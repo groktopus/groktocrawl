@@ -179,16 +179,12 @@ async def search(request: Request, body: SearchRequest):
     from .searxng_client import SearXNGClient
 
     searxng = SearXNGClient(request.app.state.searxng_url)
-    scraper = request.app.state.scraper_client
     try:
         results = await searxng.search(body.query, limit=body.limit)
-        search_results = []
-        for r in results:
-            scrape_result = await scraper.scrape(r["url"])
-            markdown = ""
-            if scrape_result.get("success"):
-                markdown = scrape_result["data"].get("markdown", "")[:3000]
-            search_results.append(SearchResult(url=r["url"], title=r["title"], description=r.get("description", ""), markdown=markdown))
+        search_results = [
+            SearchResult(url=r["url"], title=r["title"], description=r.get("description", ""))
+            for r in results
+        ]
         return SearchResponse(data={"web": search_results, "images": [], "news": []})
     finally:
         await searxng.close()
