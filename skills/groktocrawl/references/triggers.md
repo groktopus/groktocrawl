@@ -1,21 +1,32 @@
-# When to use the groktocrawl skill
+# When to use which groktocrawl command
 
 ## Decision table
 
-| User says… | Use this command | Why |
-|------------|-----------------|-----|
-| "Scrape this URL" / "Get me the content of this page" | `scripts/groktocrawl scrape <url>` | Single page, no synthesis needed |
-| "Search for X" / "Find information about Y" | `scripts/groktocrawl search "<query>"` | Raw results, no cross-source synthesis |
-| "Research X" / "Tell me about Y" / "What happened at Z" | `scripts/groktocrawl agent "<prompt>"` | Needs search, scrape, and synthesis |
-| "Compare A and B" | `scripts/groktocrawl agent "Compare A and B"` | Multi-source synthesis |
-| "Find all URLs on this site" / "Map this site" | `scripts/groktocrawl map <url>` | URL discovery only |
-| "Crawl this site" / "Get all pages from this site" | `scripts/groktocrawl crawl <url>` | Full site scrape |
-| "Extract data from these URLs" | `scripts/groktocrawl extract <urls...>` | Structured extraction, no search |
-| "Open a browser" / "Take a screenshot" / "Click this button" | `scripts/groktocrawl browser create/exec/destroy` | Interactive browser session |
-| "Parse this PDF" / "Extract text from this document" | Use `curl -X POST .../v2/parse -F "file=@..."` | Not yet a CLI subcommand |
-| "Watch this page for changes" / "Monitor this URL" | Use `curl` to `/v2/monitor` | Not yet a CLI subcommand |
-| "Generate llms.txt for this site" | `curl -X POST .../v2/generate-llmstxt` | Not yet a CLI subcommand |
+| Need | Command | Why |
+|------|---------|-----|
+| Single page content | `scrape <url>` | One fetch, no synthesis |
+| Web search, raw results | `search "<query>"` | Just the search hits |
+| Multi-source research | `agent "<prompt>"` | Searches, scrapes, and synthesizes |
+| Compare A vs B | `agent "Compare A and B"` | Needs reading multiple pages |
+| Discover site URLs | `map <url>` | URL discovery only |
+| Full site scrape | `crawl <url>` | Recursive site extraction |
+| Structured data from URLs | `extract <url>...` | Schema-guided extraction |
+| Interactive page (clicks, forms) | `browser create/exec/destroy` | Headless browser session |
+| Document parsing (PDF, DOCX) | `curl -X POST .../v2/parse` | No CLI subcommand yet |
+| Change monitoring | `curl` to `/v2/monitor` | No CLI subcommand yet |
+| Generate llms.txt | `curl` to `/v2/generate-llmstxt` | No CLI subcommand yet |
 
 ## Rule of thumb
 
-If the answer requires reading 2+ sources and connecting them, use `agent`. If you just need to find content or scrape a single page, use `scrape` or `search`.
+If the answer needs **2+ sources connected together**, use `agent`.
+If you just need content from a single page, use `scrape`.
+If you need results from a search engine, use `search`.
+
+## Tool selection order
+
+When fetching content from the web, prefer in this order:
+
+1. **`agent`** — multi-source research that needs search + scrape + synthesis
+2. **`scrape`** — any single URL: HTML pages, markdown docs, JSON endpoints, raw text
+3. **`search`** — web search with optional content scraping
+4. **`curl`** — only for the service's own API endpoints (`/v2/parse`, `/v2/monitor`, etc.) and raw binary downloads (PDFs, images) discovered during research
