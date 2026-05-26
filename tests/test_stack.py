@@ -77,7 +77,7 @@ def test_crawl_batch_search_and_map_endpoints_exist():
     assert search.status_code == 200
     search_payload = search.json()
     assert search_payload["success"] is True
-    assert len(search_payload["data"]) >= 1
+    assert len(search_payload["data"]["web"]) >= 1
 
     map_resp = httpx.post(AGENT + "/v2/map", json={"url": TEST_SITE, "limit": 10}, timeout=120)
     assert map_resp.status_code == 200

@@ -107,7 +107,7 @@ class SearchResult(BaseModel):
 
 class SearchResponse(BaseModel):
     success: bool = True
-    data: list[SearchResult] = Field(default_factory=list)
+    data: dict = Field(default_factory=lambda: {"web": [], "images": [], "news": []})
 
 
 class MapRequest(BaseModel):

@@ -189,7 +189,7 @@ async def search(request: Request, body: SearchRequest):
             if scrape_result.get("success"):
                 markdown = scrape_result["data"].get("markdown", "")[:3000]
             search_results.append(SearchResult(url=r["url"], title=r["title"], description=r.get("description", ""), markdown=markdown))
-        return SearchResponse(data=search_results)
+        return SearchResponse(data={"web": search_results, "images": [], "news": []})
     finally:
         await searxng.close()
 
