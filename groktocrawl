@@ -4,13 +4,18 @@
 Usage: groktocrawl <command> [OPTIONS]
 
 Commands:
-  scrape   Scrape a single URL
-  search   Search the web
-  map      Discover URLs on a site
-  crawl    Crawl a website
-  agent    Start an autonomous research agent
-  download Download binary content (PDF, EPUB, image, etc.) to disk
-  extract  Extract structured data from URLs
+  scrape           Scrape a single URL
+  search           Search the web
+  map              Discover URLs on a site
+  crawl            Crawl a website
+  agent            Start an autonomous research agent
+  download         Download binary content (PDF, EPUB, image, etc.) to disk
+  extract          Extract structured data from URLs
+  browser          Manage browser sessions
+  active           List active crawl jobs
+  monitor          Manage change monitors
+  parse            Parse a document file (PDF, EPUB, DOCX, etc.) to markdown
+  generate-llmstxt Generate an llms.txt for a website
 Global flags:
   --server <url>   API URL (default: GROKTOCRAWL_API_URL env or http://localhost:8080)
   --json           Machine-readable JSON output
@@ -277,6 +282,51 @@ class Client:
 
     def destroy_browser(self, session_id):
         return self._request("DELETE", f"/browser/{session_id}")
+
+    # ---- Monitor ----
+
+    def create_monitor(self, url, schedule="0 */6 * * *", webhook=None):
+        data = {"url": url, "schedule": schedule}
+        if webhook:
+            data["webhook"] = webhook
+        return self._request("POST", "/monitor", json_data=data)
+
+    def list_monitors(self):
+        return self._request("GET", "/monitor")
+
+    def get_monitor(self, monitor_id):
+        return self._request("GET", f"/monitor/{monitor_id}")
+
+    def update_monitor(self, monitor_id, **kwargs):
+        return self._request("PATCH", f"/monitor/{monitor_id}", json_data=kwargs)
+
+    def delete_monitor(self, monitor_id):
+        return self._request("DELETE", f"/monitor/{monitor_id}")
+
+    # ---- Parse ----
+
+    def parse_file(self, filepath):
+        import requests
+        url = self._url("/parse")
+        if self.dry_run:
+            return {"dry_run": True, "method": "POST", "url": url, "file": filepath}
+        with open(filepath, "rb") as f:
+            resp = requests.post(url, files={"file": f}, timeout=120)
+        if resp.status_code >= 400:
+            try:
+                body = resp.json()
+            except ValueError:
+                body = {"detail": resp.text[:200]}
+            raise ApiError(f"Parse error ({resp.status_code}): {body.get('detail', body.get('error', str(body)))}")
+        return resp.json()
+
+    # ---- LLMs.txt ----
+
+    def create_llmstxt(self, url, max_pages=50):
+        return self._request("POST", "/generate-llmstxt", json_data={"url": url, "max_pages": max_pages})
+
+    def llmstxt_status(self, job_id):
+        return self._request("GET", f"/generate-llmstxt/{job_id}")
 
 
 # === CLI Handlers ===
@@ -715,6 +765,185 @@ def cmd_active(client: Client, args: argparse.Namespace) -> None:
         print(f"  {job.get('id','?')}  [{job.get('status','?')}]")
 
 
+def cmd_monitor(client: Client, args: argparse.Namespace) -> None:
+    """Manage change monitors."""
+    action = args.command_action
+
+    if action == "create":
+        if client.dry_run:
+            emit(f"[dry-run] Would create monitor for {args.url}", {"dry_run": True, "command": "monitor", "action": "create", "url": args.url})
+            return
+        try:
+            result = client.create_monitor(args.url, schedule=args.schedule, webhook=args.webhook)
+        except ApiError as e:
+            die(str(e))
+        if JSON_OUTPUT:
+            emit("", result)
+        else:
+            log(f"Monitor created: {result.get('id', '')}")
+            log(f"  URL: {args.url}")
+            log(f"  Schedule: {args.schedule}")
+
+    elif action == "list":
+        if client.dry_run:
+            emit("[dry-run] Would list monitors", {"dry_run": True, "command": "monitor", "action": "list"})
+            return
+        try:
+            result = client.list_monitors()
+        except ApiError as e:
+            die(str(e))
+        monitors = result.get("monitors", [])
+        if JSON_OUTPUT:
+            emit("", {"monitors": monitors})
+            return
+        if not monitors:
+            log("No monitors configured")
+            return
+        print(f"Monitors ({len(monitors)}):\n")
+        for m in monitors:
+            lr = m.get("last_result", "never checked")
+            lc = m.get("last_checked", "")
+            lc_str = f" @ {lc[:19]}" if lc else ""
+            print(f"  {m['id'][:8]}  {m['url']}  [{lr}]{lc_str}")
+        print()
+
+    elif action == "get":
+        if client.dry_run:
+            emit(f"[dry-run] Would get monitor {args.id}", {"dry_run": True, "command": "monitor", "action": "get", "id": args.id})
+            return
+        try:
+            result = client.get_monitor(args.id)
+        except ApiError as e:
+            die(str(e))
+        if JSON_OUTPUT:
+            emit("", result)
+        else:
+            print(f"Monitor: {result.get('id', '')}")
+            print(f"  URL:      {result.get('url', '')}")
+            print(f"  Schedule: {result.get('schedule', '')}")
+            print(f"  Webhook:  {result.get('webhook', '(none)')}")
+            print(f"  Created:  {result.get('created_at', '')}")
+            print(f"  Checked:  {result.get('last_checked', 'never')}")
+            print(f"  Result:   {result.get('last_result', 'pending')}")
+
+    elif action == "update":
+        if client.dry_run:
+            emit(f"[dry-run] Would update monitor {args.id}", {"dry_run": True, "command": "monitor", "action": "update", "id": args.id})
+            return
+        kwargs = {}
+        if args.url:
+            kwargs["url"] = args.url
+        if args.schedule:
+            kwargs["schedule"] = args.schedule
+        if args.webhook is not None:
+            kwargs["webhook"] = args.webhook
+        if not kwargs:
+            die("Nothing to update. Provide --url, --schedule, or --webhook.")
+        try:
+            result = client.update_monitor(args.id, **kwargs)
+        except ApiError as e:
+            die(str(e))
+        if JSON_OUTPUT:
+            emit("", result)
+        else:
+            log(f"Monitor {args.id} updated")
+
+    elif action == "delete":
+        if client.dry_run:
+            emit(f"[dry-run] Would delete monitor {args.id}", {"dry_run": True, "command": "monitor", "action": "delete", "id": args.id})
+            return
+        try:
+            result = client.delete_monitor(args.id)
+        except ApiError as e:
+            die(str(e))
+        if JSON_OUTPUT:
+            emit("", result)
+        else:
+            log(f"Monitor {args.id} deleted")
+
+
+def cmd_parse(client: Client, args: argparse.Namespace) -> None:
+    """Parse a document file to markdown via the server."""
+    if client.dry_run:
+        emit(f"[dry-run] Would parse {args.filepath}", {"dry_run": True, "command": "parse", "filepath": args.filepath})
+        return
+
+    if not os.path.isfile(args.filepath):
+        die(f"File not found: {args.filepath}")
+
+    try:
+        result = client.parse_file(args.filepath)
+    except ApiError as e:
+        die(str(e))
+
+    if not result.get("success"):
+        die(f"Parse failed: {result.get('error', 'unknown error')}")
+
+    data = result.get("data", {})
+    markdown = data.get("markdown", data.get("text", ""))
+
+    if JSON_OUTPUT:
+        emit("", result)
+        return
+
+    if args.output:
+        with open(args.output, "w") as f:
+            f.write(markdown)
+        log(f"Parsed content ({len(markdown)} chars) written to {args.output}")
+    else:
+        print(markdown.rstrip())
+
+
+def cmd_generate_llmstxt(client: Client, args: argparse.Namespace) -> None:
+    """Generate an llms.txt for a website."""
+    if client.dry_run:
+        emit(f"[dry-run] Would generate llms.txt for {args.url}", {"dry_run": True, "command": "generate-llmstxt", "url": args.url})
+        return
+
+    try:
+        result = client.create_llmstxt(args.url, max_pages=args.max_pages)
+    except ApiError as e:
+        die(str(e))
+
+    job_id = result.get("id", "")
+    if not job_id:
+        die("No job ID returned")
+
+    if args.no_poll:
+        if JSON_OUTPUT:
+            emit(f"llms.txt job: {job_id}", {"job_id": job_id, "status": "started"})
+        else:
+            log(f"llms.txt generation started: {job_id}")
+            log(f"Check status later with: curl $GROKTOCRAWL_API_URL/v2/generate-llmstxt/{job_id}")
+        return
+
+    log(f"Generating llms.txt for {args.url} — job {job_id}...")
+    while True:
+        time.sleep(POLL_INTERVAL)
+        try:
+            status = client.llmstxt_status(job_id)
+        except ApiError as e:
+            warn(f"Status check failed: {e}")
+            continue
+
+        s = status.get("status", "unknown")
+        if s == "completed":
+            data = status.get("data", {})
+            content = data.get("llmstxt", data.get("content", ""))
+            if JSON_OUTPUT:
+                emit("", {"job_id": job_id, "status": "completed", "result": data})
+            else:
+                if content:
+                    print(content.rstrip())
+                else:
+                    print(json.dumps(data, indent=2))
+            return
+        elif s == "failed":
+            die(f"llms.txt generation failed: {status.get('error', 'unknown')}")
+        else:
+            info(f"  Status: {s}")
+
+
 def make_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="groktocrawl",
@@ -727,6 +956,10 @@ def make_parser() -> argparse.ArgumentParser:
               groktocrawl map https://docs.example.com --limit 50
               groktocrawl crawl https://docs.example.com --max-depth 2 --limit 20
               groktocrawl agent "What is new in Google I/O 2025?"
+              groktocrawl monitor create https://example.com --schedule "0 */12 * * *"
+              groktocrawl monitor list
+              groktocrawl parse report.pdf --output report.md
+              groktocrawl generate-llmstxt https://docs.example.com
         """),
     )
 
@@ -799,6 +1032,41 @@ def make_parser() -> argparse.ArgumentParser:
     p_browser_destroy.add_argument("session_id", help="Session ID")
 
     p_active = subparsers.add_parser("active", help="List active crawl jobs")
+
+    # --- Monitor ---
+    p_monitor = subparsers.add_parser("monitor", help="Manage change monitors")
+    p_monitor_sub = p_monitor.add_subparsers(dest="command_action")
+
+    p_monitor_create = p_monitor_sub.add_parser("create", help="Create a monitor")
+    p_monitor_create.add_argument("url", help="URL to monitor for changes")
+    p_monitor_create.add_argument("--schedule", default="0 */6 * * *", help="Cron expression (default: every 6 hours)")
+    p_monitor_create.add_argument("--webhook", help="Webhook URL called on change")
+
+    p_monitor_list = p_monitor_sub.add_parser("list", help="List all monitors")
+
+    p_monitor_get = p_monitor_sub.add_parser("get", help="Get monitor details")
+    p_monitor_get.add_argument("id", help="Monitor ID")
+
+    p_monitor_update = p_monitor_sub.add_parser("update", help="Update a monitor")
+    p_monitor_update.add_argument("id", help="Monitor ID")
+    p_monitor_update.add_argument("--url", help="New URL to monitor")
+    p_monitor_update.add_argument("--schedule", help="New cron expression")
+    p_monitor_update.add_argument("--webhook", help="New webhook URL (empty string to clear)")
+
+    p_monitor_delete = p_monitor_sub.add_parser("delete", help="Delete a monitor")
+    p_monitor_delete.add_argument("id", help="Monitor ID")
+
+    # --- Parse ---
+    p_parse = subparsers.add_parser("parse", help="Parse a document file (PDF, EPUB, DOCX, etc.) to markdown via the server")
+    p_parse.add_argument("filepath", help="Path to the file to parse")
+    p_parse.add_argument("-o", "--output", help="Write output to file instead of stdout")
+
+    # --- Generate llms.txt ---
+    p_llmstxt = subparsers.add_parser("generate-llmstxt", help="Generate an llms.txt for a website")
+    p_llmstxt.add_argument("url", help="Site URL to generate llms.txt for")
+    p_llmstxt.add_argument("--max-pages", type=int, default=50, help="Max pages to scan (default: 50)")
+    p_llmstxt.add_argument("--no-poll", action="store_true", help="Don't poll for completion")
+
     return parser
 
 
@@ -857,6 +1125,9 @@ def main() -> None:
         "extract": cmd_extract,
         "browser": cmd_browser,
         "active": cmd_active,
+        "monitor": cmd_monitor,
+        "parse": cmd_parse,
+        "generate-llmstxt": cmd_generate_llmstxt,
     }
 
     handler = dispatch.get(args.command)

@@ -9,8 +9,9 @@ description: >-
 license: MIT
 metadata:
   author: groktopus
-  version: "1.3.3"
+  version: "1.4.0"
   changelog:
+    "1.4.0": "Add CLI subcommands for monitor (create/list/get/update/delete), parse (file to markdown), and generate-llmstxt (with async polling)"
     "1.3.3": "Add change monitoring section with active job tracking and monitor lifecycle guidance"
     "1.3.2": "Add multi-source research fallback chain (search→scrape→browser→agent) and domain exploration strategy (llms.txt→map→crawl→search site:)"
     "1.3.1": "Add extracting structured data section with prompt guidance and error recovery across commands"
@@ -45,8 +46,10 @@ groktocrawl agent "What were the key Google I/O 2025 announcements?"
 | crawl | Site crawling | `groktocrawl crawl <url> --max-depth 3` |
 | agent | Autonomous research | `groktocrawl agent "<prompt>"` |
 | browser | Headless browser | `groktocrawl browser create --ttl 300` |
-
 | active | List crawl jobs | `groktocrawl active --json` |
+| monitor | Manage monitors | `groktocrawl monitor create/list/get/update/delete` |
+| parse | Doc file to markdown | `groktocrawl parse <filepath>` |
+| generate-llmstxt | Generate llms.txt | `groktocrawl generate-llmstxt <url>` |
 
 ## When to use which
 
@@ -157,48 +160,33 @@ groktocrawl search "site:example.com tutorial" --limit 5 --json
 
 ## Change monitoring
 
-Track when a page's content changes — useful for documentation updates, blog posts, pricing pages, or any URL whose content you want to watch. The CLI does **not** have a `monitor` subcommand — use the API directly via curl.
+Track when a page's content changes — useful for documentation updates, blog posts, pricing pages, or any URL whose content you want to watch.
 
 ```bash
 # Create a monitor (checks every 6 hours by default)
-curl -s -X POST $GROKTOCRAWL_API_URL/v2/monitor \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://example.com/docs", "schedule": "0 */6 * * *"}'
+groktocrawl monitor create https://example.com/docs --schedule "0 */6 * * *"
 
-# List all monitors and their last-check status
-curl -s $GROKTOCRAWL_API_URL/v2/monitor | python3 -m json.tool
+# List all monitors and their status
+groktocrawl monitor list
 
-# Get a specific monitor's status
-curl -s $GROKTOCRAWL_API_URL/v2/monitor/<id> | python3 -m json.tool
+# Get a specific monitor's details
+groktocrawl monitor get <id>
 
 # Update a monitor
-curl -s -X PATCH $GROKTOCRAWL_API_URL/v2/monitor/<id> \
-  -H "Content-Type: application/json" \
-  -d '{"schedule": "0 */12 * * *"}'
+groktocrawl monitor update <id> --schedule "0 */12 * * *"
 
 # Delete a monitor
-curl -s -X DELETE $GROKTOCRAWL_API_URL/v2/monitor/<id>
+groktocrawl monitor delete <id>
 ```
 
-**How it works internally** (\`agent-svc/agent/monitor.py\`):
-- **Scheduler:** A scheduler container in the Docker stack runs \`python3 -m agent.monitor check_all\` on cron.
+**How it works internally** (`agent-svc/agent/monitor.py`):
+- **Scheduler:** A scheduler container in the Docker stack runs `python3 -m agent.monitor check_all` on cron.
 - **Check cycle:** For each registered monitor, the scheduler scrapes the URL via the scraper service, computes a unified diff against the previous content, and stores the result in Valkey.
-- **Storage:** Monitor configs live in Valkey under the \`monitors\` hash. Check history is stored in \`monitor:{id}:history\` lists (last 50 checks retained).
+- **Storage:** Monitor configs live in Valkey under the `monitors` hash. Check history is stored in `monitor:{id}:history` lists (last 50 checks retained).
 - **Change detection:** First check stores content without diff. Subsequent checks compare and produce a unified diff (capped at 100 lines).
-- **Webhook notifications:** If configured with a \`webhook\` URL, the server POSTs \`{"event": "monitor.changed", "monitor_id": "...", "url": "...", "diff": "..."}\` on change.
+- **Webhook notifications:** If configured with a `webhook` URL, the server POSTs `{"event": "monitor.changed", "monitor_id": "...", "url": "...", "diff": "..."}` on change.
 
-**Monitor API response fields:**
-| Field | Type | Description |
-|-------|------|-------------|
-| id | string | UUID |
-| url | string | The monitored URL |
-| schedule | string | Cron expression (default \`0 */6 * * *\`) |
-| webhook | string? | Optional webhook URL called on change |
-| last_checked | string? | ISO timestamp of last check |
-| last_result | string? | "changed" or "unchanged" |
-| created_at | string | ISO timestamp of creation |
-
-**Note on \`active\`:** \`groktocrawl active --json\` shows **crawl/agent jobs only** (\`GET /crawl/active\`). Monitors are not included. Use \`GET /v2/monitor\` via curl to list them.
+**Note on `active`:** `groktocrawl active --json` shows **crawl/agent jobs only** (`GET /crawl/active`). Monitors are not included. Use `groktocrawl monitor list` to list monitors.
 
 ## Pitfalls
 
