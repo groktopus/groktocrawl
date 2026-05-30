@@ -9,8 +9,9 @@ description: >-
 license: MIT
 metadata:
   author: groktopus
-  version: "1.3.1"
+  version: "1.3.2"
   changelog:
+    "1.3.2": "Add multi-source research fallback chain (search→scrape→browser→agent) and domain exploration strategy (llms.txt→map→crawl→search site:)
     "1.3.1": "Add extracting structured data section with prompt guidance and error recovery across commands"
     "1.3.0": "Add full structured extraction workflow with session ID plumbing, browser session lifecycle reference, and multi-step research workflow example"
     "1.2.0": "Add browser session lifecycle guidance, structured extraction examples, search backend config reference, and cross-command chaining patterns"
@@ -63,6 +64,35 @@ groktocrawl agent "Summarize the key findings from this PDF and compare with the
 ```
 The agent will fetch and analyze both sources independently.
 
+## Multi-source research with fallback chain
+
+When researching a topic, no single source type is guaranteed complete. Use this fallback chain when the first approach produces insufficient results:
+
+```bash
+# Level 1: Search for leads
+groktocrawl search "p5.js 2.0 release WebGPU changes" --limit 5 --json
+
+# Level 2a: If search results are shallow (blogspam, summaries) → scrape primary sources
+groktocrawl scrape https://p5js.org/download/
+
+# Level 2b: If scrape returns under 500 chars → try browser for JS-rendered content
+SESSION=$(groktocrawl browser create --ttl 120 | grep -o '"[a-f0-9]\{24\}"' | head -1 | tr -d '"')
+groktocrawl browser exec "$SESSION" navigate --url "https://p5js.org/download/"
+groktocrawl browser exec "$SESSION" executeScript --script "document.body.innerText"
+
+# Level 3: Cross-reference and synthesize all sources
+groktocrawl agent "Compare the features from the p5.js release notes at https://p5js.org/download/ with community summaries. What changed in WebGPU support? Are there breaking changes?"
+```
+
+**When to escalate:**
+- Search returns few results → try `site:domain.com <topic>` or switch search backends
+- Scrape returns under 500 chars → browser (JS rendering needed)
+- Scrape returns 403/blocked → browser with stealth mode or try curl
+- Browser fails → check session TTL has not expired (create fresh if needed)
+- Multiple sources give conflicting info → `agent` command to compare and reconcile
+
+**Cross-referencing for verification:** When you need to verify a specific claim across multiple sources, do not rely on a single source type. Fetch the claim from an official source (scrape/browser), cross-reference with community/analysis sources (search), and feed both into an `agent` for comparison. This is especially important for technical specifications, version changes, and breaking changes.
+
 ## Extracting structured data
 
 The `extract` command (`groktocrawl extract <url> --prompt "..."`) uses the LLM to return structured data from a page. It works best on static HTML pages with clear content patterns.
@@ -83,6 +113,45 @@ groktocrawl extract https://example.com/products --prompt "product names, prices
 **When to use extract vs browser + executeScript:**
 - `extract` — quick extraction from static HTML when you know roughly what you want
 - `browser + executeScript` — JS-rendered pages, precise CSS selectors, when you need control over the extraction logic
+
+## Domain exploration strategy
+
+When exploring an unfamiliar website for comprehensive coverage, use this systematic approach rather than one-off `scrape` calls:
+
+```bash
+# Phase 1: Discover the site's surface
+# Try llms.txt first (agent-friendly docs), then sitemap.xml
+curl -sL https://example.com/llms.txt
+# OR
+groktocrawl scrape https://example.com/sitemap.xml
+
+# Phase 2: Breadth-first URL inventory with map
+groktocrawl map https://example.com/docs --limit 100
+
+# Phase 3: Depth-first content extraction with crawl
+# Pick a subpath from the map output
+groktocrawl crawl https://example.com/docs/api --max-depth 2 --limit 50
+
+# Phase 4: Gap detection with search site: prefix
+groktocrawl search "site:example.com tutorial" --limit 5 --json
+```
+
+**Deciding between map, crawl, and search:**
+
+| Goal | Tool | Why |
+|------|------|-----|
+| List all URLs on a site | `map` | Fast, breadth-first, returns URLs only — good for inventorying |
+| Extract full page content from a section | `crawl` | Depth-first, returns markdown — good for documentation, blogs |
+| Find pages about a specific topic on the site | `search site:` | Query-driven — good for targeted discovery |
+| Find the agent-friendly entry point | `curl /llms.txt` | Fastest — one request, full site map in structured text |
+
+**Depth strategy:**
+- `--max-depth 1`: Single level only (page + its immediate links). Use for landing pages, index pages.
+- `--max-depth 2`: Page + one level of links. Use for documentation sites with a table of contents.
+- `--max-depth 3+`: Full subsite crawl. Use for deep hierarchies. Always pair with `--limit` to bound the crawl.
+- No limit: Only for small, well-understood sites (under ~200 pages).
+
+**When map + crawl together:** Start with `map` to understand site structure (breadth-first, low cost), then `crawl` specific subpaths for content (depth-first, higher cost). This avoids crawling irrelevant sections.
 
 ## Pitfalls
 
