@@ -9,8 +9,9 @@ description: >-
 license: MIT
 metadata:
   author: groktopus
-  version: "1.2.0"
+  version: "1.3.0"
   changelog:
+    "1.3.0": "Add full structured extraction workflow with session ID plumbing, browser session lifecycle reference, and multi-step research workflow example"
     "1.2.0": "Add browser session lifecycle guidance, structured extraction examples, search backend config reference, and cross-command chaining patterns"
     "1.1.0": "Add download command, clarify PATH-vs-script CLI path, document search bug fix"
     "1.0.0": "Initial release after SkillOpt Epoch 1 — search pitfalls, multi-step workflows"
@@ -50,8 +51,16 @@ groktocrawl agent "What were the key Google I/O 2025 announcements?"
 - **Binary files (PDF, EPUB, image)** → download
 - **Search results** → search
 - **Interactive page, JS-heavy SPA, YouTube** → browser (also needed when scrape returns short/empty content)
-- **Batch scrape + synthesize** → `crawl` or `scrape` multiple URLs, then `agent` to combine
-- **Source includes binary files (PDF, image)** → `download` the file, then `agent` to analyze alongside scraped text
+- **Batch scrape + synthesize** → `scrape` multiple URLs (or `crawl` a site), then feed results into `agent` for synthesis
+- **Source includes binary files (PDF, image)** → `download` the file to `~/Downloads/`, then reference it in `agent` prompt — the agent can analyze text extracted from the file
+- **API endpoints, raw JSON** → curl
+
+**Multi-step workflow example — research with PDF source:** If your PDF URL is `https://example.com/report.pdf`, the `download` command saves the file locally but does not automatically pass it to `agent`. Use a two-step approach:
+```bash
+groktocrawl download https://example.com/report.pdf    # Saves to current directory or ~/Downloads/
+groktocrawl agent "Summarize the key findings from this PDF and compare with the web article at https://other-site.com/blog"
+```
+The agent will fetch and analyze both sources independently.
 - **API endpoints, raw JSON** → curl
 
 ## Pitfalls
@@ -78,14 +87,36 @@ groktocrawl browser exec <session> executeScript --script "document.body.innerTe
 
 Note: `getContent` returns metadata only (url, title, html_length) — not page content. Use `executeScript` to extract rendered text.
 
-**Browser session lifecycle:** Sessions created with `browser create --ttl N` auto-expire after N seconds. For explicit cleanup, the session ID is scoped to your API key — old sessions are garbage-collected server-side. If you're running long extraction pipelines, set `--ttl` high enough (e.g., `--ttl 300` for 5 minutes) to accommodate all navigation and extraction steps.
+**Browser session lifecycle:**
 
-**Structured extraction from rendered pages:** For extracting specific elements (headings, code blocks, links) rather than raw body text, use targeted CSS selectors:
+- **Default TTL:** If `--ttl` is not specified, sessions default to a 60-second lifetime.
+- **Setting TTL:** Use `--ttl N` where N is seconds. For long pipelines, `--ttl 300` (5 minutes) is recommended. Sessions are scoped to your API key; old sessions are garbage-collected server-side.
+- **Checking status:** There is no built-in session status command. If you need to verify a session is still alive, attempt a `navigate` — a valid session returns page content; an expired session returns an error. If a session expires mid-pipeline, create a new one with `browser create --ttl N` and re-navigate.
+- **Session ID persistence:** The session ID returned by `browser create` is a hex string. Save it to a variable (`SESSION=$(groktocrawl browser create --ttl 300 | ...)`) for reuse across multiple `browser exec` commands. The session survives as long as its TTL — it does not persist across server restarts.
+- **Idle timeouts:** The TTL is a total lifetime, not an idle timeout. Even if you're actively sending commands, the session expires after N seconds from creation. For pipelines exceeding the TTL, split the work across multiple shorter sessions or set a generous TTL upfront.
+
+**Structured extraction from rendered pages — full workflow:** For extracting specific elements (headings, code blocks, links) rather than raw body text, use targeted CSS selectors. Here is the complete workflow with session ID plumbing:
+
 ```bash
-groktocrawl browser exec <session> executeScript --script "document.querySelectorAll('h2').map(h => h.textContent)"
-groktocrawl browser exec <session> executeScript --script "document.querySelectorAll('pre code').map(c => c.textContent).join('\n')"
+# 1. Create a session with sufficient TTL
+SESSION=$(groktocrawl browser create --ttl 120 | grep -o '"[a-f0-9]\{24\}"' | head -1 | tr -d '"')
+
+# 2. Navigate to the page
+groktocrawl browser exec "$SESSION" navigate --url "https://example.com/docs"
+
+# 3. Extract h2 headings (returns JSON array)
+groktocrawl browser exec "$SESSION" executeScript --script "document.querySelectorAll('h2').map(h => h.textContent)"
+
+# 4. Extract code blocks (returns joined text)
+groktocrawl browser exec "$SESSION" executeScript --script "document.querySelectorAll('pre code').map(c => c.textContent).join('\n')"
+
+# 5. Extract all links with hrefs
+groktocrawl browser exec "$SESSION" executeScript --script "Array.from(document.querySelectorAll('a[href]')).map(a => ({text: a.textContent, href: a.href}))"
 ```
-If `executeScript` also returns empty, the page may require authentication, have a CAPTCHA wall, or load content inside iframes. See `assets/examples.md` for advanced patterns.
+
+**Output format:** `executeScript` returns the JS expression's result as a JSON string. Arrays of strings come back as `["item1", "item2"]`. Objects come back as `{"key": "value"}`. If the result is a single value (string, number), it's returned directly.
+
+**If `executeScript` returns empty:** The page may require authentication, have a CAPTCHA wall, or load content inside iframes. Check for rendered elements with `document.body.innerText.length` to verify the page actually loaded. See `assets/examples.md` for advanced patterns.
 
 ### CLI vs reference copy
 
