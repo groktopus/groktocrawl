@@ -9,8 +9,9 @@ description: >-
 license: MIT
 metadata:
   author: groktopus
-  version: "1.3.0"
+  version: "1.3.1"
   changelog:
+    "1.3.1": "Add extracting structured data section with prompt guidance and error recovery across commands"
     "1.3.0": "Add full structured extraction workflow with session ID plumbing, browser session lifecycle reference, and multi-step research workflow example"
     "1.2.0": "Add browser session lifecycle guidance, structured extraction examples, search backend config reference, and cross-command chaining patterns"
     "1.1.0": "Add download command, clarify PATH-vs-script CLI path, document search bug fix"
@@ -61,7 +62,27 @@ groktocrawl download https://example.com/report.pdf    # Saves to current direct
 groktocrawl agent "Summarize the key findings from this PDF and compare with the web article at https://other-site.com/blog"
 ```
 The agent will fetch and analyze both sources independently.
-- **API endpoints, raw JSON** → curl
+
+## Extracting structured data
+
+The `extract` command (`groktocrawl extract <url> --prompt "..."`) uses the LLM to return structured data from a page. It works best on static HTML pages with clear content patterns.
+
+**Prompt tips:** Describe what you want as a comma-separated list of fields. The LLM extracts whatever it finds, so be specific about what to look for and what to ignore. For example:
+
+```bash
+groktocrawl extract https://example.com/products --prompt "product names, prices, and whether each is in stock"
+```
+
+**Output:** Returns a JSON object or array with the fields you requested. If the prompt is vague, the output may be freeform text instead of structured fields.
+
+**When extract fails:**
+- The page is JS-rendered (SPA) → extract reads the raw HTML before JS executes. Use the browser pipeline instead: create a session, navigate, then use `executeScript` with targeted CSS selectors (see Browser section above).
+- The prompt is too broad → narrow the focus to specific fields. If the page has many products, try extracting from a single section first.
+- The page is behind auth or returns 403 → `extract` cannot access authenticated content. Try `browser` with cookies or ensure the page is publicly accessible.
+
+**When to use extract vs browser + executeScript:**
+- `extract` — quick extraction from static HTML when you know roughly what you want
+- `browser + executeScript` — JS-rendered pages, precise CSS selectors, when you need control over the extraction logic
 
 ## Pitfalls
 
@@ -116,7 +137,21 @@ groktocrawl browser exec "$SESSION" executeScript --script "Array.from(document.
 
 **Output format:** `executeScript` returns the JS expression's result as a JSON string. Arrays of strings come back as `["item1", "item2"]`. Objects come back as `{"key": "value"}`. If the result is a single value (string, number), it's returned directly.
 
-**If `executeScript` returns empty:** The page may require authentication, have a CAPTCHA wall, or load content inside iframes. Check for rendered elements with `document.body.innerText.length` to verify the page actually loaded. See `assets/examples.md` for advanced patterns.
+If `executeScript` also returns empty, check for rendered elements with `document.body.innerText.length` to verify the page actually loaded. See `assets/examples.md` for advanced patterns.
+
+### Error recovery across commands
+
+GroktoCrawl commands can fail in three common ways. Here is how to handle each:
+
+| Error type | Symptoms | Recovery |
+|------------|----------|----------|
+| **Network / HTTP errors** | `curl` returns 4xx or 5xx; CLI shows connection refused or timeout | Check the server is running (`docker ps`), the URL is reachable (`curl -I <url>`), and the API key is set in `.env`. Retry with backoff (wait 5s between attempts). |
+| **Content quality failures** | Scrape returns under 500 chars; search returns empty; extract returns null | These are the per-command content issues documented above. Switch modes: scrape→browser, search→agent or check backend, extract→browser executeScript. |
+| **Timed-out operations** | Crawl hangs mid-way; agent does not return after several minutes | Set explicit timeouts: for crawl reduce `--max-depth` or add `--limit` to bound the site surface. For agent, the server enforces a timeout — if it consistently fails, check `LLM_TIMEOUT` in the server's `.env`. |
+
+**General approach:** If a command fails, try the same request via `curl` against the API endpoint to isolate CLI-vs-server causes. If `curl` also fails, the issue is server-side (config, network, resources). If `curl` succeeds but the CLI fails, report a CLI bug.
+
+If a crawl or agent job fails partway through, the server may have partial results. Use `groktocrawl active --json` to check for in-progress or completed jobs that may have finished despite the client timing out.
 
 ### CLI vs reference copy
 
