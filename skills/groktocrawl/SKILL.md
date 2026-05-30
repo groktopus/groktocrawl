@@ -9,9 +9,10 @@ description: >-
 license: MIT
 metadata:
   author: groktopus
-  version: "1.3.2"
+  version: "1.3.3"
   changelog:
-    "1.3.2": "Add multi-source research fallback chain (search→scrape→browser→agent) and domain exploration strategy (llms.txt→map→crawl→search site:)
+    "1.3.3": "Add change monitoring section with active job tracking and monitor lifecycle guidance"
+    "1.3.2": "Add multi-source research fallback chain (search→scrape→browser→agent) and domain exploration strategy (llms.txt→map→crawl→search site:)"
     "1.3.1": "Add extracting structured data section with prompt guidance and error recovery across commands"
     "1.3.0": "Add full structured extraction workflow with session ID plumbing, browser session lifecycle reference, and multi-step research workflow example"
     "1.2.0": "Add browser session lifecycle guidance, structured extraction examples, search backend config reference, and cross-command chaining patterns"
@@ -44,6 +45,7 @@ groktocrawl agent "What were the key Google I/O 2025 announcements?"
 | crawl | Site crawling | `groktocrawl crawl <url> --max-depth 3` |
 | agent | Autonomous research | `groktocrawl agent "<prompt>"` |
 | browser | Headless browser | `groktocrawl browser create --ttl 300` |
+| monitor | Change detection | `groktocrawl monitor <url>` |
 | active | List crawl jobs | `groktocrawl active --json` |
 
 ## When to use which
@@ -152,6 +154,30 @@ groktocrawl search "site:example.com tutorial" --limit 5 --json
 - No limit: Only for small, well-understood sites (under ~200 pages).
 
 **When map + crawl together:** Start with `map` to understand site structure (breadth-first, low cost), then `crawl` specific subpaths for content (depth-first, higher cost). This avoids crawling irrelevant sections.
+
+## Change monitoring
+
+Track when a page's content changes — useful for documentation updates, blog posts, pricing pages, or any URL whose content you want to watch.
+
+```bash
+# Set up a monitor on a URL
+groktocrawl monitor https://example.com/docs --interval daily
+
+# List all active monitors and crawl jobs
+groktocrawl active --json
+```
+
+**Output of `active`:** Returns a JSON array of job objects. Each job has an `id`, `url`, `status` (one of `processing`, `completed`, `failed`), and timestamps. If a crawl or agent job failed partway through, it may still appear here with partial results despite the client timing out.
+
+**Monitor lifecycle:**
+- **Setup:** `groktocrawl monitor <url>` registers a URL for periodic change detection. The `--interval` flag controls check frequency (e.g., `daily`, `weekly`, `hourly`).
+- **Checking:** Use `groktocrawl active --json` to list all active monitors and their last-check status. Each entry shows `url`, `status`, `last_checked`, and `changed` (boolean).
+- **Results:** When a change is detected, the monitor records the diff. Check the `active` output for `changed: true` entries, then re-scrape the URL for current content.
+- **Teardown:** There is no built-in `monitor remove` command. To stop monitoring, note the job ID from `active` output and contact the server admin or restart the service.
+
+**When to use monitor vs active:**
+- `monitor` — set up a recurring check on a specific URL
+- `active` — inspect all running jobs (crawls, agents, monitors) and their statuses
 
 ## Pitfalls
 
