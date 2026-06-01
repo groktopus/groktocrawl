@@ -16,7 +16,7 @@ services:
     ports:
       - "8081:8080"
     volumes:
-      - /Users/magnus/.hermes/searxng-settings.yml:/etc/searxng/settings.yml:ro
+      - ./searxng/settings.yml:/etc/searxng/settings.yml:ro
     environment:
       - SEARXNG_BASE_URL=http://localhost:8081/
     cap_add:
@@ -111,7 +111,7 @@ services:
     restart: unless-stopped
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /Users/magnus/.hermes/ofelia-config.ini:/etc/ofelia/config.ini:ro
+      - ./ofelia/config.ini:/etc/ofelia/config.ini:ro
     depends_on:
       - agent-svc
 
