@@ -78,7 +78,32 @@ The scraper uses a **three-tier strategy**: check `/llms.txt` first, try `Accept
 
 ## CLI
 
-`groktocrawl` is a CLI tool in the repo root. It needs `requests` (`pip install requests`).
+`groktocrawl` is a CLI tool in the repo root. It needs `requests`.
+
+If you want to avoid installing dependencies into your global Python, use a repo-local `uv` environment:
+
+```bash
+uv venv
+uv pip install requests
+uv run ./groktocrawl scrape https://example.com
+```
+
+To expose a global `groktocrawl` command while keeping dependencies isolated, create a small wrapper somewhere on your `PATH`:
+
+```bash
+cat > ~/.local/bin/groktocrawl <<'EOF'
+#!/bin/sh
+cd "$HOME/groktocrawl" || exit 1
+exec uv run ./groktocrawl "$@"
+EOF
+chmod +x ~/.local/bin/groktocrawl
+```
+
+Or install `requests` into the Python that runs the script:
+
+```bash
+python3 -m pip install requests
+```
 
 ```bash
 ./groktocrawl scrape <url>                  # Scrape a page to markdown
