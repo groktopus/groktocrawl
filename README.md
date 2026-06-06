@@ -365,6 +365,33 @@ GroktoCrawl supports **site-specific content handlers** that extract richer cont
 
 **Configuration:** None — the public API requires no authentication.
 
+### GitHub Adapters
+
+Two adapters handle different URL types on `github.com`. They work together via priority dispatch:
+
+| Priority | Adapter | Handles | Primary Strategy |
+|----------|---------|---------|-----------------|
+| 200 | GitHub File | raw files, blobs, READMEs, directory listings | raw.githubusercontent.com direct fetch |
+| 190 | GitHub Discussion | issues, pull requests | GraphQL API (v4) |
+
+`scrape <github-url>` returns a markdown document with YAML frontmatter containing owner, repo, ref, path, size, and type-specific metadata (stars/forks for repos, labels for issues, diff stats for PRs).
+
+**Fallback chain (file adapter):** raw.githubusercontent.com direct fetch → GitHub Contents API → generic tier
+
+**Fallback chain (discussion adapter):** GitHub GraphQL API → GitHub REST API → generic tier
+
+**Configuration:**
+
+The `GITHUB_TOKEN` environment variable enables authenticated access to the GitHub API:
+
+| Variable | Default | Effect |
+|----------|---------|--------|
+| `GITHUB_TOKEN` | *(none)* | 5,000 API requests/hr vs 60/hr unauth; enables GraphQL for issues/PRs |
+
+Without a token, the file adapter still works (raw.githubusercontent.com fetches have no rate limit) and the discussion adapter falls back to the REST API at 60 requests/hr.
+
+A token with the `public_repo` scope is sufficient for public repositories. For private repos, a token with the `repo` scope is required.
+
 ### Adding a New Adapter
 
 1. Create `scraper-svc/scraper/adapters/<site>.py`
