@@ -8,8 +8,14 @@ REST API as fallback.  Falls through to the generic tier only when
 both paths fail.
 
 Auth: GITHUB_TOKEN with ``public_repo`` scope (public repos) or
-``repo`` scope (private repos).  Without a token, the REST fallback
-works at 60 requests/hr.
+``repo`` scope (private repos).  Without a token, falls back to
+REST API (60 req/hr) then HTML page scrape via readability-lxml.
+
+Fallback chain for every resource type:
+  1. GitHub GraphQL API — single query, rich structured data
+  2. GitHub REST API — structured JSON, works without auth
+  3. HTML page scrape — readability + markdownify, last resort
+  4. Generic tier pipeline — for URLs the adapter doesn't match
 
 PAT scope documentation:
   - Classic token: any token with ``repo`` scope
@@ -145,6 +151,63 @@ async def _graphql(query: str, variables: dict) -> dict | None:
             return body.get("data")
     except Exception as exc:
         logger.debug("GraphQL request failed: %s", exc)
+        return None
+
+
+# ── HTML scrape fallback (when GraphQL + REST both fail) ────────
+
+async def _html_scrape(url: str) -> dict | None:
+    """Fetch a GitHub page's HTML and extract readable content.
+
+    Tier 3 fallback for every resource type.  Uses readability-lxml
+    (already installed in scraper-svc) to extract the main content,
+    then markdownify to convert to markdown.
+
+    This catches cases where GraphQL is unavailable and REST is rate-
+    limited, still returning something useful from the rendered page.
+    GitHub pages are server-side rendered, so the HTML always
+    contains the full content.
+    """
+    try:
+        async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
+            resp = await client.get(url, headers={
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/131.0.0.0 Safari/537.36"
+                ),
+            })
+            if resp.status_code != 200:
+                logger.debug("HTML scrape returned %d for %s", resp.status_code, url)
+                return None
+
+            html = resp.text
+            if not html or len(html) < 500:
+                return None
+
+            # readability-lxml extracts the main content from HTML
+            from readability import Document
+            doc = Document(html)
+            content_html = doc.summary()
+            title = doc.title()
+
+            if not content_html or len(content_html) < 100:
+                return None
+
+            # markdownify converts HTML to markdown
+            from markdownify import markdownify as md
+            content_md = md(content_html, heading_style="ATX")
+
+            return {
+                "title": title or "",
+                "body": content_md or "",
+                "source": "html-scrape",
+            }
+    except ImportError:
+        logger.debug("readability-lxml or markdownify not available")
+        return None
+    except Exception as exc:
+        logger.debug("HTML scrape failed for %s: %s", url, exc)
         return None
 
 
@@ -686,21 +749,25 @@ async def _fetch_issue(owner: str, repo: str, number: int) -> dict | None:
     # Tier 2: REST
     logger.debug("GraphQL issue failed, trying REST for %s/%s#%d", owner, repo, number)
     issue = await _rest_get(f"/repos/{owner}/{repo}/issues/{number}")
-    if not issue:
-        return None
-    comments = await _rest_get(f"/repos/{owner}/{repo}/issues/{number}/comments",
-                               {"per_page": 100})
-    if not isinstance(comments, list):
-        comments = []
-    return {
-        "title": issue.get("title", ""), "body": issue.get("body", "") or "",
-        "state": issue.get("state", ""), "createdAt": issue.get("created_at", ""),
-        "author": {"login": issue.get("user", {}).get("login", "")},
-        "labels": [{"name": l["name"], "color": l.get("color", "")} for l in issue.get("labels", [])],
-        "comments": [{"body": c.get("body", "") or "", "createdAt": c.get("created_at", ""),
-                       "author": {"login": c.get("user", {}).get("login", "")}} for c in comments],
-        "comment_count": len(comments),
-    }
+    if issue:
+        comments = await _rest_get(f"/repos/{owner}/{repo}/issues/{number}/comments",
+                                   {"per_page": 100})
+        if not isinstance(comments, list):
+            comments = []
+        return {
+            "title": issue.get("title", ""), "body": issue.get("body", "") or "",
+            "state": issue.get("state", ""), "createdAt": issue.get("created_at", ""),
+            "author": {"login": issue.get("user", {}).get("login", "")},
+            "labels": [{"name": l["name"], "color": l.get("color", "")} for l in issue.get("labels", [])],
+            "comments": [{"body": c.get("body", "") or "", "createdAt": c.get("created_at", ""),
+                           "author": {"login": c.get("user", {}).get("login", "")}} for c in comments],
+            "comment_count": len(comments),
+        }
+
+    # Tier 3: HTML scrape
+    logger.debug("REST issue failed, trying HTML scrape for %s/%s#%d", owner, repo, number)
+    scrape_url = f"https://github.com/{owner}/{repo}/issues/{number}"
+    return await _html_scrape(scrape_url)
 
 
 async def _fetch_pull(owner: str, repo: str, number: int) -> dict | None:
@@ -712,30 +779,33 @@ async def _fetch_pull(owner: str, repo: str, number: int) -> dict | None:
     # Tier 2: REST
     logger.debug("GraphQL PR failed, trying REST for %s/%s#%d", owner, repo, number)
     pr = await _rest_get(f"/repos/{owner}/{repo}/pulls/{number}")
-    if not pr:
-        return None
-    comments = await _rest_get(f"/repos/{owner}/{repo}/issues/{number}/comments", {"per_page": 100})
-    files = await _rest_get(f"/repos/{owner}/{repo}/pulls/{number}/files", {"per_page": 30})
-    review_c = await _rest_get(f"/repos/{owner}/{repo}/pulls/{number}/comments", {"per_page": 100})
-    return {
-        "title": pr.get("title", ""), "body": pr.get("body", "") or "",
-        "state": pr.get("state", ""), "createdAt": pr.get("created_at", ""),
-        "mergedAt": pr.get("merged_at", ""), "merged": pr.get("merged", False),
-        "author": {"login": pr.get("user", {}).get("login", "")},
-        "baseRefName": pr.get("base", {}).get("ref", ""),
-        "headRefName": pr.get("head", {}).get("ref", ""),
-        "additions": pr.get("additions", 0), "deletions": pr.get("deletions", 0),
-        "changedFiles": pr.get("changed_files", 0),
-        "mergeable": pr.get("mergeable_state", ""),
-        "labels": [{"name": l["name"], "color": l.get("color", "")} for l in pr.get("labels", [])],
-        "comments": [{"body": c.get("body", "") or "", "createdAt": c.get("created_at", ""),
-                       "author": {"login": c.get("user", {}).get("login", "")}} for c in (comments or [])],
-        "review_comments": [],
-        "files": [{"filename": f.get("filename", ""), "status": f.get("status", ""),
-                    "additions": f.get("additions", 0), "deletions": f.get("deletions", 0)}
-                   for f in (files or [])[:20]],
-        "comment_count": len(comments or []),
-    }
+    if pr:
+        comments = await _rest_get(f"/repos/{owner}/{repo}/issues/{number}/comments", {"per_page": 100})
+        files = await _rest_get(f"/repos/{owner}/{repo}/pulls/{number}/files", {"per_page": 30})
+        return {
+            "title": pr.get("title", ""), "body": pr.get("body", "") or "",
+            "state": pr.get("state", ""), "createdAt": pr.get("created_at", ""),
+            "mergedAt": pr.get("merged_at", ""), "merged": pr.get("merged", False),
+            "author": {"login": pr.get("user", {}).get("login", "")},
+            "baseRefName": pr.get("base", {}).get("ref", ""),
+            "headRefName": pr.get("head", {}).get("ref", ""),
+            "additions": pr.get("additions", 0), "deletions": pr.get("deletions", 0),
+            "changedFiles": pr.get("changed_files", 0),
+            "mergeable": pr.get("mergeable_state", ""),
+            "labels": [{"name": l["name"], "color": l.get("color", "")} for l in pr.get("labels", [])],
+            "comments": [{"body": c.get("body", "") or "", "createdAt": c.get("created_at", ""),
+                           "author": {"login": c.get("user", {}).get("login", "")}} for c in (comments or [])],
+            "review_comments": [],
+            "files": [{"filename": f.get("filename", ""), "status": f.get("status", ""),
+                        "additions": f.get("additions", 0), "deletions": f.get("deletions", 0)}
+                       for f in (files or [])[:20]],
+            "comment_count": len(comments or []),
+        }
+
+    # Tier 3: HTML scrape
+    logger.debug("REST PR failed, trying HTML scrape for %s/%s#%d", owner, repo, number)
+    scrape_url = f"https://github.com/{owner}/{repo}/pull/{number}"
+    return await _html_scrape(scrape_url)
 
 
 async def _fetch_discussion(owner: str, repo: str, number: int) -> dict | None:
@@ -743,7 +813,11 @@ async def _fetch_discussion(owner: str, repo: str, number: int) -> dict | None:
     data = await _graphql(_DISCUSSION_QUERY, {"owner": owner, "repo": repo, "number": number})
     if data and data.get("repository", {}).get("discussion"):
         return data["repository"]["discussion"]
-    return None
+
+    # Tier 2: HTML scrape (no REST API for discussions)
+    logger.debug("GraphQL discussion failed, trying HTML scrape for %s/%s#%d", owner, repo, number)
+    scrape_url = f"https://github.com/{owner}/{repo}/discussions/{number}"
+    return await _html_scrape(scrape_url)
 
 
 async def _fetch_release(owner: str, repo: str, tag: str) -> dict | None:
@@ -755,22 +829,26 @@ async def _fetch_release(owner: str, repo: str, tag: str) -> dict | None:
     # Tier 2: REST
     logger.debug("GraphQL release failed, trying REST for %s/%s/tag/%s", owner, repo, tag)
     release = await _rest_get(f"/repos/{owner}/{repo}/releases/tags/{tag}")
-    if not release:
-        return None
-    assets = await _rest_get(f"/repos/{owner}/{repo}/releases/{release.get('id')}/assets")
-    return {
-        "name": release.get("name", ""), "tagName": release.get("tag_name", ""),
-        "description": release.get("body", "") or "",
-        "isPrerelease": release.get("prerelease", False),
-        "isDraft": release.get("draft", False),
-        "publishedAt": release.get("published_at", ""),
-        "author": {"login": release.get("author", {}).get("login", "")},
-        "releaseAssets": {"nodes": [
-            {"name": a.get("name", ""), "downloadUrl": a.get("browser_download_url", ""),
-             "size": a.get("size", 0), "contentType": a.get("content_type", "")}
-            for a in (assets or [])
-        ]},
-    }
+    if release:
+        assets = await _rest_get(f"/repos/{owner}/{repo}/releases/{release.get('id')}/assets")
+        return {
+            "name": release.get("name", ""), "tagName": release.get("tag_name", ""),
+            "description": release.get("body", "") or "",
+            "isPrerelease": release.get("prerelease", False),
+            "isDraft": release.get("draft", False),
+            "publishedAt": release.get("published_at", ""),
+            "author": {"login": release.get("author", {}).get("login", "")},
+            "releaseAssets": {"nodes": [
+                {"name": a.get("name", ""), "downloadUrl": a.get("browser_download_url", ""),
+                 "size": a.get("size", 0), "contentType": a.get("content_type", "")}
+                for a in (assets or [])
+            ]},
+        }
+
+    # Tier 3: HTML scrape
+    logger.debug("REST release failed, trying HTML scrape for %s/%s/tag/%s", owner, repo, tag)
+    scrape_url = f"https://github.com/{owner}/{repo}/releases/tag/{tag}"
+    return await _html_scrape(scrape_url)
 
 
 async def _fetch_release_list(owner: str, repo: str) -> dict | None:
@@ -782,22 +860,26 @@ async def _fetch_release_list(owner: str, repo: str) -> dict | None:
     # Tier 2: REST
     logger.debug("GraphQL release list failed, trying REST for %s/%s/releases", owner, repo)
     releases = await _rest_get(f"/repos/{owner}/{repo}/releases", {"per_page": 30})
-    if not isinstance(releases, list):
-        return None
-    return {
-        "releases": {
-            "totalCount": len(releases),
-            "nodes": [{
-                "name": r.get("name", ""), "tagName": r.get("tag_name", ""),
-                "description": r.get("body", "") or "",
-                "isPrerelease": r.get("prerelease", False),
-                "isDraft": r.get("draft", False),
-                "publishedAt": r.get("published_at", ""),
-                "url": r.get("html_url", ""),
-                "author": {"login": r.get("author", {}).get("login", "")},
-            } for r in releases],
+    if isinstance(releases, list) and releases:
+        return {
+            "releases": {
+                "totalCount": len(releases),
+                "nodes": [{
+                    "name": r.get("name", ""), "tagName": r.get("tag_name", ""),
+                    "description": r.get("body", "") or "",
+                    "isPrerelease": r.get("prerelease", False),
+                    "isDraft": r.get("draft", False),
+                    "publishedAt": r.get("published_at", ""),
+                    "url": r.get("html_url", ""),
+                    "author": {"login": r.get("author", {}).get("login", "")},
+                } for r in releases],
+            }
         }
-    }
+
+    # Tier 3: HTML scrape
+    logger.debug("REST release list failed, trying HTML scrape for %s/%s/releases", owner, repo)
+    scrape_url = f"https://github.com/{owner}/{repo}/releases"
+    return await _html_scrape(scrape_url)
 
 
 async def _fetch_commit(owner: str, repo: str, sha: str) -> dict | None:
@@ -809,27 +891,31 @@ async def _fetch_commit(owner: str, repo: str, sha: str) -> dict | None:
     # Tier 2: REST
     logger.debug("GraphQL commit failed, trying REST for %s/%s/%s", owner, repo, sha)
     commit = await _rest_get(f"/repos/{owner}/{repo}/commits/{sha}")
-    if not commit:
-        return None
-    author_info = commit.get("commit", {}).get("author", {}) or {}
-    committer_info = commit.get("commit", {}).get("committer", {}) or {}
-    message = commit.get("commit", {}).get("message", "")
-    headline = message.split("\n")[0] if message else ""
+    if commit:
+        author_info = commit.get("commit", {}).get("author", {}) or {}
+        committer_info = commit.get("commit", {}).get("committer", {}) or {}
+        message = commit.get("commit", {}).get("message", "")
+        headline = message.split("\n")[0] if message else ""
 
-    return {
-        "oid": sha,
-        "messageHeadline": headline,
-        "message": message,
-        "author": {"name": author_info.get("name", ""),
-                    "date": author_info.get("date", ""),
-                    "user": {"login": commit.get("author", {}).get("login", "")}},
-        "committer": {"name": committer_info.get("name", ""),
-                       "date": committer_info.get("date", ""),
-                       "user": {"login": commit.get("committer", {}).get("login", "")}},
-        "url": f"https://github.com/{owner}/{repo}/commit/{sha}",
-        "associatedPullRequests": {"nodes": []},
-        "parents": {"nodes": [{"oid": p["sha"]} for p in commit.get("parents", [])[:2]]},
-    }
+        return {
+            "oid": sha,
+            "messageHeadline": headline,
+            "message": message,
+            "author": {"name": author_info.get("name", ""),
+                        "date": author_info.get("date", ""),
+                        "user": {"login": commit.get("author", {}).get("login", "")}},
+            "committer": {"name": committer_info.get("name", ""),
+                           "date": committer_info.get("date", ""),
+                           "user": {"login": commit.get("committer", {}).get("login", "")}},
+            "url": f"https://github.com/{owner}/{repo}/commit/{sha}",
+            "associatedPullRequests": {"nodes": []},
+            "parents": {"nodes": [{"oid": p["sha"]} for p in commit.get("parents", [])[:2]]},
+        }
+
+    # Tier 3: HTML scrape
+    logger.debug("REST commit failed, trying HTML scrape for %s/%s/%s", owner, repo, sha)
+    scrape_url = f"https://github.com/{owner}/{repo}/commit/{sha}"
+    return await _html_scrape(scrape_url)
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -917,16 +1003,12 @@ class GitHubSocialAdapter(SiteAdapter):
                              source="github-social-adapter", url=url)
 
     async def _handle_discussion(self, url: str, owner: str, repo: str, number: int) -> AdapterResult:
-        # Discussions require GraphQL (no REST API) — warn if no token
-        if not _check_graphql():
-            raise AdapterError(
-                f"Cannot extract discussion {owner}/{repo}#{number}. "
-                f"GitHub Discussions have no REST API. "
-                f"Set GITHUB_TOKEN env var with `public_repo` scope for GraphQL access."
-            )
         data = await _fetch_discussion(owner, repo, number)
         if not data:
-            raise AdapterError(f"Could not extract discussion {owner}/{repo}#{number}.")
+            raise AdapterError(
+                f"Could not extract discussion {owner}/{repo}#{number}. "
+                f"Set GITHUB_TOKEN env var with `public_repo` scope for GraphQL access."
+            )
         markdown, metadata = _render_discussion(data)
         return AdapterResult(success=True, markdown=markdown, metadata=metadata,
                              source="github-social-adapter", url=url)

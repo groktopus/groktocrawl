@@ -394,8 +394,7 @@ Two adapters handle different URL types on `github.com`, working together via pr
 **Fallback chains:**
 
 - **File adapter:** raw.githubusercontent.com direct fetch → GitHub Contents API → generic tier
-- **Social adapter:** GitHub GraphQL API (single query) → GitHub REST API → generic tier
-  - *Discussions* require GraphQL (no REST API) — token required
+- **Social adapter:** GitHub GraphQL API (single query) → GitHub REST API → HTML page scrape (readability) → generic tier
 
 **Configuration:**
 
@@ -403,9 +402,9 @@ The `GITHUB_TOKEN` environment variable enables authenticated access:
 
 | Variable | Default | Effect |
 |----------|---------|--------|
-| `GITHUB_TOKEN` | *(none)* | 5,000 API req/hr vs 60/hr unauth; enables GraphQL for issues/PRs/discussions/releases/commits |
+| `GITHUB_TOKEN` | *(none)* | 5,000 API req/hr vs 60/hr unauth; enables GraphQL; always falls back to HTML scrape |
 
-A token with `public_repo` scope is sufficient for public repositories. For private repos, use `repo` scope. Without a token, the file adapter works fully and the social adapter falls back to REST at 60 req/hr (discussions unavailable).
+A token with `public_repo` scope is sufficient for public repositories. For private repos, use `repo` scope. Without a token, the file adapter works fully and the social adapter falls back to REST (60 req/hr) then HTML scrape — every URL type returns useful content.
 
 ### Adding a New Adapter
 
