@@ -247,3 +247,68 @@ def test_generate_llmstxt_meta_tag_preference():
             desc = line.split(": ", 1)[1]
             assert len(desc) >= 20, f"Description should be substantive, got: {desc}"
             break
+
+
+# ── GitHub adapter tests ────────────────────────────────────────
+
+GITHUB_RAW = "https://raw.githubusercontent.com/groktopus/groktocrawl/main/README.md"
+GITHUB_BLOB = "https://github.com/groktopus/groktocrawl/blob/main/README.md"
+GITHUB_REPO = "https://github.com/groktopus/groktocrawl"
+GITHUB_TREE = "https://github.com/groktopus/groktocrawl/tree/main/scraper-svc/scraper"
+GITHUB_ISSUE = "https://github.com/groktopus/groktocrawl/issues/1"
+
+
+def test_github_adapter_raw_file():
+    """Raw.githubusercontent.com URLs should be handled by the adapter."""
+    r = httpx.post(SCRAPER + "/scrape", json={"url": GITHUB_RAW}, timeout=120)
+    payload = r.json()
+    assert payload["success"] is True
+    md = payload.get("data", {}).get("markdown", "")
+    assert "GroktoCrawl" in md or "github" in md
+    # Should have adapter frontmatter
+    assert "github-adapter" in md or "---" in md
+
+
+def test_github_adapter_blob_url():
+    """Blob URLs should be rewritten to raw.githubusercontent.com."""
+    r = httpx.post(SCRAPER + "/scrape", json={"url": GITHUB_BLOB}, timeout=120)
+    payload = r.json()
+    assert payload["success"] is True
+    md = payload.get("data", {}).get("markdown", "")
+    # Should have content (from raw fetch), not generic GitHub docs page
+    assert len(md) > 100, f"Expected >100 chars, got {len(md)}"
+    assert "developer platform" not in md[:200], "Should not be generic GitHub docs"
+
+
+def test_github_adapter_repo_root():
+    """Repo root URLs should return README with metadata."""
+    r = httpx.post(SCRAPER + "/scrape", json={"url": GITHUB_REPO}, timeout=120)
+    payload = r.json()
+    assert payload["success"] is True
+    md = payload.get("data", {}).get("markdown", "")
+    assert len(md) > 200, f"Expected >200 chars, got {len(md)}"
+    # Should contain repo metadata (stars, forks, or description)
+    assert any(x in md for x in ["GroktoCrawl", "github", "Self-hosted"])
+
+
+def test_github_adapter_tree_listing():
+    """Tree URLs should return a directory listing."""
+    r = httpx.post(SCRAPER + "/scrape", json={"url": GITHUB_TREE}, timeout=120)
+    payload = r.json()
+    assert payload["success"] is True
+    md = payload.get("data", {}).get("markdown", "")
+    assert len(md) > 50, f"Expected >50 chars, got {len(md)}"
+    # Should list files (not a generic page)
+    assert any(x in md for x in ["📁", "📄", "adapters", "app.py", "__init__"])
+
+
+def test_github_adapter_social_fallback():
+    """Issue URLs should be handled by the social adapter (REST fallback)."""
+    r = httpx.post(SCRAPER + "/scrape", json={"url": GITHUB_ISSUE}, timeout=120)
+    payload = r.json()
+    assert payload["success"] is True
+    md = payload.get("data", {}).get("markdown", "")
+    assert len(md) > 50, f"Expected >50 chars, got {len(md)}"
+    # Frontmatter should indicate social adapter
+    assert "github-social" in md or "github-discussion" in md or "issue" in md.lower()
+

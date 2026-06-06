@@ -24,8 +24,9 @@ groktocrawl/
 ├── scraper-svc/        # URL → markdown service
 │   └── scraper/
 │       ├── app.py      # FastAPI, single /scrape endpoint
-│       ├── fetch.py    # Three-tier fetch strategy
-│       └── extract.py  # HTML → markdown conversion + content quality gates (ADR-0016)
+│       ├── fetch.py    # Three-tier fetch strategy (+ adapter dispatch)
+│       ├── extract.py  # HTML → markdown conversion + content quality gates (ADR-0016)
+│       └── adapters/   # Site-specific content handlers (auto-registered)
 ├── search-svc/         # Search fixture for local testing
 ├── llm-svc/            # LLM fixture for local testing
 ├── test-site/          # Fixture website for integration tests
@@ -47,6 +48,8 @@ Jobs are processed with `asyncio.create_task()` inside the API process. This avo
 Tier 1: Check `/llms.txt` at the site root (one GET, whole site in markdown)
 Tier 2: Request with `Accept: text/markdown` header (per-page markdown)
 Tier 3: Playwright render + readability extraction
+
+**Adapters run before tier 1.** When a URL matches a registered adapter (e.g., a `github.com` or `youtube.com` URL), the adapter handles extraction with its own optimized fallback chain. If the adapter fails, the standard tier pipeline runs as normal. See `scraper-svc/scraper/adapters/base.py` for the adapter framework and `scraper-svc/scraper/adapters/` for available adapters.
 
 ### LLM-agnostic
 

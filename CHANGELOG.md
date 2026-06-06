@@ -13,12 +13,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Unit tests for politeness module** — 14 tests covering robots.txt parsing, check/delay/block decision flow, rate limit timing, metadata reporting, and domain extraction.
 - **`politeness` field in scrape response** — `ScrapeResponse.data.politeness` returned when `SCRAPER_POLITENESS_ENABLED=true`.
 - **Graceful degradation** — `smart_scrape()` now checks content quality after each tier. When quality is below `QA_MIN_QUALITY_THRESHOLD` (default 0.3), the pipeline degrades to the next tier instead of returning low-quality content. Best-effort result is returned if all tiers produce low quality, with a `warning` field. Configurable via `QA_MIN_QUALITY_THRESHOLD` env var.
-- **Extraction quality gates** — post-extraction content quality assessment for boilerplate detection, completeness checks, and block page detection. Three lightweight heuristic gates in `scraper-svc/scraper/extract.py` produce a composite quality score (0.0–1.0) with structured breakdown. Quality score is returned in scrape response metadata — non-blocking, consumers set their own tolerance. See ADR-0016.
-- **`quality` field in scrape response** — `ScrapeResponse.data` and `ScrapeData.quality` now carry the quality assessment result: `{"score": 0.95, "checks": {"boilerplate": "pass", "completeness": "pass", "block_detected": "pass"}, "detail": "all checks passed"}`.
+- **Extraction quality gates** — post-extraction content quality assessment for boilerplate detection, completeness checks, and block page detection. Three lightweight heuristic gates in `scraper-svc/scraper/extract.py` produce a composite quality score (0.0-1.0) with structured breakdown. Quality score is returned in scrape response metadata — non-blocking, consumers set their own tolerance. See ADR-0016.
+- **`quality` field in scrape response** — `ScrapeResponse.data` and `ScrapeData.quality` now carry the quality assessment result.
 - **Unit tests for quality gates** — 18 tests covering boilerplate detection, completeness checking, block page detection, and integrated quality assessment.
+- **GitHub file adapter** (`scraper-svc/scraper/adapters/github.py`) — structured content extraction for raw.githubusercontent.com, blob URLs, repo roots (README + metadata), and tree listings. Uses raw.githubusercontent.com direct fetch as primary path with Contents API fallback. Extension allowlist for binary detection. Per-endpoint sliding window rate-limit tracker. Priority 200.
+- **GitHub social adapter** (`scraper-svc/scraper/adapters/github_social.py`) — issues, pull requests, discussions, releases (single + list), and commits via GitHub GraphQL API (v4). Three-tier fallback chain per resource: GraphQL → REST API → HTML page scrape (readability-lxml + markdownify). Works without a token at 60 req/hr (REST fallback) or without any auth (HTML scrape). Priority 190.
+- **`GITHUB_TOKEN` environment variable** — enables 5,000 API req/hr and GraphQL access for richer metadata (reviews, diff stats, threaded comments, discussion answers, release assets). `public_repo` scope for public repos, `repo` scope for private repos.
+- **CI tests for GitHub adapters** — 5 integration tests (raw file, blob→raw rewrite, repo root README, tree listing, social issue fallback) in `tests/test_stack.py`.
 
 ### Changed
 
+- Updated README with full GitHub adapter documentation covering 10 URL types and configuration.
+- Updated `.env.sample` with `GITHUB_TOKEN` configuration guide.
+- `smart_scrape()` now checks the adapter registry before the tier pipeline — matched adapters short-circuit to their own extraction.
 - `smart_scrape()` calls `assess_quality()` after each successful tier, attaching the quality result to the response dict.
 - `ScrapeData` model in agent-svc now includes an optional `quality` field.
 
