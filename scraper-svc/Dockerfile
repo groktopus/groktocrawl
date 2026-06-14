@@ -9,13 +9,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY pyproject.toml .
+COPY scraper-svc/pyproject.toml .
 
 # Install with playwright extras for Tier 3
 RUN pip install --no-cache-dir -e ".[playwright]"
 RUN python -m playwright install chromium
 
-COPY scraper/ scraper/
+COPY scraper-svc/scraper/ scraper/
 COPY common/ common/
 
 EXPOSE 8001

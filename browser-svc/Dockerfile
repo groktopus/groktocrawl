@@ -8,11 +8,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY pyproject.toml .
+COPY browser-svc/pyproject.toml .
 RUN pip install --no-cache-dir -e .
 RUN python -m playwright install chromium
 
-COPY browser_svc/ browser_svc/
+COPY browser-svc/browser_svc/ browser_svc/
 COPY common/ common/
 
 EXPOSE 8012

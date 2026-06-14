@@ -29,15 +29,15 @@ jobs:
       matrix:
         include:
           - service: agent-svc
-            context: ./agent-svc
+            context: .
             dockerfile: agent-svc/Dockerfile
             image: ghcr.io/groktopus/groktocrawl-agent
           - service: scraper-svc
-            context: ./scraper-svc
+            context: .
             dockerfile: scraper-svc/Dockerfile
             image: ghcr.io/groktopus/groktocrawl-scraper
           - service: browser-svc
-            context: ./browser-svc
+            context: .
             dockerfile: browser-svc/Dockerfile
             image: ghcr.io/groktopus/groktocrawl-browser
           - service: semantic-svc
