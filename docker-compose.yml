@@ -11,7 +11,7 @@ services:
       retries: 20
 
   slopsearx:
-    image: ghcr.io/magnus919/slopsearx:v0.1.1
+    image: ghcr.io/magnus919/slopsearx:0.1.1
     restart: unless-stopped
     ports:
       - "8081:8080"
