@@ -10,22 +10,20 @@ services:
       timeout: 3s
       retries: 20
 
-  searxng:
-    image: searxng/searxng:latest
+  slopsearx:
+    image: ghcr.io/magnus919/slopsearx:v0.1.1
     restart: unless-stopped
     ports:
       - "8081:8080"
-    volumes:
-      - ./searxng/settings.yml:/etc/searxng/settings.yml:rw
-      - ./searxng/docker-entrypoint.sh:/docker-entrypoint.sh:ro
-    entrypoint: ["/bin/sh", "/docker-entrypoint.sh"]
     environment:
-      - SEARXNG_BASE_URL=http://localhost:8081/
-      - BRAVE_API_KEY=${BRAVE_API_KEY}
-    cap_add:
-      - CAP_NET_BIND_SERVICE
-    cap_drop:
-      - ALL
+      - ENGINE_BRAVE_API_KEY=${BRAVE_API_KEY}
+      - VALKEY_URL=redis://valkey:6379/0
+    healthcheck:
+      test: ["CMD", "python", "/app/healthcheck.py"]
+      interval: 30s
+      timeout: 5s
+      start_period: 5s
+      retries: 3
 
   search-svc:
     build:
@@ -36,7 +34,7 @@ services:
     profiles:
       - fixture
     # Fixture service — only starts when explicitly needed.
-    # Production uses searxng instead.
+    # Production uses slopsearx instead.
 
   llm-svc:
     build:
@@ -128,7 +126,7 @@ services:
     depends_on:
       valkey:
         condition: service_healthy
-      searxng:
+      slopsearx:
         condition: service_started
       scraper-svc:
         condition: service_started
@@ -136,7 +134,7 @@ services:
         condition: service_started
     environment:
       - VALKEY_URL=${VALKEY_URL:-redis://valkey:6379/0}
-      - SEARXNG_URL=${SEARXNG_URL:-http://searxng:8080}
+      - SEARXNG_URL=${SEARXNG_URL:-http://slopsearx:8080}
       - SCRAPER_URL=${SCRAPER_URL:-http://scraper-svc:8001}
       - SEMANTIC_URL=${SEMANTIC_URL:-http://semantic-svc:8003}
       - HOST=0.0.0.0
