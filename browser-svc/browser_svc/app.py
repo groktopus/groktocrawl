@@ -12,11 +12,12 @@ import time
 import uuid
 from ipaddress import ip_address, ip_network
 from typing import Any
-from urllib.parse import urlparse
 
 from fastapi import FastAPI, HTTPException
 from playwright.async_api import async_playwright
 from pydantic import BaseModel
+
+from common.url import extract_domain
 
 from .settings import load_settings
 
@@ -29,7 +30,7 @@ COOKIE_TTL_SECONDS = 1500  # 25 minutes (under Cloudflare's typical 30m expiry)
 
 def _cookie_key(url: str) -> str:
     """Extract TLD+1 domain for cookie scoping."""
-    hostname = urlparse(url).hostname or "unknown"
+    hostname = extract_domain(url) or "unknown"
     parts = hostname.split(".")
     if len(parts) >= 2:
         domain = ".".join(parts[-2:])
@@ -170,50 +171,14 @@ def _is_private_url(url: str) -> tuple[bool, str]:
     """Check if a URL targets a private/internal IP or hostname.
 
     Returns (is_private, reason) tuple.
+
+    Delegates to the shared ``common.url.is_private_host``
+    for the actual check, then maps the boolean result back to the
+    ``(bool, str)`` tuple format.
     """
-    parsed = urlparse(url)
-    hostname = parsed.hostname or ""
+    from common.url import is_private_host as _shared_is_private
 
-    # Reject empty/relative URLs
-    if not hostname:
-        return True, "Empty or relative URL"
-
-    # Check hostname suffixes for internal Docker resolution
-    hostname_lower = hostname.lower()
-    for suffix in _PRIVATE_HOSTNAME_SUFFIXES:
-        if hostname_lower.endswith(suffix):
-            return True, f"Hostname '{hostname}' resolves to Docker host machine"
-
-    # Check if hostname is itself a private IP literal
-    try:
-        addr = ip_address(hostname)
-        for net in _PRIVATE_NETWORKS:
-            if addr in net:
-                return True, f"IP address {hostname} is in private range {net}"
-        if addr in _METADATA_IPS:
-            return True, f"IP address {hostname} is a cloud metadata endpoint"
-        # It's a valid, non-private IP literal — safe to navigate
-        return False, ""
-    except ValueError:
-        pass  # Not an IP literal, treat as hostname
-
-    # Resolve hostname to IPs and check each
-    ips = _resolve_to_ips(hostname)
-    if not ips:
-        # Can't resolve — log and reject (DNS rebinding risk)
-        return True, f"Could not resolve hostname '{hostname}' — blocked for safety"
-
-    for addr in ips:
-        for net in _PRIVATE_NETWORKS:
-            if addr in net:
-                return (
-                    True,
-                    f"Hostname '{hostname}' resolves to private IP {addr} ({net})",
-                )
-        if addr in _METADATA_IPS:
-            return True, f"Hostname '{hostname}' resolves to metadata endpoint {addr}"
-
-    return False, ""
+    return (True, "Private or internal URL") if _shared_is_private(url) else (False, "")
 
 
 app = FastAPI(title="GroktoCrawl Browser Service", version="0.1.0")

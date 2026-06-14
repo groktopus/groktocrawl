@@ -17,7 +17,8 @@ import logging
 import re
 import time
 from dataclasses import dataclass, field
-from urllib.parse import urlparse
+
+from common.url import extract_domain
 
 from .settings import load_settings
 
@@ -82,8 +83,7 @@ class PolitenessManager:
     @staticmethod
     def _domain_from_url(url: str) -> str:
         """Extract the hostname from a URL for rate-limiting key."""
-        parsed = urlparse(url)
-        return parsed.hostname or ""
+        return extract_domain(url)
 
     # ── Robots.txt fetch + parse ────────────────────────────────
 
@@ -245,6 +245,8 @@ class PolitenessManager:
             await self._fetch_and_parse_robots(domain)
 
         # ── Check robots.txt ──────────────────────────────────
+        from urllib.parse import urlparse
+
         parsed = urlparse(url)
         path = parsed.path or "/"
         for pattern in state.robots_disallowed_paths:

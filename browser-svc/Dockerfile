@@ -13,6 +13,7 @@ RUN pip install --no-cache-dir -e .
 RUN python -m playwright install chromium
 
 COPY browser_svc/ browser_svc/
+COPY common/ common/
 
 EXPOSE 8012
 CMD ["uvicorn", "browser_svc.app:app", "--host", "0.0.0.0", "--port", "8012"]

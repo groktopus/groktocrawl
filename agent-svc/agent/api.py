@@ -6,12 +6,13 @@ Targets Firecrawl v2 API compatibility where possible.
 import logging
 from datetime import UTC
 from typing import Any
-from urllib.parse import urlparse
 
 import httpx
 from bs4 import BeautifulSoup
 from fastapi import APIRouter, Request
 from rq import Queue
+
+from common.url import extract_domain, is_same_origin
 
 from .exceptions import (
     BrowserError,
@@ -627,10 +628,9 @@ async def map_site(request: Request, body: MapRequest):
             for a in soup.find_all("a", href=True):
                 href = a["href"]
                 if href.startswith("/"):
-                    parsed = urlparse(body.url)
-                    href = f"{parsed.scheme}://{parsed.netloc}{href}"
-                if href.startswith(body.url.rstrip("/")) or href.startswith(
-                    f"{urlparse(body.url).scheme}://{urlparse(body.url).netloc}"
+                    href = f"{extract_domain(body.url, include_scheme=True)}{href}"
+                if href.startswith(body.url.rstrip("/")) or is_same_origin(
+                    body.url, href
                 ):
                     if href not in links:
                         links.append(href)
@@ -834,7 +834,9 @@ async def parse_file(request: Request):
         try:
             return resp.json()
         except Exception:
-            raise UpstreamError(detail=f"Parse service error: {resp.text[:200]}") from None
+            raise UpstreamError(
+                detail=f"Parse service error: {resp.text[:200]}"
+            ) from None
 
 
 # ----- LLMs.txt Generator -----

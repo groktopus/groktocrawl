@@ -6,7 +6,8 @@ Also provides the extract endpoint: scrape given URLs → LLM → structured dat
 import json
 import logging
 from typing import Any
-from urllib.parse import urlparse
+
+from common.url import extract_domain
 
 from .llm import LLMClient
 from .scraper_client import ScraperClient
@@ -245,7 +246,7 @@ async def run_research_stream(
                     )
                     if result.get("success") and result.get("data", {}).get("markdown"):
                         md = result["data"]["markdown"]
-                        domain = urlparse(url).netloc
+                        domain = extract_domain(url)
                         doc = f"Source: {url} (domain: {domain})\n\n{md[:8000]}"
                         src = {
                             "url": url,
@@ -443,7 +444,6 @@ async def _scrape_urls(
     ``max_attempts`` sets an upper bound on how many URLs are tried.
     """
     import asyncio
-    from urllib.parse import urlparse
 
     documents: list[str] = []
     source_details: list[dict] = []
@@ -460,7 +460,7 @@ async def _scrape_urls(
                 )
                 if result.get("success") and result.get("data", {}).get("markdown"):
                     md = result["data"]["markdown"]
-                    domain = urlparse(url).netloc
+                    domain = extract_domain(url)
                     doc = f"Source: {url} (domain: {domain})\n\n{md[:8000]}"
                     src = {
                         "url": url,
@@ -551,10 +551,7 @@ _VIDEO_PLATFORM_DOMAINS: frozenset[str] = frozenset(
 
 def _is_video_platform_url(url: str) -> bool:
     """Return True when *url* belongs to a video-first platform."""
-    from urllib.parse import urlparse
-
-    parsed = urlparse(url)
-    hostname = (parsed.hostname or "").lower()
+    hostname = extract_domain(url).lower()
     # Strip leading "www." for comparison (the frozenset includes
     # both canonicalised and www-prefixed variants).
     return (

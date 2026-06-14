@@ -7,23 +7,41 @@ the site's key pages.
 
 import logging
 import re
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin
 
 import httpx
 from bs4 import BeautifulSoup
+
+from common.url import extract_domain
 
 logger = logging.getLogger(__name__)
 
 # Boilerplate line signals — if a line contains any of these, skip it
 _BOILERPLATE_SIGNALS = [
-    "cookie", "cookies", "accept all", "accept cookies",
-    "skip to", "skip navigation", "skip nav",
-    "navigation", "nav bar", "main navigation",
-    "footer", "copyright", "all rights reserved",
-    "privacy policy", "terms of service", "terms and conditions",
-    "this website uses", "we use cookies",
-    "sign in", "sign up", "log in", "subscribe",
-    "advertisement", "sponsored",
+    "cookie",
+    "cookies",
+    "accept all",
+    "accept cookies",
+    "skip to",
+    "skip navigation",
+    "skip nav",
+    "navigation",
+    "nav bar",
+    "main navigation",
+    "footer",
+    "copyright",
+    "all rights reserved",
+    "privacy policy",
+    "terms of service",
+    "terms and conditions",
+    "this website uses",
+    "we use cookies",
+    "sign in",
+    "sign up",
+    "log in",
+    "subscribe",
+    "advertisement",
+    "sponsored",
 ]
 
 
@@ -54,7 +72,12 @@ def _extract_description(text: str, max_chars: int = 300) -> str:
         # Skip headings, images, links-as-first-element, and boilerplate
         if not stripped:
             continue
-        if stripped.startswith("#") or stripped.startswith("!") or stripped.startswith("[") or stripped.startswith(">"):
+        if (
+            stripped.startswith("#")
+            or stripped.startswith("!")
+            or stripped.startswith("[")
+            or stripped.startswith(">")
+        ):
             continue
         if _is_boilerplate(stripped):
             continue
@@ -64,7 +87,11 @@ def _extract_description(text: str, max_chars: int = 300) -> str:
         # Fallback: use first substantive line from full text
         for line in text.split("\n"):
             stripped = line.strip()
-            if len(stripped) >= 30 and not stripped.startswith("#") and not stripped.startswith("!"):
+            if (
+                len(stripped) >= 30
+                and not stripped.startswith("#")
+                and not stripped.startswith("!")
+            ):
                 candidates.append(stripped)
                 break
 
@@ -84,7 +111,7 @@ def _extract_description(text: str, max_chars: int = 300) -> str:
     min_length = min(100, len(desc))
     rest = desc[min_length:]
     # Look for sentence-ending punctuation followed by space or end-of-string
-    boundary_match = re.search(r'[.!?](?:\s|$)', rest)
+    boundary_match = re.search(r"[.!?](?:\s|$)", rest)
     if boundary_match:
         end_pos = min_length + boundary_match.end()
         # Include the punctuation but not the trailing space
@@ -101,10 +128,6 @@ def _extract_description(text: str, max_chars: int = 300) -> str:
 
 async def discover_pages(url: str, max_pages: int = 50) -> list[str]:
     """Discover page URLs on a site by fetching the homepage and finding same-domain links."""
-    parsed = urlparse(url)
-    base_domain = parsed.netloc
-    base_url = f"{parsed.scheme}://{parsed.netloc}"
-
     discovered: list[str] = []
     seen = set()
 
@@ -116,15 +139,19 @@ async def discover_pages(url: str, max_pages: int = 50) -> list[str]:
                 return [url]  # fallback: just return the input URL
 
             soup = BeautifulSoup(resp.text, "html.parser")
+            base_domain = extract_domain(url)
+            base_url = extract_domain(url, include_scheme=True)
             for a in soup.find_all("a", href=True):
                 href = a["href"].strip()
                 full_url = urljoin(base_url, href)
-                full_parsed = urlparse(full_url)
 
                 # Skip external links, anchors, mailto, etc.
-                if full_parsed.netloc and full_parsed.netloc != base_domain:
+                fd = extract_domain(full_url)
+                if fd and fd != base_domain:
                     continue
-                if not full_parsed.scheme.startswith("http"):
+                from urllib.parse import urlparse
+
+                if not urlparse(full_url).scheme.startswith("http"):
                     continue
                 if full_url in seen:
                     continue
@@ -145,7 +172,9 @@ async def discover_pages(url: str, max_pages: int = 50) -> list[str]:
     return discovered
 
 
-async def extract_title_and_description(page_url: str, scraper_url: str) -> tuple[str, str]:
+async def extract_title_and_description(
+    page_url: str, scraper_url: str
+) -> tuple[str, str]:
     """Extract the title and a short description from a page.
 
     Tries meta tag extraction first (cheap, one GET). Falls back to
@@ -168,7 +197,9 @@ async def extract_title_and_description(page_url: str, scraper_url: str) -> tupl
                     # Prefer meta description, fall back to og:description
                     meta_desc = meta.get("description") or meta.get("og_description")
                     if meta_desc and len(meta_desc.strip()) >= 40:
-                        return title or page_url.rstrip("/").split("/")[-1].replace("-", " ").title(), meta_desc.strip()
+                        return title or page_url.rstrip("/").split("/")[-1].replace(
+                            "-", " "
+                        ).title(), meta_desc.strip()
     except Exception as e:
         logger.debug("Meta fetch failed for %s: %s", page_url, e)
 
@@ -203,17 +234,20 @@ async def extract_title_and_description(page_url: str, scraper_url: str) -> tupl
     except Exception as e:
         logger.warning("Failed to scrape %s: %s", page_url, e)
 
-    return title or page_url.rstrip("/").split("/")[-1].replace("-", " ").title(), description
+    return title or page_url.rstrip("/").split("/")[-1].replace(
+        "-", " "
+    ).title(), description
 
 
 def generate_llms_txt(site_url: str, pages: list[dict]) -> str:
     """Compile discovered page info into the llms.txt format."""
-    parsed = urlparse(site_url)
-    site_name = parsed.netloc
+    site_name = extract_domain(site_url)
 
     lines = [f"# {site_name}"]
     lines.append("")
-    lines.append(f"> Auto-generated by GroktoCrawl. This file helps AI agents discover and prioritize content on {site_url}.")
+    lines.append(
+        f"> Auto-generated by GroktoCrawl. This file helps AI agents discover and prioritize content on {site_url}."
+    )
     lines.append("")
 
     for i, page in enumerate(pages):
@@ -228,7 +262,9 @@ def generate_llms_txt(site_url: str, pages: list[dict]) -> str:
 
     lines.append("")
     lines.append("---")
-    lines.append(f"> This llms.txt was auto-generated by [GroktoCrawl](https://github.com/groktopus/groktocrawl) on {__import__('datetime').datetime.now().strftime('%Y-%m-%d')}.")
+    lines.append(
+        f"> This llms.txt was auto-generated by [GroktoCrawl](https://github.com/groktopus/groktocrawl) on {__import__('datetime').datetime.now().strftime('%Y-%m-%d')}."
+    )
 
     return "\n".join(lines)
 

@@ -15,9 +15,10 @@ import socket
 import time
 from dataclasses import dataclass
 from ipaddress import ip_address, ip_network
-from urllib.parse import urlparse
 
 import httpx
+
+from common.url import extract_domain, normalize_url
 
 from .extract import assess_quality
 from .metadata import extract_all_metadata
@@ -64,6 +65,8 @@ def _get_playwright_proxy() -> dict | None:
     """
     if not SCRAPER_PROXY_URL:
         return None
+    from urllib.parse import urlparse
+
     parsed = urlparse(SCRAPER_PROXY_URL)
 
     # Re-bracket IPv6 hostnames (urlparse strips them)
@@ -92,6 +95,8 @@ def _redact_proxy_url(url: str) -> str:
     """
     if not url:
         return url
+    from urllib.parse import urlparse
+
     parsed = urlparse(url)
     if parsed.username:
         hostname = parsed.hostname or ""
@@ -110,23 +115,10 @@ def _normalize_url_for_cache(url: str) -> str:
 
     Lowercases scheme and hostname, strips trailing slash from path
     (preserving root '/'), and sorts query parameters.
+
+    Delegates to the shared ``common.url.normalize_url``.
     """
-    parsed = urlparse(url)
-    scheme = parsed.scheme.lower()
-    netloc = parsed.netloc.lower()
-    path = parsed.path.lower().rstrip("/") if parsed.path.lower() != "/" else "/"
-    query = parsed.query
-    fragment = parsed.fragment
-    # Sort query parameters for consistency
-    if query:
-        params = sorted(query.lower().split("&"))
-        query = "&".join(params)
-    normalized = f"{scheme}://{netloc}{path}"
-    if query:
-        normalized += f"?{query}"
-    if fragment:
-        normalized += f"#{fragment}"
-    return normalized
+    return normalize_url(url)
 
 
 def _scrape_cache_key(url: str) -> str:
@@ -271,8 +263,7 @@ def _resolve_cache_ttl(url: str, stability_multiplier: float = 1.0) -> int:
     Applies the stability multiplier and clamps to min/max bounds.
     """
     domain_ttls = _parse_domain_ttls()
-    parsed = urlparse(url)
-    hostname = parsed.hostname or ""
+    hostname = extract_domain(url)
 
     # Longest suffix match
     matched_ttl: int | None = None
@@ -523,6 +514,8 @@ def _is_binary_content_type(content_type: str) -> bool:
 
 def _derive_filename(url: str, content_type: str) -> str:
     """Derive a sensible filename from URL path + Content-Type."""
+    from urllib.parse import urlparse
+
     parsed = urlparse(url)
     path = parsed.path or parsed.query or "download"
     basename = path.rstrip("/").split("/")[-1]
@@ -825,8 +818,7 @@ def _looks_like_markdown(text: str) -> bool:
 
 async def fetch_via_llms_txt(url: str, client: httpx.AsyncClient) -> dict | None:
     """Tier 1: Check for /llms.txt at the site root."""
-    parsed = urlparse(url)
-    llms_url = f"{parsed.scheme}://{parsed.netloc}/llms.txt"
+    llms_url = f"{extract_domain(url, include_scheme=True)}/llms.txt"
     try:
         resp = await client.get(llms_url, follow_redirects=True, timeout=10)
         if (
@@ -933,44 +925,14 @@ def _is_private_url(url: str) -> tuple[bool, str]:
     """Check if a URL targets a private/internal IP or hostname.
 
     Returns (is_private, reason) tuple. Shared logic with browser-svc.
+
+    Delegates to the shared ``common.url.is_private_host``
+    for the actual check, then maps the boolean result back to the
+    ``(bool, str)`` tuple format.
     """
-    parsed = urlparse(url)
-    hostname = parsed.hostname or ""
+    from common.url import is_private_host as _shared_is_private
 
-    if not hostname:
-        return True, "Empty or relative URL"
-
-    hostname_lower = hostname.lower()
-    for suffix in _PRIVATE_HOSTNAME_SUFFIXES:
-        if hostname_lower.endswith(suffix):
-            return True, f"Hostname '{hostname}' resolves to Docker host machine"
-
-    try:
-        addr = ip_address(hostname)
-        for net in _PRIVATE_NETWORKS:
-            if addr in net:
-                return True, f"IP address {hostname} is in private range {net}"
-        if addr in _METADATA_IPS:
-            return True, f"IP address {hostname} is a cloud metadata endpoint"
-        return False, ""
-    except ValueError:
-        pass
-
-    ips = _resolve_to_ips(hostname)
-    if not ips:
-        return True, f"Could not resolve hostname '{hostname}' — blocked for safety"
-
-    for addr in ips:
-        for net in _PRIVATE_NETWORKS:
-            if addr in net:
-                return (
-                    True,
-                    f"Hostname '{hostname}' resolves to private IP {addr} ({net})",
-                )
-        if addr in _METADATA_IPS:
-            return True, f"Hostname '{hostname}' resolves to metadata endpoint {addr}"
-
-    return False, ""
+    return (True, "Private or internal URL") if _shared_is_private(url) else (False, "")
 
 
 async def _playwright_fetch_with_proxy(
