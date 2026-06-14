@@ -61,7 +61,8 @@ services:
 
   scraper-svc:
     build:
-      context: ./scraper-svc
+      context: .
+      dockerfile: scraper-svc/Dockerfile
     image: ghcr.io/groktopus/groktocrawl-scraper
     restart: unless-stopped
     ports:
@@ -76,7 +77,8 @@ services:
 
   browser-svc:
     build:
-      context: ./browser-svc
+      context: .
+      dockerfile: browser-svc/Dockerfile
     image: ghcr.io/groktopus/groktocrawl-browser
     restart: unless-stopped
 
@@ -116,7 +118,8 @@ services:
 
   agent-svc:
     build:
-      context: ./agent-svc
+      context: .
+      dockerfile: agent-svc/Dockerfile
     image: ghcr.io/groktopus/groktocrawl-agent
     restart: unless-stopped
     ports:
