@@ -116,12 +116,12 @@ jobs:
       - name: Wait for services to be healthy
         run: |
           python3 -c "
-          import time, httpx
+          import time, urllib.request
           deadline = time.time() + 180
           while time.time() < deadline:
               try:
-                  r = httpx.get('http://localhost:8080/health', timeout=5)
-                  if r.status_code == 200:
+                  r = urllib.request.urlopen('http://localhost:8080/health', timeout=5)
+                  if r.status == 200:
                       print('Stack healthy')
                       break
               except Exception:
