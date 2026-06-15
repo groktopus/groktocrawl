@@ -1,6 +1,6 @@
 # ADR-0034: Lifespan-Based Model Loading and Startup Readiness for semantic-svc
 
-**Status:** Proposed
+**Status:** Accepted
 
 **Deciders:** Magnus Hedemark, Jasper (AI Agent)
 

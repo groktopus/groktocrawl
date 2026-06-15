@@ -52,6 +52,6 @@ An Architecture Decision Record captures an important architectural decision mad
 | 0031 | [Centralized Settings Object](0031-centralized-settings-object.md) | accepted |
 | 0032 | [Standardized Error Response Model](0032-standardized-error-response-model.md) | accepted |
 | 0033 | [Search Volume Controls](0033-search-volume-controls.md) | accepted |
-| 0034 | [Lifespan-Based Model Loading and Startup Readiness](0034-lifespan-model-loading.md) | proposed |
+| 0034 | [Lifespan-Based Model Loading and Startup Readiness](0034-lifespan-model-loading.md) | accepted |
 
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full ADR workflow: when to write an ADR, how to number it, and how to get it reviewed in a PR.
