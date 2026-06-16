@@ -25,6 +25,11 @@ _browser_available: bool | None = None
 async def _probe_browser() -> bool:
     """Attempt to launch a minimal Playwright browser and report success.
 
+    Uses the same stealth launch args as Tier 3 (``create_stealth_browser``)
+    so the probe accurately reflects whether the real scraping pipeline
+    can start Chromium — including Docker-specific requirements like
+    ``--no-sandbox`` and ``--disable-dev-shm-usage``.
+
     Runs once per service startup. Does NOT install system deps — that
     must happen in the Dockerfile. This detects missing shared libraries
     (libglib-2.0.so.0 etc.) or other runtime failures that prevent
@@ -33,8 +38,10 @@ async def _probe_browser() -> bool:
     try:
         from playwright.async_api import async_playwright
 
+        from .stealth import STEALTH_BROWSER_ARGS
+
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
+            browser = await p.chromium.launch(headless=True, args=STEALTH_BROWSER_ARGS)
             await browser.close()
         return True
     except Exception as exc:

@@ -1051,3 +1051,21 @@ def test_non_existent_browser_session_returns_404():
     data = r.json()
     assert data["success"] is False
     assert data["error_code"] == "NOT_FOUND"
+
+
+if __name__ == "__main__":
+    """Run all test functions in this file when invoked directly.
+
+    CI runs ``python3 /app/tests/test_stack.py``, so this block is
+    required — without it ``pytest`` functions are defined but never
+    executed.
+    """
+    import subprocess
+    import sys
+
+    raise SystemExit(
+        subprocess.run(
+            [sys.executable, "-m", "pytest", "-v", __file__],
+            capture_output=False,
+        ).returncode
+    )
