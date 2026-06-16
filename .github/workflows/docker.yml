@@ -166,6 +166,7 @@ jobs:
           docker cp tests/test_stack.py $(docker compose ps -q agent-svc):/app/tests/test_stack.py
           docker compose exec -T \
             -e SCRAPER_BASE_URL=http://scraper-svc:8001 \
+            -e SEARCH_BASE_URL=http://slopsearx:8080 \
             -e TEST_SITE_BASE_URL=http://test-site:8000 \
             -e TIER3_FIXTURE_BASE_URL=http://tier3-fixture:8000 \
             -e SEMANTIC_BASE_URL=http://semantic-svc:8003 \
