@@ -161,6 +161,7 @@ jobs:
 
       - name: Run integration tests
         run: |
+          docker compose exec -T agent-svc pip install pytest -q
           docker compose exec -T agent-svc mkdir -p /app/tests
           docker cp tests/test_stack.py $(docker compose ps -q agent-svc):/app/tests/test_stack.py
           docker compose exec -T -e TIER3_FIXTURE_BASE_URL=http://tier3-fixture:8000 agent-svc python3 /app/tests/test_stack.py
