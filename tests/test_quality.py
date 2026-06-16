@@ -224,7 +224,7 @@ def test_assess_quality_returns_dict_contract():
 
 
 def test_quality_acceptable_above_threshold():
-    from scraper.fetch import _quality_acceptable, QA_MIN_QUALITY_THRESHOLD
+    from scraper.fetch_quality import _quality_acceptable, QA_MIN_QUALITY_THRESHOLD
 
     # Above default threshold (0.3)
     result = {"quality": {"score": 0.7}}
@@ -232,7 +232,7 @@ def test_quality_acceptable_above_threshold():
 
 
 def test_quality_acceptable_below_threshold():
-    from scraper.fetch import _quality_acceptable
+    from scraper.fetch_quality import _quality_acceptable
 
     # Below default threshold (0.3)
     result = {"quality": {"score": 0.1}}
@@ -240,7 +240,7 @@ def test_quality_acceptable_below_threshold():
 
 
 def test_quality_acceptable_no_quality_field():
-    from scraper.fetch import _quality_acceptable
+    from scraper.fetch_quality import _quality_acceptable
 
     # No quality field — return as-is (barrier detection, etc.)
     result = {"markdown": "some content"}
@@ -248,7 +248,7 @@ def test_quality_acceptable_no_quality_field():
 
 
 def test_quality_acceptable_at_threshold():
-    from scraper.fetch import _quality_acceptable, QA_MIN_QUALITY_THRESHOLD
+    from scraper.fetch_quality import _quality_acceptable, QA_MIN_QUALITY_THRESHOLD
 
     # Exactly at threshold should pass
     result = {"quality": {"score": QA_MIN_QUALITY_THRESHOLD}}

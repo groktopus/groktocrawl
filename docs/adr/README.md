@@ -54,5 +54,6 @@ An Architecture Decision Record captures an important architectural decision mad
 | 0033 | [Search Volume Controls](0033-search-volume-controls.md) | accepted |
 | 0034 | [Lifespan-Based Model Loading and Startup Readiness](0034-lifespan-model-loading.md) | accepted |
 | 0035 | [Graceful Shutdown for Fire-and-Forget Tasks](0035-graceful-shutdown.md) | accepted |
+| 0036 | [Split Scraper fetch.py into Focused Modules](0036-split-scraper-fetch-modules.md) | proposed |
 
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full ADR workflow: when to write an ADR, how to number it, and how to get it reviewed in a PR.

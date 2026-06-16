@@ -101,7 +101,7 @@ class TestBotChallengeDetection:
 
     @staticmethod
     def _import_func():
-        from scraper.fetch import _is_bot_challenge
+        from scraper.fetch_quality import _is_bot_challenge
 
         return _is_bot_challenge
 
@@ -145,7 +145,7 @@ class TestSubstackRedirectDetection:
 
     @staticmethod
     def _import_func():
-        from scraper.fetch import _is_substack_redirect
+        from scraper.fetch_quality import _is_substack_redirect
 
         return _is_substack_redirect
 
@@ -177,7 +177,7 @@ class TestBarrierClassification:
 
     @staticmethod
     def _import():
-        from scraper.fetch import BarrierInfo, _classify_barrier
+        from scraper.fetch_quality import BarrierInfo, _classify_barrier
 
         return _classify_barrier, BarrierInfo
 

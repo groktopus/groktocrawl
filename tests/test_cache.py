@@ -2,16 +2,19 @@
 
 Tests the pure functions used by the freshness-aware cache revalidation
 system. These tests do NOT require Valkey or Docker — they test only
-the stateless utility functions in fetch.py.
+the stateless utility functions in cache.py.
 """
 
 import hashlib
 import json
 import os
+import sys
 from unittest.mock import patch
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scraper-svc"))
+
 # Import the module under test
-from scraper.fetch import (
+from scraper.cache import (
     _compute_content_hash,
     _enrich_cache_entry,
     _merge_cache_metadata,
@@ -167,16 +170,16 @@ class TestResolveCacheTtl:
 
     def test_clamps_to_min_ttl(self):
         with (
-            patch("scraper.fetch.SCRAPE_CACHE_TTL", 10),
-            patch("scraper.fetch.SCRAPE_CACHE_MIN_TTL", 60),
+            patch("scraper.cache.SCRAPE_CACHE_TTL", 10),
+            patch("scraper.cache.SCRAPE_CACHE_MIN_TTL", 60),
         ):
             ttl = _resolve_cache_ttl("https://example.com")
             assert ttl == 60  # Clamped from 10 to 60
 
     def test_clamps_to_max_ttl(self):
         with (
-            patch("scraper.fetch.SCRAPE_CACHE_TTL", 999999),
-            patch("scraper.fetch.SCRAPE_CACHE_MAX_TTL", 86400),
+            patch("scraper.cache.SCRAPE_CACHE_TTL", 999999),
+            patch("scraper.cache.SCRAPE_CACHE_MAX_TTL", 86400),
         ):
             ttl = _resolve_cache_ttl("https://example.com")
             assert ttl == 86400  # Clamped from 999999 to 86400
