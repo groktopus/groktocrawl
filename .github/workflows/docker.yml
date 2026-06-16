@@ -119,8 +119,8 @@ jobs:
         run: docker compose up --build -d
         timeout-minutes: 10
 
-      - name: Start tier-3 test fixture
-        run: docker compose --profile fixture up --build -d tier3-fixture
+      - name: Start test fixtures
+        run: docker compose --profile fixture up --build -d tier3-fixture test-site
         timeout-minutes: 5
 
       - name: Wait for services to be healthy
@@ -164,7 +164,12 @@ jobs:
           docker compose exec -T agent-svc pip install pytest -q
           docker compose exec -T agent-svc mkdir -p /app/tests
           docker cp tests/test_stack.py $(docker compose ps -q agent-svc):/app/tests/test_stack.py
-          docker compose exec -T -e TIER3_FIXTURE_BASE_URL=http://tier3-fixture:8000 agent-svc python3 /app/tests/test_stack.py
+          docker compose exec -T \
+            -e SCRAPER_BASE_URL=http://scraper-svc:8001 \
+            -e TEST_SITE_BASE_URL=http://test-site:8000 \
+            -e TIER3_FIXTURE_BASE_URL=http://tier3-fixture:8000 \
+            -e SEMANTIC_BASE_URL=http://semantic-svc:8003 \
+            agent-svc python3 /app/tests/test_stack.py
         timeout-minutes: 10
 
       - name: Collect logs on failure
