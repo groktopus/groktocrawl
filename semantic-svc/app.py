@@ -235,10 +235,7 @@ def _compute_domain_category(url: str) -> str:
         news (0.3), social (0.4), blog (0.6), api (0.7),
         unknown (0.8), reference (1.0), docs (1.2)
     """
-    try:
-        netloc = urllib.parse.urlparse(url).netloc.lower()
-    except Exception:
-        return "unknown"
+    netloc = urllib.parse.urlparse(url).netloc.lower()
 
     if not netloc:
         return "unknown"
