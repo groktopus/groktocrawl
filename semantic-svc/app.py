@@ -868,7 +868,11 @@ async def index_page(body: IndexRequest):
         if existing and existing[0].payload:
             existing_payload = existing[0].payload
     except Exception:
-        pass
+        logger.warning(
+            "Qdrant lookup failed during index for %s — proceeding as new page",
+            body.url,
+            exc_info=True,
+        )
 
     # Embed the content
     loop = asyncio.get_event_loop()
