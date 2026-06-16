@@ -125,7 +125,7 @@ async def _track_access(qdrant, hits: list) -> None:
 # ── Index endpoints ───────────────────────────────────────────────
 
 
-@router_index.post("/", response_model=IndexResponse, status_code=201)
+@router_index.post("", response_model=IndexResponse, status_code=201)
 async def index_page(body: IndexRequest):
     """Embed and store a page in the persistent vector index.
 

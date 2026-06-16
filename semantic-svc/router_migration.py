@@ -97,9 +97,11 @@ async def _run_backfill(qdrant, target_name: str, target_dim: int):
                     continue
 
                 # Update the point: add named vector + update embedding_models list
-                existing_models = json.loads(
-                    point.payload.get("embedding_models", "[]")
-                )
+                em_raw = point.payload.get("embedding_models", "[]")
+                if isinstance(em_raw, list):
+                    existing_models = em_raw
+                else:
+                    existing_models = json.loads(em_raw)
                 model_short = _named_vector_name(EMBED_MODEL_NAME)
                 target_short = nv_name
                 if model_short not in existing_models:
@@ -166,6 +168,26 @@ async def migrate_start(body: MigrationStartRequest):
 
     target_model_id = body.target_model
     target_dim = body.target_dim
+
+    # Validate target named vector exists on the collection
+    target_nv = _named_vector_name(target_model_id)
+    try:
+        collection_info = qdrant.get_collection(COLLECTION_NAME)
+        vectors_config = collection_info.config.params.vectors
+        if hasattr(vectors_config, 'get') and target_nv not in vectors_config:
+            raise HTTPException(
+                400,
+                f"Target named vector '{target_nv}' is not configured on the collection. "
+                "Named vectors cannot be added post-creation — recreate the collection "
+                "with the target model's named vector first.",
+            )
+    except AttributeError:
+        # Single-vector collection — can't migrate to named vectors
+        raise HTTPException(
+            400,
+            "Collection uses single-vector mode. Recreate with named vectors enabled "
+            "before running migration.",
+        )
 
     _migration.clear()
     _migration.update({
