@@ -10,3 +10,4 @@ __pypackages__/
 .opencode/
 .planning/
 .coverage
+graphify-out/
