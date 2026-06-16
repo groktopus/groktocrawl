@@ -531,8 +531,8 @@ async def _fetch_via_browser_svc(url: str) -> dict | None:
             try:
                 async with httpx.AsyncClient(timeout=5) as c:
                     await c.delete(f"{browser_svc_url}/browsers/{session_id}")
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Session cleanup failed for %s: %s", url, e)
 
     return None
 
@@ -552,8 +552,8 @@ async def _get_browser_page_content(
             )
             if resp.json().get("success"):
                 return resp.json()["result"].get("script_result", "")
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("Browser page content fetch failed for session %s: %s", session_id, e)
     return None
 
 

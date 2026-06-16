@@ -354,8 +354,8 @@ async def _fetch_via_browser(
             try:
                 async with httpx.AsyncClient(timeout=5) as c:
                     await c.delete(f"{browser_svc_url}/browsers/{session_id}")
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Session cleanup failed for %s: %s", url, e)
 
 
 # ── Adapter class ────────────────────────────────────────────────
