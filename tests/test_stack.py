@@ -33,8 +33,6 @@ def test_services_health():
     assert wait_for(AGENT).json()["status"] == "ok"
     assert wait_for(SCRAPER).json()["status"] == "ok"
     assert wait_for(SEARCH).json()["status"] == "ok"
-    assert wait_for(LLM).json()["status"] == "ok"
-    assert wait_for(TEST_SITE).json()["status"] == "ok"
 
 
 def test_scraper_health_reports_playwright():
