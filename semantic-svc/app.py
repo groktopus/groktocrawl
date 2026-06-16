@@ -974,7 +974,11 @@ async def index_batch(body: IndexBatchRequest):
             if existing and existing[0].payload:
                 existing_payload = existing[0].payload
         except Exception:
-            pass
+            logger.warning(
+                "Qdrant lookup failed during batch index for %s — proceeding as new page",
+                page.url,
+                exc_info=True,
+            )
 
         payload = _build_index_payload(page.url, page.title, existing_payload)
         vectors: dict[str, list[float]] = {active_nv: embedding}
