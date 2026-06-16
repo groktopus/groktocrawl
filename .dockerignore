@@ -1,0 +1,64 @@
+# GroktoCrawl Docker build context exclusions
+# Keeps build contexts lean and cache-friendly for CI and local dev.
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Tests
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Docs
+docs/
+droid-wiki/
+
+# Skills (Hermes agent skill directory)
+skills/
+
+# CI
+.github/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.*
+
+# macOS
+.DS_Store
+
+# Markdown docs
+*.md
+!AGENTS.md
+!CONTRIBUTING.md
+!README.md
+
+# Docker (don't recurse)
+docker-compose*.yml
+Dockerfile*
+.dockerignore
+
+# Misc
+*.log
