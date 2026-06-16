@@ -18,14 +18,40 @@ from .meta import fetch_meta_tags
 
 logger = logging.getLogger(__name__)
 
+# Cache for Playwright browser availability — probed at startup.
+_browser_available: bool | None = None
+
+
+async def _probe_browser() -> bool:
+    """Attempt to launch a minimal Playwright browser and report success.
+
+    Runs once per service startup. Does NOT install system deps — that
+    must happen in the Dockerfile. This detects missing shared libraries
+    (libglib-2.0.so.0 etc.) or other runtime failures that prevent
+    Chromium from starting.
+    """
+    try:
+        from playwright.async_api import async_playwright
+
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            await browser.close()
+        return True
+    except Exception as exc:
+        logger.warning("Playwright browser probe failed: %s", exc)
+        return False
+
 
 @asynccontextmanager
 async def lifespan(app):
     """Connect to Valkey on startup, close on shutdown.
 
     Also loads site adapters (YouTube, etc.) — safe to call even
-    if the adapters package is not yet installed.
+    if the adapters package is not yet installed. Probes Playwright
+    browser availability for health check reporting.
     """
+    global _browser_available
+
     from .adapters.base import get_registry
 
     try:
@@ -34,6 +60,14 @@ async def lifespan(app):
         logger.info("Loaded %d site adapters", len(registry._entries))
     except Exception as exc:
         logger.warning("Failed to load adapters: %s", exc)
+
+    # Probe Playwright browser at startup (non-blocking — failure is logged, not fatal)
+    try:
+        _browser_available = await _probe_browser()
+        logger.info("Playwright browser available: %s", _browser_available)
+    except Exception as exc:
+        _browser_available = False
+        logger.warning("Playwright browser probe raised: %s", exc)
 
     await get_client()
     yield
@@ -131,7 +165,14 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 @app.get("/health")
 async def health():
-    return {"status": "ok"}
+    checks = {
+        "playwright": {
+            "status": "available" if _browser_available else "unavailable",
+            "available": bool(_browser_available),
+        }
+    }
+    overall = "ok" if _browser_available is not False else "degraded"
+    return {"status": overall, "checks": checks}
 
 
 @app.post("/scrape", response_model=ScrapeResponse)

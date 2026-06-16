@@ -8,6 +8,7 @@ SCRAPER = os.getenv("SCRAPER_BASE_URL", "http://localhost:8001")
 SEARCH = os.getenv("SEARCH_BASE_URL", "http://localhost:8010")
 LLM = os.getenv("LLM_BASE_URL", "http://localhost:8011")
 TEST_SITE = os.getenv("TEST_SITE_BASE_URL", "http://localhost:8000")
+TIER3_SITE = os.getenv("TIER3_FIXTURE_BASE_URL", "http://localhost:8006")
 SEMANTIC = os.getenv("SEMANTIC_BASE_URL", "http://localhost:8003")
 
 
@@ -31,6 +32,62 @@ def test_services_health():
     assert wait_for(SEARCH).json()["status"] == "ok"
     assert wait_for(LLM).json()["status"] == "ok"
     assert wait_for(TEST_SITE).json()["status"] == "ok"
+
+
+def test_scraper_health_reports_playwright():
+    """Scraper health endpoint should report Playwright browser availability.
+
+    The startup probe launches Chromium once and caches the result.
+    A missing ``checks.playwright`` field or ``available: false`` means
+    the browser pipeline (Tier 3) is broken — the bug that the original
+    ``playwright install-deps`` fix addressed.
+    """
+    r = httpx.get(SCRAPER + "/health", timeout=30)
+    assert r.status_code == 200
+    data = r.json()
+    assert data["status"] == "ok" or data["status"] == "degraded"
+    assert "checks" in data, f"Health missing checks: {data}"
+    assert "playwright" in data["checks"], f"Missing playwright check: {data['checks']}"
+    assert data["checks"]["playwright"]["status"] == "available", (
+        f"Playwright browser unavailable: {data['checks']['playwright']}. "
+        "This usually means missing system deps (libglib-2.0.so.0 etc.) "
+        "in the scraper-svc Docker image."
+    )
+    assert data["checks"]["playwright"]["available"] is True
+
+
+def test_scraper_falls_through_to_playwright():
+    """Scrape a page that has no llms.txt and no content-negotiation,
+    forcing the scraper to use Playwright (Tier 3) for JS-rendered content.
+
+    The tier3-fixture has ENABLE_LLMS_TXT=0, ENABLE_MARKDOWN=0, and
+    serves /dynamic with JS-rendered content ("Dynamic Content Loaded").
+    A successful scrape proves the Playwright browser pipeline works.
+    """
+    r = httpx.post(
+        SCRAPER + "/scrape", json={"url": TIER3_SITE + "/dynamic"}, timeout=120
+    )
+    payload = r.json()
+    assert payload["success"] is True, (
+        f"Scrape failed: {payload.get('error')}. Playwright (Tier 3) is likely broken."
+    )
+    md = payload["data"]["markdown"]
+    # The JS-rendered content should appear in the markdown
+    assert "Dynamic Content Loaded" in md, (
+        f"JS-rendered content not found in scrape output. "
+        f"Scraper used tier: {payload['data']['source']}. "
+        f"Markdown preview: {md[:300]}"
+    )
+    assert payload["data"]["source"] != "llms.txt", (
+        "Scraper should NOT use llms.txt for tier3-fixture"
+    )
+    assert payload["data"]["source"] != "content-negotiation", (
+        "Scraper should NOT use content-negotiation for tier3-fixture"
+    )
+    # Source should be playwright or adapter
+    assert payload["data"]["source"] == "playwright", (
+        f"Unexpected source: {payload['data']['source']}"
+    )
 
 
 def test_health_endpoint_returns_per_dependency_checks():

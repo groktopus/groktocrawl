@@ -119,6 +119,10 @@ jobs:
         run: docker compose up --build -d
         timeout-minutes: 10
 
+      - name: Start tier-3 test fixture
+        run: docker compose --profile fixture up --build -d tier3-fixture
+        timeout-minutes: 5
+
       - name: Wait for services to be healthy
         run: |
           python3 -c "
@@ -137,11 +141,29 @@ jobs:
               raise RuntimeError('Timed out waiting for stack')
           "
 
+      - name: Wait for tier3-fixture
+        run: |
+          python3 -c "
+          import time, urllib.request
+          deadline = time.time() + 30
+          while time.time() < deadline:
+              try:
+                  r = urllib.request.urlopen('http://localhost:8006/health', timeout=5)
+                  if r.status == 200:
+                      print('tier3-fixture healthy')
+                      break
+              except Exception:
+                  pass
+              time.sleep(2)
+          else:
+              raise RuntimeError('Timed out waiting for tier3-fixture')
+          "
+
       - name: Run integration tests
         run: |
           docker compose exec -T agent-svc mkdir -p /app/tests
           docker cp tests/test_stack.py $(docker compose ps -q agent-svc):/app/tests/test_stack.py
-          docker compose exec -T agent-svc python3 /app/tests/test_stack.py
+          docker compose exec -T -e TIER3_FIXTURE_BASE_URL=http://tier3-fixture:8000 agent-svc python3 /app/tests/test_stack.py
         timeout-minutes: 10
 
       - name: Collect logs on failure

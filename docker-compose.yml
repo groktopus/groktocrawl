@@ -59,6 +59,20 @@ services:
       - ENABLE_DYNAMIC=1
       - SITE_NAME=Fixture Site
 
+  tier3-fixture:
+    build:
+      context: ./test-site
+    restart: unless-stopped
+    ports:
+      - "8006:8000"
+    profiles:
+      - fixture
+    environment:
+      - ENABLE_LLMS_TXT=0
+      - ENABLE_MARKDOWN=0
+      - ENABLE_DYNAMIC=1
+      - SITE_NAME=Tier 3 Fixture
+
   scraper-svc:
     build:
       context: .
