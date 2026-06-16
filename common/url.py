@@ -4,9 +4,12 @@ Consolidates urlparse-based URL handling across all services into a single,
 testable module. All functions are pure (no I/O, no external dependencies).
 """
 
+import logging
 import socket
 from ipaddress import ip_address, ip_network
 from urllib.parse import urlparse
+
+logger = logging.getLogger(__name__)
 
 # ── Private/hostile network definitions (SSRF guard) ────────────────
 
@@ -110,6 +113,7 @@ def _resolve_to_ips(hostname: str) -> list[ip_address]:
                 continue
         return list(ips)
     except socket.gaierror:
+        logger.warning("DNS resolution failed for %s — treating as private", hostname)
         return []
 
 
@@ -151,6 +155,10 @@ def is_private_host(url: str) -> bool:
     ips = _resolve_to_ips(hostname)
     if not ips:
         # Can't resolve — log and reject (DNS rebinding risk)
+        logger.warning(
+            "Cannot resolve hostname %s — treating as private (possible DNS outage)",
+            hostname,
+        )
         return True
 
     for addr in ips:
