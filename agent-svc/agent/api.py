@@ -963,11 +963,18 @@ async def get_llmstxt_status(request: Request, job_id: str):
 
 async def _index_scrape(url: str, title: str, content: str, request) -> None:
     """Fire-and-forget index a scraped page in the vector index."""
+    semantic = None
     try:
         from .semantic_client import SemanticClient
 
         semantic = SemanticClient(request.app.state.semantic_url)
         await semantic.index_page(url, title, content[:2000])
-        await semantic.close()
     except Exception:
-        pass
+        logger.warning(
+            "Semantic indexing failed for %s — page will not appear in vector search",
+            url,
+            exc_info=True,
+        )
+    finally:
+        if semantic is not None:
+            await semantic.close()
