@@ -137,8 +137,8 @@ def _parse_epub_metadata(zf: zipfile.ZipFile) -> dict[str, Any]:
                     title_el = soup.find("ncx:title") or soup.find("title")
                     if title_el:
                         metadata["title"] = title_el.get_text(strip=True)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("NCX metadata extraction failed for %s: %s", name, e)
                 break
 
     return metadata

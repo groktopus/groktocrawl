@@ -1,12 +1,15 @@
 """Shared URL utility functions for GroktoCrawl.
 
 Consolidates urlparse-based URL handling across all services into a single,
-testable module. All functions are pure (no I/O, no external dependencies).
+testable module. Uses only stdlib plus socket I/O for DNS resolution.
 """
 
+import logging
 import socket
 from ipaddress import ip_address, ip_network
 from urllib.parse import urlparse
+
+logger = logging.getLogger(__name__)
 
 # ── Private/hostile network definitions (SSRF guard) ────────────────
 
@@ -110,6 +113,7 @@ def _resolve_to_ips(hostname: str) -> list[ip_address]:
                 continue
         return list(ips)
     except socket.gaierror:
+        logger.warning("DNS resolution failed for %s — treating as private", hostname)
         return []
 
 
@@ -150,7 +154,7 @@ def is_private_host(url: str) -> bool:
     # Resolve hostname to IPs and check each
     ips = _resolve_to_ips(hostname)
     if not ips:
-        # Can't resolve — log and reject (DNS rebinding risk)
+        # Can't resolve — _resolve_to_ips already logged at WARNING
         return True
 
     for addr in ips:

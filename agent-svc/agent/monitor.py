@@ -171,11 +171,15 @@ def check_all() -> None:
     results = asyncio.run(check_all_async())
     changed = [r for r in results if r.get("changed")]
     if changed:
-        print(f"Monitors checked: {len(results)}, changed: {len(changed)}")
+        logger.info(
+            "Monitors checked: %d, changed: %d",
+            len(results),
+            len(changed),
+        )
         for r in changed:
-            print(f"  CHANGED: {r['url']} ({r['monitor_id']})")
+            logger.info("  CHANGED: %s (%s)", r["url"], r["monitor_id"])
     else:
-        print(f"Monitors checked: {len(results)}, all unchanged")
+        logger.info("Monitors checked: %d, all unchanged", len(results))
 
 
 if __name__ == "__main__":
