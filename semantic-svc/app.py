@@ -107,7 +107,7 @@ async def lifespan(app: FastAPI):
         )
         _models_ready = True
         logger.info("Models loaded — semantic-svc ready")
-    except Exception:
+    except (OSError, RuntimeError, ValueError):
         logger.exception(
             "Failed to load semantic models — /health will report 'starting'"
         )
