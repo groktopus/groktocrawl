@@ -120,7 +120,7 @@ jobs:
         timeout-minutes: 10
 
       - name: Start test fixtures
-        run: docker compose --profile fixture up --build -d llm-svc search-svc tier3-fixture test-site
+        run: docker compose --profile fixture up --build -d llm-svc tier3-fixture test-site
         timeout-minutes: 5
 
       - name: Wait for services to be healthy
