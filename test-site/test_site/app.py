@@ -4,9 +4,10 @@
 - dynamic JS-rendered site
 """
 
+import os
+
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, PlainTextResponse
-import os
 
 app = FastAPI(title="GroktoCrawl Test Site", version="0.1.0")
 
@@ -86,13 +87,19 @@ async def dynamic():
     return HTMLResponse(
         """
         <html>
+          <head>
+            <title>Tier 3 Dynamic Page</title>
+            <meta name="description" content="This page requires JavaScript rendering for its content.">
+          </head>
           <body>
             <h1>Dynamic Page</h1>
             <div id="content">Loading...</div>
+            <div id="content2">Also loading...</div>
             <script>
               setTimeout(() => {
                 document.getElementById('content').innerText = 'Dynamic Content Loaded';
-              }, 10);
+                document.getElementById('content2').innerText = 'Secondary dynamic content is also rendered.';
+              }, 50);
             </script>
           </body>
         </html>
@@ -101,6 +108,7 @@ async def dynamic():
 
 
 # ----- llms.txt test fixtures -----
+
 
 @app.get("/content/multi-sentence")
 async def content_multi_sentence():
