@@ -120,7 +120,7 @@ jobs:
         timeout-minutes: 10
 
       - name: Start test fixtures
-        run: docker compose --profile fixture up --build -d tier3-fixture test-site
+        run: docker compose --profile fixture up --build -d llm-svc search-svc tier3-fixture test-site
         timeout-minutes: 5
 
       - name: Wait for services to be healthy
@@ -139,6 +139,24 @@ jobs:
               time.sleep(3)
           else:
               raise RuntimeError('Timed out waiting for stack')
+          "
+
+      - name: Wait for semantic-svc
+        run: |
+          python3 -c "
+          import time, urllib.request
+          deadline = time.time() + 120
+          while time.time() < deadline:
+              try:
+                  r = urllib.request.urlopen('http://localhost:8003/health', timeout=5)
+                  if r.status == 200:
+                      print('semantic-svc healthy')
+                      break
+              except Exception:
+                  pass
+              time.sleep(3)
+          else:
+              raise RuntimeError('Timed out waiting for semantic-svc')
           "
 
       - name: Wait for tier3-fixture
@@ -167,6 +185,7 @@ jobs:
           docker compose exec -T \
             -e SCRAPER_BASE_URL=http://scraper-svc:8001 \
             -e SEARCH_BASE_URL=http://slopsearx:8080 \
+            -e LLM_BASE_URL=http://llm-svc:8011 \
             -e TEST_SITE_BASE_URL=http://test-site:8000 \
             -e TIER3_FIXTURE_BASE_URL=http://tier3-fixture:8000 \
             -e SEMANTIC_BASE_URL=http://semantic-svc:8003 \
