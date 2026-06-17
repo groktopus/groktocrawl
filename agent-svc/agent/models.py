@@ -52,7 +52,7 @@ class ScrapeResponse(BaseModel):
 
 class AgentRequest(BaseModel):
     prompt: str = Field(
-        ..., max_length=10000, description="What the agent should research"
+        ..., max_length=100000, description="What the agent should research"
     )
     urls: list[str] | None = Field(
         None, description="Optional seed URLs to constrain research"
