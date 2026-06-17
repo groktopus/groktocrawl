@@ -165,27 +165,24 @@ jobs:
           else:
               raise RuntimeError('Timed out waiting for semantic-svc on host')
           "
-          # Then verify the /index endpoint works from inside agent-svc
+          # Verify Qdrant is reachable from inside agent-svc (where tests run)
           python3 -c "
-          import time, subprocess, json
-          deadline = time.time() + 120
+          import time, subprocess
+          deadline = time.time() + 60
           while time.time() < deadline:
               r = subprocess.run(
                   ['docker', 'compose', 'exec', '-T', 'agent-svc',
                    'python3', '-c',
-                   'import httpx; r=httpx.post(\"http://semantic-svc:8003/index\", '
-                   'json={\"url\": \"http://healthcheck.local/test\", '
-                   '\"title\": \"health\", \"content\": \"health check content\"}, '
-                   'timeout=10); print(r.status_code, r.text)'],
-                  capture_output=True, text=True, timeout=15
+                   'import urllib.request; u=urllib.request.urlopen(\"http://semantic-svc:8003/index/stats\", timeout=5); print(u.status)'],
+                  capture_output=True, text=True, timeout=10
               )
-              if r.returncode == 0 and '201' in r.stdout:
-                  print(f'/index works from agent-svc: {r.stdout.strip()}')
+              if r.returncode == 0 and '200' in r.stdout:
+                  print(f'Qdrant ready from agent-svc')
                   break
-              print(f'  waiting from agent-svc (rc={r.returncode}): {r.stdout[:100]}')
+              print(f'  waiting from agent-svc (rc={r.returncode}): {r.stdout[:80]}')
               time.sleep(5)
           else:
-              raise RuntimeError('Timed out waiting for /index from agent-svc')
+              raise RuntimeError('Timed out waiting for Qdrant from agent-svc')
           "
 
       - name: Wait for tier3-fixture
