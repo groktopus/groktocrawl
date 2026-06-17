@@ -642,6 +642,9 @@ def test_abuseipdb_adapter_ip():
     assert len(md) > 50, f"Expected >50 chars, got {len(md)}"
 
 
+@pytest.mark.xfail(
+    strict=False, reason="Requires reaching third-party sites from CI runner"
+)
 def test_censys_adapter_ip():
     """Censys IP page should be handled by the adapter (scrape fallback)."""
     r = httpx.post(SCRAPER + "/scrape", json={"url": CENSYS_IP}, timeout=120)

@@ -146,6 +146,7 @@ jobs:
 
       - name: Wait for semantic-svc
         run: |
+          # First check from host
           python3 -c "
           import time, urllib.request, urllib.error
           deadline = time.time() + 120
@@ -154,18 +155,33 @@ jobs:
                   r = urllib.request.urlopen('http://localhost:8003/health', timeout=5)
                   data = r.read().decode()
                   if r.status == 200 and '\"ok\"' in data:
-                      print('Models loaded, checking Qdrant...')
-                      r2 = urllib.request.urlopen('http://localhost:8003/index/stats', timeout=5)
-                      if r2.status == 200:
-                          print('semantic-svc + Qdrant healthy')
-                          break
+                      print('semantic-svc healthy on host')
+                      break
               except urllib.error.HTTPError as e:
                   print(f'  waiting ({e.code})...')
               except Exception:
                   pass
               time.sleep(3)
           else:
-              raise RuntimeError('Timed out waiting for semantic-svc + Qdrant')
+              raise RuntimeError('Timed out waiting for semantic-svc on host')
+          "
+          # Then verify from inside the agent container where tests actually run
+          python3 -c "
+          import time, subprocess
+          deadline = time.time() + 60
+          while time.time() < deadline:
+              r = subprocess.run(
+                  ['docker', 'compose', 'exec', '-T', 'agent-svc',
+                   'python3', '-c', 'import urllib.request, json; u=urllib.request.urlopen(\"http://semantic-svc:8003/index/stats\", timeout=5); print(u.status, u.read().decode())'],
+                  capture_output=True, text=True, timeout=10
+              )
+              if r.returncode == 0 and '200' in r.stdout:
+                  print(f'Qdrant ready from agent-svc: {r.stdout.strip()}')
+                  break
+              print(f'  waiting from agent-svc...')
+              time.sleep(5)
+          else:
+              raise RuntimeError('Timed out waiting for Qdrant from agent-svc')
           "
 
       - name: Wait for tier3-fixture
