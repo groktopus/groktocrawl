@@ -823,17 +823,27 @@ def test_agent_streaming_returns_sse_events():
 # ── Phase 3: Near-Duplicate Detection ────────────────────────────
 
 
+def _index(url: str, title: str, content: str, **extra) -> httpx.Response:
+    """POST /index with retry on 503 (Qdrant may restart under memory pressure)."""
+    for attempt in range(5):
+        r = httpx.post(
+            SEMANTIC + "/index",
+            json={"url": url, "title": title, "content": content, **extra},
+            timeout=30,
+        )
+        if r.status_code != 503 or attempt == 4:
+            return r
+        time.sleep(5 * (attempt + 1))
+    return r  # unreachable
+
+
 def test_index_structure():
     """POST /index on semantic-svc returns valid structure."""
-    r = httpx.post(
-        SEMANTIC + "/index",
-        json={
-            "url": "http://example.com/page-a",
-            "title": "Test Page A",
-            "content": "This is unique content for the near-dup test. "
-            "It describes a specific topic that should not match other pages.",
-        },
-        timeout=30,
+    r = _index(
+        "http://example.com/page-a",
+        "Test Page A",
+        "This is unique content for the near-dup test. "
+        "It describes a specific topic that should not match other pages.",
     )
     assert r.status_code == 201
     payload = r.json()
@@ -850,30 +860,22 @@ def test_near_dup_detection_skip_mode():
     first to seed the index, second to detect the duplicate.
     """
     # Seed — first page with distinctive content
-    r1 = httpx.post(
-        SEMANTIC + "/index",
-        json={
-            "url": "http://example.com/near-dup-original",
-            "title": "Original",
-            "content": "The near-dup detection test should identify this content "
-            "as a duplicate when it appears at a second URL with the same text. "
-            "This paragraph is specific enough to generate a stable embedding.",
-        },
-        timeout=30,
+    r1 = _index(
+        "http://example.com/near-dup-original",
+        "Original",
+        "The near-dup detection test should identify this content "
+        "as a duplicate when it appears at a second URL with the same text. "
+        "This paragraph is specific enough to generate a stable embedding.",
     )
     assert r1.status_code == 201
 
     # Same content, different URL — should be flagged as duplicate
-    r2 = httpx.post(
-        SEMANTIC + "/index",
-        json={
-            "url": "http://example.com/near-dup-copy",
-            "title": "Copy",
-            "content": "The near-dup detection test should identify this content "
-            "as a duplicate when it appears at a second URL with the same text. "
-            "This paragraph is specific enough to generate a stable embedding.",
-        },
-        timeout=30,
+    r2 = _index(
+        "http://example.com/near-dup-copy",
+        "Copy",
+        "The near-dup detection test should identify this content "
+        "as a duplicate when it appears at a second URL with the same text. "
+        "This paragraph is specific enough to generate a stable embedding.",
     )
     assert r2.status_code == 201
     payload = r2.json()
@@ -886,16 +888,12 @@ def test_near_dup_detection_skip_mode():
 
 def test_near_dup_detection_update_mode():
     """Requesting near_dup_mode='update' always indexes even when duplicated."""
-    r = httpx.post(
-        SEMANTIC + "/index",
-        json={
-            "url": "http://example.com/near-dup-update-test",
-            "title": "Update Mode Test",
-            "content": "This content tests the update mode for near-duplicate detection. "
-            "When set to 'update', even near-duplicate content gets indexed.",
-            "near_dup_mode": "update",
-        },
-        timeout=30,
+    r = _index(
+        "http://example.com/near-dup-update-test",
+        "Update Mode Test",
+        "This content tests the update mode for near-duplicate detection. "
+        "When set to 'update', even near-duplicate content gets indexed.",
+        near_dup_mode="update",
     )
     assert r.status_code == 201
     payload = r.json()
@@ -906,21 +904,31 @@ def test_near_dup_detection_update_mode():
 
 def test_near_dup_different_content():
     """Completely different content at different URL should index normally."""
-    r = httpx.post(
-        SEMANTIC + "/index",
-        json={
-            "url": "http://example.com/unique-page",
-            "title": "Unique Page",
-            "content": "This content is completely unique and has nothing to do with "
-            "any other page in the test suite. It discusses quantum computing "
-            "applications in marine biology research.",
-        },
-        timeout=30,
+    r = _index(
+        "http://example.com/unique-page",
+        "Unique Page",
+        "This content is completely unique and has nothing to do with "
+        "any other page in the test suite. It discusses quantum computing "
+        "applications in marine biology research.",
     )
     assert r.status_code == 201
     payload = r.json()
     assert payload["status"] in ("indexed", "updated_duplicate")
     assert isinstance(payload["url_hash"], int)
+
+
+def _index_batch(pages: list[dict]) -> httpx.Response:
+    """POST /index/batch with retry on 503 (Qdrant may restart under memory pressure)."""
+    for attempt in range(5):
+        r = httpx.post(
+            SEMANTIC + "/index/batch",
+            json={"pages": pages},
+            timeout=30,
+        )
+        if r.status_code != 503 or attempt == 4:
+            return r
+        time.sleep(5 * (attempt + 1))
+    return r
 
 
 def test_batch_index_endpoint():
@@ -929,25 +937,21 @@ def test_batch_index_endpoint():
     Batch endpoint should index multiple pages in a single call,
     returning count of successfully indexed pages.
     """
-    r = httpx.post(
-        SEMANTIC + "/index/batch",
-        json={
-            "pages": [
-                {
-                    "url": "http://example.com/batch-page-a",
-                    "title": "Batch Page A",
-                    "content": "This is the first page in a batch index test. "
-                    "It contains unique content for testing batch ingestion.",
-                },
-                {
-                    "url": "http://example.com/batch-page-b",
-                    "title": "Batch Page B",
-                    "content": "This is the second page in a batch index test. "
-                    "It also contains unique content for testing.",
-                },
-            ],
-        },
-        timeout=30,
+    r = _index_batch(
+        [
+            {
+                "url": "http://example.com/batch-page-a",
+                "title": "Batch Page A",
+                "content": "This is the first page in a batch index test. "
+                "It contains unique content for testing batch ingestion.",
+            },
+            {
+                "url": "http://example.com/batch-page-b",
+                "title": "Batch Page B",
+                "content": "This is the second page in a batch index test. "
+                "It also contains unique content for testing.",
+            },
+        ],
     )
     assert r.status_code == 201
     payload = r.json()
@@ -957,7 +961,7 @@ def test_batch_index_endpoint():
 
 def test_batch_index_empty():
     """POST /index/batch with no pages should return count=0."""
-    r = httpx.post(SEMANTIC + "/index/batch", json={"pages": []}, timeout=30)
+    r = _index_batch([])
     assert r.status_code == 201
     payload = r.json()
     assert payload["status"] == "indexed"
