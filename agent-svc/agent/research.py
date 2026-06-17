@@ -236,6 +236,9 @@ async def run_research_stream(
     llm = LLMClient(llm_base_url, llm_api_key, effective_model)
 
     try:
+        # Yield status heartbeat — searching phase
+        yield {"type": "status", "state": "searching"}
+
         discovered = await _run_research_discover_and_scrape(
             prompt=prompt,
             urls=urls,
@@ -283,6 +286,9 @@ async def run_research_stream(
                 "latency_ms": elapsed,
             }
             return
+
+        # Yield status heartbeat — synthesizing phase
+        yield {"type": "status", "state": "synthesizing"}
 
         # Phase 2: Synthesis
         # If schema is provided, use synchronous generation (structured JSON output)

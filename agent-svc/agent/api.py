@@ -161,6 +161,25 @@ async def create_agent(request: Request, body: AgentRequest, response: Response)
 
     # Streaming path — run inline, return SSE
     if body.stream:
+        # Pre-flight LLM health check — fail fast before opening the stream
+        from .llm import LLMClient
+
+        health_logger = logging.getLogger(__name__)
+        llm_check = LLMClient(
+            base_url=request.app.state.llm_base_url,
+            api_key=request.app.state.llm_api_key,
+            model=request.app.state.llm_model,
+        )
+        if not await llm_check.check_health():
+            health_logger.error("LLM backend unreachable. Agent disabled.")
+            await llm_check.close()
+            from fastapi import HTTPException
+
+            raise HTTPException(
+                status_code=503,
+                detail="LLM backend is not available. Cannot process agent request.",
+            )
+        await llm_check.close()
         from fastapi.responses import StreamingResponse
 
         async def event_stream():
@@ -192,6 +211,8 @@ async def create_agent(request: Request, body: AgentRequest, response: Response)
                     yield f"data: {json.dumps({'type': 'done', 'result': event['result'], 'sources': event['sources'], 'latency_ms': event['latency_ms']})}\n\n"
                 elif event["type"] == "error":
                     yield f"data: {json.dumps({'type': 'error', 'content': event['content']})}\n\n"
+                elif event["type"] == "status":
+                    yield f"data: {json.dumps({'type': 'status', 'state': event['state']})}\n\n"
             yield "data: [DONE]\n\n"
 
         headers = {
