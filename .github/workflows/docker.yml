@@ -146,7 +146,7 @@ jobs:
 
       - name: Wait for semantic-svc
         run: |
-          # First check from host
+          # First check from host that the API is alive
           python3 -c "
           import time, urllib.request, urllib.error
           deadline = time.time() + 120
@@ -165,23 +165,27 @@ jobs:
           else:
               raise RuntimeError('Timed out waiting for semantic-svc on host')
           "
-          # Then verify from inside the agent container where tests actually run
+          # Then verify the /index endpoint works from inside agent-svc
           python3 -c "
-          import time, subprocess
-          deadline = time.time() + 60
+          import time, subprocess, json
+          deadline = time.time() + 120
           while time.time() < deadline:
               r = subprocess.run(
                   ['docker', 'compose', 'exec', '-T', 'agent-svc',
-                   'python3', '-c', 'import urllib.request, json; u=urllib.request.urlopen(\"http://semantic-svc:8003/index/stats\", timeout=5); print(u.status, u.read().decode())'],
-                  capture_output=True, text=True, timeout=10
+                   'python3', '-c',
+                   'import httpx; r=httpx.post(\"http://semantic-svc:8003/index\", '
+                   'json={\"url\": \"http://healthcheck.local/test\", '
+                   '\"title\": \"health\", \"content\": \"health check content\"}, '
+                   'timeout=10); print(r.status_code, r.text)'],
+                  capture_output=True, text=True, timeout=15
               )
-              if r.returncode == 0 and '200' in r.stdout:
-                  print(f'Qdrant ready from agent-svc: {r.stdout.strip()}')
+              if r.returncode == 0 and '201' in r.stdout:
+                  print(f'/index works from agent-svc: {r.stdout.strip()}')
                   break
-              print(f'  waiting from agent-svc...')
+              print(f'  waiting from agent-svc (rc={r.returncode}): {r.stdout[:100]}')
               time.sleep(5)
           else:
-              raise RuntimeError('Timed out waiting for Qdrant from agent-svc')
+              raise RuntimeError('Timed out waiting for /index from agent-svc')
           "
 
       - name: Wait for tier3-fixture
