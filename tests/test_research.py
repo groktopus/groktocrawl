@@ -551,10 +551,12 @@ class TestRunResearchStream:
             async for event in run_research_stream(prompt="What is AI?"):
                 events.append(event)
 
-        # Verify event sequence
-        assert len(events) >= 4
-        assert events[0]["type"] == "sources_pending"
-        assert len(events[0]["sources"]) == 1
+        # Verify event sequence — status heartbeat is now the first event
+        assert len(events) >= 5
+        assert events[0]["type"] == "status"
+        assert events[0]["state"] == "searching"
+        assert events[1]["type"] == "sources_pending"
+        assert len(events[1]["sources"]) == 1
         # source_scraped events
         scraped_events = [e for e in events if e["type"] == "source_scraped"]
         assert len(scraped_events) >= 1

@@ -165,10 +165,14 @@ async def create_agent(request: Request, body: AgentRequest, response: Response)
         from .llm import LLMClient
 
         health_logger = logging.getLogger(__name__)
+        effective_model = (
+            body.model if body.model and body.model != "default"
+            else request.app.state.llm_model
+        )
         llm_check = LLMClient(
             base_url=request.app.state.llm_base_url,
             api_key=request.app.state.llm_api_key,
-            model=request.app.state.llm_model,
+            model=effective_model,
         )
         if not await llm_check.check_health():
             health_logger.error("LLM backend unreachable. Agent disabled.")
