@@ -7,6 +7,7 @@ Each session is an isolated Chromium instance with its own context.
 import asyncio
 import json
 import logging
+import random
 import time
 import uuid
 from typing import Any
@@ -266,7 +267,10 @@ async def create_browser(req: BrowserCreateRequest):
             ],
         )
         context = await browser.new_context(
-            viewport={"width": 1920, "height": 1080},
+            viewport={
+                "width": 1920 + random.randint(-5, 5),
+                "height": 1080 + random.randint(-5, 5),
+            },
             user_agent=REAL_CHROME_UA,
             locale="en-US",
             timezone_id="America/New_York",
@@ -275,9 +279,44 @@ async def create_browser(req: BrowserCreateRequest):
         page = await context.new_page()
         # Hide Playwright automation signals from bot detection
         await page.add_init_script("""() => {
+            // Override navigator properties
             Object.defineProperty(navigator, 'webdriver', {
                 get: () => undefined
             });
+
+            // Real Chrome reports 5 plugins (Chrome PDF Plugin, Chrome PDF Viewer, Native Client, etc.)
+            Object.defineProperty(navigator, 'plugins', {
+                get: () => [
+                    { name: 'Chrome PDF Plugin', filename: 'internal-pdf-viewer' },
+                    { name: 'Chrome PDF Viewer', filename: 'mhjfbmdgcfjbbpaeojofohoefgiehjai' },
+                    { name: 'Native Client', filename: 'internal-nacl-plugin' },
+                ],
+            });
+
+            // Real Chrome reports these languages
+            Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
+
+            // Typical modern hardware concurrency (8 cores is most common)
+            Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 8 });
+
+            // Add chrome.runtime (real Chrome has it, headless Playwright doesn't)
+            if (window.chrome) {
+                window.chrome.runtime = {};
+            }
+
+            // Override WebGL vendor/renderer to look like a real GPU
+            const getParameter = WebGLRenderingContext.prototype.getParameter;
+            WebGLRenderingContext.prototype.getParameter = function(parameter) {
+                // UNMASKED_VENDOR_WEBGL
+                if (parameter === 37445) {
+                    return 'Intel Inc.';
+                }
+                // UNMASKED_RENDERER_WEBGL
+                if (parameter === 37446) {
+                    return 'Intel Iris OpenGL Engine';
+                }
+                return getParameter.call(this, parameter);
+            };
         }""")
         session = SessionData(browser, context, page, req.ttl)
         _sessions[session_id] = session

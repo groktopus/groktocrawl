@@ -16,6 +16,7 @@ Usage:
 """
 
 import logging
+import random
 
 logger = logging.getLogger(__name__)
 
@@ -44,9 +45,44 @@ STEALTH_CONTEXT_KWARGS = {
 
 # ── Init script to hide automation signals ─────────────────────
 STEALTH_INIT_SCRIPT = """() => {
+    // Override navigator properties
     Object.defineProperty(navigator, 'webdriver', {
         get: () => undefined
     });
+
+    // Real Chrome reports 5 plugins (Chrome PDF Plugin, Chrome PDF Viewer, Native Client, etc.)
+    Object.defineProperty(navigator, 'plugins', {
+        get: () => [
+            { name: 'Chrome PDF Plugin', filename: 'internal-pdf-viewer' },
+            { name: 'Chrome PDF Viewer', filename: 'mhjfbmdgcfjbbpaeojofohoefgiehjai' },
+            { name: 'Native Client', filename: 'internal-nacl-plugin' },
+        ],
+    });
+
+    // Real Chrome reports these languages
+    Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
+
+    // Typical modern hardware concurrency (8 cores is most common)
+    Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 8 });
+
+    // Add chrome.runtime (real Chrome has it, headless Playwright doesn't)
+    if (window.chrome) {
+        window.chrome.runtime = {};
+    }
+
+    // Override WebGL vendor/renderer to look like a real GPU
+    const getParameter = WebGLRenderingContext.prototype.getParameter;
+    WebGLRenderingContext.prototype.getParameter = function(parameter) {
+        // UNMASKED_VENDOR_WEBGL
+        if (parameter === 37445) {
+            return 'Intel Inc.';
+        }
+        // UNMASKED_RENDERER_WEBGL
+        if (parameter === 37446) {
+            return 'Intel Iris OpenGL Engine';
+        }
+        return getParameter.call(this, parameter);
+    };
 }"""
 
 
@@ -78,7 +114,14 @@ async def create_stealth_context(browser, **kwargs):
         A BrowserContext with realistic fingerprint settings.
     """
     logger.debug("Creating stealth browser context")
-    context_kwargs = {**STEALTH_CONTEXT_KWARGS, **kwargs}
+    context_kwargs = {
+        **STEALTH_CONTEXT_KWARGS,
+        "viewport": {
+            "width": 1920 + random.randint(-5, 5),
+            "height": 1080 + random.randint(-5, 5),
+        },
+        **kwargs,
+    }
     context = await browser.new_context(**context_kwargs)
     await context.add_init_script(STEALTH_INIT_SCRIPT)
     return context
