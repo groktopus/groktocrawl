@@ -5,6 +5,40 @@ All notable changes to GroktoCrawl are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0](https://github.com/groktopus/groktocrawl/compare/v0.8.0...v0.9.0) (2026-06-18)
+
+
+### Features
+
+* add analytics counter pipeline with Valkey counters, Prometheus export, error tracking, and feature toggle observability ([63d4aa7](https://github.com/groktopus/groktocrawl/commit/63d4aa76f39ba9686f42db93cd9730b1cdc00573))
+* add browser-svc unit and integration tests covering session management, stealth, cookies, and all 8 browser actions ([857f076](https://github.com/groktopus/groktocrawl/commit/857f076006698ea4ecbf0c83b038efb48cf6372c))
+* add env-var-based feature toggle system in common/features.py ([bb0c9a6](https://github.com/groktopus/groktocrawl/commit/bb0c9a6f54b8b4999558457bda18f771b8fe004d))
+* add gitleaks secret scanning CI job to workflow ([7ff312f](https://github.com/groktopus/groktocrawl/commit/7ff312f956e1e6fce758a8aa12d2b5ee699bf3d2))
+* add Grafana dashboard JSONs for agent-svc and scraper-svc ([5aec055](https://github.com/groktopus/groktocrawl/commit/5aec055c135ac73754719a7f5c25ad4694579ca4))
+* add mypy type checking job to CI workflow ([34cb786](https://github.com/groktopus/groktocrawl/commit/34cb7863596b50dd237fdaf7a05e4279e3151675))
+* add parse-svc unit and integration tests covering all 8 parsers ([59929b3](https://github.com/groktopus/groktocrawl/commit/59929b364c1253583404a005e296ebd03a37bb64))
+* add pip-audit CI job and update integration tests to copy full tests/ directory ([627ddcd](https://github.com/groktopus/groktocrawl/commit/627ddcd452ef60ed4242c031cafd2e999a85ab71))
+* add portal-svc unit and integration tests covering proxy logic and SSE streaming ([09edbf6](https://github.com/groktopus/groktocrawl/commit/09edbf60d9a8e117b27e1150045e5d0826dbb134))
+* add Prometheus alerting rules and per-alert runbooks ([5a3d1d2](https://github.com/groktopus/groktocrawl/commit/5a3d1d23581e2932feed2d350828f5903cae1196))
+* add reusable CircuitBreaker class and apply to portal-svc proxy ([14087b3](https://github.com/groktopus/groktocrawl/commit/14087b3cd31fc3c5c1a1fe27eb2ee7b5a5e9677a))
+* add ruff TD enforcement job to CI workflow ([9c75fae](https://github.com/groktopus/groktocrawl/commit/9c75fae39872c65c8590f21825a792c13f36fcaf))
+* add semantic-svc unit and integration tests covering 9 unit areas and 20+ integration scenarios ([4c13f22](https://github.com/groktopus/groktocrawl/commit/4c13f22b9a57dc9a091d39805c1ff5004c582818))
+* add SensitiveDataFilter to common/logging.py and standardize /metrics media type ([489b8f8](https://github.com/groktopus/groktocrawl/commit/489b8f89fa08a10daafe2013277a2b81791a19d8))
+* add structured logging, request-ID tracing, and /metrics endpoint to llm-svc ([9f0a437](https://github.com/groktopus/groktocrawl/commit/9f0a4379223bc0359adaf7354b8613023dc4f385))
+* add structured logging, request-ID tracing, and /metrics endpoint to search-svc ([c160c5b](https://github.com/groktopus/groktocrawl/commit/c160c5b5332407ad05a2736ca4bdee726fae8211))
+* replace agent-svc inline logging/middleware/metrics with common/ imports ([8a1f6c4](https://github.com/groktopus/groktocrawl/commit/8a1f6c4006b32ec690dfce0c4d17fb343cff400c))
+
+
+### Bug Fixes
+
+* add --redact to gitleaks CI to prevent secret exposure in logs ([cd20b56](https://github.com/groktopus/groktocrawl/commit/cd20b56fb822a49fe3230a084ddee2444fb5b12a))
+* add .gitleaksignore for pre-existing README placeholder secret ([b6f6112](https://github.com/groktopus/groktocrawl/commit/b6f611281e9e573a8b0c07106fb3bc788a3a6ed3))
+* add test-site health check to CI workflow ([#288](https://github.com/groktopus/groktocrawl/issues/288)) ([dd3e06d](https://github.com/groktopus/groktocrawl/commit/dd3e06dceb5fffb0a1c96e831880c40f60a6eecb)), closes [#287](https://github.com/groktopus/groktocrawl/issues/287)
+* correct gitleaks download URL from linux_amd64 to linux_x64 ([8b82a13](https://github.com/groktopus/groktocrawl/commit/8b82a13fc638a1803b54737ec5136398ebc63621))
+* remove non-existent semantic-svc/semantic from docker.yml copy loop ([ab5d0f7](https://github.com/groktopus/groktocrawl/commit/ab5d0f71d6f44697c4f46f2c091f80f3da0e5e21))
+* replace gitleaks-action with direct gitleaks install in CI ([7e460c1](https://github.com/groktopus/groktocrawl/commit/7e460c16d30ae553dd5a219b9011d73134f038fa))
+* resolve pre-existing test failures and lint issues for observability milestone validation ([a103920](https://github.com/groktopus/groktocrawl/commit/a103920ad5d959af5646ee3ca804308db8ba20a1))
+
 ## [0.8.0](https://github.com/groktopus/groktocrawl/compare/v0.7.0...v0.8.0) (2026-06-18)
 
 
