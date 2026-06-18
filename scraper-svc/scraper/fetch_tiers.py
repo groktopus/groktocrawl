@@ -314,7 +314,7 @@ async def fetch_via_flaresolverr(url: str) -> dict | None:
     try:
         async with httpx.AsyncClient(timeout=60) as client:
             resp = await client.post(
-                f"{FLARE_SOLVERR_URL}/v1",
+                f"{FLARE_SOLVERR_URL}",
                 json={
                     "cmd": "request.get",
                     "url": url,

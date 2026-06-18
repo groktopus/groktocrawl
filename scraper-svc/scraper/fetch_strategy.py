@@ -12,7 +12,7 @@ import re
 
 import httpx
 
-from common.url import extract_domain
+from common.url import extract_domain, is_private_host
 
 from .adapters.base import AdapterContext, get_registry
 from .barrier import (
@@ -28,7 +28,6 @@ from .cache import (
     _make_download_payload,
     _set_cache,
 )
-from common.url import is_private_host
 from .extract import assess_quality
 from .metadata import extract_all_metadata
 from .proxy import (
@@ -310,7 +309,7 @@ async def fetch_via_flaresolverr(url: str) -> dict | None:
     try:
         async with httpx.AsyncClient(timeout=60) as client:
             resp = await client.post(
-                f"{FLARE_SOLVERR_URL}/v1",
+                f"{FLARE_SOLVERR_URL}",
                 json={
                     "cmd": "request.get",
                     "url": url,
@@ -553,7 +552,9 @@ async def _get_browser_page_content(
             if resp.json().get("success"):
                 return resp.json()["result"].get("script_result", "")
     except Exception as e:
-        logger.debug("Browser page content fetch failed for session %s: %s", session_id, e)
+        logger.debug(
+            "Browser page content fetch failed for session %s: %s", session_id, e
+        )
     return None
 
 
