@@ -5,6 +5,93 @@ All notable changes to GroktoCrawl are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0](https://github.com/groktopus/groktocrawl/compare/v0.7.0...v0.8.0) (2026-06-18)
+
+
+### Features
+
+* 10 security scraper adapters — threat intelligence API coverage ([c37637e](https://github.com/groktopus/groktocrawl/commit/c37637eb7d8b518485d4159d26e7ac9ccc15dd3d))
+* add .dockerignore to reduce Docker build context size ([#254](https://github.com/groktopus/groktocrawl/issues/254)) ([eb48825](https://github.com/groktopus/groktocrawl/commit/eb48825497f5a7a428fc326cfb9b39b341512603)), closes [#241](https://github.com/groktopus/groktocrawl/issues/241)
+* add 10 security scraper adapters for threat intelligence APIs ([4330b16](https://github.com/groktopus/groktocrawl/commit/4330b166ddbbbefca857bb40b2087cd18ee95cd0))
+* add DEBUG-level logging to scraper adapter fallback chains ([#251](https://github.com/groktopus/groktocrawl/issues/251)) ([f12706d](https://github.com/groktopus/groktocrawl/commit/f12706dacd47096cbf1bab6d905f14d58418f6b8)), closes [#239](https://github.com/groktopus/groktocrawl/issues/239)
+* add DNS resolution failure logging to SSRF guard ([#253](https://github.com/groktopus/groktocrawl/issues/253)) ([080ef60](https://github.com/groktopus/groktocrawl/commit/080ef603a5f2ec3205662d397f080a9c8a16e4e1))
+* add graceful shutdown handling for fire-and-forget async tasks ([#231](https://github.com/groktopus/groktocrawl/issues/231)) ([360b526](https://github.com/groktopus/groktocrawl/commit/360b52616055295da5e042bbf920ae8320cc6272))
+* add Greenhouse and AshbyHQ ATS adapters ([#216](https://github.com/groktopus/groktocrawl/issues/216)) ([777fbd3](https://github.com/groktopus/groktocrawl/commit/777fbd387e8d20b2ccbc47b12fa4639d2f3765b7))
+* add lifespan-based model loading and startup readiness to semantic-svc ([#223](https://github.com/groktopus/groktocrawl/issues/223)) ([5b98caf](https://github.com/groktopus/groktocrawl/commit/5b98caff097ea9cbbd25d4712b7923759d21bfc6))
+* add portal-svc health probe to agent-svc ([#218](https://github.com/groktopus/groktocrawl/issues/218)) ([429335c](https://github.com/groktopus/groktocrawl/commit/429335ceffa007bdeb3672a9d3109aa97a55747c))
+* add Query Intelligence — LLM-powered research planning (Phase 0) ([865da0d](https://github.com/groktopus/groktocrawl/commit/865da0db27906ce43d7b3e83c241f05a9ae7c42c))
+* add search volume controls to agent-svc ([#214](https://github.com/groktopus/groktocrawl/issues/214)) ([064628d](https://github.com/groktopus/groktocrawl/commit/064628d41b24aba9ca3f8874dbe8ef08e85eb293))
+* add Vaco (Highspring) adapter for jobs.vaco.com ([#222](https://github.com/groktopus/groktocrawl/issues/222)) ([8a5b54e](https://github.com/groktopus/groktocrawl/commit/8a5b54ecd3eb47fd20847a29437784266e171809))
+* agent readiness level-up — observability, type checking, CI tooling, tests ([#267](https://github.com/groktopus/groktocrawl/issues/267)) ([3dbdd82](https://github.com/groktopus/groktocrawl/commit/3dbdd82f5ee4711c2005212345a96308b60976d3))
+* NVD and CVE Program adapters — structured CVE data extraction ([b327921](https://github.com/groktopus/groktocrawl/commit/b32792105c2128c36bc352b111726b14da759a66))
+* NVD and CVE Program adapters for structured CVE data extraction ([4e10527](https://github.com/groktopus/groktocrawl/commit/4e10527842984d48d189a33ce0c2cf308e21d9c1))
+* pre-tier HEAD probe to detect bot protection before scrape pipeline ([#276](https://github.com/groktopus/groktocrawl/issues/276)) ([bce7edc](https://github.com/groktopus/groktocrawl/commit/bce7edcc7ae29cc2bf7064fe30b921f1368d73d9)), closes [#272](https://github.com/groktopus/groktocrawl/issues/272)
+* Project Gutenberg adapter — chapter-structured book extraction ([#182](https://github.com/groktopus/groktocrawl/issues/182)) ([94a32d0](https://github.com/groktopus/groktocrawl/commit/94a32d0ca23e41b8fb6982081604e29006d9fd19)), closes [#181](https://github.com/groktopus/groktocrawl/issues/181)
+* Query Intelligence — LLM-powered research planning (Phase 0) ([e7f87da](https://github.com/groktopus/groktocrawl/commit/e7f87da5b956cde382df66ef27bac79b89ead131))
+* replace SearXNG with SlopSearX in Docker stack ([#204](https://github.com/groktopus/groktocrawl/issues/204)) ([d384355](https://github.com/groktopus/groktocrawl/commit/d3843553916ccdadf5c1065b0c8d585f1927bb50))
+* Shopify adapter — bypass UCP content-negotiation trap ([04df892](https://github.com/groktopus/groktocrawl/commit/04df892cceef4280f032262ceb84b7f4bb1eec6f))
+* Shopify adapter — bypass UCP content-negotiation trap ([f7852cf](https://github.com/groktopus/groktocrawl/commit/f7852cf206aa2a7e4042e625fd89e8797c35645e))
+* standardize error handling across all API endpoints ([#208](https://github.com/groktopus/groktocrawl/issues/208)) ([5b1154d](https://github.com/groktopus/groktocrawl/commit/5b1154d3e2a607979f48a81f1f36f93abde2a007)), closes [#185](https://github.com/groktopus/groktocrawl/issues/185)
+
+
+### Bug Fixes
+
+* add from __future__ import annotations for Python 3.9 compat ([c8b8477](https://github.com/groktopus/groktocrawl/commit/c8b8477c85da6e4bfea1fb2be108cf553021c51c))
+* add from __future__ import annotations for Python 3.9 compat ([a3cf2a8](https://github.com/groktopus/groktocrawl/commit/a3cf2a86d787161bcfe5e7191802cec7e6622306))
+* add LLM health check and SSE status heartbeat to agent endpoint ([#265](https://github.com/groktopus/groktocrawl/issues/265)) ([e3df9b3](https://github.com/groktopus/groktocrawl/commit/e3df9b3ee3752d7e3176971fae3eb8531e301121))
+* add missing Qdrant lookup logging to batch index endpoint ([#257](https://github.com/groktopus/groktocrawl/issues/257)) ([209f964](https://github.com/groktopus/groktocrawl/commit/209f9648d5b731ac73f113f9256a21aded1e253d))
+* allow dependabot PRs to pass CI ([#230](https://github.com/groktopus/groktocrawl/issues/230)) ([ec4ab1d](https://github.com/groktopus/groktocrawl/commit/ec4ab1d52b9f4f9d66f084dbbd0c023d50ad3e62))
+* correct SlopSearX image tag — CI strips v prefix ([#205](https://github.com/groktopus/groktocrawl/issues/205)) ([3691023](https://github.com/groktopus/groktocrawl/commit/3691023a19a10de9257f2edf9c56c3ac654209e5))
+* deduplicate SSRF guard across services ([#235](https://github.com/groktopus/groktocrawl/issues/235)) ([dfa36fd](https://github.com/groktopus/groktocrawl/commit/dfa36fd1fbcd9f57b1190f60272cc3e491488835))
+* deduplicate SSRF guard across services, consolidate on common.url.is_private_host ([dfa36fd](https://github.com/groktopus/groktocrawl/commit/dfa36fd1fbcd9f57b1190f60272cc3e491488835))
+* deduplicate SSRF guard across services, consolidate on common.url.is_private_host ([cab348f](https://github.com/groktopus/groktocrawl/commit/cab348f6ec19f43dd516c8c43b01c80f555958c2)), closes [#195](https://github.com/groktopus/groktocrawl/issues/195)
+* deprioritize video platform URLs in agent research pipeline ([#184](https://github.com/groktopus/groktocrawl/issues/184)) ([669c51b](https://github.com/groktopus/groktocrawl/commit/669c51b984a4e4965314751a45d35d4d01fee338))
+* enable rich search for vector and hybrid_vector retrieval modes ([#234](https://github.com/groktopus/groktocrawl/issues/234)) ([43a8a16](https://github.com/groktopus/groktocrawl/commit/43a8a16ce44e8270c4f24e54d5fae12030694512))
+* handle read-only settings.yml mount in searxng entrypoint ([40495f9](https://github.com/groktopus/groktocrawl/commit/40495f935d8f9df589f95639b60bade8055ff035))
+* harden Playwright stealth configuration for anti-bot bypass ([#277](https://github.com/groktopus/groktocrawl/issues/277)) ([2794051](https://github.com/groktopus/groktocrawl/commit/279405170dea61caad5e26164b7656a63b2314af)), closes [#273](https://github.com/groktopus/groktocrawl/issues/273)
+* increase agent prompt max_length from 10000 to 100000 ([#264](https://github.com/groktopus/groktocrawl/issues/264)) ([d088574](https://github.com/groktopus/groktocrawl/commit/d08857455ecbf6b40e1ec73c237f041b0577c19f))
+* install system deps for Playwright Chromium Dockerfiles ([#259](https://github.com/groktopus/groktocrawl/issues/259)) ([d03995e](https://github.com/groktopus/groktocrawl/commit/d03995e994de8191b1370d8d9c71307323977261))
+* lift FlareSolverr tier out of if result: gating ([#275](https://github.com/groktopus/groktocrawl/issues/275)) ([d74aac6](https://github.com/groktopus/groktocrawl/commit/d74aac647c39215936a0ddad933a9385c5f85bb6)), closes [#274](https://github.com/groktopus/groktocrawl/issues/274)
+* log Qdrant lookup failures instead of silently swallowing them ([#248](https://github.com/groktopus/groktocrawl/issues/248)) ([f862b45](https://github.com/groktopus/groktocrawl/commit/f862b45a18f6d51b10eefbeb24bce4e2ae7a5c89)), closes [#237](https://github.com/groktopus/groktocrawl/issues/237)
+* log semantic indexing failures instead of silently swallowing them ([#249](https://github.com/groktopus/groktocrawl/issues/249)) ([44b166a](https://github.com/groktopus/groktocrawl/commit/44b166a58e6b88294c80ea6b22d10f706dc829f8)), closes [#238](https://github.com/groktopus/groktocrawl/issues/238)
+* narrow exception handling in semantic-svc model loading ([#252](https://github.com/groktopus/groktocrawl/issues/252)) ([28d0e05](https://github.com/groktopus/groktocrawl/commit/28d0e05c0e98b7686ed0c39a498dd6ff11972af1)), closes [#243](https://github.com/groktopus/groktocrawl/issues/243)
+* only send enable_thinking param when explicitly opted in ([c97170d](https://github.com/groktopus/groktocrawl/commit/c97170d94d595b0afe220af5ba5b4ad72d2a0025))
+* pass HF_TOKEN as Docker build arg for model downloads ([43ad4e0](https://github.com/groktopus/groktocrawl/commit/43ad4e068b143a4007abd19eac8954a95a638827))
+* pin Qdrant image and cap memory to prevent OOM ([483f148](https://github.com/groktopus/groktocrawl/commit/483f148d004355d4f96e164e36dfb773ce3e63f7))
+* print agent errors to stdout instead of stderr ([#266](https://github.com/groktopus/groktocrawl/issues/266)) ([198a41d](https://github.com/groktopus/groktocrawl/commit/198a41dcc414c4812786da1172a7bbf59c6a07da)), closes [#263](https://github.com/groktopus/groktocrawl/issues/263)
+* read API key from API_KEY or GROKTOCRAWL_API_KEY env vars ([d5080ee](https://github.com/groktopus/groktocrawl/commit/d5080ee49efba0ac8152175becf9fcacae31318b))
+* remove dead try/except in _compute_domain_category ([54c6f1e](https://github.com/groktopus/groktocrawl/commit/54c6f1efc43b009a2ae005f54b5a56e008c0c755))
+* remove duplicate /v1 path in FlareSolverr URL construction ([#284](https://github.com/groktopus/groktocrawl/issues/284)) ([2656b65](https://github.com/groktopus/groktocrawl/commit/2656b656b6d536475a325f3979b8818ce117ca3a)), closes [#283](https://github.com/groktopus/groktocrawl/issues/283)
+* remove unused RQ queue code ([#233](https://github.com/groktopus/groktocrawl/issues/233)) ([11663bd](https://github.com/groktopus/groktocrawl/commit/11663bd79d8a20d9c90953bda3dafbfd21fab489)), closes [#196](https://github.com/groktopus/groktocrawl/issues/196)
+* rename unused variable to silence vulture dead-code check ([e7253cb](https://github.com/groktopus/groktocrawl/commit/e7253cbab16ad27e185e8b3eeb5da365f007a016))
+* replace debug print() with structured logger in monitor.py ([#250](https://github.com/groktopus/groktocrawl/issues/250)) ([fda98a7](https://github.com/groktopus/groktocrawl/commit/fda98a763a7f25d05105036241bfbff278fb44e0)), closes [#242](https://github.com/groktopus/groktocrawl/issues/242)
+* send API key as Bearer token in CLI requests ([d0221ae](https://github.com/groktopus/groktocrawl/commit/d0221ae9c047f5b56f16d412ca6914e20c09ccd0))
+* send API key as Bearer token in CLI requests ([a037388](https://github.com/groktopus/groktocrawl/commit/a0373889ee3d02cce222de598ae7cac6afd4e132)), closes [#177](https://github.com/groktopus/groktocrawl/issues/177)
+* stop firing real searches in agent-svc health check ([2e18603](https://github.com/groktopus/groktocrawl/commit/2e186036602d44d1dae377a19d6243bab730fd33))
+* stop firing real searches in agent-svc health check ([#217](https://github.com/groktopus/groktocrawl/issues/217)) ([46bc439](https://github.com/groktopus/groktocrawl/commit/46bc439a44ba4f4d7cfb489ce97f9d3790779d22))
+* tune code-quality CI thresholds and add setuptools config ([12226c8](https://github.com/groktopus/groktocrawl/commit/12226c861d34e2bb71b30e64aeabeffd05b3ef20))
+* tune code-quality CI thresholds and add setuptools config ([#269](https://github.com/groktopus/groktocrawl/issues/269)) ([6af7293](https://github.com/groktopus/groktocrawl/commit/6af72932fdd53dbd42db1522411232e37bdf958c))
+
+
+### Documentation
+
+* add Shopify adapter to README ([154fb77](https://github.com/groktopus/groktocrawl/commit/154fb7780f82ac55c84c90c890bcbc16e84e5a25))
+* add Shopify to AGENTS.md adapter listing ([fa7d701](https://github.com/groktopus/groktocrawl/commit/fa7d7015a746f21fdb2e292abb9a9b904bafc50d))
+* bring Firecrawl comparison table current with v0.7.0 features ([e7e0ccb](https://github.com/groktopus/groktocrawl/commit/e7e0ccbe63b50c07d0932988154d81f57fc13ddd))
+* document full adapter architecture — 20 adapters across 4 categories ([44a0d5d](https://github.com/groktopus/groktocrawl/commit/44a0d5d7e8afc402a8e8289b15347fdf466644c6))
+* document full adapter architecture — 20 adapters across 4 categories ([0d892e2](https://github.com/groktopus/groktocrawl/commit/0d892e20c2e167c96aa66dfa1be76bf017a5b0f4)), closes [#169](https://github.com/groktopus/groktocrawl/issues/169)
+* fix Firecrawl comparison — use — for unverified, correct self-hosted status ([9797731](https://github.com/groktopus/groktocrawl/commit/97977316bd4a5ede1a9ebf27d61002826e55cffa))
+* only mark self-hosted rows I actually verified — rest — ([c032c7a](https://github.com/groktopus/groktocrawl/commit/c032c7a900555401e7daf652d6be033df80ea6b9))
+* promote ADR-0031 from proposed to accepted ([#201](https://github.com/groktopus/groktocrawl/issues/201)) ([e992921](https://github.com/groktopus/groktocrawl/commit/e99292187885097769b6db4c4004d48212a3c1af))
+* promote ADR-0032 from proposed to accepted ([#209](https://github.com/groktopus/groktocrawl/issues/209)) ([9a61aa5](https://github.com/groktopus/groktocrawl/commit/9a61aa55cc2344f2a4fc7ffd8c70283ace5dab27))
+* promote ADR-0033 to accepted ([#215](https://github.com/groktopus/groktocrawl/issues/215)) ([fde96f4](https://github.com/groktopus/groktocrawl/commit/fde96f4e9b7767474e9413c5ec80952fdfde348e))
+* promote ADR-0034 from proposed to accepted ([#229](https://github.com/groktopus/groktocrawl/issues/229)) ([6f56a14](https://github.com/groktopus/groktocrawl/commit/6f56a146eab8947270f2b47b7dabab664dab75c5))
+* promote ADR-0035 from proposed to accepted ([#232](https://github.com/groktopus/groktocrawl/issues/232)) ([6a83d5d](https://github.com/groktopus/groktocrawl/commit/6a83d5db039bd2823a6e069c2bd8418feffcdc2a))
+* replace — with ❌ in comparison table for consistency ([ef99a8f](https://github.com/groktopus/groktocrawl/commit/ef99a8fffca81867ad1fd513d728594baa90f32d))
+* simplify Self-contained Docker row to emoji-only ([0f46b0e](https://github.com/groktopus/groktocrawl/commit/0f46b0e76e36bfc0d17ab776bdce3f766388e14e))
+* update AGENTS.md with current adapter categories (20 total) ([41a9407](https://github.com/groktopus/groktocrawl/commit/41a94073d542ba030ae944c4a9e81e2e84150454))
+* update README and CONTRIBUTING for current architecture ([dbe5a0a](https://github.com/groktopus/groktocrawl/commit/dbe5a0a5d4c441c0da14d6c3f719863f2ee45e30))
+
 ## [Unreleased]
 
 ### Changed
