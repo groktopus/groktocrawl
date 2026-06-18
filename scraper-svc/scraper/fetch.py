@@ -241,9 +241,9 @@ async def smart_scrape(url: str) -> dict:
         # Barrier detection — if page IS a challenge/error, skip remaining tiers
         if "barrier" in result:
             logger.warning(
-                "Barrier detected at Tier 3 for %s, skipping remaining tiers", url
+                "Barrier detected at Tier 3 for %s, falling through to FlareSolverr",
+                url,
             )
-            return result
 
         markdown_text = result.get("markdown", "")
         raw_html = result.get("raw_html_start", "")
@@ -268,27 +268,26 @@ async def smart_scrape(url: str) -> dict:
             )
 
     # Tier 3.5: FlareSolverr for hard Cloudflare challenges
-    if result:
-        _proceed, blocked = await _politeness_check_and_delay(url)
-        if blocked:
-            return blocked
-        fs_result = await fetch_via_flaresolverr(url)
-        if fs_result:
-            if "barrier" in fs_result:
-                logger.warning(
-                    "Barrier detected at Tier 3.5 for %s, skipping remaining tiers", url
-                )
-                return fs_result
-            accepted = await _maybe_degrade(
-                fs_result, "tier35-flaresolverr", best_effort
+    # Always attempt FlareSolverr after Playwright — handles Cloudflare
+    # JS challenges that Playwright couldn't render.
+    _proceed, blocked = await _politeness_check_and_delay(url)
+    if blocked:
+        return blocked
+    fs_result = await fetch_via_flaresolverr(url)
+    if fs_result:
+        if "barrier" in fs_result:
+            logger.warning(
+                "Barrier detected at Tier 3.5 for %s, skipping remaining tiers", url
             )
-            if accepted:
-                accepted = await _enrich_with_politeness(accepted, url)
-                await _set_cache(url, accepted, prior_entry=cached)
-                return accepted
+            return fs_result
+        accepted = await _maybe_degrade(fs_result, "tier35-flaresolverr", best_effort)
+        if accepted:
+            accepted = await _enrich_with_politeness(accepted, url)
+            await _set_cache(url, accepted, prior_entry=cached)
+            return accepted
 
     # Tier 4: LLM-assisted recovery when content looks suspicious
-    if result:
+    if result and ("barrier" in result or result.get("markdown")):
         logger.info("Tier 4: attempting LLM recovery for %s", url)
         from .recovery import attempt_llm_recovery
 
@@ -304,7 +303,7 @@ async def smart_scrape(url: str) -> dict:
                 return accepted
 
     # Browser-svc fallback for Substack (last resort before error)
-    if result:
+    if result and ("barrier" in result or result.get("raw_html_start")):
         raw_html = result.get("raw_html_start", "")
         redirected_url = ""
         import re as _re
