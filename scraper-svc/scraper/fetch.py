@@ -15,7 +15,7 @@ import os
 import httpx
 
 from .adapters.base import AdapterContext, get_registry
-from .cache import _check_cache, _set_cache
+from .cache import _check_cache, _is_binary_content_type, _set_cache
 from .fetch_quality import (
     QA_MIN_QUALITY_THRESHOLD,
     _add_quality,
@@ -148,6 +148,74 @@ async def _politeness_check_for_tier(url: str, tier_label: str) -> dict | None:
     return None
 
 
+async def _head_probe(url: str, client: httpx.AsyncClient) -> dict:
+    """Send a lightweight HEAD request to detect routing signals.
+
+    Checks response headers for bot protection, redirects, binary content,
+    and empty responses. The probe is an optimization — if it fails, the
+    pipeline falls through to the normal tier flow.
+
+    Returns a dict with routing hints:
+        shielded: True if bot protection or error status detected
+        redirect_url: Final URL after redirects
+        is_binary: True if content-type indicates binary download
+        is_empty: True if content-length < 1KB with 200 status
+        status_code: HTTP status code
+        content_type: Content-Type header value
+    """
+    try:
+        resp = await client.head(url, follow_redirects=True, timeout=10)
+        status_code = resp.status_code
+        content_type = resp.headers.get("content-type", "")
+        content_length = resp.headers.get("content-length")
+        final_url = str(resp.url)
+
+        shielded = False
+        if resp.headers.get("cf-mitigated", "").lower() == "challenge":
+            shielded = True
+        if status_code >= 400:
+            shielded = True
+
+        is_binary = _is_binary_content_type(content_type)
+
+        is_empty = False
+        if content_length is not None and status_code == 200:
+            try:
+                cl = int(content_length)
+                if cl < 1024:
+                    is_empty = True
+            except (ValueError, TypeError):
+                pass
+
+        result = {
+            "shielded": shielded,
+            "redirect_url": final_url,
+            "is_binary": is_binary,
+            "is_empty": is_empty,
+            "status_code": status_code,
+            "content_type": content_type,
+        }
+        logger.info(
+            "HEAD probe: %s -> shielded=%s, redirect=%s, binary=%s, status=%d",
+            url,
+            shielded,
+            final_url != url,
+            is_binary,
+            status_code,
+        )
+        return result
+    except Exception as e:
+        logger.warning("HEAD probe failed for %s: %s", url, e)
+        return {
+            "shielded": False,
+            "redirect_url": url,
+            "is_binary": False,
+            "is_empty": False,
+            "status_code": 0,
+            "content_type": "",
+        }
+
+
 async def smart_scrape(url: str) -> dict:
     """Try each tier in order. Return the first successful result with acceptable quality.
 
@@ -206,31 +274,46 @@ async def smart_scrape(url: str) -> dict:
                 return cached
             logger.info("Cache hit below quality threshold, re-fetching %s", url)
 
+        # Phase 0: HEAD probe — detect bot protection, errors, or binary content
+        probe = await _head_probe(url, client)
+        if probe["redirect_url"] != url:
+            logger.info("HEAD probe: %s redirected to %s", url, probe["redirect_url"])
+            url = probe["redirect_url"]
+            # Re-check cache with redirected URL
+            cached = await _check_cache(url)
+            if cached:
+                cached = _add_quality(cached)
+                _enrich_with_metadata(cached)
+                if _quality_acceptable(cached):
+                    return cached
+
         # Tier 1: /llms.txt
-        _proceed, blocked = await _politeness_check_and_delay(url)
-        if blocked:
-            return blocked
-        result = await fetch_via_llms_txt(url, client)
-        if result:
-            accepted = await _maybe_degrade(result, "tier1-llms-txt", best_effort)
-            if accepted:
-                accepted = await _enrich_with_politeness(accepted, url)
-                await _set_cache(url, accepted, prior_entry=cached)
-                return accepted
+        if not probe.get("shielded") and not probe.get("is_binary"):
+            _proceed, blocked = await _politeness_check_and_delay(url)
+            if blocked:
+                return blocked
+            result = await fetch_via_llms_txt(url, client)
+            if result:
+                accepted = await _maybe_degrade(result, "tier1-llms-txt", best_effort)
+                if accepted:
+                    accepted = await _enrich_with_politeness(accepted, url)
+                    await _set_cache(url, accepted, prior_entry=cached)
+                    return accepted
 
         # Tier 2: Accept: text/markdown
-        _proceed, blocked = await _politeness_check_and_delay(url)
-        if blocked:
-            return blocked
-        result = await fetch_via_content_negotiation(url, client)
-        if result:
-            accepted = await _maybe_degrade(
-                result, "tier2-content-negotiation", best_effort
-            )
-            if accepted:
-                accepted = await _enrich_with_politeness(accepted, url)
-                await _set_cache(url, accepted, prior_entry=cached)
-                return accepted
+        if not probe.get("shielded") and not probe.get("is_binary"):
+            _proceed, blocked = await _politeness_check_and_delay(url)
+            if blocked:
+                return blocked
+            result = await fetch_via_content_negotiation(url, client)
+            if result:
+                accepted = await _maybe_degrade(
+                    result, "tier2-content-negotiation", best_effort
+                )
+                if accepted:
+                    accepted = await _enrich_with_politeness(accepted, url)
+                    await _set_cache(url, accepted, prior_entry=cached)
+                    return accepted
 
     # Tier 3: Playwright render + readability (no shared client needed)
     _proceed, blocked = await _politeness_check_and_delay(url)
