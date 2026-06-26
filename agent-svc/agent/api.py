@@ -60,6 +60,8 @@ from .models import (
     MonitorListResponse,
     MonitorResponse,
     MonitorUpdateRequest,
+    MonitorCheckItem,
+    MonitorCheckListResponse,
     ParamsPreviewRequest,
     ParamsPreviewResponse,
     ParseResponse,
@@ -71,7 +73,7 @@ from .models import (
     SearchResult,
     Source,
 )
-from .monitor import delete_monitor, get_all_monitors, get_monitor, run_monitor, save_monitor
+from .monitor import delete_monitor, get_all_monitors, get_monitor, get_monitor_check, get_monitor_checks, run_monitor, save_monitor
 from .store import JobStore
 
 logger = logging.getLogger(__name__)
@@ -1762,6 +1764,48 @@ async def run_monitor_check(request: Request, monitor_id: str) -> MonitorRespons
         last_result=cfg.get("last_result"),
         created_at=cfg.get("created_at", ""),
     )
+
+
+@router.get(
+    "/v2/monitor/{monitor_id}/checks", response_model=MonitorCheckListResponse
+)
+async def list_monitor_checks(
+    monitor_id: str, limit: int = 50
+) -> MonitorCheckListResponse:
+    """List check history for a monitor, newest first."""
+    cfg = get_monitor(monitor_id)
+    if cfg is None:
+        raise NotFoundError(
+            detail="Monitor not found", details={"monitor_id": monitor_id}
+        )
+    checks = get_monitor_checks(monitor_id, limit=limit)
+    items = [MonitorCheckItem(**c) for c in checks]
+    return MonitorCheckListResponse(data=items, total=len(items))
+
+
+@router.get(
+    "/v2/monitor/{monitor_id}/checks/{check_index}",
+    response_model=MonitorCheckItem,
+)
+async def get_monitor_check_detail(
+    monitor_id: str, check_index: int
+) -> MonitorCheckItem:
+    """Get a specific monitor check by its 0-based index.
+
+    Index 0 is the most recent check.
+    """
+    cfg = get_monitor(monitor_id)
+    if cfg is None:
+        raise NotFoundError(
+            detail="Monitor not found", details={"monitor_id": monitor_id}
+        )
+    check = get_monitor_check(monitor_id, check_index)
+    if check is None:
+        raise NotFoundError(
+            detail="Check not found",
+            details={"monitor_id": monitor_id, "check_index": check_index},
+        )
+    return MonitorCheckItem(**check)
 
 
 # ----- Parse -----

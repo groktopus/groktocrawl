@@ -929,6 +929,32 @@ class MonitorDeleteResponse(BaseModel):
     success: bool = True
 
 
+class MonitorCheckItem(BaseModel):
+    """A single monitor check result entry."""
+
+    monitor_id: str = ""
+    monitor_type: str = "scrape"
+    url: str | None = None
+    query: str | None = None
+    checked_at: str = ""
+    changed: bool = False
+    diff: str | None = None
+    previous_length: int | None = None
+    current_length: int | None = None
+    new_results: list[dict[str, Any]] | None = None
+    new_count: int | None = None
+    total_results: int | None = None
+    error: str | None = None
+
+
+class MonitorCheckListResponse(BaseModel):
+    """Response for GET /v2/monitor/{id}/checks."""
+
+    success: bool = True
+    data: list[MonitorCheckItem] = Field(default_factory=list)
+    total: int = 0
+
+
 class ParseResponse(BaseModel):
     success: bool
     data: dict[str, Any] | None = None

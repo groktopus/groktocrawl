@@ -274,6 +274,42 @@ async def run_monitor(monitor_id: str, scraper_url: str = "http://scraper-svc:80
     return await check_monitor(monitor_id, config)
 
 
+def get_monitor_checks(monitor_id: str, limit: int = 50) -> list[dict]:
+    """Get check history for a monitor, newest first.
+
+    Returns up to ``limit`` entries from the monitor's history list.
+    Each entry is a dict with check result fields (checked_at, changed,
+    diff, error, etc.).
+    """
+    r = _get_redis()
+    key = HISTORY_KEY.format(monitor_id)
+    raw = r.lrange(key, 0, limit - 1)
+    results = []
+    for entry in raw:
+        try:
+            results.append(json.loads(entry))
+        except json.JSONDecodeError:
+            continue
+    return results
+
+
+def get_monitor_check(monitor_id: str, check_index: int) -> dict | None:
+    """Get a single check result by its 0-based index in the history list.
+
+    Index 0 is the most recent check.
+    Returns None if the index is out of range or the monitor has no history.
+    """
+    r = _get_redis()
+    key = HISTORY_KEY.format(monitor_id)
+    raw = r.lindex(key, check_index)
+    if raw is None:
+        return None
+    try:
+        return json.loads(raw)  # type: ignore[no-any-return]
+    except json.JSONDecodeError:
+        return None
+
+
 async def check_all_async() -> list[dict]:
     """Check all monitors."""
     monitors = get_all_monitors()
