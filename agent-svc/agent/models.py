@@ -1044,6 +1044,14 @@ class ActivityResponse(BaseModel):
     data: list[ActivityItem] = Field(default_factory=list)
 
 
+class ConcurrencyCheckResponse(BaseModel):
+    """Response for GET /v2/concurrency-check."""
+
+    success: bool = True
+    max_concurrency: int = 50
+    current: int = 0
+
+
 class EnrichmentField(BaseModel):
     """A field to extract for each enrichment item."""
 

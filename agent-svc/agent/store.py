@@ -244,3 +244,37 @@ class JobStore:
             if cursor == 0:
                 break
         return active
+
+    def count_active_jobs(self, kind: str | None = None) -> int:
+        """Count the number of jobs currently in 'processing' status.
+
+        Uses the same SCAN-based approach as list_active_jobs but
+        only returns the count rather than the full metadata list.
+
+        Args:
+            kind: If set, only count jobs of this kind (``crawl``, ``agent``, etc.)
+
+        Returns:
+            Number of active processing jobs.
+        """
+        count = 0
+        cursor = 0
+        while True:
+            cursor, keys = self.redis.scan(cursor=cursor, match="job:*:meta", count=100)
+            if keys:
+                pipe = self.redis.pipeline()
+                for key in keys:
+                    pipe.get(key)
+                results = pipe.execute()
+                for raw in results:
+                    if raw is None:
+                        continue
+                    meta = json.loads(raw)
+                    if meta.get("status") != "processing":
+                        continue
+                    if kind is not None and meta.get("kind") != kind:
+                        continue
+                    count += 1
+            if cursor == 0:
+                break
+        return count
