@@ -257,6 +257,23 @@ async def run_search_monitor(monitor_id: str, config: dict) -> dict:
     return result
 
 
+async def run_monitor(monitor_id: str, scraper_url: str = "http://scraper-svc:8001") -> dict:
+    """Run a single monitor check immediately, regardless of schedule.
+
+    Loads the monitor config, dispatches to the appropriate check function
+    (scrape or search), and returns the check result.
+    """
+    config = get_monitor(monitor_id)
+    if config is None:
+        raise ValueError(f"Monitor {monitor_id} not found")
+
+    config["scraper_url"] = scraper_url
+    mt = config.get("monitor_type", "scrape")
+    if mt == "search":
+        return await run_search_monitor(monitor_id, config)
+    return await check_monitor(monitor_id, config)
+
+
 async def check_all_async() -> list[dict]:
     """Check all monitors."""
     monitors = get_all_monitors()
