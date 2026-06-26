@@ -326,3 +326,4 @@ def check_all() -> None:
 
 if __name__ == "__main__":
     check_all()
+#CI trigger
