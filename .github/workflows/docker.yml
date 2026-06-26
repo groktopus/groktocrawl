@@ -139,7 +139,7 @@ jobs:
 
       - name: Start the Docker stack
         run: docker compose up --build -d
-        timeout-minutes: 10
+        timeout-minutes: 15
 
       - name: Start test fixtures
         run: docker compose --profile fixture up --build -d llm-svc tier3-fixture test-site
@@ -168,7 +168,7 @@ jobs:
           # First check from host that the API is alive
           python3 -c "
           import time, urllib.request, urllib.error
-          deadline = time.time() + 300
+          deadline = time.time() + 600
           while time.time() < deadline:
               try:
                   r = urllib.request.urlopen('http://localhost:8003/health', timeout=5)
@@ -208,7 +208,7 @@ jobs:
         run: |
           python3 -c "
           import time, urllib.request
-          deadline = time.time() + 30
+          deadline = time.time() + 60
           while time.time() < deadline:
               try:
                   r = urllib.request.urlopen('http://localhost:8006/health', timeout=5)
@@ -226,7 +226,7 @@ jobs:
         run: |
           python3 -c "
           import time, urllib.request
-          deadline = time.time() + 60
+          deadline = time.time() + 90
           while time.time() < deadline:
               try:
                   r = urllib.request.urlopen('http://localhost:8005/health', timeout=5)

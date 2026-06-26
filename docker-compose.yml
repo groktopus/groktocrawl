@@ -46,6 +46,12 @@ services:
       - "8011:8011"
     profiles:
       - fixture
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8011/health', timeout=5)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   test-site:
     build:
@@ -60,6 +66,12 @@ services:
       - ENABLE_MARKDOWN=1
       - ENABLE_DYNAMIC=1
       - SITE_NAME=Fixture Site
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
 
   tier3-fixture:
     build:
@@ -74,6 +86,12 @@ services:
       - ENABLE_MARKDOWN=0
       - ENABLE_DYNAMIC=1
       - SITE_NAME=Tier 3 Fixture
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
 
   scraper-svc:
     build:
@@ -90,6 +108,12 @@ services:
       - VALKEY_HOST=valkey
       - VALKEY_PORT=6379
       - VALKEY_DB=0
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health', timeout=5)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   browser-svc:
     build:
@@ -97,6 +121,12 @@ services:
       dockerfile: browser-svc/Dockerfile
     image: ghcr.io/groktopus/groktocrawl-browser
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8012/health', timeout=5)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   flare-solverr:
     image: ghcr.io/flaresolverr/flaresolverr:latest
@@ -123,6 +153,12 @@ services:
       - EMBED_MODEL_NAME=${EMBED_MODEL_NAME:-BAAI/bge-m3}
       - EMBED_DIM=${EMBED_DIM:-1024}
       - ACTIVE_EMBED_MODEL=${ACTIVE_EMBED_MODEL:-v_bge-m3}
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; r=urllib.request.urlopen('http://localhost:8003/health', timeout=5); assert b'\"ok\"' in r.read()"]
+      interval: 15s
+      timeout: 10s
+      retries: 30
+      start_period: 30s
 
   qdrant:
     image: qdrant/qdrant:v1.18.2
@@ -133,6 +169,12 @@ services:
       - qdrant_data:/qdrant/storage
     environment:
       - MALLOC_CONF=retain:false
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:6333/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
 
   agent-svc:
     build:
@@ -150,9 +192,11 @@ services:
       slopsearx:
         condition: service_started
       scraper-svc:
-        condition: service_started
+        condition: service_healthy
       semantic-svc:
-        condition: service_started
+        condition: service_healthy
+      browser-svc:
+        condition: service_healthy
     environment:
       - VALKEY_URL=${VALKEY_URL:-redis://valkey:6379/0}
       - SEARXNG_URL=${SEARXNG_URL:-http://slopsearx:8080}
@@ -160,6 +204,12 @@ services:
       - SEMANTIC_URL=${SEMANTIC_URL:-http://semantic-svc:8003}
       - HOST=0.0.0.0
       - PORT=8080
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health', timeout=5)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   ofelia:
     image: mcuadros/ofelia:latest
@@ -180,12 +230,24 @@ services:
       - "8082:8081"
     environment:
       - AGENT_BASE_URL=http://agent-svc:8080
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8081/health', timeout=5)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   parse-svc:
     build:
       context: .
       dockerfile: parse-svc/Dockerfile
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8013/health', timeout=5)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 volumes:
   valkey_data:
