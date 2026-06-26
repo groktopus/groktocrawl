@@ -961,6 +961,14 @@ class ParseResponse(BaseModel):
     error: str | None = None
 
 
+class ParseUploadUrlResponse(BaseModel):
+    """Response for POST /v2/parse/upload-url."""
+
+    success: bool = True
+    upload_id: str
+    upload_url: str
+
+
 class LLMsTextRequest(BaseModel):
     url: str = Field(..., description="Site URL to generate llms.txt for")
     max_pages: int = Field(default=50, ge=1, le=500, description="Max pages to scan")

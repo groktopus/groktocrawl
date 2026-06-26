@@ -65,6 +65,7 @@ from .models import (
     ParamsPreviewRequest,
     ParamsPreviewResponse,
     ParseResponse,
+    ParseUploadUrlResponse,
     ScrapeData,
     ScrapeRequest,
     ScrapeResponse,
@@ -1811,31 +1812,96 @@ async def get_monitor_check_detail(
 # ----- Parse -----
 
 PARSE_SVC_URL = "http://parse-svc:8013"
+PARSE_UPLOAD_TTL = 3600  # 1 hour TTL for upload temp storage
+
+
+@router.post("/v2/parse/upload-url", response_model=ParseUploadUrlResponse)
+async def request_parse_upload_url(request: Request) -> ParseUploadUrlResponse:
+    """Request a pre-signed upload URL for large file parsing.
+
+    Returns an upload_id and upload_url. The client PUTs the file to the
+    upload_url, then calls POST /v2/parse with upload_id in the form.
+    """
+    import uuid
+
+    from redis import Redis
+
+    upload_id = str(uuid.uuid4())
+    r = Redis.from_url("redis://valkey:6379/0", decode_responses=False)
+    r.set(f"parse:upload:{upload_id}", b"pending", ex=PARSE_UPLOAD_TTL)
+
+    scheme = request.url.scheme
+    host = request.url.netloc
+    upload_url = f"{scheme}://{host}/v2/parse/upload/{upload_id}"
+
+    return ParseUploadUrlResponse(upload_id=upload_id, upload_url=upload_url)
+
+
+@router.put("/v2/parse/upload/{upload_id}")
+async def upload_parse_file(upload_id: str, request: Request) -> dict[str, Any]:
+    """Upload file bytes for a previously requested upload_id."""
+    from redis import Redis
+
+    r = Redis.from_url("redis://valkey:6379/0", decode_responses=False)
+    meta = r.get(f"parse:upload:{upload_id}")
+    if meta is None:
+        raise NotFoundError(
+            detail="Upload ID not found or expired",
+            details={"upload_id": upload_id},
+        )
+
+    raw_body = await request.body()
+    if not raw_body:
+        raise InvalidRequestError(detail="Empty body — no file data received")
+
+    r.set(f"parse:upload:{upload_id}:data", raw_body, ex=PARSE_UPLOAD_TTL)
+    r.set(f"parse:upload:{upload_id}", b"uploaded", ex=PARSE_UPLOAD_TTL)
+    return {"success": True, "upload_id": upload_id}
 
 
 @router.post("/v2/parse", response_model=ParseResponse)
 async def parse_file(request: Request) -> Any:
-    """Upload a file and get its content as markdown."""
+    """Upload a file and get its content as markdown.
+
+    Supports two modes:
+    - Direct: multipart form with 'file' field (small files)
+    - Two-step: form field 'upload_id' referencing a pre-uploaded file
+    """
     import httpx
+    from redis import Redis
 
     form = await request.form()
-    if "file" not in form:
-        raise InvalidRequestError(
-            detail="No file provided. Use multipart form with 'file' field."
-        )
+    r = Redis.from_url("redis://valkey:6379/0", decode_responses=False)
 
-    upload = form["file"]  # type: ignore[union-attr]
-    content = await upload.read()  # type: ignore[union-attr]
+    upload_id = form.get("upload_id")
+    if upload_id is not None:
+        # Two-step mode: retrieve pre-uploaded file
+        upload_id_str = str(upload_id)
+        content = r.get(f"parse:upload:{upload_id_str}:data")
+        if content is None:
+            raise NotFoundError(
+                detail="Upload ID not found or no data uploaded",
+                details={"upload_id": upload_id_str},
+            )
+        filename = "uploaded_file"
+        content_type = "application/octet-stream"
+        # Clean up temp keys
+        r.delete(f"parse:upload:{upload_id_str}", f"parse:upload:{upload_id_str}:data")
+    elif "file" not in form:
+        raise InvalidRequestError(
+            detail="No file provided. Use multipart form with 'file' field or 'upload_id' for two-step upload."
+        )
+    else:
+        upload = form["file"]  # type: ignore[union-attr]
+        content = await upload.read()  # type: ignore[union-attr]
+        filename = upload.filename or "file"  # type: ignore[union-attr]
+        content_type = upload.content_type or "application/octet-stream"  # type: ignore[union-attr]
 
     async with httpx.AsyncClient(timeout=120) as client:
         resp = await client.post(
             f"{PARSE_SVC_URL}/parse",
             files={
-                "file": (
-                    upload.filename or "file",  # type: ignore[union-attr]
-                    content,
-                    upload.content_type or "application/octet-stream",  # type: ignore[union-attr]
-                )
+                "file": (filename, content, content_type)
             },
         )
         try:
