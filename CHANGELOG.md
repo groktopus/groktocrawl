@@ -2,6 +2,38 @@
 
 All notable changes to GroktoCrawl are documented in this file.
 
+## [0.10.0](https://github.com/groktopus/groktocrawl/compare/v0.9.0...v0.10.0) (2026-06-27)
+
+
+### Features
+
+* add batch scrape status, cancel, and errors endpoints ([95f79e7](https://github.com/groktopus/groktocrawl/commit/95f79e74b9fa07edefb4f29c272849914292c8ae))
+* add batch scrape status, cancel, and errors endpoints ([5210a51](https://github.com/groktopus/groktocrawl/commit/5210a514a3c83e086573c57e45b5105045a0735c))
+* add batch-scrape CLI subcommand for /v2/batch/scrape endpoints ([#354](https://github.com/groktopus/groktocrawl/issues/354)) ([961c837](https://github.com/groktopus/groktocrawl/commit/961c837f29ce935558e2ce6963464a70b9bd7cad))
+* add concurrency check endpoint (GET /v2/concurrency-check) ([a0e157c](https://github.com/groktopus/groktocrawl/commit/a0e157ceda3b4659c65f4c3b22e83b4d0f72b0d3))
+* add concurrency check endpoint (GET /v2/concurrency-check) ([0655575](https://github.com/groktopus/groktocrawl/commit/0655575eb898074e2c4b7fe0b78e1fb4ae6236bb))
+* add monitor check history endpoints ([37f0483](https://github.com/groktopus/groktocrawl/commit/37f048399a386e2674aeda6bce0b01c61cd963a6))
+* add monitor check history endpoints ([fd1412e](https://github.com/groktopus/groktocrawl/commit/fd1412e31c2eff206f832178c2d88a99a96a475d))
+* add monitor manual trigger endpoint (POST /v2/monitor/:id/run) ([2f89f0a](https://github.com/groktopus/groktocrawl/commit/2f89f0a5cbb165b4e2f08212245c310fe8cf4155))
+* add monitor manual trigger endpoint (POST /v2/monitor/:id/run) ([3a4a723](https://github.com/groktopus/groktocrawl/commit/3a4a723ebf7483ea767d1bc72fbf7b23143b6643))
+* add monitor run CLI subcommand ([08a63d5](https://github.com/groktopus/groktocrawl/commit/08a63d53669ea6b43dfcf39ff30adfe16cd3d27c))
+* add parse-upload CLI subcommand and --upload-id flag ([a8bc8ed](https://github.com/groktopus/groktocrawl/commit/a8bc8ed380ef8d7918efd3de060a1dca600e9ff7))
+* add two-step parse upload endpoints for large files ([d5bb644](https://github.com/groktopus/groktocrawl/commit/d5bb64408522b5410c1bfd36dc69cf1e2ed17ba1))
+* add two-step parse upload endpoints for large files ([05962c1](https://github.com/groktopus/groktocrawl/commit/05962c15c1b0ac238c518348374e552eb8a03952))
+* enforce API-CLI surface parity via ADR, CI check, and PR template ([#357](https://github.com/groktopus/groktocrawl/issues/357)) ([9473e90](https://github.com/groktopus/groktocrawl/commit/9473e9074d69f0e3959ef072d82904deb6973f84))
+
+
+### Bug Fixes
+
+* **ci:** add Docker health checks and increase integration test timeouts ([#352](https://github.com/groktopus/groktocrawl/issues/352)) ([209cbb0](https://github.com/groktopus/groktocrawl/commit/209cbb05de88c0bf044f6545a51213a857afc945))
+* correct deptry --per-rule-ignores format ([8034bf3](https://github.com/groktopus/groktocrawl/commit/8034bf3fea864b904519f4a2b50a74776ed80156))
+* update batch scrape tests to match current error-handling behavior ([4be3909](https://github.com/groktopus/groktocrawl/commit/4be39097d19b7a2e9fc7a0317e3f17a2fbb94838))
+
+
+### Documentation
+
+* promote ADR-0039 status to accepted ([887be9d](https://github.com/groktopus/groktocrawl/commit/887be9d563a2ee0f134cb7c1bbeb44dae790c08f))
+
 ## [Unreleased]
 
 ### Added
