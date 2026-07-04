@@ -35,7 +35,7 @@ jobs:
 
   droid-review:
     needs: assess-depth
-    if: github.event.pull_request.draft == false && github.actor != 'app/dependabot'
+    if: github.event.pull_request.draft == false && github.actor != 'app/dependabot' && github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-latest
     permissions:
       contents: read
