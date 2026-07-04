@@ -1,6 +1,7 @@
 FROM python:3.13-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    poppler-utils \
     tesseract-ocr tesseract-ocr-eng \
     libglib2.0-0 && \
     rm -rf /var/lib/apt/lists/*
