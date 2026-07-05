@@ -145,7 +145,16 @@ jobs:
         timeout-minutes: 10
 
       - name: Start test fixtures
-        run: docker compose --profile fixture up --build -d llm-svc tier3-fixture test-site
+        run: |
+          # Kill any stale llm-svc container and build fresh
+          docker compose --profile fixture rm -sf llm-svc || true
+          docker compose --profile fixture build --no-cache llm-svc
+          docker compose --profile fixture up -d --force-recreate llm-svc tier3-fixture test-site
+          # Deploy modified app.py, clear bytecode cache, full recreate
+          CONTAINER=$(docker compose ps -q llm-svc)
+          docker cp llm-svc/llm_svc/app.py $CONTAINER:/app/llm_svc/app.py
+          docker compose exec -T llm-svc rm -rf /app/llm_svc/__pycache__/
+          docker compose --profile fixture up -d --force-recreate llm-svc
         timeout-minutes: 5
 
       - name: Wait for services to be healthy

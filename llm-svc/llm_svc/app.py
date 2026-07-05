@@ -14,6 +14,63 @@ from common.middleware import add_request_id_middleware
 
 logger = logging.getLogger(__name__)
 
+# Marker injected by agent-svc LLM client when output_schema is requested
+_SCHEMA_MARKER = "MUST respond with valid JSON matching this schema:"
+
+
+def _resolve_type(prop_schema: dict) -> str:
+    """Return the canonical type string, handling type arrays like ["string","null"]."""
+    t = prop_schema.get("type", "string")
+    if isinstance(t, list):
+        for item in t:
+            if item != "null":
+                return item
+        return "string"
+    return t
+
+
+def _dummy_value(prop_schema: dict) -> object:
+    """Build a dummy value that satisfies *prop_schema*."""
+    t = _resolve_type(prop_schema)
+    if t == "string":
+        if "enum" in prop_schema:
+            return prop_schema["enum"][0]
+        return "value"
+    if t == "array":
+        item_schema = prop_schema.get("items", {"type": "string"})
+        return [_dummy_value(item_schema), _dummy_value(item_schema)]
+    if t == "object":
+        obj = {}
+        for key, subschema in prop_schema.get("properties", {}).items():
+            if key in prop_schema.get("required", []):
+                obj[key] = _dummy_value(subschema)
+        return obj
+    if t in ("integer", "number"):
+        return 42
+    if t == "boolean":
+        return True
+    return "value"
+
+
+def _generate_schema_response(system_text: str) -> str:
+    """Parse the JSON Schema from the system prompt and return a conformant response."""
+    try:
+        idx = system_text.index(_SCHEMA_MARKER)
+        schema_json = system_text[idx + len(_SCHEMA_MARKER):].strip()
+        schema = json.loads(schema_json)
+    except (ValueError, json.JSONDecodeError):
+        return json.dumps({"result": "structured response"})
+
+    if schema.get("type") != "object" or "properties" not in schema:
+        return json.dumps({"result": "structured response"})
+
+    response: dict = {}
+    for key, prop in schema.get("properties", {}).items():
+        if key in schema.get("required", []):
+            response[key] = _dummy_value(prop)
+
+    return json.dumps(response)
+
 
 class ChatMessage(BaseModel):
     role: str
@@ -90,7 +147,7 @@ def create_app() -> FastAPI:
                     }
                 )
             else:
-                content = json.dumps({"result": "structured response"})
+                content = _generate_schema_response(system_text)
         else:
             content = "Synthesized answer from provided context."
         return {
