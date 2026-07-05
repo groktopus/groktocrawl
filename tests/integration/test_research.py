@@ -184,9 +184,9 @@ class TestRunResearch:
         llm.generate.return_value = "Here is the synthesized answer."
 
         with (
-            patch("agent.searxng_client.SearXNGClient", return_value=searxng),
-            patch("agent.scraper_client.ScraperClient", return_value=scraper),
-            patch("agent.llm.LLMClient", return_value=llm),
+            patch("agent.research.loop.SearXNGClient", return_value=searxng),
+            patch("agent.research.loop.ScraperClient", return_value=scraper),
+            patch("agent.research.loop.LLMClient", return_value=llm),
         ):
             result = await run_research(
                 prompt="What is AI?",
@@ -215,9 +215,9 @@ class TestRunResearch:
         llm.generate.return_value = "Answer from search."
 
         with (
-            patch("agent.searxng_client.SearXNGClient", return_value=searxng),
-            patch("agent.scraper_client.ScraperClient", return_value=scraper),
-            patch("agent.llm.LLMClient", return_value=llm),
+            patch("agent.research.loop.SearXNGClient", return_value=searxng),
+            patch("agent.research.loop.ScraperClient", return_value=scraper),
+            patch("agent.research.loop.LLMClient", return_value=llm),
         ):
             result = await run_research(prompt="Tell me about AI")
 
@@ -236,9 +236,9 @@ class TestRunResearch:
         }
 
         with (
-            patch("agent.searxng_client.SearXNGClient", return_value=searxng),
-            patch("agent.scraper_client.ScraperClient", return_value=scraper),
-            patch("agent.llm.LLMClient", return_value=llm),
+            patch("agent.research.loop.SearXNGClient", return_value=searxng),
+            patch("agent.research.loop.ScraperClient", return_value=scraper),
+            patch("agent.research.loop.LLMClient", return_value=llm),
         ):
             result = await run_research(
                 prompt="Anything?",
@@ -262,9 +262,9 @@ class TestRunResearch:
         schema = {"type": "object", "properties": {"name": {"type": "string"}}}
 
         with (
-            patch("agent.searxng_client.SearXNGClient", return_value=searxng),
-            patch("agent.scraper_client.ScraperClient", return_value=scraper),
-            patch("agent.llm.LLMClient", return_value=llm),
+            patch("agent.research.loop.SearXNGClient", return_value=searxng),
+            patch("agent.research.loop.ScraperClient", return_value=scraper),
+            patch("agent.research.loop.LLMClient", return_value=llm),
             patch("agent.research.loop._generate_research_plan") as mock_plan,
         ):
             mock_plan.return_value = {
@@ -300,9 +300,9 @@ class TestRunResearch:
         llm.generate.return_value = "ok"
 
         with (
-            patch("agent.searxng_client.SearXNGClient", return_value=searxng),
-            patch("agent.scraper_client.ScraperClient", return_value=scraper),
-            patch("agent.llm.LLMClient", return_value=llm),
+            patch("agent.research.loop.SearXNGClient", return_value=searxng),
+            patch("agent.research.loop.ScraperClient", return_value=scraper),
+            patch("agent.research.loop.LLMClient", return_value=llm),
         ):
             result = await run_research(
                 prompt="test",
@@ -330,9 +330,9 @@ class TestRunResearch:
         llm.generate.return_value = "Answer."
 
         with (
-            patch("agent.searxng_client.SearXNGClient", return_value=searxng),
-            patch("agent.scraper_client.ScraperClient", return_value=scraper),
-            patch("agent.llm.LLMClient", return_value=llm),
+            patch("agent.research.loop.SearXNGClient", return_value=searxng),
+            patch("agent.research.loop.ScraperClient", return_value=scraper),
+            patch("agent.research.loop.LLMClient", return_value=llm),
         ):
             result = await run_research(
                 prompt="test",
@@ -389,9 +389,9 @@ class TestRunAnswer:
         llm.close = AsyncMock()
 
         with (
-            patch("agent.searxng_client.SearXNGClient", return_value=searxng),
-            patch("agent.scraper_client.ScraperClient", return_value=scraper),
-            patch("agent.llm.LLMClient", return_value=llm),
+            patch("agent.research.loop.SearXNGClient", return_value=searxng),
+            patch("agent.research.loop.ScraperClient", return_value=scraper),
+            patch("agent.research.loop.LLMClient", return_value=llm),
         ):
             result = await run_answer(query="What is the answer?", num_sources=1)
 
@@ -429,9 +429,9 @@ class TestRunAnswer:
         llm.close = AsyncMock()
 
         with (
-            patch("agent.searxng_client.SearXNGClient", return_value=searxng),
-            patch("agent.scraper_client.ScraperClient", return_value=scraper),
-            patch("agent.llm.LLMClient", return_value=llm),
+            patch("agent.research.loop.SearXNGClient", return_value=searxng),
+            patch("agent.research.loop.ScraperClient", return_value=scraper),
+            patch("agent.research.loop.LLMClient", return_value=llm),
         ):
             result = await run_answer(query="Anything?")
 
@@ -476,8 +476,8 @@ class TestRunExtract:
         llm.generate.return_value = '{"name": "Extracted Data"}'
 
         with (
-            patch("agent.scraper_client.ScraperClient", return_value=scraper),
-            patch("agent.llm.LLMClient", return_value=llm),
+            patch("agent.research.loop.ScraperClient", return_value=scraper),
+            patch("agent.research.loop.LLMClient", return_value=llm),
         ):
             result = await run_extract(
                 urls=["https://example.com"],
@@ -500,8 +500,8 @@ class TestRunExtract:
         llm.generate.return_value = "Extracted info"
 
         with (
-            patch("agent.scraper_client.ScraperClient", return_value=scraper),
-            patch("agent.llm.LLMClient", return_value=llm),
+            patch("agent.research.loop.ScraperClient", return_value=scraper),
+            patch("agent.research.loop.LLMClient", return_value=llm),
         ):
             result = await run_extract(
                 urls=["https://example.com"],
@@ -526,8 +526,8 @@ class TestRunExtract:
         schema = {"type": "object", "properties": {"name": {"type": "string"}}}
 
         with (
-            patch("agent.scraper_client.ScraperClient", return_value=scraper),
-            patch("agent.llm.LLMClient", return_value=llm),
+            patch("agent.research.loop.ScraperClient", return_value=scraper),
+            patch("agent.research.loop.LLMClient", return_value=llm),
             patch("agent.research._validate_json_if_schema") as mock_validate,
         ):
             result = await run_extract(
@@ -549,8 +549,8 @@ class TestRunExtract:
         }
 
         with (
-            patch("agent.scraper_client.ScraperClient", return_value=scraper),
-            patch("agent.llm.LLMClient", return_value=llm),
+            patch("agent.research.loop.ScraperClient", return_value=scraper),
+            patch("agent.research.loop.LLMClient", return_value=llm),
         ):
             result = await run_extract(
                 urls=["https://example.com/missing"],
@@ -608,9 +608,9 @@ class TestRunResearchStream:
         llm.close = AsyncMock()
 
         with (
-            patch("agent.searxng_client.SearXNGClient", return_value=searxng),
-            patch("agent.scraper_client.ScraperClient", return_value=scraper),
-            patch("agent.llm.LLMClient", return_value=llm),
+            patch("agent.research.loop.SearXNGClient", return_value=searxng),
+            patch("agent.research.loop.ScraperClient", return_value=scraper),
+            patch("agent.research.loop.LLMClient", return_value=llm),
         ):
             events = []
             async for event in run_research_stream(prompt="What is AI?"):
@@ -680,9 +680,9 @@ class TestRunResearchStream:
         schema = {"type": "object", "properties": {"key": {"type": "string"}}}
 
         with (
-            patch("agent.searxng_client.SearXNGClient", return_value=searxng),
-            patch("agent.scraper_client.ScraperClient", return_value=scraper),
-            patch("agent.llm.LLMClient", return_value=llm),
+            patch("agent.research.loop.SearXNGClient", return_value=searxng),
+            patch("agent.research.loop.ScraperClient", return_value=scraper),
+            patch("agent.research.loop.LLMClient", return_value=llm),
         ):
             events = []
             async for event in run_research_stream(
@@ -736,9 +736,9 @@ class TestRunResearchStream:
         llm.close = AsyncMock()
 
         with (
-            patch("agent.searxng_client.SearXNGClient", return_value=searxng),
-            patch("agent.scraper_client.ScraperClient", return_value=scraper),
-            patch("agent.llm.LLMClient", return_value=llm),
+            patch("agent.research.loop.SearXNGClient", return_value=searxng),
+            patch("agent.research.loop.ScraperClient", return_value=scraper),
+            patch("agent.research.loop.LLMClient", return_value=llm),
         ):
             events = []
             async for event in run_research_stream(prompt="Anything?"):
@@ -791,9 +791,9 @@ class TestRunResearchStream:
         llm.close = AsyncMock()
 
         with (
-            patch("agent.searxng_client.SearXNGClient", return_value=searxng),
-            patch("agent.scraper_client.ScraperClient", return_value=scraper),
-            patch("agent.llm.LLMClient", return_value=llm),
+            patch("agent.research.loop.SearXNGClient", return_value=searxng),
+            patch("agent.research.loop.ScraperClient", return_value=scraper),
+            patch("agent.research.loop.LLMClient", return_value=llm),
         ):
             events = []
             async for event in run_research_stream(prompt="Test"):
@@ -854,9 +854,9 @@ class TestRunAnswerStream:
         llm.close = AsyncMock()
 
         with (
-            patch("agent.searxng_client.SearXNGClient", return_value=searxng),
-            patch("agent.scraper_client.ScraperClient", return_value=scraper),
-            patch("agent.llm.LLMClient", return_value=llm),
+            patch("agent.research.loop.SearXNGClient", return_value=searxng),
+            patch("agent.research.loop.ScraperClient", return_value=scraper),
+            patch("agent.research.loop.LLMClient", return_value=llm),
         ):
             events = []
             async for event in run_answer_stream(
@@ -894,9 +894,9 @@ class TestRunAnswerStream:
         llm.close = AsyncMock()
 
         with (
-            patch("agent.searxng_client.SearXNGClient", return_value=searxng),
-            patch("agent.scraper_client.ScraperClient", return_value=scraper),
-            patch("agent.llm.LLMClient", return_value=llm),
+            patch("agent.research.loop.SearXNGClient", return_value=searxng),
+            patch("agent.research.loop.ScraperClient", return_value=scraper),
+            patch("agent.research.loop.LLMClient", return_value=llm),
         ):
             events = []
             async for event in run_answer_stream(query="Anything?"):
@@ -960,9 +960,9 @@ class TestRunAnswerStream:
         llm.close = AsyncMock()
 
         with (
-            patch("agent.searxng_client.SearXNGClient", return_value=searxng),
-            patch("agent.scraper_client.ScraperClient", return_value=scraper),
-            patch("agent.llm.LLMClient", return_value=llm),
+            patch("agent.research.loop.SearXNGClient", return_value=searxng),
+            patch("agent.research.loop.ScraperClient", return_value=scraper),
+            patch("agent.research.loop.LLMClient", return_value=llm),
         ):
             events = []
             async for event in run_answer_stream(
@@ -1015,9 +1015,9 @@ class TestRunAnswerStream:
         llm.close = AsyncMock()
 
         with (
-            patch("agent.searxng_client.SearXNGClient", return_value=searxng),
-            patch("agent.scraper_client.ScraperClient", return_value=scraper),
-            patch("agent.llm.LLMClient", return_value=llm),
+            patch("agent.research.loop.SearXNGClient", return_value=searxng),
+            patch("agent.research.loop.ScraperClient", return_value=scraper),
+            patch("agent.research.loop.LLMClient", return_value=llm),
             patch("agent.research._rerank_answer_sources") as mock_rerank,
         ):
             events = []
@@ -1067,9 +1067,9 @@ class TestRunAnswerStream:
         llm.close = AsyncMock()
 
         with (
-            patch("agent.searxng_client.SearXNGClient", return_value=searxng),
-            patch("agent.scraper_client.ScraperClient", return_value=scraper),
-            patch("agent.llm.LLMClient", return_value=llm),
+            patch("agent.research.loop.SearXNGClient", return_value=searxng),
+            patch("agent.research.loop.ScraperClient", return_value=scraper),
+            patch("agent.research.loop.LLMClient", return_value=llm),
             patch("agent.research._rerank_answer_sources") as mock_rerank,
         ):
             events = []
@@ -1118,8 +1118,8 @@ class TestRunRichSearch:
         llm.close = AsyncMock()
 
         with (
-            patch("agent.scraper_client.ScraperClient", return_value=scraper),
-            patch("agent.llm.LLMClient", return_value=llm),
+            patch("agent.research.search.ScraperClient", return_value=scraper),
+            patch("agent.research.search.LLMClient", return_value=llm),
         ):
             result = await run_rich_search(
                 search_results=search_results,
@@ -1166,8 +1166,8 @@ class TestRunRichSearch:
         schema = {"type": "object", "properties": {"company": {"type": "string"}}}
 
         with (
-            patch("agent.scraper_client.ScraperClient", return_value=scraper),
-            patch("agent.llm.LLMClient", return_value=llm),
+            patch("agent.research.search.ScraperClient", return_value=scraper),
+            patch("agent.research.search.LLMClient", return_value=llm),
         ):
             result = await run_rich_search(
                 search_results=search_results,
@@ -1215,8 +1215,8 @@ class TestRunRichSearch:
         schema = {"type": "object"}
 
         with (
-            patch("agent.scraper_client.ScraperClient", return_value=scraper),
-            patch("agent.llm.LLMClient", return_value=llm),
+            patch("agent.research.search.ScraperClient", return_value=scraper),
+            patch("agent.research.search.LLMClient", return_value=llm),
         ):
             result = await run_rich_search(
                 search_results=search_results,
@@ -1242,8 +1242,8 @@ class TestRunRichSearch:
         llm.close = AsyncMock()
 
         with (
-            patch("agent.scraper_client.ScraperClient", return_value=scraper),
-            patch("agent.llm.LLMClient", return_value=llm),
+            patch("agent.research.search.ScraperClient", return_value=scraper),
+            patch("agent.research.search.LLMClient", return_value=llm),
         ):
             result = await run_rich_search(
                 search_results=[],
@@ -1285,8 +1285,8 @@ class TestRunRichSearch:
         custom_prompt = "Focus only on recent results from 2025."
 
         with (
-            patch("agent.scraper_client.ScraperClient", return_value=scraper),
-            patch("agent.llm.LLMClient", return_value=llm),
+            patch("agent.research.search.ScraperClient", return_value=scraper),
+            patch("agent.research.search.LLMClient", return_value=llm),
         ):
             result = await run_rich_search(
                 search_results=search_results,
@@ -1369,8 +1369,8 @@ class TestRerankAnswerSources:
         mock_scraper.close = AsyncMock()
 
         with (
-            patch("agent.semantic_client.SemanticClient", return_value=mock_semantic),
-            patch("agent.scraper_client.ScraperClient", return_value=mock_scraper),
+            patch("agent.research.rerank.SemanticClient", return_value=mock_semantic),
+            patch("agent.research.rerank.ScraperClient", return_value=mock_scraper),
         ):
             result = await _rerank_answer_sources(
                 search_results=search_results,
@@ -1408,8 +1408,8 @@ class TestRerankAnswerSources:
         mock_scraper.close = AsyncMock()
 
         with (
-            patch("agent.semantic_client.SemanticClient", return_value=mock_semantic),
-            patch("agent.scraper_client.ScraperClient", return_value=mock_scraper),
+            patch("agent.research.rerank.SemanticClient", return_value=mock_semantic),
+            patch("agent.research.rerank.ScraperClient", return_value=mock_scraper),
         ):
             result = await _rerank_answer_sources(
                 search_results=search_results,
@@ -1447,8 +1447,8 @@ class TestRerankAnswerSources:
         mock_scraper.close = AsyncMock()
 
         with (
-            patch("agent.semantic_client.SemanticClient", return_value=mock_semantic),
-            patch("agent.scraper_client.ScraperClient", return_value=mock_scraper),
+            patch("agent.research.rerank.SemanticClient", return_value=mock_semantic),
+            patch("agent.research.rerank.ScraperClient", return_value=mock_scraper),
         ):
             result = await _rerank_answer_sources(
                 search_results=search_results,
