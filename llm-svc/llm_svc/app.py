@@ -37,8 +37,14 @@ def _dummy_value(prop_schema: dict) -> object:
             return prop_schema["enum"][0]
         return "value"
     if t == "array":
-        item_schema = prop_schema.get("items", {"type": "string"})
-        return [_dummy_value(item_schema), _dummy_value(item_schema)]
+        items = prop_schema.get("items", {"type": "string"})
+        if isinstance(items, list):
+            # Tuple-style validation: each element validates a position
+            return [
+                _dummy_value(item) if isinstance(item, dict) else "value"
+                for item in items
+            ]
+        return [_dummy_value(items), _dummy_value(items)]
     if t == "object":
         obj = {}
         for key, subschema in prop_schema.get("properties", {}).items():
@@ -56,7 +62,7 @@ def _generate_schema_response(system_text: str) -> str:
     """Parse the JSON Schema from the system prompt and return a conformant response."""
     try:
         idx = system_text.index(_SCHEMA_MARKER)
-        schema_json = system_text[idx + len(_SCHEMA_MARKER):].strip()
+        schema_json = system_text[idx + len(_SCHEMA_MARKER) :].strip()
         schema = json.loads(schema_json)
     except (ValueError, json.JSONDecodeError):
         return json.dumps({"result": "structured response"})
