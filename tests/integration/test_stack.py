@@ -7543,48 +7543,36 @@ def test_session_step_deepen_val():
 
 def test_deepen_valid_ref_after_search_val_dpn_001():
     """VAL-DPN-001: Deepen on valid ref in session with prior steps succeeds.
-    Create a session, execute a search step, scrape a result, then deepen on a
-    specific ref from the search step. Verify deepen returns step_index, action,
-    and new_ref_ids.
+    Scrape a test-site page, then deepen on the resulting ref. Verify deepen
+    returns step_index, action, and new_ref_ids with proper indices.
     """
     r = httpx.post(AGENT + "/v2/session/create", json={"ttl": 600}, timeout=10)
     sid = r.json()["sessionId"]
-    # Step 1: search
+    # Step 1: scrape a test-site page (avoid external dependency)
     s1 = httpx.post(
         AGENT + f"/v2/session/{sid}/step",
-        json={
-            "action": "search",
-            "params": {"query": "Python web frameworks", "limit": 3},
-        },
-        timeout=60,
+        json={"action": "scrape", "params": {"urls": [TEST_SITE + "/pricing"]}},
+        timeout=120,
     )
-    assert s1.status_code == 200, s1.text
-    refs = s1.json()["result"].get("top_refs", [])
-    assert len(refs) > 0, "Need at least one search result"
+    assert s1.status_code == 200, f"Scrape step failed: {s1.status_code} {s1.text}"
+    refs = s1.json()["result"]["refs"]
+    assert len(refs) > 0, "Need at least one scraped ref"
     target_ref = refs[0]["ref_id"]
-    target_url = refs[0]["url"]
-    # Scrape the URL so the ref has content for deep
-    s1b = httpx.post(
-        AGENT + f"/v2/session/{sid}/step",
-        json={"action": "scrape", "params": {"urls": [target_url]}},
-        timeout=60,
-    )
-    assert s1b.status_code == 200, f"Scrape step failed: {s1b.status_code} {s1b.text}"
-    # Step 2: deepen
+    # Step 2: deepen on the scraped ref
     s2 = httpx.post(
         AGENT + f"/v2/session/{sid}/step",
         json={
             "action": "deepen",
             "params": {
                 "ref_id": target_ref,
-                "sub_topic": "Django vs FastAPI comparison",
+                "sub_topic": "test-site pricing details",
             },
         },
         timeout=120,
     )
     assert s2.status_code == 200, s2.text
     data = s2.json()
-    assert data["stepIndex"] == 3
+    assert data["stepIndex"] == 2
     assert data["action"] == "deepen"
     assert data["result"]["ref_id"] == target_ref
     assert "new_findings" in data["result"]
@@ -7709,47 +7697,31 @@ def test_deepen_artifact_location_val_dpn_004():
 
 def test_deepen_new_refs_with_indices_val_dpn_005():
     """VAL-DPN-005: Deepen adds new refs with appropriate indices.
-    After a deepen action, new references should be created with ref_ids
-    following the pattern ref_{step_index}_{source_index}.
+    Scrape a test-site page, then deepen on the resulting ref. Verify new
+    references follow the pattern ref_{step_index}_{source_index}.
     """
     r = httpx.post(AGENT + "/v2/session/create", json={"ttl": 600}, timeout=10)
     sid = r.json()["sessionId"]
+    # Scrape a test-site page (avoid external dependency)
     s1 = httpx.post(
         AGENT + f"/v2/session/{sid}/step",
-        json={
-            "action": "search",
-            "params": {"query": "TypeScript decorators", "limit": 3},
-        },
-        timeout=60,
+        json={"action": "scrape", "params": {"urls": [TEST_SITE + "/pricing"]}},
+        timeout=120,
     )
-    assert s1.status_code == 200, f"Search step failed: {s1.status_code} {s1.text}"
+    assert s1.status_code == 200, f"Scrape step failed: {s1.status_code} {s1.text}"
     s1_data = s1.json()
     assert s1_data.get("stepIndex") is not None, (
-        f"Search step missing stepIndex: {s1_data}"
+        f"Scrape step missing stepIndex: {s1_data}"
     )
-    # Get the actual ref_id from search results (not hardcoded)
-    refs = s1_data["result"].get("top_refs", [])
-    if not refs:
-        # No search results — nothing to deepen on.  Skip validation
-        # cleanly (fixture environments may not return results).
-        httpx.delete(AGENT + f"/v2/session/{sid}", timeout=10)
-        return
+    refs = s1_data["result"]["refs"]
     target_ref = refs[0]["ref_id"]
-    target_url = refs[0]["url"]
-    # Scrape the URL so the ref has content for deepen
-    s1b = httpx.post(
-        AGENT + f"/v2/session/{sid}/step",
-        json={"action": "scrape", "params": {"urls": [target_url]}},
-        timeout=60,
-    )
-    assert s1b.status_code == 200, f"Scrape step failed: {s1b.status_code} {s1b.text}"
     s2 = httpx.post(
         AGENT + f"/v2/session/{sid}/step",
         json={
             "action": "deepen",
             "params": {
                 "ref_id": target_ref,
-                "sub_topic": "TypeScript 5 decorators ECMA",
+                "sub_topic": "pricing tiers and features",
             },
         },
         timeout=120,
