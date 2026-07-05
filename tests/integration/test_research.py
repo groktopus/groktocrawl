@@ -1018,7 +1018,7 @@ class TestRunAnswerStream:
             patch("agent.research.loop.SearXNGClient", return_value=searxng),
             patch("agent.research.loop.ScraperClient", return_value=scraper),
             patch("agent.research.loop.LLMClient", return_value=llm),
-            patch("agent.research._rerank_answer_sources") as mock_rerank,
+            patch("agent.research.rerank._rerank_answer_sources") as mock_rerank,
         ):
             events = []
             async for event in run_answer_stream(
@@ -1068,10 +1068,9 @@ class TestRunAnswerStream:
 
         with (
             patch("agent.research.loop.SearXNGClient", return_value=searxng),
-            patch("agent.research.loop.SearXNGClient", return_value=searxng),
             patch("agent.research.loop.ScraperClient", return_value=scraper),
             patch("agent.research.loop.LLMClient", return_value=llm),
-            patch("agent.research._rerank_answer_sources") as mock_rerank,
+            patch("agent.research.rerank._rerank_answer_sources") as mock_rerank,
         ):
             events = []
             async for event in run_answer_stream(
