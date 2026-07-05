@@ -528,7 +528,7 @@ class TestRunExtract:
         with (
             patch("agent.research.loop.ScraperClient", return_value=scraper),
             patch("agent.research.loop.LLMClient", return_value=llm),
-            patch("agent.research._validate_json_if_schema") as mock_validate,
+            patch("agent.research.loop._validate_json_if_schema") as mock_validate,
         ):
             result = await run_extract(
                 urls=["https://example.com"],
@@ -1067,6 +1067,7 @@ class TestRunAnswerStream:
         llm.close = AsyncMock()
 
         with (
+            patch("agent.research.loop.SearXNGClient", return_value=searxng),
             patch("agent.research.loop.SearXNGClient", return_value=searxng),
             patch("agent.research.loop.ScraperClient", return_value=scraper),
             patch("agent.research.loop.LLMClient", return_value=llm),
