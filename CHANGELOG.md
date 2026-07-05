@@ -2,6 +2,69 @@
 
 All notable changes to GroktoCrawl are documented in this file.
 
+## [0.12.0](https://github.com/groktopus/groktocrawl/compare/v0.11.0...v0.12.0) (2026-07-05)
+
+
+### Features
+
+* add batch query/store endpoints and comprehensive M2 memory integration tests ([f878aaa](https://github.com/groktopus/groktocrawl/commit/f878aaa4ea1a864878451c9c1cc572feeab7a46a))
+* add plan and execute endpoints for plan-consent flow ([95902a8](https://github.com/groktopus/groktocrawl/commit/95902a86028e60e70ba80533f2c84f098dd81dab))
+* add plan execute tests (VAL-PLN-006/007/008/012) and deepen action refactor ([05ac347](https://github.com/groktopus/groktocrawl/commit/05ac34712121358f22570793b42c71be915db797))
+* add plan models, planner improvements, and plan endpoint tests ([ba60e62](https://github.com/groktopus/groktocrawl/commit/ba60e62db7b8a59cc204e16dfbd1b81c20807355))
+* add session protocol Pydantic models with validation ([22c74e1](https://github.com/groktopus/groktocrawl/commit/22c74e1f2aa852859be297bb274359dc17fd2455))
+* add session resolve endpoint and enhance SessionManager ([d8de0e6](https://github.com/groktopus/groktocrawl/commit/d8de0e6aaaaffb3057290a6f47eea42a35b328cf))
+* Agent-Native Research Platform (closes [#387](https://github.com/groktopus/groktocrawl/issues/387)-[#393](https://github.com/groktopus/groktocrawl/issues/393)) ([07edb27](https://github.com/groktopus/groktocrawl/commit/07edb27536abbcc9a0e64fdac838bb4df21a655f))
+* complete compact citations feature (M1) ([833e584](https://github.com/groktopus/groktocrawl/commit/833e5848d611f957f1734046ce0b4f53e57b6f25))
+* hybrid semantic cache with Valkey + Qdrant research memory (M2) ([ed370f7](https://github.com/groktopus/groktocrawl/commit/ed370f744349202112e56fdfb5d8af5dc31313a8))
+* implement m5-mcp-client HTTP client wrapping all 17 agent-svc endpoints ([f6ec080](https://github.com/groktopus/groktocrawl/commit/f6ec080106717ab7e3e1441b365cff8b18ca765f))
+* implement m5-mcp-server-core with 17 GroktoCrawl MCP tools ([7f7c09b](https://github.com/groktopus/groktocrawl/commit/7f7c09ba224e78203a5add8432937c1005df26fc))
+* MCP server — expose GroktoCrawl through Model Context Protocol (Phase 5) ([5d6b763](https://github.com/groktopus/groktocrawl/commit/5d6b7639f92e1e0a5d467c3b3e747e7b4345bba5)), closes [#393](https://github.com/groktopus/groktocrawl/issues/393)
+* **mcp-svc:** Docker deployment with python:3.12-slim, pinned deps, health endpoint ([67c67e0](https://github.com/groktopus/groktocrawl/commit/67c67e06c060bbb0833fc1e2389629bca2f33eac))
+* **mcp-svc:** enhance groktocrawl_client with structured error handling and missing tool methods ([d077c6a](https://github.com/groktopus/groktocrawl/commit/d077c6ac54e1311ac016a89e375c4822506afd04))
+* **mcp-svc:** integration tests for MCP server concurrent clients, edge cases, and cross-flows ([3be5346](https://github.com/groktopus/groktocrawl/commit/3be534670febb3720185a3038eab849992b5dbbf))
+* **mcp-svc:** rewrite session_store.py as async generic TTL session store with asyncio.Lock ([14c7a0c](https://github.com/groktopus/groktocrawl/commit/14c7a0c29ef60b60332d2cbefd374f34ed2842ad))
+* plan-consent and depth injection (Phase 3) ([81d69d3](https://github.com/groktopus/groktocrawl/commit/81d69d3039262cdb52be25f7024b66adcf7c42c9))
+* research memory — cross-session caching (Phase 4) ([211e64e](https://github.com/groktopus/groktocrawl/commit/211e64e2e186af3569f58982ee4ef0f0dd61399c)), closes [#391](https://github.com/groktopus/groktocrawl/issues/391)
+* structured output schema and compact citations (Phase 1) ([5ba02c8](https://github.com/groktopus/groktocrawl/commit/5ba02c8dc1b741cf4102e597c267c95dd8a3d811))
+* upgrade LLM structured output with empty-schema handling and streaming schema support ([0795e33](https://github.com/groktopus/groktocrawl/commit/0795e330e33aa21bf71f2ccb38f8e8535ca56e62))
+* Valkey-backed session store with HSET meta/refs, HINCRBY step counter, per-session locking ([89db6cb](https://github.com/groktopus/groktocrawl/commit/89db6cb7d61429b43f66462ce2640a2179ee7c5a))
+* wire output_schema into answer and agent endpoints with schema alias support ([8e19eac](https://github.com/groktopus/groktocrawl/commit/8e19eacec7459cbe73c4ff6db0770c909cc99efb))
+* wire ResearchMemory into agent pipeline with force_fresh and per-user scoping ([1e7810b](https://github.com/groktopus/groktocrawl/commit/1e7810b723bfd80f855711339d699b1376485604))
+* wire up Deep Research button in web portal ([58e7d7f](https://github.com/groktopus/groktocrawl/commit/58e7d7f972b58d20d28ca22be65f15b6565cd356))
+* wire up Deep Research button in web portal ([58e7d7f](https://github.com/groktopus/groktocrawl/commit/58e7d7f972b58d20d28ca22be65f15b6565cd356))
+* wire up Deep Research button in web portal ([29d849f](https://github.com/groktopus/groktocrawl/commit/29d849f4cbdccc742c8bff37f9773572508f4dfa))
+
+
+### Bug Fixes
+
+* add CLI coverage exemptions for 13 new agent-native endpoints ([0d452a4](https://github.com/groktopus/groktocrawl/commit/0d452a4c42232665104ae0039690c6418d0070d0))
+* add poppler-utils to parse-svc Dockerfile for OCR support ([#386](https://github.com/groktopus/groktocrawl/issues/386)) ([2c943ca](https://github.com/groktopus/groktocrawl/commit/2c943ca56b85c723bb49b13289b0ad90000e0e35)), closes [#383](https://github.com/groktopus/groktocrawl/issues/383)
+* add rate-limit retry for answer endpoint in VAL-CROSS-005 test ([66078dd](https://github.com/groktopus/groktocrawl/commit/66078dd4f1f4090e1150bb2145980d2717658fd5))
+* add webhook, stream, and modify_query support to plan execute ([a83e698](https://github.com/groktopus/groktocrawl/commit/a83e69865551aa092854a4f1b65453e8ac9b103b))
+* address droid review — sticky mode, CSS selector, phase indicator ([8b8c6b6](https://github.com/groktopus/groktocrawl/commit/8b8c6b6c8c174e1fe81c73a58d3c73a506735293))
+* apply _apply_citation_style in non-streaming and streaming agent paths ([e16f1ea](https://github.com/groktopus/groktocrawl/commit/e16f1ea806585c3c170d7f4791db67d997ddfad5))
+* CI integration test failures — rate limit, schema alias, worker test ([ab42fa4](https://github.com/groktopus/groktocrawl/commit/ab42fa4aa6d1971af893536a2ed443d6becc3afa))
+* differentiate session step ValueError types (404/409/400) ([3dca580](https://github.com/groktopus/groktocrawl/commit/3dca580e026675411d021019b3abbde93bedad61))
+* exclude test files from jscpd duplicate code detection ([751f4b5](https://github.com/groktopus/groktocrawl/commit/751f4b5bcad66e610516b4d2a65d15c943ea0bc6))
+* force browser tier when --format images requested so raw_html is available ([47f9bfb](https://github.com/groktopus/groktocrawl/commit/47f9bfb76bef9d8e2dfb209b5825363448ca0ed5)), closes [#378](https://github.com/groktopus/groktocrawl/issues/378)
+* force browser tier when --format images requested so raw_html is available ([#380](https://github.com/groktopus/groktocrawl/issues/380)) ([eeab12a](https://github.com/groktopus/groktocrawl/commit/eeab12a373685cb47096c06484cbd0ddf06d3ae9))
+* guard against empty choices array in LLM SSE stream ([#385](https://github.com/groktopus/groktocrawl/issues/385)) ([9884bc8](https://github.com/groktopus/groktocrawl/commit/9884bc8cffec62a5b954dd3f6d5cf3f64fb76dbb))
+* integration test failures — answer output_schema, deepen ref resolution ([4e75de4](https://github.com/groktopus/groktocrawl/commit/4e75de4de993eda98fe8d95ceeba886658dd74c3))
+* make full pipeline test resilient to SearXNG rate limiting ([9697dd7](https://github.com/groktopus/groktocrawl/commit/9697dd7cd57646b6515a0045ce3d1bada9bb313e))
+* make session step lock use async backoff to avoid blocking FastAPI event loop ([b510703](https://github.com/groktopus/groktocrawl/commit/b5107036f40d9af0342c4bdd3cf68d66aaef1c46))
+* **mcp-svc:** close 3 MCP tool gaps — JSON responses, isError:true, missing tools ([eced9a8](https://github.com/groktopus/groktocrawl/commit/eced9a84f5d6cfc98d49fd74b93bcc516e552f2e))
+* **mcp-svc:** handle error:null in agent-svc responses, don't raise isError for falsy errors ([58a4e60](https://github.com/groktopus/groktocrawl/commit/58a4e6086748592616210cc5965292698fa073c8))
+* P0 review fixes — compact citation source preservation, uvicorn dep, json_object test ([9f29b6b](https://github.com/groktopus/groktocrawl/commit/9f29b6b74814975015d380bb8ce6430349bc982d))
+* P1+P2 review fixes — citation regex, lock lease, scope, rate limiting ([7880215](https://github.com/groktopus/groktocrawl/commit/788021545f82717ed3307bc6c0e9553cc294ba74))
+* resolve integration test failures in output_schema and deepen tests ([8276bc5](https://github.com/groktopus/groktocrawl/commit/8276bc5e47f2c5011ac4f650a99aaa02f1521165))
+* resolve mypy type errors in models.py, research.py, and session_store.py ([9ccd862](https://github.com/groktopus/groktocrawl/commit/9ccd862a901e9bbf2646e92839c549fd3eaff479))
+* revert test_memory_ttl_configurable to snake_case keys ([71abbbd](https://github.com/groktopus/groktocrawl/commit/71abbbdfb13a007b458956b54eb85fff771286e5))
+* structural fallback in html_to_markdown for SPA-heavy sites ([70bf93c](https://github.com/groktopus/groktocrawl/commit/70bf93c644d58cdd001c5e144dcb4a706d369dfe))
+* structural fallback in html_to_markdown for SPA-heavy sites ([938ff5b](https://github.com/groktopus/groktocrawl/commit/938ff5b99d10ac45c901112daebb08b6f2404175)), closes [#361](https://github.com/groktopus/groktocrawl/issues/361)
+* switch json_schema to json_object for DeepSeek compatibility, fix cache replay tokens with schema ([6cf8828](https://github.com/groktopus/groktocrawl/commit/6cf88288eb1952f3388df33d6e7055c5fbef0e1a))
+* three M2 validation gaps — DELETE 404, prompt min_length, batch store validation ([3e140d1](https://github.com/groktopus/groktocrawl/commit/3e140d18bca42bc067d9c302d1bfda6b8c8b7a21))
+* tighten integration test assertions for backward compat and schema conformance ([86aa81f](https://github.com/groktopus/groktocrawl/commit/86aa81f7131433e85003e6007350dfca4a5dc5d0))
+
 ## [Unreleased]
 
 ## [0.11.0](https://github.com/groktopus/groktocrawl/compare/v0.10.1...v0.11.0) (2026-06-29)
