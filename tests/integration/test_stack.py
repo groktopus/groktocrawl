@@ -7697,15 +7697,17 @@ def test_deepen_artifact_location_val_dpn_004():
 
 def test_deepen_new_refs_with_indices_val_dpn_005():
     """VAL-DPN-005: Deepen adds new refs with appropriate indices.
-    Scrape a test-site page, then deepen on the resulting ref. Verify new
-    references follow the pattern ref_{step_index}_{source_index}.
+    Scrape httpbin.org (different from VAL-DPN-001 to avoid dedup), then deepen
+    on the resulting ref. Verify new references follow the pattern
+    ref_{step_index}_{source_index}.
     """
     r = httpx.post(AGENT + "/v2/session/create", json={"ttl": 600}, timeout=10)
     sid = r.json()["sessionId"]
-    # Scrape a test-site page (avoid external dependency)
+    # Scrape a known URL (avoid external search dependency, use different URL
+    # than VAL-DPN-001 to avoid scraper deduplication across tests)
     s1 = httpx.post(
         AGENT + f"/v2/session/{sid}/step",
-        json={"action": "scrape", "params": {"urls": [TEST_SITE + "/pricing"]}},
+        json={"action": "scrape", "params": {"urls": ["http://httpbin.org/html"]}},
         timeout=120,
     )
     assert s1.status_code == 200, f"Scrape step failed: {s1.status_code} {s1.text}"
