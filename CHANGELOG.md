@@ -2,6 +2,14 @@
 
 All notable changes to GroktoCrawl are documented in this file.
 
+## [0.12.1](https://github.com/groktopus/groktocrawl/compare/v0.12.0...v0.12.1) (2026-07-06)
+
+
+### Bug Fixes
+
+* llm-svc fixture handles output_schema with schema-conformant responses ([#404](https://github.com/groktopus/groktocrawl/issues/404)) ([5e62cff](https://github.com/groktopus/groktocrawl/commit/5e62cff76bd4ba5ad29c149bf164e092df4e3b5a))
+* resolve integration test failures in output_schema and deepen tests ([8276bc5](https://github.com/groktopus/groktocrawl/commit/8276bc5e47f2c5011ac4f650a99aaa02f1521165))
+
 ## [0.12.0](https://github.com/groktopus/groktocrawl/compare/v0.11.0...v0.12.0) (2026-07-05)
 
 
