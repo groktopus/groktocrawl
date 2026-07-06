@@ -7548,10 +7548,10 @@ def test_deepen_valid_ref_after_search_val_dpn_001():
     """
     r = httpx.post(AGENT + "/v2/session/create", json={"ttl": 600}, timeout=10)
     sid = r.json()["sessionId"]
-    # Step 1: scrape a test-site page (avoid external dependency)
+    # Step 1: scrape a known URL (avoid external search dependency)
     s1 = httpx.post(
         AGENT + f"/v2/session/{sid}/step",
-        json={"action": "scrape", "params": {"urls": [TEST_SITE + "/pricing"]}},
+        json={"action": "scrape", "params": {"urls": ["http://example.com"]}},
         timeout=120,
     )
     assert s1.status_code == 200, f"Scrape step failed: {s1.status_code} {s1.text}"
