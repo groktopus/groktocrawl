@@ -148,6 +148,8 @@ class SessionManager:
         llm_model: str | None = None,
     ) -> dict:
         """Internal dispatch for step actions (called under lock)."""
+        if llm_model is None:
+            raise ValueError("llm_model is required — set via LLM_MODEL env var")
         if action == "search":
             result = await self._step_search(
                 session_id=session_id,

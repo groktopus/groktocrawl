@@ -153,6 +153,8 @@ async def run_rich_search(
     or None if no results could be enriched.
     """
     start = time.monotonic()
+    if llm_model is None:
+        raise ValueError("llm_model is required — set via LLM_MODEL env var")
     scraper = ScraperClient(scraper_url)
     llm = LLMClient(llm_base_url, llm_api_key, llm_model)
 
@@ -301,6 +303,8 @@ async def run_search_stream(
       {"type": "error", "content": "..."}
     """
     start = time.monotonic()
+    if llm_model is None:
+        raise ValueError("llm_model is required — set via LLM_MODEL env var")
 
     searxng = SearXNGClient(searxng_url, max_searches=max_searches_per_request)
     scraper = ScraperClient(scraper_url)

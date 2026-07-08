@@ -54,6 +54,8 @@ async def run_research(
         raise ValueError("llm_model is required — set via LLM_MODEL env var")
     searxng = SearXNGClient(searxng_url, max_searches=max_searches_per_request)
     scraper = ScraperClient(scraper_url)
+    if llm_model is None:
+        raise ValueError("llm_model is required — set via LLM_MODEL env var")
     effective_model = (
         requested_model
         if requested_model and requested_model != "default"
@@ -197,9 +199,13 @@ async def run_research_stream(
       {"type": "error", "content": "..."} — error
     """
     start = time.monotonic()
+    if llm_model is None:
+        raise ValueError("llm_model is required — set via LLM_MODEL env var")
 
     searxng = SearXNGClient(searxng_url, max_searches=max_searches_per_request)
     scraper = ScraperClient(scraper_url)
+    if llm_model is None:
+        raise ValueError("llm_model is required — set via LLM_MODEL env var")
     effective_model = (
         requested_model
         if requested_model and requested_model != "default"
@@ -499,6 +505,8 @@ async def run_answer(
 
     searxng = SearXNGClient(searxng_url, max_searches=max_searches_per_request)
     scraper = ScraperClient(scraper_url)
+    if llm_model is None:
+        raise ValueError("llm_model is required — set via LLM_MODEL env var")
     effective_model = (
         requested_model
         if requested_model and requested_model != "default"
@@ -616,6 +624,8 @@ async def run_answer_stream(
 
     searxng = SearXNGClient(searxng_url, max_searches=max_searches_per_request)
     scraper = ScraperClient(scraper_url)
+    if llm_model is None:
+        raise ValueError("llm_model is required — set via LLM_MODEL env var")
     effective_model = (
         requested_model
         if requested_model and requested_model != "default"
