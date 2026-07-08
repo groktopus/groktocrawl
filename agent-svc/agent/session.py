@@ -78,7 +78,7 @@ class SessionManager:
         scraper_url: str = "http://scraper-svc:8001",
         llm_base_url: str = "https://api.openai.com/v1",
         llm_api_key: str = "",
-        llm_model: str = "gpt-4o-mini",
+        llm_model: str | None = None,
     ) -> dict:
         """Execute a step action and accumulate results into the session.
 
@@ -142,7 +142,7 @@ class SessionManager:
         scraper_url: str = "http://scraper-svc:8001",
         llm_base_url: str = "https://api.openai.com/v1",
         llm_api_key: str = "",
-        llm_model: str = "gpt-4o-mini",
+        llm_model: str | None = None,
     ) -> dict:
         """Internal dispatch for step actions (called under lock)."""
         if action == "search":

@@ -46,7 +46,7 @@ async def run_enrich_pipeline(
     scraper_url: str = "http://scraper-svc:8001",
     llm_base_url: str = "https://api.openai.com/v1",
     llm_api_key: str = "",
-    llm_model: str = "gpt-4o-mini",
+    llm_model: str | None = None,
 ) -> list[dict]:
     """Enrich a list of entities with web-sourced structured data.
 

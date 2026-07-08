@@ -22,8 +22,12 @@ class LLMClient:
         self,
         base_url: str = "https://api.openai.com/v1",
         api_key: str = "",
-        model: str = "gpt-4o-mini",
+        model: str = "",
     ):
+        if not model:
+            raise ValueError(
+                "model is required — set LLM_MODEL env var or pass model= explicitly"
+            )
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.model = model
