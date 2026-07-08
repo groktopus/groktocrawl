@@ -50,6 +50,8 @@ async def run_research(
     and this is pass 1, a second pass searches the missing topics and re-synthesizes
     with the combined context. Capped at 2 passes.
     """
+    if llm_model is None:
+        raise ValueError("llm_model is required — set via LLM_MODEL env var")
     searxng = SearXNGClient(searxng_url, max_searches=max_searches_per_request)
     scraper = ScraperClient(scraper_url)
     effective_model = (
@@ -430,6 +432,8 @@ async def run_extract(
     llm_model: str | None = None,
 ) -> dict:
     """Extract structured data from given URLs. No search step."""
+    if llm_model is None:
+        raise ValueError("llm_model is required — set via LLM_MODEL env var")
     scraper = ScraperClient(scraper_url)
     llm = LLMClient(llm_base_url, llm_api_key, llm_model)
 

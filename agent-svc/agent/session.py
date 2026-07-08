@@ -117,6 +117,9 @@ class SessionManager:
                 "Retry in a moment."
             )
 
+        if llm_model is None:
+            raise ValueError("llm_model is required — set via LLM_MODEL env var")
+
         try:
             result = await self._execute_step(
                 session_id=session_id,

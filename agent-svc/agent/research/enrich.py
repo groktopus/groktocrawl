@@ -69,6 +69,9 @@ async def run_enrich_pipeline(
         (dict of field_name → {value, source}).
     """
     search_limit = 3 if effort == "low" else 5
+    if llm_model is None:
+        raise ValueError("llm_model is required — set via LLM_MODEL env var")
+
     semaphore = asyncio.Semaphore(3)
 
     async def enrich_one(item: dict) -> dict:

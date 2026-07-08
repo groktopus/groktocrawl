@@ -33,6 +33,8 @@ async def run_deep_search(
     5. Merges all results, URL-dedup (first occurrence wins)
     6. Returns SearchResult list + query_variations
     """
+    if llm_model is None:
+        raise ValueError("llm_model is required — set via LLM_MODEL env var")
     searxng = SearXNGClient(searxng_url)
     llm = LLMClient(llm_base_url, llm_api_key, llm_model)
 
