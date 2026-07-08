@@ -83,6 +83,8 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
     from ..searxng_client import SearXNGClient
 
     searxng = SearXNGClient(request.app.state.searxng_url)
+    warning_msg: str | None = None
+
     try:
         # ── Determine which source types to query ──────────────────
         has_image_source = body.sources and "images" in body.sources
@@ -190,6 +192,11 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
                     categories=body.categories,
                     sources=effective_sources,
                 )
+                if not searxng_results and _health.engines_responding == 0:
+                    warning_msg = (
+                        "All search engines returned no results. "
+                        "Check your BRAVE_API_KEY configuration."
+                    )
                 # Query vector index in parallel (async would be better, but sequential for now)
                 vector_results = await semantic.search_vector(
                     body.query, limit=body.limit
@@ -229,6 +236,11 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
                 categories=body.categories,
                 sources=effective_sources,
             )
+            if not results and _health.engines_responding == 0:
+                warning_msg = (
+                    "All search engines returned no results. "
+                    "Check your BRAVE_API_KEY configuration."
+                )
             search_results = [
                 SearchResult(
                     url=r["url"], title=r["title"], description=r.get("description", "")
@@ -382,6 +394,6 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
                 await llm_client.close()
                 await scraper_client.close()
 
-        return SearchResponse(data=result_data, output=output)
+        return SearchResponse(data=result_data, output=output, warning=warning_msg)
     finally:
         await searxng.close()

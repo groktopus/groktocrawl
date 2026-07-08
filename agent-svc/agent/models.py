@@ -852,6 +852,9 @@ class SearchResponse(BaseModel):
     data: dict = Field(default_factory=lambda: {"web": [], "images": [], "news": []})
     output: dict[str, Any] | None = None  # Present only when output_schema provided
     query_variations: list[str] | None = None  # Present for deep search type
+    warning: str | None = (
+        None  # Degraded search state (e.g. all engines returned no results)
+    )
 
 
 class FindSimilarRequest(BaseModel):
