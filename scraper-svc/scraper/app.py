@@ -17,7 +17,7 @@ from common.metrics import METRICS
 from common.middleware import add_request_id_middleware
 
 from .cookie_store import close_client, get_client
-from .exceptions import GroktoCrawlError, UpstreamError
+from .exceptions import BrowserError, GroktoCrawlError, UpstreamError
 from .fetch import smart_scrape
 from .meta import fetch_meta_tags
 
@@ -268,6 +268,8 @@ async def scrape(request: ScrapeRequest):
             METRICS.counter(
                 "scrape_calls_total", "Total scrape requests", ["status"]
             ).inc({"status": "error"})
+            if result.get("error_type") == "browser_error":
+                raise BrowserError(detail=result["error"])
             raise UpstreamError(detail=result["error"])
         markdown = result.get("markdown", "")
         raw_html = result.get("raw_html_start", "")

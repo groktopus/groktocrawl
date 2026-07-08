@@ -387,6 +387,17 @@ async def fetch_via_playwright(url: str) -> dict | None:
     except ImportError:
         logger.warning("Playwright not installed; skipping Tier 3")
     except Exception as e:
+        error_str = str(e)
+        # Classify known Playwright crash signatures
+        if "page is navigating" in error_str or "scrollHeight" in error_str.lower():
+            logger.warning("Tier 3 browser crash for %s: %s", url, e)
+            return {
+                "error": f"Browser error: {error_str}",
+                "error_type": "browser_error",
+                "markdown": "",
+                "source": "playwright-error",
+                "url": url,
+            }
         logger.warning("Tier 3 miss for %s: %s", url, e)
     return None
 
