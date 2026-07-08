@@ -682,6 +682,9 @@ class _LoggingMiddleware:
 
 def main() -> None:
     """Start the MCP server with Streamable HTTP transport on port 8002."""
+    import asyncio
+    import signal
+
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -706,7 +709,34 @@ def main() -> None:
 
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=PORT)
+    config = uvicorn.Config(
+        app,
+        host="0.0.0.0",
+        port=PORT,
+        timeout_graceful_shutdown=30,
+    )
+    server = uvicorn.Server(config)
+
+    # Signal handlers for clean shutdown with drain
+    shutdown_event = asyncio.Event()
+
+    def _handle_shutdown() -> None:
+        logger.info("Received shutdown signal, draining in-flight requests...")
+        shutdown_event.set()
+
+    loop = asyncio.new_event_loop()
+    try:
+        loop.add_signal_handler(signal.SIGTERM, _handle_shutdown)
+        loop.add_signal_handler(signal.SIGINT, _handle_shutdown)
+    except NotImplementedError:
+        # Signal handlers not available on this platform (e.g. Windows)
+        for sig in (signal.SIGTERM, signal.SIGINT):
+            try:
+                signal.signal(sig, lambda *_: _handle_shutdown())
+            except (ValueError, OSError):
+                pass
+
+    loop.run_until_complete(server.serve())
 
 
 if __name__ == "__main__":

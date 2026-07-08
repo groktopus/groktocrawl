@@ -197,6 +197,7 @@ services:
     depends_on:
       - agent-svc
     restart: unless-stopped
+    stop_grace_period: 35s
 
 volumes:
   valkey_data:
