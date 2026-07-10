@@ -17,6 +17,12 @@ An Architecture Decision Record captures an important architectural decision mad
 
 ## Index
 
+**Status legend:** accepted ADRs describe decisions used by the current implementation. Proposed ADRs are design work, not promises of current behavior. Superseded ADRs are historical context only; use their successor when documenting current behavior.
+
+**Current accepted decisions:** ADR-0001–0012, 0014–0022, 0026, 0029–0035, 0038, 0039, and 0043.
+
+**Proposed work:** ADR-0023–0025, 0027, 0028, 0036, 0037, and 0040–0042.
+
 | ADR | Title | Status |
 |-----|-------|--------|
 | 0001 | [Adapter Registry Pre-Pipeline Hook](0001-adapter-registry-pre-pipeline-hook.md) | accepted |
@@ -49,7 +55,7 @@ An Architecture Decision Record captures an important architectural decision mad
 | 0028 | [Embedding Model Migration Path for Index Rebuilds](0028-embedding-model-migration-path.md) | proposed |
 | 0029 | [Service-Level Metrics for semantic-svc](0029-service-level-metrics-for-semantic-svc.md) | accepted |
 | 0030 | [Batch Vector Ingestion via Qdrant gRPC](0030-batch-vector-ingestion.md) | accepted |
-| 0031 | [Centralized Settings Object](0031-centralized-settings-object.md) | accepted |
+| 0031 | [Centralized Settings Object](0031-settings-object.md) | accepted |
 | 0032 | [Standardized Error Response Model](0032-standardized-error-response-model.md) | accepted |
 | 0033 | [Search Volume Controls](0033-search-volume-controls.md) | accepted |
 | 0034 | [Lifespan-Based Model Loading and Startup Readiness](0034-lifespan-model-loading.md) | accepted |

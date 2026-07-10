@@ -16,12 +16,24 @@ on:
     paths:
       - "docs/adr/**"
       - "docs/architecture.md"
+      - "docker-compose.yml"
+      - "agent-svc/agent/routes/**"
+      - "agent-svc/agent/research/**"
+      - "scraper-svc/scraper/**"
+      - "semantic-svc/**"
+      - "mcp-svc/**"
       - "model/**"
   pull_request:
     branches: [main]
     paths:
       - "docs/adr/**"
       - "docs/architecture.md"
+      - "docker-compose.yml"
+      - "agent-svc/agent/routes/**"
+      - "agent-svc/agent/research/**"
+      - "scraper-svc/scraper/**"
+      - "semantic-svc/**"
+      - "mcp-svc/**"
       - "model/**"
 
 jobs:

@@ -1,0 +1,33 @@
+name: Documentation Surface
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "README.md"
+      - "CONTRIBUTING.md"
+      - ".env.sample"
+      - "docker-compose.yml"
+      - "agent-svc/agent/routes/**"
+      - "groktocrawl"
+      - "scripts/check-docs-surface.py"
+  pull_request:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "README.md"
+      - "CONTRIBUTING.md"
+      - ".env.sample"
+      - "docker-compose.yml"
+      - "agent-svc/agent/routes/**"
+      - "groktocrawl"
+      - "scripts/check-docs-surface.py"
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: python3 scripts/check-docs-surface.py
+      - run: python3 scripts/check-cli-coverage.py

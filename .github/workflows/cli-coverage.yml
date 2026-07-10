@@ -14,12 +14,12 @@ on:
   push:
     branches: [main]
     paths:
-      - "agent-svc/agent/api.py"
+      - "agent-svc/agent/routes/**"
       - "groktocrawl"
   pull_request:
     branches: [main]
     paths:
-      - "agent-svc/agent/api.py"
+      - "agent-svc/agent/routes/**"
       - "groktocrawl"
 
 jobs:

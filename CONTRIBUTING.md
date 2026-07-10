@@ -28,19 +28,21 @@ Open a GitHub issue with:
 1. Fork the repo
 2. Create a branch: `git checkout -b feat/your-feature` or `fix/your-bug`
 3. Make your changes
-4. Run the integration tests (see below)
+4. Run the relevant checks and tests (see below)
 5. Commit with a clear message
 6. Open a PR
 
 ### Running Tests
 
 ```bash
-# From the repo root:
+# From the repo root (fixture services provide an LLM and test sites):
 cp .env.sample .env
 docker compose --profile fixture up --build -d
-docker compose exec -T agent-svc mkdir -p /app/tests
-docker cp tests/test_stack.py $(docker compose ps -q agent-svc):/app/tests/test_stack.py
-docker compose exec -T agent-svc python3 /app/tests/test_stack.py
+docker compose exec -T agent-svc python3 -m pytest /app/tests/integration/ /app/tests/service/
+
+# Fast checks that do not require the stack:
+python3 scripts/check-cli-coverage.py
+python3 scripts/check-docs-surface.py
 ```
 
 All tests must pass before a PR is merged.
@@ -65,7 +67,7 @@ The `--profile fixture` flag starts test helper services (`llm-svc` for a built-
 
 - **Python 3.12+** with type hints
 - **FastAPI** for all HTTP services
-- **Async/await** throughout (except RQ worker functions which are sync wrappers)
+- **Async/await** throughout; background jobs run in the API process through `TaskTracker` and `asyncio.create_task()`.
 - **MIT license** — all contributions are under this license
 - Keep dependencies minimal. Each service's `pyproject.toml` should list only what it needs.
 - **Webhook support required for all async endpoints** — any new endpoint that returns a job ID must accept a `webhook` field in its request and fire it on completion/failure via `deliver_webhook()` in `agent/webhook.py`. This ensures all async jobs are observable.
@@ -79,7 +81,7 @@ The `--profile fixture` flag starts test helper services (`llm-svc` for a built-
 - `portal-svc/` — web UI for human users
 - `llm-svc/` — LLM fixture for local testing (replaceable with any OpenAI-compatible backend)
 - `test-site/` — fixture website for integration tests
-- `tests/` — integration tests
+- `tests/` — unit, service, and integration tests
 
 ## Error Handling Conventions
 
@@ -155,6 +157,10 @@ Significant architectural decisions are documented as ADRs in `docs/adr/`. Each 
 3. On acceptance, update the ADR status and the table in `docs/adr/README.md`
 
 See `docs/adr/README.md` for the full index of existing ADRs.
+
+## Documentation updates
+
+Keep the README as onboarding material and update the relevant guide in `docs/guides/` for public behavior changes. The validated inventory in `docs/reference/public-surface.md` must change with any public route, top-level CLI command, compose service, or `.env.sample` setting. `scripts/check-docs-surface.py` is the local and CI guardrail; do not add broad exemptions for public behavior.
 
 ## Commit Guidelines
 
