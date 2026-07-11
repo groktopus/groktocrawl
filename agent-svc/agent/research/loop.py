@@ -161,7 +161,9 @@ async def run_research(
 
             # ── Gap detection after pass 1 ─────────────────────────
             if pass_count == 1:
-                gap_topics = await _detect_gaps(combined_context, llm, original_query=prompt)
+                gap_topics = await _detect_gaps(
+                    combined_context, llm, original_query=prompt
+                )
                 if not gap_topics:
                     break  # Coverage is adequate, done
                 max_passes = 2  # Enable second pass
@@ -379,12 +381,15 @@ async def run_research_stream(
 
                 # ── Gap detection after pass 1 ──────────────────────
                 if pass_count == 1:
-                    gap_topics = await _detect_gaps(combined_context, llm, original_query=prompt)
+                    gap_topics = await _detect_gaps(
+                        combined_context, llm, original_query=prompt
+                    )
                     if not gap_topics:
                         break  # Coverage is adequate, done
                     max_passes = 2  # Enable second pass
                     if pass_count == 1:
                         continue
+            else:
                 # No schema — stream tokens from the LLM
                 yield {
                     "type": "sources",
@@ -408,12 +413,13 @@ async def run_research_stream(
 
                 # ── Gap detection after pass 1 ──────────────────────
                 if pass_count == 1:
-                    gap_topics = await _detect_gaps(combined_context, llm, original_query=prompt)
+                    gap_topics = await _detect_gaps(
+                        combined_context, llm, original_query=prompt
+                    )
                     if not gap_topics:
                         break  # Coverage is adequate, done
                     max_passes = 2  # Enable second pass
-                    if pass_count == 1:
-                        continue
+                    continue
         # ── Final done event after all passes ───────────────────────
         source_list = [s["url"] for s in all_source_details]
         elapsed = int((time.monotonic() - start) * 1000)

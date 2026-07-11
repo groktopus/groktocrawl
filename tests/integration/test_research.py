@@ -613,7 +613,9 @@ class TestRunResearchStream:
             patch("agent.research.loop.LLMClient", return_value=llm),
         ):
             events = []
-            async for event in run_research_stream(prompt="What is AI?"):
+            async for event in run_research_stream(
+                prompt="What is AI?", llm_model="fixture-model"
+            ):
                 events.append(event)
 
         # Verify event sequence — Phase 0 planning → Phase 1 discovery → Phase 2 synthesis
@@ -686,7 +688,7 @@ class TestRunResearchStream:
         ):
             events = []
             async for event in run_research_stream(
-                prompt="Extract data", schema=schema
+                prompt="Extract data", schema=schema, llm_model="fixture-model"
             ):
                 events.append(event)
 
@@ -741,7 +743,9 @@ class TestRunResearchStream:
             patch("agent.research.loop.LLMClient", return_value=llm),
         ):
             events = []
-            async for event in run_research_stream(prompt="Anything?"):
+            async for event in run_research_stream(
+                prompt="Anything?", llm_model="fixture-model"
+            ):
                 events.append(event)
 
         types = [e["type"] for e in events]
@@ -796,7 +800,9 @@ class TestRunResearchStream:
             patch("agent.research.loop.LLMClient", return_value=llm),
         ):
             events = []
-            async for event in run_research_stream(prompt="Test"):
+            async for event in run_research_stream(
+                prompt="Test", llm_model="fixture-model"
+            ):
                 events.append(event)
 
         error_events = [e for e in events if e["type"] == "error"]
