@@ -121,6 +121,9 @@ jobs:
     name: Integration Tests
     needs: build-and-push
     runs-on: [self-hosted, groktopus, docker]
+    concurrency:
+      group: groktocrawl-integration-${{ github.repository }}
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v7
 
