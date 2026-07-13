@@ -52,6 +52,9 @@ jobs:
       - name: Run ruff TD check (TODO/FIXME enforcement)
         run: python3 -m ruff check --select TD
 
+      - name: Validate observability artifacts
+        run: python3 tests/service/test_observability_contract.py
+
   duplicate-code:
     name: Duplicate Code
     runs-on: ubuntu-latest

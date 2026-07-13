@@ -6,24 +6,30 @@ groups:
         for: 5m
         labels:
           severity: critical
+          owner: groktocrawl-maintainers
         annotations:
           summary: "High job error rate for {{ $labels.type }} jobs"
           description: "The error rate for {{ $labels.type }} jobs has exceeded 0.1 errors/sec over the last 5 minutes (current value: {{ $value }})."
+          runbook_url: "https://github.com/groktopus/groktocrawl/blob/main/docs/runbooks/high-job-error-rate.md"
 
       - alert: ServiceDown
-        expr: up{job=~"agent-svc|scraper-svc"} == 0
+        expr: up{job=~"agent-svc|scraper-svc|semantic-svc"} == 0
         for: 2m
         labels:
           severity: critical
+          owner: groktocrawl-maintainers
         annotations:
           summary: "Service {{ $labels.job }} is down"
           description: "The {{ $labels.job }} instance {{ $labels.instance }} has been unreachable for more than 2 minutes."
+          runbook_url: "https://github.com/groktopus/groktocrawl/blob/main/docs/runbooks/service-down.md"
 
       - alert: QueueDepthSpike
         expr: queue_depth > 100
         for: 5m
         labels:
           severity: warning
+          owner: groktocrawl-maintainers
         annotations:
           summary: "Queue depth spike for agent-svc"
           description: "The job queue depth in agent-svc has exceeded 100 active jobs (current value: {{ $value }})."
+          runbook_url: "https://github.com/groktopus/groktocrawl/blob/main/docs/runbooks/queue-depth-spike.md"

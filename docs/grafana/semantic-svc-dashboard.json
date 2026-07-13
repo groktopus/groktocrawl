@@ -3,16 +3,24 @@
   "uid": "groktocrawl_semantic_svc",
   "schemaVersion": 39,
   "version": 1,
-  "tags": ["groktocrawl", "semantic-svc"],
+  "tags": ["groktocrawl", "semantic-svc", "owner:groktocrawl-maintainers"],
+  "description": "Owner: GroktoCrawl maintainers",
   "timezone": "browser",
   "editable": true,
+  "refresh": "30s",
+  "time": {"from": "now-6h", "to": "now"},
+  "templating": {
+    "list": [
+      {"name": "datasource", "type": "datasource", "query": "prometheus"}
+    ]
+  },
   "panels": [
     {
       "title": "Index Size",
       "type": "gauge",
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "$datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -32,7 +40,7 @@
       },
       "targets": [
         {
-          "expr": "groktocrawl_index_docs_total{instance=~\"semantic-svc:8003.*\"}",
+          "expr": "groktocrawl_index_docs_total{job=\"semantic-svc\"}",
           "legendFormat": "Documents"
         }
       ],
@@ -43,12 +51,11 @@
       "type": "stat",
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "$datasource"
       },
       "fieldConfig": {
         "defaults": {
           "unit": "none",
-          "color": {"mode": "background"},
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -61,30 +68,31 @@
       },
       "targets": [
         {
-          "expr": "increase(groktocrawl_index_evictions_total{instance=~\"semantic-svc:8003.*\"}[$__rate_interval])",
+          "expr": "increase(groktocrawl_index_evictions_total{job=\"semantic-svc\"}[$__rate_interval])",
           "legendFormat": "Evictions/s"
         }
       ],
-      "gridPos": {"h": 8, "w": 6, "x": 6, "y": 0}
+      "gridPos": {"h": 8, "w": 6, "x": 6, "y": 0},
+      "options": {"colorMode": "background"}
     },
     {
       "title": "Query Latency (p50/p95/p99)",
       "type": "heatmap",
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "$datasource"
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum(rate(groktocrawl_index_query_duration_seconds_bucket{instance=~\"semantic-svc:8003.*\"}[$__rate_interval])) by (le, endpoint))",
+          "expr": "histogram_quantile(0.50, sum(rate(groktocrawl_index_query_duration_seconds_bucket{job=\"semantic-svc\"}[$__rate_interval])) by (le, endpoint))",
           "legendFormat": "p50 {{endpoint}}"
         },
         {
-          "expr": "histogram_quantile(0.95, sum(rate(groktocrawl_index_query_duration_seconds_bucket{instance=~\"semantic-svc:8003.*\"}[$__rate_interval])) by (le, endpoint))",
+          "expr": "histogram_quantile(0.95, sum(rate(groktocrawl_index_query_duration_seconds_bucket{job=\"semantic-svc\"}[$__rate_interval])) by (le, endpoint))",
           "legendFormat": "p95 {{endpoint}}"
         },
         {
-          "expr": "histogram_quantile(0.99, sum(rate(groktocrawl_index_query_duration_seconds_bucket{instance=~\"semantic-svc:8003.*\"}[$__rate_interval])) by (le, endpoint))",
+          "expr": "histogram_quantile(0.99, sum(rate(groktocrawl_index_query_duration_seconds_bucket{job=\"semantic-svc\"}[$__rate_interval])) by (le, endpoint))",
           "legendFormat": "p99 {{endpoint}}"
         }
       ],
@@ -95,7 +103,7 @@
       "type": "barchart",
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "$datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -104,7 +112,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(groktocrawl_search_requests_total{instance=~\"semantic-svc:8003.*\"}[$__rate_interval])) by (endpoint)",
+          "expr": "sum(rate(groktocrawl_search_requests_total{job=\"semantic-svc\"}[$__rate_interval])) by (endpoint)",
           "legendFormat": "{{endpoint}}"
         }
       ],
@@ -115,7 +123,7 @@
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "$datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -127,7 +135,7 @@
       },
       "targets": [
         {
-          "expr": "rate(groktocrawl_index_embeddings_duration_seconds_sum{instance=~\"semantic-svc:8003.*\"}[$__rate_interval]) / rate(groktocrawl_index_embeddings_duration_seconds_count{instance=~\"semantic-svc:8003.*\"}[$__rate_interval])",
+          "expr": "rate(groktocrawl_index_embeddings_duration_seconds_sum{job=\"semantic-svc\"}[$__rate_interval]) / rate(groktocrawl_index_embeddings_duration_seconds_count{job=\"semantic-svc\"}[$__rate_interval])",
           "legendFormat": "Average embed duration"
         }
       ],

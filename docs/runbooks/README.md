@@ -2,6 +2,14 @@
 
 Operational runbooks for common incidents and maintenance procedures.
 
+Owner: GroktoCrawl maintainers
+
+## Alert Runbooks
+
+- [HighJobErrorRate](high-job-error-rate.md)
+- [QueueDepthSpike](queue-depth-spike.md)
+- [ServiceDown](service-down.md)
+
 ---
 
 ## Service Health Check
@@ -27,17 +35,13 @@ docker compose up -d --force-recreate scraper-svc
 
 ## Valkey (Redis) Recovery
 
-If Valkey data is corrupted or the container won't start:
+If Valkey is unavailable or the container will not start:
 
 ```bash
-# Stop Valkey
-docker compose stop valkey
-
-# Remove the volume (DESTRUCTIVE - clears all job data)
-docker compose down -v valkey
-
-# Recreate
-docker compose up -d valkey
+# Inspect the failure, restart or recreate the service, then verify it responds.
+docker compose logs --tail=200 valkey
+docker compose up -d --force-recreate valkey
+docker compose exec valkey valkey-cli PING
 ```
 
 ## Qdrant Recovery

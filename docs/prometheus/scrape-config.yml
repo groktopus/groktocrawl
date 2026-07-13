@@ -1,0 +1,20 @@
+# Merge this fragment into the deployment-specific Prometheus configuration.
+scrape_configs:
+  - job_name: agent-svc
+    static_configs:
+      - targets: ["agent-svc:8080"]
+        labels:
+          owner: groktocrawl-maintainers
+          service: agent-svc
+  - job_name: scraper-svc
+    static_configs:
+      - targets: ["scraper-svc:8001"]
+        labels:
+          owner: groktocrawl-maintainers
+          service: scraper-svc
+  - job_name: semantic-svc
+    static_configs:
+      - targets: ["semantic-svc:8003"]
+        labels:
+          owner: groktocrawl-maintainers
+          service: semantic-svc

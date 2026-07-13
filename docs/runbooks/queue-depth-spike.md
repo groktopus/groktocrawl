@@ -2,6 +2,8 @@
 
 QueueDepthSpike
 
+Owner: GroktoCrawl maintainers
+
 ## Severity
 
 Warning
@@ -28,7 +30,7 @@ Warning
    ```bash
    curl -s http://localhost:8080/health
    ```
-5. **If the backlog is growing rapidly and dependencies are healthy**, consider scaling horizontally (if supported) or throttling incoming requests.
+5. **If the backlog is growing rapidly and dependencies are healthy**, identify the slow job type and recent configuration or deployment changes.
 
 ## Investigation Steps
 
@@ -50,7 +52,7 @@ Warning
    ```
 5. **Verify resource utilization** — CPU or memory contention can slow job processing:
    ```bash
-   docker stats agent-svc --no-stream
+   docker compose stats --no-stream agent-svc
    ```
 6. **Determine if the spike is traffic-driven** — check for a corresponding increase in `jobs_submitted_total` rate. If submissions are normal but queue is growing, the bottleneck is processing speed.
 7. **Review recent deployments or configuration changes** that may have introduced a performance regression.
@@ -59,4 +61,4 @@ Warning
 
 - **Level 1 (On-call engineer)**: Follow immediate actions. If the queue depth is driven by a transient traffic spike and dependencies are healthy, monitor for 10 minutes. The backlog should clear naturally as jobs complete.
 - **Level 2 (Service owner)**: If the queue depth exceeds 200 or persists for more than 15 minutes despite healthy dependencies, escalate to the service owner. Investigate potential performance regressions or resource bottlenecks.
-- **Level 3 (Engineering leadership)**: If the queue depth spike is caused by a systemic issue (e.g., all jobs are stuck due to a code defect, or the LLM provider is degraded), escalate to engineering leadership. Consider temporarily pausing new job submissions via the feature toggle (`FEATURE_AGENT_ENABLED=false`) and restarting agent-svc to drain the queue.
+- **Level 3 (Engineering leadership)**: If the queue depth spike is caused by a systemic issue (e.g., all jobs are stuck due to a code defect, or the LLM provider is degraded), escalate to engineering leadership.

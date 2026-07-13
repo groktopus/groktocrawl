@@ -2,13 +2,15 @@
 
 ServiceDown
 
+Owner: GroktoCrawl maintainers
+
 ## Severity
 
 Critical
 
 ## Symptoms
 
-- The `up` metric for `agent-svc` or `scraper-svc` is `0`, indicating the service is unreachable by Prometheus.
+- The `up` metric for `agent-svc`, `scraper-svc`, or `semantic-svc` is `0`, indicating the service is unreachable by Prometheus.
 - Users cannot access the affected service's API endpoints.
 - Health checks for the affected service return connection refused or timeout.
 - Downstream services that depend on the affected service may also exhibit failures.
@@ -20,7 +22,7 @@ Critical
    ```bash
    docker compose ps <service-name>
    ```
-   Replace `<service-name>` with `agent-svc` or `scraper-svc`.
+   Replace `<service-name>` with `agent-svc`, `scraper-svc`, or `semantic-svc`.
 3. **Check service logs** for crash indicators or startup failures:
    ```bash
    docker compose logs --tail=100 <service-name>
@@ -35,6 +37,7 @@ Critical
    ```
    - agent-svc health: `http://localhost:8080/health`
    - scraper-svc health: `http://localhost:8001/health`
+   - semantic-svc health: `http://localhost:8003/health`
 
 ## Investigation Steps
 
@@ -44,7 +47,7 @@ Critical
    ```
 2. **Check for OOM kills** — look for `Killed` or `OOM` in docker logs:
    ```bash
-   docker inspect <container-id> | jq '.[].State.OOMKilled'
+   docker inspect "$(docker compose ps -q <service-name>)" --format '{{.State.OOMKilled}}'
    ```
 3. **Verify Docker host resources** — insufficient memory or disk space can cause service termination:
    ```bash

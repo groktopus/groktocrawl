@@ -3,16 +3,24 @@
   "uid": "groktocrawl_scraper_svc",
   "schemaVersion": 39,
   "version": 1,
-  "tags": ["groktocrawl", "scraper-svc"],
+  "tags": ["groktocrawl", "scraper-svc", "owner:groktocrawl-maintainers"],
+  "description": "Owner: GroktoCrawl maintainers",
   "timezone": "browser",
   "editable": true,
+  "refresh": "30s",
+  "time": {"from": "now-6h", "to": "now"},
+  "templating": {
+    "list": [
+      {"name": "datasource", "type": "datasource", "query": "prometheus"}
+    ]
+  },
   "panels": [
     {
       "title": "Scrape Call Rate",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "$datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -24,7 +32,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(scrape_calls_total{instance=~\"scraper-svc:8001.*\"}[$__rate_interval])) by (status)",
+          "expr": "sum(rate(scrape_calls_total{job=\"scraper-svc\"}[$__rate_interval])) by (status)",
           "legendFormat": "{{status}}"
         }
       ],
@@ -35,7 +43,7 @@
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "$datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -47,7 +55,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(meta_calls_total{instance=~\"scraper-svc:8001.*\"}[$__rate_interval])) by (status)",
+          "expr": "sum(rate(meta_calls_total{job=\"scraper-svc\"}[$__rate_interval])) by (status)",
           "legendFormat": "{{status}}"
         }
       ],
@@ -58,7 +66,7 @@
       "type": "barchart",
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "$datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -67,11 +75,11 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(scrape_calls_total{instance=~\"scraper-svc:8001.*\"}[$__rate_interval])) by (status)",
+          "expr": "sum(rate(scrape_calls_total{job=\"scraper-svc\"}[$__rate_interval])) by (status)",
           "legendFormat": "scrape {{status}}"
         },
         {
-          "expr": "sum(rate(meta_calls_total{instance=~\"scraper-svc:8001.*\"}[$__rate_interval])) by (status)",
+          "expr": "sum(rate(meta_calls_total{job=\"scraper-svc\"}[$__rate_interval])) by (status)",
           "legendFormat": "meta {{status}}"
         }
       ],
@@ -82,7 +90,7 @@
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "$datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -94,15 +102,15 @@
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{instance=~\"scraper-svc:8001.*\"}[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{job=\"scraper-svc\"}[$__rate_interval])) by (le))",
           "legendFormat": "p50"
         },
         {
-          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{instance=~\"scraper-svc:8001.*\"}[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"scraper-svc\"}[$__rate_interval])) by (le))",
           "legendFormat": "p95"
         },
         {
-          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{instance=~\"scraper-svc:8001.*\"}[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job=\"scraper-svc\"}[$__rate_interval])) by (le))",
           "legendFormat": "p99"
         }
       ],

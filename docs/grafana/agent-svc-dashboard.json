@@ -3,16 +3,24 @@
   "uid": "groktocrawl_agent_svc",
   "schemaVersion": 39,
   "version": 1,
-  "tags": ["groktocrawl", "agent-svc"],
+  "tags": ["groktocrawl", "agent-svc", "owner:groktocrawl-maintainers"],
+  "description": "Owner: GroktoCrawl maintainers",
   "timezone": "browser",
   "editable": true,
+  "refresh": "30s",
+  "time": {"from": "now-6h", "to": "now"},
+  "templating": {
+    "list": [
+      {"name": "datasource", "type": "datasource", "query": "prometheus"}
+    ]
+  },
   "panels": [
     {
       "title": "Job Execution Rate",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "$datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -24,15 +32,15 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(jobs_submitted_total{instance=~\"agent-svc:8080.*\"}[$__rate_interval])) by (type)",
+          "expr": "sum(rate(jobs_submitted_total{job=\"agent-svc\"}[$__rate_interval])) by (type)",
           "legendFormat": "submitted {{type}}"
         },
         {
-          "expr": "sum(rate(jobs_completed_total{instance=~\"agent-svc:8080.*\"}[$__rate_interval])) by (type)",
+          "expr": "sum(rate(jobs_completed_total{job=\"agent-svc\"}[$__rate_interval])) by (type)",
           "legendFormat": "completed {{type}}"
         },
         {
-          "expr": "sum(rate(jobs_failed_total{instance=~\"agent-svc:8080.*\"}[$__rate_interval])) by (type)",
+          "expr": "sum(rate(jobs_failed_total{job=\"agent-svc\"}[$__rate_interval])) by (type)",
           "legendFormat": "failed {{type}}"
         }
       ],
@@ -43,7 +51,7 @@
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "$datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -55,7 +63,7 @@
       },
       "targets": [
         {
-          "expr": "queue_depth{instance=~\"agent-svc:8080.*\"}",
+          "expr": "queue_depth{job=\"agent-svc\"}",
           "legendFormat": "Active jobs"
         }
       ],
@@ -66,14 +74,11 @@
       "type": "stat",
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "$datasource"
       },
       "fieldConfig": {
         "defaults": {
           "unit": "none",
-          "color": {
-            "mode": "background"
-          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -88,18 +93,19 @@
       },
       "targets": [
         {
-          "expr": "dependency_health{instance=~\"agent-svc:8080.*\"}",
+          "expr": "dependency_health{job=\"agent-svc\"}",
           "legendFormat": "{{dependency}}"
         }
       ],
-      "gridPos": {"h": 8, "w": 3, "x": 9, "y": 0}
+      "gridPos": {"h": 8, "w": 3, "x": 9, "y": 0},
+      "options": {"colorMode": "background"}
     },
     {
       "title": "Request Latency (p50/p95/p99)",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "$datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -111,15 +117,15 @@
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{instance=~\"agent-svc:8080.*\"}[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{job=\"agent-svc\"}[$__rate_interval])) by (le))",
           "legendFormat": "p50"
         },
         {
-          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{instance=~\"agent-svc:8080.*\"}[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"agent-svc\"}[$__rate_interval])) by (le))",
           "legendFormat": "p95"
         },
         {
-          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{instance=~\"agent-svc:8080.*\"}[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job=\"agent-svc\"}[$__rate_interval])) by (le))",
           "legendFormat": "p99"
         }
       ],
@@ -130,7 +136,7 @@
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "$datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -142,15 +148,15 @@
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum(rate(job_duration_seconds_bucket{instance=~\"agent-svc:8080.*\"}[$__rate_interval])) by (le, type))",
+          "expr": "histogram_quantile(0.50, sum(rate(job_duration_seconds_bucket{job=\"agent-svc\"}[$__rate_interval])) by (le, type))",
           "legendFormat": "p50 {{type}}"
         },
         {
-          "expr": "histogram_quantile(0.95, sum(rate(job_duration_seconds_bucket{instance=~\"agent-svc:8080.*\"}[$__rate_interval])) by (le, type))",
+          "expr": "histogram_quantile(0.95, sum(rate(job_duration_seconds_bucket{job=\"agent-svc\"}[$__rate_interval])) by (le, type))",
           "legendFormat": "p95 {{type}}"
         },
         {
-          "expr": "histogram_quantile(0.99, sum(rate(job_duration_seconds_bucket{instance=~\"agent-svc:8080.*\"}[$__rate_interval])) by (le, type))",
+          "expr": "histogram_quantile(0.99, sum(rate(job_duration_seconds_bucket{job=\"agent-svc\"}[$__rate_interval])) by (le, type))",
           "legendFormat": "p99 {{type}}"
         }
       ],
@@ -161,7 +167,7 @@
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "$datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -173,7 +179,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(search_calls_total{instance=~\"agent-svc:8080.*\"}[$__rate_interval])) by (status)",
+          "expr": "sum(rate(search_calls_total{job=\"agent-svc\"}[$__rate_interval])) by (status)",
           "legendFormat": "{{status}}"
         }
       ],
@@ -184,7 +190,7 @@
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "$datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -196,11 +202,11 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(scrapes_total{instance=~\"agent-svc:8080.*\"}[$__rate_interval])) by (tier)",
+          "expr": "sum(rate(scrapes_total{job=\"agent-svc\"}[$__rate_interval])) by (tier)",
           "legendFormat": "Scrapes {{tier}}"
         },
         {
-          "expr": "rate(scrape_duration_seconds_sum{instance=~\"agent-svc:8080.*\"}[$__rate_interval]) / rate(scrape_duration_seconds_count{instance=~\"agent-svc:8080.*\"}[$__rate_interval])",
+          "expr": "rate(scrape_duration_seconds_sum{job=\"agent-svc\"}[$__rate_interval]) / rate(scrape_duration_seconds_count{job=\"agent-svc\"}[$__rate_interval])",
           "legendFormat": "Avg scrape duration (s)"
         }
       ],

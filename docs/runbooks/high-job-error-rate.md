@@ -2,6 +2,8 @@
 
 HighJobErrorRate
 
+Owner: GroktoCrawl maintainers
+
 ## Severity
 
 Critical
@@ -26,7 +28,6 @@ Critical
    curl -s http://localhost:8080/health
    ```
    Look for any dependency in a non-ok state (valkey, slopsearx, scraper, browser, portal).
-5. **Pause job processing** if needed by setting the `FEATURE_AGENT_ENABLED` toggle to `false` and restarting agent-svc.
 
 ## Investigation Steps
 
@@ -41,7 +42,7 @@ Critical
    ```
 3. **Check resource utilization** — look for memory or CPU pressure on the agent-svc container:
    ```bash
-   docker stats agent-svc --no-stream
+   docker compose stats --no-stream agent-svc
    ```
 4. **Verify Valkey connectivity** — if jobs cannot store state, failures cascade:
    ```bash
