@@ -539,6 +539,8 @@ class TestMetrics:
         assert "# HELP" in text
         assert "# TYPE" in text
         assert "# EOF" in text
+        assert "\n\n" not in text
+        assert text.endswith("# EOF\n")
 
     def test_metrics_has_search_requests(self):
         skip_if_not_running()

@@ -233,7 +233,7 @@ class MetricsCollector:
             lines.append("")
 
         lines.append("# EOF")
-        return "\n".join(lines)
+        return "\n".join(line for line in lines if line) + "\n"
 
 
 def _format_labels_no_braces(key: tuple) -> str:
