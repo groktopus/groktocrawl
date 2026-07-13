@@ -48,7 +48,7 @@ async def llms_txt():
     )
 
 
-@app.get("/pricing")
+@app.api_route("/pricing", methods=["GET", "HEAD"])
 async def pricing(request: Request):
     accept = request.headers.get("accept", "")
     if ENABLE_MARKDOWN and "text/markdown" in accept:

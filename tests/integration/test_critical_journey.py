@@ -49,10 +49,10 @@ def test_search_contract():
 
 
 def test_fixture_scrape():
-    """fixture scrape: the substantive fixture page returns expected markdown."""
+    """fixture scrape: the markdown-capable pricing fixture returns markdown."""
     response = httpx.post(
         AGENT + "/v2/scrape",
-        json={"url": TEST_SITE + "/content/multi-sentence"},
+        json={"url": TEST_SITE + "/pricing"},
         timeout=30,
     )
     assert response.status_code == 200, (
@@ -64,8 +64,5 @@ def test_fixture_scrape():
     assert isinstance(data, dict), f"fixture scrape payload: {payload}"
     markdown = data.get("markdown")
     assert isinstance(markdown, str), f"fixture scrape payload: {payload}"
-    assert "Multi-Sentence Page" in markdown, f"fixture scrape markdown: {markdown[:500]}"
-    assert "This is the first sentence of the description." in markdown, (
-        f"fixture scrape markdown: {markdown[:500]}"
-    )
-    print("fixture scrape: substantive markdown verified")
+    assert "Pro: $10" in markdown, f"fixture scrape markdown: {markdown[:500]}"
+    print("fixture scrape: pricing markdown verified")

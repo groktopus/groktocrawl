@@ -24,6 +24,6 @@ Only expose or override internal service URLs when deliberately splitting the co
 
 `/health` reports dependency probes and `/metrics` exposes OpenMetrics data. Prometheus alerts and response procedures live in [runbooks](../runbooks/README.md). Important capacity controls include `AGENT_MAX_SEARCHES_PER_REQUEST`, `AGENT_SEARCH_RATE_LIMIT`, crawl duration/idle limits, scrape-cache TTLs, and vector-index capacity.
 
-The fixture-backed critical-journey diagnostic checks `/health`, the fast-search response contract, and `/v2/scrape` for `test-site`'s substantive `/content/multi-sentence` page; it deliberately does not promise live-search result cardinality, semantic retrieval, or research-agent results.
+The fixture-backed critical-journey release gate checks `/health`, the fast-search response contract, and `/v2/scrape` for `test-site`'s markdown-capable `/pricing` page; it deliberately does not promise live-search result cardinality, semantic retrieval, or research-agent results.
 
 Before upgrading, run `docker compose config --quiet`, rebuild changed services, and review [CHANGELOG.md](../../CHANGELOG.md). Use the fixture profile and test suite before changing production configuration.

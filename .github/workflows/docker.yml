@@ -149,6 +149,7 @@ jobs:
           # Kill any stale llm-svc container, build fresh image, recreate
           docker compose --profile fixture rm -sf llm-svc || true
           docker compose --profile fixture build --no-cache llm-svc
+          docker compose --profile fixture build test-site tier3-fixture
           docker compose --profile fixture up -d --force-recreate llm-svc tier3-fixture test-site
         timeout-minutes: 5
 
@@ -260,8 +261,7 @@ jobs:
             docker cp "$pkg/." "$svc:/app/$pkg/"
           done
 
-      - name: Critical journey smoke (diagnostic)
-        continue-on-error: true
+      - name: Critical journey smoke
         run: |
           docker compose exec -T agent-svc pip install pytest pytest-asyncio pytest-timeout jinja2 python-docx python-pptx openpyxl tabulate -q
           set +e
