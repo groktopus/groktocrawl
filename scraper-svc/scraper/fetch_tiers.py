@@ -170,6 +170,21 @@ async def _playwright_fetch_with_proxy(
                 }
             captcha_resolved = bool(attempts)
             if captcha_resolved:
+                # Remove solved widget DOM before extraction so challenge markup
+                # cannot be returned or cached as successful page content.
+                try:
+                    await page.evaluate(
+                        """document.querySelectorAll([
+                            '.g-recaptcha', '.h-captcha', '.cf-turnstile',
+                            'iframe[src*="recaptcha"]', 'iframe[src*="hcaptcha"]',
+                            'iframe[src*="turnstile"]',
+                            '[name="g-recaptcha-response"]',
+                            '[name="h-captcha-response"]',
+                            '[name="cf-turnstile-response"]'
+                        ].join(',')).forEach((element) => element.remove())"""
+                    )
+                except Exception as exc:
+                    logger.debug("Could not remove solved CAPTCHA widget DOM: %s", exc)
                 title = await page.title()
                 current_url = page.url
 

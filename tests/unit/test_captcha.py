@@ -198,6 +198,39 @@ async def test_malformed_vision_success_does_not_disable_future_calls(monkeypatc
 
 
 @pytest.mark.asyncio
+async def test_solved_check_skips_absent_checkbox_without_waiting():
+    import scraper.captcha as captcha
+
+    class Missing:
+        first = None
+
+        def __init__(self):
+            self.first = self
+
+        async def count(self):
+            return 0
+
+        async def input_value(self):
+            return ""
+
+        async def get_attribute(self, _name):
+            raise AssertionError("absent checkbox must not be awaited")
+
+        async def is_checked(self):
+            raise AssertionError("absent checkbox must not be awaited")
+
+    class Page:
+        def locator(self, _selector):
+            return Missing()
+
+    class Frame:
+        def locator(self, _selector):
+            return Missing()
+
+    assert await captcha._is_solved(Page(), "hcaptcha", [Frame()]) is False
+
+
+@pytest.mark.asyncio
 async def test_frame_checkbox_token_marks_captcha_solved(monkeypatch):
     import scraper.captcha as captcha
 

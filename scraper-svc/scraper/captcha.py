@@ -181,6 +181,8 @@ async def _is_solved(page, provider: str, frames) -> bool:
     for frame in frames:
         try:
             checkbox = frame.locator(selectors["checkbox"]).first
+            if await checkbox.count() == 0:
+                continue
             if await checkbox.get_attribute("aria-checked") == "true":
                 return True
             if await checkbox.is_checked():
