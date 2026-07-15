@@ -39,6 +39,9 @@ class ScraperSettings(BaseModel):
         default="{}", alias="SCRAPE_CACHE_DOMAIN_TTLS"
     )
     scraper_proxy_url: str = Field(default="", alias="SCRAPER_PROXY_URL")
+    scraper_private_url_allowlist: str = Field(
+        default="", alias="SCRAPER_PRIVATE_URL_ALLOWLIST"
+    )
     browser_svc_url: str = Field(
         default="http://browser-svc:8012", alias="BROWSER_SVC_URL"
     )

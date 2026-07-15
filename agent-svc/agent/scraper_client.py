@@ -190,9 +190,9 @@ class ScraperClient:
                 self.scrape(url, force_browser=False, scrape_options=scrape_options),
                 timeout=generic_timeout,
             )
-            if (
-                result.get("success")
-                and result.get("data", {}).get("markdown", "").strip()
+            data = result.get("data") or {}
+            if result.get("success") and (
+                data.get("markdown", "").strip() or data.get("download")
             ):
                 return result
             if result.get("error_code") == "CAPTCHA_UNRESOLVED":
@@ -211,9 +211,9 @@ class ScraperClient:
                 self.scrape(url, force_browser=True, scrape_options=scrape_options),
                 timeout=browser_timeout,
             )
-            if (
-                result.get("success")
-                and result.get("data", {}).get("markdown", "").strip()
+            data = result.get("data") or {}
+            if result.get("success") and (
+                data.get("markdown", "").strip() or data.get("download")
             ):
                 return result
             if result.get("error_code") == "CAPTCHA_UNRESOLVED":

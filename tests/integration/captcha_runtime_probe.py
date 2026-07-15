@@ -1,15 +1,13 @@
 """Container-level CAPTCHA recovery probe for the Docker integration gate.
 
 Run inside scraper-svc so it exercises the packaged CloakBrowser runtime. The
-fixture-only private-host exception is process-local and never changes the
-service's SSRF policy.
+fixture hostnames are admitted by CI's exact private-host allowlist.
 """
 
 import asyncio
 import os
 
 from scraper import app as scraper_app
-from scraper import fetch_tiers
 from scraper.cache import _get_cache_client, _scrape_cache_key
 from scraper.exceptions import CaptchaError
 
@@ -18,10 +16,6 @@ async def main() -> None:
     fixture = os.getenv("TIER3_FIXTURE_BASE_URL", "http://tier3-fixture:8000")
     solved_url = f"{fixture}/captcha-hcaptcha-grid"
     blocked_url = f"{fixture}/captcha-unresolved"
-
-    # The fixture lives on the Compose network. Keep this exception inside this
-    # probe process rather than weakening the running service's SSRF guard.
-    fetch_tiers._is_private_url = lambda _url: (False, "fixture probe")
 
     cache = await _get_cache_client()
     await cache.delete(_scrape_cache_key(solved_url), _scrape_cache_key(blocked_url))

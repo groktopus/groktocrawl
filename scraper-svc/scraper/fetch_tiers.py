@@ -78,12 +78,6 @@ async def _playwright_fetch_with_proxy(
         )
         page = await context.new_page()
         try:
-            # Security: reject private/internal destination URLs
-            is_private, reason = _is_private_url(url)
-            if is_private:
-                logger.warning("Blocked navigation to private URL %s: %s", url, reason)
-                return None
-
             # Inject cached Cloudflare clearance cookies before navigation
             await inject_cookies(url, context)
 

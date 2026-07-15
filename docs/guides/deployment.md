@@ -30,6 +30,7 @@ redistributed by GroktoCrawl.
 - Keep internal service ports private where possible; the API emits a warning header if authentication is disabled.
 - Use `WEBHOOK_SECRET` to authenticate outbound asynchronous notifications.
 - Configure `SCRAPER_PROXY_URL` only for an operator-managed outbound proxy; credentials are redacted in logs and requests fail open if that proxy is unavailable.
+- Private and internal destinations are blocked before every fetch tier. Keep `SCRAPER_PRIVATE_URL_ALLOWLIST` empty unless an exact, trusted internal hostname must be reachable; CI uses it only for fixture services.
 - Enable `SCRAPER_POLITENESS_ENABLED` for per-domain rate limiting and robots.txt enforcement when required by your deployment policy.
 
 ## Operations

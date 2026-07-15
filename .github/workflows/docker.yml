@@ -135,6 +135,7 @@ jobs:
           echo "CAPTCHA_VISION_BASE_URL=http://llm-svc:8011/v1" >> .env
           echo "CAPTCHA_VISION_API_KEY=fixture-only" >> .env
           echo "CAPTCHA_VISION_MODEL=fixture-model" >> .env
+          echo "SCRAPER_PRIVATE_URL_ALLOWLIST=test-site,tier3-fixture" >> .env
           echo "AGENT_SEARCH_RATE_LIMIT=1000/1s" >> .env
 
       - name: Force-remove all stale project containers

@@ -29,6 +29,7 @@ from .fetch_quality import (
 )
 from .fetch_tiers import (
     _fetch_via_browser_svc,
+    _is_private_url,
     fetch_via_content_negotiation,
     fetch_via_flaresolverr,
     fetch_via_llms_txt,
@@ -51,6 +52,17 @@ FLARE_SOLVERR_URL = _settings.flare_solverr_url
 # Format: **************************
 # Unset or empty = no proxy (default).
 SCRAPER_PROXY_URL = _settings.scraper_proxy_url
+
+
+def _private_url_allowlisted(url: str) -> bool:
+    """Return whether an exact hostname is explicitly trusted by the operator."""
+    hostname = (urlparse(url).hostname or "").lower()
+    allowed = {
+        host.strip().lower()
+        for host in _settings.scraper_private_url_allowlist.split(",")
+        if host.strip()
+    }
+    return hostname in allowed
 
 
 async def _maybe_degrade(
@@ -264,6 +276,18 @@ async def smart_scrape(
 
     Returns a dict with keys: markdown, source, url, quality, error (optional).
     """
+    if not _private_url_allowlisted(url):
+        is_private, reason = _is_private_url(url)
+        if is_private:
+            logger.warning("Blocked private or internal scrape destination")
+            return {
+                "markdown": "",
+                "source": "blocked",
+                "url": url,
+                "error": reason,
+                "error_code": "PRIVATE_URL_BLOCKED",
+            }
+
     best_effort: list[dict] = []
 
     # ── force_browser fast path ─────────────────────────────────

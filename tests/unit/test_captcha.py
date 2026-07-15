@@ -443,6 +443,10 @@ async def test_grid_uses_bframe_when_anchor_precedes_it(monkeypatch):
 async def test_force_browser_only_routes_turnstile_to_flaresolverr(monkeypatch):
     import scraper.fetch as fetch
 
+    monkeypatch.setattr(
+        fetch._settings, "scraper_private_url_allowlist", "example.test"
+    )
+
     async def allow(*_args, **_kwargs):
         return True, None
 
@@ -484,6 +488,10 @@ async def test_unresolved_turnstile_survives_failed_flaresolverr_without_cache(
     monkeypatch,
 ):
     import scraper.fetch as fetch
+
+    monkeypatch.setattr(
+        fetch._settings, "scraper_private_url_allowlist", "example.test"
+    )
 
     class Session:
         async def __aenter__(self):
@@ -642,6 +650,64 @@ async def test_agent_scraper_client_preserves_unresolved_captcha(monkeypatch):
 
     assert result["error_code"] == "CAPTCHA_UNRESOLVED"
     assert calls == 1
+
+
+@pytest.mark.asyncio
+async def test_agent_scraper_client_accepts_binary_download_without_browser_fallback(
+    monkeypatch,
+):
+    from agent.scraper_client import ScraperClient
+
+    client = ScraperClient("http://scraper.test")
+    calls = 0
+    download = {
+        "filename": "document.pdf",
+        "content_type": "application/pdf",
+        "size": 128,
+    }
+
+    async def binary_result(*_args, **_kwargs):
+        nonlocal calls
+        calls += 1
+        return {"success": True, "data": {"markdown": "", "download": download}}
+
+    monkeypatch.setattr(client, "scrape", binary_result)
+    result = await client.scrape_with_fallback("https://example.test/document.pdf")
+    await client.close()
+
+    assert result["data"]["download"] == download
+    assert calls == 1
+
+
+@pytest.mark.asyncio
+async def test_smart_scrape_blocks_private_url_before_any_fetch_tier(monkeypatch):
+    import scraper.fetch as fetch
+
+    async def unexpected_fetch(*_args, **_kwargs):
+        raise AssertionError("fetch tier must not run for a private destination")
+
+    monkeypatch.setattr(fetch._settings, "scraper_private_url_allowlist", "")
+    monkeypatch.setattr(fetch, "_is_private_url", lambda _url: (True, "blocked"))
+    monkeypatch.setattr(fetch, "fetch_via_playwright", unexpected_fetch)
+
+    result = await fetch.smart_scrape("http://127.0.0.1/private", force_browser=True)
+
+    assert result["error_code"] == "PRIVATE_URL_BLOCKED"
+    assert result["markdown"] == ""
+
+
+def test_private_url_allowlist_matches_exact_hostname_only(monkeypatch):
+    import scraper.fetch as fetch
+
+    monkeypatch.setattr(
+        fetch._settings,
+        "scraper_private_url_allowlist",
+        "test-site, tier3-fixture",
+    )
+
+    assert fetch._private_url_allowlisted("http://test-site:8000/pricing") is True
+    assert fetch._private_url_allowlisted("http://tier3-fixture:8000/") is True
+    assert fetch._private_url_allowlisted("http://evil.test-site/") is False
 
 
 @pytest.mark.asyncio
