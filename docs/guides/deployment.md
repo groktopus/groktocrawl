@@ -12,6 +12,18 @@ Copy `.env.sample` to `.env` and configure an OpenAI-compatible LLM for non-fixt
 
 Only expose or override internal service URLs when deliberately splitting the compose deployment. Persist Valkey and Qdrant volumes in production; the embedding model cache volume avoids repeated model downloads.
 
+CAPTCHA image-grid recovery is optional. Set all of `CAPTCHA_VISION_BASE_URL`,
+`CAPTCHA_VISION_API_KEY`, and `CAPTCHA_VISION_MODEL` to an OpenAI-compatible
+multimodal endpoint; incomplete configuration skips vision. Use
+`CAPTCHA_VISION_TIMEOUT` to bound image requests (default: 60 seconds). The
+scraper mounts a
+runtime-only CloakBrowser cache at `/root/.cloakbrowser`, attempts its official
+binary download at startup, and falls back to stock Playwright Chromium if that
+download fails. CloakBrowser uses its own upstream browser context defaults;
+the legacy Chromium fingerprint shim applies only to the stock fallback. The
+wrapper is MIT, while the downloaded binary is not copied into image layers or
+redistributed by GroktoCrawl.
+
 ## Security
 
 - Set a strong `API_KEY` and route public access through TLS/reverse-proxy controls.
@@ -23,6 +35,11 @@ Only expose or override internal service URLs when deliberately splitting the co
 ## Operations
 
 `/health` reports dependency probes and `/metrics` exposes OpenMetrics data. Prometheus alerts and response procedures live in [runbooks](../runbooks/README.md). Important capacity controls include `AGENT_MAX_SEARCHES_PER_REQUEST`, `AGENT_SEARCH_RATE_LIMIT`, crawl duration/idle limits, scrape-cache TTLs, and vector-index capacity.
+
+CAPTCHA screenshots are challenge-widget crops held only in memory for the
+configured vision request. They are never logged, cached, returned, or written
+to disk. Exhausted recovery returns `CAPTCHA_UNRESOLVED`; it does not guarantee
+access to protected pages.
 
 The fixture-backed critical-journey release gate checks `/health`, the fast-search response contract, and `/v2/scrape` for `test-site`'s markdown-capable `/pricing` page; it deliberately does not promise live-search result cardinality, semantic retrieval, or research-agent results.
 

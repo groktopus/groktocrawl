@@ -40,6 +40,12 @@ class ScrapeError(GroktoCrawlError):
     detail = "Scrape failed"
 
 
+class CaptchaError(GroktoCrawlError):
+    status_code = 502
+    error_code = "CAPTCHA_UNRESOLVED"
+    detail = "CAPTCHA challenge could not be resolved"
+
+
 class BrowserError(GroktoCrawlError):
     status_code = 502
     error_code = "BROWSER_ERROR"

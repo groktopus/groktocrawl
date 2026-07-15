@@ -132,6 +132,9 @@ jobs:
           cp .env.sample .env
           echo "LLM_BASE_URL=http://llm-svc:8011/v1" >> .env
           echo "LLM_MODEL=fixture-model" >> .env
+          echo "CAPTCHA_VISION_BASE_URL=http://llm-svc:8011/v1" >> .env
+          echo "CAPTCHA_VISION_API_KEY=fixture-only" >> .env
+          echo "CAPTCHA_VISION_MODEL=fixture-model" >> .env
           echo "AGENT_SEARCH_RATE_LIMIT=1000/1s" >> .env
 
       - name: Force-remove all stale project containers
@@ -283,6 +286,9 @@ jobs:
           fi
           exit "$pytest_status"
         timeout-minutes: 20
+
+      - name: Run CAPTCHA runtime probe
+        run: docker compose exec -T scraper-svc python - < tests/integration/captcha_runtime_probe.py
 
       - name: Run integration tests
         run: |

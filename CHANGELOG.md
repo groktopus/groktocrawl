@@ -77,6 +77,8 @@ All notable changes to GroktoCrawl are documented in this file.
 
 ### Features
 
+* scraper: add bounded autonomous CAPTCHA detection and recovery with typed unresolved errors
+
 * agent: `--search-type` flag for research depth control — deep (multi-query, multi-pass, default) or focused (single-query, single-pass) ([#418](https://github.com/groktopus/groktocrawl/issues/418))
 * agent: default research depth changed from auto-classified to `deep` — thorough multi-pass research is now the default for `groktocrawl agent`
 

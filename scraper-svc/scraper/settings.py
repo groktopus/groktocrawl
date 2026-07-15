@@ -60,6 +60,12 @@ class ScraperSettings(BaseModel):
     )
     recovery_llm_api_key: str = Field(default="", alias="LLM_API_KEY")
     recovery_llm_model: str = Field(default="gpt-4o-mini", alias="LLM_MODEL")
+    captcha_vision_base_url: str = Field(default="", alias="CAPTCHA_VISION_BASE_URL")
+    captcha_vision_api_key: str = Field(default="", alias="CAPTCHA_VISION_API_KEY")
+    captcha_vision_model: str = Field(default="", alias="CAPTCHA_VISION_MODEL")
+    captcha_vision_timeout: int = Field(
+        default=60, alias="CAPTCHA_VISION_TIMEOUT", gt=0
+    )
 
     section_filter_default_include: str = Field(
         default="", alias="SECTION_FILTER_DEFAULT_INCLUDE"

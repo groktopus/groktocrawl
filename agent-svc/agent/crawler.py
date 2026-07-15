@@ -94,6 +94,7 @@ def _classify_scrape_error(error_msg: str, error_code: str = "") -> str:
         "UPSTREAM_ERROR": "http_error",
         "INVALID_REQUEST": "scrape_error",
         "AUTH_ERROR": "http_error",
+        "CAPTCHA_UNRESOLVED": "captcha_unresolved",
     }
     if error_code in code_map:
         return code_map[error_code]

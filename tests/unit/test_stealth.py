@@ -94,6 +94,58 @@ def test_stealth_ua_matches_chrome_131():
     assert "Safari/537.36" in REAL_CHROME_UA
 
 
+@pytest.mark.asyncio
+async def test_cloakbrowser_context_keeps_upstream_defaults_and_proxy():
+    from scraper.stealth import create_stealth_context
+
+    class Browser:
+        def __init__(self):
+            self.kwargs = None
+
+        async def new_context(self, **kwargs):
+            self.kwargs = kwargs
+            return object()
+
+    browser = Browser()
+    context = await create_stealth_context(
+        browser, cloakbrowser=True, proxy={"server": "http://proxy.test"}
+    )
+    assert context is not None
+    assert browser.kwargs == {"proxy": {"server": "http://proxy.test"}}
+
+
+@pytest.mark.asyncio
+async def test_cloakbrowser_launch_uses_only_upstream_args(monkeypatch):
+    import types
+
+    import scraper.stealth as stealth
+
+    class Chromium:
+        async def launch(self, **kwargs):
+            self.kwargs = kwargs
+            return object()
+
+    chromium = Chromium()
+    fake_module = types.SimpleNamespace(
+        ensure_binary=lambda: "/tmp/cloak",
+        get_default_stealth_args=lambda: ["--upstream", "--fingerprint=random"],
+    )
+    monkeypatch.setitem(sys.modules, "cloakbrowser", fake_module)
+    monkeypatch.setattr(stealth.asyncio, "to_thread", lambda fn: _immediate(fn))
+    _browser, cloakbrowser = await stealth.create_stealth_browser(
+        types.SimpleNamespace(chromium=chromium), "https://example.test"
+    )
+    assert cloakbrowser is True
+    assert chromium.kwargs["args"] == [
+        "--upstream",
+        f"--fingerprint={stealth.fingerprint_seed('https://example.test')}",
+    ]
+
+
+async def _immediate(fn):
+    return fn()
+
+
 class TestBotChallengeDetection:
     """Test _is_bot_challenge() for Cloudflare and DDoS-Guard patterns."""
 

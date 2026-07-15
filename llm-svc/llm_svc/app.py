@@ -80,7 +80,7 @@ def _generate_schema_response(system_text: str) -> str:
 
 class ChatMessage(BaseModel):
     role: str
-    content: str
+    content: str | list[dict]
 
 
 class ChatCompletionRequest(BaseModel):
@@ -126,15 +126,25 @@ def create_app() -> FastAPI:
 
     @app.post("/v1/chat/completions")
     async def chat_completions(req: ChatCompletionRequest):
-        user_text = "\n".join(m.content for m in req.messages if m.role == "user")
-        system_text = "\n".join(m.content for m in req.messages if m.role == "system")
+        def text(message: ChatMessage) -> str:
+            if isinstance(message.content, str):
+                return message.content
+            return "\n".join(
+                item.get("text", "")
+                for item in message.content
+                if item.get("type") == "text"
+            )
+
+        user_text = "\n".join(text(m) for m in req.messages if m.role == "user")
+        system_text = "\n".join(text(m) for m in req.messages if m.role == "system")
 
         if req.response_format and req.response_format.get("type") == "json_object":
+            if "Select fixture tiles" in user_text:
+                content = json.dumps({"tiles": [0, 4, 8], "submit": True})
             # Handle recovery prompts — extract iframe URLs from page content
-            iframe_match = re.search(r'<iframe[^>]+src="([^"]+)"', user_text)
-            if iframe_match and (
-                "iframe_url" in system_text or "recovery" in system_text.lower()
-            ):
+            elif (
+                iframe_match := re.search(r'<iframe[^>]+src="([^"]+)"', user_text)
+            ) and ("iframe_url" in system_text or "recovery" in system_text.lower()):
                 content = json.dumps(
                     {
                         "action": "iframe_url",

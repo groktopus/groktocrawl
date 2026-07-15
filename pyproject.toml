@@ -81,6 +81,8 @@ ignore = [
 "**/tests/**" = ["T20"]
 "tests/**" = ["T20"]
 "scripts/*" = ["T20"]
+"groktocrawl" = ["T20"]  # CLI output is the product interface.
+"scraper-svc/scraper/app.py" = ["N815"]  # Firecrawl-compatible camelCase fields.
 "scraper-svc/scraper/adapters/github_social.py" = ["E741"]
 
 [tool.black]

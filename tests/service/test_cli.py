@@ -89,6 +89,46 @@ class TestClientAuthentication:
 
         assert "Authorization" not in request.call_args.kwargs["headers"]
 
+    def test_api_error_preserves_structured_captcha_body(self, client):
+        response = MagicMock()
+        response.status_code = 502
+        response.json.return_value = {
+            "success": False,
+            "error": "CAPTCHA challenge could not be resolved",
+            "error_code": "CAPTCHA_UNRESOLVED",
+            "details": {"provider": "recaptcha"},
+        }
+        response.headers = {}
+        response.url = "http://test-server:8080/v2/scrape"
+
+        import requests as requests_module
+
+        with patch.object(requests_module, "request", return_value=response):
+            with pytest.raises(_cli_ns["ApiError"]) as error:
+                client._request(
+                    "POST", "/scrape", json_data={"url": "https://example.test"}
+                )
+
+        assert error.value.status_code == 502
+        assert error.value.body["error_code"] == "CAPTCHA_UNRESOLVED"
+
+    def test_json_die_emits_structured_api_error(self, capsys):
+        original_json = _cli_ns["JSON_OUTPUT"]
+        _cli_ns["JSON_OUTPUT"] = True
+        error = _cli_ns["ApiError"](
+            "API error (502)",
+            status_code=502,
+            body={"error_code": "CAPTCHA_UNRESOLVED", "success": False},
+        )
+        try:
+            with pytest.raises(SystemExit) as exit_info:
+                _cli_ns["die"](error)
+        finally:
+            _cli_ns["JSON_OUTPUT"] = original_json
+
+        assert exit_info.value.code == 1
+        assert json.loads(capsys.readouterr().out)["error_code"] == "CAPTCHA_UNRESOLVED"
+
 
 class TestClientCrawl:
     """Tests for Client.crawl() parameter mapping."""

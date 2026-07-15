@@ -74,10 +74,11 @@ services:
     env_file:
       - .env
     environment:
-      - LLM_BASE_URL=http://llm-svc:8011/v1
       - VALKEY_HOST=valkey
       - VALKEY_PORT=6379
       - VALKEY_DB=0
+    volumes:
+      - cloakbrowser_cache:/root/.cloakbrowser
 
   browser-svc:
     build:
@@ -210,3 +211,4 @@ volumes:
   qdrant_data:
   hf-cache:
     external: true
+  cloakbrowser_cache:

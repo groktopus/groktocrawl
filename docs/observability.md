@@ -23,6 +23,10 @@
 
 Environment-specific target addresses and contact-point secrets are deployment overlays and must never enter this public repository.
 
+`scraper-svc` exports `captcha_attempts_total{provider,strategy,outcome}`. All
+labels are bounded provider and strategy constants; URLs, challenge content,
+tokens, and screenshots are never metric labels.
+
 ## Verification
 
 1. Validate the deployment's Prometheus configuration and rules with its native check commands.

@@ -78,6 +78,7 @@ class BarrierInfo:
     confidence: float
     detail: str = ""
     title: str = ""
+    provider: str | None = None
 
 
 def _classify_barrier(
@@ -94,6 +95,34 @@ def _classify_barrier(
       2 signals → 0.85
       3+ signals → 0.95
     """
+    html_lower = html.lower() if html else ""
+    captcha_providers = (
+        (
+            "turnstile",
+            (
+                "challenges.cloudflare.com/turnstile",
+                "cf-turnstile",
+                "cf-turnstile-response",
+            ),
+        ),
+        ("recaptcha", ("google.com/recaptcha", "g-recaptcha", "g-recaptcha-response")),
+        ("hcaptcha", ("hcaptcha.com", "h-captcha", "h-captcha-response")),
+    )
+    for provider, signatures in captcha_providers:
+        if any(signature in html_lower for signature in signatures):
+            return BarrierInfo(
+                True, "captcha", 0.95, f"Definitive {provider} widget", title, provider
+            )
+    generic_widget = (
+        "<iframe" in html_lower
+        and "sitekey" in html_lower
+        and ("captcha" in html_lower or "challenge" in html_lower)
+    )
+    if generic_widget:
+        return BarrierInfo(
+            True, "captcha", 0.85, "Definitive generic CAPTCHA widget", title, "generic"
+        )
+
     if not content and not html:
         return BarrierInfo(
             detected=True,
@@ -107,7 +136,6 @@ def _classify_barrier(
     content_lower = content.lower() if content else ""
     title_lower = title.lower() if title else ""
     url_lower = url.lower() if url else ""
-    html_lower = html.lower() if html else ""
 
     # ── Signal: Empty content ─────────────────────────────────
     if len(content) < 100:
@@ -138,10 +166,6 @@ def _classify_barrier(
     # ── Signal: DDoS-Guard URL detection ──────────────────────
     if "ddos-guard" in url_lower or "/.well-known/ddos-guard" in url_lower:
         signals.append("ddos-guard-url")
-
-    # ── Signal: Captcha detection in content ──────────────────
-    if "hcaptcha" in content_lower or "recaptcha" in content_lower:
-        signals.append("captcha")
 
     # ── Signal: Rate-limit detection in content ───────────────
     if "rate limit" in content_lower or "too many requests" in content_lower:

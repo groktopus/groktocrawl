@@ -282,6 +282,11 @@ async def smart_scrape(
             return blocked
 
         result = await fetch_via_playwright(url)
+        unresolved_captcha = (
+            result
+            if result and result.get("error_code") == "CAPTCHA_UNRESOLVED"
+            else None
+        )
         if result:
             # Barrier detection
             if "barrier" in result:
@@ -302,6 +307,10 @@ async def smart_scrape(
                     barrier.confidence,
                 )
 
+        # FlareSolverr is only applicable to Cloudflare/Turnstile, not generic CAPTCHA.
+        if result and result.get("error_code") == "CAPTCHA_UNRESOLVED":
+            if result.get("barrier", {}).get("provider") != "turnstile":
+                return await _enrich_with_politeness(result, url)
         # Fall through to FlareSolverr
         _proceed, blocked = await _politeness_check_and_delay(
             url,
@@ -321,6 +330,9 @@ async def smart_scrape(
             if accepted:
                 accepted = await _enrich_with_politeness(accepted, url)
                 return accepted
+
+        if unresolved_captcha:
+            return await _enrich_with_politeness(unresolved_captcha, url)
 
         # Return best effort or error
         if best_effort:
@@ -458,6 +470,13 @@ async def smart_scrape(
     if blocked:
         return blocked
     result = await fetch_via_playwright(url)
+    unresolved_captcha = (
+        result if result and result.get("error_code") == "CAPTCHA_UNRESOLVED" else None
+    )
+    if result and result.get("error_code") == "CAPTCHA_UNRESOLVED":
+        provider = result.get("barrier", {}).get("provider")
+        if provider != "turnstile":
+            return await _enrich_with_politeness(result, url)
     if result:
         # Barrier detection — if page IS a challenge/error, skip remaining tiers
         if "barrier" in result:
@@ -488,7 +507,7 @@ async def smart_scrape(
                 content_embedded,
             )
 
-    # Tier 3.5: FlareSolverr for hard Cloudflare challenges
+    # Tier 3.5: FlareSolverr only for Cloudflare/Turnstile challenges.
     # Always attempt FlareSolverr after Playwright — handles Cloudflare
     # JS challenges that Playwright couldn't render.
     _proceed, blocked = await _politeness_check_and_delay(
@@ -498,7 +517,11 @@ async def smart_scrape(
     )
     if blocked:
         return blocked
-    fs_result = await fetch_via_flaresolverr(url)
+    can_use_flaresolverr = not result or result.get("barrier", {}).get("provider") in {
+        None,
+        "turnstile",
+    }
+    fs_result = await fetch_via_flaresolverr(url) if can_use_flaresolverr else None
     if fs_result:
         if "barrier" in fs_result:
             logger.warning(
@@ -511,8 +534,15 @@ async def smart_scrape(
             await _set_cache(url, accepted, prior_entry=cached)
             return accepted
 
+    if unresolved_captcha:
+        return await _enrich_with_politeness(unresolved_captcha, url)
+
     # Tier 4: LLM-assisted recovery when content looks suspicious
-    if result and ("barrier" in result or result.get("markdown")):
+    if (
+        result
+        and result.get("error_code") != "CAPTCHA_UNRESOLVED"
+        and ("barrier" in result or result.get("markdown"))
+    ):
         logger.info("Tier 4: attempting LLM recovery for %s", url)
         from .recovery import attempt_llm_recovery
 

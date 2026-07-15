@@ -232,7 +232,7 @@ async def attempt_llm_recovery(url: str, page_text: str) -> dict | None:
                 if "#" in extracted_url:
                     extracted_url = extracted_url.split("#")[0]
                 logger.info("LLM recovery: retrying on extracted URL %s", extracted_url)
-                from .fetch_strategy import smart_scrape
+                from .fetch import smart_scrape
 
                 return await smart_scrape(extracted_url)
 

@@ -395,7 +395,7 @@ def _download_images(
 
     os.makedirs(output_dir, exist_ok=True)
 
-    IMAGE_CONTENT_TYPES = {
+    image_content_types = {
         "image/jpeg",
         "image/png",
         "image/gif",
@@ -459,7 +459,7 @@ def _download_images(
             )
             resp.raise_for_status()
             ct = resp.headers.get("content-type", "").split(";")[0].strip()
-            if ct not in IMAGE_CONTENT_TYPES:
+            if ct not in image_content_types:
                 with lock:
                     skipped += 1
                     skip_reasons["non_image_content_type"] = (
@@ -496,8 +496,12 @@ def warn(msg: str) -> None:
     print(f"Warning: {msg}", file=sys.stderr)
 
 
-def die(msg: str, exit_code: int = 1) -> None:
-    print(f"Error: {msg}", file=sys.stderr)
+def die(msg: Any, exit_code: int = 1) -> None:
+    body = getattr(msg, "body", None)
+    if JSON_OUTPUT and isinstance(body, dict):
+        print(json.dumps(body))
+    else:
+        print(f"Error: {msg}", file=sys.stderr)
     sys.exit(exit_code)
 
 
@@ -514,7 +518,16 @@ def emit(human: str, machine: Any) -> None:
 
 
 class ApiError(Exception):
-    pass
+    def __init__(
+        self,
+        message: str,
+        *,
+        status_code: int | None = None,
+        body: dict[str, Any] | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+        self.body = body
 
 
 class Client:
@@ -591,7 +604,11 @@ class Client:
             detail = body.get(
                 "detail", body.get("error", body.get("message", str(body)))
             )
-            raise ApiError(f"API error ({resp.status_code}): {detail}")
+            raise ApiError(
+                f"API error ({resp.status_code}): {detail}",
+                status_code=resp.status_code,
+                body=body,
+            )
 
         return body
 
@@ -765,7 +782,11 @@ class Client:
 
         Returns a dict with ``_stream`` key containing the raw streaming response.
         """
-        data: dict[str, Any] = {"prompt": prompt, "stream": True, "search_type": search_type}
+        data: dict[str, Any] = {
+            "prompt": prompt,
+            "stream": True,
+            "search_type": search_type,
+        }
         if urls:
             data["urls"] = urls
         if include_images:
@@ -1024,7 +1045,7 @@ def cmd_scrape(client: Client, args: argparse.Namespace) -> None:
             contents=contents,
         )
     except ApiError as e:
-        die(str(e))
+        die(e)
 
     if not result.get("success"):
         die(f"Scrape failed: {result.get('error', 'unknown error')}")
@@ -1156,7 +1177,7 @@ def cmd_search(client: Client, args: argparse.Namespace) -> None:
             contents=contents,
         )
     except ApiError as e:
-        die(str(e))
+        die(e)
 
     data = result.get("data", {}).get("web", [])
     image_data = result.get("data", {}).get("images", [])
@@ -1233,7 +1254,7 @@ def cmd_map(client: Client, args: argparse.Namespace) -> None:
     try:
         result = client.map_urls(url=args.url, limit=args.limit, search=args.search)
     except ApiError as e:
-        die(str(e))
+        die(e)
 
     if not result.get("success"):
         die(f"Map failed: {result.get('error', 'unknown error')}")
@@ -1280,7 +1301,7 @@ def cmd_crawl(client: Client, args: argparse.Namespace) -> None:
             **extra,
         )
     except ApiError as e:
-        die(str(e))
+        die(e)
 
     job_id = result.get("id", "")
     if not job_id:
@@ -1517,7 +1538,7 @@ def cmd_answer(client: Client, args: argparse.Namespace) -> None:
             query=args.query, num_sources=args.num_sources, stream=not args.sync
         )
     except ApiError as e:
-        die(str(e))
+        die(e)
 
     if not args.sync:
         resp = result["_stream"]
@@ -1661,7 +1682,7 @@ def cmd_enrich(client: Client, args: argparse.Namespace) -> None:
             effort=args.effort,
         )
     except ApiError as e:
-        die(str(e))
+        die(e)
 
     if JSON_OUTPUT:
         emit("", result)
@@ -1701,7 +1722,7 @@ def cmd_find_similar(client: Client, args: argparse.Namespace) -> None:
             search_mode=args.search_mode,
         )
     except ApiError as e:
-        die(str(e))
+        die(e)
 
     data = result.get("data", [])
 
@@ -1863,7 +1884,7 @@ def cmd_extract(client: Client, args: argparse.Namespace) -> None:
     try:
         result = client.create_extract(urls=args.urls, prompt=args.prompt, schema=None)
     except ApiError as e:
-        die(str(e))
+        die(e)
 
     job_id = result.get("id", "")
     if not job_id:
@@ -1983,7 +2004,7 @@ def cmd_active(client: Client, args: argparse.Namespace) -> None:
     try:
         result = client.get_active_crawls()
     except ApiError as e:
-        die(str(e))
+        die(e)
 
     active = result.get("data", [])
     if not isinstance(active, list):
@@ -2040,7 +2061,7 @@ def cmd_batch_scrape(client: Client, args: argparse.Namespace) -> None:
         # Default: show status
         result = client.batch_status(args.job_id)
     except ApiError as e:
-        die(str(e))
+        die(e)
 
     if JSON_OUTPUT:
         emit("", result)
@@ -2103,7 +2124,7 @@ def cmd_monitor(client: Client, args: argparse.Namespace) -> None:
                 num_results=getattr(args, "num_results", 10),
             )
         except ApiError as e:
-            die(str(e))
+            die(e)
         if JSON_OUTPUT:
             emit("", result)
         else:
@@ -2134,7 +2155,7 @@ def cmd_monitor(client: Client, args: argparse.Namespace) -> None:
         try:
             result = client.run_monitor(args.id)
         except ApiError as e:
-            die(str(e))
+            die(e)
         if JSON_OUTPUT:
             emit("", result)
         else:
@@ -2155,7 +2176,7 @@ def cmd_monitor(client: Client, args: argparse.Namespace) -> None:
         try:
             result = client.list_monitors()
         except ApiError as e:
-            die(str(e))
+            die(e)
         monitors = result.get("monitors", [])
         if JSON_OUTPUT:
             emit("", {"monitors": monitors})
@@ -2187,7 +2208,7 @@ def cmd_monitor(client: Client, args: argparse.Namespace) -> None:
         try:
             result = client.get_monitor(args.id)
         except ApiError as e:
-            die(str(e))
+            die(e)
         if JSON_OUTPUT:
             emit("", result)
         else:
@@ -2232,7 +2253,7 @@ def cmd_monitor(client: Client, args: argparse.Namespace) -> None:
         try:
             result = client.update_monitor(args.id, **kwargs)
         except ApiError as e:
-            die(str(e))
+            die(e)
         if JSON_OUTPUT:
             emit("", result)
         else:
@@ -2253,7 +2274,7 @@ def cmd_monitor(client: Client, args: argparse.Namespace) -> None:
         try:
             result = client.delete_monitor(args.id)
         except ApiError as e:
-            die(str(e))
+            die(e)
         if JSON_OUTPUT:
             emit("", result)
         else:
@@ -2272,7 +2293,7 @@ def cmd_parse(client: Client, args: argparse.Namespace) -> None:
         try:
             result = client.parse_with_upload_id(args.upload_id)
         except ApiError as e:
-            die(str(e))
+            die(e)
         if not result.get("success"):
             die(f"Parse failed: {result.get('error', 'unknown error')}")
         data = result.get("data", {})
@@ -2304,7 +2325,7 @@ def cmd_parse(client: Client, args: argparse.Namespace) -> None:
     try:
         result = client.parse_file(args.filepath)
     except ApiError as e:
-        die(str(e))
+        die(e)
 
     if not result.get("success"):
         die(f"Parse failed: {result.get('error', 'unknown error')}")
@@ -2344,7 +2365,7 @@ def cmd_parse_upload(client: Client, args: argparse.Namespace) -> None:
     try:
         result = client.parse_upload_file(args.upload_id, args.file)
     except ApiError as e:
-        die(str(e))
+        die(e)
 
     if JSON_OUTPUT:
         emit("", result)
@@ -2366,7 +2387,7 @@ def cmd_generate_llmstxt(client: Client, args: argparse.Namespace) -> None:
     try:
         result = client.create_llmstxt(args.url, max_pages=args.max_pages)
     except ApiError as e:
-        die(str(e))
+        die(e)
 
     job_id = result.get("id", "")
     if not job_id:
@@ -2661,12 +2682,12 @@ def make_parser() -> argparse.ArgumentParser:
     p_browser_exec.add_argument("--text", help="Text for type action")
     p_browser_exec.add_argument("--script", help="JavaScript for executeScript action")
 
-    p_browser_list = p_browser_sub.add_parser("list", help="List active sessions")
+    p_browser_sub.add_parser("list", help="List active sessions")
 
     p_browser_destroy = p_browser_sub.add_parser("destroy", help="Destroy a session")
     p_browser_destroy.add_argument("session_id", help="Session ID")
 
-    p_active = subparsers.add_parser("active", help="List active crawl jobs")
+    subparsers.add_parser("active", help="List active crawl jobs")
 
     # --- Monitor ---
     p_monitor = subparsers.add_parser("monitor", help="Manage change monitors")
@@ -2712,7 +2733,7 @@ def make_parser() -> argparse.ArgumentParser:
         help="Max results per check (default: 10)",
     )
 
-    p_monitor_list = p_monitor_sub.add_parser("list", help="List all monitors")
+    p_monitor_sub.add_parser("list", help="List all monitors")
 
     p_monitor_get = p_monitor_sub.add_parser("get", help="Get monitor details")
     p_monitor_get.add_argument("id", help="Monitor ID")
@@ -2842,8 +2863,8 @@ def make_parser() -> argparse.ArgumentParser:
 
 
 def global_pre_parse(argv: list[str]) -> tuple[dict[str, Any], list[str]]:
-    GLOBAL_BOOLS = {"--json", "--dry-run", "--quiet", "--verbose"}
-    GLOBAL_VALUES = {"--server"}
+    global_bools = {"--json", "--dry-run", "--quiet", "--verbose"}
+    global_values = {"--server"}
     globals_map: dict[str, Any] = {}
     filtered: list[str] = []
     skip = 0
@@ -2851,9 +2872,9 @@ def global_pre_parse(argv: list[str]) -> tuple[dict[str, Any], list[str]]:
         if skip > 0:
             skip -= 1
             continue
-        if arg in GLOBAL_BOOLS:
+        if arg in global_bools:
             globals_map[arg.lstrip("-").replace("-", "_")] = True
-        elif arg in GLOBAL_VALUES:
+        elif arg in global_values:
             if i + 1 < len(argv) and not argv[i + 1].startswith("-"):
                 globals_map[arg.lstrip("-").replace("-", "_")] = argv[i + 1]
                 skip = 1

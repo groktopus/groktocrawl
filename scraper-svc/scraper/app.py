@@ -5,7 +5,7 @@ Single endpoint: POST /scrape — takes a URL, returns clean markdown.
 
 import logging
 from contextlib import asynccontextmanager
-from enum import Enum
+from enum import StrEnum
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
@@ -17,7 +17,7 @@ from common.metrics import METRICS
 from common.middleware import add_request_id_middleware
 
 from .cookie_store import close_client, get_client
-from .exceptions import BrowserError, GroktoCrawlError, UpstreamError
+from .exceptions import BrowserError, CaptchaError, GroktoCrawlError, UpstreamError
 from .fetch import smart_scrape
 from .meta import fetch_meta_tags
 
@@ -55,13 +55,13 @@ async def _probe_browser() -> bool:
         return False
 
 
-class VerbosityLevel(str, Enum):
+class VerbosityLevel(StrEnum):
     compact = "compact"  # ~300 chars of body text
     standard = "standard"  # Current behavior (readability extraction)
     full = "full"  # Complete page text including structural markup
 
 
-class SectionCategory(str, Enum):
+class SectionCategory(StrEnum):
     header = "header"
     navigation = "navigation"
     banner = "banner"
@@ -270,6 +270,10 @@ async def scrape(request: ScrapeRequest):
             ).inc({"status": "error"})
             if result.get("error_type") == "browser_error":
                 raise BrowserError(detail=result["error"])
+            if result.get("error_code") == "CAPTCHA_UNRESOLVED":
+                raise CaptchaError(
+                    detail=result["error"], details=result.get("barrier")
+                )
             raise UpstreamError(detail=result["error"])
         markdown = result.get("markdown", "")
         raw_html = result.get("raw_html_start", "")
@@ -306,9 +310,9 @@ async def scrape(request: ScrapeRequest):
 
                     soup = None  # type: ignore[assignment]
                     try:
-                        from bs4 import BeautifulSoup as _BS
+                        from bs4 import BeautifulSoup
 
-                        soup = _BS(raw_html, "html.parser")
+                        soup = BeautifulSoup(raw_html, "html.parser")
                     except Exception:
                         pass
                     if soup:
@@ -364,6 +368,8 @@ async def scrape(request: ScrapeRequest):
             {"status": "success"}
         )
         return ScrapeResponse(success=True, data=data)
+    except GroktoCrawlError:
+        raise
     except Exception as e:
         logger.exception("Scrape failed for %s", request.url)
         raise UpstreamError(detail=str(e)) from e

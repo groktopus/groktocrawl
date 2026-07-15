@@ -620,12 +620,18 @@ async def _process_batch_scrape_async(
                 )
                 store.increment_completed(job_id)
             else:
+                error_message = result.get("error", "Scrape failed")
+                error_code = result.get("error_code") or "SCRAPE_ERROR"
                 errors.append(
                     {
                         "url": url,
-                        "error": result.get("error", "Scrape failed"),
-                        "error_type": "scrape_error",
-                        "error_code": "SCRAPE_ERROR",
+                        "error": error_message,
+                        "error_type": (
+                            "captcha_unresolved"
+                            if error_code == "CAPTCHA_UNRESOLVED"
+                            else "scrape_error"
+                        ),
+                        "error_code": error_code,
                         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                     }
                 )

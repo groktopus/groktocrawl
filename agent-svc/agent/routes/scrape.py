@@ -5,7 +5,7 @@ from datetime import datetime as _dt
 
 from fastapi import APIRouter, Request
 
-from ..exceptions import NotFoundError, ScrapeError
+from ..exceptions import CaptchaError, NotFoundError, ScrapeError
 from ..models import (
     AgentCancelResponse,
     BatchScrapeErrorsResponse,
@@ -50,6 +50,11 @@ async def scrape(request: Request, body: ScrapeRequest) -> ScrapeResponse:
                 if scraper_data.get("images")
                 else None,
             ),
+        )
+    if result.get("error_code") == "CAPTCHA_UNRESOLVED":
+        raise CaptchaError(
+            detail=result.get("error", "CAPTCHA challenge could not be resolved"),
+            details=result.get("details") or result.get("barrier"),
         )
     raise ScrapeError(detail=result.get("error", "Scrape failed"))
 

@@ -10,13 +10,16 @@ Usage:
     from .stealth import create_stealth_browser, create_stealth_context
 
     async with async_playwright() as p:
-        browser = await create_stealth_browser(p)
-        context = await create_stealth_context(browser)
+        browser, cloakbrowser = await create_stealth_browser(p, url)
+        context = await create_stealth_context(browser, cloakbrowser=cloakbrowser)
         page = await context.new_page()
 """
 
+import asyncio
+import hashlib
 import logging
 import random
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 
@@ -86,23 +89,48 @@ STEALTH_INIT_SCRIPT = """() => {
 }"""
 
 
-async def create_stealth_browser(playwright):
+def fingerprint_seed(url: str) -> str:
+    """Return a stable, non-secret fingerprint value for a normalized domain."""
+    host = (urlparse(url).hostname or url).lower().removeprefix("www.")
+    return str(
+        int.from_bytes(hashlib.sha256(host.encode("utf-8")).digest()[:4], "big")
+        & 0x7FFFFFFF
+    )
+
+
+async def create_stealth_browser(playwright, url: str = ""):
     """Launch a Chromium browser with stealth configuration.
 
     Args:
         playwright: An async_playwright instance.
 
     Returns:
-        A Browser instance configured to avoid headless detection.
+        ``(browser, cloakbrowser)`` where the flag selects matching context defaults.
     """
     logger.debug("Launching stealth Chromium browser")
-    return await playwright.chromium.launch(
-        headless=True,
-        args=STEALTH_BROWSER_ARGS,
-    )
+    try:
+        from cloakbrowser import ensure_binary, get_default_stealth_args
+
+        executable_path = await asyncio.to_thread(ensure_binary)
+        args = [
+            arg
+            for arg in get_default_stealth_args()
+            if not arg.startswith("--fingerprint=")
+        ]
+        args.append(f"--fingerprint={fingerprint_seed(url)}")
+        return await playwright.chromium.launch(
+            headless=True, executable_path=str(executable_path), args=args
+        ), True
+    except Exception as exc:
+        logger.warning(
+            "CloakBrowser unavailable; using stock Playwright Chromium: %s", exc
+        )
+        return await playwright.chromium.launch(
+            headless=True, args=STEALTH_BROWSER_ARGS
+        ), False
 
 
-async def create_stealth_context(browser, **kwargs):
+async def create_stealth_context(browser, cloakbrowser: bool = False, **kwargs):
     """Create a browser context with stealth settings.
 
     Args:
@@ -111,9 +139,12 @@ async def create_stealth_context(browser, **kwargs):
             (e.g., proxy config for context-level proxy assignment).
 
     Returns:
-        A BrowserContext with realistic fingerprint settings.
+        A BrowserContext with stock-fallback fingerprint settings, or the
+        upstream CloakBrowser defaults when ``cloakbrowser`` is true.
     """
     logger.debug("Creating stealth browser context")
+    if cloakbrowser:
+        return await browser.new_context(**kwargs)
     context_kwargs = {
         **STEALTH_CONTEXT_KWARGS,
         "viewport": {

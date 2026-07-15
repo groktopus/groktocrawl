@@ -72,8 +72,10 @@ async def _playwright_fetch_with_proxy(
         context_kwargs["proxy"] = proxy  # context-level, not launch-level
 
     async with async_playwright() as p:
-        browser = await create_stealth_browser(p)
-        context = await create_stealth_context(browser, **context_kwargs)
+        browser, cloakbrowser = await create_stealth_browser(p, url)
+        context = await create_stealth_context(
+            browser, cloakbrowser=cloakbrowser, **context_kwargs
+        )
         page = await context.new_page()
         try:
             # Security: reject private/internal destination URLs
@@ -145,6 +147,32 @@ async def _playwright_fetch_with_proxy(
                 title = await page.title()
                 current_url = page.url
 
+            # Resolve provider widgets before extraction while this page and
+            # its cookie-bearing context are still alive.
+            from .captcha import resolve_captcha
+
+            unresolved_captcha, attempts = await resolve_captcha(page, url)
+            if unresolved_captcha:
+                return {
+                    "error": "CAPTCHA challenge could not be resolved",
+                    "error_code": "CAPTCHA_UNRESOLVED",
+                    "markdown": "",
+                    "source": "captcha",
+                    "url": url,
+                    "barrier": {
+                        "detected": True,
+                        "type": "captcha",
+                        "provider": unresolved_captcha.provider,
+                        "confidence": unresolved_captcha.confidence,
+                        "detail": unresolved_captcha.detail,
+                        "attempted_strategies": attempts,
+                    },
+                }
+            captcha_resolved = bool(attempts)
+            if captcha_resolved:
+                title = await page.title()
+                current_url = page.url
+
             # If the challenge caused a redirect to the real site, ensure the
             # real page's content is fully loaded before extracting.
             if current_url != url:
@@ -176,11 +204,11 @@ async def _playwright_fetch_with_proxy(
             html = await retry_transient(page.content)
             markdown = html_to_markdown(html) if html else ""
 
-            if (
-                not markdown
-                or len(markdown) < 500
-                or _classify_barrier(title, url, markdown, html).detected
-            ):
+            barrier = _classify_barrier(title, url, markdown, html)
+            barrier_blocks = barrier.detected and not (
+                captcha_resolved and barrier.barrier_type == "captcha"
+            )
+            if not markdown or len(markdown) < 500 or barrier_blocks:
                 for attempt in range(2):
                     logger.info(
                         "SPA retry %d for %s (markdown: %d chars)",
@@ -196,11 +224,11 @@ async def _playwright_fetch_with_proxy(
 
                     html = await retry_transient(page.content)
                     markdown = html_to_markdown(html) if html else ""
-                    if (
-                        markdown
-                        and len(markdown) >= 500
-                        and not _classify_barrier(title, url, markdown, html).detected
-                    ):
+                    barrier = _classify_barrier(title, url, markdown, html)
+                    barrier_blocks = barrier.detected and not (
+                        captcha_resolved and barrier.barrier_type == "captcha"
+                    )
+                    if markdown and len(markdown) >= 500 and not barrier_blocks:
                         logger.info(
                             "SPA retry %d succeeded for %s (%d chars)",
                             attempt + 1,
@@ -209,41 +237,38 @@ async def _playwright_fetch_with_proxy(
                         )
                         break
 
+            if html:
+                markdown = html_to_markdown(html)
+                if markdown and len(markdown) > 50:
+                    barrier = _classify_barrier(title, url, markdown, html)
+                    if (
+                        barrier.detected
+                        and not (captcha_resolved and barrier.barrier_type == "captcha")
+                        and barrier.confidence > 0.7
+                    ):
+                        return {
+                            "error": f"Barrier detected: {barrier.barrier_type} (confidence: {barrier.confidence:.2f})",
+                            "barrier": {
+                                "detected": True,
+                                "type": barrier.barrier_type,
+                                "provider": barrier.provider,
+                                "confidence": barrier.confidence,
+                                "detail": barrier.detail,
+                            },
+                            "markdown": "",
+                            "source": "barrier-detection",
+                            "url": url,
+                        }
+                    await store_cookies(url, context)
+                    return {
+                        "markdown": markdown,
+                        "source": "playwright",
+                        "url": url,
+                        "raw_html_start": html,
+                    }
+
         finally:
             await browser.close()
-
-    if html:
-        markdown = html_to_markdown(html)
-        if markdown and len(markdown) > 50:
-            barrier = _classify_barrier(title, url, markdown, html)
-            if barrier.detected and barrier.confidence > 0.7:
-                logger.warning(
-                    "Barrier detected in playwright result for %s: %s (confidence: %.2f)",
-                    url,
-                    barrier.barrier_type,
-                    barrier.confidence,
-                )
-                return {
-                    "error": f"Barrier detected: {barrier.barrier_type} (confidence: {barrier.confidence:.2f})",
-                    "barrier": {
-                        "detected": True,
-                        "type": barrier.barrier_type,
-                        "confidence": barrier.confidence,
-                        "detail": barrier.detail,
-                    },
-                    "markdown": "",
-                    "source": "barrier-detection",
-                    "url": url,
-                }
-
-            logger.info("Tier 3 hit: playwright render for %s", url)
-            await store_cookies(url, context)
-            return {
-                "markdown": markdown,
-                "source": "playwright",
-                "url": url,
-                "raw_html_start": html,
-            }
     return None
 
 
@@ -317,9 +342,7 @@ async def fetch_via_content_negotiation(
             if is_html and resp.text and len(resp.text) > 100:
                 markdown = html_to_markdown(resp.text)
                 if markdown and len(markdown) > 50:
-                    logger.info(
-                        "Tier 2 hit: content negotiation (HTML→md) for %s", url
-                    )
+                    logger.info("Tier 2 hit: content negotiation (HTML→md) for %s", url)
                     result = {
                         "markdown": markdown,
                         "source": "content-negotiation",

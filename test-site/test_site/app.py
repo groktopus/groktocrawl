@@ -35,7 +35,10 @@ async def health():
 async def anything():
     """Catch-all endpoint for scraper tests."""
     from fastapi.responses import HTMLResponse
-    return HTMLResponse("<html><body><h1>Anything</h1><p>This is the anything page.</p><a href='/pricing'>Pricing</a><a href='/about'>About</a></body></html>")
+
+    return HTMLResponse(
+        "<html><body><h1>Anything</h1><p>This is the anything page.</p><a href='/pricing'>Pricing</a><a href='/about'>About</a></body></html>"
+    )
 
 
 @app.get("/llms.txt")
@@ -134,6 +137,55 @@ async def dynamic():
           </body>
         </html>
         """
+    )
+
+
+@app.get("/captcha-hcaptcha")
+async def captcha_hcaptcha():
+    """Fixture-only same-origin hCaptcha-shaped checkbox challenge."""
+    return HTMLResponse(
+        """<html><body><div class="h-captcha"><textarea name="h-captcha-response"></textarea>
+        <iframe src="/captcha-hcaptcha-frame"></iframe></div>
+        <article><h1>Fixture CAPTCHA Article</h1><p>This verified article content is returned after the fixture checkbox sets its token.</p></article></body></html>"""
+    )
+
+
+@app.get("/captcha-hcaptcha-frame")
+async def captcha_hcaptcha_frame():
+    return HTMLResponse(
+        """<html><body><button id="checkbox" role="checkbox" onclick="parent.document.querySelector('[name=h-captcha-response]').value='fixture-token'">Verify</button></body></html>"""
+    )
+
+
+@app.get("/captcha-hcaptcha-grid")
+async def captcha_hcaptcha_grid():
+    return HTMLResponse(
+        """<html><body><div class="h-captcha"><textarea name="h-captcha-response"></textarea>
+        <iframe src="/captcha-hcaptcha-grid-frame"></iframe></div>
+        <article><h1>Fixture CAPTCHA Grid Article</h1><p>This article follows the fixture-only 3 by 3 grid.</p></article></body></html>"""
+    )
+
+
+@app.get("/captcha-hcaptcha-grid-frame")
+async def captcha_hcaptcha_grid_frame():
+    tiles = "".join('<button class="task-image">tile</button>' for _ in range(9))
+    return HTMLResponse(
+        f"""<html><body><div class="challenge-container"><p class="prompt-text">Select fixture tiles</p>{tiles}<button class="button-submit" onclick="parent.document.querySelector('[name=h-captcha-response]').value='fixture-token'">Submit</button></div></body></html>"""
+    )
+
+
+@app.get("/captcha-unresolved")
+async def captcha_unresolved():
+    return HTMLResponse(
+        """<html><body><div class="h-captcha"><textarea name="h-captcha-response"></textarea>
+        <iframe src="/captcha-unresolved-frame"></iframe></div></body></html>"""
+    )
+
+
+@app.get("/captcha-unresolved-frame")
+async def captcha_unresolved_frame():
+    return HTMLResponse(
+        "<html><body><div class='challenge-container'>Unavailable fixture</div></body></html>"
     )
 
 

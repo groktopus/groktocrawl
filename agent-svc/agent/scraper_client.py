@@ -182,6 +182,8 @@ class ScraperClient:
         """
         import asyncio as _asyncio
 
+        last_failure: dict | None = None
+
         # ── Try generic (fast path) ───────────────────────────
         try:
             result = await _asyncio.wait_for(
@@ -193,6 +195,9 @@ class ScraperClient:
                 and result.get("data", {}).get("markdown", "").strip()
             ):
                 return result
+            if result.get("error_code") == "CAPTCHA_UNRESOLVED":
+                return result
+            last_failure = result
         except TimeoutError:
             logger.info("Generic scrape timed out for %s, trying browser fallback", url)
         except Exception as e:
@@ -211,9 +216,15 @@ class ScraperClient:
                 and result.get("data", {}).get("markdown", "").strip()
             ):
                 return result
+            if result.get("error_code") == "CAPTCHA_UNRESOLVED":
+                return result
+            last_failure = result
         except TimeoutError:
             logger.warning("Browser fallback also timed out for %s", url)
         except Exception as e:
             logger.warning("Browser fallback failed for %s: %s", url, e)
 
-        return {"success": False, "error": f"All scrape methods failed for {url}"}
+        return last_failure or {
+            "success": False,
+            "error": f"All scrape methods failed for {url}",
+        }
