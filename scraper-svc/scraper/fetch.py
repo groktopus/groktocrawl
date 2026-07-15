@@ -276,6 +276,20 @@ async def smart_scrape(
 
     Returns a dict with keys: markdown, source, url, quality, error (optional).
     """
+    # Non-network identifiers (for example, cve:CVE-...) are handled by
+    # registered adapters before URL-level SSRF validation.
+    if not force_browser:
+        registry = get_registry()
+        if registry._entries:
+            ctx = AdapterContext(
+                browser_svc_url=_settings.browser_svc_url,
+                config=dict(os.environ),
+            )
+            adapter_result = await registry.dispatch(url, ctx)
+            if adapter_result:
+                logger.info("Adapter hit: %s for %s", adapter_result.source, url)
+                return adapter_result.to_dict()
+
     if not _private_url_allowlisted(url):
         is_private, reason = _is_private_url(url)
         if is_private:
@@ -405,18 +419,6 @@ async def smart_scrape(
         },
         proxy=_get_httpx_proxies(),
     ) as client:
-        # Adapter registry check (pre-pipeline, before any HTTP)
-        registry = get_registry()
-        if registry._entries:
-            ctx = AdapterContext(
-                browser_svc_url=_settings.browser_svc_url,
-                config=dict(os.environ),
-            )
-            adapter_result = await registry.dispatch(url, ctx)
-            if adapter_result:
-                logger.info("Adapter hit: %s for %s", adapter_result.source, url)
-                return adapter_result.to_dict()
-
         # Politeness check: robots.txt + rate limit (before any HTTP)
         _proceed, blocked = await _politeness_check_and_delay(
             url,

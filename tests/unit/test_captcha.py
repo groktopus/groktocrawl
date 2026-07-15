@@ -680,6 +680,37 @@ async def test_agent_scraper_client_accepts_binary_download_without_browser_fall
 
 
 @pytest.mark.asyncio
+async def test_adapter_identifier_dispatches_before_url_guard(monkeypatch):
+    import scraper.fetch as fetch
+
+    class AdapterResult:
+        source = "nvd"
+
+        @staticmethod
+        def to_dict():
+            return {"markdown": "CVE content", "source": "nvd", "url": "cve:CVE-1"}
+
+    class Registry:
+        _entries = [object()]
+
+        @staticmethod
+        async def dispatch(url, _ctx):
+            assert url == "cve:CVE-1"
+            return AdapterResult()
+
+    def unexpected_guard(_url):
+        raise AssertionError("adapter identifiers must not reach URL validation")
+
+    monkeypatch.setattr(fetch, "get_registry", lambda: Registry())
+    monkeypatch.setattr(fetch, "_is_private_url", unexpected_guard)
+
+    result = await fetch.smart_scrape("cve:CVE-1")
+
+    assert result["source"] == "nvd"
+    assert result["markdown"] == "CVE content"
+
+
+@pytest.mark.asyncio
 async def test_smart_scrape_blocks_private_url_before_any_fetch_tier(monkeypatch):
     import scraper.fetch as fetch
 
