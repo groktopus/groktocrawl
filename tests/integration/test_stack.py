@@ -8948,8 +8948,8 @@ def test_cross_session_compact_ref_ids_val_cross_003():
         assert ref["url"], f"Ref missing url: {ref}"
         assert ref["title"] is not None, f"Ref missing title: {ref}"
 
-    # Scrape step using the first search ref's URL
-    first_url = search_refs[0]["url"]
+    # Scrape a deterministic fixture; external search results may reject automation.
+    first_url = f"{TEST_SITE}/pricing"
     s2 = httpx.post(
         AGENT + f"/v2/session/{sid}/step",
         json={"action": "scrape", "params": {"urls": [first_url]}},
