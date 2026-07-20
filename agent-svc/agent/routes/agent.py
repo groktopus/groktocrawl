@@ -226,6 +226,7 @@ async def create_agent(request: Request, body: AgentRequest, response: Response)
             user_id=user_id,
             research_memory=request.app.state.research_memory,
             search_type=body.search_type,
+            max_searches_per_request=max_searches,
         )
     )
 

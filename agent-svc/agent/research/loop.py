@@ -190,6 +190,11 @@ async def _run_research_events(
                     schema=schema,
                 )
                 _validate_json_if_schema(answer, schema)
+                if not schema and not stream_tokens:
+                    yield {
+                        "type": "sources",
+                        "sources": [s["url"] for s in all_source_details],
+                    }
             else:
                 yield {
                     "type": "sources",

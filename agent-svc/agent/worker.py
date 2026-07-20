@@ -86,6 +86,7 @@ async def _process_agent_async(
     user_id: str | None = None,
     research_memory: Any = None,
     search_type: str = "deep",
+    max_searches_per_request: int = 5,
 ) -> None:
     settings = _get_worker_settings()
     redis_url = (
@@ -194,6 +195,7 @@ async def _process_agent_async(
             include_images=include_images,
             citation_style=cs,
             search_type=search_type,
+            max_searches_per_request=max_searches_per_request,
         )
         # Apply citation style to transform bare [N] markers to [N](url)
         # for compact style, or leave them unchanged for inline style.
