@@ -145,6 +145,8 @@ async def _handle_agent_streaming(
                 include_images=body.include_images,
                 citation_style=body.citation_style,
                 search_type=body.search_type,
+                research_memory=request.app.state.research_memory,
+                user_id=_derive_user_id(request),
             ),
             media_type="text/event-stream",
             headers=headers,

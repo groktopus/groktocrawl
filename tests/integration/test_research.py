@@ -145,6 +145,42 @@ class TestScrapeUrls:
 
 
 class TestRunResearch:
+    @pytest.mark.asyncio
+    async def test_consumes_terminal_event_from_canonical_engine(self):
+        """Polling adapts the shared event engine instead of running its own loop."""
+        from agent.research import run_research
+
+        async def events(*args, **kwargs):
+            yield {"type": "status", "state": "planning"}
+            yield {
+                "type": "done",
+                "result": "canonical result",
+                "sources": ["https://example.com"],
+                "source_details": [{"url": "https://example.com"}],
+                "latency_ms": 1,
+            }
+
+        with patch("agent.research.loop._run_research_events", events):
+            result = await run_research(prompt="Test", llm_model="test-model")
+
+        assert result == {
+            "result": "canonical result",
+            "sources": ["https://example.com"],
+            "source_details": [{"url": "https://example.com"}],
+        }
+
+    @pytest.mark.asyncio
+    async def test_fails_when_canonical_engine_has_no_terminal_event(self):
+        """A broken event engine must not be presented as an empty success."""
+        from agent.research import run_research
+
+        async def events(*args, **kwargs):
+            yield {"type": "status", "state": "planning"}
+
+        with patch("agent.research.loop._run_research_events", events):
+            with pytest.raises(RuntimeError, match="without a terminal done event"):
+                await run_research(prompt="Test", llm_model="test-model")
+
     @pytest.fixture
     def mocks(self):
         """Patch all three clients used by run_research."""
@@ -220,7 +256,9 @@ class TestRunResearch:
             patch("agent.research.loop.ScraperClient", return_value=scraper),
             patch("agent.research.loop.LLMClient", return_value=llm),
         ):
-            result = await run_research(prompt="Tell me about AI", llm_model="test-model")
+            result = await run_research(
+                prompt="Tell me about AI", llm_model="test-model"
+            )
 
         assert result["result"] == "Answer from search."
         searxng.search.assert_called_once()
@@ -654,6 +692,37 @@ class TestRunResearchStream:
         # done event
         done_events = [e for e in events if e["type"] == "done"]
         assert len(done_events) == 1
+
+    @pytest.mark.asyncio
+    async def test_exposes_canonical_events(self):
+        """Streaming adapts the shared engine without translating its events."""
+        from agent.research import run_research_stream
+
+        expected = [
+            {"type": "status", "state": "planning"},
+            {
+                "type": "done",
+                "result": "complete",
+                "sources": [],
+                "source_details": [],
+                "latency_ms": 1,
+            },
+        ]
+
+        async def events(*args, **kwargs):
+            assert kwargs["stream_tokens"] is True
+            for event in expected:
+                yield event
+
+        with patch("agent.research.loop._run_research_events", events):
+            actual = [
+                event
+                async for event in run_research_stream(
+                    prompt="Test", llm_model="test-model"
+                )
+            ]
+
+        assert actual == expected
 
     @pytest.mark.asyncio
     async def test_schema_mode_no_tokens(self):

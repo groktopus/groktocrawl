@@ -12,6 +12,7 @@ from typing import Any
 from ..models import CitationStyle
 from .citations import _apply_citation_style
 from .loop import run_research_stream
+from .memory import admit_research_memory
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +82,8 @@ async def stream_research_live(
     include_images: bool,
     citation_style: CitationStyle,
     search_type: str = "deep",
+    research_memory: Any = None,
+    user_id: str | None = None,
 ) -> Any:
     """Orchestrate full research SSE pipeline for cache-miss or force-fresh.
 
@@ -118,6 +121,18 @@ async def stream_research_live(
             transformed_result, _ = _apply_citation_style(
                 event["result"], source_details, cs
             )
+            if research_memory is not None:
+                await admit_research_memory(
+                    research_memory,
+                    prompt=prompt,
+                    artifact=transformed_result,
+                    source_details=source_details,
+                    model=llm_model,
+                    citation_style=cs.value,
+                    requested_model=requested_model,
+                    latency_ms=event["latency_ms"],
+                    user_id=user_id,
+                )
 
             done_payload: dict = {
                 "type": "done",

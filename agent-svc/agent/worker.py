@@ -9,6 +9,7 @@ from typing import Any
 
 from .metrics import METRICS
 from .research import run_extract, run_research
+from .research.memory import admit_research_memory
 from .scraper_client import ScraperClient
 from .settings import load_settings
 from .store import JobStore
@@ -204,7 +205,8 @@ async def _process_agent_async(
 
         # Save rich source_details for memory storage BEFORE compactifying
         # the API response. Cache-hit paths expect sources as list[dict].
-        rich_source_details = source_details or result.get("source_details", [])
+        rich_source_details = source_details
+        memory_sources = rich_source_details or result.get("sources", [])
 
         # When citation_style is compact, replace full source_details with
         # a compact citations mapping (index → {url}) to reduce
@@ -222,58 +224,19 @@ async def _process_agent_async(
             # Drop the full source_details from the API response to save payload size
             result["source_details"] = []
 
-        # ── Store fresh result in research memory ──────────────────
-        try:
-            answer = result.get("result", "")
-            # Use rich_source_details (preserved before compactification) for memory
-            store_sources = rich_source_details or result.get("sources", [])
-            if not store_sources:
-                store_sources = result.get("sources", [])
-
-            # ── Cache-admission guard ──────────────────────────
-            # Skip store for empty answers, handled LLM errors,
-            # or sourceless results (#432).
-            if answer and not answer.startswith("Error:") and store_sources:
-                metadata: dict[str, Any] = {
-                    "model": llm_model,
-                    "citation_style": cs.value,
-                }
-                if requested_model and requested_model != "default":
-                    metadata["requested_model"] = requested_model
-                if hasattr(result, "get"):
-                    metadata["latency_ms"] = result.get("latency_ms", 0)
-
-                memory_user_id = user_id if memory_scope == "per_user" else None
-                artifact_id = await research_memory.store(
-                    prompt=prompt,
-                    artifact=answer,
-                    sources=store_sources,
-                    model=llm_model,
-                    user_id=memory_user_id,
-                    metadata=metadata,
-                )
-                logger.info(
-                    "Stored research memory artifact %s for agent %s (scope=%s)",
-                    artifact_id,
-                    job_id,
-                    memory_scope,
-                )
-                result["research_memory_id"] = artifact_id
-            else:
-                logger.info(
-                    "Skipping research memory store for agent %s "
-                    "(empty=%s, error=%s, no_sources=%s)",
-                    job_id,
-                    not answer,
-                    answer.startswith("Error:") if answer else False,
-                    not store_sources,
-                )
-        except Exception:
-            logger.warning(
-                "Failed to store research memory for agent %s (service may be down)",
-                job_id,
-                exc_info=True,
-            )
+        artifact_id = await admit_research_memory(
+            research_memory,
+            prompt=prompt,
+            artifact=result.get("result", ""),
+            source_details=memory_sources,
+            model=llm_model,
+            citation_style=cs.value,
+            requested_model=requested_model,
+            latency_ms=result.get("latency_ms", 0),
+            user_id=user_id,
+        )
+        if artifact_id:
+            result["research_memory_id"] = artifact_id
 
         # Note stale cache existence if applicable
         if stale_cache_hit:

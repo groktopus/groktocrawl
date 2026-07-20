@@ -197,6 +197,21 @@ class TestProcessAgentAsync:
         assert call_args.kwargs["artifact"] == "This is a valid research result."
 
     @pytest.mark.asyncio
+    async def test_success_result_with_url_sources_is_cached(self):
+        """Keep the legacy admission fallback when rich details are unavailable."""
+        mocks = await self._run_worker_with(
+            {
+                "result": "This is a valid research result.",
+                "sources": ["https://a.com"],
+            },
+            job_id="test-job-url-sources-cache",
+        )
+
+        assert mocks["research_memory"].store.call_args.kwargs["sources"] == [
+            "https://a.com"
+        ]
+
+    @pytest.mark.asyncio
     async def test_default_valkey_url(self):
         """Verify JobStore is constructed with the default VALKEY_URL."""
         from agent.worker import _process_agent_async
