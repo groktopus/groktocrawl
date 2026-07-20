@@ -48,7 +48,7 @@ Architecture Decision Records (ADRs) live in `docs/adr/` and capture the context
 
 ### Inline async processing (no RQ worker)
 
-Jobs are processed with `asyncio.create_task()` inside the API process. This avoids needing a separate worker container. For production deployments with high throughput, restore the RQ queue and add a worker container.
+Jobs are processed with `asyncio.create_task()` inside the API process. Valkey persists job records, not execution: interrupted jobs are not resumed after restart, partial artifacts can remain, and undelivered webhooks are not replayed. `TaskTracker` provides only a short graceful-shutdown window. Restart-safe execution is deferred until it is an explicit product requirement; any future design must define ownership, leases, retries, cancellation, artifact consistency, and webhook idempotency in an ADR before selecting queue technology.
 
 ### Three-tier smart scraper
 

@@ -16,11 +16,13 @@ curl -X POST http://localhost:8080/v2/scrape \
 
 ## Jobs, streaming, and webhooks
 
-Scrape, map, search, answer, browser, and similar lightweight operations return directly. Crawl, extraction, batch scrape, and llms.txt generation create durable jobs: create the job, poll its status route, and cancel where a DELETE route is available. Job responses include IDs suitable for polling.
+Scrape, map, search, answer, browser, and similar lightweight operations return directly. Crawl, extraction, batch scrape, and llms.txt generation create persistent job records: create the job, poll its status route, and cancel where a DELETE route is available. Job responses include IDs suitable for polling.
+
+Persistent state is not restart-safe execution. Valkey preserves job status and completed results, but `agent-svc` executes work in-process. If that process exits before a job finishes, the job is not resumed or reclaimed automatically and may remain `processing` until its record expires. Cancellation can update the stored status, but it does not recover interrupted work. Partial writes to downstream stores are not rolled back, and completion or failure webhooks are not replayed after restart. Restart-safe execution is deferred until there is an explicit product requirement for a durable job owner, retry and lease semantics, cancellation behavior, artifact consistency, and idempotent webhook delivery.
 
 `POST /v2/agent` and `POST /v2/answer` support SSE when `stream: true`; agent events include planning, source discovery, scraping, tokens, and completion. Crawls stream through `GET /v2/crawl/{job_id}/stream`, including replay for completed jobs. Consume each SSE event as JSON and treat `done`/`error` as terminal.
 
-Every asynchronous creation request accepts webhook configuration. Completion and failure delivery is best effort; verify the endpoint’s OpenAPI model for the exact field shape and sign requests with `WEBHOOK_SECRET` where configured.
+Every asynchronous creation request accepts webhook configuration. Completion and failure delivery is best effort and is not persisted for retry after process loss; verify the endpoint’s OpenAPI model for the exact field shape and sign requests with `WEBHOOK_SECRET` where configured.
 
 ## Common workflows
 
