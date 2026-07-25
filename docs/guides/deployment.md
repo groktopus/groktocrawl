@@ -24,6 +24,11 @@ the legacy Chromium fingerprint shim applies only to the stock fallback. The
 wrapper is MIT, while the downloaded binary is not copied into image layers or
 redistributed by GroktoCrawl.
 
+`SCRAPER_MAX_BROWSER_CONCURRENCY` bounds complete Playwright browser lifecycles
+inside `scraper-svc` (default: 4, allowed range: 1–32). This service-wide limit
+applies across independent callers and jobs. The Compose service also runs with
+an init process so orphaned browser descendants are reaped.
+
 ## Security
 
 - Set a strong `API_KEY` and route public access through TLS/reverse-proxy controls.

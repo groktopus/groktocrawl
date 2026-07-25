@@ -12,6 +12,7 @@ Also includes internal helpers for Playwright proxy management and
 browser service interaction.
 """
 
+import asyncio
 import logging
 
 import httpx
@@ -34,6 +35,7 @@ logger = logging.getLogger(__name__)
 
 _settings = load_settings()
 FLARE_SOLVERR_URL = _settings.flare_solverr_url
+_browser_semaphore = asyncio.Semaphore(_settings.max_browser_concurrency)
 
 
 def _is_private_url(url: str) -> tuple[bool, str]:
@@ -51,6 +53,15 @@ def _is_private_url(url: str) -> tuple[bool, str]:
 
 
 async def _playwright_fetch_with_proxy(
+    url: str,
+    proxy: dict | None,
+) -> dict | None:
+    """Run one complete Playwright lifecycle within the service-wide limit."""
+    async with _browser_semaphore:
+        return await _playwright_fetch_unbounded(url, proxy)
+
+
+async def _playwright_fetch_unbounded(
     url: str,
     proxy: dict | None,
 ) -> dict | None:
@@ -72,12 +83,13 @@ async def _playwright_fetch_with_proxy(
         context_kwargs["proxy"] = proxy  # context-level, not launch-level
 
     async with async_playwright() as p:
-        browser, cloakbrowser = await create_stealth_browser(p, url)
-        context = await create_stealth_context(
-            browser, cloakbrowser=cloakbrowser, **context_kwargs
-        )
-        page = await context.new_page()
+        browser = None
         try:
+            browser, cloakbrowser = await create_stealth_browser(p, url)
+            context = await create_stealth_context(
+                browser, cloakbrowser=cloakbrowser, **context_kwargs
+            )
+            page = await context.new_page()
             # Inject cached Cloudflare clearance cookies before navigation
             await inject_cookies(url, context)
 
@@ -277,7 +289,8 @@ async def _playwright_fetch_with_proxy(
                     }
 
         finally:
-            await browser.close()
+            if browser is not None:
+                await browser.close()
     return None
 
 

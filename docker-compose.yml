@@ -64,6 +64,7 @@ services:
       - SITE_NAME=Tier 3 Fixture
 
   scraper-svc:
+    init: true
     build:
       context: .
       dockerfile: scraper-svc/Dockerfile

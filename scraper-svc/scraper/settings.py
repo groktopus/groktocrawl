@@ -39,6 +39,9 @@ class ScraperSettings(BaseModel):
         default="{}", alias="SCRAPE_CACHE_DOMAIN_TTLS"
     )
     scraper_proxy_url: str = Field(default="", alias="SCRAPER_PROXY_URL")
+    max_browser_concurrency: int = Field(
+        default=4, alias="SCRAPER_MAX_BROWSER_CONCURRENCY", ge=1, le=32
+    )
     scraper_private_url_allowlist: str = Field(
         default="", alias="SCRAPER_PRIVATE_URL_ALLOWLIST"
     )
