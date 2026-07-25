@@ -258,9 +258,10 @@ jobs:
       - name: Copy test files and source directories
         run: |
           svc=$(docker compose ps -q agent-svc)
-          # Copy full tests/ directory
+          # Copy full tests/ directory and root Compose contract input
           docker compose exec -T agent-svc mkdir -p /app/tests
           docker cp tests/. "$svc":/app/tests/
+          docker cp docker-compose.yml "$svc":/app/docker-compose.yml
           # Copy service source packages so tests can import them
           # Each package_dir (e.g. scraper-svc/scraper) becomes /app/<package_dir>/
           for pkg in agent-svc/agent scraper-svc/scraper parse-svc/parse_svc portal-svc/portal browser-svc/browser_svc llm-svc/llm_svc; do
