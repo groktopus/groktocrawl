@@ -7,6 +7,11 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def test_integration_workflow_enables_indexing_profile():
+    workflow = (ROOT / ".github/workflows/docker.yml").read_text()
+    assert "docker compose --profile indexing up --build -d" in workflow
+
+
 def _services_for_profiles(compose: dict, profiles: set[str]) -> set[str]:
     """Resolve the services Compose activates for the selected profiles."""
     return {

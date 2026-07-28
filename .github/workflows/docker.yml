@@ -148,7 +148,7 @@ jobs:
         run: docker volume inspect hf-cache || docker volume create hf-cache
 
       - name: Start the Docker stack
-        run: docker compose up --build -d
+        run: docker compose --profile indexing up --build -d
         timeout-minutes: 10
 
       - name: Start test fixtures
