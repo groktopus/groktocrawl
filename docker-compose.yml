@@ -65,6 +65,9 @@ services:
 
   scraper-svc:
     init: true
+    mem_limit: 2500m
+    cpus: 2.0
+    pids_limit: 512
     build:
       context: .
       dockerfile: scraper-svc/Dockerfile
@@ -82,6 +85,9 @@ services:
       - cloakbrowser_cache:/root/.cloakbrowser
 
   browser-svc:
+    mem_limit: 1500m
+    cpus: 1.0
+    pids_limit: 256
     build:
       context: .
       dockerfile: browser-svc/Dockerfile
@@ -91,6 +97,9 @@ services:
   flare-solverr:
     image: ghcr.io/flaresolverr/flaresolverr:latest
     restart: unless-stopped
+    mem_limit: 1500m
+    cpus: 1.0
+    pids_limit: 256
     ports:
       - "${FLARE_SOLVERR_PORT:-8191}:8191"
     environment:
@@ -105,6 +114,8 @@ services:
       dockerfile: semantic-svc/Dockerfile
     image: ghcr.io/groktopus/groktocrawl-semantic
     restart: unless-stopped
+    profiles:
+      - indexing
     ports:
       - "8003:8003"
     environment:
@@ -126,6 +137,8 @@ services:
     image: qdrant/qdrant:v1.18.2
     platform: linux/amd64
     restart: unless-stopped
+    profiles:
+      - indexing
     mem_limit: 4g
     volumes:
       - qdrant_data:/qdrant/storage
@@ -149,8 +162,6 @@ services:
         condition: service_started
       scraper-svc:
         condition: service_started
-      semantic-svc:
-        condition: service_healthy
     environment:
       - VALKEY_URL=${VALKEY_URL:-redis://valkey:6379/0}
       - SEARXNG_URL=${SEARXNG_URL:-http://slopsearx:8080}

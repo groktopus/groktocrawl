@@ -2,9 +2,9 @@
 
 ## Services and profiles
 
-`docker compose up -d` starts the production service graph. `docker compose --profile fixture up --build -d` additionally starts `llm-svc`, `test-site`, and `tier3-fixture` for local evaluation. The main public ports are agent API `8080`, portal `8082`, scraper `8001`, semantic service `8003`, SlopSearX `8081`, and MCP `8002` by default.
+`docker compose up -d` starts the production service graph. `docker compose --profile fixture up --build -d` additionally starts `llm-svc`, `test-site`, and `tier3-fixture` for local evaluation. Semantic indexing is optional and best-effort on constrained hosts; enable `semantic-svc` and Qdrant explicitly with `docker compose --profile indexing up -d`. Without that profile, ordinary scrape and keyword/deep search continue, while vector and hybrid-vector retrieval, semantic/hybrid reranking, `/v2/find-similar`, and semantic-backed research-memory indexing are unavailable. The main public ports are agent API `8080`, portal `8082`, scraper `8001`, semantic service `8003` when indexing is enabled, SlopSearX `8081`, and MCP `8002` by default.
 
-`agent-svc` coordinates requests; `scraper-svc` fetches content; `semantic-svc` uses Qdrant; Valkey stores operational state; SlopSearX discovers web results; `browser-svc`, `parse-svc`, `portal-svc`, `mcp-svc`, and Ofelia provide specialized capabilities. The [architecture guide](../architecture.md) describes ownership and data flow.
+`agent-svc` coordinates requests; `scraper-svc` fetches content; optional `semantic-svc` uses Qdrant; Valkey stores operational state; SlopSearX discovers web results; `browser-svc`, `parse-svc`, `portal-svc`, `mcp-svc`, and Ofelia provide specialized capabilities. The [architecture guide](../architecture.md) describes ownership and data flow.
 
 ## Configuration
 
