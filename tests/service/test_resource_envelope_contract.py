@@ -2,13 +2,18 @@
 
 from pathlib import Path
 
+import pytest
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_integration_workflow_enables_indexing_profile():
-    workflow = (ROOT / ".github/workflows/docker.yml").read_text()
+    workflow_path = ROOT / ".github/workflows/docker.yml"
+    if not workflow_path.exists():
+        pytest.skip("workflow source is not copied into the integration container")
+
+    workflow = workflow_path.read_text()
     assert "docker compose --profile indexing up --build -d" in workflow
     assert "docker compose exec -T agent-svc env \\" in workflow
     assert "docker compose exec -T \\\\n            -e" not in workflow
