@@ -88,6 +88,62 @@ def _import_build_payload():
 _build_index_payload = _import_build_payload()
 
 
+# ── Tests: health readiness ─────────────────────────────────────────
+
+
+class TestHealthReadiness:
+    """Semantic readiness requires both models and Qdrant."""
+
+    @pytest.mark.asyncio
+    async def test_health_is_ok_when_models_and_qdrant_are_ready(self, monkeypatch):
+        from unittest.mock import MagicMock
+
+        import app
+
+        qdrant = MagicMock()
+        monkeypatch.setattr(app, "_models_ready", True)
+        monkeypatch.setattr(app, "_qdrant", qdrant)
+
+        response = await app.health()
+
+        assert response == {"status": "ok", "models": "loaded", "qdrant": "ready"}
+        qdrant.get_collections.assert_called_once_with()
+
+    @pytest.mark.asyncio
+    async def test_health_is_not_ok_when_qdrant_is_unavailable(self, monkeypatch):
+        from unittest.mock import MagicMock
+
+        import app
+
+        qdrant = MagicMock()
+        qdrant.get_collections.side_effect = ConnectionError("Connection refused")
+        monkeypatch.setattr(app, "_models_ready", True)
+        monkeypatch.setattr(app, "_qdrant", qdrant)
+
+        response = await app.health()
+
+        assert response == {
+            "status": "starting",
+            "models": "loaded",
+            "qdrant": "unavailable",
+        }
+
+    def test_temporary_qdrant_readiness_client_is_closed(self, monkeypatch):
+        from unittest.mock import MagicMock
+
+        import app
+
+        temporary_client = MagicMock()
+        monkeypatch.setattr(app, "_qdrant", None)
+        monkeypatch.setattr(
+            app, "QdrantClient", MagicMock(return_value=temporary_client)
+        )
+
+        assert app._is_qdrant_ready() is True
+        temporary_client.get_collections.assert_called_once_with()
+        temporary_client.close.assert_called_once_with()
+
+
 # ── Tests: _url_hash ──────────────────────────────────────────────
 
 

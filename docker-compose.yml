@@ -126,6 +126,9 @@ services:
       - ACTIVE_EMBED_MODEL=${ACTIVE_EMBED_MODEL:-v_bge-m3}
     volumes:
       - hf-cache:/root/.cache/huggingface
+    depends_on:
+      qdrant:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import json, urllib.request; response = urllib.request.urlopen('http://localhost:8003/health', timeout=5); assert json.load(response)['status'] == 'ok'"]
       interval: 10s
@@ -144,6 +147,20 @@ services:
       - qdrant_data:/qdrant/storage
     environment:
       - MALLOC_CONF=retain:false
+    healthcheck:
+      # The image provides bash but not curl/wget. Probe Qdrant's live readiness endpoint.
+      test:
+        - CMD
+        - bash
+        - -c
+        - >-
+          exec 3<>/dev/tcp/127.0.0.1/6333 &&
+          printf 'GET /readyz HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 &&
+          IFS= read -r status <&3 &&
+          [[ "$${status}" == *200* ]]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   agent-svc:
     build:

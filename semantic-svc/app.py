@@ -25,6 +25,7 @@ Phase 4 endpoints (this file):
 """
 
 import asyncio
+import contextlib
 import datetime
 import hashlib
 import logging
@@ -243,6 +244,23 @@ def _url_hash(url: str) -> int:
     return int(h[:16], 16)
 
 
+def _is_qdrant_ready() -> bool:
+    """Return whether Qdrant is reachable without initializing the collection."""
+    client = _qdrant
+    temporary_client = client is None
+    if temporary_client:
+        client = QdrantClient(url=QDRANT_URL, timeout=5)
+    try:
+        client.get_collections()
+    except Exception:
+        return False
+    finally:
+        if temporary_client:
+            with contextlib.suppress(Exception):
+                client.close()
+    return True
+
+
 def _named_vector_name(model_name: str) -> str:
     """Short name for a named vector (e.g., 'BAAI/bge-m3' -> 'v_bge-m3')."""
     short = model_name.split("/")[-1].lower()
@@ -338,7 +356,7 @@ async def _ensure_qdrant() -> QdrantClient:
             _qdrant_ready = True
         except Exception as e:
             logger.error("Qdrant init failed: %s", e)
-            raise HTTPException(503, "Vector index unavailable")  # noqa: B904
+            raise HTTPException(503, "Vector index unavailable")
     return _qdrant
 
 
@@ -375,9 +393,15 @@ async def metrics_middleware(request: Request, call_next):
 
 @app.get("/health")
 async def health():
+    if not _models_ready:
+        return {"status": "starting", "models": "loading"}
+
+    loop = asyncio.get_running_loop()
+    qdrant_ready = await loop.run_in_executor(None, _is_qdrant_ready)
     return {
-        "status": "ok" if _models_ready else "starting",
-        "models": "loaded" if _models_ready else "loading",
+        "status": "ok" if qdrant_ready else "starting",
+        "models": "loaded",
+        "qdrant": "ready" if qdrant_ready else "unavailable",
     }
 
 

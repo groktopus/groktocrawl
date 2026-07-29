@@ -36,6 +36,13 @@ def test_constrained_host_compose_contract():
     assert {"semantic-svc", "qdrant"}.isdisjoint(default_services)
     assert {"semantic-svc", "qdrant"}.issubset(indexing_services)
 
+    semantic_dependencies = compose["services"]["semantic-svc"]["depends_on"]
+    assert semantic_dependencies["qdrant"]["condition"] == "service_healthy"
+    qdrant_healthcheck = compose["services"]["qdrant"]["healthcheck"]["test"]
+    assert qdrant_healthcheck[:3] == ["CMD", "bash", "-c"]
+    assert "/readyz" in qdrant_healthcheck[-1]
+    assert "$${status}" in qdrant_healthcheck[-1]
+
     agent_dependencies = compose["services"]["agent-svc"].get("depends_on", {})
     assert "semantic-svc" not in agent_dependencies
 
