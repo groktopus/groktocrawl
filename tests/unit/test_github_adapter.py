@@ -72,7 +72,9 @@ async def test_raw_readme_reserves_shared_raw_budget(monkeypatch):
     assert result is None
     assert len(client.urls) == github.RAW_README_PROBE_LIMIT
     assert len(recorded) == github.RAW_README_PROBE_LIMIT
-    assert all("/main/" in url for url in client.urls)
+    assert client.urls[0].endswith("/main/README.md")
+    assert client.urls[1].endswith("/master/README.md")
+    assert all("/main/" in url for url in client.urls[2:])
 
 
 @pytest.mark.asyncio
@@ -95,13 +97,13 @@ async def test_raw_readme_finds_nonstandard_filename(monkeypatch, filename):
 
 
 @pytest.mark.asyncio
-async def test_repo_root_falls_back_when_api_readme_is_empty(monkeypatch):
-    """An empty API README must not suppress non-empty raw fallback content."""
+async def test_repo_root_falls_back_when_api_readme_decode_is_empty(monkeypatch):
+    """A nonzero-size API README with empty decoded content can fall back."""
     fetch_readme = AsyncMock(
         return_value={
             "markdown": "",
             "source": "github-readme-api",
-            "metadata": {},
+            "metadata": {"size": 1},
         }
     )
     fetch_metadata = AsyncMock(return_value={"default_branch": "main"})
@@ -126,3 +128,31 @@ async def test_repo_root_falls_back_when_api_readme_is_empty(monkeypatch):
 
     assert "raw README content" in result.markdown
     fetch_raw_readme.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_repo_root_skips_raw_fallback_for_confirmed_empty_api_readme(monkeypatch):
+    """A confirmed zero-byte API README should not burn raw CDN probes."""
+    fetch_readme = AsyncMock(
+        return_value={
+            "markdown": "",
+            "source": "github-readme-api",
+            "metadata": {"size": 0},
+        }
+    )
+    fetch_metadata = AsyncMock(return_value={"default_branch": "main"})
+    fetch_raw_readme = AsyncMock()
+    monkeypatch.setattr(github, "_fetch_readme", fetch_readme)
+    monkeypatch.setattr(github, "_fetch_repo_metadata", fetch_metadata)
+    monkeypatch.setattr(github, "_fetch_raw_readme", fetch_raw_readme)
+    monkeypatch.setattr(github._rate_tracker, "can_call", lambda endpoint: True)
+    monkeypatch.setattr(github._rate_tracker, "record_call", lambda endpoint: None)
+
+    result = await github.GitHubAdapter()._handle_repo_root(
+        "https://github.com/owner/repo",
+        {"owner": "owner", "repo": "repo"},
+        None,
+    )
+
+    assert "## README" not in result.markdown
+    fetch_raw_readme.assert_not_awaited()
