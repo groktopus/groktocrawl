@@ -584,6 +584,13 @@ async def _fetch_raw_readme(owner: str, repo: str, branches: list[str]) -> dict 
                     resp = await client.get(
                         url, headers={"User-Agent": "GroktoCrawl/0.6.0"}
                     )
+                    if resp.status_code in (403, 429):
+                        logger.warning(
+                            "GitHub adapter: raw README rate-limited for %s/%s",
+                            owner,
+                            repo,
+                        )
+                        break
                     if resp.status_code == 200 and resp.text:
                         return {
                             "markdown": resp.text,
