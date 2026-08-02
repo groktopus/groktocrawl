@@ -162,9 +162,9 @@ def html_to_markdown(html: str) -> str:
         summary_soup = BeautifulSoup(summary, "html.parser")
         for tag in summary_soup(["script", "style"]):
             tag.decompose()
-        # The summary is Readability's content fragment, so its headers and
-        # footers are article content even when the container is a plain div.
-        # Page chrome was excluded when Readability produced the fragment.
+        # The summary is Readability's selected content fragment. Keep its
+        # structural tags because headers and footers may be article metadata;
+        # page-level chrome is filtered by Readability before this conversion.
         # Clean up readability's artifacts
         markdown = md(str(summary_soup), heading_style="ATX", strip=["script", "style"])
         # Collapse multiple blank lines

@@ -192,6 +192,8 @@ README_CANDIDATES: tuple[str, ...] = (
     "README.rst",
     "README.txt",
     "README.markdown",
+    "README.adoc",
+    "README.asc",
 )
 
 # ── API endpoint constants ───────────────────────────────────────

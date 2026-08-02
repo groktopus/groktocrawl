@@ -283,6 +283,33 @@ def test_html_to_markdown_normal_article():
     assert "My Article" in result
 
 
+def test_html_to_markdown_real_readability_filters_page_chrome():
+    """The real Readability fragment keeps article metadata, not page chrome."""
+    from scraper.fetch_quality import html_to_markdown
+
+    html = """<html><head><title>Site</title></head><body>
+    <header>Site Header</header>
+    <nav><a href="/">Home</a><a href="/docs">Docs</a></nav>
+    <article>
+      <header><h1>Article Title</h1><p>By Example Author</p></header>
+      <p>This is a substantive article paragraph with enough detail to make the
+      Readability result meaningful and useful for a real extraction test.</p>
+      <p>A second paragraph adds context, examples, and supporting information
+      for the reader.</p>
+      <footer>Sources: Example Research Institute</footer>
+    </article>
+    <footer>Page Copyright</footer>
+    </body></html>"""
+
+    result = html_to_markdown(html)
+
+    assert "Article Title" in result
+    assert "By Example Author" in result
+    assert "Sources: Example Research Institute" in result
+    assert "Site Header" not in result
+    assert "Page Copyright" not in result
+
+
 def test_html_to_markdown_preserves_article_header_and_footer(monkeypatch):
     """Readability content headers and footers carry article metadata and notes."""
     from scraper.fetch_quality import html_to_markdown

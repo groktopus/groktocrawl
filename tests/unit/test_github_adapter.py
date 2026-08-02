@@ -23,7 +23,8 @@ class _RateLimitedClient:
 
 
 class _ReadmeVariantClient:
-    def __init__(self):
+    def __init__(self, filename):
+        self.filename = filename
         self.urls = []
 
     async def __aenter__(self):
@@ -34,9 +35,9 @@ class _ReadmeVariantClient:
 
     async def get(self, url, headers):
         self.urls.append(url)
-        if url.endswith("/README.rst"):
+        if url.endswith(f"/{self.filename}"):
             return SimpleNamespace(
-                status_code=200, text="README in reStructuredText", content=b"README"
+                status_code=200, text="README variant content", content=b"README"
             )
         return SimpleNamespace(status_code=404, text="", content=b"")
 
@@ -58,9 +59,10 @@ async def test_raw_readme_stops_after_rate_limit(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_raw_readme_finds_nonstandard_filename(monkeypatch):
-    """The raw fallback should recover README variants matched by the API."""
-    client = _ReadmeVariantClient()
+@pytest.mark.parametrize("filename", ["README.rst", "README.adoc"])
+async def test_raw_readme_finds_nonstandard_filename(monkeypatch, filename):
+    """The raw fallback should recover API-matched README variants."""
+    client = _ReadmeVariantClient(filename)
     monkeypatch.setattr(github.httpx, "AsyncClient", lambda **kwargs: client)
     monkeypatch.setattr(github._rate_tracker, "can_call", lambda endpoint: True)
     monkeypatch.setattr(github._rate_tracker, "record_call", lambda endpoint: None)
@@ -68,11 +70,11 @@ async def test_raw_readme_finds_nonstandard_filename(monkeypatch):
     result = await github._fetch_raw_readme("owner", "repo", ["main"])
 
     assert result == {
-        "markdown": "README in reStructuredText",
+        "markdown": "README variant content",
         "source": "github-raw-readme",
-        "metadata": {"file": "README.rst", "size": 6},
+        "metadata": {"file": filename, "size": 6},
     }
-    assert client.urls[-1].endswith("/main/README.rst")
+    assert client.urls[-1].endswith(f"/main/{filename}")
 
 
 @pytest.mark.asyncio
