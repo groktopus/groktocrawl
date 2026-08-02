@@ -434,9 +434,22 @@ def test_html_to_markdown_structural_extracts_meta_description():
     assert "Browse and discover torrent files easily" in result
 
 
-def test_html_to_markdown_structural_strips_non_content_tags():
+def test_html_to_markdown_structural_strips_non_content_tags(monkeypatch):
     """Structural fallback should strip script, style, nav, footer, header."""
     from scraper.fetch_quality import html_to_markdown
+
+    class ReadabilityDocument:
+        def __init__(self, _html):
+            pass
+
+        def summary(self):
+            # Force the structural fallback rather than relying on a particular
+            # readability-lxml scoring result for this shell page.
+            return "<div>short readability fragment</div>"
+
+    monkeypatch.setitem(
+        sys.modules, "readability", SimpleNamespace(Document=ReadabilityDocument)
+    )
 
     html = """<html><head><title>Test</title>
     <script>console.log('hidden')</script>

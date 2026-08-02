@@ -316,7 +316,7 @@ jobs:
 
       - name: Critical journey smoke
         run: |
-          docker compose exec -T agent-svc pip install pytest pytest-asyncio pytest-timeout jinja2 python-docx python-pptx openpyxl tabulate markdownify readability-lxml -q
+          docker compose exec -T agent-svc pip install pytest pytest-asyncio pytest-timeout jinja2 python-docx python-pptx openpyxl tabulate markdownify==1.2.3 readability-lxml==0.8.4.1 -q
           set +e
           docker compose exec -T agent-svc env \
             PYTHONPATH=/app/agent-svc:/app/scraper-svc:/app/llm-svc:/app/parse-svc:/app/portal-svc:/app/browser-svc:/app \
@@ -339,7 +339,7 @@ jobs:
 
       - name: Run integration tests
         run: |
-          docker compose exec -T agent-svc pip install pytest pytest-asyncio pytest-timeout jinja2 python-docx python-pptx openpyxl tabulate markdownify readability-lxml PyYAML -q
+          docker compose exec -T agent-svc pip install pytest pytest-asyncio pytest-timeout jinja2 python-docx python-pptx openpyxl tabulate markdownify==1.2.3 readability-lxml==0.8.4.1 PyYAML -q
           docker compose exec -T agent-svc env \
             PYTHONPATH=/app/agent-svc:/app/scraper-svc:/app/llm-svc:/app/parse-svc:/app/portal-svc:/app/browser-svc:/app \
             SCRAPER_BASE_URL=http://scraper-svc:8001 \
