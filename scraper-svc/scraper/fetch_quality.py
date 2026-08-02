@@ -153,13 +153,20 @@ def html_to_markdown(html: str) -> str:
     sites where the non-JS HTML shell lacks article-like structure).
     """
     try:
+        from bs4 import BeautifulSoup
         from markdownify import markdownify as md
         from readability import Document
 
         doc = Document(html)
         summary = doc.summary()
+        summary_soup = BeautifulSoup(summary, "html.parser")
+        for tag in summary_soup(["script", "style"]):
+            tag.decompose()
+        # The summary is Readability's content fragment, so its headers and
+        # footers are article content even when the container is a plain div.
+        # Page chrome was excluded when Readability produced the fragment.
         # Clean up readability's artifacts
-        markdown = md(summary, heading_style="ATX", strip=["script", "style"])
+        markdown = md(str(summary_soup), heading_style="ATX", strip=["script", "style"])
         # Collapse multiple blank lines
         markdown = re.sub(r"\n{3,}", "\n\n", markdown)
         result = markdown.strip()

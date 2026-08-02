@@ -11,6 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 CLASSIFIER = ROOT / "scripts" / "classify_ci_changes.py"
 WORKFLOW = ROOT / ".github" / "workflows" / "docker.yml"
+FAST_TESTS_WORKFLOW = ROOT / ".github" / "workflows" / "fast-tests.yml"
 SPEC = importlib.util.spec_from_file_location("classify_ci_changes", CLASSIFIER)
 assert SPEC and SPEC.loader
 MODULE = importlib.util.module_from_spec(SPEC)
@@ -191,6 +192,10 @@ class RuntimeGateWorkflowContractTests(unittest.TestCase):
             'docker cp .github/workflows/docker.yml "$svc":/app/.github/workflows/docker.yml',
             self.integration_tests,
         )
+        self.assertIn(
+            'docker cp .github/workflows/fast-tests.yml "$svc":/app/.github/workflows/fast-tests.yml',
+            self.integration_tests,
+        )
         self.assertNotIn(
             'docker cp .github/workflows/. "$svc":/app/.github/workflows/',
             self.integration_tests,
@@ -225,6 +230,30 @@ class RuntimeGateWorkflowContractTests(unittest.TestCase):
         )
         self.assertIn("needs.integration-tests.result != 'success'", self.runtime_gate)
         self.assertEqual(self.runtime_gate.count("exit 1"), 2)
+
+
+class FastTestsWorkflowContractTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.workflow = FAST_TESTS_WORKFLOW.read_text(encoding="utf-8")
+
+    def test_fast_tests_are_named_and_run_for_main_pushes_and_pull_requests(
+        self,
+    ) -> None:
+        self.assertIn("name: Fast Tests", self.workflow)
+        self.assertIn("push:\n    branches: [main]", self.workflow)
+        self.assertIn("pull_request:\n    branches: [main]", self.workflow)
+        self.assertIn('python-version: "3.12"', self.workflow)
+
+    def test_fast_tests_install_locked_declared_dependencies(self) -> None:
+        self.assertIn("uv sync --locked --no-dev --group fast-tests", self.workflow)
+        self.assertNotIn("--all-packages", self.workflow)
+
+    def test_fast_tests_target_only_unit_and_service_suites_without_docker(
+        self,
+    ) -> None:
+        self.assertIn("pytest tests/unit/ tests/service/", self.workflow)
+        self.assertNotIn("tests/integration", self.workflow)
+        self.assertNotIn("docker", self.workflow.lower())
 
 
 if __name__ == "__main__":

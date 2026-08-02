@@ -35,6 +35,11 @@ Open a GitHub issue with:
 ### Running Tests
 
 ```bash
+# Fast Docker-free unit and service tests (Python 3.12 with uv):
+uv sync --locked --no-dev --group fast-tests
+PYTHONPATH=agent-svc:scraper-svc:llm-svc:parse-svc:portal-svc:browser-svc:semantic-svc:. \
+  uv run --no-sync pytest tests/unit/ tests/service/
+
 # From the repo root (fixture services provide an LLM and test sites):
 cp .env.sample .env
 docker compose --profile fixture up --build -d
@@ -44,6 +49,9 @@ docker compose exec -T agent-svc python3 -m pytest /app/tests/integration/ /app/
 python3 scripts/check-cli-coverage.py
 python3 scripts/check-docs-surface.py
 ```
+
+The fast test suite is Docker-free and covers only `tests/unit/` and `tests/service/`.
+The Docker command above remains the integration-test path.
 
 All tests must pass before a PR is merged.
 

@@ -24,6 +24,8 @@ Phase 4 endpoints (this file):
 |- GET /metrics — Prometheus-compatible OpenMetrics endpoint (stdlib, no deps)
 """
 
+from __future__ import annotations
+
 import asyncio
 import contextlib
 import datetime
@@ -32,6 +34,7 @@ import logging
 import os
 import time
 from contextlib import asynccontextmanager
+from typing import TYPE_CHECKING
 
 import numpy as np
 from auth import verify_api_key
@@ -45,13 +48,22 @@ from models import (
     RerankResult,
 )
 from qdrant_client import QdrantClient, models
-from sentence_transformers import CrossEncoder, SentenceTransformer
+
+if TYPE_CHECKING:
+    from sentence_transformers import CrossEncoder, SentenceTransformer
 
 from common.logging import setup_logging
 from common.middleware import add_request_id_middleware
 
 setup_logging()
 logger = logging.getLogger(__name__)
+
+
+def _load_sentence_transformers():
+    """Import model classes only when semantic inference is used."""
+    from sentence_transformers import CrossEncoder, SentenceTransformer
+
+    return CrossEncoder, SentenceTransformer
 
 
 # ── TaskTracker (copied from agent-svc; avoids cross-service import) ──
@@ -108,11 +120,12 @@ async def lifespan(app: FastAPI):
     logger.info("Loading semantic models (~2.2GB, 2-5s)...")
     loop = asyncio.get_event_loop()
     try:
+        cross_encoder_cls, sentence_transformer_cls = _load_sentence_transformers()
         _embed_model = await loop.run_in_executor(
-            None, lambda: SentenceTransformer(EMBED_MODEL_NAME)
+            None, lambda: sentence_transformer_cls(EMBED_MODEL_NAME)
         )
         _rerank_model = await loop.run_in_executor(
-            None, lambda: CrossEncoder(RERANK_MODEL_NAME)
+            None, lambda: cross_encoder_cls(RERANK_MODEL_NAME)
         )
         _models_ready = True
         logger.info("Models loaded — semantic-svc ready")
@@ -213,9 +226,10 @@ async def _get_target_embed_model(target_name: str) -> SentenceTransformer:
     """
     global _target_embed_model, _target_embed_model_name
     if _target_embed_model is None or _target_embed_model_name != target_name:
+        _, sentence_transformer_cls = _load_sentence_transformers()
         loop = asyncio.get_event_loop()
         _target_embed_model = await loop.run_in_executor(
-            None, lambda: SentenceTransformer(target_name)
+            None, lambda: sentence_transformer_cls(target_name)
         )
         _target_embed_model_name = target_name
     return _target_embed_model

@@ -529,7 +529,7 @@ async def _fetch_readme(owner: str, repo: str) -> dict | None:
             resp = await client.get(url, headers=headers)
             if resp.status_code == 404:
                 logger.debug("No README for %s/%s", owner, repo)
-                return None
+                return {"_not_found": True}
             if resp.status_code != 200:
                 logger.debug(
                     "Readme API returned %d for %s/%s", resp.status_code, owner, repo
@@ -564,6 +564,38 @@ async def _fetch_readme(owner: str, repo: str) -> dict | None:
             }
     except Exception as exc:
         logger.debug("Readme API failed for %s/%s: %s", owner, repo, exc)
+    return None
+
+
+async def _fetch_raw_readme(owner: str, repo: str, branches: list[str]) -> dict | None:
+    """Fetch README markdown from the raw content CDN without API quota."""
+    try:
+        async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
+            for branch in dict.fromkeys(branches):
+                if not _rate_tracker.can_call("raw"):
+                    logger.warning("GitHub adapter: raw endpoint burst limit reached")
+                    break
+                _rate_tracker.record_call("raw")
+                url = f"{RAW_BASE}/{owner}/{repo}/{branch}/README.md"
+                try:
+                    resp = await client.get(
+                        url, headers={"User-Agent": "GroktoCrawl/0.6.0"}
+                    )
+                    if resp.status_code == 200 and resp.text:
+                        return {
+                            "markdown": resp.text,
+                            "source": "github-raw-readme",
+                            "metadata": {
+                                "file": "README.md",
+                                "size": len(resp.content),
+                            },
+                        }
+                except Exception as exc:
+                    logger.debug(
+                        "Raw README fetch failed for %s/%s: %s", owner, repo, exc
+                    )
+    except Exception as exc:
+        logger.debug("Raw README client failed for %s/%s: %s", owner, repo, exc)
     return None
 
 
@@ -884,7 +916,10 @@ class GitHubAdapter(SiteAdapter):
         # Build markdown
         md_parts = []
         readme_md = ""
-        if readme:
+        readme_not_found = bool(readme and readme.get("_not_found"))
+        if readme_not_found:
+            readme = None
+        elif readme:
             readme_md = readme.get("markdown", "")
 
         if repo_meta:
@@ -917,6 +952,15 @@ class GitHubAdapter(SiteAdapter):
         else:
             md_parts.append(f"# {owner}/{repo}")
             md_parts.append("")
+
+        if not readme and not readme_not_found:
+            default_branch = repo_meta.get("default_branch", "") if repo_meta else ""
+            branches = [
+                branch for branch in [default_branch, "main", "master"] if branch
+            ]
+            readme = await _fetch_raw_readme(owner, repo, branches)
+            if readme:
+                readme_md = readme.get("markdown", "")
 
         if readme_md:
             md_parts.append("---")

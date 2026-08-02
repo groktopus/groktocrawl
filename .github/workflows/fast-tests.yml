@@ -1,0 +1,25 @@
+# Unit and service test lane.
+name: Fast Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  fast-tests:
+    name: Fast Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v7
+      - name: Install declared test dependencies
+        run: uv sync --locked --no-dev --group fast-tests
+      - name: Run unit and service tests
+        run: >-
+          PYTHONPATH=agent-svc:scraper-svc:llm-svc:parse-svc:portal-svc:browser-svc:semantic-svc:.
+          uv run --no-sync pytest tests/unit/ tests/service/
