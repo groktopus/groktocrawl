@@ -375,6 +375,13 @@ class TestValidateOutboundWebhookUrl:
         with pytest.raises(WebhookDestinationValidationError):
             validate_outbound_webhook_url(f"http://{'a' * 64}.example.com/hook")
 
+    def test_overlong_hostname_label_is_permanent_rejection(self):
+        from common.url import WebhookDestinationValidationError
+
+        with pytest.raises(WebhookDestinationValidationError) as exc_info:
+            validate_outbound_webhook_url(f"http://{'a' * 64}.example.com/hook")
+        assert type(exc_info.value) is WebhookDestinationValidationError
+
     def test_unexpected_errors_become_permanent_rejection(self, monkeypatch):
         """The public wrapper converts any unexpected error to a rejection."""
         from common.url import (
