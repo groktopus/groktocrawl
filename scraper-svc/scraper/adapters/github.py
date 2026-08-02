@@ -601,12 +601,12 @@ async def _fetch_raw_readme(owner: str, repo: str, branches: list[str]) -> dict 
     if not unique_branches:
         return None
 
-    # Product order distributes common filename variants across branches while
-    # keeping the plan deterministic and bounded by the shared probe budget.
+    # Probe every filename on a branch before moving to the next branch so the
+    # primary branch gets complete candidate coverage within the bounded plan.
     probe_plan = [
         (branch, filename)
-        for filename in README_CANDIDATES
         for branch in unique_branches
+        for filename in README_CANDIDATES
     ][:RAW_README_PROBE_LIMIT]
 
     try:
@@ -1025,18 +1025,18 @@ class GitHubAdapter(SiteAdapter):
             md_parts.append(f"# {owner}/{repo}")
             md_parts.append("")
 
-        non_standard_default = bool(default_branch) and default_branch not in (
-            "main",
-            "master",
-        )
-        if (
-            not readme_md
-            and not readme_confirmed_empty
-            and (not readme_not_found or non_standard_default)
-        ):
-            branches = [
-                branch for branch in [default_branch, "main", "master"] if branch
-            ]
+        if not readme_md and not readme_confirmed_empty:
+            if readme_not_found:
+                if default_branch == "main":
+                    branches = ["master"]
+                elif default_branch == "master":
+                    branches = ["main"]
+                else:
+                    branches = ["main", "master"]
+            else:
+                branches = [
+                    branch for branch in [default_branch, "main", "master"] if branch
+                ]
             readme = await _fetch_raw_readme(owner, repo, branches)
             if readme:
                 readme_md = readme.get("markdown", "")

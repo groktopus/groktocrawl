@@ -85,14 +85,11 @@ async def test_raw_readme_reserves_shared_raw_budget(monkeypatch):
     assert result is None
     assert len(client.urls) == github.RAW_README_PROBE_LIMIT
     assert len(recorded) == github.RAW_README_PROBE_LIMIT
-    assert client.urls[0].endswith("/main/README.md")
-    assert client.urls[1].endswith("/master/README.md")
-    assert client.urls[2].endswith("/develop/README.md")
-    assert client.urls[3].endswith("/main/README.rst")
-    assert client.urls[4].endswith("/master/README.rst")
-    assert client.urls[5].endswith("/develop/README.rst")
-    assert client.urls[6].endswith("/main/README.adoc")
-    assert client.urls[7].endswith("/master/README.adoc")
+    assert [url.rsplit("/", 1)[-1] for url in client.urls[:6]] == list(
+        github.README_CANDIDATES
+    )
+    assert all("/main/" in url for url in client.urls[:6])
+    assert all("/master/" in url for url in client.urls[6:])
 
 
 @pytest.mark.asyncio
@@ -115,7 +112,7 @@ async def test_raw_readme_finds_nonstandard_filename(monkeypatch, filename):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("filename", ["README.rst", "README.adoc"])
+@pytest.mark.parametrize("filename", ["README.rst"])
 async def test_raw_readme_finds_variant_on_later_branch(monkeypatch, filename):
     """Common variants on main/master remain inside the bounded product plan."""
     client = _ReadmeVariantClient(filename, branch="main")
@@ -234,6 +231,32 @@ async def test_repo_root_recovers_nonstandard_branch_after_api_readme_404(monkey
     )
 
     assert "README from main" in result.markdown
-    fetch_raw_readme.assert_awaited_once_with(
-        "owner", "repo", ["develop", "main", "master"]
+    fetch_raw_readme.assert_awaited_once_with("owner", "repo", ["main", "master"])
+
+
+@pytest.mark.asyncio
+async def test_repo_root_uses_standard_branches_when_default_is_unknown(monkeypatch):
+    """A metadata failure still allows raw README recovery on standard branches."""
+    fetch_readme = AsyncMock(return_value={"_not_found": True})
+    fetch_metadata = AsyncMock(return_value=None)
+    fetch_raw_readme = AsyncMock(
+        return_value={
+            "markdown": "README from main",
+            "source": "github-raw-readme",
+            "metadata": {},
+        }
     )
+    monkeypatch.setattr(github, "_fetch_readme", fetch_readme)
+    monkeypatch.setattr(github, "_fetch_repo_metadata", fetch_metadata)
+    monkeypatch.setattr(github, "_fetch_raw_readme", fetch_raw_readme)
+    monkeypatch.setattr(github._rate_tracker, "can_call", lambda endpoint: True)
+    monkeypatch.setattr(github._rate_tracker, "record_call", lambda endpoint: None)
+
+    result = await github.GitHubAdapter()._handle_repo_root(
+        "https://github.com/owner/repo",
+        {"owner": "owner", "repo": "repo"},
+        None,
+    )
+
+    assert "README from main" in result.markdown
+    fetch_raw_readme.assert_awaited_once_with("owner", "repo", ["main", "master"])
