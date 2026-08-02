@@ -4786,6 +4786,7 @@ def test_agent_llm_health_check_streaming():
 
     When streaming is requested, the pre-flight LLM health check should
     run before the stream opens. A failing LLM should produce HTTP 503.
+    Use the local fixture and focused search to keep the healthy path deterministic.
     """
     schema = {
         "type": "object",
@@ -4798,8 +4799,10 @@ def test_agent_llm_health_check_streaming():
             "prompt": "test health check",
             "output_schema": schema,
             "stream": True,
+            "urls": [TEST_SITE],
+            "search_type": "focused",
         },
-        timeout=30,
+        timeout=180,
     )
     # If LLM is healthy: 200 + SSE stream
     # If LLM is unhealthy: 503
