@@ -67,14 +67,17 @@ async def test_raw_readme_reserves_shared_raw_budget(monkeypatch):
     monkeypatch.setattr(github._rate_tracker, "can_call", lambda endpoint: True)
     monkeypatch.setattr(github._rate_tracker, "record_call", recorded.append)
 
-    result = await github._fetch_raw_readme("owner", "repo", ["main", "master"])
+    result = await github._fetch_raw_readme(
+        "owner", "repo", ["main", "master", "develop"]
+    )
 
     assert result is None
     assert len(client.urls) == github.RAW_README_PROBE_LIMIT
     assert len(recorded) == github.RAW_README_PROBE_LIMIT
     assert client.urls[0].endswith("/main/README.md")
     assert client.urls[1].endswith("/master/README.md")
-    assert all("/main/" in url for url in client.urls[2:])
+    assert client.urls[2].endswith("/develop/README.md")
+    assert all("/main/" in url for url in client.urls[3:])
 
 
 @pytest.mark.asyncio

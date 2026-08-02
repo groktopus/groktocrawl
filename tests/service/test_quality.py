@@ -308,6 +308,8 @@ def test_html_to_markdown_real_readability_filters_page_chrome():
     assert "Sources: Example Research Institute" in result
     assert "Site Header" not in result
     assert "Page Copyright" not in result
+    assert "[Home](/)" not in result
+    assert "[Docs](/docs)" not in result
 
 
 def test_html_to_markdown_preserves_article_header_and_footer(monkeypatch):

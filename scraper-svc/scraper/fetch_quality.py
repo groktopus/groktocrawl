@@ -162,9 +162,15 @@ def html_to_markdown(html: str) -> str:
         summary_soup = BeautifulSoup(summary, "html.parser")
         for tag in summary_soup(["script", "style"]):
             tag.decompose()
+        # Readability can retain site-level navigation in its fragment. Remove
+        # nav elements outside article/main content while preserving in-article
+        # tables of contents and other structural navigation.
+        for tag in summary_soup.find_all("nav"):
+            if not tag.find_parent(["article", "main"]):
+                tag.decompose()
         # The summary is Readability's selected content fragment. Keep its
         # structural tags because headers and footers may be article metadata;
-        # page-level chrome is filtered by Readability before this conversion.
+        # page-level chrome is filtered above before markdown conversion.
         # Clean up readability's artifacts
         markdown = md(str(summary_soup), heading_style="ATX", strip=["script", "style"])
         # Collapse multiple blank lines

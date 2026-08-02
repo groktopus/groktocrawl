@@ -194,7 +194,9 @@ README_CANDIDATES: tuple[str, ...] = (
     "Readme.md",
     "readme.md",
 )
-RAW_README_PROBE_LIMIT = len(README_CANDIDATES)
+RAW_ENDPOINT_BURST_LIMIT = 10
+RAW_README_RESERVED_CALLS = 2
+RAW_README_PROBE_LIMIT = RAW_ENDPOINT_BURST_LIMIT - RAW_README_RESERVED_CALLS
 
 # ── API endpoint constants ───────────────────────────────────────
 API_BASE = "https://api.github.com"
@@ -254,7 +256,7 @@ class _RateLimitTracker:
         self._endpoints: dict[str, list[float]] = {}
         # Default burst limits per endpoint type
         self._burst_limits: dict[str, int] = {
-            "raw": 10,  # raw.githubusercontent.com — generous
+            "raw": RAW_ENDPOINT_BURST_LIMIT,  # raw.githubusercontent.com — generous
             "contents": 5,  # /repos/*/contents endpoint
             "repo": 5,  # /repos/* endpoint
             "readme": 5,  # /repos/*/readme endpoint
@@ -590,9 +592,9 @@ async def _fetch_raw_readme(owner: str, repo: str, branches: list[str]) -> dict 
     """Fetch README markdown from the raw content CDN without API quota.
 
     The raw CDN is case-sensitive, unlike GitHub's Readme API, so common
-    README filename variants are tried within a six-probe per-scrape budget.
-    The cap reserves the remaining raw burst budget for ordinary file/blob
-    fallback work in the same process.
+    README filename variants are tried within an eight-probe per-scrape budget.
+    The cap reserves two raw calls for ordinary file/blob fallback work in the
+    same process, including when earlier raw calls already consumed capacity.
     """
     probes = 0
     unique_branches = list(dict.fromkeys(branches))
@@ -614,6 +616,14 @@ async def _fetch_raw_readme(owner: str, repo: str, branches: list[str]) -> dict 
                         "GitHub adapter: README probe budget exhausted for %s/%s",
                         owner,
                         repo,
+                    )
+                    return None
+                if (
+                    _rate_tracker.remaining_budget.get("raw", 0)
+                    <= RAW_README_RESERVED_CALLS
+                ):
+                    logger.debug(
+                        "GitHub adapter: preserving raw budget for file/blob fallback"
                     )
                     return None
                 if not _rate_tracker.can_call("raw"):
