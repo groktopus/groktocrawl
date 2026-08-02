@@ -1036,7 +1036,7 @@ class GitHubAdapter(SiteAdapter):
             elif readme_not_found:
                 branches = ["main", "master"]
             elif default_branch:
-                branches = [default_branch]
+                branches = list(dict.fromkeys([default_branch, "main", "master"]))
             else:
                 branches = ["main", "master"]
             if branches:
