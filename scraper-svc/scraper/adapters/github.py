@@ -36,6 +36,7 @@ fallback chains. Never fail-fast.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import re
@@ -188,15 +189,17 @@ TEXT_FILENAMES: set[str] = {
 # primary Readme API when it is available.
 README_CANDIDATES: tuple[str, ...] = (
     "README.md",
+    "README.rst",
     "README.adoc",
     "README.asc",
-    "README.rst",
     "Readme.md",
     "readme.md",
 )
 RAW_ENDPOINT_BURST_LIMIT = 10
 RAW_README_RESERVED_CALLS = 2
 RAW_README_PROBE_LIMIT = RAW_ENDPOINT_BURST_LIMIT - RAW_README_RESERVED_CALLS
+RAW_README_REQUEST_TIMEOUT_SECONDS = 5.0
+RAW_README_DEADLINE_SECONDS = 20.0
 
 # ── API endpoint constants ───────────────────────────────────────
 API_BASE = "https://api.github.com"
@@ -224,20 +227,17 @@ _TREE_URL_PATTERN = re.compile(
 
 # github.com repo root (no blob/tree/issue/pull suffix)
 _REPO_URL_PATTERN = re.compile(
-    r"^https?://(?:www\.)?github\.com/"
-    r"(?P<owner>[^/]+)/(?P<repo>[^/]+)$"
+    r"^https?://(?:www\.)?github\.com/" r"(?P<owner>[^/]+)/(?P<repo>[^/]+)$"
 )
 
 # github.com issue URLs — matched but NOT handled (falls through)
 _ISSUE_URL_PATTERN = re.compile(
-    r"^https?://(?:www\.)?github\.com/"
-    r"(?P<owner>[^/]+)/(?P<repo>[^/]+)/issues/\d+"
+    r"^https?://(?:www\.)?github\.com/" r"(?P<owner>[^/]+)/(?P<repo>[^/]+)/issues/\d+"
 )
 
 # github.com PR URLs — matched but NOT handled (falls through)
 _PULL_URL_PATTERN = re.compile(
-    r"^https?://(?:www\.)?github\.com/"
-    r"(?P<owner>[^/]+)/(?P<repo>[^/]+)/pull/\d+"
+    r"^https?://(?:www\.)?github\.com/" r"(?P<owner>[^/]+)/(?P<repo>[^/]+)/pull/\d+"
 )
 
 
@@ -601,61 +601,62 @@ async def _fetch_raw_readme(owner: str, repo: str, branches: list[str]) -> dict 
     if not unique_branches:
         return None
 
-    # Spend one standard-name probe on every branch before using the remaining
-    # budget for filename variants on the default/first branch.
-    probe_plan = [(branch, README_CANDIDATES[0]) for branch in unique_branches]
-    probe_plan.extend(
-        (unique_branches[0], filename) for filename in README_CANDIDATES[1:]
-    )
+    # Product order distributes common filename variants across branches while
+    # keeping the plan deterministic and bounded by the shared probe budget.
+    probe_plan = [
+        (branch, filename)
+        for filename in README_CANDIDATES
+        for branch in unique_branches
+    ][:RAW_README_PROBE_LIMIT]
 
     try:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
-            for branch, filename in probe_plan:
-                if probes >= RAW_README_PROBE_LIMIT:
-                    logger.debug(
-                        "GitHub adapter: README probe budget exhausted for %s/%s",
-                        owner,
-                        repo,
-                    )
-                    return None
-                if (
-                    _rate_tracker.remaining_budget.get("raw", 0)
-                    <= RAW_README_RESERVED_CALLS
-                ):
-                    logger.debug(
-                        "GitHub adapter: preserving raw budget for file/blob fallback"
-                    )
-                    return None
-                if not _rate_tracker.can_call("raw"):
-                    logger.warning("GitHub adapter: raw endpoint burst limit reached")
-                    return None
-                _rate_tracker.record_call("raw")
-                probes += 1
-                url = f"{RAW_BASE}/{owner}/{repo}/{branch}/{filename}"
-                try:
-                    resp = await client.get(
-                        url, headers={"User-Agent": "GroktoCrawl/0.6.0"}
-                    )
-                    if resp.status_code in (403, 429):
-                        logger.warning(
-                            "GitHub adapter: raw README rate-limited for %s/%s",
+        async with asyncio.timeout(RAW_README_DEADLINE_SECONDS):
+            async with httpx.AsyncClient(
+                follow_redirects=True, timeout=RAW_README_REQUEST_TIMEOUT_SECONDS
+            ) as client:
+                for branch, filename in probe_plan:
+                    if probes >= RAW_README_PROBE_LIMIT:
+                        logger.debug(
+                            "GitHub adapter: README probe budget exhausted for %s/%s",
                             owner,
                             repo,
                         )
                         return None
-                    if resp.status_code == 200 and resp.text:
-                        return {
-                            "markdown": resp.text,
-                            "source": "github-raw-readme",
-                            "metadata": {
-                                "file": filename,
-                                "size": len(resp.content),
-                            },
-                        }
-                except Exception as exc:
-                    logger.debug(
-                        "Raw README fetch failed for %s/%s: %s", owner, repo, exc
-                    )
+                    if (
+                        _rate_tracker.remaining_budget.get("raw", 0)
+                        <= RAW_README_RESERVED_CALLS
+                    ):
+                        logger.debug(
+                            "GitHub adapter: preserving raw budget for file/blob fallback"
+                        )
+                        return None
+                    _rate_tracker.record_call("raw")
+                    probes += 1
+                    url = f"{RAW_BASE}/{owner}/{repo}/{branch}/{filename}"
+                    try:
+                        resp = await client.get(
+                            url, headers={"User-Agent": "GroktoCrawl/0.6.0"}
+                        )
+                        if resp.status_code in (403, 429):
+                            logger.warning(
+                                "GitHub adapter: raw README rate-limited for %s/%s",
+                                owner,
+                                repo,
+                            )
+                            return None
+                        if resp.status_code == 200 and resp.text:
+                            return {
+                                "markdown": resp.text,
+                                "source": "github-raw-readme",
+                                "metadata": {
+                                    "file": filename,
+                                    "size": len(resp.content),
+                                },
+                            }
+                    except Exception as exc:
+                        logger.debug(
+                            "Raw README fetch failed for %s/%s: %s", owner, repo, exc
+                        )
     except Exception as exc:
         logger.debug("Raw README client failed for %s/%s: %s", owner, repo, exc)
     return None
