@@ -1,6 +1,7 @@
 """Regression tests for the GitHub adapter's fallback boundaries."""
 
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 import pytest
 from scraper.adapters import github
@@ -35,3 +36,37 @@ async def test_raw_readme_stops_after_rate_limit(monkeypatch):
     assert client.urls == [
         "https://raw.githubusercontent.com/owner/repo/main/README.md"
     ]
+
+
+@pytest.mark.asyncio
+async def test_repo_root_falls_back_when_api_readme_is_empty(monkeypatch):
+    """An empty API README must not suppress non-empty raw fallback content."""
+    fetch_readme = AsyncMock(
+        return_value={
+            "markdown": "",
+            "source": "github-readme-api",
+            "metadata": {},
+        }
+    )
+    fetch_metadata = AsyncMock(return_value={"default_branch": "main"})
+    fetch_raw_readme = AsyncMock(
+        return_value={
+            "markdown": "raw README content",
+            "source": "github-raw-readme",
+            "metadata": {},
+        }
+    )
+    monkeypatch.setattr(github, "_fetch_readme", fetch_readme)
+    monkeypatch.setattr(github, "_fetch_repo_metadata", fetch_metadata)
+    monkeypatch.setattr(github, "_fetch_raw_readme", fetch_raw_readme)
+    monkeypatch.setattr(github._rate_tracker, "can_call", lambda endpoint: True)
+    monkeypatch.setattr(github._rate_tracker, "record_call", lambda endpoint: None)
+
+    result = await github.GitHubAdapter()._handle_repo_root(
+        "https://github.com/owner/repo",
+        {"owner": "owner", "repo": "repo"},
+        None,
+    )
+
+    assert "raw README content" in result.markdown
+    fetch_raw_readme.assert_awaited_once()

@@ -965,7 +965,7 @@ class GitHubAdapter(SiteAdapter):
             md_parts.append(f"# {owner}/{repo}")
             md_parts.append("")
 
-        if not readme and not readme_not_found:
+        if not readme_md and not readme_not_found:
             default_branch = repo_meta.get("default_branch", "") if repo_meta else ""
             branches = [
                 branch for branch in [default_branch, "main", "master"] if branch
