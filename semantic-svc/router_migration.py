@@ -23,7 +23,6 @@ from app import (
 from fastapi import APIRouter, HTTPException
 from models import MigrationStartRequest, MigrationStatusResponse
 from qdrant_client import models
-from sentence_transformers import SentenceTransformer
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +37,8 @@ async def _run_backfill(qdrant, target_name: str, target_dim: int):
 
     This runs as an asyncio task and updates _migration state as it progresses.
     """
+    from sentence_transformers import SentenceTransformer
+
     logger.info(
         "Migration backfill started: %s (%d) -> %s (%d)",
         EMBED_MODEL_NAME,
@@ -71,14 +72,10 @@ async def _run_backfill(qdrant, target_name: str, target_dim: int):
                 break
 
             nv_name = _named_vector_name(target_name)
-            now = _now_iso()
 
             for point in page:
                 if point.payload is None:
                     continue
-                content = (
-                    point.payload.get("title", "") + " " + point.payload.get("url", "")
-                )
                 # If we had original content stored, we'd use that. For backfill,
                 # we embed from URL+title as a stopgap. Full re-indexing would
                 # re-scrape the source.

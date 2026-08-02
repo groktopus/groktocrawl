@@ -519,7 +519,10 @@ async def _fetch_via_contents_api(
 async def _fetch_readme(owner: str, repo: str) -> dict | None:
     """Fetch the repo README via the GitHub Readme API.
 
-    Returns {markdown, source, metadata} or None on failure.
+    Returns ``{markdown, source, metadata}`` on success, ``None`` on a
+    non-404 failure, or the ``{"_not_found": True}`` sentinel when GitHub
+    confirms that the repository has no README. The caller must preserve
+    this sentinel to prevent a raw README fallback for a known-empty README.
     """
     url = f"{API_BASE}/repos/{owner}/{repo}/readme"
     headers = _api_headers()
@@ -916,6 +919,8 @@ class GitHubAdapter(SiteAdapter):
         # Build markdown
         md_parts = []
         readme_md = ""
+        # Preserve the explicit 404 sentinel: a confirmed missing README must
+        # not trigger the raw CDN fallback, which could otherwise be ambiguous.
         readme_not_found = bool(readme and readme.get("_not_found"))
         if readme_not_found:
             readme = None
