@@ -18,6 +18,8 @@ import time
 import httpx
 import pytest
 
+from tests.outcome_governance import governed_skip
+
 SEMANTIC = os.getenv("SEMANTIC_BASE_URL", "http://localhost:8003")
 
 
@@ -50,9 +52,21 @@ def skip_if_not_running():
     try:
         r = httpx.get(f"{SEMANTIC}/health", timeout=5)
         if r.status_code != 200:
-            pytest.skip(f"semantic-svc not ready: {r.status_code}")
+            governed_skip(
+                f"semantic-svc not ready: {r.status_code}",
+                owner="repository-maintainer",
+                issue="#502",
+                classification="retained",
+                environment="semantic-svc health endpoint is not ready",
+            )
     except Exception as e:
-        pytest.skip(f"semantic-svc not reachable: {e}")
+        governed_skip(
+            f"semantic-svc not reachable: {e}",
+            owner="repository-maintainer",
+            issue="#502",
+            classification="retained",
+            environment="semantic-svc health endpoint is unreachable",
+        )
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -603,6 +617,10 @@ class TestMigration:
     os.getenv("VECTOR_INDEX_MAX_DOCS") is None,
     reason="Set VECTOR_INDEX_MAX_DOCS=5 and restart semantic-svc to test eviction. "
     "Run: VECTOR_INDEX_MAX_DOCS=5 docker compose up -d semantic-svc",
+    owner="repository-maintainer",
+    issue="#502",
+    classification="retained",
+    environment="VECTOR_INDEX_MAX_DOCS is unset",
 )
 class TestEviction:
     """Eviction when index exceeds capacity."""

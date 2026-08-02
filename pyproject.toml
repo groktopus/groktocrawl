@@ -109,7 +109,8 @@ asyncio_mode = "auto"
 markers = [
     "external: requires network access or a deployed external service",
 ]
-addopts = "-m 'not external' --cov=agent-svc/agent --cov=scraper-svc/scraper --cov=browser-svc/browser_svc --cov=parse-svc/parse_svc --cov=portal-svc/portal --cov=semantic-svc --cov-report=term-missing --cov-fail-under=20 --durations=10 -n auto"
+addopts = "-m 'not external' --strict-markers --strict-config --cov=agent-svc/agent --cov=scraper-svc/scraper --cov=browser-svc/browser_svc --cov=parse-svc/parse_svc --cov=portal-svc/portal --cov=semantic-svc --cov-report=term-missing --cov-fail-under=20 --durations=10 -n auto"
+xfail_strict = true
 
 [tool.mypy]
 ignore_missing_imports = true

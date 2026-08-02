@@ -1684,7 +1684,13 @@ class TestCrawlRequestValidation:
 class TestJobStoreExpiresAt:
     """Tests for JobStore expires_at field."""
 
-    @pytest.mark.skip(reason="Requires running valkey/redis server")
+    @pytest.mark.skip(
+        reason="Requires running valkey/redis server",
+        owner="repository-maintainer",
+        issue="#502",
+        classification="retained",
+        environment="valkey/redis is not running",
+    )
     def test_create_job_includes_expires_at(self):
         """JobStore.create_job sets expires_at in job metadata."""
         from agent.store import JobStore
@@ -1713,7 +1719,13 @@ class TestJobStoreExpiresAt:
         finally:
             store.redis.delete(f"job:{job_id}:meta")
 
-    @pytest.mark.skip(reason="Requires running valkey/redis server")
+    @pytest.mark.skip(
+        reason="Requires running valkey/redis server",
+        owner="repository-maintainer",
+        issue="#502",
+        classification="retained",
+        environment="valkey/redis is not running",
+    )
     def test_complete_job_sets_completed_at(self):
         """JobStore.complete_job sets completed_at in metadata."""
         from agent.store import JobStore

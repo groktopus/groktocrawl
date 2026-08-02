@@ -6,6 +6,8 @@ import time
 import httpx
 import pytest
 
+from tests.outcome_governance import governed_skip
+
 logger = logging.getLogger(__name__)
 
 AGENT = os.getenv("AGENT_BASE_URL", "http://localhost:8080")
@@ -35,6 +37,10 @@ def _docker_available() -> bool:
 require_docker = pytest.mark.skipif(
     not _docker_available(),
     reason="Docker stack not running — start with `docker compose up --build -d`",
+    owner="repository-maintainer",
+    issue="#502",
+    classification="retained",
+    environment="Docker stack is not running",
 )
 
 
@@ -136,7 +142,12 @@ def test_metrics_endpoint_returns_openmetrics():
 
 
 @pytest.mark.xfail(
-    strict=False, reason="scraper cannot extract from minimal HTML test pages"
+    strict=True,
+    reason="scraper cannot extract from minimal HTML test pages",
+    owner="repository-maintainer",
+    issue="#502",
+    classification="quarantined",
+    environment="minimal HTML fixture is not extractable",
 )
 def test_scraper_uses_llms_txt():
     r = httpx.post(
@@ -153,7 +164,12 @@ def test_scraper_uses_llms_txt():
 
 
 @pytest.mark.xfail(
-    strict=False, reason="scraper cannot extract from minimal HTML test pages"
+    strict=True,
+    reason="scraper cannot extract from minimal HTML test pages",
+    owner="repository-maintainer",
+    issue="#502",
+    classification="quarantined",
+    environment="minimal HTML fixture is not extractable",
 )
 def test_scraper_uses_accept_markdown():
     # Disable llms.txt by targeting a page that doesn't match the llms.txt listing.
@@ -532,7 +548,13 @@ def test_agent_streaming_with_output_schema_no_token_events():
     # Pre-flight LLM health check may return 503 if LLM backend is unavailable.
     # This is a pre-existing infrastructure concern, not related to output_schema.
     if r.status_code == 503:
-        pytest.skip("LLM backend unavailable — pre-existing infrastructure issue")
+        governed_skip(
+            "LLM backend unavailable — pre-existing infrastructure issue",
+            owner="repository-maintainer",
+            issue="#502",
+            classification="retained",
+            environment="LLM backend returned HTTP 503",
+        )
     assert r.status_code == 200
     assert r.headers.get("content-type", "").startswith("text/event-stream")
     body = r.text
@@ -808,7 +830,12 @@ def test_shodan_adapter_public_host():
 
 
 @pytest.mark.xfail(
-    strict=False, reason="Requires reaching third-party sites from CI runner"
+    strict=True,
+    reason="Requires reaching third-party sites from CI runner",
+    owner="repository-maintainer",
+    issue="#502",
+    classification="quarantined",
+    environment="CI runner cannot reliably reach third-party sites",
 )
 def test_shodan_adapter_source():
     """Shodan adapter source should be shodan-html (no API key in CI)."""
@@ -820,7 +847,12 @@ def test_shodan_adapter_source():
 
 
 @pytest.mark.xfail(
-    strict=False, reason="Requires reaching third-party sites from CI runner"
+    strict=True,
+    reason="Requires reaching third-party sites from CI runner",
+    owner="repository-maintainer",
+    issue="#502",
+    classification="quarantined",
+    environment="CI runner cannot reliably reach third-party sites",
 )
 def test_crtsh_adapter_domain():
     """CRT.sh domain lookup should return certificate data."""
@@ -842,7 +874,12 @@ def test_exploitdb_adapter_exploit():
 
 
 @pytest.mark.xfail(
-    strict=False, reason="Requires reaching third-party sites from CI runner"
+    strict=True,
+    reason="Requires reaching third-party sites from CI runner",
+    owner="repository-maintainer",
+    issue="#502",
+    classification="quarantined",
+    environment="CI runner cannot reliably reach third-party sites",
 )
 def test_mitreattack_adapter_technique():
     """MITRE ATT&CK technique page should return content via STIX adapter."""
@@ -855,7 +892,12 @@ def test_mitreattack_adapter_technique():
 
 
 @pytest.mark.xfail(
-    strict=False, reason="Requires reaching third-party sites from CI runner"
+    strict=True,
+    reason="Requires reaching third-party sites from CI runner",
+    owner="repository-maintainer",
+    issue="#502",
+    classification="quarantined",
+    environment="CI runner cannot reliably reach third-party sites",
 )
 def test_abuseipdb_adapter_ip():
     """AbuseIPDB IP check should return content via adapter."""
@@ -867,7 +909,12 @@ def test_abuseipdb_adapter_ip():
 
 
 @pytest.mark.xfail(
-    strict=False, reason="Requires reaching third-party sites from CI runner"
+    strict=True,
+    reason="Requires reaching third-party sites from CI runner",
+    owner="repository-maintainer",
+    issue="#502",
+    classification="quarantined",
+    environment="CI runner cannot reliably reach third-party sites",
 )
 def test_censys_adapter_ip():
     """Censys IP page should be handled by the adapter (scrape fallback)."""
@@ -879,7 +926,12 @@ def test_censys_adapter_ip():
 
 
 @pytest.mark.xfail(
-    strict=False, reason="Requires reaching third-party sites from CI runner"
+    strict=True,
+    reason="Requires reaching third-party sites from CI runner",
+    owner="repository-maintainer",
+    issue="#502",
+    classification="quarantined",
+    environment="CI runner cannot reliably reach third-party sites",
 )
 def test_virustotal_adapter_file():
     """VirusTotal file page should be handled by the adapter."""
@@ -906,7 +958,12 @@ def test_otx_adapter_indicator():
 
 
 @pytest.mark.xfail(
-    strict=False, reason="Requires reaching third-party sites from CI runner"
+    strict=True,
+    reason="Requires reaching third-party sites from CI runner",
+    owner="repository-maintainer",
+    issue="#502",
+    classification="quarantined",
+    environment="CI runner cannot reliably reach third-party sites",
 )
 def test_hibp_adapter_breach():
     """HIBP account page should return content via adapter."""
@@ -1421,7 +1478,14 @@ def _index_batch(pages: list[dict]) -> httpx.Response:
     return r
 
 
-@pytest.mark.xfail(strict=False, reason="Qdrant unstable under CI memory pressure")
+@pytest.mark.xfail(
+    strict=True,
+    reason="Qdrant unstable under CI memory pressure",
+    owner="repository-maintainer",
+    issue="#502",
+    classification="quarantined",
+    environment="CI runner memory pressure destabilizes Qdrant",
+)
 def test_index_structure():
     """POST /index on semantic-svc returns valid structure."""
     r = _index(
@@ -1437,7 +1501,14 @@ def test_index_structure():
     return payload
 
 
-@pytest.mark.xfail(strict=False, reason="Qdrant unstable under CI memory pressure")
+@pytest.mark.xfail(
+    strict=True,
+    reason="Qdrant unstable under CI memory pressure",
+    owner="repository-maintainer",
+    issue="#502",
+    classification="quarantined",
+    environment="CI runner memory pressure destabilizes Qdrant",
+)
 def test_near_dup_detection_skip_mode():
     """Indexing the same content at a different URL returns 'duplicate' status.
 
@@ -1469,7 +1540,14 @@ def test_near_dup_detection_skip_mode():
     assert isinstance(payload["url_hash"], int)
 
 
-@pytest.mark.xfail(strict=False, reason="Qdrant unstable under CI memory pressure")
+@pytest.mark.xfail(
+    strict=True,
+    reason="Qdrant unstable under CI memory pressure",
+    owner="repository-maintainer",
+    issue="#502",
+    classification="quarantined",
+    environment="CI runner memory pressure destabilizes Qdrant",
+)
 def test_near_dup_detection_update_mode():
     """Requesting near_dup_mode='update' always indexes even when duplicated."""
     r = _index(
@@ -1485,7 +1563,14 @@ def test_near_dup_detection_update_mode():
     assert isinstance(payload["url_hash"], int)
 
 
-@pytest.mark.xfail(strict=False, reason="Qdrant unstable under CI memory pressure")
+@pytest.mark.xfail(
+    strict=True,
+    reason="Qdrant unstable under CI memory pressure",
+    owner="repository-maintainer",
+    issue="#502",
+    classification="quarantined",
+    environment="CI runner memory pressure destabilizes Qdrant",
+)
 def test_near_dup_different_content():
     """Completely different content at different URL should index normally."""
     r = _index(
@@ -1501,7 +1586,14 @@ def test_near_dup_different_content():
     assert isinstance(payload["url_hash"], int)
 
 
-@pytest.mark.xfail(strict=False, reason="Qdrant unstable under CI memory pressure")
+@pytest.mark.xfail(
+    strict=True,
+    reason="Qdrant unstable under CI memory pressure",
+    owner="repository-maintainer",
+    issue="#502",
+    classification="quarantined",
+    environment="CI runner memory pressure destabilizes Qdrant",
+)
 def test_batch_index_endpoint():
     """POST /index/batch on semantic-svc returns valid structure.
 
@@ -1530,7 +1622,14 @@ def test_batch_index_endpoint():
     assert payload["count"] == 2
 
 
-@pytest.mark.xfail(strict=False, reason="Qdrant unstable under CI memory pressure")
+@pytest.mark.xfail(
+    strict=True,
+    reason="Qdrant unstable under CI memory pressure",
+    owner="repository-maintainer",
+    issue="#502",
+    classification="quarantined",
+    environment="CI runner memory pressure destabilizes Qdrant",
+)
 def test_batch_index_empty():
     """POST /index/batch with no pages should return count=0."""
     r = _index_batch([])
@@ -1547,7 +1646,14 @@ GUTENBERG_FILES = "https://www.gutenberg.org/files/11/"
 GUTENBERG_CACHE = "https://gutenberg.org/cache/epub/11/"
 
 
-@pytest.mark.xfail(strict=False, reason="gutenberg.org may be unreachable in CI")
+@pytest.mark.xfail(
+    strict=True,
+    reason="gutenberg.org may be unreachable in CI",
+    owner="repository-maintainer",
+    issue="#502",
+    classification="quarantined",
+    environment="CI runner cannot reach gutenberg.org",
+)
 def test_gutenberg_adapter_known_book():
     """Known Gutenberg book (Alice in Wonderland) returns structured markdown with frontmatter."""
     r = httpx.post(SCRAPER + "/scrape", json={"url": GUTENBERG_ALICE}, timeout=180)
@@ -1575,7 +1681,14 @@ def test_gutenberg_adapter_known_book():
     assert "gutenberg" in src, f"Expected gutenberg source, got {src}"
 
 
-@pytest.mark.xfail(strict=False, reason="gutenberg.org may be unreachable in CI")
+@pytest.mark.xfail(
+    strict=True,
+    reason="gutenberg.org may be unreachable in CI",
+    owner="repository-maintainer",
+    issue="#502",
+    classification="quarantined",
+    environment="CI runner cannot reach gutenberg.org",
+)
 def test_gutenberg_adapter_files_url():
     """Gutenberg /files/<id>/ URL pattern should also work."""
     r = httpx.post(SCRAPER + "/scrape", json={"url": GUTENBERG_FILES}, timeout=180)
@@ -1585,7 +1698,14 @@ def test_gutenberg_adapter_files_url():
     assert len(md) > 100, f"Expected >100 chars, got {len(md)}"
 
 
-@pytest.mark.xfail(strict=False, reason="gutenberg.org may be unreachable in CI")
+@pytest.mark.xfail(
+    strict=True,
+    reason="gutenberg.org may be unreachable in CI",
+    owner="repository-maintainer",
+    issue="#502",
+    classification="quarantined",
+    environment="CI runner cannot reach gutenberg.org",
+)
 def test_gutenberg_adapter_cache_url():
     """Gutenberg /cache/epub/<id>/ URL pattern should also work."""
     r = httpx.post(SCRAPER + "/scrape", json={"url": GUTENBERG_CACHE}, timeout=180)
@@ -1595,7 +1715,14 @@ def test_gutenberg_adapter_cache_url():
     assert len(md) > 100, f"Expected >100 chars, got {len(md)}"
 
 
-@pytest.mark.xfail(strict=False, reason="gutenberg.org may be unreachable in CI")
+@pytest.mark.xfail(
+    strict=True,
+    reason="gutenberg.org may be unreachable in CI",
+    owner="repository-maintainer",
+    issue="#502",
+    classification="quarantined",
+    environment="CI runner cannot reach gutenberg.org",
+)
 def test_gutenberg_adapter_invalid_id():
     """Non-existent book ID should gracefully fall through or return error."""
     r = httpx.post(SCRAPER + "/scrape", json={"url": GUTENBERG_INVALID}, timeout=180)
@@ -2300,7 +2427,14 @@ def test_crawl_response_shape_parity():
 # ── VAL-CROSS-004: Crawl → Semantic Indexing ────────────────────
 
 
-@pytest.mark.xfail(strict=False, reason="Qdrant unstable under CI memory pressure")
+@pytest.mark.xfail(
+    strict=True,
+    reason="Qdrant unstable under CI memory pressure",
+    owner="repository-maintainer",
+    issue="#502",
+    classification="quarantined",
+    environment="CI runner memory pressure destabilizes Qdrant",
+)
 @require_docker
 def test_crawl_semantic_indexing():
     """Crawled pages appear in vector search after crawl completion.
@@ -4194,7 +4328,13 @@ def _post_agent(body: dict, timeout: int = 30) -> httpx.Response:
 def _assert_agent_created(r: httpx.Response):
     """Assert agent job was created, or skip if rate-limited."""
     if r.status_code == 429:
-        pytest.skip("Rate limited by agent endpoint")
+        governed_skip(
+            "Rate limited by agent endpoint",
+            owner="repository-maintainer",
+            issue="#502",
+            classification="retained",
+            environment="agent endpoint returned HTTP 429",
+        )
     assert r.status_code == 200, f"Expected 200, got {r.status_code}: {r.text[:200]}"
 
 
@@ -4971,7 +5111,13 @@ def test_cross_endpoint_citation_style_consistency():
     )
     # Answer may be rate-limited if rate limit was exhausted by agent call
     if answer_r.status_code == 429:
-        pytest.skip("Rate limited on answer endpoint")
+        governed_skip(
+            "Rate limited on answer endpoint",
+            owner="repository-maintainer",
+            issue="#502",
+            classification="retained",
+            environment="answer endpoint returned HTTP 429",
+        )
     assert answer_r.status_code == 200
     answer_payload = answer_r.json()
     answer_text = answer_payload.get("answer", "")
@@ -6178,7 +6324,6 @@ def test_memory_survives_agent_svc_restart():
     This test requires SSH access to saru to restart the container.
     If SSH is not available, the test is skipped.
     """
-    pytest.importorskip("subprocess")
 
     unique_query = f"restart survival {int(time.time())}"
     store_r = httpx.post(
@@ -7995,7 +8140,13 @@ def test_deepen_isolated_to_target_ref_val_dpn_012():
     assert s1.status_code == 200, f"Search failed: {s1.text}"
     ref_count = s1.json()["result"].get("ref_count", 0)
     if ref_count == 0:
-        pytest.skip("Search returned no results (rate-limited or empty)")
+        governed_skip(
+            "Search returned no results (rate-limited or empty)",
+            owner="repository-maintainer",
+            issue="#502",
+            classification="retained",
+            environment="search returned no results or was rate-limited",
+        )
     # Get step 1 ref count
     export1 = httpx.post(AGENT + f"/v2/session/{sid}/export", json={}, timeout=10)
     step1_refs = len(
@@ -10067,9 +10218,13 @@ def test_plan_execute_empty_modifications():
     )
     # Accept rate limiting (429) — pre-existing env issue with LLM key causing many retries
     if r.status_code == 429:
-        import pytest
-
-        pytest.skip("Rate limited — cannot generate plan")
+        governed_skip(
+            "Rate limited — cannot generate plan",
+            owner="repository-maintainer",
+            issue="#502",
+            classification="retained",
+            environment="agent endpoint returned HTTP 429",
+        )
     assert r.status_code == 200, f"Plan generation failed: {r.status_code} {r.text}"
     plan_id = r.json()["plan_id"]
 
@@ -10119,9 +10274,13 @@ def test_plan_execute_with_modifications_list_form():
         timeout=60,
     )
     if r.status_code == 429:
-        import pytest
-
-        pytest.skip("Rate limited — cannot generate plan")
+        governed_skip(
+            "Rate limited — cannot generate plan",
+            owner="repository-maintainer",
+            issue="#502",
+            classification="retained",
+            environment="agent endpoint returned HTTP 429",
+        )
     assert r.status_code == 200, f"Plan generation failed: {r.status_code}"
     plan_id = r.json()["plan_id"]
 
@@ -10169,9 +10328,13 @@ def test_plan_execute_no_modifications():
         timeout=60,
     )
     if r.status_code == 429:
-        import pytest
-
-        pytest.skip("Rate limited — cannot generate plan")
+        governed_skip(
+            "Rate limited — cannot generate plan",
+            owner="repository-maintainer",
+            issue="#502",
+            classification="retained",
+            environment="agent endpoint returned HTTP 429",
+        )
     assert r.status_code == 200, f"Plan generation failed: {r.status_code} {r.text}"
     plan_id = r.json()["plan_id"]
 
@@ -10215,9 +10378,13 @@ def test_plan_execute_narrow_modification():
         timeout=60,
     )
     if r.status_code == 429:
-        import pytest
-
-        pytest.skip("Rate limited — cannot generate plan")
+        governed_skip(
+            "Rate limited — cannot generate plan",
+            owner="repository-maintainer",
+            issue="#502",
+            classification="retained",
+            environment="agent endpoint returned HTTP 429",
+        )
     assert r.status_code == 200, f"Plan generation failed: {r.status_code} {r.text}"
     plan_id = r.json()["plan_id"]
 
@@ -10269,9 +10436,13 @@ def test_plan_execute_add_dimension_modification():
         timeout=60,
     )
     if r.status_code == 429:
-        import pytest
-
-        pytest.skip("Rate limited — cannot generate plan")
+        governed_skip(
+            "Rate limited — cannot generate plan",
+            owner="repository-maintainer",
+            issue="#502",
+            classification="retained",
+            environment="agent endpoint returned HTTP 429",
+        )
     assert r.status_code == 200, f"Plan generation failed: {r.status_code} {r.text}"
     plan_id = r.json()["plan_id"]
 
@@ -10342,9 +10513,13 @@ def test_plan_execute_full_end_to_end():
         timeout=60,
     )
     if r.status_code == 429:
-        import pytest
-
-        pytest.skip("Rate limited — cannot generate plan")
+        governed_skip(
+            "Rate limited — cannot generate plan",
+            owner="repository-maintainer",
+            issue="#502",
+            classification="retained",
+            environment="agent endpoint returned HTTP 429",
+        )
     assert r.status_code == 200, f"Plan generation failed: {r.status_code} {r.text}"
     d = r.json()
     plan_id = d["plan_id"]
@@ -10494,9 +10669,13 @@ def test_deepen_expired_session_404_val_dpn_014():
             # Session may have been refreshed by the scrape step (TTL refresh)
             # If so, step succeeded — clean up and note
             httpx.delete(AGENT + f"/v2/session/{sid}", timeout=10)
-            pytest.skip(
+            governed_skip(
                 "Session TTL was refreshed by step activity "
-                "(TTL refresh on step is valid behavior)"
+                "(TTL refresh on step is valid behavior)",
+                owner="repository-maintainer",
+                issue="#502",
+                classification="retained",
+                environment="session step refreshed its TTL",
             )
     else:
         # Other status (e.g., 4xx, 5xx) is acceptable
@@ -10519,7 +10698,13 @@ def test_plan_streaming_response_structure_val_pln_020():
     ) as r:
         # Accept 200 (streaming) or 503 (LLM unavailable)
         if r.status_code == 503:
-            pytest.skip("LLM unavailable — cannot test plan streaming")
+            governed_skip(
+                "LLM unavailable — cannot test plan streaming",
+                owner="repository-maintainer",
+                issue="#502",
+                classification="retained",
+                environment="LLM backend returned HTTP 503",
+            )
         assert r.status_code == 200, (
             f"Expected 200, got {r.status_code}: {r.text[:200]}"
         )
@@ -10691,8 +10876,12 @@ def test_cross_plan_agent_structured_output_val_cross_005():
         time.sleep(15)
 
     if answer_r.status_code == 429:
-        pytest.skip(
-            "Answer endpoint rate-limited — cannot verify cross-endpoint overlap"
+        governed_skip(
+            "Answer endpoint rate-limited — cannot verify cross-endpoint overlap",
+            owner="repository-maintainer",
+            issue="#502",
+            classification="retained",
+            environment="answer endpoint returned HTTP 429",
         )
     assert answer_r.status_code == 200, f"Answer failed: {answer_r.text}"
     answer_data = answer_r.json()
@@ -10847,7 +11036,13 @@ def test_cross_deepen_equivalent_agent_val_cross_010():
     query_data = s2.json()
     query_response = query_data.get("result", {}).get("response", "")
     if not query_response:
-        pytest.skip("Query produced no response (LLM may be unavailable)")
+        governed_skip(
+            "Query produced no response (LLM may be unavailable)",
+            owner="repository-maintainer",
+            issue="#502",
+            classification="retained",
+            environment="LLM backend produced no response",
+        )
 
     # Step 3: Take a finding and use as agent prompt (deepen equivalent)
     finding = (

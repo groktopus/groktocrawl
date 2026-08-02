@@ -319,6 +319,7 @@ jobs:
           docker compose exec -T agent-svc pip install pytest pytest-asyncio pytest-timeout jinja2 python-docx python-pptx openpyxl tabulate markdownify==1.2.3 readability-lxml==0.8.4.1 -q
           set +e
           docker compose exec -T agent-svc env \
+            QA_OUTCOME_PATH=/app/qa-outcomes-critical.json \
             PYTHONPATH=/app/agent-svc:/app/scraper-svc:/app/llm-svc:/app/parse-svc:/app/portal-svc:/app/browser-svc:/app \
             SCRAPER_BASE_URL=http://scraper-svc:8001 \
             SEARCH_BASE_URL=http://slopsearx:8080 \
@@ -328,6 +329,9 @@ jobs:
             SEMANTIC_BASE_URL=http://semantic-svc:8003 \
             python3 -m pytest /app/tests/integration/test_critical_journey.py -vv -rA
           pytest_status=$?
+          svc=$(docker compose ps -q agent-svc)
+          docker cp "$svc:/app/qa-outcomes-critical.json" qa-outcomes-critical.json || true
+          docker cp "$svc:/app/qa-outcomes-critical.md" qa-outcomes-critical.md || true
           if [ "$pytest_status" -ne 0 ]; then
             docker compose logs --tail 50 test-site scraper-svc || true
           fi
@@ -340,7 +344,9 @@ jobs:
       - name: Run integration tests
         run: |
           docker compose exec -T agent-svc pip install pytest pytest-asyncio pytest-timeout jinja2 python-docx python-pptx openpyxl tabulate markdownify==1.2.3 readability-lxml==0.8.4.1 PyYAML -q
+          set +e
           docker compose exec -T agent-svc env \
+            QA_OUTCOME_PATH=/app/qa-outcomes-integration.json \
             PYTHONPATH=/app/agent-svc:/app/scraper-svc:/app/llm-svc:/app/parse-svc:/app/portal-svc:/app/browser-svc:/app \
             SCRAPER_BASE_URL=http://scraper-svc:8001 \
             SEARCH_BASE_URL=http://slopsearx:8080 \
@@ -349,7 +355,24 @@ jobs:
             TIER3_FIXTURE_BASE_URL=http://tier3-fixture:8000 \
             SEMANTIC_BASE_URL=http://semantic-svc:8003 \
             python3 -m pytest /app/tests/integration/ /app/tests/service/ --timeout=120 --ignore-glob='*observability*' --ignore=/app/tests/integration/test_critical_journey.py -m 'not external'
+          pytest_status=$?
+          svc=$(docker compose ps -q agent-svc)
+          docker cp "$svc:/app/qa-outcomes-integration.json" qa-outcomes-integration.json || true
+          docker cp "$svc:/app/qa-outcomes-integration.md" qa-outcomes-integration.md || true
+          exit "$pytest_status"
         timeout-minutes: 20
+
+      - name: Publish integration outcome summary
+        if: always()
+        run: cat qa-outcomes-*.md >> "$GITHUB_STEP_SUMMARY" || true
+
+      - name: Upload integration outcome reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: integration-test-outcomes
+          path: qa-outcomes-*
+          if-no-files-found: warn
 
       - name: Collect diagnostics on failure
         if: failure()

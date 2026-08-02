@@ -6,9 +6,12 @@
 import json
 import os
 import time
+from contextlib import suppress
 
 import httpx
 import pytest
+
+from tests.outcome_governance import governed_skip
 
 AGENT = os.getenv("AGENT_BASE_URL", "http://localhost:8080")
 TEST_SITE = os.getenv("TEST_SITE_BASE_URL", "http://localhost:8005")
@@ -31,7 +34,13 @@ def _post_agent(body: dict, timeout: int = 30) -> httpx.Response:
 def _assert_agent_created(r: httpx.Response):
     """Assert agent job was created, or skip if rate-limited."""
     if r.status_code == 429:
-        pytest.skip("Rate limited by agent endpoint")
+        governed_skip(
+            "Rate limited by agent endpoint",
+            owner="repository-maintainer",
+            issue="#502",
+            classification="retained",
+            environment="agent endpoint returned HTTP 429",
+        )
     assert r.status_code == 200, f"Expected 200, got {r.status_code}: {r.text[:200]}"
 
 
@@ -375,10 +384,8 @@ def test_answer_output_schema_num_sources_one():
 
     answer_text = payload["answer"]
     if not answer_text.startswith("I was unable to find"):
-        try:
+        with suppress(json.JSONDecodeError):
             json.loads(answer_text)
-        except json.JSONDecodeError:
-            pass
 
 
 def test_answer_non_json_fallback():
@@ -792,10 +799,8 @@ def test_cross_endpoint_citation_style_consistency():
     if not answer_text.startswith("I was unable to find") and answer_payload.get(
         "sources"
     ):
-        try:
+        with suppress(json.JSONDecodeError):
             json.loads(answer_text)
-        except json.JSONDecodeError:
-            pass  # May be prose with markdown citations
 
     # Citations/resolve with compact style
     resolve_r = httpx.post(

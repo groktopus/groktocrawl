@@ -16,6 +16,8 @@ import re
 import httpx
 import pytest
 
+from tests.outcome_governance import governed_skip
+
 # ── Configuration ──────────────────────────────────────────────────────────
 
 BROWSER_SVC_BASE = os.environ.get("BROWSER_SVC_URL", "http://localhost:8012")
@@ -49,6 +51,10 @@ def _docker_available() -> bool:
 require_docker = pytest.mark.skipif(
     not _docker_available(),
     reason="Docker stack not running — start with `docker compose up --build -d`",
+    owner="repository-maintainer",
+    issue="#502",
+    classification="retained",
+    environment="Docker stack is not running",
 )
 
 
@@ -58,8 +64,12 @@ require_docker = pytest.mark.skipif(
 def _skip_if_no_docker():
     """Skip the current test if Docker is not available."""
     if not _docker_available():
-        pytest.skip(
-            "Docker stack not running — start with `docker compose up --build -d`"
+        governed_skip(
+            "Docker stack not running — start with `docker compose up --build -d`",
+            owner="repository-maintainer",
+            issue="#502",
+            classification="retained",
+            environment="Docker stack is not running",
         )
 
 
@@ -73,7 +83,13 @@ def _check_service():
         data = resp.json()
         assert data["status"] == "ok"
     except httpx.ConnectError as e:
-        pytest.skip(f"browser-svc unreachable at {BROWSER_SVC_BASE}: {e}")
+        governed_skip(
+            f"browser-svc unreachable at {BROWSER_SVC_BASE}: {e}",
+            owner="repository-maintainer",
+            issue="#502",
+            classification="retained",
+            environment="browser-svc health endpoint is unreachable",
+        )
 
 
 @pytest.fixture

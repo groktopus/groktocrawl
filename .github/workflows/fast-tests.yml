@@ -20,6 +20,25 @@ jobs:
       - name: Install declared test dependencies
         run: uv sync --locked --no-dev --group fast-tests
       - name: Run unit and service tests
+        env:
+          QA_OUTCOME_PATH: ${{ github.workspace }}/qa-outcomes-fast.json
         run: >-
           PYTHONPATH=agent-svc:scraper-svc:llm-svc:parse-svc:portal-svc:browser-svc:semantic-svc:.
           uv run --no-sync pytest tests/unit/ tests/service/ --no-cov
+
+      - name: Publish test outcome summary
+        if: always()
+        run: |
+          if [ -f qa-outcomes-fast.md ]; then
+            cat qa-outcomes-fast.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "QA outcome report unavailable; pytest did not reach session finish." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload test outcome reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: fast-test-outcomes
+          path: qa-outcomes-fast.*
+          if-no-files-found: warn

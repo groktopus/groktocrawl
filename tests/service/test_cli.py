@@ -19,11 +19,20 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from tests.outcome_governance import governed_skip
+
 # ── Load the CLI script ──────────────────────────────────────────────────────
 
 _CLI_PATH = Path(__file__).resolve().parents[2] / "groktocrawl"
 if not _CLI_PATH.is_file():
-    pytest.skip("groktocrawl CLI not found at project root", allow_module_level=True)
+    governed_skip(
+        "groktocrawl CLI not found at project root",
+        owner="repository-maintainer",
+        issue="#502",
+        classification="retained",
+        environment="local checkout does not expose the root CLI",
+        allow_module_level=True,
+    )
 _CLI_PATH = str(_CLI_PATH)
 
 # Load the CLI module by executing it with a namespace dict
