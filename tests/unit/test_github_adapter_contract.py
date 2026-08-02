@@ -6,8 +6,13 @@ from pathlib import Path
 
 import httpx
 import pytest
-from scraper.adapters import github
-from scraper.adapters.base import AdapterContext
+from scraper.adapters import github, github_social
+from scraper.adapters.base import (
+    AdapterContext,
+    AdapterError,
+    AdapterRegistry,
+    AdapterResult,
+)
 
 FIXTURES = Path(__file__).parents[1] / "fixtures" / "github"
 RAW_URL = "https://raw.githubusercontent.com/fixture/repo/main/raw-file.txt"
@@ -158,3 +163,67 @@ async def test_repo_root_contract_combines_readme_and_repository_metadata(monkey
     assert output["source"] == "github-adapter"
     assert "url_type: repo_root" in output["markdown"]
     assert "## README" in output["markdown"]
+
+
+@pytest.mark.asyncio
+async def test_registry_dispatch_contract_covers_github_priority_and_fallthrough(
+    monkeypatch,
+):
+    registry = AdapterRegistry()
+    github_adapter = github.GitHubAdapter()
+    social_adapter = github_social.GitHubSocialAdapter()
+    calls = []
+
+    async def github_scrape(url, _ctx):
+        calls.append(("github", url))
+        if "/issues/" in url or "/pull/" in url:
+            raise AdapterError("social URL")
+        return AdapterResult(
+            success=True,
+            markdown="github result",
+            source="github",
+            url=url,
+        )
+
+    async def social_scrape(url, _ctx):
+        calls.append(("github-social", url))
+        return AdapterResult(
+            success=True,
+            markdown="social result",
+            source="github-social",
+            url=url,
+        )
+
+    monkeypatch.setattr(github_adapter, "scrape", github_scrape)
+    monkeypatch.setattr(social_adapter, "scrape", social_scrape)
+    registry.register(social_adapter)
+    registry.register(github_adapter)
+
+    assert [entry.name for entry in registry._entries] == ["github", "github-social"]
+
+    urls = [
+        RAW_URL,
+        BLOB_URL,
+        TREE_URL,
+        REPO_URL,
+        "https://github.com/fixture/repo/issues/42",
+        "https://github.com/fixture/repo/pull/7",
+    ]
+    for url in urls:
+        result = await registry.dispatch(url, AdapterContext())
+        assert result is not None
+        assert result.source == (
+            "github-social" if "/issues/" in url or "/pull/" in url else "github"
+        )
+        assert result.url == url
+
+    assert calls == [
+        ("github", RAW_URL),
+        ("github", BLOB_URL),
+        ("github", TREE_URL),
+        ("github", REPO_URL),
+        ("github", "https://github.com/fixture/repo/issues/42"),
+        ("github-social", "https://github.com/fixture/repo/issues/42"),
+        ("github", "https://github.com/fixture/repo/pull/7"),
+        ("github-social", "https://github.com/fixture/repo/pull/7"),
+    ]
