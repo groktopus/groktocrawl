@@ -192,10 +192,10 @@ README_CANDIDATES: tuple[str, ...] = (
     "README.rst",
     "README.adoc",
     "README.asc",
-    "Readme.md",
-    "readme.md",
     "README",
     "readme",
+    "Readme.md",
+    "readme.md",
 )
 README_COMMON_CANDIDATES: tuple[str, ...] = ("README.md", "README.rst")
 RAW_ENDPOINT_BURST_LIMIT = 10

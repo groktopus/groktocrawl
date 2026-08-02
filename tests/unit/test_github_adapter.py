@@ -118,10 +118,17 @@ async def test_raw_readme_finds_nonstandard_filename(monkeypatch, filename):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("filename", ["README.rst"])
-async def test_raw_readme_finds_variant_on_later_branch(monkeypatch, filename):
+@pytest.mark.parametrize(
+    ("filename", "expected_probe_count"),
+    [("README.rst", 4), ("README", 7), ("readme", 8)],
+)
+async def test_raw_readme_finds_variant_on_later_branch(
+    monkeypatch, filename, expected_probe_count
+):
     """Common variants on main/master remain inside the bounded product plan."""
-    client = _ReadmeVariantClient(filename, branch="main")
+    expected_branch = "main" if filename == "README.rst" else "develop"
+    client = _ReadmeVariantClient(filename, branch=expected_branch)
+    monkeypatch.setattr(github._rate_tracker, "_endpoints", {})
     monkeypatch.setattr(github.httpx, "AsyncClient", lambda **kwargs: client)
     monkeypatch.setattr(github._rate_tracker, "can_call", lambda endpoint: True)
     monkeypatch.setattr(github._rate_tracker, "record_call", lambda endpoint: None)
@@ -130,7 +137,8 @@ async def test_raw_readme_finds_variant_on_later_branch(monkeypatch, filename):
 
     assert result is not None
     assert result["metadata"]["file"] == filename
-    assert any(f"/main/{filename}" in url for url in client.urls)
+    assert len(client.urls) == expected_probe_count
+    assert any(f"/{expected_branch}/{filename}" in url for url in client.urls)
     for branch in ["develop", "main"]:
         assert any(f"/{branch}/README.md" in url for url in client.urls)
         assert any(f"/{branch}/README.rst" in url for url in client.urls)
