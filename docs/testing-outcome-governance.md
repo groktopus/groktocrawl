@@ -40,16 +40,36 @@ to the GitHub Actions Job Summary.
 
 ## Baseline and Classification
 
-The observed baseline for the current main lineage was **147 skipped, 6
-xfailing, and 13 xpassing** in the reported integration run. The issue body
-also cites an earlier **147 skipped, 4 xfailed, and 15 xpassed** run. These are
-different runs, not interchangeable counts; dependency state and selected
-tests changed between them.
+The issue body cites an earlier **147 skipped, 4 xfailed, and 15 xpassed** run.
+A later exact-head run on PR #509 at `41d13c5` selected a different set and
+reported **951 passed, 144 skipped, 6 xfailed, 13 xpassed, and 2 setup
+errors**. These are different runs, not interchangeable counts. The exact
+node IDs from the later run are the authoritative input for this triage.
 
-This change does not claim that the baseline is fully classified because CI
-has not supplied exact xpass node IDs. Strict xpass failures are triaged by
-exact node ID and metadata first. Only then may an obsolete xfail marker be
-removed and the test classified as `fixed/re-enabled` or `deleted`.
+The 13 xpasses were classified as `fixed/re-enabled` and their stale strict
+xfail markers were removed:
+
+- `tests/integration/test_stack.py::test_scraper_uses_accept_markdown`
+- `tests/integration/test_stack.py::test_mitreattack_adapter_technique`
+- `tests/integration/test_stack.py::test_virustotal_adapter_file`
+- `tests/integration/test_stack.py::test_index_structure`
+- `tests/integration/test_stack.py::test_near_dup_detection_skip_mode`
+- `tests/integration/test_stack.py::test_near_dup_detection_update_mode`
+- `tests/integration/test_stack.py::test_near_dup_different_content`
+- `tests/integration/test_stack.py::test_batch_index_endpoint`
+- `tests/integration/test_stack.py::test_batch_index_empty`
+- `tests/integration/test_stack.py::test_gutenberg_adapter_known_book`
+- `tests/integration/test_stack.py::test_gutenberg_adapter_files_url`
+- `tests/integration/test_stack.py::test_gutenberg_adapter_cache_url`
+- `tests/integration/test_stack.py::test_gutenberg_adapter_invalid_id`
+
+The remaining seven declared strict xfails are `quarantined` and retain
+explicit owner, issue, reason, and environment metadata. The two setup errors
+were caused by passing governance-only keyword arguments into pytest's native
+skip markers; the governance hook now validates and retains those fields on
+the collected item, then strips only the native-marker-incompatible fields
+before pytest evaluates the marker. Shared class-level markers are sanitized
+only after all collected items have been validated.
 
 Outcome mapping is:
 

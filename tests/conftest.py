@@ -31,12 +31,23 @@ from tests.outcome_governance import (
     validate_metadata,
 )
 
+_GOVERNANCE_KEYS = {
+    "owner",
+    "issue",
+    "classification",
+    "review_date",
+    "environment",
+}
+
 
 def _report_path() -> Path:
     return Path(os.environ.get("QA_OUTCOME_PATH", "test-outcomes.json"))
 
 
 def _governance_metadata(item, report) -> dict[str, str]:
+    metadata = getattr(item, "_qa_governance_metadata", None)
+    if metadata:
+        return metadata
     for marker_name in ("skip", "skipif", "xfail"):
         marker = item.get_closest_marker(marker_name)
         if marker:
@@ -48,7 +59,9 @@ def _governance_metadata(item, report) -> dict[str, str]:
 
 def pytest_collection_modifyitems(config, items):
     violations = []
+    markers_to_strip = {}
     for item in items:
+        item_metadata = {}
         for marker_name in ("skip", "skipif", "xfail"):
             for marker in item.iter_markers(name=marker_name):
                 kwargs = marker.kwargs
@@ -63,12 +76,20 @@ def pytest_collection_modifyitems(config, items):
                     )
                 except (TypeError, ValueError) as exc:
                     violations.append(f"{item.nodeid} @{marker_name}: {exc}")
+                else:
+                    item_metadata.update(metadata_from_marker(marker))
+                    markers_to_strip[id(marker)] = marker
                 if marker_name == "xfail" and kwargs.get("strict") is not True:
                     violations.append(f"{item.nodeid} @xfail: strict=True is required")
+        if item_metadata:
+            item._qa_governance_metadata = item_metadata
     if violations:
         raise pytest.UsageError(
             "Ungoverned skip/xfail markers:\n" + "\n".join(violations)
         )
+    for marker in markers_to_strip.values():
+        for key in _GOVERNANCE_KEYS:
+            marker.kwargs.pop(key, None)
 
 
 def _outcome_entry(nodeid, report, metadata=None) -> dict:
@@ -103,7 +124,9 @@ def _outcome_entry(nodeid, report, metadata=None) -> dict:
 def pytest_runtest_makereport(item, call):
     outcome = yield
     report = outcome.get_result()
-    if call.when != "call" and not (call.when == "setup" and report.skipped):
+    if call.when != "call" and not (
+        call.when == "setup" and (report.skipped or report.failed)
+    ):
         return
     entry = _outcome_entry(item.nodeid, report, _governance_metadata(item, report))
     _record_outcome(item.config, entry)

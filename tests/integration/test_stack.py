@@ -163,14 +163,6 @@ def test_scraper_uses_llms_txt():
     assert "llms.txt entrypoint" in payload["data"]["markdown"]
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="scraper cannot extract from minimal HTML test pages",
-    owner="repository-maintainer",
-    issue="#502",
-    classification="quarantined",
-    environment="minimal HTML fixture is not extractable",
-)
 def test_scraper_uses_accept_markdown():
     # Disable llms.txt by targeting a page that doesn't match the llms.txt listing.
     r = httpx.post(
@@ -873,14 +865,6 @@ def test_exploitdb_adapter_exploit():
     assert len(md) > 50, f"Expected >50 chars, got {len(md)}"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="Requires reaching third-party sites from CI runner",
-    owner="repository-maintainer",
-    issue="#502",
-    classification="quarantined",
-    environment="CI runner cannot reliably reach third-party sites",
-)
 def test_mitreattack_adapter_technique():
     """MITRE ATT&CK technique page should return content via STIX adapter."""
     r = httpx.post(SCRAPER + "/scrape", json={"url": MITRE_TECHNIQUE}, timeout=120)
@@ -925,14 +909,6 @@ def test_censys_adapter_ip():
     assert len(md) > 20, f"Expected >20 chars, got {len(md)}"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="Requires reaching third-party sites from CI runner",
-    owner="repository-maintainer",
-    issue="#502",
-    classification="quarantined",
-    environment="CI runner cannot reliably reach third-party sites",
-)
 def test_virustotal_adapter_file():
     """VirusTotal file page should be handled by the adapter."""
     r = httpx.post(SCRAPER + "/scrape", json={"url": VT_FILE}, timeout=120)
@@ -1478,14 +1454,6 @@ def _index_batch(pages: list[dict]) -> httpx.Response:
     return r
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="Qdrant unstable under CI memory pressure",
-    owner="repository-maintainer",
-    issue="#502",
-    classification="quarantined",
-    environment="CI runner memory pressure destabilizes Qdrant",
-)
 def test_index_structure():
     """POST /index on semantic-svc returns valid structure."""
     r = _index(
@@ -1501,14 +1469,6 @@ def test_index_structure():
     return payload
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="Qdrant unstable under CI memory pressure",
-    owner="repository-maintainer",
-    issue="#502",
-    classification="quarantined",
-    environment="CI runner memory pressure destabilizes Qdrant",
-)
 def test_near_dup_detection_skip_mode():
     """Indexing the same content at a different URL returns 'duplicate' status.
 
@@ -1540,14 +1500,6 @@ def test_near_dup_detection_skip_mode():
     assert isinstance(payload["url_hash"], int)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="Qdrant unstable under CI memory pressure",
-    owner="repository-maintainer",
-    issue="#502",
-    classification="quarantined",
-    environment="CI runner memory pressure destabilizes Qdrant",
-)
 def test_near_dup_detection_update_mode():
     """Requesting near_dup_mode='update' always indexes even when duplicated."""
     r = _index(
@@ -1563,14 +1515,6 @@ def test_near_dup_detection_update_mode():
     assert isinstance(payload["url_hash"], int)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="Qdrant unstable under CI memory pressure",
-    owner="repository-maintainer",
-    issue="#502",
-    classification="quarantined",
-    environment="CI runner memory pressure destabilizes Qdrant",
-)
 def test_near_dup_different_content():
     """Completely different content at different URL should index normally."""
     r = _index(
@@ -1586,14 +1530,6 @@ def test_near_dup_different_content():
     assert isinstance(payload["url_hash"], int)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="Qdrant unstable under CI memory pressure",
-    owner="repository-maintainer",
-    issue="#502",
-    classification="quarantined",
-    environment="CI runner memory pressure destabilizes Qdrant",
-)
 def test_batch_index_endpoint():
     """POST /index/batch on semantic-svc returns valid structure.
 
@@ -1622,14 +1558,6 @@ def test_batch_index_endpoint():
     assert payload["count"] == 2
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="Qdrant unstable under CI memory pressure",
-    owner="repository-maintainer",
-    issue="#502",
-    classification="quarantined",
-    environment="CI runner memory pressure destabilizes Qdrant",
-)
 def test_batch_index_empty():
     """POST /index/batch with no pages should return count=0."""
     r = _index_batch([])
@@ -1646,14 +1574,6 @@ GUTENBERG_FILES = "https://www.gutenberg.org/files/11/"
 GUTENBERG_CACHE = "https://gutenberg.org/cache/epub/11/"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="gutenberg.org may be unreachable in CI",
-    owner="repository-maintainer",
-    issue="#502",
-    classification="quarantined",
-    environment="CI runner cannot reach gutenberg.org",
-)
 def test_gutenberg_adapter_known_book():
     """Known Gutenberg book (Alice in Wonderland) returns structured markdown with frontmatter."""
     r = httpx.post(SCRAPER + "/scrape", json={"url": GUTENBERG_ALICE}, timeout=180)
@@ -1681,14 +1601,6 @@ def test_gutenberg_adapter_known_book():
     assert "gutenberg" in src, f"Expected gutenberg source, got {src}"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="gutenberg.org may be unreachable in CI",
-    owner="repository-maintainer",
-    issue="#502",
-    classification="quarantined",
-    environment="CI runner cannot reach gutenberg.org",
-)
 def test_gutenberg_adapter_files_url():
     """Gutenberg /files/<id>/ URL pattern should also work."""
     r = httpx.post(SCRAPER + "/scrape", json={"url": GUTENBERG_FILES}, timeout=180)
@@ -1698,14 +1610,6 @@ def test_gutenberg_adapter_files_url():
     assert len(md) > 100, f"Expected >100 chars, got {len(md)}"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="gutenberg.org may be unreachable in CI",
-    owner="repository-maintainer",
-    issue="#502",
-    classification="quarantined",
-    environment="CI runner cannot reach gutenberg.org",
-)
 def test_gutenberg_adapter_cache_url():
     """Gutenberg /cache/epub/<id>/ URL pattern should also work."""
     r = httpx.post(SCRAPER + "/scrape", json={"url": GUTENBERG_CACHE}, timeout=180)
@@ -1715,14 +1619,6 @@ def test_gutenberg_adapter_cache_url():
     assert len(md) > 100, f"Expected >100 chars, got {len(md)}"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="gutenberg.org may be unreachable in CI",
-    owner="repository-maintainer",
-    issue="#502",
-    classification="quarantined",
-    environment="CI runner cannot reach gutenberg.org",
-)
 def test_gutenberg_adapter_invalid_id():
     """Non-existent book ID should gracefully fall through or return error."""
     r = httpx.post(SCRAPER + "/scrape", json={"url": GUTENBERG_INVALID}, timeout=180)
