@@ -195,6 +195,7 @@ README_CANDIDATES: tuple[str, ...] = (
     "Readme.md",
     "readme.md",
 )
+README_COMMON_CANDIDATES: tuple[str, ...] = ("README.md", "README.rst")
 RAW_ENDPOINT_BURST_LIMIT = 10
 RAW_README_RESERVED_CALLS = 2
 RAW_README_PROBE_LIMIT = RAW_ENDPOINT_BURST_LIMIT - RAW_README_RESERVED_CALLS
@@ -591,23 +592,31 @@ async def _fetch_readme(owner: str, repo: str) -> dict | None:
 async def _fetch_raw_readme(owner: str, repo: str, branches: list[str]) -> dict | None:
     """Fetch README markdown from the raw content CDN without API quota.
 
-    The raw CDN is case-sensitive, unlike GitHub's Readme API, so common
-    README filename variants are tried within an eight-probe per-scrape budget.
+    The raw CDN is case-sensitive, unlike GitHub's Readme API. Common filename
+    variants are tried on every supplied branch first; remaining variants are
+    tried only on the primary branch within an eight-probe per-scrape budget.
+    This keeps common variants covered across branches while intentionally
+    leaving rare variants on secondary branches outside the bounded budget.
     The cap reserves two raw calls for ordinary file/blob fallback work in the
     same process, including when earlier raw calls already consumed capacity.
     """
-    probes = 0
     unique_branches = list(dict.fromkeys(branches))
     if not unique_branches:
         return None
 
-    # Probe every filename on a branch before moving to the next branch so the
-    # primary branch gets complete candidate coverage within the bounded plan.
+    # Probe common names on every branch before trying rarer names on the
+    # primary branch, preserving useful coverage within the bounded plan.
     probe_plan = [
         (branch, filename)
         for branch in unique_branches
-        for filename in README_CANDIDATES
+        for filename in README_COMMON_CANDIDATES
     ][:RAW_README_PROBE_LIMIT]
+    probe_plan.extend(
+        (unique_branches[0], filename)
+        for filename in README_CANDIDATES
+        if filename not in README_COMMON_CANDIDATES
+    )
+    probe_plan = probe_plan[:RAW_README_PROBE_LIMIT]
 
     try:
         async with asyncio.timeout(RAW_README_DEADLINE_SECONDS):
@@ -615,13 +624,6 @@ async def _fetch_raw_readme(owner: str, repo: str, branches: list[str]) -> dict 
                 follow_redirects=True, timeout=RAW_README_REQUEST_TIMEOUT_SECONDS
             ) as client:
                 for branch, filename in probe_plan:
-                    if probes >= RAW_README_PROBE_LIMIT:
-                        logger.debug(
-                            "GitHub adapter: README probe budget exhausted for %s/%s",
-                            owner,
-                            repo,
-                        )
-                        return None
                     if (
                         _rate_tracker.remaining_budget.get("raw", 0)
                         <= RAW_README_RESERVED_CALLS
@@ -631,7 +633,6 @@ async def _fetch_raw_readme(owner: str, repo: str, branches: list[str]) -> dict 
                         )
                         return None
                     _rate_tracker.record_call("raw")
-                    probes += 1
                     url = f"{RAW_BASE}/{owner}/{repo}/{branch}/{filename}"
                     try:
                         resp = await client.get(
@@ -1026,18 +1027,18 @@ class GitHubAdapter(SiteAdapter):
             md_parts.append("")
 
         if not readme_md and not readme_confirmed_empty:
-            if readme_not_found:
-                if default_branch == "main":
-                    branches = ["master"]
-                elif default_branch == "master":
-                    branches = ["main"]
-                else:
-                    branches = ["main", "master"]
+            if readme_not_found and default_branch in {"main", "master"}:
+                # A definitive 404 on a known standard default branch is not
+                # evidence that the unconfirmed alternate branch exists.
+                branches = []
+            elif readme_not_found:
+                branches = ["main", "master"]
+            elif default_branch:
+                branches = [default_branch]
             else:
-                branches = [
-                    branch for branch in [default_branch, "main", "master"] if branch
-                ]
-            readme = await _fetch_raw_readme(owner, repo, branches)
+                branches = ["main", "master"]
+            if branches:
+                readme = await _fetch_raw_readme(owner, repo, branches)
             if readme:
                 readme_md = readme.get("markdown", "")
 

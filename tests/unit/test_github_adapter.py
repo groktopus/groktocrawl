@@ -85,11 +85,17 @@ async def test_raw_readme_reserves_shared_raw_budget(monkeypatch):
     assert result is None
     assert len(client.urls) == github.RAW_README_PROBE_LIMIT
     assert len(recorded) == github.RAW_README_PROBE_LIMIT
-    assert [url.rsplit("/", 1)[-1] for url in client.urls[:6]] == list(
-        github.README_CANDIDATES
-    )
-    assert all("/main/" in url for url in client.urls[:6])
-    assert all("/master/" in url for url in client.urls[6:])
+    expected = [
+        (branch, filename)
+        for branch in ["main", "master", "develop"]
+        for filename in github.README_COMMON_CANDIDATES
+    ] + [("main", filename) for filename in github.README_CANDIDATES[2:4]]
+    assert [
+        (url.split("/")[-2], url.rsplit("/", 1)[-1]) for url in client.urls
+    ] == expected
+    for branch in ["main", "master", "develop"]:
+        assert any(url.endswith(f"/{branch}/README.md") for url in client.urls)
+        assert any(url.endswith(f"/{branch}/README.rst") for url in client.urls)
 
 
 @pytest.mark.asyncio
@@ -120,13 +126,14 @@ async def test_raw_readme_finds_variant_on_later_branch(monkeypatch, filename):
     monkeypatch.setattr(github._rate_tracker, "can_call", lambda endpoint: True)
     monkeypatch.setattr(github._rate_tracker, "record_call", lambda endpoint: None)
 
-    result = await github._fetch_raw_readme(
-        "owner", "repo", ["develop", "main", "master"]
-    )
+    result = await github._fetch_raw_readme("owner", "repo", ["develop", "main"])
 
     assert result is not None
     assert result["metadata"]["file"] == filename
     assert any(f"/main/{filename}" in url for url in client.urls)
+    for branch in ["develop", "main"]:
+        assert any(f"/{branch}/README.md" in url for url in client.urls)
+        assert any(f"/{branch}/README.rst" in url for url in client.urls)
 
 
 @pytest.mark.asyncio
@@ -232,6 +239,27 @@ async def test_repo_root_recovers_nonstandard_branch_after_api_readme_404(monkey
 
     assert "README from main" in result.markdown
     fetch_raw_readme.assert_awaited_once_with("owner", "repo", ["main", "master"])
+
+
+@pytest.mark.asyncio
+async def test_repo_root_skips_raw_fallback_after_standard_branch_api_404(monkeypatch):
+    """A definitive 404 on known main must not probe an unconfirmed master."""
+    fetch_readme = AsyncMock(return_value={"_not_found": True})
+    fetch_metadata = AsyncMock(return_value={"default_branch": "main"})
+    fetch_raw_readme = AsyncMock()
+    monkeypatch.setattr(github, "_fetch_readme", fetch_readme)
+    monkeypatch.setattr(github, "_fetch_repo_metadata", fetch_metadata)
+    monkeypatch.setattr(github, "_fetch_raw_readme", fetch_raw_readme)
+    monkeypatch.setattr(github._rate_tracker, "can_call", lambda endpoint: True)
+    monkeypatch.setattr(github._rate_tracker, "record_call", lambda endpoint: None)
+
+    await github.GitHubAdapter()._handle_repo_root(
+        "https://github.com/owner/repo",
+        {"owner": "owner", "repo": "repo"},
+        None,
+    )
+
+    fetch_raw_readme.assert_not_awaited()
 
 
 @pytest.mark.asyncio
