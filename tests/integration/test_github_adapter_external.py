@@ -72,11 +72,25 @@ def _scrape_github_probe(url: str, label: str) -> tuple[str, str, int, str]:
         or not isinstance(source, str)
     ):
         pytest.fail(
-            f"{label}: {_failure_category(None, body)}; "
+            f"{label}: malformed service response; "
             f"status={response.status_code}; body={body[:1000]!r}"
         )
 
     return markdown, source, response.status_code, body
+
+
+def test_github_probe_rejects_malformed_success_payload(monkeypatch):
+    """A successful response still requires the scraper payload contract."""
+    monkeypatch.setattr(
+        httpx,
+        "post",
+        lambda *args, **kwargs: httpx.Response(
+            200, json={"success": True, "data": {"markdown": "content"}}
+        ),
+    )
+
+    with pytest.raises(pytest.fail.Exception, match="malformed service response"):
+        _scrape_github_probe("https://github.com/fixture/repo", "GitHub probe")
 
 
 @pytest.mark.external
