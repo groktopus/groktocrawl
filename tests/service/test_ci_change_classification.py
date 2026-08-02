@@ -200,6 +200,7 @@ class RuntimeGateWorkflowContractTests(unittest.TestCase):
             'docker cp .github/workflows/. "$svc":/app/.github/workflows/',
             self.integration_tests,
         )
+        self.assertIn("-m 'not external'", self.integration_tests)
 
     def test_runtime_gate_only_bypasses_docs_only_pull_requests(self) -> None:
         self.assertIn("if: always()", self.runtime_gate)

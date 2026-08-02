@@ -348,7 +348,7 @@ jobs:
             TEST_SITE_BASE_URL=http://test-site:8000 \
             TIER3_FIXTURE_BASE_URL=http://tier3-fixture:8000 \
             SEMANTIC_BASE_URL=http://semantic-svc:8003 \
-            python3 -m pytest /app/tests/integration/ /app/tests/service/ --timeout=120 --ignore-glob='*observability*' --ignore=/app/tests/integration/test_critical_journey.py
+            python3 -m pytest /app/tests/integration/ /app/tests/service/ --timeout=120 --ignore-glob='*observability*' --ignore=/app/tests/integration/test_critical_journey.py -m 'not external'
         timeout-minutes: 20
 
       - name: Collect diagnostics on failure
