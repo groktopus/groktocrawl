@@ -182,6 +182,7 @@ def _worker_report_path(path: Path, worker_id: str) -> Path:
     return path.with_name(f"{path.stem}.{worker_id}{path.suffix}")
 
 
+@pytest.hookimpl(optionalhook=True)
 def pytest_testnodedown(node, error):
     """Collect each xdist worker's report before the master finishes."""
     config = node.config
@@ -200,6 +201,7 @@ def pytest_testnodedown(node, error):
 
 
 def pytest_sessionfinish(session, exitstatus):
+    _ = exitstatus
     config = session.config
     path = _report_path()
     if getattr(config, "workerinput", None) is not None:
