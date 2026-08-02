@@ -99,7 +99,7 @@ async def test_raw_readme_reserves_shared_raw_budget(monkeypatch):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("filename", ["README.rst", "README.adoc"])
+@pytest.mark.parametrize("filename", ["README.rst", "README.adoc", "README", "readme"])
 async def test_raw_readme_finds_nonstandard_filename(monkeypatch, filename):
     """The raw fallback should recover API-matched README variants."""
     client = _ReadmeVariantClient(filename)
