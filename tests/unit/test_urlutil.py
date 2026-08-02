@@ -375,12 +375,16 @@ class TestValidateOutboundWebhookUrl:
         with pytest.raises(WebhookDestinationValidationError):
             validate_outbound_webhook_url(f"http://{'a' * 64}.example.com/hook")
 
-    def test_overlong_hostname_label_is_permanent_rejection(self):
+    def test_overlong_hostname_label_is_permanent_rejection(self, monkeypatch):
         from common.url import (
             WebhookDestinationDNSRetryableError,
             WebhookDestinationValidationError,
         )
 
+        def _overlong_label(*args, **kwargs):
+            raise UnicodeError("label empty or too long")
+
+        monkeypatch.setattr("common.url.socket.getaddrinfo", _overlong_label)
         with pytest.raises(WebhookDestinationValidationError) as exc_info:
             validate_outbound_webhook_url(f"http://{'a' * 64}.example.com/hook")
         assert not isinstance(exc_info.value, WebhookDestinationDNSRetryableError)
