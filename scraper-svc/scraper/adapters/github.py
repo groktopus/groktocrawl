@@ -182,6 +182,18 @@ TEXT_FILENAMES: set[str] = {
     "Gemfile.lock",
 }
 
+# GitHub's Readme API matches these names case-insensitively. The raw CDN does
+# not, so the fallback probes the common names in this order.
+README_CANDIDATES: tuple[str, ...] = (
+    "README.md",
+    "Readme.md",
+    "readme.md",
+    "README",
+    "README.rst",
+    "README.txt",
+    "README.markdown",
+)
+
 # ── API endpoint constants ───────────────────────────────────────
 API_BASE = "https://api.github.com"
 RAW_BASE = "https://raw.githubusercontent.com"
@@ -571,39 +583,46 @@ async def _fetch_readme(owner: str, repo: str) -> dict | None:
 
 
 async def _fetch_raw_readme(owner: str, repo: str, branches: list[str]) -> dict | None:
-    """Fetch README markdown from the raw content CDN without API quota."""
+    """Fetch README markdown from the raw content CDN without API quota.
+
+    The raw CDN is case-sensitive, unlike GitHub's Readme API, so common
+    README filename variants are tried within the raw endpoint burst budget.
+    """
     try:
         async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
             for branch in dict.fromkeys(branches):
-                if not _rate_tracker.can_call("raw"):
-                    logger.warning("GitHub adapter: raw endpoint burst limit reached")
-                    break
-                _rate_tracker.record_call("raw")
-                url = f"{RAW_BASE}/{owner}/{repo}/{branch}/README.md"
-                try:
-                    resp = await client.get(
-                        url, headers={"User-Agent": "GroktoCrawl/0.6.0"}
-                    )
-                    if resp.status_code in (403, 429):
+                for filename in README_CANDIDATES:
+                    if not _rate_tracker.can_call("raw"):
                         logger.warning(
-                            "GitHub adapter: raw README rate-limited for %s/%s",
-                            owner,
-                            repo,
+                            "GitHub adapter: raw endpoint burst limit reached"
                         )
-                        break
-                    if resp.status_code == 200 and resp.text:
-                        return {
-                            "markdown": resp.text,
-                            "source": "github-raw-readme",
-                            "metadata": {
-                                "file": "README.md",
-                                "size": len(resp.content),
-                            },
-                        }
-                except Exception as exc:
-                    logger.debug(
-                        "Raw README fetch failed for %s/%s: %s", owner, repo, exc
-                    )
+                        return None
+                    _rate_tracker.record_call("raw")
+                    url = f"{RAW_BASE}/{owner}/{repo}/{branch}/{filename}"
+                    try:
+                        resp = await client.get(
+                            url, headers={"User-Agent": "GroktoCrawl/0.6.0"}
+                        )
+                        if resp.status_code in (403, 429):
+                            logger.warning(
+                                "GitHub adapter: raw README rate-limited for %s/%s",
+                                owner,
+                                repo,
+                            )
+                            return None
+                        if resp.status_code == 200 and resp.text:
+                            return {
+                                "markdown": resp.text,
+                                "source": "github-raw-readme",
+                                "metadata": {
+                                    "file": filename,
+                                    "size": len(resp.content),
+                                },
+                            }
+                    except Exception as exc:
+                        logger.debug(
+                            "Raw README fetch failed for %s/%s: %s", owner, repo, exc
+                        )
     except Exception as exc:
         logger.debug("Raw README client failed for %s/%s: %s", owner, repo, exc)
     return None
