@@ -1,0 +1,16 @@
+[
+  {
+    "body": "The REST response should preserve this comment.",
+    "created_at": "2026-01-16T11:45:00Z",
+    "user": {
+      "login": "fixture-reviewer"
+    }
+  },
+  {
+    "body": "A second generic fixture comment.",
+    "created_at": "2026-01-17T12:00:00Z",
+    "user": {
+      "login": "fixture-maintainer"
+    }
+  }
+]

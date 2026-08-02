@@ -1,0 +1,19 @@
+{
+  "title": "Improve fixture-backed issue coverage",
+  "body": "This issue verifies the deterministic REST adapter contract.",
+  "state": "open",
+  "created_at": "2026-01-15T10:30:00Z",
+  "user": {
+    "login": "fixture-author"
+  },
+  "labels": [
+    {
+      "name": "testing",
+      "color": "0e8a16"
+    },
+    {
+      "name": "documentation",
+      "color": "0075ca"
+    }
+  ]
+}
