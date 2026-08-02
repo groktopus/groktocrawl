@@ -120,7 +120,13 @@ async def test_raw_readme_finds_nonstandard_filename(monkeypatch, filename):
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("filename", "expected_probe_count"),
-    [("README.rst", 4), ("README", 7), ("readme", 8)],
+    [
+        ("README.rst", 4),
+        ("README", 5),
+        ("readme", 6),
+        ("Readme.md", 7),
+        ("readme.md", 8),
+    ],
 )
 async def test_raw_readme_finds_variant_on_later_branch(
     monkeypatch, filename, expected_probe_count

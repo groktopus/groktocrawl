@@ -252,6 +252,7 @@ class FastTestsWorkflowContractTests(unittest.TestCase):
         self,
     ) -> None:
         self.assertIn("pytest tests/unit/ tests/service/", self.workflow)
+        self.assertIn("--no-cov", self.workflow)
         self.assertNotIn("tests/integration", self.workflow)
         self.assertNotIn("docker", self.workflow.lower())
 

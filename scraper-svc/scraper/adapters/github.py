@@ -184,18 +184,17 @@ TEXT_FILENAMES: set[str] = {
 }
 
 # GitHub's Readme API matches these names case-insensitively. The raw CDN does
-# not, so the quota-free fallback prioritizes the most common variants that fit
-# its shared raw-endpoint sub-budget. Less-common names remain covered by the
-# primary Readme API when it is available.
+# not, so historical case variants stay ahead of newer AsciiDoc variants: the
+# bounded multi-branch probe plan can otherwise silently omit them.
 README_CANDIDATES: tuple[str, ...] = (
     "README.md",
     "README.rst",
-    "README.adoc",
-    "README.asc",
     "README",
     "readme",
     "Readme.md",
     "readme.md",
+    "README.adoc",
+    "README.asc",
 )
 README_COMMON_CANDIDATES: tuple[str, ...] = ("README.md", "README.rst")
 RAW_ENDPOINT_BURST_LIMIT = 10

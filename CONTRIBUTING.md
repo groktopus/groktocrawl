@@ -38,7 +38,7 @@ Open a GitHub issue with:
 # Fast Docker-free unit and service tests (Python 3.12 with uv):
 uv sync --locked --no-dev --group fast-tests
 PYTHONPATH=agent-svc:scraper-svc:llm-svc:parse-svc:portal-svc:browser-svc:semantic-svc:. \
-  uv run --no-sync pytest tests/unit/ tests/service/
+  uv run --no-sync pytest tests/unit/ tests/service/ --no-cov
 
 # From the repo root (fixture services provide an LLM and test sites):
 cp .env.sample .env

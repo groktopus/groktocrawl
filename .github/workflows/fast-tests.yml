@@ -22,4 +22,4 @@ jobs:
       - name: Run unit and service tests
         run: >-
           PYTHONPATH=agent-svc:scraper-svc:llm-svc:parse-svc:portal-svc:browser-svc:semantic-svc:.
-          uv run --no-sync pytest tests/unit/ tests/service/
+          uv run --no-sync pytest tests/unit/ tests/service/ --no-cov

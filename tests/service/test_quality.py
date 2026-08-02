@@ -1,7 +1,7 @@
 """Tests for the extraction quality gate functions.
 
 Unit tests — no Docker needed. Run directly:
-    python -m pytest tests/test_quality.py -v
+    python3 -m pytest tests/service/test_quality.py -v --no-cov
 """
 
 import os
