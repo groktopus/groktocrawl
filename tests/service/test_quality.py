@@ -350,6 +350,7 @@ def test_html_to_markdown_preserves_div_content_header_and_footer(monkeypatch):
 
     summary = """<div class="readability-content">
     <header><h1>Div Article Title</h1><p>By Example Author</p></header>
+    <nav aria-label="Contents"><a href="#div-setup">Div Setup</a></nav>
     <p>This div-based article has enough substantive content for the normal
     readability path and does not depend on semantic HTML container elements.</p>
     <footer><p>Sources: Div Content Research Institute</p></footer>
@@ -374,6 +375,7 @@ def test_html_to_markdown_preserves_div_content_header_and_footer(monkeypatch):
     assert "Div Article Title" in result
     assert "By Example Author" in result
     assert "Sources: Div Content Research Institute" in result
+    assert "[Div Setup](#div-setup)" in result
     assert "Site Header" not in result
     assert "Page Copyright" not in result
 

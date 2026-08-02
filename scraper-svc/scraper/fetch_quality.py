@@ -163,10 +163,13 @@ def html_to_markdown(html: str) -> str:
         for tag in summary_soup(["script", "style"]):
             tag.decompose()
         # Readability can retain site-level navigation in its fragment. Remove
-        # nav elements outside article/main content while preserving in-article
-        # tables of contents and other structural navigation.
+        # only nav elements that are direct children of Readability's root body;
+        # nested div-based article content may contain its own navigation.
+        fragment_root = summary_soup.find("body", id="readabilityBody")
+        if fragment_root is None:
+            fragment_root = summary_soup.find("body")
         for tag in summary_soup.find_all("nav"):
-            if not tag.find_parent(["article", "main"]):
+            if fragment_root is not None and tag.parent is fragment_root:
                 tag.decompose()
         # The summary is Readability's selected content fragment. Keep its
         # structural tags because headers and footers may be article metadata;

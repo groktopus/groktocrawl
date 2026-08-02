@@ -971,6 +971,7 @@ class GitHubAdapter(SiteAdapter):
 
         # Tier 2: Repo metadata (runs in parallel or after)
         repo_meta = None
+        default_branch = ""
         if _rate_tracker.can_call("repo"):
             _rate_tracker.record_call("repo")
             repo_meta = await _fetch_repo_metadata(owner, repo)
@@ -978,8 +979,8 @@ class GitHubAdapter(SiteAdapter):
         # Build markdown
         md_parts = []
         readme_md = ""
-        # Preserve the explicit 404 sentinel: a confirmed missing README must
-        # not trigger the raw CDN fallback, which could otherwise be ambiguous.
+        # Preserve the explicit 404 sentinel so later logic can distinguish
+        # "no README on the default branch" from a generic API failure.
         readme_not_found = bool(readme and readme.get("_not_found"))
         readme_confirmed_empty = bool(
             readme
@@ -1023,8 +1024,15 @@ class GitHubAdapter(SiteAdapter):
             md_parts.append(f"# {owner}/{repo}")
             md_parts.append("")
 
-        if not readme_md and not readme_not_found and not readme_confirmed_empty:
-            default_branch = repo_meta.get("default_branch", "") if repo_meta else ""
+        non_standard_default = bool(default_branch) and default_branch not in (
+            "main",
+            "master",
+        )
+        if (
+            not readme_md
+            and not readme_confirmed_empty
+            and (not readme_not_found or non_standard_default)
+        ):
             branches = [
                 branch for branch in [default_branch, "main", "master"] if branch
             ]

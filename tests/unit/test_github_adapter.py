@@ -159,3 +159,33 @@ async def test_repo_root_skips_raw_fallback_for_confirmed_empty_api_readme(monke
 
     assert "## README" not in result.markdown
     fetch_raw_readme.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_repo_root_recovers_nonstandard_branch_after_api_readme_404(monkeypatch):
+    """A default-branch 404 still probes standard branches for recovery."""
+    fetch_readme = AsyncMock(return_value={"_not_found": True})
+    fetch_metadata = AsyncMock(return_value={"default_branch": "develop"})
+    fetch_raw_readme = AsyncMock(
+        return_value={
+            "markdown": "README from main",
+            "source": "github-raw-readme",
+            "metadata": {},
+        }
+    )
+    monkeypatch.setattr(github, "_fetch_readme", fetch_readme)
+    monkeypatch.setattr(github, "_fetch_repo_metadata", fetch_metadata)
+    monkeypatch.setattr(github, "_fetch_raw_readme", fetch_raw_readme)
+    monkeypatch.setattr(github._rate_tracker, "can_call", lambda endpoint: True)
+    monkeypatch.setattr(github._rate_tracker, "record_call", lambda endpoint: None)
+
+    result = await github.GitHubAdapter()._handle_repo_root(
+        "https://github.com/owner/repo",
+        {"owner": "owner", "repo": "repo"},
+        None,
+    )
+
+    assert "README from main" in result.markdown
+    fetch_raw_readme.assert_awaited_once_with(
+        "owner", "repo", ["develop", "main", "master"]
+    )
