@@ -106,6 +106,9 @@ skip-magic-trailing-comma = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+markers = [
+    "external: requires network access or a deployed external service",
+]
 addopts = "--cov=agent-svc/agent --cov=scraper-svc/scraper --cov=browser-svc/browser_svc --cov=parse-svc/parse_svc --cov=portal-svc/portal --cov=semantic-svc --cov-report=term-missing --cov-fail-under=20 --durations=10 -n auto"
 
 [tool.mypy]

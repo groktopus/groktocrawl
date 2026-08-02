@@ -1,0 +1,14 @@
+[
+  {
+    "name": "adapters",
+    "type": "dir",
+    "size": 0,
+    "download_url": null
+  },
+  {
+    "name": "README.md",
+    "type": "file",
+    "size": 123,
+    "download_url": "https://raw.githubusercontent.com/fixture/repo/main/README.md"
+  }
+]

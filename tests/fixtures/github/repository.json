@@ -1,0 +1,9 @@
+{
+  "description": "A controlled GitHub adapter fixture.",
+  "stargazers_count": 17,
+  "forks_count": 3,
+  "language": "Python",
+  "topics": ["fixture", "scraping"],
+  "license": {"spdx_id": "MIT"},
+  "default_branch": "main"
+}
