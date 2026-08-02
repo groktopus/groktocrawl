@@ -59,6 +59,23 @@ async def test_raw_readme_stops_after_rate_limit(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_raw_readme_reserves_shared_raw_budget(monkeypatch):
+    """README probing must not consume the raw budget needed by other tiers."""
+    client = _ReadmeVariantClient("never")
+    recorded = []
+    monkeypatch.setattr(github.httpx, "AsyncClient", lambda **kwargs: client)
+    monkeypatch.setattr(github._rate_tracker, "can_call", lambda endpoint: True)
+    monkeypatch.setattr(github._rate_tracker, "record_call", recorded.append)
+
+    result = await github._fetch_raw_readme("owner", "repo", ["main", "master"])
+
+    assert result is None
+    assert len(client.urls) == github.RAW_README_PROBE_LIMIT
+    assert len(recorded) == github.RAW_README_PROBE_LIMIT
+    assert all("/main/" in url for url in client.urls)
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("filename", ["README.rst", "README.adoc"])
 async def test_raw_readme_finds_nonstandard_filename(monkeypatch, filename):
     """The raw fallback should recover API-matched README variants."""

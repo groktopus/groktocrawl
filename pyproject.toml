@@ -166,7 +166,7 @@ fast-tests = [
     "cloakbrowser==0.5.2",
     "curl_cffi>=0.15.0",
     "jinja2>=3.1.0",
-    "markdownify>=0.14.0",
+    "markdownify==1.2.3",
     "markitdown>=0.1.0",
     "numpy>=1.26.0",
     "openpyxl>=3.1.0",
@@ -177,7 +177,7 @@ fast-tests = [
     "python-multipart>=0.0.20",
     "python-pptx>=1.0.0",
     "qdrant-client>=1.13.0,<1.19.0",
-    "readability-lxml>=0.8.1",
+    "readability-lxml==0.8.4.1",
     "tabulate>=0.9.0",
     "youtube_transcript_api>=1.0.0",
 ]

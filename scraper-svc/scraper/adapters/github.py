@@ -183,18 +183,18 @@ TEXT_FILENAMES: set[str] = {
 }
 
 # GitHub's Readme API matches these names case-insensitively. The raw CDN does
-# not, so the fallback probes the common names in this order.
+# not, so the quota-free fallback prioritizes the most common variants that fit
+# its shared raw-endpoint sub-budget. Less-common names remain covered by the
+# primary Readme API when it is available.
 README_CANDIDATES: tuple[str, ...] = (
     "README.md",
     "Readme.md",
     "readme.md",
-    "README",
     "README.rst",
-    "README.txt",
-    "README.markdown",
     "README.adoc",
     "README.asc",
 )
+RAW_README_PROBE_LIMIT = len(README_CANDIDATES)
 
 # ── API endpoint constants ───────────────────────────────────────
 API_BASE = "https://api.github.com"
@@ -588,18 +588,29 @@ async def _fetch_raw_readme(owner: str, repo: str, branches: list[str]) -> dict 
     """Fetch README markdown from the raw content CDN without API quota.
 
     The raw CDN is case-sensitive, unlike GitHub's Readme API, so common
-    README filename variants are tried within the raw endpoint burst budget.
+    README filename variants are tried within a six-probe per-scrape budget.
+    The cap reserves the remaining raw burst budget for ordinary file/blob
+    fallback work in the same process.
     """
+    probes = 0
     try:
         async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
             for branch in dict.fromkeys(branches):
                 for filename in README_CANDIDATES:
+                    if probes >= RAW_README_PROBE_LIMIT:
+                        logger.debug(
+                            "GitHub adapter: README probe budget exhausted for %s/%s",
+                            owner,
+                            repo,
+                        )
+                        return None
                     if not _rate_tracker.can_call("raw"):
                         logger.warning(
                             "GitHub adapter: raw endpoint burst limit reached"
                         )
                         return None
                     _rate_tracker.record_call("raw")
+                    probes += 1
                     url = f"{RAW_BASE}/{owner}/{repo}/{branch}/{filename}"
                     try:
                         resp = await client.get(

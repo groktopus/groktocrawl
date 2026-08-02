@@ -853,7 +853,7 @@ fast-tests = [
     { name = "cloakbrowser", specifier = "==0.5.2" },
     { name = "curl-cffi", specifier = ">=0.15.0" },
     { name = "jinja2", specifier = ">=3.1.0" },
-    { name = "markdownify", specifier = ">=0.14.0" },
+    { name = "markdownify", specifier = "==1.2.3" },
     { name = "markitdown", specifier = ">=0.1.0" },
     { name = "numpy", specifier = ">=1.26.0" },
     { name = "openpyxl", specifier = ">=3.1.0" },
@@ -869,7 +869,7 @@ fast-tests = [
     { name = "python-pptx", specifier = ">=1.0.0" },
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "qdrant-client", specifier = ">=1.13.0,<1.19.0" },
-    { name = "readability-lxml", specifier = ">=0.8.1" },
+    { name = "readability-lxml", specifier = "==0.8.4.1" },
     { name = "tabulate", specifier = ">=0.9.0" },
     { name = "youtube-transcript-api", specifier = ">=1.0.0" },
 ]
