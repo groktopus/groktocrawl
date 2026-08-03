@@ -288,6 +288,25 @@ def parse_renamed_paths(diff_text: str) -> dict[str, str]:
     return renamed
 
 
+def parse_deleted_paths(diff_text: str) -> set[str]:
+    """Return source paths deleted without a detected destination."""
+
+    deleted: set[str] = set()
+    source_path: str | None = None
+    for line in diff_text.splitlines():
+        if line.startswith("--- a/"):
+            source_path = line[6:]
+            continue
+        if line.startswith("--- "):
+            source_path = None
+            continue
+        if line == "+++ /dev/null" and source_path is not None:
+            deleted.add(source_path)
+        if line.startswith("+++ "):
+            source_path = None
+    return deleted
+
+
 def git_diff(repo_root: Path, base_sha: str, head_sha: str) -> str:
     """Read the exact changed-line diff used by CI."""
 
@@ -325,6 +344,29 @@ def path_matches(path: str, patterns: Iterable[str]) -> bool:
         or path.startswith(pattern.rstrip("/") + "/")
         for pattern in patterns
     )
+
+
+def validate_high_risk_path_changes(
+    renamed_from: Mapping[str, str],
+    deleted_paths: Iterable[str],
+    policy: CoveragePolicy,
+) -> None:
+    """Require policy updates when a configured high-risk path moves or disappears."""
+
+    stale = [
+        f"{source} -> {destination}"
+        for destination, source in renamed_from.items()
+        if path_matches(source, policy.high_risk_paths)
+        and not path_matches(destination, policy.high_risk_paths)
+    ]
+    stale.extend(
+        path for path in deleted_paths if path_matches(path, policy.high_risk_paths)
+    )
+    if stale:
+        raise CoverageGateError(
+            "high-risk paths moved or were deleted without a policy update: "
+            + ", ".join(sorted(stale))
+        )
 
 
 def source_changes(
@@ -376,13 +418,11 @@ def evaluate(
     coverage: Mapping[str, CoverageLines],
     policy: CoveragePolicy,
     exceptions: Mapping[str, Mapping[str, Any]] | None = None,
-    renamed_from: Mapping[str, str] | None = None,
 ) -> list[FileResult]:
     """Calculate changed executable-line coverage for each changed source file."""
 
     results: list[FileResult] = []
     exceptions = exceptions or {}
-    renamed_from = renamed_from or {}
     for path in sorted(source_changes(changed, policy)):
         lines = changed[path]
         report = coverage.get(path)
@@ -399,11 +439,7 @@ def evaluate(
             percent = None
         else:
             percent = 100.0 * len(covered) / len(executable)
-        renamed_source = renamed_from.get(path)
-        high_risk = path_matches(path, policy.high_risk_paths) or (
-            renamed_source is not None
-            and path_matches(renamed_source, policy.high_risk_paths)
-        )
+        high_risk = path_matches(path, policy.high_risk_paths)
         exception = exceptions.get(path) if high_risk else None
         results.append(
             FileResult(
@@ -525,11 +561,13 @@ def main(argv: list[str] | None = None) -> int:
         coverage = load_coverage(args.coverage_json, repo_root)
         diff_text = git_diff(repo_root, args.base_sha, args.head_sha)
         exceptions = load_exceptions(args.exceptions)
+        changed = parse_changed_lines(diff_text)
+        renamed_from = parse_renamed_paths(diff_text)
+        deleted_paths = parse_deleted_paths(diff_text)
+        validate_high_risk_path_changes(renamed_from, deleted_paths, policy)
     except (AttributeError, CoverageGateError, OSError, TypeError, ValueError) as exc:
         return _fail_gate(args, str(exc))
-    changed = parse_changed_lines(diff_text)
-    renamed_from = parse_renamed_paths(diff_text)
-    results = evaluate(changed, coverage, policy, exceptions, renamed_from)
+    results = evaluate(changed, coverage, policy, exceptions)
     summary = render_summary(
         results,
         coverage,

@@ -15,9 +15,11 @@ from scripts.coverage_gate import (
     load_exceptions,
     main,
     parse_changed_lines,
+    parse_deleted_paths,
     parse_renamed_paths,
     render_summary,
     valid_exception,
+    validate_high_risk_path_changes,
 )
 
 
@@ -85,16 +87,42 @@ rename to common/url_validation.py
     assert parse_renamed_paths(diff) == {"common/url_validation.py": "common/url.py"}
 
 
-def test_renamed_high_risk_path_inherits_enforcement():
-    results = evaluate(
-        {"common/url_validation.py": {10, 11}},
-        {"common/url_validation.py": CoverageLines(frozenset(), frozenset({10, 11}))},
-        _policy(),
-        renamed_from={"common/url_validation.py": "common/url.py"},
+def test_detected_high_risk_rename_requires_policy_update():
+    with pytest.raises(
+        CoverageGateError, match=r"common/url\.py -> common/url_validation\.py"
+    ):
+        validate_high_risk_path_changes(
+            {"common/url_validation.py": "common/url.py"}, set(), _policy()
+        )
+
+    validate_high_risk_path_changes(
+        {"common/url_validation.py": "common/url.py"},
+        set(),
+        _policy(high_risk=("common/url_validation.py",)),
     )
 
-    assert results[0].high_risk is True
-    assert results[0].passed is False
+
+def test_low_similarity_high_risk_rename_fails_closed_as_deletion():
+    diff = """\
+diff --git a/common/url.py b/common/url.py
+deleted file mode 100644
+--- a/common/url.py
++++ /dev/null
+@@ -1 +0,0 @@
+-old
+diff --git a/common/url_validation.py b/common/url_validation.py
+new file mode 100644
+--- /dev/null
++++ b/common/url_validation.py
+@@ -0,0 +1 @@
++new
+"""
+
+    deleted = parse_deleted_paths(diff)
+
+    assert deleted == {"common/url.py"}
+    with pytest.raises(CoverageGateError, match=r"common/url\.py"):
+        validate_high_risk_path_changes({}, deleted, _policy())
 
 
 def test_evaluate_filters_non_source_changes():
