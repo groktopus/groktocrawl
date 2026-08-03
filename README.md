@@ -13,7 +13,7 @@ curl http://localhost:8080/health
 
 The `fixture` profile starts a local LLM fixture and test sites. For production, omit that profile and configure an OpenAI-compatible provider plus `BRAVE_API_KEY` for web search. Set `API_KEY` before exposing the API outside a trusted network.
 
-> **Background jobs are best-effort.** Async jobs (crawl, agent, extract, batch-scrape, llmstxt) run in-process and are not restart-safe; see [Deployment and configuration](docs/guides/deployment.md#job-durability-and-recovery) for the durability contract and recovery procedure.
+> **Background jobs are best-effort.** Async jobs (crawl, agent, extract, batch-scrape, llmstxt, plan execution) run in-process and are not restart-safe; see [Deployment and configuration](docs/guides/deployment.md#job-durability-and-recovery) for the durability contract and recovery procedure.
 
 ## What it provides
 

@@ -20,6 +20,7 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
+import redis
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "reconcile-jobs.py"
@@ -171,6 +172,49 @@ class TestFindStrandedJobs:
         assert stranded == []
         assert [j["id"] for j in skipped] == ["broken"]
 
+    def test_corrupt_record_is_skipped_not_crash(self, fake_redis):
+        fake_redis._store["job:corrupt:meta"] = "{not valid json"
+        stranded, skipped = MODULE.find_stranded_jobs(fake_redis, 3600, now=NOW)
+        assert stranded == []
+        assert [j["id"] for j in skipped] == ["corrupt"]
+
+    def test_multiple_scan_pages_are_followed(self):
+        class PagedRedis:
+            """Two-page scan fake: cursor 1 then 0."""
+
+            def __init__(self):
+                self._store = {
+                    "job:one:meta": json.dumps(
+                        {
+                            "id": "one",
+                            "kind": "crawl",
+                            "status": "processing",
+                            "created_at": _iso(NOW - timedelta(hours=2)),
+                            "payload": {},
+                        }
+                    ),
+                    "job:two:meta": json.dumps(
+                        {
+                            "id": "two",
+                            "kind": "crawl",
+                            "status": "processing",
+                            "created_at": _iso(NOW - timedelta(hours=2)),
+                            "payload": {},
+                        }
+                    ),
+                }
+
+            def scan(self, cursor=0, match=None, count=10):
+                if cursor == 0:
+                    return (1, ["job:one:meta"])
+                return (0, ["job:two:meta"])
+
+            def get(self, key):
+                return self._store.get(key)
+
+        stranded, _ = MODULE.find_stranded_jobs(PagedRedis(), 3600, now=NOW)
+        assert {j["id"] for j in stranded} == {"one", "two"}
+
 
 # ── fail_jobs ─────────────────────────────────────────────────────
 
@@ -246,10 +290,12 @@ class TestRun:
         rc = MODULE.run(fake_redis, args(json=True), now=NOW)
         assert rc == 1
         payload = json.loads(capsys.readouterr().out)
-        assert payload["reconciled"] is False
+        assert payload["dry_run"] is True
+        assert payload["failed"] == 0
         assert payload["stranded"][0]["id"] == "stale"
         assert payload["stranded"][0]["url"] == "https://example.com/x"
         assert payload["remaining"] == ["stale"]
+        assert payload["skipped"] == []
 
 
 # ── main (argv / env resolution / exit codes) ─────────────────────
@@ -312,4 +358,11 @@ class TestMain:
             raise RuntimeError("connection refused")
 
         monkeypatch.setattr(MODULE, "create_client", boom)
+        assert MODULE.main(["--json"]) == 2
+
+    def test_main_exit_2_on_runtime_redis_error(self, fake_redis, monkeypatch):
+        """Redis.from_url is lazy: a Valkey outage surfaces on the first
+        scan inside run() and must map to exit 2, not exit 1."""
+        self._patch_client(fake_redis, monkeypatch)
+        fake_redis.scan.side_effect = redis.exceptions.ConnectionError("down")
         assert MODULE.main(["--json"]) == 2

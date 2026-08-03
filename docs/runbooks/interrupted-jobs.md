@@ -29,7 +29,7 @@ After an `agent-svc` restart, crash, forced termination, or deployment, jobs tha
    docker compose exec agent-svc python3 /app/scripts/reconcile-jobs.py --stale-after 3600
    ```
 
-   Lower the threshold right after a known restart (e.g. `--stale-after 60`) to sweep jobs orphaned by that restart. Filter by kind with `--kind crawl|agent|extract|batch_scrape|llmstxt|plan_execute`; add `--json` for machine-readable output. The tool exits `1` when stranded jobs are found, so it can be used as an alerting check.
+   Lower the threshold right after a known restart (e.g. `--stale-after 60`) to sweep jobs orphaned by that restart. Filter by kind with `--kind crawl|agent|extract|batch_scrape|llmstxt|plan_execute`; add `--json` for machine-readable output. The tool exits `1` when stranded jobs are found, so it can be used as an alerting check. Set `--stale-after` above your longest legitimate job runtime — the default 3600s exceeds the crawl cap (`CRAWL_MAX_DURATION_SECONDS` default 1800s), but agent research jobs have no hard duration cap, so run the tool while `agent-svc` is stopped to avoid misclassifying a live long-running job.
 
 3. **Raw Valkey inspection (fallback, no Python client needed):**
 
@@ -58,7 +58,7 @@ After an `agent-svc` restart, crash, forced termination, or deployment, jobs tha
    docker compose exec agent-svc python3 /app/scripts/reconcile-jobs.py --stale-after 3600 --fail
    ```
 
-   The tool re-reads each record immediately before writing and only transitions records still in `processing`, so a job that completed or was cancelled in the meantime is never overwritten. Re-run the dry-run to confirm nothing remains in `processing`.
+   The tool re-reads each record immediately before writing and only transitions records still in `processing`, so a job that completed or was cancelled in the meantime is not overwritten in the common case (best-effort read-check-write, matching `JobStore.fail_job` semantics — not atomic). Re-run the dry-run to confirm nothing remains in `processing`.
 
 3. **Re-submit critical work.** The original request is not replayed; re-run the client command (e.g. `./groktocrawl crawl ...`). Webhook consumers should deduplicate by `webhookId` — a re-submitted job delivers a fresh event with a fresh `webhookId`.
 

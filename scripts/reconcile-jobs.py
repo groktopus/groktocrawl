@@ -22,6 +22,13 @@ Exit codes (usable as an alerting check):
 - 1 — stale processing jobs found (dry-run) or still remaining
 - 2 — error (connection, bad arguments)
 
+Run this while ``agent-svc`` is stopped (for example, immediately after a
+restart or deploy) so a genuinely live long-running job is not mistaken for
+a stranded one. Choose ``--stale-after`` above your longest legitimate job
+runtime: the default 3600s exceeds the crawl cap
+(``CRAWL_MAX_DURATION_SECONDS`` default 1800s) and typical agent jobs, but
+agent research jobs have no hard duration cap.
+
 Examples:
 
     # Dry-run inside the agent-svc container (inherits VALKEY_URL):
@@ -45,6 +52,7 @@ import sys
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+import redis
 from redis import Redis
 
 META_PATTERN = "job:*:meta"
@@ -93,8 +101,8 @@ def find_stranded_jobs(
 
     A job is stranded when it is still ``processing`` and its ``created_at``
     is more than *stale_after* seconds before *now* (exclusive boundary).
-    Jobs whose ``created_at`` cannot be parsed are reported in *skipped* so
-    operators can inspect them manually.
+    Jobs whose ``created_at`` cannot be parsed, and corrupt job records, are
+    reported in *skipped* so operators can inspect them manually.
     """
     now = now or datetime.now(UTC)
     stranded: list[dict[str, Any]] = []
@@ -106,7 +114,14 @@ def find_stranded_jobs(
             raw = client.get(key)
             if raw is None:
                 continue
-            meta = json.loads(raw)
+            try:
+                meta = json.loads(raw)
+            except json.JSONDecodeError:
+                # Corrupt record (e.g., a partial write); surface it instead
+                # of aborting the whole sweep.
+                job_id = key[len("job:") : -len(":meta")]
+                skipped.append({"id": job_id, "corrupt": True})
+                continue
             if meta.get("status") != "processing":
                 continue
             if kind is not None and meta.get("kind") != kind:
@@ -129,9 +144,9 @@ def fail_jobs(client: Redis, jobs: list[dict[str, Any]]) -> int:
     """Transition stale ``processing`` jobs to ``failed``.
 
     Re-reads each record immediately before writing and only transitions
-    when the status is still ``processing``, so a job that completed or was
-    cancelled between listing and reconciliation is never overwritten.
-    Returns the number of records actually transitioned.
+    when the status is still ``processing`` (best-effort read-check-write,
+    matching ``JobStore.fail_job`` semantics — not atomic). Returns the
+    number of records actually transitioned.
     """
     failed = 0
     now = datetime.now(UTC).isoformat()
@@ -180,7 +195,7 @@ def run(client: Redis, args: argparse.Namespace, now: datetime | None = None) ->
     if args.json:
         payload = {
             "stale_after_seconds": args.stale_after,
-            "reconciled": args.fail,
+            "dry_run": not args.fail,
             "failed": failed,
             "stranded": [
                 {
@@ -192,7 +207,7 @@ def run(client: Redis, args: argparse.Namespace, now: datetime | None = None) ->
                 for j in stranded
             ],
             "remaining": [j["id"] for j in remaining],
-            "skipped_unparseable": [j["id"] for j in skipped],
+            "skipped": [j["id"] for j in skipped],
         }
         print(json.dumps(payload, indent=2, sort_keys=True))
     else:
@@ -216,8 +231,8 @@ def run(client: Redis, args: argparse.Namespace, now: datetime | None = None) ->
             print("No stranded processing jobs.")
         if skipped:
             print(
-                f"{len(skipped)} processing job(s) skipped (unparseable "
-                "created_at); inspect manually via valkey-cli.",
+                f"{len(skipped)} processing job(s) skipped (unparseable or "
+                "corrupt); inspect manually via valkey-cli.",
                 file=sys.stderr,
             )
 
@@ -269,10 +284,16 @@ def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
     try:
         client = create_client(args.redis_url)
-    except Exception as exc:  # redis connection or URL errors
+    except Exception as exc:  # redis URL parse errors
         print(f"reconcile-jobs: cannot connect to Valkey: {exc}", file=sys.stderr)
         return 2
-    return run(client, args)
+    try:
+        return run(client, args)
+    except redis.exceptions.RedisError as exc:
+        # Redis.from_url is lazy; connection failures surface here on the
+        # first scan/get. Keep exit code 2 distinct from "stale jobs found".
+        print(f"reconcile-jobs: Valkey operation failed: {exc}", file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":
