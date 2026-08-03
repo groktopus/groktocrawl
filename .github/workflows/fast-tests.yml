@@ -13,18 +13,46 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - uses: astral-sh/setup-uv@v7
       - name: Install declared test dependencies
         run: uv sync --locked --no-dev --group fast-tests
+      - name: Verify coverage tooling
+        run: uv run --no-sync python -c "import coverage, pytest_cov; print(f'coverage={coverage.__version__} pytest-cov={pytest_cov.__version__}')"
       - name: Run unit and service tests
         env:
           QA_OUTCOME_PATH: ${{ github.workspace }}/qa-outcomes-fast.json
         run: >-
+          mkdir -p coverage &&
           PYTHONPATH=agent-svc:scraper-svc:llm-svc:parse-svc:portal-svc:browser-svc:semantic-svc:.
-          uv run --no-sync pytest tests/unit/ tests/service/ --no-cov
+          uv run --no-sync pytest tests/unit/ tests/service/
+          --cov-report=xml:coverage/fast.xml
+          --cov-report=json:coverage/fast.json
+          --cov-report=term-missing
+
+      - name: Check changed-line coverage
+        env:
+          COVERAGE_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          COVERAGE_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          uv run --no-sync python scripts/coverage_gate.py \
+            --coverage-json coverage/fast.json \
+            --base-sha "$COVERAGE_BASE_SHA" \
+            --head-sha "$COVERAGE_HEAD_SHA" \
+            --summary-path coverage/fast-risk-summary.md
+
+      - name: Publish coverage summary
+        if: always()
+        run: |
+          if [ -f coverage/fast-risk-summary.md ]; then
+            cat coverage/fast-risk-summary.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Changed-line coverage report unavailable; pytest did not produce coverage JSON." >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Publish test outcome summary
         if: always()
@@ -41,4 +69,12 @@ jobs:
         with:
           name: fast-test-outcomes
           path: qa-outcomes-fast.*
+          if-no-files-found: warn
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: fast-test-coverage
+          path: coverage/*
           if-no-files-found: warn

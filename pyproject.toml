@@ -109,8 +109,36 @@ asyncio_mode = "auto"
 markers = [
     "external: requires network access or a deployed external service",
 ]
-addopts = "-m 'not external' --strict-markers --strict-config --cov=agent-svc/agent --cov=scraper-svc/scraper --cov=browser-svc/browser_svc --cov=parse-svc/parse_svc --cov=portal-svc/portal --cov=semantic-svc --cov-report=term-missing --cov-fail-under=20 --durations=10 -n auto"
+addopts = "-m 'not external' --strict-markers --strict-config --cov=agent-svc/agent --cov=scraper-svc/scraper --cov=browser-svc/browser_svc --cov=parse-svc/parse_svc --cov=portal-svc/portal --cov=semantic-svc --cov=common --cov-report=term-missing --cov-fail-under=20 --durations=10 -n auto"
 xfail_strict = true
+
+[tool.groktocrawl.coverage]
+source_roots = [
+    "agent-svc/agent",
+    "scraper-svc/scraper",
+    "browser-svc/browser_svc",
+    "parse-svc/parse_svc",
+    "portal-svc/portal",
+    "semantic-svc",
+    "common",
+]
+excluded_paths = [
+    "tests",
+    "test-site",
+    "mcp-svc",
+    "llm-svc",
+]
+high_risk_paths = [
+    "common/url.py",
+    "scraper-svc/scraper/fetch.py",
+    "scraper-svc/scraper/fetch_tiers.py",
+    "browser-svc/browser_svc/app.py",
+    "agent-svc/agent/crawler.py",
+    "agent-svc/agent/webhook.py",
+    "agent-svc/agent/monitor.py",
+]
+changed_line_target = 80.0
+high_risk_changed_line_fail_under = 90.0
 
 [tool.mypy]
 ignore_missing_imports = true
