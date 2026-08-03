@@ -3,11 +3,14 @@ from __future__ import annotations
 import json
 from datetime import date
 
+import scripts.coverage_gate as coverage_gate
 from scripts.coverage_gate import (
     CoverageLines,
     CoveragePolicy,
     evaluate,
     load_coverage,
+    load_exceptions,
+    load_policy,
     main,
     parse_changed_lines,
     render_summary,
@@ -236,6 +239,37 @@ diff --git a/common/url.py b/common/url.py
 
     assert exit_code == 1
     assert "FAIL" in summary_path.read_text(encoding="utf-8")
+
+
+def test_toml_fallback_loads_policy_and_reviewed_exception(tmp_path, monkeypatch):
+    policy_path = tmp_path / "pyproject.toml"
+    policy_path.write_text(
+        """\
+[tool.groktocrawl.coverage]
+source_roots = ["common"]
+excluded_paths = ["tests"]
+high_risk_paths = ["common/url.py"]
+changed_line_target = 80.0
+high_risk_changed_line_fail_under = 90.0
+""",
+        encoding="utf-8",
+    )
+    exception_path = tmp_path / "coverage-exceptions.toml"
+    exception_path.write_text(
+        """\
+[exceptions]
+"common/url.py" = { issue = "#503", reviewer = "@maintainer", expires = "2099-12-31", reason = "bounded", reviewed = true }
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(coverage_gate, "tomllib", None)
+
+    policy = load_policy(policy_path)
+    exceptions = load_exceptions(exception_path)
+
+    assert policy.source_roots == ("common",)
+    assert policy.high_risk_changed_line_fail_under == 90.0
+    assert valid_exception(exceptions["common/url.py"], today=date(2026, 1, 1))
 
 
 def test_changed_lines_without_executable_coverage_are_informational():
