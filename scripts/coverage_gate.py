@@ -585,10 +585,10 @@ def render_summary(
             "| No measured service source changed | — | — | — | — | — | PASS |"
         )
     for result in rows:
-        if result.coverage_percent is None:
-            outcome = "INFO (no executable lines)"
-        elif result.exception is not None:
+        if result.exception is not None:
             outcome = f"EXCEPTION ({result.exception['issue']})"
+        elif result.coverage_percent is None:
+            outcome = "INFO (no executable lines)"
         elif not result.passed:
             outcome = "FAIL"
         elif not result.high_risk and result.coverage_percent < result.threshold:

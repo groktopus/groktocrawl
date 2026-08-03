@@ -742,6 +742,30 @@ def test_changed_lines_without_executable_coverage_are_informational():
     assert results[0].passed is True
 
 
+def test_exception_is_visible_when_changed_lines_are_not_executable():
+    exception = {
+        "issue": "#503",
+        "reviewer": "@maintainers",
+        "expires": "2099-12-31",
+        "reason": "A reviewed bounded exception.",
+        "reviewed": True,
+    }
+    coverage = {"common/url.py": CoverageLines(frozenset({1}), frozenset({2}))}
+    results = evaluate(
+        {"common/url.py": {10}},
+        coverage,
+        _policy(),
+        {"common/url.py": exception},
+    )
+
+    assert "EXCEPTION (#503)" in render_summary(
+        results,
+        coverage,
+        base_sha="base",
+        head_sha="head",
+    )
+
+
 def test_unmeasured_changed_module_is_informational():
     results = evaluate(
         {"common/url.py": {10}},
