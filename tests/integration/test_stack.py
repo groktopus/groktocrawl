@@ -141,6 +141,7 @@ def test_metrics_endpoint_returns_openmetrics():
     assert "queue_depth" in body
 
 
+@pytest.mark.external
 @pytest.mark.xfail(
     strict=True,
     reason="scraper cannot extract from minimal HTML test pages",
@@ -821,6 +822,7 @@ def test_shodan_adapter_public_host():
     assert "8.8.8.8" in md or "Shodan" in md or "shodan" in md.lower()
 
 
+@pytest.mark.external
 @pytest.mark.xfail(
     strict=True,
     reason="Requires reaching third-party sites from CI runner",
@@ -875,6 +877,7 @@ def test_mitreattack_adapter_technique():
     assert "T1059" in md or "Command" in md or "Scripting" in md
 
 
+@pytest.mark.external
 @pytest.mark.xfail(
     strict=True,
     reason="Requires reaching third-party sites from CI runner",
@@ -892,6 +895,7 @@ def test_abuseipdb_adapter_ip():
     assert len(md) > 50, f"Expected >50 chars, got {len(md)}"
 
 
+@pytest.mark.external
 @pytest.mark.xfail(
     strict=True,
     reason="Requires reaching third-party sites from CI runner",
@@ -933,6 +937,7 @@ def test_otx_adapter_indicator():
     assert len(md) > 20, f"Expected >20 chars, got {len(md)}"
 
 
+@pytest.mark.external
 @pytest.mark.xfail(
     strict=True,
     reason="Requires reaching third-party sites from CI runner",
