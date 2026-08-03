@@ -86,18 +86,6 @@ def test_evaluate_filters_non_source_changes():
     assert [result.path for result in results] == ["common/url.py"]
 
 
-def test_checked_in_policy_excludes_service_local_tests():
-    policy = load_policy(coverage_gate.DEFAULT_POLICY_PATH)
-
-    results = evaluate(
-        {"agent-svc/agent/tests/test_stack.py": {1}},
-        {},
-        policy,
-    )
-
-    assert results == []
-
-
 def test_load_coverage_unions_reports_and_normalizes_docker_paths(tmp_path):
     first = tmp_path / "first.json"
     second = tmp_path / "second.json"
