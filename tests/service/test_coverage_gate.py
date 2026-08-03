@@ -124,7 +124,11 @@ def test_load_coverage_unions_reports_and_normalizes_docker_paths(tmp_path):
                     "/app/common/url.py": {
                         "executed_lines": [10],
                         "missing_lines": [11],
-                    }
+                    },
+                    "/app/agent/crawler.py": {
+                        "executed_lines": [20],
+                        "missing_lines": [21],
+                    },
                 }
             }
         ),
@@ -148,6 +152,9 @@ def test_load_coverage_unions_reports_and_normalizes_docker_paths(tmp_path):
 
     assert loaded["common/url.py"].executed == frozenset({10, 11})
     assert loaded["common/url.py"].missing == frozenset({12})
+    assert loaded["agent-svc/agent/crawler.py"] == CoverageLines(
+        executed=frozenset({20}), missing=frozenset({21})
+    )
 
 
 def test_high_risk_changed_line_failure_is_reported():

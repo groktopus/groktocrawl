@@ -315,9 +315,11 @@ jobs:
           docker compose exec -T agent-svc mkdir -p /app/.github/workflows
           docker cp .github/workflows/docker.yml "$svc":/app/.github/workflows/docker.yml
           docker cp .github/workflows/fast-tests.yml "$svc":/app/.github/workflows/fast-tests.yml
-          # Copy service source packages so tests can import them
-          # Each package_dir (e.g. scraper-svc/scraper) becomes /app/<package_dir>/
-          for pkg in agent-svc/agent scraper-svc/scraper parse-svc/parse_svc portal-svc/portal browser-svc/browser_svc llm-svc/llm_svc common; do
+          # Refresh the baked agent package at the path Python imports from /app.
+          docker compose exec -T agent-svc mkdir -p /app/agent
+          docker cp agent-svc/agent/. "$svc":/app/agent/
+          # Copy the remaining service packages under their repository paths.
+          for pkg in scraper-svc/scraper parse-svc/parse_svc portal-svc/portal browser-svc/browser_svc llm-svc/llm_svc common; do
             docker compose exec -T agent-svc mkdir -p "/app/$pkg"
             docker cp "$pkg/." "$svc:/app/$pkg/"
           done
@@ -337,7 +339,7 @@ jobs:
             TIER3_FIXTURE_BASE_URL=http://tier3-fixture:8000 \
             SEMANTIC_BASE_URL=http://semantic-svc:8003 \
             python3 -m pytest /app/tests/integration/test_critical_journey.py -vv -rA -m 'not external' \
-              --cov=/app/agent-svc/agent \
+              --cov=/app/agent \
               --cov=/app/scraper-svc/scraper \
               --cov=/app/parse-svc/parse_svc \
               --cov=/app/portal-svc/portal \
@@ -376,7 +378,7 @@ jobs:
             TIER3_FIXTURE_BASE_URL=http://tier3-fixture:8000 \
             SEMANTIC_BASE_URL=http://semantic-svc:8003 \
             python3 -m pytest /app/tests/integration/ /app/tests/service/ --timeout=120 --ignore-glob='*observability*' --ignore=/app/tests/integration/test_critical_journey.py -m 'not external' \
-              --cov=/app/agent-svc/agent \
+              --cov=/app/agent \
               --cov=/app/scraper-svc/scraper \
               --cov=/app/parse-svc/parse_svc \
               --cov=/app/portal-svc/portal \

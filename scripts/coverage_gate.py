@@ -161,6 +161,8 @@ def normalize_coverage_path(name: str, repo_root: Path) -> str:
     # Docker reports commonly contain /app/<repository path>. Keep the first
     # repository-owned source directory and discard the container prefix.
     parts = path.parts
+    if len(parts) >= 3 and parts[1:3] == ("app", "agent"):
+        return Path("agent-svc", *parts[2:]).as_posix()
     source_markers = (
         "agent-svc",
         "scraper-svc",

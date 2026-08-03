@@ -197,9 +197,15 @@ class RuntimeGateWorkflowContractTests(unittest.TestCase):
             self.integration_tests,
         )
         self.assertIn(
-            "for pkg in agent-svc/agent scraper-svc/scraper parse-svc/parse_svc portal-svc/portal browser-svc/browser_svc llm-svc/llm_svc common; do",
+            'docker cp agent-svc/agent/. "$svc":/app/agent/',
             self.integration_tests,
         )
+        self.assertIn(
+            "for pkg in scraper-svc/scraper parse-svc/parse_svc portal-svc/portal browser-svc/browser_svc llm-svc/llm_svc common; do",
+            self.integration_tests,
+        )
+        self.assertIn("--cov=/app/agent", self.integration_tests)
+        self.assertNotIn("--cov=/app/agent-svc/agent", self.integration_tests)
         self.assertNotIn(
             'docker cp .github/workflows/. "$svc":/app/.github/workflows/',
             self.integration_tests,
