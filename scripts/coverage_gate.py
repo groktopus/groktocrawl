@@ -98,9 +98,7 @@ def _required_percentage(raw: Mapping[str, Any], field: str) -> float:
     if field not in raw:
         raise ValueError(f"coverage policy field {field} is required")
     value = raw[field]
-    # The Docker coverage gate uses the self-hosted runner's Python 3.9.
-    numeric_types = (int, float)
-    if isinstance(value, bool) or not isinstance(value, numeric_types):
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise ValueError(f"coverage policy field {field} must be numeric")
     number = float(value)
     if not math.isfinite(number) or not 0 <= number <= 100:
@@ -268,6 +266,26 @@ def parse_changed_lines(diff_text: str) -> dict[str, set[int]]:
     return {path: lines for path, lines in changed.items() if lines}
 
 
+def parse_renamed_paths(diff_text: str) -> dict[str, str]:
+    """Map destination paths to source paths for detected renames."""
+
+    renamed: dict[str, str] = {}
+    source_path: str | None = None
+    for line in diff_text.splitlines():
+        if line.startswith("--- a/"):
+            source_path = line[6:]
+            continue
+        if line.startswith("--- "):
+            source_path = None
+            continue
+        if line.startswith("+++ b/"):
+            destination_path = line[6:]
+            if source_path is not None and source_path != destination_path:
+                renamed[destination_path] = source_path
+            source_path = None
+    return renamed
+
+
 def git_diff(repo_root: Path, base_sha: str, head_sha: str) -> str:
     """Read the exact changed-line diff used by CI."""
 
@@ -277,6 +295,7 @@ def git_diff(repo_root: Path, base_sha: str, head_sha: str) -> str:
                 "git",
                 "diff",
                 "--no-ext-diff",
+                "--find-renames",
                 "--unified=0",
                 f"{base_sha}...{head_sha}",
                 "--",
@@ -355,11 +374,13 @@ def evaluate(
     coverage: Mapping[str, CoverageLines],
     policy: CoveragePolicy,
     exceptions: Mapping[str, Mapping[str, Any]] | None = None,
+    renamed_from: Mapping[str, str] | None = None,
 ) -> list[FileResult]:
     """Calculate changed executable-line coverage for each changed source file."""
 
     results: list[FileResult] = []
     exceptions = exceptions or {}
+    renamed_from = renamed_from or {}
     for path in sorted(source_changes(changed, policy)):
         lines = changed[path]
         report = coverage.get(path)
@@ -376,7 +397,11 @@ def evaluate(
             percent = None
         else:
             percent = 100.0 * len(covered) / len(executable)
-        high_risk = path_matches(path, policy.high_risk_paths)
+        renamed_source = renamed_from.get(path)
+        high_risk = path_matches(path, policy.high_risk_paths) or (
+            renamed_source is not None
+            and path_matches(renamed_source, policy.high_risk_paths)
+        )
         exception = exceptions.get(path) if high_risk else None
         results.append(
             FileResult(
@@ -501,7 +526,8 @@ def main(argv: list[str] | None = None) -> int:
     except (AttributeError, CoverageGateError, OSError, TypeError, ValueError) as exc:
         return _fail_gate(args, str(exc))
     changed = parse_changed_lines(diff_text)
-    results = evaluate(changed, coverage, policy, exceptions)
+    renamed_from = parse_renamed_paths(diff_text)
+    results = evaluate(changed, coverage, policy, exceptions, renamed_from)
     summary = render_summary(
         results,
         coverage,

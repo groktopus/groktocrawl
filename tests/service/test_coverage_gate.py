@@ -15,6 +15,7 @@ from scripts.coverage_gate import (
     load_exceptions,
     main,
     parse_changed_lines,
+    parse_renamed_paths,
     render_summary,
     valid_exception,
 )
@@ -66,6 +67,34 @@ diff --git a/common/url.py b/common/url.py
 """
 
     assert parse_changed_lines(diff) == {"common/url.py": {9, 10}}
+
+
+def test_parse_renamed_paths_maps_destination_to_source():
+    diff = """\
+diff --git a/common/url.py b/common/url_validation.py
+similarity index 91%
+rename from common/url.py
+rename to common/url_validation.py
+--- a/common/url.py
++++ b/common/url_validation.py
+@@ -10 +10 @@
+-old
++new
+"""
+
+    assert parse_renamed_paths(diff) == {"common/url_validation.py": "common/url.py"}
+
+
+def test_renamed_high_risk_path_inherits_enforcement():
+    results = evaluate(
+        {"common/url_validation.py": {10, 11}},
+        {"common/url_validation.py": CoverageLines(frozenset(), frozenset({10, 11}))},
+        _policy(),
+        renamed_from={"common/url_validation.py": "common/url.py"},
+    )
+
+    assert results[0].high_risk is True
+    assert results[0].passed is False
 
 
 def test_evaluate_filters_non_source_changes():
