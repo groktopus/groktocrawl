@@ -13,9 +13,21 @@ High
 Use it **only** when:
 
 - A legitimate fix must land on `main` immediately (e.g., a production incident fix), and
-- The blocking condition (failed required check or missing review) cannot be resolved within the required window.
+- The blocking condition (failed required check) cannot be resolved within the required window.
 
 Never use it for routine merges. Admins are subject to the policy; the audit trail below records every lift.
+
+> **Update (2026-08-03): maintainer self-merge amendment.** Per ADR-0046 (2026-08-03
+> amendment, "allow maintainer to merge own PRs (review bypass only)"), the sole
+> maintainer `magnus919` is a User bypass actor (`bypass_mode: pull_request`) on
+> Ruleset A `main review policy`, so they can merge their **own** green PRs without
+> an approving review (GitHub disallows self-approval). After this amendment, this
+> emergency path is needed **only when required checks fail** — a `Code Quality Gate`
+> or `Runtime Gate` failure that cannot be resolved in time. A missing review on the
+> maintainer's own PR is no longer an emergency: the normal merge flow (with green
+> required checks) handles it. The amendment does **not** relax required checks:
+> Ruleset B `main required checks` has no bypass actors, so merging a PR whose
+> required checks fail still requires this emergency path.
 
 ## Timeline
 
