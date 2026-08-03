@@ -79,6 +79,11 @@ def _parse_toml_subset_value(value: str) -> object:
     value = value.strip()
     if value in {"true", "false"}:
         return value == "true"
+    if value.startswith('"""') and value.endswith('"""'):
+        parsed = ast.literal_eval(value)
+        return parsed.removeprefix("\n")
+    if value.startswith("'''") and value.endswith("'''"):
+        return value[3:-3].removeprefix("\n")
     if value.startswith("[") and value.endswith("]"):
         return [
             _parse_toml_subset_value(part) for part in _split_toml_values(value[1:-1])
@@ -119,6 +124,32 @@ def _strip_toml_comment(line: str) -> str:
     return line.rstrip()
 
 
+def _toml_subset_value_complete(value: str) -> bool:
+    if value.startswith(('"""', "'''")):
+        delimiter = value[:3]
+        return len(value) >= 6 and value.endswith(delimiter)
+    if value.startswith("["):
+        return value.endswith("]")
+    return True
+
+
+def _store_toml_subset_value(
+    values: dict[str, object],
+    exception_module: str | None,
+    key: str,
+    value: object,
+) -> None:
+    if exception_module is None:
+        values[key] = value
+        return
+    exception_values = values.setdefault(exception_module, {})
+    if not isinstance(exception_values, dict):
+        raise ValueError(
+            f"coverage exception entry must be a table: {exception_module}"
+        )
+    exception_values[key] = value
+
+
 def _load_toml_subset(path: Path) -> dict[str, Any]:
     """Read the small TOML subset used by the gate on Python < 3.11."""
 
@@ -131,6 +162,17 @@ def _load_toml_subset(path: Path) -> dict[str, Any]:
     pending_key: str | None = None
     pending_value = ""
     for raw_line in path.read_text(encoding="utf-8").splitlines():
+        if pending_key is not None and pending_value.startswith(('"""', "'''")):
+            pending_value += "\n" + raw_line
+            if _toml_subset_value_complete(pending_value):
+                parsed_key = _parse_toml_subset_key(pending_key)
+                parsed_value = _parse_toml_subset_value(pending_value)
+                _store_toml_subset_value(
+                    values, exception_module, parsed_key, parsed_value
+                )
+                pending_key = None
+                pending_value = ""
+            continue
         line = _strip_toml_comment(raw_line).strip()
         if not line:
             continue
@@ -153,13 +195,12 @@ def _load_toml_subset(path: Path) -> dict[str, Any]:
             continue
         if pending_key is not None:
             pending_value += line
-            if pending_value.startswith("[") and pending_value.endswith("]"):
+            if _toml_subset_value_complete(pending_value):
                 parsed_key = _parse_toml_subset_key(pending_key)
                 parsed_value = _parse_toml_subset_value(pending_value)
-                if exception_module is None:
-                    values[parsed_key] = parsed_value
-                else:
-                    values.setdefault(exception_module, {})[parsed_key] = parsed_value
+                _store_toml_subset_value(
+                    values, exception_module, parsed_key, parsed_value
+                )
                 pending_key = None
                 pending_value = ""
             continue
@@ -167,16 +208,13 @@ def _load_toml_subset(path: Path) -> dict[str, Any]:
         if not separator:
             raise ValueError(f"invalid TOML assignment: {line}")
         value = value.strip()
-        if value.startswith("[") and not value.endswith("]"):
+        if not _toml_subset_value_complete(value):
             pending_key = key.strip()
             pending_value = value
             continue
         key = _parse_toml_subset_key(key)
         parsed_value = _parse_toml_subset_value(value)
-        if exception_module is None:
-            values[key] = parsed_value
-        else:
-            values.setdefault(exception_module, {})[key] = parsed_value
+        _store_toml_subset_value(values, exception_module, key, parsed_value)
     if pending_key is not None:
         raise ValueError(f"unterminated TOML value: {pending_key}")
     if target == "exceptions":

@@ -698,7 +698,7 @@ def test_toml_fallback_matches_tomllib_for_inline_and_subtable_exceptions(
 ):
     exception_path = tmp_path / "coverage-exceptions.toml"
     exception_path.write_text(
-        """\
+        '''\
 [exceptions]
 "inline.py" = { issue = "#503", reviewer = "@maintainer", expires = "2099-12-31", reason = "inline", reviewed = true }
 
@@ -706,9 +706,10 @@ def test_toml_fallback_matches_tomllib_for_inline_and_subtable_exceptions(
 issue = "#504"
 reviewer = "@maintainer"
 expires = "2099-12-31"
-reason = "subtable"
+reason = """multi
+line reason"""
 reviewed = true
-""",
+''',
         encoding="utf-8",
     )
     expected = load_exceptions(exception_path)
