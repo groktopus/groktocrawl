@@ -10,6 +10,10 @@ Owner: GroktoCrawl maintainers
 - [QueueDepthSpike](queue-depth-spike.md)
 - [ServiceDown](service-down.md)
 
+## Maintenance Procedures
+
+- [InterruptedJobs](interrupted-jobs.md) — identify and reconcile jobs stranded in `processing` after a restart
+
 ## Emergency Procedures
 
 - [Emergency Branch Protection Bypass](emergency-branch-protection-bypass.md)
