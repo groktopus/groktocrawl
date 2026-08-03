@@ -304,6 +304,7 @@ def pytest_sessionfinish(session, exitstatus):
             for worker_report in worker_reports:
                 entries.extend(json.loads(worker_report.read_text()).get("tests", []))
                 worker_report.unlink()
+                worker_report.with_suffix(".md").unlink(missing_ok=True)
             _write_outcome_reports(config, entries=entries)
         else:
             _write_outcome_reports(config)

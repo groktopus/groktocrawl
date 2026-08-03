@@ -838,13 +838,13 @@ def test_shodan_adapter_source():
     assert "shodan" in src, f"Expected shodan source, got {src}"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="Requires reaching third-party sites from CI runner",
+@pytest.mark.skipif(
+    not os.getenv("RUN_EXTERNAL_TESTS"),
+    reason="CRT.sh access is opt-in because the third-party service is intermittent from CI",
     owner="repository-maintainer",
     issue="#502",
-    classification="quarantined",
-    environment="CI runner cannot reliably reach third-party sites",
+    classification="retained",
+    environment="Third-party CRT.sh access is opt-in via RUN_EXTERNAL_TESTS=1",
 )
 def test_crtsh_adapter_domain():
     """CRT.sh domain lookup should return certificate data."""

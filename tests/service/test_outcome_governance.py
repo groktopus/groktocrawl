@@ -12,7 +12,11 @@ from types import SimpleNamespace
 
 import pytest
 
-from tests.conftest import _outcome_entry, _write_outcome_reports
+from tests.conftest import (
+    _outcome_entry,
+    _write_outcome_reports,
+    pytest_sessionfinish,
+)
 from tests.outcome_governance import CLASSIFICATIONS, governed_skip, validate_metadata
 
 
@@ -208,6 +212,33 @@ def test_failed_outcome_preserves_reason():
     entry = _outcome_entry("tests/unit/test_example.py::test_broken", report)
     assert entry["status"] == "failed"
     assert entry["reason"] == "assertion failed: expected 1, got 2"
+
+
+def test_sessionfinish_fallback_removes_worker_markdown(tmp_path, monkeypatch):
+    report_path = tmp_path / "outcomes.json"
+    worker_json = tmp_path / "outcomes.gw0.json"
+    worker_markdown = tmp_path / "outcomes.gw0.md"
+    worker_json.write_text(
+        json.dumps(
+            {
+                "tests": [
+                    {
+                        "nodeid": "tests/test_worker.py::test_ok",
+                        "status": "passed",
+                        "reason": None,
+                        "metadata": {},
+                    }
+                ]
+            }
+        )
+    )
+    worker_markdown.write_text("partial worker report\n")
+    monkeypatch.setenv("QA_OUTCOME_PATH", str(report_path))
+    config = SimpleNamespace(workerinput=None)
+    pytest_sessionfinish(SimpleNamespace(config=config), 0)
+    assert report_path.exists()
+    assert not worker_json.exists()
+    assert not worker_markdown.exists()
 
 
 def _run_report_fixture(tmp_path, source: str, *, xdist: bool = False):
