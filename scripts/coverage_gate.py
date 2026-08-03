@@ -263,6 +263,12 @@ def normalize_coverage_path(name: str, repo_root: Path) -> str:
     return path.as_posix().lstrip("/")
 
 
+def _coverage_line_numbers(value: object, *, field: str, name: str) -> set[int]:
+    if not isinstance(value, list) or any(type(line) is not int for line in value):
+        raise ValueError(f"coverage field {field} must contain integers: {name}")
+    return set(value)
+
+
 def load_coverage(paths: Iterable[Path], repo_root: Path) -> dict[str, CoverageLines]:
     """Load and union one or more coverage.py JSON reports."""
 
@@ -277,8 +283,12 @@ def load_coverage(paths: Iterable[Path], repo_root: Path) -> dict[str, CoverageL
             for name, payload in files.items():
                 if not isinstance(payload, dict):
                     raise ValueError(f"coverage entry is not an object: {name}")
-                executed = {int(line) for line in payload.get("executed_lines", [])}
-                missing = {int(line) for line in payload.get("missing_lines", [])}
+                executed = _coverage_line_numbers(
+                    payload.get("executed_lines", []), field="executed_lines", name=name
+                )
+                missing = _coverage_line_numbers(
+                    payload.get("missing_lines", []), field="missing_lines", name=name
+                )
                 normalized = normalize_coverage_path(str(name), repo_root)
                 current_executed, current_missing = merged.setdefault(
                     normalized, (set(), set())
@@ -287,7 +297,7 @@ def load_coverage(paths: Iterable[Path], repo_root: Path) -> dict[str, CoverageL
                 current_missing.update(missing)
         except CoverageGateError:
             raise
-        except (AttributeError, OSError, TypeError, ValueError) as exc:
+        except (AttributeError, OSError, OverflowError, TypeError, ValueError) as exc:
             raise CoverageGateError(
                 f"unable to load coverage report '{path}': {exc}"
             ) from exc
