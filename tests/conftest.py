@@ -116,7 +116,9 @@ def _outcome_entry(nodeid, report, metadata=None) -> dict:
         "nodeid": nodeid,
         "status": status,
         "reason": reason,
-        "metadata": metadata or metadata_from_reason(getattr(report, "wasxfail", None)),
+        "metadata": metadata
+        or metadata_from_reason(reason if isinstance(reason, str) else None)
+        or metadata_from_reason(getattr(report, "wasxfail", None)),
     }
 
 
@@ -125,7 +127,7 @@ def pytest_runtest_makereport(item, call):
     outcome = yield
     report = outcome.get_result()
     if call.when != "call" and not (
-        call.when == "setup" and (report.skipped or report.failed)
+        call.when in {"setup", "teardown"} and (report.skipped or report.failed)
     ):
         return
     entry = _outcome_entry(item.nodeid, report, _governance_metadata(item, report))
@@ -221,6 +223,7 @@ def pytest_testnodedown(node, error):
     config._qa_worker_entries = getattr(config, "_qa_worker_entries", [])
     config._qa_worker_entries.extend(entries)
     worker_path.unlink()
+    worker_path.with_suffix(".md").unlink(missing_ok=True)
 
 
 def pytest_sessionfinish(session, exitstatus):
