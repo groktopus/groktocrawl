@@ -812,6 +812,7 @@ VULNCHECK_CVE = "https://vulncheck.com/cve/CVE-2024-3094"
 CENSYS_IP = "https://search.censys.io/ipv4/8.8.8.8"
 
 
+@pytest.mark.external
 def test_shodan_adapter_public_host():
     """Shodan host page should be handled by the adapter (scrape fallback)."""
     r = httpx.post(SCRAPER + "/scrape", json={"url": SHODAN_HOST}, timeout=120)
@@ -858,6 +859,7 @@ def test_crtsh_adapter_domain():
     assert "example.com" in md or "Certificate" in md
 
 
+@pytest.mark.external
 def test_exploitdb_adapter_exploit():
     """Exploit-DB exploit page should return content via adapter."""
     r = httpx.post(SCRAPER + "/scrape", json={"url": EXPLOITDB_ID}, timeout=120)
@@ -867,6 +869,7 @@ def test_exploitdb_adapter_exploit():
     assert len(md) > 50, f"Expected >50 chars, got {len(md)}"
 
 
+@pytest.mark.external
 def test_mitreattack_adapter_technique():
     """MITRE ATT&CK technique page should return content via STIX adapter."""
     r = httpx.post(SCRAPER + "/scrape", json={"url": MITRE_TECHNIQUE}, timeout=120)
@@ -913,6 +916,7 @@ def test_censys_adapter_ip():
     assert len(md) > 20, f"Expected >20 chars, got {len(md)}"
 
 
+@pytest.mark.external
 def test_virustotal_adapter_file():
     """VirusTotal file page should be handled by the adapter."""
     r = httpx.post(SCRAPER + "/scrape", json={"url": VT_FILE}, timeout=120)
@@ -928,6 +932,7 @@ def test_security_adapters_loaded():
     assert r.status_code == 200
 
 
+@pytest.mark.external
 def test_otx_adapter_indicator():
     """OTX indicator page should return content via adapter."""
     r = httpx.post(SCRAPER + "/scrape", json={"url": OTX_IP}, timeout=120)
@@ -955,6 +960,7 @@ def test_hibp_adapter_breach():
     assert len(md) > 20, f"Expected >20 chars, got {len(md)}"
 
 
+@pytest.mark.external
 def test_vulncheck_adapter_cve():
     """VulnCheck CVE page should return content via adapter."""
     r = httpx.post(SCRAPER + "/scrape", json={"url": VULNCHECK_CVE}, timeout=120)

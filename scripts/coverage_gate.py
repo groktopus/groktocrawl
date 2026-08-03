@@ -65,6 +65,15 @@ def _split_toml_values(value: str) -> list[str]:
     return [part for part in parts if part]
 
 
+def _parse_toml_subset_key(key: str) -> str:
+    key = key.strip()
+    if key.startswith('"') and key.endswith('"'):
+        return ast.literal_eval(key)
+    if key.startswith("'") and key.endswith("'"):
+        return key[1:-1]
+    return key
+
+
 def _parse_toml_subset_value(value: str) -> object:
     value = value.strip()
     if value in {"true", "false"}:
@@ -79,7 +88,7 @@ def _parse_toml_subset_value(value: str) -> object:
             key, separator, item_value = item.partition("=")
             if not separator:
                 raise ValueError(f"invalid inline TOML table entry: {item}")
-            result[key.strip()] = _parse_toml_subset_value(item_value)
+            result[_parse_toml_subset_key(key)] = _parse_toml_subset_value(item_value)
         return result
     if value.startswith('"') and value.endswith('"'):
         return ast.literal_eval(value)
@@ -143,9 +152,7 @@ def _load_toml_subset(path: Path) -> dict[str, Any]:
             pending_key = key.strip()
             pending_value = value
             continue
-        key = key.strip()
-        if key.startswith('"') and key.endswith('"'):
-            key = ast.literal_eval(key)
+        key = _parse_toml_subset_key(key)
         values[key] = _parse_toml_subset_value(value)
     if pending_key is not None:
         raise ValueError(f"unterminated TOML value: {pending_key}")
@@ -548,7 +555,6 @@ def _fail_gate(args: argparse.Namespace, detail: str) -> int:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     repo_root = args.repo_root.resolve()
-    policy = load_policy(args.policy)
     missing = [str(path) for path in args.coverage_json if not path.exists()]
     if missing:
         return _fail_gate(
@@ -556,12 +562,14 @@ def main(argv: list[str] | None = None) -> int:
             f"coverage report not found: {', '.join(missing)}",
         )
     try:
+        policy = load_policy(args.policy)
         coverage = load_coverage(args.coverage_json, repo_root)
         diff_text = git_diff(repo_root, args.base_sha, args.head_sha)
-    except CoverageGateError as exc:
+        exceptions = load_exceptions(args.exceptions)
+    except (AttributeError, CoverageGateError, OSError, TypeError, ValueError) as exc:
         return _fail_gate(args, str(exc))
     changed = parse_changed_lines(diff_text)
-    results = evaluate(changed, coverage, policy, load_exceptions(args.exceptions))
+    results = evaluate(changed, coverage, policy, exceptions)
     summary = render_summary(
         results,
         coverage,
