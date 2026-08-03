@@ -12,10 +12,10 @@ from types import SimpleNamespace
 
 import pytest
 
+import tests.conftest as outcome_conftest
 from tests.conftest import (
     _outcome_entry,
     _write_outcome_reports,
-    pytest_sessionfinish,
 )
 from tests.outcome_governance import CLASSIFICATIONS, governed_skip, validate_metadata
 
@@ -234,8 +234,12 @@ def test_sessionfinish_fallback_removes_worker_markdown(tmp_path, monkeypatch):
     )
     worker_markdown.write_text("partial worker report\n")
     monkeypatch.setenv("QA_OUTCOME_PATH", str(report_path))
-    config = SimpleNamespace(workerinput=None)
-    pytest_sessionfinish(SimpleNamespace(config=config), 0)
+    original_collection_outcomes = outcome_conftest._collection_outcomes
+    with monkeypatch.context() as isolated:
+        isolated.setattr(outcome_conftest, "_collection_outcomes", [])
+        config = SimpleNamespace(workerinput=None)
+        outcome_conftest.pytest_sessionfinish(SimpleNamespace(config=config), 0)
+    assert outcome_conftest._collection_outcomes is original_collection_outcomes
     assert report_path.exists()
     assert not worker_json.exists()
     assert not worker_markdown.exists()
