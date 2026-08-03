@@ -343,7 +343,7 @@ jobs:
 
       - name: Run integration tests
         run: |
-          docker compose exec -T agent-svc pip install pytest pytest-asyncio pytest-timeout jinja2 python-docx python-pptx openpyxl tabulate markdownify==1.2.3 readability-lxml==0.8.4.1 PyYAML -q
+          docker compose exec -T agent-svc pip install pytest pytest-asyncio pytest-xdist pytest-timeout jinja2 python-docx python-pptx openpyxl tabulate markdownify==1.2.3 readability-lxml==0.8.4.1 PyYAML -q
           set +e
           docker compose exec -T agent-svc env \
             QA_OUTCOME_PATH=/app/qa-outcomes-integration.json \

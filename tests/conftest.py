@@ -119,7 +119,7 @@ def _outcome_entry(nodeid, report, metadata=None) -> dict:
         reason = str(report.longrepr[2]) if isinstance(report.longrepr, tuple) else None
     else:
         status = "failed"
-        reason = None
+        reason = str(report.longrepr) if report.longrepr else None
     if status == "passed":
         metadata = {}
     else:

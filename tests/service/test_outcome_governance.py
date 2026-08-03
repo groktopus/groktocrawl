@@ -198,6 +198,18 @@ def test_passed_outcome_drops_governance_metadata():
     assert entry["metadata"] == {}
 
 
+def test_failed_outcome_preserves_reason():
+    report = SimpleNamespace(
+        passed=False,
+        skipped=False,
+        failed=True,
+        longrepr="assertion failed: expected 1, got 2",
+    )
+    entry = _outcome_entry("tests/unit/test_example.py::test_broken", report)
+    assert entry["status"] == "failed"
+    assert entry["reason"] == "assertion failed: expected 1, got 2"
+
+
 def _run_report_fixture(tmp_path, source: str, *, xdist: bool = False):
     test_file = tmp_path / "test_report_fixture.py"
     report_file = tmp_path / "outcomes.json"
