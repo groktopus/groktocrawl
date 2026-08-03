@@ -13,6 +13,7 @@ import argparse
 import ast
 import fnmatch
 import json
+import math
 import re
 import subprocess
 import sys
@@ -125,6 +126,7 @@ def _load_toml_subset(path: Path) -> dict[str, Any]:
         "tool.groktocrawl.coverage" if path.name == "pyproject.toml" else "exceptions"
     )
     section: str | None = None
+    exception_module: str | None = None
     values: dict[str, object] = {}
     pending_key: str | None = None
     pending_value = ""
@@ -133,14 +135,31 @@ def _load_toml_subset(path: Path) -> dict[str, Any]:
         if not line:
             continue
         if line.startswith("[") and line.endswith("]"):
-            section = line[1:-1]
+            header = line[1:-1].strip()
+            section = header
+            exception_module = None
+            if target == "exceptions" and header.startswith("exceptions."):
+                module_key = header.removeprefix("exceptions.").strip()
+                if not (
+                    len(module_key) >= 2
+                    and module_key[0] in {'"', "'"}
+                    and module_key[-1] == module_key[0]
+                ):
+                    raise ValueError(f"invalid exceptions table header: {line}")
+                exception_module = _parse_toml_subset_key(module_key)
+                section = "exceptions"
             continue
         if section != target:
             continue
         if pending_key is not None:
             pending_value += line
             if pending_value.startswith("[") and pending_value.endswith("]"):
-                values[pending_key] = _parse_toml_subset_value(pending_value)
+                parsed_key = _parse_toml_subset_key(pending_key)
+                parsed_value = _parse_toml_subset_value(pending_value)
+                if exception_module is None:
+                    values[parsed_key] = parsed_value
+                else:
+                    values.setdefault(exception_module, {})[parsed_key] = parsed_value
                 pending_key = None
                 pending_value = ""
             continue
@@ -153,7 +172,11 @@ def _load_toml_subset(path: Path) -> dict[str, Any]:
             pending_value = value
             continue
         key = _parse_toml_subset_key(key)
-        values[key] = _parse_toml_subset_value(value)
+        parsed_value = _parse_toml_subset_value(value)
+        if exception_module is None:
+            values[key] = parsed_value
+        else:
+            values.setdefault(exception_module, {})[key] = parsed_value
     if pending_key is not None:
         raise ValueError(f"unterminated TOML value: {pending_key}")
     if target == "exceptions":
@@ -207,28 +230,57 @@ class FileResult:
         )
 
 
-def _as_string_tuple(
-    value: object, *, default: tuple[str, ...] = ()
+def _required_string_tuple(
+    raw: Mapping[str, Any], field: str, *, allow_empty: bool
 ) -> tuple[str, ...]:
-    if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
-        return default
+    if field not in raw:
+        raise ValueError(f"coverage policy field {field} is required")
+    value = raw[field]
+    if not isinstance(value, list):
+        raise ValueError(f"coverage policy field {field} must be a string list")
+    if not allow_empty and not value:
+        raise ValueError(f"coverage policy field {field} must be non-empty")
+    if any(not isinstance(item, str) or not item.strip() for item in value):
+        raise ValueError(
+            f"coverage policy field {field} must contain non-empty strings"
+        )
     return tuple(value)
+
+
+def _required_percentage(raw: Mapping[str, Any], field: str) -> float:
+    if field not in raw:
+        raise ValueError(f"coverage policy field {field} is required")
+    value = raw[field]
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        raise ValueError(f"coverage policy field {field} must be numeric")
+    number = float(value)
+    if not math.isfinite(number) or not 0 <= number <= 100:
+        raise ValueError(
+            f"coverage policy field {field} must be finite and in the range 0..100"
+        )
+    return number
 
 
 def load_policy(path: Path) -> CoveragePolicy:
     """Load the checked-in coverage policy from pyproject.toml."""
 
     document = _load_toml(path)
-    raw = document.get("tool", {}).get("groktocrawl", {}).get("coverage", {})
-    if not isinstance(raw, dict):
-        raw = {}
+    tool = document.get("tool")
+    groktocrawl = tool.get("groktocrawl") if isinstance(tool, Mapping) else None
+    raw = groktocrawl.get("coverage") if isinstance(groktocrawl, Mapping) else None
+    if not isinstance(raw, Mapping):
+        raise ValueError(
+            "coverage policy must define a [tool.groktocrawl.coverage] table"
+        )
     return CoveragePolicy(
-        source_roots=_as_string_tuple(raw.get("source_roots")),
-        excluded_paths=_as_string_tuple(raw.get("excluded_paths")),
-        high_risk_paths=_as_string_tuple(raw.get("high_risk_paths")),
-        changed_line_target=float(raw.get("changed_line_target", 80.0)),
-        high_risk_changed_line_fail_under=float(
-            raw.get("high_risk_changed_line_fail_under", 90.0)
+        source_roots=_required_string_tuple(raw, "source_roots", allow_empty=False),
+        excluded_paths=_required_string_tuple(raw, "excluded_paths", allow_empty=True),
+        high_risk_paths=_required_string_tuple(
+            raw, "high_risk_paths", allow_empty=False
+        ),
+        changed_line_target=_required_percentage(raw, "changed_line_target"),
+        high_risk_changed_line_fail_under=_required_percentage(
+            raw, "high_risk_changed_line_fail_under"
         ),
     )
 
@@ -401,9 +453,14 @@ def load_exceptions(path: Path) -> dict[str, Mapping[str, Any]]:
     raw = document.get("exceptions", {})
     if not isinstance(raw, dict):
         raise ValueError(f"coverage exceptions must be a table: {path}")
-    return {
-        str(module): value for module, value in raw.items() if isinstance(value, dict)
-    }
+    invalid = [
+        module for module, value in raw.items() if not isinstance(value, Mapping)
+    ]
+    if invalid:
+        raise ValueError(
+            f"coverage exception entries must be tables: {', '.join(map(str, invalid))}"
+        )
+    return {str(module): value for module, value in raw.items()}
 
 
 def valid_exception(entry: Mapping[str, Any], *, today: date | None = None) -> bool:
@@ -486,14 +543,7 @@ def render_summary(
     total_percent = (
         100.0 * total_covered / total_executable if total_executable else None
     )
-    failures = [
-        result
-        for result in rows
-        if result.high_risk
-        and result.coverage_percent is not None
-        and result.coverage_percent < result.threshold
-        and result.exception is None
-    ]
+    failures = [result for result in rows if not result.passed]
     lines = [
         "# Changed-line coverage",
         "",
@@ -514,7 +564,7 @@ def render_summary(
             outcome = "INFO (no executable lines)"
         elif result.exception is not None:
             outcome = f"EXCEPTION ({result.exception['issue']})"
-        elif result.high_risk and result.coverage_percent < result.threshold:
+        elif not result.passed:
             outcome = "FAIL"
         elif not result.high_risk and result.coverage_percent < result.threshold:
             outcome = "INFO (below target)"
@@ -590,17 +640,7 @@ def main(argv: list[str] | None = None) -> int:
         args.summary_path.parent.mkdir(parents=True, exist_ok=True)
         args.summary_path.write_text(summary, encoding="utf-8")
     print(summary, end="")
-    return (
-        1
-        if any(
-            result.high_risk
-            and result.coverage_percent is not None
-            and result.coverage_percent < result.threshold
-            and result.exception is None
-            for result in results
-        )
-        else 0
-    )
+    return 1 if any(not result.passed for result in results) else 0
 
 
 if __name__ == "__main__":

@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from datetime import date
 
+import pytest
+
 import scripts.coverage_gate as coverage_gate
 from scripts.coverage_gate import (
     CoverageGateError,
@@ -202,6 +204,7 @@ def test_cli_returns_failure_for_uncovered_high_risk_change(tmp_path, monkeypatc
         """\
 [tool.groktocrawl.coverage]
 source_roots = ["common"]
+excluded_paths = []
 high_risk_paths = ["common/url.py"]
 changed_line_target = 80.0
 high_risk_changed_line_fail_under = 90.0
@@ -263,6 +266,7 @@ def test_cli_reports_unresolvable_diff_base(tmp_path, monkeypatch, capsys):
         """\
 [tool.groktocrawl.coverage]
 source_roots = ["common"]
+excluded_paths = []
 high_risk_paths = ["common/url.py"]
 changed_line_target = 80.0
 high_risk_changed_line_fail_under = 90.0
@@ -309,6 +313,7 @@ def test_cli_reports_missing_coverage_report(tmp_path, capsys):
         """\
 [tool.groktocrawl.coverage]
 source_roots = ["common"]
+excluded_paths = []
 high_risk_paths = ["common/url.py"]
 changed_line_target = 80.0
 high_risk_changed_line_fail_under = 90.0
@@ -346,6 +351,7 @@ def test_cli_reports_malformed_coverage_report(tmp_path, capsys):
         """\
 [tool.groktocrawl.coverage]
 source_roots = ["common"]
+excluded_paths = []
 high_risk_paths = ["common/url.py"]
 changed_line_target = 80.0
 high_risk_changed_line_fail_under = 90.0
@@ -387,6 +393,7 @@ def test_cli_reports_non_integer_coverage_line(tmp_path, capsys):
         """\
 [tool.groktocrawl.coverage]
 source_roots = ["common"]
+excluded_paths = []
 high_risk_paths = ["common/url.py"]
 changed_line_target = 80.0
 high_risk_changed_line_fail_under = 90.0
@@ -461,6 +468,10 @@ def test_cli_reports_malformed_exceptions_file(tmp_path, monkeypatch, capsys):
         """\
 [tool.groktocrawl.coverage]
 source_roots = ["common"]
+excluded_paths = []
+high_risk_paths = ["common/url.py"]
+changed_line_target = 80.0
+high_risk_changed_line_fail_under = 90.0
 """,
         encoding="utf-8",
     )
@@ -492,6 +503,89 @@ source_roots = ["common"]
 
     assert exit_code == 2
     assert "Coverage gate error:" in capsys.readouterr().err
+    assert "Changed-line coverage gate error" in summary_path.read_text(
+        encoding="utf-8"
+    )
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "expected"),
+    [
+        ("source_roots", "[]", "source_roots must be non-empty"),
+        ("high_risk_paths", '"common/url.py"', "high_risk_paths must be a string list"),
+        ("high_risk_paths", '[""]', "high_risk_paths must contain non-empty strings"),
+        ("changed_line_target", "nan", "changed_line_target must be finite"),
+    ],
+)
+def test_cli_rejects_invalid_policy_with_error_summary(
+    tmp_path, monkeypatch, capsys, field, value, expected
+):
+    policy_path = tmp_path / "pyproject.toml"
+    fields = {
+        "source_roots": '["common"]',
+        "excluded_paths": "[]",
+        "high_risk_paths": '["common/url.py"]',
+        "changed_line_target": "80.0",
+        "high_risk_changed_line_fail_under": "90.0",
+    }
+    fields[field] = value
+    policy_path.write_text(
+        "[tool.groktocrawl.coverage]\n"
+        + "\n".join(f"{name} = {item}" for name, item in fields.items())
+        + "\n",
+        encoding="utf-8",
+    )
+    coverage_path = tmp_path / "coverage.json"
+    coverage_path.write_text(
+        json.dumps(
+            {
+                "files": {
+                    "common/url.py": {
+                        "executed_lines": [],
+                        "missing_lines": [10],
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        coverage_gate,
+        "git_diff",
+        lambda *_args: (
+            """\
+diff --git a/common/url.py b/common/url.py
+--- a/common/url.py
++++ b/common/url.py
+@@ -9,0 +10 @@
++return False
+"""
+        ),
+    )
+    summary_path = tmp_path / "summary.md"
+
+    exit_code = main(
+        [
+            "--coverage-json",
+            str(coverage_path),
+            "--base-sha",
+            "base",
+            "--head-sha",
+            "head",
+            "--repo-root",
+            str(tmp_path),
+            "--policy",
+            str(policy_path),
+            "--summary-path",
+            str(summary_path),
+        ]
+    )
+
+    assert exit_code == 2
+    assert (
+        f"Coverage gate error: coverage policy field {expected}"
+        in capsys.readouterr().err
+    )
     assert "Changed-line coverage gate error" in summary_path.read_text(
         encoding="utf-8"
     )
@@ -565,6 +659,32 @@ def test_toml_fallback_unquotes_literal_string_exception_keys(tmp_path, monkeypa
 
     assert "common/url.py" in exceptions
     assert valid_exception(exceptions["common/url.py"], today=date(2026, 1, 1))
+
+
+def test_toml_fallback_matches_tomllib_for_inline_and_subtable_exceptions(
+    tmp_path, monkeypatch
+):
+    exception_path = tmp_path / "coverage-exceptions.toml"
+    exception_path.write_text(
+        """\
+[exceptions]
+"inline.py" = { issue = "#503", reviewer = "@maintainer", expires = "2099-12-31", reason = "inline", reviewed = true }
+
+[exceptions."common/url.py"]
+issue = "#504"
+reviewer = "@maintainer"
+expires = "2099-12-31"
+reason = "subtable"
+reviewed = true
+""",
+        encoding="utf-8",
+    )
+    expected = load_exceptions(exception_path)
+    monkeypatch.setattr(coverage_gate, "tomllib", None)
+
+    actual = load_exceptions(exception_path)
+
+    assert actual == expected
 
 
 def test_changed_lines_without_executable_coverage_are_informational():
