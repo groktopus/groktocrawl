@@ -199,6 +199,9 @@ def _write_outcome_reports(config, entries=None, path=None) -> None:
 
 
 def pytest_configure(config):
+    config.addinivalue_line(
+        "markers", "external: requires network access or a deployed external service"
+    )
     config._qa_outcomes = []
     config._qa_outcome_by_nodeid = {}
 
