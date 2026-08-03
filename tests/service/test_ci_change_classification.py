@@ -202,6 +202,12 @@ class RuntimeGateWorkflowContractTests(unittest.TestCase):
         )
         self.assertIn("-m 'not external'", self.integration_tests)
 
+    def test_changed_line_gate_skips_ref_creation_without_base_sha(self) -> None:
+        zero_sha = "0" * 40
+        guard = f'if [ "$COVERAGE_BASE_SHA" = "{zero_sha}" ]; then'
+        self.assertIn(guard, self.integration_tests)
+        self.assertIn("no prior commit exists for this ref", self.integration_tests)
+
     def test_runtime_gate_only_bypasses_docs_only_pull_requests(self) -> None:
         self.assertIn("if: always()", self.runtime_gate)
         self.assertIn(
@@ -258,6 +264,12 @@ class FastTestsWorkflowContractTests(unittest.TestCase):
         self.assertNotIn("--no-cov", self.workflow)
         self.assertNotIn("tests/integration", self.workflow)
         self.assertNotIn("docker", self.workflow.lower())
+
+    def test_changed_line_gate_skips_ref_creation_without_base_sha(self) -> None:
+        zero_sha = "0" * 40
+        guard = f'if [ "$COVERAGE_BASE_SHA" = "{zero_sha}" ]; then'
+        self.assertIn(guard, self.workflow)
+        self.assertIn("no prior commit exists for this ref", self.workflow)
 
 
 if __name__ == "__main__":

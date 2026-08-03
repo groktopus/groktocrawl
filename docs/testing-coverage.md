@@ -32,6 +32,10 @@ rather than treating every changed line as uncovered. Coverage ownership remains
 the lane that measures the module, so a missing report does not bypass the complete
 Fast Tests policy.
 
+When a workflow event creates a ref with no prior commit, GitHub supplies an all-zero
+base SHA. The workflow skips only the changed-line comparison in that case because no
+meaningful diff base exists; the test lane and its aggregate coverage still run.
+
 - The existing aggregate floor remains **20%**. It is not a target and is not raised
   by this policy.
 - A standard source module has an **80% changed-line target**. Results below that

@@ -39,6 +39,10 @@ jobs:
           COVERAGE_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           COVERAGE_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
+          if [ "$COVERAGE_BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            echo "Changed-line coverage skipped: no prior commit exists for this ref."
+            exit 0
+          fi
           uv run --no-sync python scripts/coverage_gate.py \
             --coverage-json coverage/fast.json \
             --base-sha "$COVERAGE_BASE_SHA" \
