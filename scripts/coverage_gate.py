@@ -10,23 +10,18 @@ observable coverage obligations.
 from __future__ import annotations
 
 import argparse
-import ast
 import fnmatch
 import json
 import math
 import re
 import subprocess
 import sys
+import tomllib
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 from typing import Any
-
-try:
-    import tomllib
-except ModuleNotFoundError:  # pragma: no cover - exercised on the CI host's Python
-    tomllib = None  # type: ignore[assignment]
 
 DEFAULT_POLICY_PATH = Path("pyproject.toml")
 DEFAULT_EXCEPTION_PATH = Path("qa/coverage-exceptions.toml")
@@ -38,193 +33,7 @@ class CoverageGateError(RuntimeError):
     """A gate input could not be resolved safely."""
 
 
-def _split_toml_values(value: str) -> list[str]:
-    parts: list[str] = []
-    start = 0
-    depth = 0
-    quote: str | None = None
-    escaped = False
-    for index, character in enumerate(value):
-        if quote is not None:
-            if quote == '"' and escaped:
-                escaped = False
-            elif quote == '"' and character == "\\":
-                escaped = True
-            elif character == quote:
-                quote = None
-            continue
-        if character in {'"', "'"}:
-            quote = character
-        elif character in "[{":
-            depth += 1
-        elif character in "]}":
-            depth -= 1
-        elif character == "," and depth == 0:
-            parts.append(value[start:index].strip())
-            start = index + 1
-    parts.append(value[start:].strip())
-    return [part for part in parts if part]
-
-
-def _parse_toml_subset_key(key: str) -> str:
-    key = key.strip()
-    if key.startswith('"') and key.endswith('"'):
-        return ast.literal_eval(key)
-    if key.startswith("'") and key.endswith("'"):
-        return key[1:-1]
-    return key
-
-
-def _parse_toml_subset_value(value: str) -> object:
-    value = value.strip()
-    if value in {"true", "false"}:
-        return value == "true"
-    if value.startswith('"""') and value.endswith('"""'):
-        parsed = ast.literal_eval(value)
-        return parsed.removeprefix("\n")
-    if value.startswith("'''") and value.endswith("'''"):
-        return value[3:-3].removeprefix("\n")
-    if value.startswith("[") and value.endswith("]"):
-        return [
-            _parse_toml_subset_value(part) for part in _split_toml_values(value[1:-1])
-        ]
-    if value.startswith("{") and value.endswith("}"):
-        result: dict[str, object] = {}
-        for item in _split_toml_values(value[1:-1]):
-            key, separator, item_value = item.partition("=")
-            if not separator:
-                raise ValueError(f"invalid inline TOML table entry: {item}")
-            result[_parse_toml_subset_key(key)] = _parse_toml_subset_value(item_value)
-        return result
-    if value.startswith('"') and value.endswith('"'):
-        return ast.literal_eval(value)
-    if value.startswith("'") and value.endswith("'"):
-        return value[1:-1]
-    try:
-        return float(value)
-    except ValueError:
-        return value
-
-
-def _strip_toml_comment(line: str) -> str:
-    quote: str | None = None
-    escaped = False
-    for index, character in enumerate(line):
-        if quote is not None:
-            if quote == '"' and escaped:
-                escaped = False
-            elif quote == '"' and character == "\\":
-                escaped = True
-            elif character == quote:
-                quote = None
-        elif character in {'"', "'"}:
-            quote = character
-        elif character == "#":
-            return line[:index].rstrip()
-    return line.rstrip()
-
-
-def _toml_subset_value_complete(value: str) -> bool:
-    if value.startswith(('"""', "'''")):
-        delimiter = value[:3]
-        return len(value) >= 6 and value.endswith(delimiter)
-    if value.startswith("["):
-        return value.endswith("]")
-    return True
-
-
-def _store_toml_subset_value(
-    values: dict[str, object],
-    exception_module: str | None,
-    key: str,
-    value: object,
-) -> None:
-    if exception_module is None:
-        values[key] = value
-        return
-    exception_values = values.setdefault(exception_module, {})
-    if not isinstance(exception_values, dict):
-        raise ValueError(
-            f"coverage exception entry must be a table: {exception_module}"
-        )
-    exception_values[key] = value
-
-
-def _load_toml_subset(path: Path) -> dict[str, Any]:
-    """Read the small TOML subset used by the gate on Python < 3.11."""
-
-    target = (
-        "tool.groktocrawl.coverage" if path.name == "pyproject.toml" else "exceptions"
-    )
-    section: str | None = None
-    exception_module: str | None = None
-    values: dict[str, object] = {}
-    pending_key: str | None = None
-    pending_value = ""
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        if pending_key is not None and pending_value.startswith(('"""', "'''")):
-            pending_value += "\n" + raw_line
-            if _toml_subset_value_complete(pending_value):
-                parsed_key = _parse_toml_subset_key(pending_key)
-                parsed_value = _parse_toml_subset_value(pending_value)
-                _store_toml_subset_value(
-                    values, exception_module, parsed_key, parsed_value
-                )
-                pending_key = None
-                pending_value = ""
-            continue
-        line = _strip_toml_comment(raw_line).strip()
-        if not line:
-            continue
-        if line.startswith("[") and line.endswith("]"):
-            header = line[1:-1].strip()
-            section = header
-            exception_module = None
-            if target == "exceptions" and header.startswith("exceptions."):
-                module_key = header.removeprefix("exceptions.").strip()
-                if not (
-                    len(module_key) >= 2
-                    and module_key[0] in {'"', "'"}
-                    and module_key[-1] == module_key[0]
-                ):
-                    raise ValueError(f"invalid exceptions table header: {line}")
-                exception_module = _parse_toml_subset_key(module_key)
-                section = "exceptions"
-            continue
-        if section != target:
-            continue
-        if pending_key is not None:
-            pending_value += line
-            if _toml_subset_value_complete(pending_value):
-                parsed_key = _parse_toml_subset_key(pending_key)
-                parsed_value = _parse_toml_subset_value(pending_value)
-                _store_toml_subset_value(
-                    values, exception_module, parsed_key, parsed_value
-                )
-                pending_key = None
-                pending_value = ""
-            continue
-        key, separator, value = line.partition("=")
-        if not separator:
-            raise ValueError(f"invalid TOML assignment: {line}")
-        value = value.strip()
-        if not _toml_subset_value_complete(value):
-            pending_key = key.strip()
-            pending_value = value
-            continue
-        key = _parse_toml_subset_key(key)
-        parsed_value = _parse_toml_subset_value(value)
-        _store_toml_subset_value(values, exception_module, key, parsed_value)
-    if pending_key is not None:
-        raise ValueError(f"unterminated TOML value: {pending_key}")
-    if target == "exceptions":
-        return {"exceptions": values}
-    return {"tool": {"groktocrawl": {"coverage": values}}}
-
-
 def _load_toml(path: Path) -> dict[str, Any]:
-    if tomllib is None:
-        return _load_toml_subset(path)
     with path.open("rb") as stream:
         return tomllib.load(stream)
 

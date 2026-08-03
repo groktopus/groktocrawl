@@ -13,7 +13,6 @@ from scripts.coverage_gate import (
     evaluate,
     load_coverage,
     load_exceptions,
-    load_policy,
     main,
     parse_changed_lines,
     render_summary,
@@ -623,101 +622,29 @@ diff --git a/common/url.py b/common/url.py
     )
 
 
-def test_toml_fallback_loads_policy_and_reviewed_exception(tmp_path, monkeypatch):
-    policy_path = tmp_path / "pyproject.toml"
-    policy_path.write_text(
-        """\
-[tool.groktocrawl.coverage]
-source_roots = ["common"]
-excluded_paths = ["tests"]
-high_risk_paths = ["common/url.py"]
-changed_line_target = 80.0
-high_risk_changed_line_fail_under = 90.0
-""",
-        encoding="utf-8",
-    )
-    exception_path = tmp_path / "coverage-exceptions.toml"
-    exception_path.write_text(
-        """\
-[exceptions]
-"common/url.py" = { issue = "#503", reviewer = "@maintainer", expires = "2099-12-31", reason = "bounded", reviewed = true }
-""",
-        encoding="utf-8",
-    )
-    monkeypatch.setattr(coverage_gate, "tomllib", None)
-
-    policy = load_policy(policy_path)
-    exceptions = load_exceptions(exception_path)
-
-    assert policy.source_roots == ("common",)
-    assert policy.high_risk_changed_line_fail_under == 90.0
-    assert valid_exception(exceptions["common/url.py"], today=date(2026, 1, 1))
-
-
-def test_toml_fallback_accepts_literal_string_values(tmp_path, monkeypatch):
-    policy_path = tmp_path / "pyproject.toml"
-    policy_path.write_text(
-        """\
-[tool.groktocrawl.coverage]
-source_roots = ['common']
-excluded_paths = ['tests']
-high_risk_paths = ['common/url.py']
-changed_line_target = 80.0
-high_risk_changed_line_fail_under = 90.0
-""",
-        encoding="utf-8",
-    )
-    monkeypatch.setattr(coverage_gate, "tomllib", None)
-
-    policy = load_policy(policy_path)
-
-    assert policy.source_roots == ("common",)
-    assert policy.excluded_paths == ("tests",)
-    assert policy.high_risk_paths == ("common/url.py",)
-
-
-def test_toml_fallback_unquotes_literal_string_exception_keys(tmp_path, monkeypatch):
-    exception_path = tmp_path / "coverage-exceptions.toml"
-    exception_path.write_text(
-        """\
-[exceptions]
-'common/url.py' = { issue = "#503", reviewer = "@maintainer", expires = "2099-12-31", reason = "bounded", reviewed = true }
-""",
-        encoding="utf-8",
-    )
-    monkeypatch.setattr(coverage_gate, "tomllib", None)
-
-    exceptions = load_exceptions(exception_path)
-
-    assert "common/url.py" in exceptions
-    assert valid_exception(exceptions["common/url.py"], today=date(2026, 1, 1))
-
-
-def test_toml_fallback_matches_tomllib_for_inline_and_subtable_exceptions(
-    tmp_path, monkeypatch
-):
+def test_exceptions_accept_multiline_reasons_supported_by_tomllib(tmp_path):
     exception_path = tmp_path / "coverage-exceptions.toml"
     exception_path.write_text(
         '''\
-[exceptions]
-"inline.py" = { issue = "#503", reviewer = "@maintainer", expires = "2099-12-31", reason = "inline", reviewed = true }
-
 [exceptions."common/url.py"]
-issue = "#504"
+issue = "#503"
 reviewer = "@maintainer"
 expires = "2099-12-31"
 reason = """multi
-line reason"""
+line reason""" # trailing comment
 reviewed = true
+
+[exceptions]
+"common/inline.py" = { issue = "#504", reviewer = "@maintainer", expires = "2099-12-31", reason = """inline
+multiline reason""", reviewed = true }
 ''',
         encoding="utf-8",
     )
-    expected = load_exceptions(exception_path)
-    monkeypatch.setattr(coverage_gate, "tomllib", None)
 
-    actual = load_exceptions(exception_path)
+    exceptions = load_exceptions(exception_path)
 
-    assert actual == expected
+    assert exceptions["common/url.py"]["reason"] == "multi\nline reason"
+    assert exceptions["common/inline.py"]["reason"] == "inline\nmultiline reason"
 
 
 def test_changed_lines_without_executable_coverage_are_informational():

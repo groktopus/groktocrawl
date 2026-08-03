@@ -169,6 +169,10 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
       - name: Set up .env
         run: |
           cp .env.sample .env
