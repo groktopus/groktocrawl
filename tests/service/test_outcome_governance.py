@@ -214,6 +214,18 @@ def test_failed_outcome_preserves_reason():
     assert entry["reason"] == "assertion failed: expected 1, got 2"
 
 
+def test_strict_xpass_reason_removes_pytest_prefix():
+    report = SimpleNamespace(
+        passed=False,
+        skipped=False,
+        failed=True,
+        longrepr="[XPASS(strict)] declared reason",
+    )
+    entry = _outcome_entry("tests/unit/test_example.py::test_xpass", report)
+    assert entry["status"] == "xpassed"
+    assert entry["reason"] == "declared reason"
+
+
 def test_sessionfinish_fallback_removes_worker_markdown(tmp_path, monkeypatch):
     report_path = tmp_path / "outcomes.json"
     worker_json = tmp_path / "outcomes.gw0.json"

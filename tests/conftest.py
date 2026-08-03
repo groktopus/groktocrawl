@@ -104,7 +104,9 @@ def _outcome_entry(nodeid, report, metadata=None) -> dict:
     report_text = str(getattr(report, "longrepr", ""))
     if report.failed and "XPASS(strict)" in report_text:
         status = "xpassed"
-        reason = getattr(report, "wasxfail", None) or report_text
+        reason = getattr(report, "wasxfail", None) or report_text.removeprefix(
+            "[XPASS(strict)] "
+        )
     elif report.skipped and hasattr(report, "wasxfail"):
         status = "xfailed"
         reason = report.wasxfail
