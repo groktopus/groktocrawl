@@ -838,6 +838,14 @@ def test_shodan_adapter_source():
     assert "shodan" in src, f"Expected shodan source, got {src}"
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason="Requires reaching third-party sites from CI runner",
+    owner="repository-maintainer",
+    issue="#502",
+    classification="quarantined",
+    environment="CI runner cannot reliably reach third-party sites",
+)
 def test_crtsh_adapter_domain():
     """CRT.sh domain lookup should return certificate data."""
     r = httpx.post(SCRAPER + "/scrape", json={"url": CRTSH_DOMAIN}, timeout=120)

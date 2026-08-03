@@ -46,7 +46,7 @@ reported **951 passed, 144 skipped, 6 xfailed, 13 xpassed, and 2 setup
 errors**. These are different runs, not interchangeable counts. The exact
 node IDs from the later run are the authoritative input for this triage.
 
-The 14 xpasses were classified as `fixed/re-enabled` and their stale strict
+The 13 xpasses were classified as `fixed/re-enabled` and their stale strict
 xfail markers were removed:
 
 - `tests/integration/test_stack.py::test_scraper_uses_accept_markdown`
@@ -62,28 +62,29 @@ xfail markers were removed:
 - `tests/integration/test_stack.py::test_gutenberg_adapter_files_url`
 - `tests/integration/test_stack.py::test_gutenberg_adapter_cache_url`
 - `tests/integration/test_stack.py::test_gutenberg_adapter_invalid_id`
-- `tests/integration/test_stack.py::test_crtsh_adapter_domain`
 
-The remaining six declared strict xfails are `quarantined` and retain
+The remaining seven declared strict xfails are `quarantined` and retain
 explicit owner, issue, reason, and environment metadata:
 
 - `tests/integration/test_stack.py::test_scraper_uses_llms_txt`
 - `tests/integration/test_stack.py::test_shodan_adapter_source`
+- `tests/integration/test_stack.py::test_crtsh_adapter_domain`
 - `tests/integration/test_stack.py::test_abuseipdb_adapter_ip`
 - `tests/integration/test_stack.py::test_censys_adapter_ip`
 - `tests/integration/test_stack.py::test_hibp_adapter_breach`
 - `tests/integration/test_stack.py::test_crawl_semantic_indexing`
 
 The exact `7daac65` Docker run observed five of these as xfailed; the
-Qdrant-dependent case was conditionally skipped by its Docker/environment gate.
-That run also exposed `test_crtsh_adapter_domain` as an XPASS, so its stale
-quarantine was removed and it is now included in the fixed/re-enabled list
-above. The two setup errors were caused by passing governance-only keyword
-arguments into pytest's native skip markers; the governance hook now validates
-and retains those fields on the collected item, then strips only the
-native-marker-incompatible fields before pytest evaluates the marker. Shared
-class-level markers are sanitized only after all collected items have been
-validated.
+Qdrant-dependent case was conditionally skipped by its Docker/environment gate,
+and CRT.sh appeared as an XPASS. A subsequent exact `2931797` run received a
+502 Bad Gateway response from CRT.sh, so the XPASS was correctly treated as
+external instability rather than a fixed/re-enabled test, and its strict
+quarantine was restored. The two setup errors were caused by passing
+governance-only keyword arguments into pytest's native skip markers; the
+governance hook now validates and retains those fields on the collected item,
+then strips only the native-marker-incompatible fields before pytest evaluates
+the marker. Shared class-level markers are sanitized only after all collected
+items have been validated.
 
 Outcome mapping is:
 
