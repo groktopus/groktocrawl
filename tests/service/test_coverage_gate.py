@@ -24,7 +24,7 @@ from scripts.coverage_gate import (
 def _policy(*, high_risk: tuple[str, ...] = ("common/url.py",)) -> CoveragePolicy:
     return CoveragePolicy(
         source_roots=("agent-svc/agent", "common"),
-        excluded_paths=("tests",),
+        excluded_paths=("tests", "agent-svc/agent/tests"),
         high_risk_paths=high_risk,
         changed_line_target=80.0,
         high_risk_changed_line_fail_under=90.0,
@@ -74,6 +74,7 @@ def test_evaluate_filters_non_source_changes():
     changed = {
         "common/url.py": {10},
         "tests/test_url.py": {1},
+        "agent-svc/agent/tests/test_stack.py": {1},
         "docs/testing-coverage.md": {2},
     }
     coverage = {
@@ -83,6 +84,18 @@ def test_evaluate_filters_non_source_changes():
     results = evaluate(changed, coverage, policy)
 
     assert [result.path for result in results] == ["common/url.py"]
+
+
+def test_checked_in_policy_excludes_service_local_tests():
+    policy = load_policy(coverage_gate.DEFAULT_POLICY_PATH)
+
+    results = evaluate(
+        {"agent-svc/agent/tests/test_stack.py": {1}},
+        {},
+        policy,
+    )
+
+    assert results == []
 
 
 def test_load_coverage_unions_reports_and_normalizes_docker_paths(tmp_path):
@@ -387,7 +400,26 @@ high_risk_changed_line_fail_under = 90.0
     )
 
 
-def test_cli_reports_non_integer_coverage_line(tmp_path, capsys):
+@pytest.mark.parametrize(
+    ("coverage_payload", "expected_detail"),
+    [
+        (
+            '{"files":{"common/url.py":{"executed_lines":[1e999],"missing_lines":[]}}}',
+            "must contain integers",
+        ),
+        (
+            '{"files":{"common/url.py":{"executed_lines":[0],"missing_lines":[]}}}',
+            "must contain positive lines",
+        ),
+        (
+            '{"files":{"common/url.py":{"executed_lines":[10],"missing_lines":[10]}}}',
+            "both executed and missing",
+        ),
+    ],
+)
+def test_cli_rejects_invalid_coverage_lines(
+    tmp_path, capsys, coverage_payload, expected_detail
+):
     policy_path = tmp_path / "pyproject.toml"
     policy_path.write_text(
         """\
@@ -400,11 +432,8 @@ high_risk_changed_line_fail_under = 90.0
 """,
         encoding="utf-8",
     )
-    coverage_path = tmp_path / "overflow.json"
-    coverage_path.write_text(
-        '{"files":{"common/url.py":{"executed_lines":[1e999],"missing_lines":[]}}}',
-        encoding="utf-8",
-    )
+    coverage_path = tmp_path / "invalid-lines.json"
+    coverage_path.write_text(coverage_payload, encoding="utf-8")
     summary_path = tmp_path / "summary.md"
     exit_code = main(
         [
@@ -424,9 +453,9 @@ high_risk_changed_line_fail_under = 90.0
     )
 
     assert exit_code == 2
-    assert (
-        "Coverage gate error: unable to load coverage report" in capsys.readouterr().err
-    )
+    error = capsys.readouterr().err
+    assert "Coverage gate error: unable to load coverage report" in error
+    assert expected_detail in error
     assert "Changed-line coverage gate error" in summary_path.read_text(
         encoding="utf-8"
     )
@@ -512,9 +541,21 @@ high_risk_changed_line_fail_under = 90.0
     ("field", "value", "expected"),
     [
         ("source_roots", "[]", "source_roots must be non-empty"),
+        ("source_roots", None, "source_roots is required"),
         ("high_risk_paths", '"common/url.py"', "high_risk_paths must be a string list"),
         ("high_risk_paths", '[""]', "high_risk_paths must contain non-empty strings"),
+        (
+            "high_risk_paths",
+            '["outside/url.py"]',
+            "high_risk_paths must fall under source_roots",
+        ),
         ("changed_line_target", "nan", "changed_line_target must be finite"),
+        ("changed_line_target", "-1", "changed_line_target must be finite"),
+        (
+            "high_risk_changed_line_fail_under",
+            "101",
+            "high_risk_changed_line_fail_under must be finite",
+        ),
     ],
 )
 def test_cli_rejects_invalid_policy_with_error_summary(
@@ -528,7 +569,10 @@ def test_cli_rejects_invalid_policy_with_error_summary(
         "changed_line_target": "80.0",
         "high_risk_changed_line_fail_under": "90.0",
     }
-    fields[field] = value
+    if value is None:
+        fields.pop(field)
+    else:
+        fields[field] = value
     policy_path.write_text(
         "[tool.groktocrawl.coverage]\n"
         + "\n".join(f"{name} = {item}" for name, item in fields.items())

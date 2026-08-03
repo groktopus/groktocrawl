@@ -274,12 +274,26 @@ def load_policy(path: Path) -> CoveragePolicy:
         raise ValueError(
             "coverage policy must define a [tool.groktocrawl.coverage] table"
         )
+    source_roots = _required_string_tuple(raw, "source_roots", allow_empty=False)
+    high_risk_paths = _required_string_tuple(raw, "high_risk_paths", allow_empty=False)
+    outside_source_roots = [
+        high_risk_path
+        for high_risk_path in high_risk_paths
+        if not any(
+            high_risk_path == source_root.rstrip("/")
+            or high_risk_path.startswith(source_root.rstrip("/") + "/")
+            for source_root in source_roots
+        )
+    ]
+    if outside_source_roots:
+        raise ValueError(
+            "coverage policy field high_risk_paths must fall under source_roots: "
+            + ", ".join(outside_source_roots)
+        )
     return CoveragePolicy(
-        source_roots=_required_string_tuple(raw, "source_roots", allow_empty=False),
+        source_roots=source_roots,
         excluded_paths=_required_string_tuple(raw, "excluded_paths", allow_empty=True),
-        high_risk_paths=_required_string_tuple(
-            raw, "high_risk_paths", allow_empty=False
-        ),
+        high_risk_paths=high_risk_paths,
         changed_line_target=_required_percentage(raw, "changed_line_target"),
         high_risk_changed_line_fail_under=_required_percentage(
             raw, "high_risk_changed_line_fail_under"
@@ -320,6 +334,8 @@ def normalize_coverage_path(name: str, repo_root: Path) -> str:
 def _coverage_line_numbers(value: object, *, field: str, name: str) -> set[int]:
     if not isinstance(value, list) or any(type(line) is not int for line in value):
         raise ValueError(f"coverage field {field} must contain integers: {name}")
+    if any(line <= 0 for line in value):
+        raise ValueError(f"coverage field {field} must contain positive lines: {name}")
     return set(value)
 
 
@@ -343,6 +359,13 @@ def load_coverage(paths: Iterable[Path], repo_root: Path) -> dict[str, CoverageL
                 missing = _coverage_line_numbers(
                     payload.get("missing_lines", []), field="missing_lines", name=name
                 )
+                overlap = executed & missing
+                if overlap:
+                    lines = ", ".join(str(line) for line in sorted(overlap))
+                    raise ValueError(
+                        f"coverage entry marks lines as both executed and missing: "
+                        f"{name}: {lines}"
+                    )
                 normalized = normalize_coverage_path(str(name), repo_root)
                 current_executed, current_missing = merged.setdefault(
                     normalized, (set(), set())

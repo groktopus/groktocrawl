@@ -62,7 +62,7 @@ jobs:
           elif [ "${{ steps.coverage_gate.outcome }}" != "success" ]; then
             echo "Changed-line coverage gate failed before writing its summary." >> "$GITHUB_STEP_SUMMARY"
           elif [ ! -f coverage/fast.json ]; then
-            echo "Changed-line coverage report unavailable; pytest did not produce coverage JSON." >> "$GITHUB_STEP_SUMMARY"
+            echo "Changed-line coverage report unavailable; coverage JSON is missing from the workspace." >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Publish test outcome summary

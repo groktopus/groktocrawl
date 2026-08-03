@@ -124,6 +124,7 @@ source_roots = [
 ]
 excluded_paths = [
     "tests",
+    "agent-svc/agent/tests",
     "test-site",
     "mcp-svc",
     "llm-svc",
