@@ -42,6 +42,25 @@ an init process so orphaned browser descendants are reaped.
 
 `/health` reports dependency probes and `/metrics` exposes OpenMetrics data. Prometheus alerts and response procedures live in [runbooks](../runbooks/README.md). Important capacity controls include `AGENT_MAX_SEARCHES_PER_REQUEST`, `AGENT_SEARCH_RATE_LIMIT`, crawl duration/idle limits, scrape-cache TTLs, and vector-index capacity.
 
+### Job durability and recovery
+
+Async jobs (crawl, agent, extract, batch-scrape, llmstxt, and plan execution) run in-process inside `agent-svc` and are **not restart-safe**. Job records persist in Valkey for 24 hours, but execution is best-effort: a crash, forced termination, or restart does not resume or reclaim interrupted work, does not roll back partial artifacts already written to downstream stores, and does not replay undelivered webhooks. An orderly shutdown gives in-flight tasks a five-second grace period before cancellation (ADR-0035). In-flight background execution carries **no durability SLO**; after a restart, treat completion as at-least-once-with-verification and re-submit critical work.
+
+After any `agent-svc` restart, check for jobs still stuck in `processing` and reconcile them:
+
+```bash
+# List all processing jobs (API)
+curl -s http://localhost:8080/v2/activity
+
+# Flag processing jobs older than one hour (dry-run, nothing changes)
+docker compose exec agent-svc python3 /app/scripts/reconcile-jobs.py --stale-after 3600
+
+# Reconcile: mark flagged jobs failed (only ever transitions processing -> failed)
+docker compose exec agent-svc python3 /app/scripts/reconcile-jobs.py --stale-after 3600 --fail
+```
+
+The reconcile tool reads `VALKEY_URL` inside the container; from a checkout, pass `--redis-url`. Full symptoms, identification, and per-job-kind resolution steps: [Interrupted Jobs runbook](../runbooks/interrupted-jobs.md). The durability contract, SLO boundary, and durable-execution roadmap (milestones M1–M5) are recorded in [ADR-0047](../adr/0047-defer-restart-safe-execution.md).
+
 CAPTCHA screenshots are challenge-widget crops held only in memory for the
 configured vision request. They are never logged, cached, returned, or written
 to disk. Exhausted recovery returns `CAPTCHA_UNRESOLVED`; it does not guarantee

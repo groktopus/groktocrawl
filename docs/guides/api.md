@@ -20,6 +20,8 @@ Scrape, map, search, answer, browser, and similar lightweight operations return 
 
 Persistent state is not restart-safe execution. Valkey preserves job status and completed results, but `agent-svc` executes work in-process. If that process exits before a job finishes, the job is not resumed or reclaimed automatically and may remain `processing` until its record expires. Cancellation can update the stored status, but it does not recover interrupted work. Partial writes to downstream stores are not rolled back, and completion or failure webhooks are not replayed after restart. Restart-safe execution is deferred until there is an explicit product requirement for a durable job owner, retry and lease semantics, cancellation behavior, artifact consistency, and idempotent webhook delivery.
 
+Operators: the [deployment guide](deployment.md#job-durability-and-recovery) documents the durability contract and recovery procedure, the [Interrupted Jobs runbook](../runbooks/interrupted-jobs.md) covers identifying and reconciling jobs stranded in `processing`, and [ADR-0047](../adr/0047-defer-restart-safe-execution.md) records the decision and roadmap.
+
 `POST /v2/agent` and `POST /v2/answer` support SSE when `stream: true`; agent events include planning, source discovery, scraping, tokens, and completion. Crawls stream through `GET /v2/crawl/{job_id}/stream`, including replay for completed jobs. Consume each SSE event as JSON and treat `done`/`error` as terminal.
 
 Every asynchronous creation request accepts webhook configuration. Completion and failure delivery is best effort and is not persisted for retry after process loss; verify the endpoint’s OpenAPI model for the exact field shape and sign requests with `WEBHOOK_SECRET` where configured.

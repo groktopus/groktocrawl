@@ -19,7 +19,7 @@ An Architecture Decision Record captures an important architectural decision mad
 
 **Status legend:** accepted ADRs describe decisions used by the current implementation. Proposed ADRs are design work, not promises of current behavior. Superseded ADRs are historical context only; use their successor when documenting current behavior.
 
-**Current accepted decisions:** ADR-0001–0012, 0014–0022, 0026, 0029–0035, 0038, 0039, 0043, 0044, 0045, and 0046.
+**Current accepted decisions:** ADR-0001–0012, 0014–0022, 0026, 0029–0035, 0038, 0039, 0043, 0044, 0045, 0046, and 0047.
 
 **Proposed work:** ADR-0023–0025, 0027, 0028, 0036, 0037, and 0040–0042.
 
@@ -71,5 +71,6 @@ An Architecture Decision Record captures an important architectural decision mad
 | 0044 | [Autonomous CAPTCHA Recovery](0044-autonomous-captcha-recovery.md) | accepted |
 | 0045 | [Outbound Webhook Destination Validation](0045-outbound-webhook-destination-validation.md) | accepted |
 | 0046 | [Enforce QA Checks and Review Policy on main](0046-enforce-qa-checks-and-review-policy-on-main.md) | accepted |
+| 0047 | [Defer Restart-Safe Execution with an Explicit Job-Durability Contract](0047-defer-restart-safe-execution.md) | accepted |
 
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full ADR workflow: when to write an ADR, how to number it, and how to get it reviewed in a PR.
