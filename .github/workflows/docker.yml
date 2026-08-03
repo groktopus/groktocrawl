@@ -306,7 +306,7 @@ jobs:
           docker cp tests/. "$svc":/app/tests/
           docker cp docker-compose.yml "$svc":/app/docker-compose.yml
           docker compose exec -T agent-svc mkdir -p /app/scripts
-          docker cp scripts/classify_ci_changes.py "$svc":/app/scripts/classify_ci_changes.py
+          docker cp scripts/. "$svc":/app/scripts/
           docker compose exec -T agent-svc mkdir -p /app/.github/workflows
           docker cp .github/workflows/docker.yml "$svc":/app/.github/workflows/docker.yml
           docker cp .github/workflows/fast-tests.yml "$svc":/app/.github/workflows/fast-tests.yml
