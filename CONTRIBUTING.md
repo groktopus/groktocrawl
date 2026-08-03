@@ -42,9 +42,10 @@ The `main` branch is protected by repository rulesets (see
 - Non-automation changes require **at least one approving review**; stale
   approvals are dismissed on push and open review conversations block merge.
 - `dependabot[bot]` is exempt from the review requirement only — it must
-  still pass the required checks. Release-please PRs require a human
-  approving review (`github-actions[bot]` cannot be a ruleset bypass actor;
-  see ADR-0046).
+  still pass the required checks. The sole maintainer can merge their own
+  PRs without an approving review (review bypass only — required checks
+  still bind). Release-please PRs require a human approving review
+  (`github-actions[bot]` cannot be a ruleset bypass actor; see ADR-0046).
 - The policy is enforced on admins; the audited emergency exception path is
   documented in
   [Emergency Branch Protection Bypass](docs/runbooks/emergency-branch-protection-bypass.md).

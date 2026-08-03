@@ -7,12 +7,14 @@ repository rulesets:
 
   * Ruleset A "main review policy" - one approving review for humans with
     stale-review dismissal, last-push re-approval, and required review
-    thread resolution; dependabot[bot] (app 29110) is exempt from the
-    review rule only (bypass_mode "pull_request"). The release-please
-    exemption was dropped (2026-08-03): github-actions[bot] (the actual
-    author of release-please PRs) cannot be a ruleset bypass actor and the
-    Release Please app (40688) is deprecated, so release-please PRs require
-    a human approving review.
+    thread resolution; dependabot[bot] (app 29110) and the sole maintainer
+    magnus919 (user 942000) are exempt from the review rule only (bypass_mode
+    "pull_request"). The maintainer self-merge exemption was added
+    (2026-08-03) so magnus919 can merge their own PRs without an approving
+    review. The release-please exemption was dropped (2026-08-03):
+    github-actions[bot] (the actual author of release-please PRs) cannot be
+    a ruleset bypass actor and the Release Please app (40688) is deprecated,
+    so release-please PRs require a human approving review.
   * Ruleset B "main required checks" - required_status_checks (strict,
     contexts exactly "Code Quality Gate" + "Runtime Gate"), non_fast_forward
     and deletion; NO bypass actors, so bots and admins must both pass the
@@ -71,6 +73,11 @@ RULESET_A: dict[str, Any] = {
         {
             "actor_type": "Integration",
             "actor_id": 29110,
+            "bypass_mode": "pull_request",
+        },
+        {
+            "actor_type": "User",
+            "actor_id": 942000,
             "bypass_mode": "pull_request",
         },
     ],
@@ -709,6 +716,7 @@ def policy_report_text() -> str:
         "  conditions.ref_name.include: ~DEFAULT_BRANCH",
         "  bypass_actors:",
         "    - Integration 29110 (dependabot[bot]) - bypass_mode: pull_request",
+        "    - User 942000 (magnus919, sole maintainer) - bypass_mode: pull_request",
         "  rules:",
         "    - pull_request:",
         "        required_approving_review_count: 1",

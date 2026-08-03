@@ -25,6 +25,11 @@ QA gates and receive an approving human review.
   PRs are NOT exempt (2026-08-03 amendment): `github-actions[bot]`, the
   actual author of release-please PRs, cannot be a ruleset bypass actor, so
   release-please PRs require a human approving review.
+* The sole maintainer can merge their own PRs (2026-08-03 amendment):
+  GitHub disallows self-approval, so with only one org member an approving
+  review can never exist for `magnus919`'s own PRs. The maintainer is
+  therefore a User bypass actor with `bypass_mode: pull_request` — review
+  bypass only; required checks still bind via Ruleset B.
 * The policy is **enforced on admins**: no routine bypass path.
 * The change must be **auditable** (who changed enforcement, when) and have a
   documented emergency exception path.
@@ -67,12 +72,25 @@ default branch, `conditions.ref_name.include: ["~DEFAULT_BRANCH"]`):
   * `require_code_owner_review: false`,
   * `required_review_thread_resolution: true` — open review conversations
     block merge.
-* `bypass_actors` (exactly one, bot exemption from the review rule **only**):
+* `bypass_actors` (exactly two, review-requirement exemption from the review
+  rule **only**; both `bypass_mode: "pull_request"`):
   * `{actor_type: "Integration", actor_id: 29110, bypass_mode: "pull_request"}`
     — `dependabot[bot]`.
-  * **Amendment (2026-08-03, user-approved):** the release-please bypass
-    exemption is dropped. `github-actions[bot]` — the actual author of
-    release-please PRs (user id 41898282) — cannot be added to a ruleset
+  * `{actor_type: "User", actor_id: 942000, bypass_mode: "pull_request"}`
+    — `magnus919`, the sole maintainer.
+  * **Amendment (2026-08-03, user-approved):** the sole maintainer
+    `magnus919` (user 942000) is a User bypass actor with `bypass_mode:
+    pull_request` so they can merge their OWN PRs without an approving
+    review (GitHub disallows self-approval). Scope is REVIEW BYPASS ONLY:
+    the PR requirement is preserved (the bypass applies only within a PR
+    context; direct pushes to `main` remain blocked by the `pull_request`
+    rule) and Ruleset B (`main required checks`, no bypass actors) still
+    requires `Code Quality Gate` + `Runtime Gate` on every PR including the
+    maintainer's. The emergency exception path is now needed only when
+    required checks fail.
+  * **Earlier amendment (2026-08-03, user-approved):** the release-please
+    bypass exemption is dropped. `github-actions[bot]` — the actual author
+    of release-please PRs (user id 41898282) — cannot be added to a ruleset
     `bypass_actors` list (GitHub blocks the GitHub Actions app identity by
     design), and the Release Please GitHub App (40688) is deprecated
     (turndown 2025-08-13) and not installed on org `groktopus`.
@@ -100,15 +118,20 @@ the classic rule redundant once the rulesets are live).
   human approving review (with stale approvals dismissed and resolved
   conversations); the policy binds repo admins too.
 * **Why two rulesets:** `bypass_actors` exempts an actor from the entire
-  ruleset. The split keeps `dependabot[bot]` exempt from the human review
-  only; everyone — bots and admins — must still pass the required checks in
-  Ruleset B. Release-please PRs (authored by `github-actions[bot]`, which
-  cannot be a ruleset bypass actor) require a human approving review per the
-  2026-08-03 amendment.
+  ruleset. The split keeps `dependabot[bot]` and the sole maintainer
+  `magnus919` (user 942000) exempt from the human review only; everyone —
+  bots and admins — must still pass the required checks in Ruleset B.
+  Release-please PRs (authored by `github-actions[bot]`, which cannot be a
+  ruleset bypass actor) require a human approving review per the 2026-08-03
+  amendment.
 * **Emergency exception path:** an org admin may temporarily set both
   rulesets' enforcement to `disabled`, merge the blocking change, and restore
   both to `active` within 24 hours, recording the incident in a tracking
-  issue. See `docs/runbooks/emergency-branch-protection-bypass.md`.
+  issue. See `docs/runbooks/emergency-branch-protection-bypass.md`. After
+  the 2026-08-03 maintainer-self-merge amendment, the emergency path is
+  needed only when the maintainer must merge a PR whose required checks fail
+  (the maintainer can already merge their own green PRs without approval;
+  Ruleset B has no bypass actors).
 * **Audit trail:** `GET /repos/{owner}/{repo}/rulesets/{id}/history` records
   the actor and timestamp per ruleset version. The org audit-log REST API
   (`GET /orgs/{owner}/audit-log`) is Enterprise-only and unavailable on this
