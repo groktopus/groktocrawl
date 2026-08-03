@@ -322,6 +322,8 @@ def git_diff(repo_root: Path, base_sha: str, head_sha: str) -> str:
         completed = subprocess.run(
             [
                 "git",
+                "-c",
+                "core.quotePath=false",
                 "diff",
                 "--no-ext-diff",
                 "--find-renames",

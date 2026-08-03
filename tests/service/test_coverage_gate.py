@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from datetime import date
 
 import pytest
@@ -113,6 +114,23 @@ rename to common/url_validation.py
     assert renamed == {"common/url_validation.py": "common/url.py"}
     with pytest.raises(CoverageGateError, match=r"common/url\.py -> common/url_validation\.py"):
         validate_high_risk_path_changes(renamed, set(), _policy())
+
+
+def test_git_diff_disables_path_quoting(monkeypatch, tmp_path):
+    """Non-ASCII paths must arrive verbatim so they match coverage keys."""
+
+    captured: list[list[str]] = []
+
+    def fake_run(command, **kwargs):
+        captured.append(command)
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    monkeypatch.setattr("scripts.coverage_gate.subprocess.run", fake_run)
+
+    coverage_gate.git_diff(tmp_path, "base", "head")
+
+    assert "-c" in captured[0]
+    assert "core.quotePath=false" in captured[0]
 
 
 def test_detected_high_risk_rename_requires_policy_update():
