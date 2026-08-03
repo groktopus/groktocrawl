@@ -274,6 +274,14 @@ def parse_renamed_paths(diff_text: str) -> dict[str, str]:
     renamed: dict[str, str] = {}
     source_path: str | None = None
     for line in diff_text.splitlines():
+        if line.startswith("rename from "):
+            source_path = line[len("rename from ") :]
+            continue
+        if line.startswith("rename to "):
+            if source_path is not None:
+                renamed[line[len("rename to ") :]] = source_path
+            source_path = None
+            continue
         if line.startswith("--- a/"):
             source_path = line[6:]
             continue

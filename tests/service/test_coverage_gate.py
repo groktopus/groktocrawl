@@ -87,6 +87,34 @@ rename to common/url_validation.py
     assert parse_renamed_paths(diff) == {"common/url_validation.py": "common/url.py"}
 
 
+def test_parse_renamed_paths_detects_pure_rename_without_file_headers():
+    # A 100%-similarity `git mv` emits only the rename pair, no
+    # --- a/ / +++ b/ headers and no hunks. The gate must still see it.
+    diff = """\
+diff --git a/common/url.py b/common/url_validation.py
+similarity index 100%
+rename from common/url.py
+rename to common/url_validation.py
+"""
+
+    assert parse_renamed_paths(diff) == {"common/url_validation.py": "common/url.py"}
+
+
+def test_pure_high_risk_rename_fails_closed_without_policy_update():
+    diff = """\
+diff --git a/common/url.py b/common/url_validation.py
+similarity index 100%
+rename from common/url.py
+rename to common/url_validation.py
+"""
+
+    renamed = parse_renamed_paths(diff)
+
+    assert renamed == {"common/url_validation.py": "common/url.py"}
+    with pytest.raises(CoverageGateError, match=r"common/url\.py -> common/url_validation\.py"):
+        validate_high_risk_path_changes(renamed, set(), _policy())
+
+
 def test_detected_high_risk_rename_requires_policy_update():
     with pytest.raises(
         CoverageGateError, match=r"common/url\.py -> common/url_validation\.py"
