@@ -234,12 +234,19 @@ def test_sessionfinish_fallback_removes_worker_markdown(tmp_path, monkeypatch):
     )
     worker_markdown.write_text("partial worker report\n")
     monkeypatch.setenv("QA_OUTCOME_PATH", str(report_path))
-    original_collection_outcomes = outcome_conftest._collection_outcomes
-    with monkeypatch.context() as isolated:
-        isolated.setattr(outcome_conftest, "_collection_outcomes", [])
-        config = SimpleNamespace(workerinput=None)
-        outcome_conftest.pytest_sessionfinish(SimpleNamespace(config=config), 0)
-    assert outcome_conftest._collection_outcomes is original_collection_outcomes
+    live_collection_outcomes = outcome_conftest._collection_outcomes
+    original_collection_outcomes = list(live_collection_outcomes)
+    sentinel = object()
+    live_collection_outcomes.append(sentinel)
+    try:
+        with monkeypatch.context() as isolated:
+            isolated.setattr(outcome_conftest, "_collection_outcomes", [])
+            config = SimpleNamespace(workerinput=None)
+            outcome_conftest.pytest_sessionfinish(SimpleNamespace(config=config), 0)
+        assert live_collection_outcomes == [*original_collection_outcomes, sentinel]
+    finally:
+        live_collection_outcomes[:] = original_collection_outcomes
+    assert outcome_conftest._collection_outcomes is live_collection_outcomes
     assert report_path.exists()
     assert not worker_json.exists()
     assert not worker_markdown.exists()
