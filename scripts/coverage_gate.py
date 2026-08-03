@@ -37,19 +37,19 @@ def _split_toml_values(value: str) -> list[str]:
     parts: list[str] = []
     start = 0
     depth = 0
-    quoted = False
+    quote: str | None = None
     escaped = False
     for index, character in enumerate(value):
-        if quoted:
-            if escaped:
+        if quote is not None:
+            if quote == '"' and escaped:
                 escaped = False
-            elif character == "\\":
+            elif quote == '"' and character == "\\":
                 escaped = True
-            elif character == '"':
-                quoted = False
+            elif character == quote:
+                quote = None
             continue
-        if character == '"':
-            quoted = True
+        if character in {'"', "'"}:
+            quote = character
         elif character in "[{":
             depth += 1
         elif character in "]}":
@@ -79,6 +79,8 @@ def _parse_toml_subset_value(value: str) -> object:
         return result
     if value.startswith('"') and value.endswith('"'):
         return ast.literal_eval(value)
+    if value.startswith("'") and value.endswith("'"):
+        return value[1:-1]
     try:
         return float(value)
     except ValueError:
@@ -86,18 +88,18 @@ def _parse_toml_subset_value(value: str) -> object:
 
 
 def _strip_toml_comment(line: str) -> str:
-    quoted = False
+    quote: str | None = None
     escaped = False
     for index, character in enumerate(line):
-        if quoted:
-            if escaped:
+        if quote is not None:
+            if quote == '"' and escaped:
                 escaped = False
-            elif character == "\\":
+            elif quote == '"' and character == "\\":
                 escaped = True
-            elif character == '"':
-                quoted = False
-        elif character == '"':
-            quoted = True
+            elif character == quote:
+                quote = None
+        elif character in {'"', "'"}:
+            quote = character
         elif character == "#":
             return line[:index].rstrip()
     return line.rstrip()

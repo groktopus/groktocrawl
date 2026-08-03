@@ -287,6 +287,28 @@ high_risk_changed_line_fail_under = 90.0
     assert valid_exception(exceptions["common/url.py"], today=date(2026, 1, 1))
 
 
+def test_toml_fallback_accepts_literal_string_values(tmp_path, monkeypatch):
+    policy_path = tmp_path / "pyproject.toml"
+    policy_path.write_text(
+        """\
+[tool.groktocrawl.coverage]
+source_roots = ['common']
+excluded_paths = ['tests']
+high_risk_paths = ['common/url.py']
+changed_line_target = 80.0
+high_risk_changed_line_fail_under = 90.0
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(coverage_gate, "tomllib", None)
+
+    policy = load_policy(policy_path)
+
+    assert policy.source_roots == ("common",)
+    assert policy.excluded_paths == ("tests",)
+    assert policy.high_risk_paths == ("common/url.py",)
+
+
 def test_changed_lines_without_executable_coverage_are_informational():
     results = evaluate(
         {"common/url.py": {10}},
