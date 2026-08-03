@@ -185,10 +185,6 @@ class FileResult:
     exception: Mapping[str, Any] | None = None
 
     @property
-    def enforced(self) -> bool:
-        return self.high_risk and self.coverage_percent is not None
-
-    @property
     def passed(self) -> bool:
         return (
             self.coverage_percent is None
@@ -306,6 +302,8 @@ def parse_changed_lines(diff_text: str) -> dict[str, set[int]]:
             continue
         if current_path is None or not line:
             continue
+        if line.startswith("\\ No newline at end of file"):
+            continue
         if line.startswith("+"):
             changed[current_path].add(current_line)
             current_line += 1
@@ -398,7 +396,10 @@ def evaluate(
         lines = changed[path]
         report = coverage.get(path)
         if report is None:
-            executable = set(lines)
+            # coverage.py reports only modules imported by this lane. A missing
+            # report means this lane did not measure the module, not that every
+            # changed line was uncovered. The owning lane remains responsible.
+            executable: set[int] = set()
             covered: set[int] = set()
         else:
             executable = set(lines) & set(report.executable)

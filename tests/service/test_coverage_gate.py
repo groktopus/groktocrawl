@@ -51,6 +51,21 @@ diff --git a/tests/test_url.py b/tests/test_url.py
     }
 
 
+def test_parse_changed_lines_ignores_no_newline_marker():
+    diff = """\
+diff --git a/common/url.py b/common/url.py
+--- a/common/url.py
++++ b/common/url.py
+@@ -9,1 +9,2 @@
+-old
++new
+\\ No newline at end of file
++newer
+"""
+
+    assert parse_changed_lines(diff) == {"common/url.py": {9, 10}}
+
+
 def test_evaluate_filters_non_source_changes():
     policy = _policy()
     changed = {
@@ -281,3 +296,21 @@ def test_changed_lines_without_executable_coverage_are_informational():
 
     assert results[0].coverage_percent is None
     assert results[0].passed is True
+
+
+def test_unmeasured_changed_module_is_informational():
+    results = evaluate(
+        {"common/url.py": {10}},
+        {},
+        _policy(),
+    )
+
+    assert results[0].changed_lines == 0
+    assert results[0].coverage_percent is None
+    assert results[0].passed is True
+    assert "INFO (no executable lines)" in render_summary(
+        results,
+        {},
+        base_sha="base",
+        head_sha="head",
+    )

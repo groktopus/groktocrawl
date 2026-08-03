@@ -26,7 +26,11 @@ not claim a coverage result.
 `scripts/coverage_gate.py` computes added and modified destination lines from the
 exact base/head diff. It then intersects those lines with executable lines reported
 by coverage.py. Comments, blank lines, tests, documentation, workflows, and other
-non-source changes do not create coverage obligations.
+non-source changes do not create coverage obligations. A lane that did not import a changed
+module has no coverage.py entry for it; the gate reports that module as informational
+rather than treating every changed line as uncovered. Coverage ownership remains with
+the lane that measures the module, so a missing report does not bypass the complete
+Fast Tests policy.
 
 - The existing aggregate floor remains **20%**. It is not a target and is not raised
   by this policy.
