@@ -420,10 +420,10 @@ jobs:
             echo "Changed-line coverage comparison skipped: no prior commit exists for this ref." >> "$GITHUB_STEP_SUMMARY"
           elif [ "${{ steps.coverage_gate.outcome }}" = "skipped" ]; then
             echo "Changed-line coverage comparison did not run because an earlier test step failed." >> "$GITHUB_STEP_SUMMARY"
+          elif [ "${{ steps.coverage_gate.outcome }}" != "success" ]; then
+            echo "Changed-line coverage gate failed before writing its summary." >> "$GITHUB_STEP_SUMMARY"
           elif [ ! -f coverage/critical.json ] && [ ! -f coverage/integration.json ]; then
             echo "Changed-line coverage report unavailable; Docker pytest did not produce coverage JSON." >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "Changed-line coverage gate failed before writing its summary." >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Upload integration outcome reports
