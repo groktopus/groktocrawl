@@ -38,6 +38,13 @@ Fast Tests uploads `fast-test-outcomes`. Docker Integration uploads
 `integration-test-outcomes`. Both workflows also publish the Markdown report
 to the GitHub Actions Job Summary.
 
+Both reports include governed test outcomes and non-passed collection outcomes.
+Collection failures contribute to `failed`; module-level skips contribute to
+`skipped`; their node IDs and reason-encoded metadata are retained. When xdist
+causes the master and workers to report the same collection event, the merge
+keeps one entry per node ID using the same failure-over-skip-over-pass priority
+as test-phase aggregation.
+
 ## Baseline and Classification
 
 The issue body cites an earlier **147 skipped, 4 xfailed, and 15 xpassed** run.

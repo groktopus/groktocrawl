@@ -39,29 +39,35 @@ _GOVERNANCE_KEYS = {
     "environment",
 }
 
+_collection_outcomes = []
+
 
 def _report_path() -> Path:
     return Path(os.environ.get("QA_OUTCOME_PATH", "test-outcomes.json"))
 
 
 def _governance_metadata(item, report) -> dict[str, str]:
-    metadata = getattr(item, "_qa_governance_metadata", None)
+    reason = _skip_reason(report)
+    metadata = metadata_from_reason(reason)
     if metadata:
         return metadata
-    for marker_name in ("skip", "skipif", "xfail"):
-        marker = item.get_closest_marker(marker_name)
-        if marker:
-            metadata = metadata_from_marker(marker)
-            if metadata:
-                return metadata
-    return metadata_from_reason(getattr(report, "wasxfail", None))
+
+    marker_metadata = getattr(item, "_qa_governance_metadata_by_marker", {})
+    report_text = str(getattr(report, "longrepr", ""))
+    if hasattr(report, "wasxfail") or (
+        report.failed and "XPASS(strict)" in report_text
+    ):
+        return marker_metadata.get("xfail", {})
+    if report.skipped:
+        return marker_metadata.get("skipif", {}) or marker_metadata.get("skip", {})
+    return {}
 
 
 def pytest_collection_modifyitems(config, items):
     violations = []
     markers_to_strip = {}
     for item in items:
-        item_metadata = {}
+        item_metadata_by_marker = {}
         for marker_name in ("skip", "skipif", "xfail"):
             for marker in item.iter_markers(name=marker_name):
                 kwargs = marker.kwargs
@@ -77,12 +83,14 @@ def pytest_collection_modifyitems(config, items):
                 except (TypeError, ValueError) as exc:
                     violations.append(f"{item.nodeid} @{marker_name}: {exc}")
                 else:
-                    item_metadata.update(metadata_from_marker(marker))
+                    item_metadata_by_marker.setdefault(
+                        marker_name, metadata_from_marker(marker)
+                    )
                     markers_to_strip[id(marker)] = marker
                 if marker_name == "xfail" and kwargs.get("strict") is not True:
                     violations.append(f"{item.nodeid} @xfail: strict=True is required")
-        if item_metadata:
-            item._qa_governance_metadata = item_metadata
+        if item_metadata_by_marker:
+            item._qa_governance_metadata_by_marker = item_metadata_by_marker
     if violations:
         raise pytest.UsageError(
             "Ungoverned skip/xfail markers:\n" + "\n".join(violations)
@@ -112,14 +120,49 @@ def _outcome_entry(nodeid, report, metadata=None) -> dict:
     else:
         status = "failed"
         reason = None
+    if status == "passed":
+        metadata = {}
+    else:
+        metadata = (
+            metadata
+            or metadata_from_reason(reason if isinstance(reason, str) else None)
+            or metadata_from_reason(getattr(report, "wasxfail", None))
+        )
     return {
         "nodeid": nodeid,
         "status": status,
         "reason": reason,
-        "metadata": metadata
-        or metadata_from_reason(reason if isinstance(reason, str) else None)
-        or metadata_from_reason(getattr(report, "wasxfail", None)),
+        "metadata": metadata,
     }
+
+
+def _skip_reason(report) -> str | None:
+    if not report.skipped:
+        return None
+    longrepr = getattr(report, "longrepr", None)
+    if isinstance(longrepr, tuple) and len(longrepr) >= 3:
+        return str(longrepr[2])
+    return str(longrepr) if longrepr else None
+
+
+def _collection_entry(report) -> dict:
+    status = "skipped" if report.outcome == "skipped" else "failed"
+    longrepr = getattr(report, "longrepr", None)
+    if status == "skipped" and isinstance(longrepr, tuple) and len(longrepr) >= 3:
+        reason = str(longrepr[2])
+    else:
+        reason = str(longrepr) if longrepr else None
+    return {
+        "nodeid": report.nodeid,
+        "status": status,
+        "reason": reason,
+        "metadata": metadata_from_reason(reason),
+    }
+
+
+def pytest_collectreport(report):
+    if report.outcome != "passed":
+        _collection_outcomes.append(_collection_entry(report))
 
 
 @pytest.hookimpl(hookwrapper=True)
@@ -155,12 +198,23 @@ def _outcome_priority(status: str) -> int:
     }.get(status, 0)
 
 
+def _merge_outcomes(entries):
+    by_nodeid = {}
+    for entry in entries:
+        existing = by_nodeid.get(entry["nodeid"])
+        if existing is None or _outcome_priority(entry["status"]) > _outcome_priority(
+            existing["status"]
+        ):
+            by_nodeid[entry["nodeid"]] = entry
+    return list(by_nodeid.values())
+
+
 def _write_outcome_reports(config, entries=None, path=None) -> None:
     if entries is None:
         entries = getattr(config, "_qa_outcomes", [])
     if path is None:
         path = _report_path()
-    entries = sorted(entries, key=lambda entry: entry["nodeid"])
+    entries = sorted(_merge_outcomes(entries), key=lambda entry: entry["nodeid"])
     observed = Counter(entry["status"] for entry in entries)
     counts = {
         status: observed.get(status, 0)
@@ -232,6 +286,9 @@ def pytest_testnodedown(node, error):
 def pytest_sessionfinish(session, exitstatus):
     _ = exitstatus
     config = session.config
+    for entry in _collection_outcomes:
+        _record_outcome(config, entry)
+    _collection_outcomes.clear()
     path = _report_path()
     if getattr(config, "workerinput", None) is not None:
         worker_id = config.workerinput.get("workerid", "worker")

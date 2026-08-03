@@ -4,11 +4,15 @@ from __future__ import annotations
 
 import ast
 import json
+import os
+import subprocess
+import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
-from tests.conftest import _write_outcome_reports
+from tests.conftest import _outcome_entry, _write_outcome_reports
 from tests.outcome_governance import CLASSIFICATIONS, governed_skip, validate_metadata
 
 
@@ -181,3 +185,121 @@ def test_outcome_report_contains_counts_and_entries(tmp_path, monkeypatch):
         "xpassed": 0,
     }
     assert path.with_suffix(".md").exists()
+
+
+def test_passed_outcome_drops_governance_metadata():
+    report = SimpleNamespace(passed=True, skipped=False, failed=False, longrepr=None)
+    entry = _outcome_entry(
+        "tests/unit/test_example.py::test_ok",
+        report,
+        {"owner": "repository-maintainer", "issue": "#502"},
+    )
+    assert entry["status"] == "passed"
+    assert entry["metadata"] == {}
+
+
+def _run_report_fixture(tmp_path, source: str, *, xdist: bool = False):
+    test_file = tmp_path / "test_report_fixture.py"
+    report_file = tmp_path / "outcomes.json"
+    test_file.write_text(source)
+    env = os.environ.copy()
+    env["QA_OUTCOME_PATH"] = str(report_file)
+    env["PYTHONPATH"] = os.pathsep.join(
+        [str(Path(__file__).parents[2]), env.get("PYTHONPATH", "")]
+    )
+    command = [
+        sys.executable,
+        "-m",
+        "pytest",
+        "-p",
+        "tests.conftest",
+    ]
+    if xdist:
+        command.extend(["-n", "2"])
+    command.extend(
+        [
+            "-o",
+            "addopts=",
+            "-q",
+            str(test_file),
+        ]
+    )
+    result = subprocess.run(
+        command,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    return result, json.loads(report_file.read_text())
+
+
+def test_combined_skipif_and_xfail_use_skipif_metadata(tmp_path):
+    result, payload = _run_report_fixture(
+        tmp_path,
+        """\
+import pytest
+
+@pytest.mark.skipif(
+    True,
+    reason="skip marker",
+    owner="skip-owner",
+    issue="#skip",
+    classification="retained",
+    environment="skip environment",
+)
+@pytest.mark.xfail(
+    strict=True,
+    reason="xfail marker",
+    owner="xfail-owner",
+    issue="#xfail",
+    classification="quarantined",
+    environment="xfail environment",
+)
+def test_combined_markers():
+    assert False
+""",
+    )
+    assert result.returncode == 0, result.stderr
+    entry = next(item for item in payload["tests"] if item["status"] == "skipped")
+    assert entry["metadata"] == {
+        "owner": "skip-owner",
+        "issue": "#skip",
+        "classification": "retained",
+        "environment": "skip environment",
+    }
+
+
+def test_module_level_governed_skip_is_reported(tmp_path):
+    result, payload = _run_report_fixture(
+        tmp_path,
+        """\
+from tests.outcome_governance import governed_skip
+
+governed_skip(
+    "module unavailable",
+    owner="module-owner",
+    issue="#module",
+    classification="retained",
+    environment="module environment",
+    allow_module_level=True,
+)
+""",
+        xdist=True,
+    )
+    assert result.returncode in {0, 5}, result.stderr
+    assert payload["counts"]["skipped"] == 1
+    entry = next(item for item in payload["tests"] if item["status"] == "skipped")
+    assert entry["metadata"]["issue"] == "#module"
+    assert entry["metadata"]["classification"] == "retained"
+
+
+def test_collection_failure_is_reported(tmp_path):
+    result, payload = _run_report_fixture(
+        tmp_path,
+        "raise RuntimeError('collection boom')\n",
+        xdist=True,
+    )
+    assert result.returncode != 0
+    entry = next(item for item in payload["tests"] if item["status"] == "failed")
+    assert entry["nodeid"].endswith("test_report_fixture.py")
+    assert payload["counts"]["failed"] == 1
