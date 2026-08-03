@@ -33,6 +33,10 @@ HUNK_RE = re.compile(r"@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@")
 ISSUE_RE = re.compile(r"#\d+")
 
 
+class CoverageGateError(RuntimeError):
+    """A gate input could not be resolved safely."""
+
+
 def _split_toml_values(value: str) -> list[str]:
     parts: list[str] = []
     start = 0
@@ -319,20 +323,29 @@ def parse_changed_lines(diff_text: str) -> dict[str, set[int]]:
 def git_diff(repo_root: Path, base_sha: str, head_sha: str) -> str:
     """Read the exact changed-line diff used by CI."""
 
-    completed = subprocess.run(
-        [
-            "git",
-            "diff",
-            "--no-ext-diff",
-            "--unified=0",
-            f"{base_sha}...{head_sha}",
-            "--",
-        ],
-        cwd=repo_root,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
+    try:
+        completed = subprocess.run(
+            [
+                "git",
+                "diff",
+                "--no-ext-diff",
+                "--unified=0",
+                f"{base_sha}...{head_sha}",
+                "--",
+            ],
+            cwd=repo_root,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        detail = (exc.stderr or "").strip()
+        if not detail:
+            detail = f"git diff exited with status {exc.returncode}"
+        raise CoverageGateError(
+            f"unable to resolve coverage diff base '{base_sha}' against head "
+            f"'{head_sha}': {detail}"
+        ) from exc
     return completed.stdout
 
 
@@ -518,7 +531,12 @@ def main(argv: list[str] | None = None) -> int:
     repo_root = args.repo_root.resolve()
     policy = load_policy(args.policy)
     coverage = load_coverage(args.coverage_json, repo_root)
-    changed = parse_changed_lines(git_diff(repo_root, args.base_sha, args.head_sha))
+    try:
+        diff_text = git_diff(repo_root, args.base_sha, args.head_sha)
+    except CoverageGateError as exc:
+        print(f"Coverage gate error: {exc}", file=sys.stderr)
+        return 2
+    changed = parse_changed_lines(diff_text)
     results = evaluate(changed, coverage, policy, load_exceptions(args.exceptions))
     summary = render_summary(
         results,

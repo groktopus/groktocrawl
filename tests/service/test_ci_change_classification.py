@@ -196,6 +196,10 @@ class RuntimeGateWorkflowContractTests(unittest.TestCase):
             'docker cp .github/workflows/fast-tests.yml "$svc":/app/.github/workflows/fast-tests.yml',
             self.integration_tests,
         )
+        self.assertIn(
+            "for pkg in agent-svc/agent scraper-svc/scraper parse-svc/parse_svc portal-svc/portal browser-svc/browser_svc llm-svc/llm_svc common; do",
+            self.integration_tests,
+        )
         self.assertNotIn(
             'docker cp .github/workflows/. "$svc":/app/.github/workflows/',
             self.integration_tests,

@@ -18,6 +18,8 @@ changed modules even when no high-risk source file was modified.
 The gate compares against the checkout's `github.sha`, so pull-request coverage
 coordinates with the merge tree that pytest actually measured rather than the
 source-branch tip.
+If Git cannot resolve the requested base revision, the gate fails closed with an
+explicit error instead of producing a partial changed-line result.
 
 The other CI jobs are not coverage-enforcing jobs: Code Quality checks static
 properties, CLI Coverage checks API/CLI parity, and dependency/security jobs inspect

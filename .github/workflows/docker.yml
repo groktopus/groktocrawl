@@ -313,7 +313,7 @@ jobs:
           docker cp .github/workflows/fast-tests.yml "$svc":/app/.github/workflows/fast-tests.yml
           # Copy service source packages so tests can import them
           # Each package_dir (e.g. scraper-svc/scraper) becomes /app/<package_dir>/
-          for pkg in agent-svc/agent scraper-svc/scraper parse-svc/parse_svc portal-svc/portal browser-svc/browser_svc llm-svc/llm_svc; do
+          for pkg in agent-svc/agent scraper-svc/scraper parse-svc/parse_svc portal-svc/portal browser-svc/browser_svc llm-svc/llm_svc common; do
             docker compose exec -T agent-svc mkdir -p "/app/$pkg"
             docker cp "$pkg/." "$svc:/app/$pkg/"
           done

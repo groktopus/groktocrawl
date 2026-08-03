@@ -5,6 +5,7 @@ from datetime import date
 
 import scripts.coverage_gate as coverage_gate
 from scripts.coverage_gate import (
+    CoverageGateError,
     CoverageLines,
     CoveragePolicy,
     evaluate,
@@ -254,6 +255,47 @@ diff --git a/common/url.py b/common/url.py
 
     assert exit_code == 1
     assert "FAIL" in summary_path.read_text(encoding="utf-8")
+
+
+def test_cli_reports_unresolvable_diff_base(tmp_path, monkeypatch, capsys):
+    policy_path = tmp_path / "pyproject.toml"
+    policy_path.write_text(
+        """\
+[tool.groktocrawl.coverage]
+source_roots = ["common"]
+high_risk_paths = ["common/url.py"]
+changed_line_target = 80.0
+high_risk_changed_line_fail_under = 90.0
+""",
+        encoding="utf-8",
+    )
+    coverage_path = tmp_path / "coverage.json"
+    coverage_path.write_text(json.dumps({"files": {}}), encoding="utf-8")
+
+    def fail_diff(*_args):
+        raise CoverageGateError("unable to resolve coverage diff base 'missing'")
+
+    monkeypatch.setattr(coverage_gate, "git_diff", fail_diff)
+    exit_code = main(
+        [
+            "--coverage-json",
+            str(coverage_path),
+            "--base-sha",
+            "missing",
+            "--head-sha",
+            "head",
+            "--repo-root",
+            str(tmp_path),
+            "--policy",
+            str(policy_path),
+        ]
+    )
+
+    assert exit_code == 2
+    assert (
+        "Coverage gate error: unable to resolve coverage diff base"
+        in capsys.readouterr().err
+    )
 
 
 def test_toml_fallback_loads_policy_and_reviewed_exception(tmp_path, monkeypatch):
