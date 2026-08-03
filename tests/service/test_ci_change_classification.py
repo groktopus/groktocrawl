@@ -208,6 +208,13 @@ class RuntimeGateWorkflowContractTests(unittest.TestCase):
         self.assertIn(guard, self.integration_tests)
         self.assertIn("no prior commit exists for this ref", self.integration_tests)
 
+    def test_changed_line_gate_uses_the_checked_out_head_sha(self) -> None:
+        self.assertIn("COVERAGE_HEAD_SHA: ${{ github.sha }}", self.integration_tests)
+        self.assertNotIn(
+            "COVERAGE_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}",
+            self.integration_tests,
+        )
+
     def test_runtime_gate_only_bypasses_docs_only_pull_requests(self) -> None:
         self.assertIn("if: always()", self.runtime_gate)
         self.assertIn(
@@ -270,6 +277,13 @@ class FastTestsWorkflowContractTests(unittest.TestCase):
         guard = f'if [ "$COVERAGE_BASE_SHA" = "{zero_sha}" ]; then'
         self.assertIn(guard, self.workflow)
         self.assertIn("no prior commit exists for this ref", self.workflow)
+
+    def test_changed_line_gate_uses_the_checked_out_head_sha(self) -> None:
+        self.assertIn("COVERAGE_HEAD_SHA: ${{ github.sha }}", self.workflow)
+        self.assertNotIn(
+            "COVERAGE_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}",
+            self.workflow,
+        )
 
 
 if __name__ == "__main__":

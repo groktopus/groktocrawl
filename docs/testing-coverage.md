@@ -15,6 +15,9 @@ Fast Tests uses the locked `fast-tests` dependency group. Docker Integration ins
 `pytest-cov` in the test container before each pytest invocation. Both lanes write
 JSON/XML coverage artifacts and a changed-line summary. The summary identifies the
 changed modules even when no high-risk source file was modified.
+The gate compares against the checkout's `github.sha`, so pull-request coverage
+coordinates with the merge tree that pytest actually measured rather than the
+source-branch tip.
 
 The other CI jobs are not coverage-enforcing jobs: Code Quality checks static
 properties, CLI Coverage checks API/CLI parity, and dependency/security jobs inspect
