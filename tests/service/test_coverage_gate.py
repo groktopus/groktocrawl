@@ -57,6 +57,22 @@ diff --git a/tests/test_url.py b/tests/test_url.py
     }
 
 
+def test_parse_changed_lines_treats_added_line_starting_with_plus_plus_as_content():
+    # An added source line whose content begins with "++ b/" appears in the
+    # diff as "+++ b/counter" and must not be mistaken for a +++ b/ file
+    # header inside a hunk.
+    diff = """\
+diff --git a/common/counter.py b/common/counter.py
+--- a/common/counter.py
++++ b/common/counter.py
+@@ -2 +2 @@ line8
+-old
++++ b/counter
+"""
+
+    assert parse_changed_lines(diff) == {"common/counter.py": {2}}
+
+
 def test_parse_changed_lines_ignores_no_newline_marker():
     diff = """\
 diff --git a/common/url.py b/common/url.py

@@ -241,15 +241,21 @@ def parse_changed_lines(diff_text: str) -> dict[str, set[int]]:
     changed: dict[str, set[int]] = {}
     current_path: str | None = None
     current_line = 0
+    in_hunk = False
     for line in diff_text.splitlines():
-        if line.startswith("+++ b/"):
+        if line.startswith("diff --git "):
+            # A new file section resets hunk state; headers precede hunks.
+            in_hunk = False
+            continue
+        if line.startswith("+++ b/") and not in_hunk:
             current_path = line[6:]
             changed.setdefault(current_path, set())
             continue
-        if line.startswith("+++ "):
+        if line.startswith("+++ ") and not in_hunk:
             current_path = None
             continue
         if line.startswith("@@"):
+            in_hunk = True
             match = HUNK_RE.search(line)
             if match:
                 current_line = int(match.group(1))
