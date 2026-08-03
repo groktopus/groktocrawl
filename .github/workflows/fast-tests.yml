@@ -35,6 +35,7 @@ jobs:
           --cov-report=term-missing
 
       - name: Check changed-line coverage
+        id: coverage_gate
         env:
           COVERAGE_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           COVERAGE_HEAD_SHA: ${{ github.sha }}
@@ -54,10 +55,14 @@ jobs:
         run: |
           if [ -f coverage/fast-risk-summary.md ]; then
             cat coverage/fast-risk-summary.md >> "$GITHUB_STEP_SUMMARY"
-          elif [ -f coverage/fast.json ]; then
-            echo "Changed-line coverage summary was not generated; coverage JSON exists (comparison may have been skipped)." >> "$GITHUB_STEP_SUMMARY"
+          elif [ "${{ steps.coverage_gate.outcome }}" = "success" ] && [ -f coverage/fast.json ]; then
+            echo "Changed-line coverage comparison skipped: no prior commit exists for this ref." >> "$GITHUB_STEP_SUMMARY"
+          elif [ "${{ steps.coverage_gate.outcome }}" = "skipped" ]; then
+            echo "Changed-line coverage comparison did not run because an earlier test step failed." >> "$GITHUB_STEP_SUMMARY"
           elif [ ! -f coverage/fast.json ]; then
             echo "Changed-line coverage report unavailable; pytest did not produce coverage JSON." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Changed-line coverage gate failed before writing its summary." >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Publish test outcome summary

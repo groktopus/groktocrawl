@@ -288,6 +288,8 @@ high_risk_changed_line_fail_under = 90.0
             str(tmp_path),
             "--policy",
             str(policy_path),
+            "--summary-path",
+            str(tmp_path / "summary.md"),
         ]
     )
 
@@ -295,6 +297,46 @@ high_risk_changed_line_fail_under = 90.0
     assert (
         "Coverage gate error: unable to resolve coverage diff base"
         in capsys.readouterr().err
+    )
+    assert "Changed-line coverage gate error" in (tmp_path / "summary.md").read_text(
+        encoding="utf-8"
+    )
+
+
+def test_cli_reports_missing_coverage_report(tmp_path, capsys):
+    policy_path = tmp_path / "pyproject.toml"
+    policy_path.write_text(
+        """\
+[tool.groktocrawl.coverage]
+source_roots = ["common"]
+high_risk_paths = ["common/url.py"]
+changed_line_target = 80.0
+high_risk_changed_line_fail_under = 90.0
+""",
+        encoding="utf-8",
+    )
+    summary_path = tmp_path / "summary.md"
+    exit_code = main(
+        [
+            "--coverage-json",
+            str(tmp_path / "missing.json"),
+            "--base-sha",
+            "base",
+            "--head-sha",
+            "head",
+            "--repo-root",
+            str(tmp_path),
+            "--policy",
+            str(policy_path),
+            "--summary-path",
+            str(summary_path),
+        ]
+    )
+
+    assert exit_code == 2
+    assert "Coverage gate error: coverage report not found" in capsys.readouterr().err
+    assert "Changed-line coverage gate error" in summary_path.read_text(
+        encoding="utf-8"
     )
 
 

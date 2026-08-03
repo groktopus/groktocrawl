@@ -228,13 +228,18 @@ class RuntimeGateWorkflowContractTests(unittest.TestCase):
         self,
     ) -> None:
         self.assertIn(
-            "elif [ -f coverage/critical.json ] || [ -f coverage/integration.json ]; then",
+            "id: coverage_gate",
             self.integration_tests,
         )
         self.assertIn(
-            "elif [ ! -f coverage/critical.json ] && [ ! -f coverage/integration.json ]; then",
+            "steps.coverage_gate.outcome",
             self.integration_tests,
         )
+        self.assertIn(
+            "Changed-line coverage comparison did not run because an earlier test step failed.",
+            self.integration_tests,
+        )
+        self.assertNotIn("comparison may have been skipped", self.integration_tests)
 
     def test_runtime_gate_only_bypasses_docs_only_pull_requests(self) -> None:
         self.assertIn("if: always()", self.runtime_gate)
@@ -310,13 +315,18 @@ class FastTestsWorkflowContractTests(unittest.TestCase):
         self,
     ) -> None:
         self.assertIn(
-            "elif [ -f coverage/fast.json ]; then",
+            "id: coverage_gate",
             self.workflow,
         )
         self.assertIn(
-            "elif [ ! -f coverage/fast.json ]; then",
+            "steps.coverage_gate.outcome",
             self.workflow,
         )
+        self.assertIn(
+            "Changed-line coverage comparison did not run because an earlier test step failed.",
+            self.workflow,
+        )
+        self.assertNotIn("comparison may have been skipped", self.workflow)
 
 
 if __name__ == "__main__":

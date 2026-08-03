@@ -526,16 +526,33 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _fail_gate(args: argparse.Namespace, detail: str) -> int:
+    message = f"Coverage gate error: {detail}"
+    if args.summary_path:
+        args.summary_path.parent.mkdir(parents=True, exist_ok=True)
+        args.summary_path.write_text(
+            f"# Changed-line coverage gate error\n\n{message}\n",
+            encoding="utf-8",
+        )
+    print(message, file=sys.stderr)
+    return 2
+
+
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     repo_root = args.repo_root.resolve()
     policy = load_policy(args.policy)
+    missing = [str(path) for path in args.coverage_json if not path.exists()]
+    if missing:
+        return _fail_gate(
+            args,
+            f"coverage report not found: {', '.join(missing)}",
+        )
     coverage = load_coverage(args.coverage_json, repo_root)
     try:
         diff_text = git_diff(repo_root, args.base_sha, args.head_sha)
     except CoverageGateError as exc:
-        print(f"Coverage gate error: {exc}", file=sys.stderr)
-        return 2
+        return _fail_gate(args, str(exc))
     changed = parse_changed_lines(diff_text)
     results = evaluate(changed, coverage, policy, load_exceptions(args.exceptions))
     summary = render_summary(
