@@ -251,7 +251,9 @@ def _required_percentage(raw: Mapping[str, Any], field: str) -> float:
     if field not in raw:
         raise ValueError(f"coverage policy field {field} is required")
     value = raw[field]
-    if isinstance(value, bool) or not isinstance(value, int | float):
+    # The Docker coverage gate uses the self-hosted runner's Python 3.9.
+    numeric_types = (int, float)
+    if isinstance(value, bool) or not isinstance(value, numeric_types):
         raise ValueError(f"coverage policy field {field} must be numeric")
     number = float(value)
     if not math.isfinite(number) or not 0 <= number <= 100:
