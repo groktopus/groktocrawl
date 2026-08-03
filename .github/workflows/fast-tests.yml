@@ -54,7 +54,9 @@ jobs:
         run: |
           if [ -f coverage/fast-risk-summary.md ]; then
             cat coverage/fast-risk-summary.md >> "$GITHUB_STEP_SUMMARY"
-          else
+          elif [ -f coverage/fast.json ]; then
+            echo "Changed-line coverage summary was not generated; coverage JSON exists (comparison may have been skipped)." >> "$GITHUB_STEP_SUMMARY"
+          elif [ ! -f coverage/fast.json ]; then
             echo "Changed-line coverage report unavailable; pytest did not produce coverage JSON." >> "$GITHUB_STEP_SUMMARY"
           fi
 

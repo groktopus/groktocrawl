@@ -378,7 +378,6 @@ jobs:
               --cov=/app/portal-svc/portal \
               --cov=/app/browser-svc/browser_svc \
               --cov=/app/common \
-              --cov-append \
               --cov-report=xml:/app/coverage/integration.xml \
               --cov-report=json:/app/coverage/integration.json \
               --cov-report=term-missing \
@@ -416,7 +415,9 @@ jobs:
         run: |
           if [ -f coverage/docker-risk-summary.md ]; then
             cat coverage/docker-risk-summary.md >> "$GITHUB_STEP_SUMMARY"
-          else
+          elif [ -f coverage/critical.json ] || [ -f coverage/integration.json ]; then
+            echo "Changed-line coverage summary was not generated; coverage JSON exists (comparison may have been skipped)." >> "$GITHUB_STEP_SUMMARY"
+          elif [ ! -f coverage/critical.json ] && [ ! -f coverage/integration.json ]; then
             echo "Changed-line coverage report unavailable; Docker pytest did not produce coverage JSON." >> "$GITHUB_STEP_SUMMARY"
           fi
 

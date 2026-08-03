@@ -215,6 +215,23 @@ class RuntimeGateWorkflowContractTests(unittest.TestCase):
             self.integration_tests,
         )
 
+    def test_integration_coverage_report_is_not_appended_to_critical_report(
+        self,
+    ) -> None:
+        self.assertNotIn("--cov-append", self.integration_tests)
+
+    def test_coverage_summary_distinguishes_missing_json_from_missing_gate_summary(
+        self,
+    ) -> None:
+        self.assertIn(
+            "elif [ -f coverage/critical.json ] || [ -f coverage/integration.json ]; then",
+            self.integration_tests,
+        )
+        self.assertIn(
+            "elif [ ! -f coverage/critical.json ] && [ ! -f coverage/integration.json ]; then",
+            self.integration_tests,
+        )
+
     def test_runtime_gate_only_bypasses_docs_only_pull_requests(self) -> None:
         self.assertIn("if: always()", self.runtime_gate)
         self.assertIn(
@@ -282,6 +299,18 @@ class FastTestsWorkflowContractTests(unittest.TestCase):
         self.assertIn("COVERAGE_HEAD_SHA: ${{ github.sha }}", self.workflow)
         self.assertNotIn(
             "COVERAGE_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}",
+            self.workflow,
+        )
+
+    def test_coverage_summary_distinguishes_missing_json_from_missing_gate_summary(
+        self,
+    ) -> None:
+        self.assertIn(
+            "elif [ -f coverage/fast.json ]; then",
+            self.workflow,
+        )
+        self.assertIn(
+            "elif [ ! -f coverage/fast.json ]; then",
             self.workflow,
         )
 
