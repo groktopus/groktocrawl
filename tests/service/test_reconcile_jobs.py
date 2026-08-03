@@ -249,6 +249,12 @@ class TestFailJobs:
         count = MODULE.fail_jobs(fake_redis, [{"id": "ghost"}])
         assert count == 0
 
+    def test_corrupt_record_during_fail_is_skipped(self, fake_redis):
+        fake_redis._store["job:corrupt:meta"] = "{not valid json"
+        count = MODULE.fail_jobs(fake_redis, [{"id": "corrupt"}])
+        assert count == 0
+        assert fake_redis._store["job:corrupt:meta"] == "{not valid json"
+
 
 # ── run (dry-run / reconcile / json / exit codes) ─────────────────
 

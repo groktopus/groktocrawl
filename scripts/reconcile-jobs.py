@@ -154,7 +154,12 @@ def fail_jobs(client: Redis, jobs: list[dict[str, Any]]) -> int:
         raw = client.get(f"job:{job['id']}:meta")
         if raw is None:
             continue
-        meta = json.loads(raw)
+        try:
+            meta = json.loads(raw)
+        except json.JSONDecodeError:
+            # Corrupt record between sweep and fail pass; leave it for
+            # manual inspection rather than crashing the run.
+            continue
         if meta.get("status") != "processing":
             continue
         meta["status"] = "failed"
