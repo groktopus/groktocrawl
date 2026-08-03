@@ -261,22 +261,29 @@ def load_coverage(paths: Iterable[Path], repo_root: Path) -> dict[str, CoverageL
 
     merged: dict[str, tuple[set[int], set[int]]] = {}
     for path in paths:
-        with path.open(encoding="utf-8") as stream:
-            document = json.load(stream)
-        files = document.get("files")
-        if not isinstance(files, dict):
-            raise ValueError(f"coverage report has no files mapping: {path}")
-        for name, payload in files.items():
-            if not isinstance(payload, dict):
-                raise ValueError(f"coverage entry is not an object: {name}")
-            executed = {int(line) for line in payload.get("executed_lines", [])}
-            missing = {int(line) for line in payload.get("missing_lines", [])}
-            normalized = normalize_coverage_path(str(name), repo_root)
-            current_executed, current_missing = merged.setdefault(
-                normalized, (set(), set())
-            )
-            current_executed.update(executed)
-            current_missing.update(missing)
+        try:
+            with path.open(encoding="utf-8") as stream:
+                document = json.load(stream)
+            files = document.get("files")
+            if not isinstance(files, dict):
+                raise ValueError(f"coverage report has no files mapping: {path}")
+            for name, payload in files.items():
+                if not isinstance(payload, dict):
+                    raise ValueError(f"coverage entry is not an object: {name}")
+                executed = {int(line) for line in payload.get("executed_lines", [])}
+                missing = {int(line) for line in payload.get("missing_lines", [])}
+                normalized = normalize_coverage_path(str(name), repo_root)
+                current_executed, current_missing = merged.setdefault(
+                    normalized, (set(), set())
+                )
+                current_executed.update(executed)
+                current_missing.update(missing)
+        except CoverageGateError:
+            raise
+        except (AttributeError, OSError, TypeError, ValueError) as exc:
+            raise CoverageGateError(
+                f"unable to load coverage report '{path}': {exc}"
+            ) from exc
 
     return {
         path: CoverageLines(
@@ -548,8 +555,8 @@ def main(argv: list[str] | None = None) -> int:
             args,
             f"coverage report not found: {', '.join(missing)}",
         )
-    coverage = load_coverage(args.coverage_json, repo_root)
     try:
+        coverage = load_coverage(args.coverage_json, repo_root)
         diff_text = git_diff(repo_root, args.base_sha, args.head_sha)
     except CoverageGateError as exc:
         return _fail_gate(args, str(exc))

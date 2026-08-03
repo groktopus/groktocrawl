@@ -340,6 +340,47 @@ high_risk_changed_line_fail_under = 90.0
     )
 
 
+def test_cli_reports_malformed_coverage_report(tmp_path, capsys):
+    policy_path = tmp_path / "pyproject.toml"
+    policy_path.write_text(
+        """\
+[tool.groktocrawl.coverage]
+source_roots = ["common"]
+high_risk_paths = ["common/url.py"]
+changed_line_target = 80.0
+high_risk_changed_line_fail_under = 90.0
+""",
+        encoding="utf-8",
+    )
+    coverage_path = tmp_path / "malformed.json"
+    coverage_path.write_text('{"files":', encoding="utf-8")
+    summary_path = tmp_path / "summary.md"
+    exit_code = main(
+        [
+            "--coverage-json",
+            str(coverage_path),
+            "--base-sha",
+            "base",
+            "--head-sha",
+            "head",
+            "--repo-root",
+            str(tmp_path),
+            "--policy",
+            str(policy_path),
+            "--summary-path",
+            str(summary_path),
+        ]
+    )
+
+    assert exit_code == 2
+    assert (
+        "Coverage gate error: unable to load coverage report" in capsys.readouterr().err
+    )
+    assert "Changed-line coverage gate error" in summary_path.read_text(
+        encoding="utf-8"
+    )
+
+
 def test_toml_fallback_loads_policy_and_reviewed_exception(tmp_path, monkeypatch):
     policy_path = tmp_path / "pyproject.toml"
     policy_path.write_text(
