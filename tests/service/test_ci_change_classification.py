@@ -196,11 +196,56 @@ class RuntimeGateWorkflowContractTests(unittest.TestCase):
             'docker cp .github/workflows/fast-tests.yml "$svc":/app/.github/workflows/fast-tests.yml',
             self.integration_tests,
         )
+        self.assertIn(
+            'docker cp agent-svc/agent/. "$svc":/app/agent/',
+            self.integration_tests,
+        )
+        self.assertIn(
+            "for pkg in scraper-svc/scraper parse-svc/parse_svc portal-svc/portal browser-svc/browser_svc llm-svc/llm_svc common; do",
+            self.integration_tests,
+        )
+        self.assertIn("--cov=/app/agent", self.integration_tests)
+        self.assertNotIn("--cov=/app/agent-svc/agent", self.integration_tests)
         self.assertNotIn(
             'docker cp .github/workflows/. "$svc":/app/.github/workflows/',
             self.integration_tests,
         )
         self.assertIn("-m 'not external'", self.integration_tests)
+
+    def test_changed_line_gate_skips_ref_creation_without_base_sha(self) -> None:
+        zero_sha = "0" * 40
+        guard = f'if [ "$COVERAGE_BASE_SHA" = "{zero_sha}" ]; then'
+        self.assertIn(guard, self.integration_tests)
+        self.assertIn("no prior commit exists for this ref", self.integration_tests)
+
+    def test_changed_line_gate_uses_the_checked_out_head_sha(self) -> None:
+        self.assertIn("COVERAGE_HEAD_SHA: ${{ github.sha }}", self.integration_tests)
+        self.assertNotIn(
+            "COVERAGE_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}",
+            self.integration_tests,
+        )
+
+    def test_integration_coverage_report_is_not_appended_to_critical_report(
+        self,
+    ) -> None:
+        self.assertNotIn("--cov-append", self.integration_tests)
+
+    def test_coverage_summary_distinguishes_missing_json_from_missing_gate_summary(
+        self,
+    ) -> None:
+        self.assertIn(
+            "id: coverage_gate",
+            self.integration_tests,
+        )
+        self.assertIn(
+            "steps.coverage_gate.outcome",
+            self.integration_tests,
+        )
+        self.assertIn(
+            "Changed-line coverage comparison did not run because an earlier test step failed.",
+            self.integration_tests,
+        )
+        self.assertNotIn("comparison may have been skipped", self.integration_tests)
 
     def test_runtime_gate_only_bypasses_docs_only_pull_requests(self) -> None:
         self.assertIn("if: always()", self.runtime_gate)
@@ -253,9 +298,41 @@ class FastTestsWorkflowContractTests(unittest.TestCase):
         self,
     ) -> None:
         self.assertIn("pytest tests/unit/ tests/service/", self.workflow)
-        self.assertIn("--no-cov", self.workflow)
+        self.assertIn("pytest-cov", self.workflow)
+        self.assertIn("--cov-report=json:coverage/fast.json", self.workflow)
+        self.assertNotIn("--no-cov", self.workflow)
         self.assertNotIn("tests/integration", self.workflow)
         self.assertNotIn("docker", self.workflow.lower())
+
+    def test_changed_line_gate_skips_ref_creation_without_base_sha(self) -> None:
+        zero_sha = "0" * 40
+        guard = f'if [ "$COVERAGE_BASE_SHA" = "{zero_sha}" ]; then'
+        self.assertIn(guard, self.workflow)
+        self.assertIn("no prior commit exists for this ref", self.workflow)
+
+    def test_changed_line_gate_uses_the_checked_out_head_sha(self) -> None:
+        self.assertIn("COVERAGE_HEAD_SHA: ${{ github.sha }}", self.workflow)
+        self.assertNotIn(
+            "COVERAGE_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}",
+            self.workflow,
+        )
+
+    def test_coverage_summary_distinguishes_missing_json_from_missing_gate_summary(
+        self,
+    ) -> None:
+        self.assertIn(
+            "id: coverage_gate",
+            self.workflow,
+        )
+        self.assertIn(
+            "steps.coverage_gate.outcome",
+            self.workflow,
+        )
+        self.assertIn(
+            "Changed-line coverage comparison did not run because an earlier test step failed.",
+            self.workflow,
+        )
+        self.assertNotIn("comparison may have been skipped", self.workflow)
 
 
 if __name__ == "__main__":

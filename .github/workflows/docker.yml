@@ -166,6 +166,12 @@ jobs:
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
 
       - name: Set up .env
         run: |
@@ -297,6 +303,7 @@ jobs:
 
       - name: Copy test files and source directories
         run: |
+          mkdir -p coverage
           svc=$(docker compose ps -q agent-svc)
           # Copy full tests/ directory and root Compose contract input
           docker compose exec -T agent-svc mkdir -p /app/tests
@@ -304,19 +311,23 @@ jobs:
           docker cp docker-compose.yml "$svc":/app/docker-compose.yml
           docker compose exec -T agent-svc mkdir -p /app/scripts
           docker cp scripts/classify_ci_changes.py "$svc":/app/scripts/classify_ci_changes.py
+          docker cp scripts/coverage_gate.py "$svc":/app/scripts/coverage_gate.py
           docker compose exec -T agent-svc mkdir -p /app/.github/workflows
           docker cp .github/workflows/docker.yml "$svc":/app/.github/workflows/docker.yml
           docker cp .github/workflows/fast-tests.yml "$svc":/app/.github/workflows/fast-tests.yml
-          # Copy service source packages so tests can import them
-          # Each package_dir (e.g. scraper-svc/scraper) becomes /app/<package_dir>/
-          for pkg in agent-svc/agent scraper-svc/scraper parse-svc/parse_svc portal-svc/portal browser-svc/browser_svc llm-svc/llm_svc; do
+          # Refresh the baked agent package at the path Python imports from /app.
+          docker compose exec -T agent-svc mkdir -p /app/agent
+          docker cp agent-svc/agent/. "$svc":/app/agent/
+          # Copy the remaining service packages under their repository paths.
+          for pkg in scraper-svc/scraper parse-svc/parse_svc portal-svc/portal browser-svc/browser_svc llm-svc/llm_svc common; do
             docker compose exec -T agent-svc mkdir -p "/app/$pkg"
             docker cp "$pkg/." "$svc:/app/$pkg/"
           done
 
       - name: Critical journey smoke
         run: |
-          docker compose exec -T agent-svc pip install pytest pytest-asyncio pytest-timeout jinja2 python-docx python-pptx openpyxl tabulate markdownify==1.2.3 readability-lxml==0.8.4.1 -q
+          docker compose exec -T agent-svc pip install pytest pytest-asyncio pytest-cov pytest-timeout jinja2 python-docx python-pptx openpyxl tabulate markdownify==1.2.3 readability-lxml==0.8.4.1 -q
+          docker compose exec -T agent-svc mkdir -p /app/coverage
           set +e
           docker compose exec -T agent-svc env \
             QA_OUTCOME_PATH=/app/qa-outcomes-critical.json \
@@ -327,11 +338,22 @@ jobs:
             TEST_SITE_BASE_URL=http://test-site:8000 \
             TIER3_FIXTURE_BASE_URL=http://tier3-fixture:8000 \
             SEMANTIC_BASE_URL=http://semantic-svc:8003 \
-            python3 -m pytest /app/tests/integration/test_critical_journey.py -vv -rA
+            python3 -m pytest /app/tests/integration/test_critical_journey.py -vv -rA -m 'not external' \
+              --cov=/app/agent \
+              --cov=/app/scraper-svc/scraper \
+              --cov=/app/parse-svc/parse_svc \
+              --cov=/app/portal-svc/portal \
+              --cov=/app/browser-svc/browser_svc \
+              --cov=/app/common \
+              --cov-report=xml:/app/coverage/critical.xml \
+              --cov-report=json:/app/coverage/critical.json \
+              --cov-report=term-missing \
+              --cov-fail-under=0
           pytest_status=$?
           svc=$(docker compose ps -q agent-svc)
           docker cp "$svc:/app/qa-outcomes-critical.json" qa-outcomes-critical.json || true
           docker cp "$svc:/app/qa-outcomes-critical.md" qa-outcomes-critical.md || true
+          docker cp "$svc:/app/coverage/." coverage/ || true
           if [ "$pytest_status" -ne 0 ]; then
             docker compose logs --tail 50 test-site scraper-svc || true
           fi
@@ -343,7 +365,8 @@ jobs:
 
       - name: Run integration tests
         run: |
-          docker compose exec -T agent-svc pip install pytest pytest-asyncio pytest-xdist pytest-timeout jinja2 python-docx python-pptx openpyxl tabulate markdownify==1.2.3 readability-lxml==0.8.4.1 PyYAML -q
+          docker compose exec -T agent-svc pip install pytest pytest-asyncio pytest-cov pytest-xdist pytest-timeout jinja2 python-docx python-pptx openpyxl tabulate markdownify==1.2.3 readability-lxml==0.8.4.1 PyYAML -q
+          docker compose exec -T agent-svc mkdir -p /app/coverage
           set +e
           docker compose exec -T agent-svc env \
             QA_OUTCOME_PATH=/app/qa-outcomes-integration.json \
@@ -354,17 +377,60 @@ jobs:
             TEST_SITE_BASE_URL=http://test-site:8000 \
             TIER3_FIXTURE_BASE_URL=http://tier3-fixture:8000 \
             SEMANTIC_BASE_URL=http://semantic-svc:8003 \
-            python3 -m pytest /app/tests/integration/ /app/tests/service/ --timeout=120 --ignore-glob='*observability*' --ignore=/app/tests/integration/test_critical_journey.py -m 'not external'
+            python3 -m pytest /app/tests/integration/ /app/tests/service/ --timeout=120 --ignore-glob='*observability*' --ignore=/app/tests/integration/test_critical_journey.py -m 'not external' \
+              --cov=/app/agent \
+              --cov=/app/scraper-svc/scraper \
+              --cov=/app/parse-svc/parse_svc \
+              --cov=/app/portal-svc/portal \
+              --cov=/app/browser-svc/browser_svc \
+              --cov=/app/common \
+              --cov-report=xml:/app/coverage/integration.xml \
+              --cov-report=json:/app/coverage/integration.json \
+              --cov-report=term-missing \
+              --cov-fail-under=0
           pytest_status=$?
           svc=$(docker compose ps -q agent-svc)
           docker cp "$svc:/app/qa-outcomes-integration.json" qa-outcomes-integration.json || true
           docker cp "$svc:/app/qa-outcomes-integration.md" qa-outcomes-integration.md || true
+          docker cp "$svc:/app/coverage/." coverage/ || true
           exit "$pytest_status"
         timeout-minutes: 20
+
+      - name: Check changed-line coverage
+        id: coverage_gate
+        env:
+          COVERAGE_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          COVERAGE_HEAD_SHA: ${{ github.sha }}
+        run: |
+          if [ "$COVERAGE_BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            echo "Changed-line coverage skipped: no prior commit exists for this ref."
+            exit 0
+          fi
+          python3 scripts/coverage_gate.py \
+            --coverage-json coverage/critical.json \
+            --coverage-json coverage/integration.json \
+            --base-sha "$COVERAGE_BASE_SHA" \
+            --head-sha "$COVERAGE_HEAD_SHA" \
+            --summary-path coverage/docker-risk-summary.md
 
       - name: Publish integration outcome summary
         if: always()
         run: cat qa-outcomes-*.md >> "$GITHUB_STEP_SUMMARY" || true
+
+      - name: Publish coverage summary
+        if: always()
+        run: |
+          if [ -f coverage/docker-risk-summary.md ]; then
+            cat coverage/docker-risk-summary.md >> "$GITHUB_STEP_SUMMARY"
+          elif [ "${{ steps.coverage_gate.outcome }}" = "success" ] && { [ -f coverage/critical.json ] || [ -f coverage/integration.json ]; }; then
+            echo "Changed-line coverage comparison skipped: no prior commit exists for this ref." >> "$GITHUB_STEP_SUMMARY"
+          elif [ "${{ steps.coverage_gate.outcome }}" = "skipped" ]; then
+            echo "Changed-line coverage comparison did not run because an earlier test step failed." >> "$GITHUB_STEP_SUMMARY"
+          elif [ "${{ steps.coverage_gate.outcome }}" != "success" ]; then
+            echo "Changed-line coverage gate failed before writing its summary." >> "$GITHUB_STEP_SUMMARY"
+          elif [ ! -f coverage/critical.json ] && [ ! -f coverage/integration.json ]; then
+            echo "Changed-line coverage report unavailable; coverage JSON files are missing from the workspace." >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Upload integration outcome reports
         if: always()
@@ -372,6 +438,14 @@ jobs:
         with:
           name: integration-test-outcomes
           path: qa-outcomes-*
+          if-no-files-found: warn
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: integration-test-coverage
+          path: coverage/*
           if-no-files-found: warn
 
       - name: Collect diagnostics on failure

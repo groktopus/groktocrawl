@@ -1,0 +1,7 @@
+# Reviewed exceptions for the changed-line high-risk coverage gate.
+#
+# Entries must be keyed by repository-relative Python path and include all of:
+# issue, reviewer, expires (ISO date), reason, and reviewed = true. Keep this
+# table empty unless a maintainer has reviewed the risk and recorded why focused
+# tests cannot land in the same change.
+[exceptions]

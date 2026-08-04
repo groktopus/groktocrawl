@@ -1,0 +1,3 @@
+# Copy an entry into qa/coverage-exceptions.toml only after maintainer review.
+[exceptions]
+# "common/url.py" = { issue = "#000", reviewer = "@maintainer", expires = "2026-12-31", reason = "Explain the bounded risk and compensating evidence.", reviewed = true }

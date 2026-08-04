@@ -13,18 +13,57 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - uses: astral-sh/setup-uv@v7
       - name: Install declared test dependencies
         run: uv sync --locked --no-dev --group fast-tests
+      - name: Verify coverage tooling
+        run: uv run --no-sync python -c "import coverage, pytest_cov; print(f'coverage={coverage.__version__} pytest-cov={pytest_cov.__version__}')"
       - name: Run unit and service tests
         env:
           QA_OUTCOME_PATH: ${{ github.workspace }}/qa-outcomes-fast.json
         run: >-
+          mkdir -p coverage &&
           PYTHONPATH=agent-svc:scraper-svc:llm-svc:parse-svc:portal-svc:browser-svc:semantic-svc:.
-          uv run --no-sync pytest tests/unit/ tests/service/ --no-cov
+          uv run --no-sync pytest tests/unit/ tests/service/
+          --cov-report=xml:coverage/fast.xml
+          --cov-report=json:coverage/fast.json
+          --cov-report=term-missing
+
+      - name: Check changed-line coverage
+        id: coverage_gate
+        env:
+          COVERAGE_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          COVERAGE_HEAD_SHA: ${{ github.sha }}
+        run: |
+          if [ "$COVERAGE_BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            echo "Changed-line coverage skipped: no prior commit exists for this ref."
+            exit 0
+          fi
+          uv run --no-sync python scripts/coverage_gate.py \
+            --coverage-json coverage/fast.json \
+            --base-sha "$COVERAGE_BASE_SHA" \
+            --head-sha "$COVERAGE_HEAD_SHA" \
+            --summary-path coverage/fast-risk-summary.md
+
+      - name: Publish coverage summary
+        if: always()
+        run: |
+          if [ -f coverage/fast-risk-summary.md ]; then
+            cat coverage/fast-risk-summary.md >> "$GITHUB_STEP_SUMMARY"
+          elif [ "${{ steps.coverage_gate.outcome }}" = "success" ] && [ -f coverage/fast.json ]; then
+            echo "Changed-line coverage comparison skipped: no prior commit exists for this ref." >> "$GITHUB_STEP_SUMMARY"
+          elif [ "${{ steps.coverage_gate.outcome }}" = "skipped" ]; then
+            echo "Changed-line coverage comparison did not run because an earlier test step failed." >> "$GITHUB_STEP_SUMMARY"
+          elif [ "${{ steps.coverage_gate.outcome }}" != "success" ]; then
+            echo "Changed-line coverage gate failed before writing its summary." >> "$GITHUB_STEP_SUMMARY"
+          elif [ ! -f coverage/fast.json ]; then
+            echo "Changed-line coverage report unavailable; coverage JSON is missing from the workspace." >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Publish test outcome summary
         if: always()
@@ -41,4 +80,12 @@ jobs:
         with:
           name: fast-test-outcomes
           path: qa-outcomes-fast.*
+          if-no-files-found: warn
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: fast-test-coverage
+          path: coverage/*
           if-no-files-found: warn
