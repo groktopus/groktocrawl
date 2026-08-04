@@ -55,11 +55,12 @@ curl -s http://localhost:8080/v2/activity
 # Flag processing jobs older than one hour (dry-run, nothing changes)
 docker compose exec agent-svc python3 /app/scripts/reconcile-jobs.py --stale-after 3600
 
-# Reconcile: mark flagged jobs failed (only ever transitions processing -> failed)
-docker compose exec agent-svc python3 /app/scripts/reconcile-jobs.py --stale-after 3600 --fail
+# Reconcile: mark flagged jobs failed (only ever transitions processing -> failed;
+# --assume-stopped attests agent-svc is stopped so a live job is never failed)
+docker compose exec agent-svc python3 /app/scripts/reconcile-jobs.py --stale-after 3600 --fail --assume-stopped
 ```
 
-The reconcile tool reads `VALKEY_URL` inside the container; from a checkout, pass `--redis-url`. Full symptoms, identification, and per-job-kind resolution steps: [Interrupted Jobs runbook](../runbooks/interrupted-jobs.md). The durability contract, SLO boundary, and durable-execution roadmap (milestones M1–M5) are recorded in [ADR-0047](../adr/0047-defer-restart-safe-execution.md).
+The reconcile tool reads `VALKEY_URL` inside the container; from a checkout, pass `--redis-url`. It refuses `--fail` without `--assume-stopped`: failing a job whose worker is still alive would make the worker's later completion no-op and silently discard its final result. Full symptoms, identification, and per-job-kind resolution steps: [Interrupted Jobs runbook](../runbooks/interrupted-jobs.md). The durability contract, SLO boundary, and durable-execution roadmap (milestones M1–M5) are recorded in [ADR-0047](../adr/0047-defer-restart-safe-execution.md).
 
 CAPTCHA screenshots are challenge-widget crops held only in memory for the
 configured vision request. They are never logged, cached, returned, or written

@@ -58,7 +58,7 @@ Adopt **Option A now** and record **Option E as the target direction** for when 
 
 The supported contract, stated explicitly:
 
-1. **Persistence:** job records (status, metadata, payload, results) persist in Valkey for 24 hours (`JobStore._default_ttl`). Status transitions and result data survive a restart; in-flight execution state does not.
+1. **Persistence:** job records (status, metadata, payload, results) persist in Valkey for 24 hours (module-level `_default_ttl()` in `agent-svc/agent/store.py`). Status transitions and result data survive a restart; in-flight execution state does not.
 2. **Execution:** background work runs best-effort inside the `agent-svc` process via `TaskTracker`. An orderly shutdown gives in-flight tasks a five-second grace period, then cancels them (ADR-0035). A crash, forced termination, or restart does not resume or reclaim work.
 3. **Webhooks:** delivery is best-effort with up to three retries and exponential backoff within the process lifetime (ADR-0012, ADR-0045). Undelivered events are not replayed after restart. Each event carries a unique `webhookId` so receivers can deduplicate.
 4. **SLO boundary:** in-flight background execution carries **no durability SLO**. Operators must treat completion as at-least-once-with-verification: after a restart, check for stranded jobs (runbook `docs/runbooks/interrupted-jobs.md`) and re-submit critical work. Job records still in `processing` beyond the configured `CRAWL_MAX_DURATION_SECONDS` / expected job runtime should be treated as stranded and reconciled with `scripts/reconcile-jobs.py`.
@@ -99,4 +99,4 @@ Implementation is **deferred** and is triggered only by operational evidence —
 - [Issue #458](https://github.com/groktopus/groktocrawl/issues/458) — prior durability-contract clarification (closed by PR #462)
 - [Issue #196](https://github.com/groktopus/groktocrawl/issues/196) — RQ machinery removal
 - [Discussion #427](https://github.com/groktopus/groktocrawl/discussions/427) — durable job owner concept (graph checkpoints ≠ durable execution)
-- [Interrupted Jobs runbook](../../runbooks/interrupted-jobs.md) — operator recovery procedure
+- [Interrupted Jobs runbook](../runbooks/interrupted-jobs.md) — operator recovery procedure

@@ -11,23 +11,29 @@ This operator tool lists those stranded jobs and can mark them ``failed``.
 Non-interactive and idempotent:
 
 - Default is a dry-run listing; nothing is modified.
-- ``--fail`` transitions stale ``processing`` jobs to ``failed``. Only
-  ``processing`` records are ever modified — ``completed``, ``cancelled``,
-  and ``failed`` records are preserved (same guard as ``JobStore.fail_job``).
-- Re-running ``--fail`` is a no-op once jobs are reconciled.
+- ``--fail --assume-stopped`` transitions stale ``processing`` jobs to
+  ``failed``. Only ``processing`` records are ever modified —
+  ``completed``, ``cancelled``, and ``failed`` records are preserved (same
+  guard as ``JobStore.fail_job``). ``--fail`` refuses to run without
+  ``--assume-stopped`` because failing a job whose worker is still alive
+  would make the worker's later ``complete_job()`` no-op, silently
+  discarding its final result.
+- Re-running ``--fail --assume-stopped`` is a no-op once jobs are
+  reconciled.
 
 Exit codes (usable as an alerting check):
 
 - 0 — no stale processing jobs remain (or all reconciled)
 - 1 — stale processing jobs found (dry-run) or still remaining
-- 2 — error (connection, bad arguments)
+- 2 — error (connection, bad arguments, missing ``--assume-stopped``)
 
 Run this while ``agent-svc`` is stopped (for example, immediately after a
 restart or deploy) so a genuinely live long-running job is not mistaken for
-a stranded one. Choose ``--stale-after`` above your longest legitimate job
-runtime: the default 3600s exceeds the crawl cap
-(``CRAWL_MAX_DURATION_SECONDS`` default 1800s) and typical agent jobs, but
-agent research jobs have no hard duration cap.
+a stranded one — ``--assume-stopped`` is your attestation that it is.
+Choose ``--stale-after`` above your longest legitimate job runtime: the
+default 3600s exceeds the crawl cap (``CRAWL_MAX_DURATION_SECONDS`` default
+1800s) and typical agent jobs, but agent research jobs have no hard
+duration cap.
 
 Examples:
 
@@ -36,7 +42,7 @@ Examples:
 
     # Reconcile jobs stuck for more than an hour, machine-readable:
     docker compose exec agent-svc python3 /app/scripts/reconcile-jobs.py \\
-        --stale-after 3600 --fail --json
+        --stale-after 3600 --fail --assume-stopped --json
 
     # From a checkout, against a custom endpoint:
     python3 scripts/reconcile-jobs.py --redis-url redis://localhost:6379/0 \\
@@ -72,8 +78,27 @@ def _parse_ts(value: str) -> datetime | None:
 
 
 def create_client(redis_url: str) -> Redis:
-    """Build the Valkey client used by ``run``. Injectable for tests."""
-    return Redis.from_url(redis_url, decode_responses=True)
+    """Build the Valkey client used by ``run``. Injectable for tests.
+
+    Bounded socket timeouts (matching the health probe in
+    ``agent-svc/agent/health.py``) so the alerting tool cannot hang
+    indefinitely against a Valkey that accepts TCP but never responds.
+    """
+    return Redis.from_url(
+        redis_url,
+        decode_responses=True,
+        socket_connect_timeout=3,
+        socket_timeout=3,
+    )
+
+
+def _sanitize_label(value: str) -> str:
+    """Strip control characters (e.g., ANSI escapes) from operator output.
+
+    Job payloads are client-controlled; printing them raw would let a
+    crafted URL or prompt spoof the tool's terminal output.
+    """
+    return "".join(ch for ch in value if ch.isprintable())
 
 
 def _job_label(meta: dict[str, Any]) -> str:
@@ -82,10 +107,10 @@ def _job_label(meta: dict[str, Any]) -> str:
     if isinstance(payload, dict):
         url = payload.get("url")
         if isinstance(url, str) and url:
-            return url
+            return _sanitize_label(url)
         prompt = payload.get("prompt")
         if isinstance(prompt, str) and prompt:
-            return prompt[:80]
+            return _sanitize_label(prompt[:80])
     return "-"
 
 
@@ -174,6 +199,19 @@ def fail_jobs(client: Redis, jobs: list[dict[str, Any]]) -> int:
 
 def run(client: Redis, args: argparse.Namespace, now: datetime | None = None) -> int:
     """Core logic; hermetically testable with a fake client."""
+    if args.fail and not args.assume_stopped:
+        # Failing a job whose worker is still alive would make the worker's
+        # later complete_job() no-op (processing-only guard), silently
+        # discarding its final result. Require an explicit attestation that
+        # agent-svc is stopped before any transition.
+        print(
+            "reconcile-jobs: refusing to reconcile: --fail requires "
+            "--assume-stopped (run only while agent-svc is stopped; use a "
+            "dry run to inspect first).",
+            file=sys.stderr,
+        )
+        return 2
+
     now = now or datetime.now(UTC)
     stranded, skipped = find_stranded_jobs(
         client,
@@ -278,6 +316,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--fail",
         action="store_true",
         help="Transition flagged processing jobs to failed (default: dry run)",
+    )
+    parser.add_argument(
+        "--assume-stopped",
+        action="store_true",
+        help=(
+            "Attest that agent-svc is stopped; required with --fail so a "
+            "live job's final result is never discarded"
+        ),
     )
     parser.add_argument(
         "--json", action="store_true", help="Machine-readable JSON output"

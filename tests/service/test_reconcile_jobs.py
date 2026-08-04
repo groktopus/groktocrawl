@@ -110,6 +110,7 @@ def args(**overrides) -> argparse.Namespace:
         "kind": None,
         "limit": 100,
         "fail": False,
+        "assume_stopped": False,
         "json": False,
     }
     base.update(overrides)
@@ -274,17 +275,30 @@ class TestRun:
 
     def test_fail_reconciles_and_returns_0(self, fake_redis):
         seed_job(fake_redis, "stale", created_at=NOW - timedelta(hours=2))
-        rc = MODULE.run(fake_redis, args(fail=True), now=NOW)
+        rc = MODULE.run(fake_redis, args(fail=True, assume_stopped=True), now=NOW)
         assert rc == 0
         assert json.loads(fake_redis._store["job:stale:meta"])["status"] == "failed"
 
     def test_fail_is_idempotent(self, fake_redis):
         seed_job(fake_redis, "stale", created_at=NOW - timedelta(hours=2))
-        first = MODULE.run(fake_redis, args(fail=True), now=NOW)
-        second = MODULE.run(fake_redis, args(fail=True), now=NOW)
+        opts = args(fail=True, assume_stopped=True)
+        first = MODULE.run(fake_redis, opts, now=NOW)
+        second = MODULE.run(fake_redis, opts, now=NOW)
         assert first == 0
         assert second == 0
         assert json.loads(fake_redis._store["job:stale:meta"])["status"] == "failed"
+
+    def test_fail_without_assume_stopped_is_refused(self, fake_redis, capsys):
+        seed_job(fake_redis, "stale", created_at=NOW - timedelta(hours=2))
+        rc = MODULE.run(fake_redis, args(fail=True), now=NOW)
+        assert rc == 2
+        meta = json.loads(fake_redis._store["job:stale:meta"])
+        assert meta["status"] == "processing"  # nothing modified
+        assert "assume-stopped" in capsys.readouterr().err
+
+    def test_fail_dry_run_does_not_require_assume_stopped(self, fake_redis):
+        seed_job(fake_redis, "stale", created_at=NOW - timedelta(hours=2))
+        assert MODULE.run(fake_redis, args(), now=NOW) == 1
 
     def test_json_output(self, fake_redis, capsys):
         seed_job(
@@ -372,3 +386,46 @@ class TestMain:
         self._patch_client(fake_redis, monkeypatch)
         fake_redis.scan.side_effect = redis.exceptions.ConnectionError("down")
         assert MODULE.main(["--json"]) == 2
+
+    def test_main_exit_2_fail_without_assume_stopped(self, fake_redis, monkeypatch):
+        self._patch_client(fake_redis, monkeypatch)
+        seed_job(fake_redis, "stale", created_at=datetime.now(UTC) - timedelta(hours=2))
+        assert MODULE.main(["--fail"]) == 2
+
+
+class TestOutputSafety:
+    def test_label_sanitizes_control_characters(self):
+        label = MODULE._job_label({"payload": {"url": "https://x.test/\x1b[2J"}})
+        assert "\x1b" not in label
+        prompt = MODULE._job_label({"payload": {"prompt": "hi\x1b[2Jthere"}})
+        assert "\x1b" not in prompt
+
+    def test_human_output_has_no_escape_bytes(self, fake_redis, capsys):
+        seed_job(
+            fake_redis,
+            "evil",
+            created_at=NOW - timedelta(hours=2),
+            payload={"url": "https://x.test/\x1b[2J"},
+        )
+        MODULE.run(fake_redis, args(), now=NOW)
+        out = capsys.readouterr().out
+        assert "\x1b" not in out
+        assert "https://x.test/" in out
+
+
+class TestCreateClient:
+    def test_socket_timeouts_are_bounded(self, monkeypatch):
+        captured: dict = {}
+
+        class FakeRedis:
+            @classmethod
+            def from_url(cls, url: str, **kwargs):
+                captured["url"] = url
+                captured["kwargs"] = kwargs
+                return object()
+
+        monkeypatch.setattr(MODULE, "Redis", FakeRedis)
+        MODULE.create_client("redis://x:6379/0")
+        assert captured["url"] == "redis://x:6379/0"
+        assert captured["kwargs"]["socket_connect_timeout"] == 3
+        assert captured["kwargs"]["socket_timeout"] == 3
