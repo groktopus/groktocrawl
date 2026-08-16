@@ -3,6 +3,8 @@
 import logging
 import math
 
+import httpx
+
 from ..scraper_client import ScraperClient
 from ..searxng_client import SearXNGClient
 
@@ -70,7 +72,18 @@ async def _run_find_similar_qdrant(
         # 2. Search Qdrant using the scraped content as the query
         # search_vector() embeds the text server-side and searches the index
         query_text = f"{title} {markdown[:3000]}"
-        vector_results = await semantic.search_vector(query_text, limit=limit)
+        try:
+            vector_results = await semantic.search_vector(query_text, limit=limit)
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 503:
+                # Vector index unavailable (e.g. models loading or a slow /
+                # unhealthy Qdrant). Degrade gracefully to no similar results
+                # rather than surfacing a 500 to the caller.
+                logger.warning(
+                    "find_similar: semantic vector index unavailable (503); returning no results"
+                )
+                return []
+            raise
 
         return [
             {

@@ -173,6 +173,7 @@ _qdrant_ready: bool = False
 COLLECTION_NAME = "groktocrawl_pages"
 MAX_DOCS = int(os.getenv("VECTOR_INDEX_MAX_DOCS", "250000"))
 QDRANT_URL = os.getenv("QDRANT_URL", "http://qdrant:6333")
+QDRANT_QUERY_TIMEOUT = float(os.getenv("QDRANT_QUERY_TIMEOUT", "10"))
 
 # ── Migration state (in-memory, lost on restart) ──────────────────
 # For restart-surviving state, store in Valkey or a known Qdrant point.

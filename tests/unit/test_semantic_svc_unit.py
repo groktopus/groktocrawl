@@ -879,3 +879,104 @@ class TestTargetEmbedModelCache:
 
         # Initially empty string
         assert isinstance(_target_embed_model_name, str)
+
+
+# ── Search vector: Qdrant failure boundary ───────────────────────
+
+
+def _async_return(value):
+    async def _wrap(*_args, **_kwargs):
+        return value
+
+    return _wrap
+
+
+class TestSearchVectorQdrantBoundary:
+    """POST /search/vector must convert a slow or failing Qdrant query
+    into a structured 503 instead of an unhandled 500.
+
+    Regression for the live 500 observed when the local Qdrant index is
+    unhealthy: ``router_search.search_vector`` previously called the
+    blocking ``qdrant.query_points`` with no timeout and no error boundary,
+    so a slow/stuck index escaped as a generic internal error.
+    """
+
+    @staticmethod
+    def _ready_router(monkeypatch, qdrant):
+        import app as app_module
+        import router_search
+
+        class _FakeModel:
+            def encode(self, text, normalize_embeddings=True):
+                import numpy as np
+
+                return np.array([[0.1, 0.2, 0.3]])
+
+        monkeypatch.setattr(app_module, "_models_ready", True)
+        monkeypatch.setattr(router_search, "_ensure_qdrant", _async_return(qdrant))
+        monkeypatch.setattr(router_search, "_get_embed_model", lambda: _FakeModel())
+        monkeypatch.setattr(router_search, "_get_active_model", lambda: "v_bge-m3")
+        return router_search
+
+    @pytest.mark.asyncio
+    async def test_qdrant_timeout_returns_503(self, monkeypatch):
+        """A Qdrant query that exceeds the bound returns 503, not 500."""
+
+        from fastapi import HTTPException
+        from models import VectorSearchRequest
+
+        class _SlowQdrant:
+            def query_points(self, **kwargs):
+                raise TimeoutError("timed out")
+
+        router_search = self._ready_router(monkeypatch, _SlowQdrant())
+        with pytest.raises(HTTPException) as exc_info:
+            await router_search.search_vector(
+                VectorSearchRequest(query="herbs", limit=5)
+            )
+        assert exc_info.value.status_code == 503
+
+    @pytest.mark.asyncio
+    async def test_qdrant_failure_returns_503(self, monkeypatch):
+        """A Qdrant connection/query error returns 503, not 500."""
+        from fastapi import HTTPException
+        from models import VectorSearchRequest
+
+        class _BadQdrant:
+            def query_points(self, **kwargs):
+                raise RuntimeError("connection refused")
+
+        router_search = self._ready_router(monkeypatch, _BadQdrant())
+        with pytest.raises(HTTPException) as exc_info:
+            await router_search.search_vector(
+                VectorSearchRequest(query="herbs", limit=5)
+            )
+        assert exc_info.value.status_code == 503
+
+    @pytest.mark.asyncio
+    async def test_success_still_returns_results(self, monkeypatch):
+        """A healthy Qdrant query still returns scored results unchanged."""
+        from models import VectorSearchRequest, VectorSearchResponse
+
+        class _Hit:
+            def __init__(self, url, title, score):
+                self.payload = {"url": url, "title": title}
+                self.score = score
+
+        class _OkQdrant:
+            def query_points(self, **kwargs):
+                class _Resp:
+                    points = [
+                        _Hit("https://a.com", "A", 0.91),
+                        _Hit("https://b.com", "B", 0.82),
+                    ]
+
+                return _Resp()
+
+        router_search = self._ready_router(monkeypatch, _OkQdrant())
+        resp = await router_search.search_vector(
+            VectorSearchRequest(query="herbs", limit=5)
+        )
+        assert isinstance(resp, VectorSearchResponse)
+        assert [r.url for r in resp.results] == ["https://a.com", "https://b.com"]
+        assert [r.score for r in resp.results] == [0.91, 0.82]

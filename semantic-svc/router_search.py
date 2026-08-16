@@ -9,6 +9,7 @@ import logging
 import app as app_module
 from app import (
     COLLECTION_NAME,
+    QDRANT_QUERY_TIMEOUT,
     _ensure_qdrant,
     _get_active_model,
     _get_embed_model,
@@ -45,12 +46,32 @@ async def search_vector(body: VectorSearchRequest):
 
     active_nv = _get_active_model()
 
-    hits = qdrant.query_points(
-        collection_name=COLLECTION_NAME,
-        query=query_embedding,
-        using=active_nv,
-        limit=body.limit,
-    ).points
+    # Qdrant query_points() is a blocking call. Run it off the event loop
+    # with a bounded timeout so a slow or unhealthy index degrades to a
+    # structured 503 instead of escaping as an unhandled 500.
+    try:
+        hits = await asyncio.wait_for(
+            loop.run_in_executor(
+                None,
+                lambda: (
+                    qdrant.query_points(
+                        collection_name=COLLECTION_NAME,
+                        query=query_embedding,
+                        using=active_nv,
+                        limit=body.limit,
+                    ).points
+                ),
+            ),
+            timeout=QDRANT_QUERY_TIMEOUT,
+        )
+    except TimeoutError:
+        logger.error(
+            "Vector search timed out querying Qdrant after %ss", QDRANT_QUERY_TIMEOUT
+        )
+        raise HTTPException(503, "Vector index query timed out")
+    except Exception:
+        logger.exception("Vector search failed querying Qdrant")
+        raise HTTPException(503, "Vector index unavailable")
 
     results = [
         VectorSearchResult(
