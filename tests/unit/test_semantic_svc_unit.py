@@ -907,7 +907,7 @@ class TestSearchVectorQdrantBoundary:
         import router_search
 
         class _FakeModel:
-            def encode(self, text, normalize_embeddings=True):
+            def encode(self, text, **kwargs):
                 import numpy as np
 
                 return np.array([[0.1, 0.2, 0.3]])
