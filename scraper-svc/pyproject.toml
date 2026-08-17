@@ -14,7 +14,7 @@ dependencies = [
     "beautifulsoup4>=4.13.0",
     "redis>=5.0",
     "youtube_transcript_api>=1.0.0",
-    "cloakbrowser==0.5.3",
+    "cloakbrowser==0.5.7",
 ]
 
 [project.optional-dependencies]
