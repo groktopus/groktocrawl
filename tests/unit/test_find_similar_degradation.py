@@ -1,9 +1,9 @@
 """Tests for graceful degradation of the find-similar qdrant path.
 
 Covers ``agent-svc/agent/research/similar.py:_run_find_similar_qdrant``:
-when semantic-svc returns 503 for the vector search (models loading or a
-slow/unhealthy Qdrant index), find-similar should degrade to an empty result
-instead of letting the HTTPStatusError escape as a 500.
+when semantic-svc fails for the vector search (503 index unavailable,
+timeout on a slow backend, or connection error), find-similar should
+degrade to an empty result instead of letting the error escape as a 500.
 """
 
 from __future__ import annotations
@@ -70,21 +70,44 @@ async def test_qdrant_503_returns_empty_results():
 
 
 @pytest.mark.asyncio
-async def test_qdrant_non_503_status_re_raises():
-    """A non-503 upstream error still propagates."""
+async def test_qdrant_http_error_returns_empty():
+    """A 500 from semantic-svc degrades to no similar results, not a 500."""
     semantic = _FakeSemantic(AsyncMock(side_effect=_mock_http_status_error(500)))
 
     with (
         patch("agent.research.similar.ScraperClient", return_value=_FakeScraper()),
         patch("agent.semantic_client.SemanticClient", return_value=semantic),
     ):
-        with pytest.raises(httpx.HTTPStatusError):
-            await _run_find_similar_qdrant(
-                url="https://example.com/herbs",
-                limit=5,
-                scraper_url="http://scraper-svc:8001",
-                semantic_url="http://semantic-svc:8003",
-            )
+        results = await _run_find_similar_qdrant(
+            url="https://example.com/herbs",
+            limit=5,
+            scraper_url="http://scraper-svc:8001",
+            semantic_url="http://semantic-svc:8003",
+        )
+
+    assert results == []
+
+
+@pytest.mark.asyncio
+async def test_qdrant_timeout_returns_empty():
+    """A timeout (slow backend) degrades to no similar results, not a 500."""
+    request = httpx.Request("POST", "http://semantic-svc:8003/search/vector")
+    semantic = _FakeSemantic(
+        AsyncMock(side_effect=httpx.ReadTimeout("timed out", request=request))
+    )
+
+    with (
+        patch("agent.research.similar.ScraperClient", return_value=_FakeScraper()),
+        patch("agent.semantic_client.SemanticClient", return_value=semantic),
+    ):
+        results = await _run_find_similar_qdrant(
+            url="https://example.com/herbs",
+            limit=5,
+            scraper_url="http://scraper-svc:8001",
+            semantic_url="http://semantic-svc:8003",
+        )
+
+    assert results == []
 
 
 @pytest.mark.asyncio

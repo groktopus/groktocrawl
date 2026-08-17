@@ -74,16 +74,20 @@ async def _run_find_similar_qdrant(
         query_text = f"{title} {markdown[:3000]}"
         try:
             vector_results = await semantic.search_vector(query_text, limit=limit)
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == 503:
-                # Vector index unavailable (e.g. models loading or a slow /
-                # unhealthy Qdrant). Degrade gracefully to no similar results
-                # rather than surfacing a 500 to the caller.
-                logger.warning(
-                    "find_similar: semantic vector index unavailable (503); returning no results"
-                )
-                return []
-            raise
+        except httpx.HTTPError as e:
+            # Vector index unavailable or slow (503, timeout, connection
+            # error). Degrade gracefully to no similar results rather than
+            # surfacing a 500 to the caller.
+            response = getattr(e, "response", None)
+            status = (
+                getattr(response, "status_code", None) if response is not None else None
+            )
+            detail = f" (HTTP {status})" if status else f" ({type(e).__name__})"
+            logger.warning(
+                "find_similar: semantic vector search failed%s; returning no results",
+                detail,
+            )
+            return []
 
         return [
             {
