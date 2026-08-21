@@ -40,12 +40,14 @@ port is `SLOPSEARX_MCP_PORT` (default `8007`). The companion shares the normal
 Brave credential and Valkey service wiring, but no grant creates credentials or
 bypasses HTTP MCP authentication.
 
-All grants default to `1`: `MCP_GRANT_JOBS` controls jobs tools,
+All grants default to disabled (secure-by-default, inherited from the
+SlopSearX image): `MCP_GRANT_JOBS` enables jobs tools,
 `MCP_GRANT_SCIENCE` science tools, `MCP_GRANT_RESEARCH` research tools,
 `MCP_GRANT_SECURITY` security tools, and
-`MCP_TARGETED_SENSITIVE_ALLOWED` targeted sensitive-engine selection. Disable
-only the capability group you do not want, for example
-`MCP_GRANT_SECURITY=0` or `MCP_TARGETED_SENSITIVE_ALLOWED=0` in `.env`.
+`MCP_TARGETED_SENSITIVE_ALLOWED` targeted sensitive-engine selection
+(`hibp`, `dehashed`). Opt in per capability group in `.env`, for example
+`MCP_GRANT_SECURITY=1`; leave `MCP_TARGETED_SENSITIVE_ALLOWED` unset unless
+sensitive-engine queries are explicitly wanted.
 
 The service healthcheck sends a bounded, authenticated MCP `initialize`
 request to its local Streamable HTTP endpoint. It verifies MCP protocol

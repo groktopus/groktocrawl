@@ -55,11 +55,15 @@ services:
       - MCP_HOST=0.0.0.0
       - MCP_PORT=8000
       - MCP_AUTH_TOKEN=${SLOPSEARX_MCP_AUTH_TOKEN:-}
-      - MCP_GRANT_JOBS=${MCP_GRANT_JOBS:-1}
-      - MCP_GRANT_SCIENCE=${MCP_GRANT_SCIENCE:-1}
-      - MCP_GRANT_RESEARCH=${MCP_GRANT_RESEARCH:-1}
-      - MCP_GRANT_SECURITY=${MCP_GRANT_SECURITY:-1}
-      - MCP_TARGETED_SENSITIVE_ALLOWED=${MCP_TARGETED_SENSITIVE_ALLOWED:-1}
+      # Grants delegate defaults to the SlopSearX image, which is secure by
+      # default: specialist grants and targeted sensitive-engine access stay
+      # off until explicitly enabled. Set values in .env to opt in, e.g.
+      # MCP_GRANT_SECURITY=1. An empty value means "no override" upstream.
+      - MCP_GRANT_JOBS=${MCP_GRANT_JOBS:-}
+      - MCP_GRANT_SCIENCE=${MCP_GRANT_SCIENCE:-}
+      - MCP_GRANT_RESEARCH=${MCP_GRANT_RESEARCH:-}
+      - MCP_GRANT_SECURITY=${MCP_GRANT_SECURITY:-}
+      - MCP_TARGETED_SENSITIVE_ALLOWED=${MCP_TARGETED_SENSITIVE_ALLOWED:-}
     depends_on:
       valkey:
         condition: service_healthy
