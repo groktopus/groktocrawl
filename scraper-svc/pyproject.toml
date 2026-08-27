@@ -15,7 +15,7 @@ dependencies = [
     "redis>=5.0",
     "youtube_transcript_api>=1.0.0",
     "yt-dlp>=2026.3.13",
-    "cloakbrowser==0.5.3",
+    "cloakbrowser==0.5.8",
 ]
 
 [project.optional-dependencies]
