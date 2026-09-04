@@ -2,6 +2,143 @@
 
 All notable changes to GroktoCrawl are documented in this file.
 
+## [0.14.0](https://github.com/groktopus/groktocrawl/compare/v0.13.0...v0.14.0) (2026-09-04)
+
+
+### Features
+
+* **parse:** add explicit hosted OCR mode ([ca59119](https://github.com/groktopus/groktocrawl/commit/ca591199cfd05144e45d2372afd659f2e86e6327))
+* **parse:** add explicit hosted OCR mode ([81ab073](https://github.com/groktopus/groktocrawl/commit/81ab0731e75888d3a50a02e6c8a6e0a19f6b276b)), closes [#615](https://github.com/groktopus/groktocrawl/issues/615)
+* **session:** opt in to independent steps ([83dd610](https://github.com/groktopus/groktocrawl/commit/83dd610967fb72423b85dfd70d0e7de1e912638a))
+
+
+### Bug Fixes
+
+* [#586](https://github.com/groktopus/groktocrawl/issues/586) barrier polish and test-fidelity hardening ([54487cf](https://github.com/groktopus/groktocrawl/commit/54487cfe453b23a2f40e2fae610640bcfd70b825))
+* [#586](https://github.com/groktopus/groktocrawl/issues/586) barrier polish and test-fidelity hardening ([2308a30](https://github.com/groktopus/groktocrawl/commit/2308a306d068f85ad75142635d5c4e7d14cc0213))
+* address review findings on [#586](https://github.com/groktopus/groktocrawl/issues/586) refusal semantics ([3323778](https://github.com/groktopus/groktocrawl/commit/3323778e9099dfd89488e960b4b0ae4ffb1cf970))
+* **agent:** address PR [#597](https://github.com/groktopus/groktocrawl/issues/597) review findings on param-honoring fix ([7b79932](https://github.com/groktopus/groktocrawl/commit/7b7993231b58d06333c9f38d602a37ce9e0bb281))
+* **agent:** honor crawl limit and agent max_credits request params ([482aa92](https://github.com/groktopus/groktocrawl/commit/482aa92873f0c5a5bd901837f1f30a9f93bf68b7))
+* **agent:** make LLM call timeout configurable ([#589](https://github.com/groktopus/groktocrawl/issues/589)) ([33a4ea9](https://github.com/groktopus/groktocrawl/commit/33a4ea9d7ef26af1d6738f8e773b0719a6175a04))
+* **browser-pool:** preserve lifecycle capacity during cleanup ([a9d890f](https://github.com/groktopus/groktocrawl/commit/a9d890ff9e98dbcb88cb49c3cc43d28b834e61cf))
+* **ci:** give deleted-fork PRs the explicit fork summary in runtime-gate ([c1fbe4d](https://github.com/groktopus/groktocrawl/commit/c1fbe4dbd2a4ccfcf12cbaa1175622bbc952067c))
+* **ci:** route null forks to fork-guard seam, exclude from self-hosted lane ([#562](https://github.com/groktopus/groktocrawl/issues/562)) ([8da8427](https://github.com/groktopus/groktocrawl/commit/8da8427ca5e05f473cd72edd4361ababfcee7cd0))
+* **ci:** route null forks to the fork-guard seam, exclude from self-hosted lane ([#562](https://github.com/groktopus/groktocrawl/issues/562)) ([e34d998](https://github.com/groktopus/groktocrawl/commit/e34d9983be4316bbb69a6becd9d8aa1bd4fb5ecf))
+* **cli:** omit crawl limit from payload when unset (PR [#597](https://github.com/groktopus/groktocrawl/issues/597) regression) ([35cba7b](https://github.com/groktopus/groktocrawl/commit/35cba7bba15b8e1aa00447dddc924a9910021819))
+* **cli:** omit crawl limit from payload when unset (PR [#597](https://github.com/groktopus/groktocrawl/issues/597) regression) ([54b92b1](https://github.com/groktopus/groktocrawl/commit/54b92b11a8ca4ca8c122a1974c151c754d30edc7))
+* complete vector search failure handling and regression coverage ([c7d1f84](https://github.com/groktopus/groktocrawl/commit/c7d1f84af0e23e517ee083cc45424f80246c064e))
+* **compose:** pass Qdrant timeout tuning through to semantic-svc ([#588](https://github.com/groktopus/groktocrawl/issues/588)) ([4d94e99](https://github.com/groktopus/groktocrawl/commit/4d94e99ac14f385d3f8b346df4373c0a7c1cadf3))
+* **compose:** pass Qdrant timeout tuning through to semantic-svc ([#588](https://github.com/groktopus/groktocrawl/issues/588)) ([9ba8c66](https://github.com/groktopus/groktocrawl/commit/9ba8c66e4d47eb4e213a2ac5023349c6779e73ae))
+* detect Fastly JS-challenge pages and refuse barrier content ([#586](https://github.com/groktopus/groktocrawl/issues/586)) ([8d7dc82](https://github.com/groktopus/groktocrawl/commit/8d7dc829ee34be6b5ae09fbb4270ab9c930dc097))
+* detect Fastly JS-challenge pages and refuse barrier content at all consumers ([#586](https://github.com/groktopus/groktocrawl/issues/586)) ([4b66e0a](https://github.com/groktopus/groktocrawl/commit/4b66e0a0dc41d9f511837433f5d8b625672fffe9))
+* fence concurrent session steps ([0b005a9](https://github.com/groktopus/groktocrawl/commit/0b005a96a52e2630e75a602225dc6c4fb72ea7ba))
+* handle vector search failures in HTTP and SSE responses ([34b4975](https://github.com/groktopus/groktocrawl/commit/34b4975bc7baaf25510ed34029b957f95b59de70))
+* honor crawl limit and agent max_credits request params ([30ee96b](https://github.com/groktopus/groktocrawl/commit/30ee96bdd38e199444165271954059b0530c34f8))
+* make LLM call timeout configurable ([9947d32](https://github.com/groktopus/groktocrawl/commit/9947d328a4238bfebbfb30703875e503605bdb6a))
+* **parse:** call PDF parser with OCR option ([8e6f4ec](https://github.com/groktopus/groktocrawl/commit/8e6f4ec0f254bf1afb0f4f7987005b60bbf330d2))
+* preserve semantic vector search failures ([8ce40ec](https://github.com/groktopus/groktocrawl/commit/8ce40ec827308c75927e0ba6d61096d0435666f9))
+* preserve Tier 3 barrier provenance in default-flow terminal dict ([18ecaff](https://github.com/groktopus/groktocrawl/commit/18ecaff86f4d9fadcc0eb4a3ec21ff3258f2f22c)), closes [#586](https://github.com/groktopus/groktocrawl/issues/586)
+* preserve Tier 3 barrier provenance in default-flow terminal dict ([#586](https://github.com/groktopus/groktocrawl/issues/586)) ([59b2084](https://github.com/groktopus/groktocrawl/commit/59b208448b9f0efe974e517df6ec7229cced4fd2))
+* propagate vector-search failures in find-similar ([#588](https://github.com/groktopus/groktocrawl/issues/588)) ([38b097a](https://github.com/groktopus/groktocrawl/commit/38b097a44c1b7e13b6b9ac74b598a194b0f1b520))
+* propagate vector-search failures in find-similar ([#588](https://github.com/groktopus/groktocrawl/issues/588)) ([74b759b](https://github.com/groktopus/groktocrawl/commit/74b759ba7810b27c119c7fdc6401d34bc8226d61))
+* **research:** drain and preserve bounded scrape batches ([918ad4c](https://github.com/groktopus/groktocrawl/commit/918ad4c92ed2e045772fbcc5c7d367ea1ba9ec69))
+* **research:** retain URL parameters and prioritize novel gap evidence ([394a0f7](https://github.com/groktopus/groktocrawl/commit/394a0f762043cf2960eeae3513151b3d1033b96a))
+* **scraper:** drain all retired processes when reaper is cancelled ([e38b825](https://github.com/groktopus/groktocrawl/commit/e38b825e796e1344a5632aebe86c223c674a1d3f))
+* **scraper:** drop duplicated proxy-logging comment from polish diff ([8c791b6](https://github.com/groktopus/groktocrawl/commit/8c791b60187106fbb7b934e98008b0a9c71385c4))
+* **scraper:** gate recovery on meaningful gain; strip head chrome ([#587](https://github.com/groktopus/groktocrawl/issues/587)) ([082d0ce](https://github.com/groktopus/groktocrawl/commit/082d0ce4a1ebcc507ad625785e5031e46457765f))
+* **scraper:** migrate legacy string source_html_size on cache reads ([b544aef](https://github.com/groktopus/groktocrawl/commit/b544aefe198550781472c9f5e90fd6228706be99))
+* **scraper:** recover full body on low-yield card-grid extractions ([#587](https://github.com/groktopus/groktocrawl/issues/587)) ([7ab1b4d](https://github.com/groktopus/groktocrawl/commit/7ab1b4d02f277a5fdf19f0359c89188923cc8dd2))
+* **scraper:** recover full body on low-yield card-grid extractions ([#587](https://github.com/groktopus/groktocrawl/issues/587)) ([0e39754](https://github.com/groktopus/groktocrawl/commit/0e397541bb751831ba9503a959733b6d8e4dd63b))
+* **search:** preserve URL identity and progressive bounded enrichment ([40d89e5](https://github.com/groktopus/groktocrawl/commit/40d89e5e3f558485e0beded163689c218d39fe67))
+* **semantic:** ceil QDRANT_CLIENT_TIMEOUT so it never lands below the wrapper ([8c0fcff](https://github.com/groktopus/groktocrawl/commit/8c0fcffa1891a9dfeaff67b31dc57fd33ee3e8a9))
+* **session:** bound and drain storage work with atomic append logs ([7513c78](https://github.com/groktopus/groktocrawl/commit/7513c780b76fdb7e2a5b7566a8641049ff1d2946))
+* **session:** drain heartbeat cleanup and document concurrent-step timings ([f13c70e](https://github.com/groktopus/groktocrawl/commit/f13c70e2c5f4f12c1d019d8a6c514036f7672aca))
+* **youtube:** pace transcript acquisition ([86a1946](https://github.com/groktopus/groktocrawl/commit/86a19468754e9caa2f4e3389c5e2d15167b689d5))
+* **youtube:** pace transcript acquisition ([567f1a1](https://github.com/groktopus/groktocrawl/commit/567f1a154b73ef324fe8d379f58e2fe00717ce6e))
+
+
+### Performance Improvements
+
+* bound semantic model inference ([1265a62](https://github.com/groktopus/groktocrawl/commit/1265a627e5394c1ff9f313f8f14e9b01d6aebd32))
+* bound semantic model inference ([4e001df](https://github.com/groktopus/groktocrawl/commit/4e001df84ee7c3b8768ab3ec62ed2b1304a4a2f1))
+* **deploy:** support bounded scraper scale-out and shared origin pacing ([0c311ae](https://github.com/groktopus/groktocrawl/commit/0c311aec6f950b9f352bdbc9e97b242ad837aab5))
+* **research:** acquire sources as queries complete ([57d4634](https://github.com/groktopus/groktocrawl/commit/57d4634899d79a7d992d6ea870a286a195ff4608))
+* **research:** complete cross-pass source reuse ([6f1b59e](https://github.com/groktopus/groktocrawl/commit/6f1b59ed77fa12d506e77cbf9b6efc6b439f6fdb))
+* **research:** pipeline discovery, reuse sources, and synthesize once ([c99d36a](https://github.com/groktopus/groktocrawl/commit/c99d36af01b8ea2cf3ee7ca38bb0beb041a15720))
+* **research:** reuse sources across discovery passes ([5c2d3fc](https://github.com/groktopus/groktocrawl/commit/5c2d3fc12ebe7dce68b3677978fc35436663ab53))
+* **research:** synthesize one final answer after evidence coverage ([d76c41b](https://github.com/groktopus/groktocrawl/commit/d76c41b310e7d3e06a057b98cb3d155bd775f122))
+* **scraper:** reuse bounded browser processes ([83d95d8](https://github.com/groktopus/groktocrawl/commit/83d95d8dcf03d4a2134a9f4f965eeedb01b7bcb6))
+* **scraper:** reuse browser processes and support bounded scale-out ([5366343](https://github.com/groktopus/groktocrawl/commit/53663433044f646c5ea60415691af40e3278680c))
+* **search:** reuse bounded source acquisition across stages ([00e73f6](https://github.com/groktopus/groktocrawl/commit/00e73f6ed99656577101741ebdb10769b318b64c))
+* **semantic:** bound native inference and keep it off the event loop ([cfb65db](https://github.com/groktopus/groktocrawl/commit/cfb65db195a67cd4434b416202f8e5d9b1cc132e))
+* **session:** allow bounded independent steps with atomic persistence ([3afcfca](https://github.com/groktopus/groktocrawl/commit/3afcfcacea2179c9d3eeab5a1985e3f8f457a6c2))
+* **session:** offload and batch persistence ([adb39ea](https://github.com/groktopus/groktocrawl/commit/adb39ea19609982420c81b5c453eaf02cdce394e))
+
+
+### Documentation
+
+* list LLM_CALL_TIMEOUT in public surface inventory ([7c9b210](https://github.com/groktopus/groktocrawl/commit/7c9b21005849dea785fe839c958059ce24bdaaea))
+* **perf:** record topology evidence and configuration inventory ([653b8d2](https://github.com/groktopus/groktocrawl/commit/653b8d2738387f897c7d9ceb92144b18d5d2ef3a))
+* record 2026-08-22 branch-protection bypass in audit runbook ([#583](https://github.com/groktopus/groktocrawl/issues/583)) ([c7bac21](https://github.com/groktopus/groktocrawl/commit/c7bac21bcd7303ef6d09fdb6afd19646de582ea4))
+* record 2026-08-22 branch-protection bypass in audit runbook ([#583](https://github.com/groktopus/groktocrawl/issues/583)) ([2ea25e7](https://github.com/groktopus/groktocrawl/commit/2ea25e797d1eb8398168c9ba6ebc70759f2ea14b))
+* reflect Round 2 barrier, search, and fork-protection changes ([eb3a06a](https://github.com/groktopus/groktocrawl/commit/eb3a06acf6f3d0f7f1157887ed0816b1c519e97e))
+* reflect Round 2 barrier, search, and fork-protection changes ([da0d4b6](https://github.com/groktopus/groktocrawl/commit/da0d4b63b44f0fa53f61c6bcfcde7ea871b6cee2))
+* update README for configurable timeouts and error-propagation ([2b3738f](https://github.com/groktopus/groktocrawl/commit/2b3738f2c941fbd535eb16ddcb15cb16a8b5f1d0))
+* update README for configurable timeouts and error-propagation changes ([a9bcccb](https://github.com/groktopus/groktocrawl/commit/a9bcccb36f4837fea75a326d5b87d098672617cb))
+
+
+### CI/CD
+
+* address review pass on fork-PR guard and --verify-rulesets ([#562](https://github.com/groktopus/groktocrawl/issues/562)) ([726858c](https://github.com/groktopus/groktocrawl/commit/726858cb3328bb90068a39331bf2dffa1f4e0c54))
+* align integration AnyDoc version ([1a47074](https://github.com/groktopus/groktocrawl/commit/1a4707461b5ec9b938b0e06554474227381623b6))
+* allocate integration-lane host ports dynamically at run time ([d3a4a09](https://github.com/groktopus/groktocrawl/commit/d3a4a097a0bb2d4c53941c679207dd91d76a124d))
+* deconflict integration-lane host ports from co-tenant stacks ([1b26623](https://github.com/groktopus/groktocrawl/commit/1b266238ad141a6d36358fe127422544ea0beef1))
+* fix python-source interpolation of allocated host ports ([5576b59](https://github.com/groktopus/groktocrawl/commit/5576b593d9237c51231b3d474b7337953e731baa))
+* harden fork-PR protection on self-hosted lane ([#562](https://github.com/groktopus/groktocrawl/issues/562)) ([bb68d9e](https://github.com/groktopus/groktocrawl/commit/bb68d9e576abf410d73f716f40d5d82af075522f))
+* harden fork-PR protection on the self-hosted runner lane ([#562](https://github.com/groktopus/groktocrawl/issues/562)) ([7380bbf](https://github.com/groktopus/groktocrawl/commit/7380bbfb5628236717281141981f2f769482ccca))
+* **session:** use the declared service test dependency group ([a468bf0](https://github.com/groktopus/groktocrawl/commit/a468bf00cb22be20223c2d1d5a5bd273b613b665))
+* string-render droid-review fork gate; harden gha expr sim ([#562](https://github.com/groktopus/groktocrawl/issues/562)) ([85c28ee](https://github.com/groktopus/groktocrawl/commit/85c28ee1b04ac3b0b3afd4726f41a185138b8741))
+* string-render the droid-review fork gate; harden gha expr sim ([#562](https://github.com/groktopus/groktocrawl/issues/562)) ([552a1ec](https://github.com/groktopus/groktocrawl/commit/552a1ec3a265ec1b6fd6f87b199839535d0626c0))
+
+
+### Tests
+
+* add hermetic Gutenberg adapter coverage and drop stale live-test duplicate ([#581](https://github.com/groktopus/groktocrawl/issues/581)) ([90e2f8c](https://github.com/groktopus/groktocrawl/commit/90e2f8c0ca8584ce3b9ae8e4be35f024539fa479))
+* address droid-review P2 fidelity gaps in gutenberg twin ([1396c82](https://github.com/groktopus/groktocrawl/commit/1396c828045ff0a8372dc77f73bcf9f45989fe42))
+* address droid-review round-5 findings (uptime decoupling, fake-client isolation) ([deac1be](https://github.com/groktopus/groktocrawl/commit/deac1be322274536c97cf6797043f81c40e64f76))
+* address review — restore seam 404 fallback, order-safe metric assertions ([8bd6bc5](https://github.com/groktopus/groktocrawl/commit/8bd6bc559e63e9493d4ef3f13799413047c3c820))
+* **agent:** address review findings on promoted LLM tests ([5fd51a0](https://github.com/groktopus/groktocrawl/commit/5fd51a0229b635f20dbd777f001fd052fac8ee9e))
+* **agent:** promote timeout/find-similar edge-case coverage ([f7aa6ee](https://github.com/groktopus/groktocrawl/commit/f7aa6eec77935c18bb9412bd8779ab3f613f5ee6))
+* **agent:** promote timeout/find-similar edge-case coverage ([80e31be](https://github.com/groktopus/groktocrawl/commit/80e31bec91e40610dc51f4a94ab82f6ba0fef5ad))
+* close remaining droid-review fidelity gaps in gutenberg twin ([1a281a0](https://github.com/groktopus/groktocrawl/commit/1a281a0b8cb9bda05b69d18afbe7a1f4c4c5d1ac))
+* **compose:** govern .env.sample skips for the containerized integration lane ([d8b3e80](https://github.com/groktopus/groktocrawl/commit/d8b3e8064d08c6fafcfac2459306e0b9e1e53352))
+* drive gutendex override through the production fetch path ([a00adbf](https://github.com/groktopus/groktocrawl/commit/a00adbfffb9549984b1cb0cd852fee610d95a43b))
+* govern curl_cffi skips for the integration lane ([#586](https://github.com/groktopus/groktocrawl/issues/586) polish) ([d0c181e](https://github.com/groktopus/groktocrawl/commit/d0c181ef428e977edfcd1cd7fcde857b04cd5bcc))
+* harden hermetic Gutenberg suite (containment helper, seam guards, fixture teeth) ([26cf2c1](https://github.com/groktopus/groktocrawl/commit/26cf2c1a2a388b5184b636e38e5c323736b67fb1))
+* harden hermetic Gutenberg suite (containment helper, seam guards, fixture teeth) ([82f0cbd](https://github.com/groktopus/groktocrawl/commit/82f0cbd8f8594f8178640a933a40e103f0bbccea))
+* hermetic Gutenberg adapter coverage ([6e71060](https://github.com/groktopus/groktocrawl/commit/6e710606aff24690d9bcadab7850fd51e64388aa))
+* hermetic gutenberg twin for the integration lane ([6ef80ab](https://github.com/groktopus/groktocrawl/commit/6ef80abd2f7e327b41778f5e09df831a4dfc9121))
+* hermetic gutenberg twin for the integration lane ([7d97c6e](https://github.com/groktopus/groktocrawl/commit/7d97c6eb42b2cb931d1680f3b95ed6db0bf1a918)), closes [#581](https://github.com/groktopus/groktocrawl/issues/581)
+* isolate YouTube pacing fixture to remove order dependence ([87c245a](https://github.com/groktopus/groktocrawl/commit/87c245affa62219ed53d302552f23c37984f1eb0))
+* isolate YouTube pacing fixture to remove order dependence ([6e8efe1](https://github.com/groktopus/groktocrawl/commit/6e8efe1459bfce8efb85bbda324d1664a8eb4266))
+* isolate YouTube pacing fixture to remove order dependence ([177f3d3](https://github.com/groktopus/groktocrawl/commit/177f3d35e9a8c5a893784a04cdc99769448a69f0))
+* move slopsearx digest-pin contract tests to the new image digest ([3ab2211](https://github.com/groktopus/groktocrawl/commit/3ab2211833fa706ad019edc4c46ae2c7b8edbcd0))
+* rebuild default-flow barrier twins around the real envelope shape ([d67b690](https://github.com/groktopus/groktocrawl/commit/d67b6909b8230ed9d1312f87d115e96e89c69424)), closes [#586](https://github.com/groktopus/groktocrawl/issues/586)
+* **research:** rely on behavioral credit accounting coverage ([c6a6dbc](https://github.com/groktopus/groktocrawl/commit/c6a6dbc85fe2bae25c343e1913053e52b580a0b6))
+* **scaleout:** declare Valkey environment requirement for governed skip ([e263007](https://github.com/groktopus/groktocrawl/commit/e263007d7d089c23230e131e99142e25fb2a31a0))
+* **scaleout:** exercise Valkey reservations and gateway drain ([c390500](https://github.com/groktopus/groktocrawl/commit/c390500fc02d14f1a11e7d817244106f1ccb5f4c))
+* **scraper:** harden yield-recovery follow-ups from [#587](https://github.com/groktopus/groktocrawl/issues/587) review ([8ca9509](https://github.com/groktopus/groktocrawl/commit/8ca95091391ce8f9b29c0f85393a98f56c598351))
+* **scraper:** harden yield-recovery follow-ups from [#587](https://github.com/groktopus/groktocrawl/issues/587) review ([7adc703](https://github.com/groktopus/groktocrawl/commit/7adc7031f47ae3ac44892487ff101629fbf1fcd4))
+
+
+### Chores
+
+* allow scraper as runtime-path import in agent-svc deptry config ([80b8171](https://github.com/groktopus/groktocrawl/commit/80b81715191dd52f1827673e7a25fb1c30f7a64f))
+* apply misc polish follow-ups from misc-qa-hardening scrutiny ([3ac8334](https://github.com/groktopus/groktocrawl/commit/3ac8334b0406e43113638b74cd554b4a4c0e2c0e))
+* apply misc polish follow-ups from misc-qa-hardening scrutiny ([7584c8c](https://github.com/groktopus/groktocrawl/commit/7584c8c80a0d3e763638d5fa372bc25ae3d96898))
+* bump slopsearx image pins to DDG-resilient build ([#413](https://github.com/groktopus/groktocrawl/issues/413)) ([029551f](https://github.com/groktopus/groktocrawl/commit/029551ff541b34c373974485f8e0e8061c7dd9f5))
+* bump slopsearx image pins to DDG-resilient build ([#413](https://github.com/groktopus/groktocrawl/issues/413)) ([6a392f4](https://github.com/groktopus/groktocrawl/commit/6a392f4f9b72f33b480687c0132f51064cb3f33b))
+
 ## [0.13.0](https://github.com/groktopus/groktocrawl/compare/v0.12.1...v0.13.0) (2026-08-22)
 
 

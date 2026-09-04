@@ -797,7 +797,7 @@ wheels = [
 
 [[package]]
 name = "groktocrawl"
-version = "0.13.0"
+version = "0.14.0"
 source = { virtual = "." }
 dependencies = [
     { name = "beautifulsoup4" },
