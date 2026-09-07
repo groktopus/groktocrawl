@@ -7,7 +7,7 @@ import logging
 import re
 import time
 from collections.abc import AsyncGenerator
-from typing import Any
+from typing import Any, cast
 
 from common.stage_metrics import StreamTiming, observe_elapsed
 
@@ -282,9 +282,9 @@ async def _run_research_events(
             ) as discovery_events:
                 async for progress_event in discovery_events:
                     if progress_event["type"] == "_discovery_complete":
-                        discovered = progress_event["result"]
+                        discovered = cast(dict[str, Any], progress_event["result"])
                     else:
-                        yield progress_event
+                        yield cast(ResearchEvent, progress_event)
             if discovered is None:
                 raise RuntimeError("Discovery ended without a result")
 
@@ -294,7 +294,7 @@ async def _run_research_events(
             previous_context = combined_context
             if not context and not combined_context:
                 yield {"type": "sources", "sources": []}
-                no_source_done = {
+                no_source_done: ResearchEvent = {
                     "type": "done",
                     "result": "I was unable to find or scrape any relevant web pages.",
                     "sources": [],
@@ -366,11 +366,12 @@ async def _run_research_events(
                 raise
             except ProviderOutputError as exc:
                 if stream_tokens:
-                    yield {
+                    error_event: ResearchEvent = {
                         "type": "error",
                         "classification": "non_retryable",
                         "content": exc.detail,
                     }
+                    yield error_event
                     return
                 raise
             try:
@@ -413,7 +414,7 @@ async def _run_research_events(
         source_list = [source["url"] for source in all_source_details]
         if schema:
             yield {"type": "sources", "sources": source_list}
-        done_event = {
+        done_event: ResearchEvent = {
             "type": "done",
             "result": answer,
             "sources": source_list,
@@ -486,7 +487,7 @@ async def run_research(
                         "I was unable to find or scrape any relevant web pages "
                         "to answer your question."
                     )
-                result_payload = {
+                result_payload: dict[str, Any] = {
                     "result": result,
                     "sources": event["sources"],
                     "source_details": event["source_details"],
