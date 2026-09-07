@@ -204,6 +204,8 @@ async def stream_research_live(
                 done_payload["source_details"] = source_details
             if include_source_content:
                 done_payload["source_contents"] = event.get("source_contents", {})
+            if "coverage" in event:
+                done_payload["coverage"] = event["coverage"]
             yield f"data: {json.dumps(done_payload)}\n\n"
         elif event["type"] == "error":
             payload: dict[str, Any] = {

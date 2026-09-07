@@ -42,6 +42,16 @@ Webhook destinations are validated before delivery: only `http`/`https` URLs res
 
 Use `/v2/answer` for one grounded response with citations. Use `/v2/agent` for multi-query research, seed URLs, structured output, citation styling, image collection, plan events, and optional streaming. `search_type` selects the research depth where supported.
 
+Agent `search_type=deep` runs the planned queries and a bounded gap-focused
+follow-up when needed. It keeps a minimum evidence floor derived from the
+planned query count (three to five successful sources), while preserving
+`max_credits`, cancellation, concurrency, and the maximum query budget. The
+completed response includes a `coverage` object with planned/executed queries,
+candidate and attempted URLs, successful sources, refusals, failures, reused
+sources, pass count, the evidence floor, and any uncovered query dimensions.
+`coverage_complete=false` means synthesis completed with those limitations
+reported; it does not claim that three sources are comprehensive coverage.
+
 ### Search and retrieval
 
 `/v2/search` supports source/category filters, content extraction, optional streaming, structured extraction, and keyword/semantic/hybrid retrieval modes. Semantic modes depend on `semantic-svc` and Qdrant; keyword search depends on SlopSearX and its configured search provider.
