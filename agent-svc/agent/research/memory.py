@@ -126,6 +126,7 @@ async def refresh_research_memory(
     max_searches_per_request: int,
     max_credits: int | None = None,
     include_images: bool,
+    include_source_content: bool,
     citation_style: CitationStyle,
     search_type: str,
     user_id: str | None,
@@ -151,6 +152,7 @@ async def refresh_research_memory(
         max_searches_per_request=max_searches_per_request,
         max_credits=max_credits,
         include_images=include_images,
+        include_source_content=include_source_content,
         citation_style=citation_style,
         search_type=search_type,
     )

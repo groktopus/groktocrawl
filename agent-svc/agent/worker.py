@@ -233,6 +233,7 @@ async def _process_agent_async(
     webhook_config: dict[str, Any] | None = None,
     requested_model: str | None = None,
     include_images: bool = False,
+    include_source_content: bool = False,
     citation_style: Any = None,
     force_fresh: bool = False,
     stale_while_revalidate: bool = False,
@@ -267,7 +268,7 @@ async def _process_agent_async(
 
     # ── Research Memory — check cache before pipeline ──────────────
     stale_cache_hit: dict | None = None
-    if not force_fresh:
+    if not force_fresh and not include_source_content:
         try:
             cache_result = await research_memory.query(
                 prompt=prompt,
@@ -376,6 +377,7 @@ async def _process_agent_async(
                                 max_searches_per_request=max_searches_per_request,
                                 max_credits=max_credits,
                                 include_images=include_images,
+                                include_source_content=include_source_content,
                                 citation_style=cs,
                                 search_type=search_type,
                                 user_id=user_id,
@@ -472,6 +474,7 @@ async def _process_agent_async(
             llm_model=llm_model,
             requested_model=requested_model,
             include_images=include_images,
+            include_source_content=include_source_content,
             citation_style=cs,
             search_type=search_type,
             max_searches_per_request=max_searches_per_request,

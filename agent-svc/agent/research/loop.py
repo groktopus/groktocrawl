@@ -135,6 +135,7 @@ async def _run_research_events(
     citation_style: Any = None,
     search_type: str = "deep",
     stream_tokens: bool = False,
+    include_source_content: bool = False,
 ) -> AsyncGenerator[ResearchEvent, None]:
     """Execute the canonical research loop and emit progress and terminal events."""
     start = time.monotonic()
@@ -293,13 +294,16 @@ async def _run_research_events(
             previous_context = combined_context
             if not context and not combined_context:
                 yield {"type": "sources", "sources": []}
-                yield {
+                no_source_done = {
                     "type": "done",
                     "result": "I was unable to find or scrape any relevant web pages.",
                     "sources": [],
                     "source_details": [],
                     "latency_ms": int((time.monotonic() - start) * 1000),
                 }
+                if include_source_content:
+                    no_source_done["source_contents"] = {}
+                yield no_source_done
                 return
 
             all_source_details = list(source_details)
@@ -312,13 +316,16 @@ async def _run_research_events(
 
             if not combined_context:
                 yield {"type": "sources", "sources": []}
-                yield {
+                no_source_done = {
                     "type": "done",
                     "result": "I was unable to find or scrape any relevant web pages.",
                     "sources": [],
                     "source_details": [],
                     "latency_ms": int((time.monotonic() - start) * 1000),
                 }
+                if include_source_content:
+                    no_source_done["source_contents"] = {}
+                yield no_source_done
                 return
 
             # Coverage depends only on evidence, so decide follow-up work
@@ -406,13 +413,20 @@ async def _run_research_events(
         source_list = [source["url"] for source in all_source_details]
         if schema:
             yield {"type": "sources", "sources": source_list}
-        yield {
+        done_event = {
             "type": "done",
             "result": answer,
             "sources": source_list,
             "source_details": all_source_details,
             "latency_ms": int((time.monotonic() - start) * 1000),
         }
+        if include_source_content:
+            done_event["source_contents"] = {
+                artifact.url: artifact.markdown or ""
+                for artifact in source_registry.artifacts()
+                if artifact.markdown
+            }
+        yield done_event
     finally:
         observe_elapsed(
             "groktocrawl_research_total_seconds",
@@ -440,6 +454,7 @@ async def run_research(
     include_images: bool = False,
     citation_style: Any = None,
     search_type: str = "deep",
+    include_source_content: bool = False,
 ) -> dict:
     """Consume the canonical research event stream and return its terminal result."""
     async with contextlib.aclosing(
@@ -458,6 +473,7 @@ async def run_research(
             include_images,
             citation_style,
             search_type,
+            include_source_content=include_source_content,
         )
     ) as research_events:
         async for event in research_events:
@@ -470,11 +486,14 @@ async def run_research(
                         "I was unable to find or scrape any relevant web pages "
                         "to answer your question."
                     )
-                return {
+                result_payload = {
                     "result": result,
                     "sources": event["sources"],
                     "source_details": event["source_details"],
                 }
+                if "source_contents" in event:
+                    result_payload["source_contents"] = event["source_contents"]
+                return result_payload
     raise RuntimeError("Research event engine ended without a terminal done event")
 
 
@@ -493,6 +512,7 @@ async def run_research_stream(
     include_images: bool = False,
     citation_style: Any = None,
     search_type: str = "deep",
+    include_source_content: bool = False,
 ) -> AsyncGenerator[ResearchEvent, None]:
     """Expose events from the canonical research engine for SSE adaptation."""
     async with contextlib.aclosing(
@@ -512,6 +532,7 @@ async def run_research_stream(
             citation_style,
             search_type,
             stream_tokens=True,
+            include_source_content=include_source_content,
         )
     ) as research_events:
         async for event in research_events:
