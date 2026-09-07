@@ -101,6 +101,19 @@ def test_workflows_have_structured_trusted_and_hosted_contracts():
     assert "twin-out" in twin_run and "junitxml" in twin_run
 
 
+def test_published_service_images_target_amd64_and_arm64():
+    root = Path(__file__).parents[2]
+    docker = yaml.safe_load((root / ".github/workflows/docker.yml").read_text())
+    build_steps = docker["jobs"]["build-and-push"]["steps"]
+    build_step = next(
+        step
+        for step in build_steps
+        if step.get("uses") == "docker/build-push-action@v6"
+    )
+
+    assert build_step["with"]["platforms"] == "linux/amd64,linux/arm64"
+
+
 def test_answer_evals_workflow_is_advisory_and_not_pr_gated():
     root = Path(__file__).parents[2]
     workflow = (root / ".github/workflows/answer-evals.yml").read_text()

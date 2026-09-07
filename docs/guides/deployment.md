@@ -6,6 +6,11 @@
 
 `agent-svc` coordinates requests; `scraper-svc` fetches content; optional `semantic-svc` uses Qdrant; Valkey stores operational state; SlopSearX discovers web results; `browser-svc`, `parse-svc`, `portal-svc`, `mcp-svc`, `slopsearx-mcp`, and Ofelia provide specialized capabilities. `mcp-svc` exposes GroktoCrawl API tools; the opt-in `slopsearx-mcp` companion exposes direct SlopSearX search-engine tools when the `mcp` profile is enabled. The [architecture guide](../architecture.md) describes ownership and data flow.
 
+The published GroktoCrawl service images support both `linux/amd64` and
+`linux/arm64`, so arm64 hosts such as Apple Silicon Macs do not need to run
+these images under emulation. The optional Qdrant service remains explicitly
+configured for `linux/amd64` in Compose.
+
 ## Configuration
 
 For deterministic Compose integration runs, enable the fixture profile and send
