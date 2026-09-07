@@ -5,7 +5,8 @@ import logging
 import re
 from typing import Any
 
-from fastapi import APIRouter, Request
+import httpx
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
 from ..models import (
@@ -14,6 +15,7 @@ from ..models import (
     SearchResponse,
     SearchResult,
 )
+from ..research.sources import normalize_source_url
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +86,9 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
 
     searxng = SearXNGClient(request.app.state.searxng_url)
     warning_msg: str | None = None
+    acquired_artifacts = []
+    refused_urls: set[str] = set()
+    unavailable_urls: set[str] = set()
 
     try:
         # ── Determine which source types to query ──────────────────
@@ -165,7 +170,7 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
 
         # Vector-only mode: query Qdrant, no SearXNG
         if body.retrieval_mode == "vector":
-            from ..semantic_client import SemanticClient
+            from ..semantic_client import SEMANTIC_UNAVAILABLE, SemanticClient
 
             semantic = SemanticClient(request.app.state.semantic_url)
             try:
@@ -176,6 +181,10 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
                     SearchResult(url=r["url"], title=r["title"], description="")
                     for r in vector_results
                 ]
+            except (httpx.HTTPStatusError, httpx.RequestError) as exc:
+                raise HTTPException(
+                    status_code=503, detail=SEMANTIC_UNAVAILABLE
+                ) from exc
             finally:
                 await semantic.close()
 
@@ -237,39 +246,46 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
             ]
 
         # Semantic/hybrid retrieval: rerank results by embedding similarity
-        if body.retrieval_mode in ("semantic", "hybrid") and results:
+        if body.retrieval_mode in ("semantic", "hybrid") and search_results:
+            from ..research.acquisition import acquire_source_artifacts
             from ..scraper_client import ScraperClient
             from ..semantic_client import SemanticClient
 
             semantic = SemanticClient(request.app.state.semantic_url)
             scraper = ScraperClient(request.app.state.scraper_url)
             try:
-                # Scrape content for top results
-                urls_to_scrape = [r["url"] for r in results[: body.limit]]
-                contents = []
-                for url in urls_to_scrape:
-                    try:
-                        scraped = await scraper.scrape(url)
-                        content = (
-                            scraped.get("data", {}).get("markdown", "")
-                            if scraped.get("success")
-                            else ""
-                        )
-                        contents.append(content[:2000])  # Truncate for embedding
-                    except Exception:
-                        contents.append("")
-
-                # Embed query + document contents
-                texts = [body.query, *contents]
-                embeddings = await semantic.embed(texts)
-                query_embedding = embeddings[0]
-                doc_embeddings = embeddings[1:]
+                contents_payload = None
+                if body.contents and body.contents.extras is not None:
+                    contents_payload = {
+                        "extras": body.contents.extras.model_dump(exclude_none=True)
+                    }
+                candidate_dicts = [
+                    {"url": r.url, "title": r.title, "description": r.description}
+                    for r in search_results[: body.limit]
+                ]
+                acquired = await acquire_source_artifacts(
+                    candidate_dicts,
+                    scraper,
+                    max_concurrent=5,
+                    contents_options=contents_payload,
+                )
+                acquired_artifacts.extend(acquired.artifacts)
+                refused_urls.update(acquired.refusals)
+                unavailable_urls.update(acquired.failures)
+                artifacts_by_url = acquired.by_url()
+                documents = []
+                for candidate in search_results[: body.limit]:
+                    artifact = artifacts_by_url.get(normalize_source_url(candidate.url))
+                    markdown = artifact.markdown if artifact else None
+                    documents.append(
+                        markdown[:2000] if markdown else candidate.description
+                    )
 
                 if body.retrieval_mode == "hybrid":
                     # Cross-encoder reranker for merged keyword+semantic scoring
                     reranked = await semantic.rerank(
                         body.query,
-                        [r.description for r in search_results[: body.limit]],
+                        documents,
                         top_k=body.limit,
                     )
                     # Reorder by cross-encoder scores
@@ -278,6 +294,12 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
                         search_results[i] for i in new_order if i < len(search_results)
                     ]
                 else:
+                    # Semantic mode uses the fetched Markdown as the document
+                    # embedding input. Hybrid mode deliberately skips this
+                    # call because rerank() is its ranking contract.
+                    embeddings = await semantic.embed([body.query, *documents])
+                    query_embedding = embeddings[0]
+                    doc_embeddings = embeddings[1:]
                     # Cosine similarity reranking (vectors are L2-normalized, so cosine = dot product)
                     similarities = [
                         sum(
@@ -300,19 +322,6 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
             finally:
                 await semantic.close()
                 await scraper.close()
-
-        # Route results to the correct top-level key based on sources filter
-        result_data: dict[str, list] = {"web": [], "images": [], "news": []}
-        if effective_sources:
-            for src in effective_sources:
-                if src in result_data:
-                    result_data[src] = [r.model_dump() for r in search_results]
-        else:
-            result_data["web"] = [r.model_dump() for r in search_results]
-
-        # Merge image results if sources included "images"
-        if image_results:
-            result_data["images"] = [r.model_dump() for r in image_results]
 
         # Rich mode: scrape results and synthesize enriched content
         output = None
@@ -338,6 +347,17 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
                 llm_base_url=request.app.state.llm_base_url,
                 llm_api_key=request.app.state.llm_api_key,
                 llm_model=request.app.state.llm_model,
+                artifacts=acquired_artifacts,
+                contents_options=(
+                    {"extras": body.contents.extras.model_dump(exclude_none=True)}
+                    if body.contents and body.contents.extras is not None
+                    else None
+                ),
+                artifact_sink=acquired_artifacts,
+                refused_urls=refused_urls,
+                unavailable_urls=unavailable_urls,
+                refusal_sink=refused_urls,
+                failure_sink=unavailable_urls,
             )
 
         # ── Contents options: per-result highlights, summary, extras ──
@@ -364,6 +384,9 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
                     body.contents,
                     llm_client,
                     scraper_client,
+                    artifacts=acquired_artifacts,
+                    refused_urls=refused_urls,
+                    unavailable_urls=unavailable_urls,
                 )
                 # Update search_results with enriched data
                 search_results = [
@@ -381,6 +404,18 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
             finally:
                 await llm_client.close()
                 await scraper_client.close()
+
+        # Build the response after contents enrichment so requested fields are
+        # present in data.web/data.news as well as in the internal list.
+        result_data: dict[str, list] = {"web": [], "images": [], "news": []}
+        if effective_sources:
+            for src in effective_sources:
+                if src in result_data:
+                    result_data[src] = [r.model_dump() for r in search_results]
+        else:
+            result_data["web"] = [r.model_dump() for r in search_results]
+        if image_results:
+            result_data["images"] = [r.model_dump() for r in image_results]
 
         return SearchResponse(data=result_data, output=output, warning=warning_msg)
     finally:

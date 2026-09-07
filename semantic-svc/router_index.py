@@ -3,7 +3,6 @@
 Extracted from app.py per ADR-0037.
 """
 
-import asyncio
 import json
 import logging
 import time
@@ -22,6 +21,7 @@ from app import (
     _named_vector_name,
     _now_iso,
     _url_hash,
+    run_inference,
 )
 from fastapi import APIRouter, HTTPException
 from metrics import METRICS
@@ -153,9 +153,8 @@ async def index_page(body: IndexRequest):
         pass
 
     # Embed the content
-    loop = asyncio.get_event_loop()
-    embedding = await loop.run_in_executor(
-        None,
+    embedding = await run_inference(
+        "index",
         lambda: model.encode(body.content[:2000], normalize_embeddings=True).tolist(),
     )
 
@@ -174,9 +173,12 @@ async def index_page(body: IndexRequest):
             assert isinstance(target_name, str)
             try:
                 target_model = await _get_target_embed_model(target_name)
-                target_embedding = target_model.encode(
-                    body.content[:2000], normalize_embeddings=True
-                ).tolist()
+                target_embedding = await run_inference(
+                    "index",
+                    lambda: target_model.encode(
+                        body.content[:2000], normalize_embeddings=True
+                    ).tolist(),
+                )
                 target_nv = _named_vector_name(target_name)
                 vectors[target_nv] = target_embedding
 
@@ -227,9 +229,8 @@ async def index_batch(body: IndexBatchRequest):
     # Batch embed all content texts in one call
     contents = [p.content[:2000] for p in body.pages]
     embed_start = time.time()
-    loop = asyncio.get_event_loop()
-    embeddings = await loop.run_in_executor(
-        None,
+    embeddings = await run_inference(
+        "index_batch",
         lambda: model.encode(contents, normalize_embeddings=True).tolist(),
     )
     embed_duration = time.time() - embed_start
@@ -282,9 +283,8 @@ async def index_batch(body: IndexBatchRequest):
         # Dual-write support: use pre-loaded (globally cached) target model
         if target_model is not None and target_nv:
             try:
-                loop = asyncio.get_event_loop()
-                target_embedding = await loop.run_in_executor(
-                    None,
+                target_embedding = await run_inference(
+                    "index_batch",
                     lambda p=page: target_model.encode(  # type: ignore[misc]
                         p.content[:2000], normalize_embeddings=True
                     ).tolist(),

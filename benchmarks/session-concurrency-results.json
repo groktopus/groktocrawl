@@ -1,0 +1,75 @@
+{
+  "fixture_search_ms": 50,
+  "independent_clients": 2,
+  "runs": 7,
+  "results": [
+    {
+      "parallel": false,
+      "steps": 1,
+      "completion_ms": {
+        "p50": 55.598,
+        "p95": 59.437
+      },
+      "step_ms": {
+        "p50": 55.53,
+        "p95": 59.326
+      },
+      "admission_wait_ms": {
+        "p50": 1.107,
+        "p95": 1.825
+      },
+      "rejected": 0
+    },
+    {
+      "parallel": true,
+      "steps": 1,
+      "completion_ms": {
+        "p50": 55.632,
+        "p95": 56.54
+      },
+      "step_ms": {
+        "p50": 55.526,
+        "p95": 56.439
+      },
+      "admission_wait_ms": {
+        "p50": 1.778,
+        "p95": 2.0
+      },
+      "rejected": 0
+    },
+    {
+      "parallel": false,
+      "steps": 4,
+      "completion_ms": {
+        "p50": 363.165,
+        "p95": 366.167
+      },
+      "step_ms": {
+        "p50": 201.488,
+        "p95": 365.361
+      },
+      "admission_wait_ms": {
+        "p50": 146.95,
+        "p95": 307.85
+      },
+      "rejected": 0
+    },
+    {
+      "parallel": true,
+      "steps": 4,
+      "completion_ms": {
+        "p50": 60.293,
+        "p95": 62.038
+      },
+      "step_ms": {
+        "p50": 59.662,
+        "p95": 61.518
+      },
+      "admission_wait_ms": {
+        "p50": 5.982,
+        "p95": 6.682
+      },
+      "rejected": 0
+    }
+  ]
+}

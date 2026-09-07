@@ -16,6 +16,7 @@ from app import (
     _now_iso,
     _set_active_override,
     _set_migration_task,
+    run_inference,
 )
 from app import (
     app as fastapi_app,
@@ -85,9 +86,17 @@ async def _run_backfill(qdrant, target_name: str, target_dim: int):
                     signal = f"{point.payload.get('title', '')} {point.payload.get('url', '')}"
                     if not signal.strip():
                         signal = point.payload.get("url", "")
-                    embedding = target_model.encode(
-                        signal[:2000], normalize_embeddings=True
-                    ).tolist()
+
+                    def encode_backfill(
+                        text: str = signal[:2000], model=target_model
+                    ) -> list[float]:
+                        return model.encode(text, normalize_embeddings=True).tolist()
+
+                    embedding = await run_inference(
+                        "migration_backfill",
+                        encode_backfill,
+                        priority="maintenance",
+                    )
                 except Exception as e:
                     logger.warning(
                         "Backfill embed failed for point %s: %s", point.id, e

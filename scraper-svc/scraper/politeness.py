@@ -56,6 +56,22 @@ USER_AGENT = (
 # Valkey key prefix for distributed rate limiting
 _RATE_KEY_PREFIX = "politeness:rate:"
 
+# Use Valkey's clock and one atomic reservation across all scraper replicas.
+# A cancelled reservation is deliberately not reclaimed: later callers may
+# already own subsequent slots. TTL bounds this conservative unused delay.
+_RESERVE_SLOT = """
+local clock = redis.call('TIME')
+local now = clock[1] * 1000 + math.floor(clock[2] / 1000)
+local delay = tonumber(ARGV[1])
+local ceiling = tonumber(ARGV[2])
+local next_slot = tonumber(redis.call('GET', KEYS[1]) or '0')
+local slot = math.max(now, next_slot)
+local wait = slot - now
+if wait > ceiling then return -1 end
+redis.call('PSETEX', KEYS[1], math.max(1000, wait + delay + 1000), slot + delay)
+return wait
+"""
+
 
 @dataclass
 class PolitenessResult:
@@ -99,6 +115,7 @@ class PolitenessManager:
         self._domains: dict[str, _DomainState] = {}
         self._domain_locks: dict[str, asyncio.Lock] = {}
         self._enabled = POLITENESS_ENABLED
+        self._distributed = _pol_settings.distributed_politeness
         self._rate_ttl: int = 60  # TTL for rate-limit keys in Valkey
 
     @property
@@ -316,6 +333,39 @@ class PolitenessManager:
 
     # ── Main check interface ────────────────────────────────────
 
+    async def _reserve_distributed(self, domain: str, delay: float) -> PolitenessResult:
+        """Reserve a shared slot, failing closed when coordination is unavailable."""
+        from .cache import _get_cache_client
+
+        try:
+            client = await _get_cache_client()
+            if client is None:
+                raise RuntimeError("Valkey is unavailable")
+            # A distinct key cannot be overwritten by legacy last-request
+            # recording. Keep excessive same-origin queues bounded to 30s.
+            wait_ms = await asyncio.wait_for(
+                client.eval(
+                    _RESERVE_SLOT,
+                    1,
+                    self._rate_key(domain) + ":slots",
+                    max(0, int(delay * 1000)),
+                    30000,
+                ),
+                timeout=2,
+            )
+            if wait_ms < 0:
+                reason = "Distributed origin queue exceeds 30 seconds"
+            else:
+                return PolitenessResult(
+                    action="delay" if wait_ms else "proceed",
+                    delay_seconds=wait_ms / 1000,
+                    domain=domain,
+                )
+        except Exception:
+            logger.warning("Distributed politeness coordination unavailable")
+            reason = "Distributed politeness coordination unavailable"
+        return PolitenessResult(action="blocked", reason=reason, domain=domain)
+
     async def check(
         self,
         url: str,
@@ -395,6 +445,9 @@ class PolitenessManager:
                     robots_allowed=True,
                     domain=domain,
                 )
+
+            if self._distributed:
+                return await self._reserve_distributed(domain, state.crawl_delay)
 
             # Check both in-memory and Valkey last_request, use the most recent
             in_memory_last = state.last_request

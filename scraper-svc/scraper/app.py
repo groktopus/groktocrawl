@@ -101,6 +101,7 @@ async def lifespan(app):
     global _browser_available
 
     from .adapters.base import get_registry
+    from .browser_pool import close_browser_pool, get_browser_pool
 
     try:
         registry = get_registry()
@@ -117,9 +118,19 @@ async def lifespan(app):
         _browser_available = False
         logger.warning("Playwright browser probe raised: %s", exc)
 
+    pool = get_browser_pool()
+    if pool.enabled:
+        try:
+            await pool.start()
+        except Exception as exc:
+            logger.warning("Browser pool startup failed; requests will retry: %s", exc)
+
     await get_client()
-    yield
-    await close_client()
+    try:
+        yield
+    finally:
+        await close_browser_pool()
+        await close_client()
 
 
 app = FastAPI(title="GroktoCrawl Scraper", version="0.1.0", lifespan=lifespan)

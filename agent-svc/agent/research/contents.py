@@ -3,7 +3,9 @@
 import asyncio
 import logging
 
+from .acquisition import acquire_source_artifacts
 from .prompts import HIGHLIGHTS_SYSTEM_PROMPT, SUMMARY_SYSTEM_PROMPT
+from .sources import SourceArtifact, normalize_source_url
 
 logger = logging.getLogger(__name__)
 
@@ -105,6 +107,9 @@ async def process_contents_for_results(
     contents_options,
     llm_client,
     scraper_client,
+    artifacts: list[SourceArtifact] | None = None,
+    refused_urls: set[str] | None = None,
+    unavailable_urls: set[str] | None = None,
 ) -> list[dict]:
     """Apply contents options (highlights, summary, extras) to search results.
 
@@ -145,76 +150,81 @@ async def process_contents_for_results(
 
     want_extras = contents_options.extras is not None
 
-    # Build scraper request body — include contents for extras extraction
-    scraper_body: dict = {"url": ""}
-    if want_extras:
-        scraper_body["contents"] = {
-            "extras": contents_options.extras.model_dump(exclude_none=True)
-        }
-
-    semaphore = asyncio.Semaphore(2)
-
     async def _process_one(result: dict) -> dict:
         url = result.get("url", "")
         entry = dict(result)  # Copy
         if not url:
             return entry
 
-        async with semaphore:
-            # Scrape the URL
+        artifact = artifact_by_url.get(normalize_source_url(url))
+        if artifact is None:
+            return entry
+
+        markdown = artifact.markdown or ""
+        if want_extras:
+            entry["extras"] = artifact.extras
+        if not markdown:
+            return entry
+        entry["markdown"] = markdown
+
+        async def _highlights() -> tuple[str, str]:
+            hq = highlights_opts.get("query") or query
+            hmax = highlights_opts.get("maxCharacters", 500)
             try:
-                scraper_body["url"] = url
-                scraped = await asyncio.wait_for(
-                    scraper_client._client.post(
-                        f"{scraper_client.base_url}/scrape",
-                        json=scraper_body,
-                    ),
-                    timeout=30,
+                return "highlights", await extract_highlights(
+                    markdown, hq, hmax, llm_client
                 )
-                scraped_data = scraped.json()
-            except Exception as e:
-                logger.warning("Failed to scrape %s for contents: %s", url, e)
-                return entry
+            except Exception:
+                return "highlights", ""
 
-            if not scraped_data.get("success"):
-                return entry
+        async def _summary() -> tuple[str, str]:
+            sq = summary_opts.get("query") or query
+            smax = summary_opts.get("maxTokens", 150)
+            try:
+                return "summary", await extract_summary(markdown, sq, smax, llm_client)
+            except Exception:
+                return "summary", ""
 
-            data = scraped_data.get("data", {})
-            markdown = data.get("markdown", "")
-
-            if want_extras:
-                entry["extras"] = data.get("extras")
-
-            if not markdown:
-                return entry
-
-            entry["markdown"] = markdown
-
-            # ── Highlights ──────────────────────────────────
-            if want_highlights:
-                hq = highlights_opts.get("query") or query
-                hmax = highlights_opts.get("maxCharacters", 500)
-                try:
-                    entry["highlights"] = await extract_highlights(
-                        markdown, hq, hmax, llm_client
-                    )
-                except Exception:
-                    entry["highlights"] = ""
-
-            # ── Summary ─────────────────────────────────────
-            if want_summary:
-                sq = summary_opts.get("query") or query
-                smax = summary_opts.get("maxTokens", 150)
-                try:
-                    entry["summary"] = await extract_summary(
-                        markdown, sq, smax, llm_client
-                    )
-                except Exception:
-                    entry["summary"] = ""
+        # These transformations are independent. Run them concurrently so a
+        # slow summary does not hold up highlights (and vice versa).
+        transformations = []
+        if want_highlights:
+            transformations.append(_highlights())
+        if want_summary:
+            transformations.append(_summary())
+        for key, value in await asyncio.gather(*transformations):
+            entry[key] = value
 
         return entry
 
-    tasks = [asyncio.create_task(_process_one(r)) for r in results]
+    contents_payload = (
+        {"extras": contents_options.extras.model_dump(exclude_none=True)}
+        if want_extras
+        else None
+    )
+    # Acquisition is shared with search/rich stages. If no compatible artifact
+    # exists (for example extras require a different scraper contract), the
+    # helper performs the one required bounded fetch through ScraperClient.
+    acquired = await acquire_source_artifacts(
+        results,
+        scraper_client,
+        existing=artifacts,
+        max_concurrent=5,
+        contents_options=contents_payload,
+        refused_urls=refused_urls,
+        unavailable_urls=unavailable_urls,
+    )
+    artifact_by_url = acquired.by_url()
+
+    # Bound LLM work separately from acquisition: two pages may each run
+    # highlights and summary concurrently, for at most four calls per request.
+    transform_slots = asyncio.Semaphore(2)
+
+    async def process_bounded(result: dict) -> dict:
+        async with transform_slots:
+            return await _process_one(result)
+
+    tasks = [asyncio.create_task(process_bounded(r)) for r in results]
     enriched = await asyncio.gather(*tasks)
 
     return list(enriched)

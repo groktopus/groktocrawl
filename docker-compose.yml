@@ -209,6 +209,11 @@ services:
       - EMBED_MODEL_NAME=${EMBED_MODEL_NAME:-BAAI/bge-m3}
       - EMBED_DIM=${EMBED_DIM:-1024}
       - ACTIVE_EMBED_MODEL=${ACTIVE_EMBED_MODEL:-v_bge-m3}
+      # Keep model/device work bounded. Increase workers only after measuring
+      # native model memory and throughput on the deployment hardware.
+      - SEMANTIC_INFERENCE_WORKERS=${SEMANTIC_INFERENCE_WORKERS:-1}
+      - SEMANTIC_INFERENCE_QUEUE_SIZE=${SEMANTIC_INFERENCE_QUEUE_SIZE:-16}
+      - SEMANTIC_INFERENCE_ADMISSION_TIMEOUT_SECONDS=${SEMANTIC_INFERENCE_ADMISSION_TIMEOUT_SECONDS:-0.25}
       # Qdrant timeout tuning must pass through from .env or operator
       # overrides are silently ignored (#588 follow-up). app.py parses
       # both vars with float() at import time, so the fallbacks must stay

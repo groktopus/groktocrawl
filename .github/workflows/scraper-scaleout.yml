@@ -1,0 +1,55 @@
+name: Scraper Scale-Out
+on:
+  pull_request:
+    paths:
+      - docker-compose.yml
+      - docker-compose.scaleout.yml
+      - deploy/scraper-gateway.cfg
+      - benchmarks/scraper_scaleout.py
+      - scraper-svc/scraper/politeness.py
+      - scraper-svc/scraper/settings.py
+      - tests/fixtures/scaleout_server.py
+      - tests/fixtures/compose.scaleout.yml
+      - .github/workflows/scraper-scaleout.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  topology:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      valkey:
+        image: valkey/valkey:8-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "valkey-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v7
+      - name: Install locked test dependencies
+        run: uv sync --locked --no-dev --group fast-tests
+      - name: Prepare fixture-only environment
+        run: cp .env.sample .env
+      - name: Exercise Valkey reservation and cancellation semantics
+        env:
+          TEST_VALKEY_URL: redis://127.0.0.1:6379/0
+        run: >-
+          PYTHONPATH=agent-svc:scraper-svc:llm-svc:slopsearx-fixture:parse-svc:portal-svc:browser-svc:semantic-svc:.
+          uv run --no-sync pytest tests/unit/test_distributed_politeness.py
+          -k valkey -q --no-cov -o addopts=
+      - name: Validate gateway configuration and 1/2/4 replicas
+        run: |
+          set -euo pipefail
+          python3 benchmarks/scraper_scaleout.py | tee scaleout-evidence.json
+      - uses: actions/upload-artifact@v7
+        with:
+          name: scraper-scaleout-evidence
+          path: scaleout-evidence.json

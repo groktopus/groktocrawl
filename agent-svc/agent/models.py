@@ -1327,6 +1327,18 @@ class SessionStepRequest(BaseModel):
         default_factory=dict,
         description="Action-specific parameters",
     )
+    parallel: bool = Field(
+        default=False,
+        description=(
+            "Opt in to overlap independent search/scrape steps. "
+            "Query and deepen remain serialized."
+        ),
+    )
+    idempotency_key: str | None = Field(
+        default=None,
+        max_length=200,
+        description="Stable retry key for an opted-in independent step",
+    )
 
     @field_validator("action")
     @classmethod

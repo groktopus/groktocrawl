@@ -1,0 +1,7 @@
+services:
+  scraper-svc:
+    build: !reset null
+    image: python:3.12-alpine
+    command: [python, /fixture/server.py]
+    volumes:
+      - ./tests/fixtures/scaleout_server.py:/fixture/server.py:ro

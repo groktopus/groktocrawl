@@ -55,15 +55,23 @@ class _Track:
 def _run(tracks):
     from scraper.adapters import youtube
 
-    youtube._YOUTUBE_GATE.min_interval = 0
-    youtube._YOUTUBE_GATE.max_interval = 0
-    youtube._YOUTUBE_GATE.request_interval = 0
-    youtube._YOUTUBE_GATE.subtitle_interval = 0
-    youtube._YOUTUBE_GATE._cooldown_until = 0
+    gate = _YouTubeRequestGate()
+    gate.min_interval = 0
+    gate.max_interval = 0
+    gate.request_interval = 0
+    gate.subtitle_interval = 0
+    gate._cooldown_until = 0
     api = SimpleNamespace(list=lambda _video_id: iter(tracks))
-    with patch.dict(
-        sys.modules,
-        {"youtube_transcript_api": SimpleNamespace(YouTubeTranscriptApi=lambda: api)},
+    with (
+        patch.object(youtube, "_YOUTUBE_GATE", gate),
+        patch.dict(
+            sys.modules,
+            {
+                "youtube_transcript_api": SimpleNamespace(
+                    YouTubeTranscriptApi=lambda: api
+                )
+            },
+        ),
     ):
         return asyncio.run(_fetch_transcript("PPM2ODdo2t8"))
 

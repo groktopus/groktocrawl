@@ -50,6 +50,9 @@ class ScraperSettings(BaseModel):
     )
 
     politeness_enabled: bool = Field(default=False, alias="SCRAPER_POLITENESS_ENABLED")
+    distributed_politeness: bool = Field(
+        default=False, alias="SCRAPER_DISTRIBUTED_POLITENESS"
+    )
     politeness_crawl_delay: float = Field(
         default=1.0, alias="SCRAPER_POLITENESS_CRAWL_DELAY"
     )

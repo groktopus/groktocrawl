@@ -1,0 +1,44 @@
+# Opt-in topology: one API process, 1-4 scraper replicas, one stable gateway.
+# Requires Docker Compose >= 2.24.4. See docs/guides/scraper-scaleout.md.
+services:
+  scraper-svc:
+    ports: !reset []
+    environment:
+      SCRAPER_MAX_BROWSER_CONCURRENCY: "4"
+      SCRAPER_POLITENESS_ENABLED: "true"
+      SCRAPER_DISTRIBUTED_POLITENESS: "true"
+    depends_on:
+      valkey:
+        condition: service_healthy
+    stop_grace_period: 75s
+
+  scraper-gateway:
+    image: haproxy:3.0-alpine
+    restart: unless-stopped
+    mem_limit: 128m
+    cpus: 0.5
+    pids_limit: 64
+    ports:
+      - "${SCRAPER_HOST_PORT:-8001}:8001"
+    volumes:
+      - ./deploy/scraper-gateway.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    depends_on:
+      scraper-svc:
+        condition: service_started
+    stop_grace_period: 75s
+
+  agent-svc:
+    environment:
+      SCRAPER_URL: http://scraper-gateway:8001
+      # Weighted browser units: 16 lifecycles * weight 8. Physical capacity
+      # is still 4 * replica count; the gateway supports at most four replicas.
+      ADMISSION_BROWSER_LIMIT: "128"
+      ADMISSION_LIGHT_FETCH_LIMIT: "64"
+      ADMISSION_LLM_LIMIT: "32"
+    depends_on:
+      scraper-gateway:
+        condition: service_started
+
+  agent-svc-fixture:
+    environment:
+      SCRAPER_URL: http://scraper-gateway:8001

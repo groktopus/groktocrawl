@@ -7,13 +7,20 @@ import logging
 import time
 from typing import Any
 
+import httpx
+
 from common.stage_metrics import StreamTiming
 
-from ..barrier_guard import is_barrier_flagged, log_refusal
 from ..llm import LLMClient
 from ..scraper_client import ScraperClient
 from ..searxng_client import SearXNGClient
+from .acquisition import (
+    AcquisitionResult,
+    acquire_source_artifacts,
+    stream_source_artifacts,
+)
 from .prompts import DEEP_SEARCH_GAP_PROMPT, RICH_SEARCH_SYSTEM_PROMPT
+from .sources import SourceArtifact, normalize_source_url
 
 logger = logging.getLogger(__name__)
 
@@ -150,6 +157,13 @@ async def run_rich_search(
     llm_base_url: str = "https://api.openai.com/v1",
     llm_api_key: str = "",
     llm_model: str | None = None,
+    artifacts: list[SourceArtifact] | None = None,
+    contents_options: dict[str, Any] | None = None,
+    artifact_sink: list[SourceArtifact] | None = None,
+    refused_urls: set[str] | None = None,
+    unavailable_urls: set[str] | None = None,
+    refusal_sink: set[str] | None = None,
+    failure_sink: set[str] | None = None,
 ) -> dict[str, Any] | None:
     """Enrich search results with scraped content and optional structured extraction.
 
@@ -165,48 +179,43 @@ async def run_rich_search(
     try:
         top_results = search_results[:limit]
 
-        # Scrape top results
+        acquired = await acquire_source_artifacts(
+            top_results,
+            scraper,
+            existing=artifacts,
+            contents_options=contents_options,
+            refused_urls=refused_urls,
+            unavailable_urls=unavailable_urls,
+            max_concurrent=5,
+        )
+        if artifact_sink is not None:
+            existing_keys = {normalize_source_url(a.url) for a in artifact_sink}
+            artifact_sink.extend(
+                a
+                for a in acquired.artifacts
+                if normalize_source_url(a.url) not in existing_keys
+            )
+        if refusal_sink is not None:
+            refusal_sink.update(acquired.refusals)
+        if failure_sink is not None:
+            failure_sink.update(acquired.failures)
+
+        artifacts_by_url = acquired.by_url()
         enriched = []
         for r in top_results:
             url = r.get("url", "")
             if not url:
                 continue
-            try:
-                resp = await scraper.scrape(url)
-                if (
-                    resp.get("success")
-                    and resp.get("data", {}).get("markdown")
-                    and not is_barrier_flagged(resp)
-                ):
-                    content = resp["data"]["markdown"][:3000]  # Trim to 3K chars
-                    enriched.append(
-                        {
-                            "url": url,
-                            "title": r.get("title", ""),
-                            "content": content,
-                        }
-                    )
-                else:
-                    if resp.get("success") and is_barrier_flagged(resp):
-                        # Barrier-flagged scrape (#586): the challenge text is
-                        # never placed into the enrichment context — fall back
-                        # to the search result's description instead.
-                        log_refusal(url, resp)
-                    enriched.append(
-                        {
-                            "url": url,
-                            "title": r.get("title", ""),
-                            "content": r.get("description", ""),
-                        }
-                    )
-            except Exception:
-                enriched.append(
-                    {
-                        "url": url,
-                        "title": r.get("title", ""),
-                        "content": r.get("description", ""),
-                    }
-                )
+            artifact = artifacts_by_url.get(normalize_source_url(url))
+            enriched.append(
+                {
+                    "url": url,
+                    "title": r.get("title", ""),
+                    "content": artifact.markdown[:3000]
+                    if artifact and artifact.markdown
+                    else r.get("description", ""),
+                }
+            )
 
         if not enriched:
             return None
@@ -324,11 +333,14 @@ async def run_search_stream(
     searxng = SearXNGClient(searxng_url, max_searches=max_searches_per_request)
     scraper = ScraperClient(scraper_url)
     llm = LLMClient(llm_base_url, llm_api_key, llm_model)
+    acquired_artifacts: list[SourceArtifact] = []
+    refused_urls: set[str] = set()
+    unavailable_urls: set[str] = set()
 
     try:
         # ── Phase 1: Search ──────────────────────────────────────
         if retrieval_mode == "vector":
-            from ..semantic_client import SemanticClient
+            from ..semantic_client import SEMANTIC_UNAVAILABLE, SemanticClient
 
             semantic = SemanticClient(semantic_url)
             try:
@@ -337,6 +349,10 @@ async def run_search_stream(
                     {"url": r["url"], "title": r["title"], "description": ""}
                     for r in vector_results
                 ]
+            except (httpx.HTTPStatusError, httpx.RequestError):
+                # SSE headers are already sent; terminate with an error event.
+                yield {"type": "error", "content": SEMANTIC_UNAVAILABLE}
+                return
             finally:
                 await semantic.close()
 
@@ -384,26 +400,30 @@ async def run_search_stream(
             from ..semantic_client import SemanticClient
 
             semantic = SemanticClient(semantic_url)
-            scraper_rerank = ScraperClient(scraper_url)
             try:
-                urls_to_scrape = [r["url"] for r in search_results[:limit]]
-                contents = []
-                for url in urls_to_scrape:
-                    try:
-                        scraped = await scraper_rerank.scrape(url)
-                        content = (
-                            scraped.get("data", {}).get("markdown", "")
-                            if scraped.get("success")
-                            else ""
-                        )
-                        contents.append(content[:2000])
-                    except Exception:
-                        contents.append("")
+                acquired = await acquire_source_artifacts(
+                    search_results[:limit], scraper, max_concurrent=5
+                )
+                acquired_artifacts.extend(acquired.artifacts)
+                refused_urls.update(acquired.refusals)
+                unavailable_urls.update(acquired.failures)
+                artifacts_by_url = acquired.by_url()
+                rerank_documents = []
+                for candidate in search_results[:limit]:
+                    artifact = artifacts_by_url.get(
+                        normalize_source_url(candidate.get("url", ""))
+                    )
+                    markdown = artifact.markdown if artifact else None
+                    rerank_documents.append(
+                        markdown[:3000]
+                        if markdown
+                        else candidate.get("description", "")
+                    )
 
                 if retrieval_mode == "hybrid":
                     reranked = await semantic.rerank(
                         query,
-                        [r.get("description", "") for r in search_results[:limit]],
+                        rerank_documents,
                         top_k=limit,
                     )
                     new_order = [item["index"] for item in reranked]
@@ -411,7 +431,7 @@ async def run_search_stream(
                         search_results[i] for i in new_order if i < len(search_results)
                     ]
                 else:
-                    embeddings = await semantic.embed([query, *contents])
+                    embeddings = await semantic.embed([query, *rerank_documents])
                     query_em = embeddings[0]
                     similarities = [
                         sum(a * b for a, b in zip(query_em, doc_em, strict=False))
@@ -429,78 +449,58 @@ async def run_search_stream(
                     ]
             finally:
                 await semantic.close()
-                await scraper_rerank.close()
 
         # ── Phase 2: Rich enrichment (scrape + LLM) ─────────────
         output = None
         if search_type == "rich" and search_results:
             top_results = search_results[:limit]
 
-            # Scrape each result, yield scrape_result events
-            enriched: list[dict] = []
-            semaphore = asyncio.Semaphore(3)
-            queue: asyncio.Queue = asyncio.Queue()
+            acquired = AcquisitionResult()
+            async with contextlib.aclosing(
+                stream_source_artifacts(
+                    top_results,
+                    scraper,
+                    existing=acquired_artifacts,
+                    refused_urls=refused_urls,
+                    unavailable_urls=unavailable_urls,
+                    max_concurrent=5,
+                )
+            ) as acquisition_stream:
+                async for source_event in acquisition_stream:
+                    if isinstance(source_event, AcquisitionResult):
+                        acquired = source_event
+                    elif source_event.markdown:
+                        yield {
+                            "type": "scrape_result",
+                            "url": source_event.url,
+                            "contents": {"markdown": source_event.markdown[:3000]},
+                        }
 
-            async def _scrape_and_queue(item: dict) -> None:
+            acquired_artifacts.extend(
+                a
+                for a in acquired.artifacts
+                if normalize_source_url(a.url)
+                not in {normalize_source_url(x.url) for x in acquired_artifacts}
+            )
+            artifacts_by_url = acquired.by_url()
+            enriched: list[dict] = []
+            for item in top_results:
                 url = item.get("url", "")
                 if not url:
-                    await queue.put(None)
-                    return
-                async with semaphore:
-                    try:
-                        resp = await asyncio.wait_for(scraper.scrape(url), timeout=20)
-                        if (
-                            resp.get("success")
-                            and resp.get("data", {}).get("markdown")
-                            and not is_barrier_flagged(resp)
-                        ):
-                            md = resp["data"]["markdown"][:3000]
-                            await queue.put(
-                                {
-                                    "scrape_event": {
-                                        "type": "scrape_result",
-                                        "url": url,
-                                        "contents": {"markdown": md},
-                                    },
-                                    "enriched": {
-                                        "url": url,
-                                        "title": item.get("title", ""),
-                                        "content": md,
-                                    },
-                                }
-                            )
-                            return
-                        if resp.get("success") and is_barrier_flagged(resp):
-                            # Barrier-flagged scrape (#586): no scrape_result
-                            # SSE event may carry challenge markdown — fall
-                            # back to the description like any failed scrape.
-                            log_refusal(url, resp)
-                    except Exception:
-                        pass
-                    await queue.put(
-                        {
-                            "enriched": {
-                                "url": url,
-                                "title": item.get("title", ""),
-                                "content": item.get("description", ""),
-                            },
-                        }
-                    )
-
-            tasks = [asyncio.create_task(_scrape_and_queue(r)) for r in top_results]
-
-            completed_count = 0
-            while completed_count < len(tasks):
-                item = await queue.get()
-                completed_count += 1
-                if item is None:
                     continue
-                if "scrape_event" in item:
-                    yield item["scrape_event"]
-                enriched.append(item["enriched"])
-
-            # Wait for any remaining tasks to settle
-            await asyncio.gather(*tasks, return_exceptions=True)
+                artifact = artifacts_by_url.get(normalize_source_url(url))
+                if artifact and artifact.markdown:
+                    md = artifact.markdown[:3000]
+                    content = md
+                else:
+                    content = item.get("description", "")
+                enriched.append(
+                    {
+                        "url": url,
+                        "title": item.get("title", ""),
+                        "content": content,
+                    }
+                )
 
             if enriched:
                 # Build context for LLM

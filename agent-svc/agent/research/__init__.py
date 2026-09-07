@@ -1,5 +1,6 @@
 """Research package — domain modules for the agent research loop."""
 
+from .acquisition import AcquisitionResult, acquire_source_artifacts
 from .citations import _apply_citation_style
 from .contents import process_contents_for_results
 from .discovery import _scrape_urls
@@ -19,11 +20,13 @@ from .streaming import stream_cached_artifact, stream_research_live
 from .utils import _validate_json_if_schema
 
 __all__ = [
+    "AcquisitionResult",
     "_apply_citation_style",
     "_is_video_platform_url",
     "_rerank_answer_sources",
     "_scrape_urls",
     "_validate_json_if_schema",
+    "acquire_source_artifacts",
     "process_contents_for_results",
     "run_answer",
     "run_answer_stream",

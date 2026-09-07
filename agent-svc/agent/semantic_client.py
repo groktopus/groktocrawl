@@ -7,6 +7,8 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
+SEMANTIC_UNAVAILABLE = "Semantic service is unavailable"
+
 
 class SemanticClient:
     """Client for the semantic-svc embedding and reranking service."""

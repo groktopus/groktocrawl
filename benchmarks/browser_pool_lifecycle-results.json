@@ -1,0 +1,35 @@
+{
+  "runs": 3,
+  "fixture": "intercepted-static-page",
+  "url": "https://browser-pool-fixture.example/article",
+  "cold_pool_total_seconds": {
+    "p50": 1.842639,
+    "p95": 4.345707,
+    "samples": [
+      4.623826,
+      1.818451,
+      1.842639
+    ]
+  },
+  "pooled_lease_seconds": {
+    "p50": 0.226113,
+    "p95": 1.620631,
+    "samples": [
+      1.775578,
+      0.226113,
+      0.169756
+    ]
+  },
+  "pooled_initial_lease_total_seconds": 1.775577874854207,
+  "cold_process_counts_after_lease": [
+    1,
+    1,
+    1
+  ],
+  "pooled_process_counts_after_lease": [
+    1,
+    1,
+    1
+  ],
+  "identical_content": true
+}

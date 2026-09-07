@@ -1,0 +1,45 @@
+name: Session storage contract
+on:
+  pull_request:
+    paths:
+      - agent-svc/agent/session.py
+      - agent-svc/agent/session_store.py
+      - agent-svc/agent/routes/session.py
+      - agent-svc/agent/models.py
+      - docs/adr/0066-opt-in-to-independent-session-steps.md
+      - tests/service/test_session_concurrency.py
+      - tests/service/test_session_storage_async.py
+      - .github/workflows/session-storage.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  valkey:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      valkey:
+        image: valkey/valkey:8-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "valkey-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@v7
+      - run: uv sync --locked --no-dev --group fast-tests
+      - name: Exercise real session storage and concurrency operations
+        env:
+          SESSION_STORE_TEST_URL: redis://127.0.0.1:6379/0
+          PYTHONPATH: agent-svc:scraper-svc:.
+        run: >-
+          uv run --no-sync pytest
+          tests/service/test_session_storage_async.py
+          tests/service/test_session_concurrency.py
+          --no-cov -n 0 -q

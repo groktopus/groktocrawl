@@ -13,7 +13,7 @@ dependencies = [
 ]
 
 [tool.setuptools]
-py-modules = ["app", "auth", "metrics", "models", "retention", "router_index", "router_migration", "router_search"]
+py-modules = ["app", "auth", "inference", "metrics", "models", "retention", "router_index", "router_migration", "router_search"]
 
 [tool.deptry.per_rule_ignores]
 # Uvicorn is the container entry point.

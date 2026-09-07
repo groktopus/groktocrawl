@@ -15,6 +15,7 @@ browser service interaction.
 import asyncio
 import logging
 import time
+from contextlib import AsyncExitStack
 
 import httpx
 
@@ -131,6 +132,7 @@ async def _playwright_fetch_unbounded(
     """
     from playwright.async_api import async_playwright
 
+    from .browser_pool import get_browser_pool
     from .cookie_store import inject_cookies, store_cookies
     from .stealth import create_stealth_browser, create_stealth_context
 
@@ -141,15 +143,46 @@ async def _playwright_fetch_unbounded(
     if proxy:
         context_kwargs["proxy"] = proxy  # context-level, not launch-level
 
-    async with async_playwright() as p:
+    pool = get_browser_pool()
+    async with AsyncExitStack() as lifecycle:
         browser = None
         setup_started = time.monotonic()
         try:
             try:
-                browser, cloakbrowser = await create_stealth_browser(p, url)
-                context = await create_stealth_context(
-                    browser, cloakbrowser=cloakbrowser, **context_kwargs
-                )
+                if pool.enabled:
+                    lease = await pool.acquire(url, proxy)
+                    browser = lease.entry.browser
+                    cloakbrowser = lease.entry.cloakbrowser
+                    context = lease.context
+
+                    async def release_pool(_exc_type, _exc, _traceback):
+                        await lease.release(healthy=_exc_type is None)
+
+                    lifecycle.push_async_exit(release_pool)
+                else:
+                    p = await lifecycle.enter_async_context(async_playwright())
+                    browser, cloakbrowser = await create_stealth_browser(p, url)
+
+                    async def close_legacy_browser():
+                        try:
+                            await browser.close()
+                        except Exception:
+                            inc_counter(
+                                _BROWSER_CLEANUP_TOTAL,
+                                "Browser cleanup outcomes",
+                                {"outcome": "error"},
+                            )
+                            raise
+                        inc_counter(
+                            _BROWSER_CLEANUP_TOTAL,
+                            "Browser cleanup outcomes",
+                            {"outcome": "success"},
+                        )
+
+                    lifecycle.push_async_callback(close_legacy_browser)
+                    context = await create_stealth_context(
+                        browser, cloakbrowser=cloakbrowser, **context_kwargs
+                    )
                 page = await context.new_page()
                 # Inject cached Cloudflare clearance cookies before navigation
                 await inject_cookies(url, context)
@@ -439,23 +472,11 @@ async def _playwright_fetch_unbounded(
                         }
             finally:
                 _observe_extraction(extraction_started)
+        except BaseException:
+            # AsyncExitStack performs the resource cleanup; preserve the
+            # original exception for callers and cancellation handling.
+            raise
 
-        finally:
-            if browser is not None:
-                try:
-                    await browser.close()
-                    inc_counter(
-                        _BROWSER_CLEANUP_TOTAL,
-                        "Browser cleanup outcomes",
-                        {"outcome": "success"},
-                    )
-                except Exception:
-                    inc_counter(
-                        _BROWSER_CLEANUP_TOTAL,
-                        "Browser cleanup outcomes",
-                        {"outcome": "error"},
-                    )
-                    raise
     return None
 
 

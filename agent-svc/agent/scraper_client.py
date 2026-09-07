@@ -46,6 +46,7 @@ class ScraperClient:
         robots_user_agent: str | None = None,
         scrape_options: dict | None = None,
         lightweight_only: bool = False,
+        contents: dict | None = None,
     ) -> dict:
         """Scrape a URL via the scraper service.
 
@@ -93,6 +94,8 @@ class ScraperClient:
                 body["robots_user_agent"] = robots_user_agent
             if scrape_options:
                 body["scrape_options"] = scrape_options
+            if contents:
+                body["contents"] = contents
             resp = await self._client.post(
                 f"{self.base_url}/scrape",
                 json=body,

@@ -6,6 +6,11 @@
 
 `agent-svc` coordinates requests; `scraper-svc` fetches content; optional `semantic-svc` uses Qdrant; Valkey stores operational state; SlopSearX discovers web results; `browser-svc`, `parse-svc`, `portal-svc`, `mcp-svc`, `slopsearx-mcp`, and Ofelia provide specialized capabilities. `mcp-svc` exposes GroktoCrawl API tools; the opt-in `slopsearx-mcp` companion exposes direct SlopSearX search-engine tools when the `mcp` profile is enabled. The [architecture guide](../architecture.md) describes ownership and data flow.
 
+The published GroktoCrawl service images support both `linux/amd64` and
+`linux/arm64`, so arm64 hosts such as Apple Silicon Macs do not need to run
+these images under emulation. The optional Qdrant service remains explicitly
+configured for `linux/amd64` in Compose.
+
 ## Configuration
 
 For deterministic Compose integration runs, enable the fixture profile and send
@@ -84,6 +89,25 @@ an init process so orphaned browser descendants are reaped.
 ## Operations
 
 `/health` reports dependency probes and `/metrics` exposes OpenMetrics data. Prometheus alerts and response procedures live in [runbooks](../runbooks/README.md). Important capacity controls include `AGENT_MAX_SEARCHES_PER_REQUEST`, `AGENT_SEARCH_RATE_LIMIT`, crawl duration/idle limits, scrape-cache TTLs, and vector-index capacity.
+
+### Semantic search readiness
+
+The optional `semantic-svc` `/health` probe checks that models have loaded and
+that Qdrant answers `get_collections()`. It does **not** embed a query, search a
+collection, validate indexed content, or measure vector-search latency. The
+agent service's aggregate `/health` does not probe semantic retrieval either.
+A green health response is therefore not evidence that a representative vector
+query will succeed within your latency target.
+
+Validate that separately against a populated index using `POST /v2/search` with
+`{"query":"a representative query for your indexed content","retrieval_mode":"vector","limit":5}`.
+Use your deployment's normal authentication, check the returned results, and
+record latency across repeated requests under representative load. Non-streaming
+vector requests return a sanitized HTTP 503 if the semantic service returns an
+HTTP error or cannot be reached. Streaming requests have already sent their HTTP
+headers, so they emit a sanitized `error` event and end the stream instead of
+emitting a successful `done` event. Hybrid-vector retrieval retains its web-only
+fallback when the vector service is unavailable.
 
 ### Job durability and recovery
 

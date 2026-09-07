@@ -13,6 +13,7 @@ from app import (
     _ensure_qdrant,
     _get_active_model,
     _get_embed_model,
+    run_inference,
 )
 from fastapi import APIRouter, HTTPException
 from models import VectorSearchRequest, VectorSearchResponse, VectorSearchResult
@@ -38,11 +39,12 @@ async def search_vector(body: VectorSearchRequest):
     qdrant = await _ensure_qdrant()
     model = _get_embed_model()
 
-    loop = asyncio.get_event_loop()
-    query_embedding = await loop.run_in_executor(
-        None,
+    query_embedding = await run_inference(
+        "vector_search",
         lambda: model.encode(body.query, normalize_embeddings=True).tolist(),
     )
+
+    loop = asyncio.get_running_loop()
 
     active_nv = _get_active_model()
 

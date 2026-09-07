@@ -19,7 +19,7 @@ An Architecture Decision Record captures an important architectural decision mad
 
 **Status legend:** accepted ADRs describe decisions used by the current implementation. Proposed ADRs are design work, not promises of current behavior. Superseded ADRs are historical context only; use their successor when documenting current behavior.
 
-**Current accepted decisions:** ADR-0001–0007, 0009–0012, 0014–0022, 0026, 0029–0035, 0038, 0039, 0043, 0044, 0045, 0046, 0047, 0048, 0049, 0050, 0051, 0052, 0053, 0054, 0055, 0056, and 0057.
+**Current accepted decisions:** ADR-0001–0007, 0009–0012, 0014–0022, 0026, 0029–0035, 0038, 0039, 0043, 0044, 0045, 0046, 0047, 0048, 0049, 0050, 0051, 0052, 0053, 0054, 0055, 0056, 0057, and 0059–0066.
 
 **Proposed work:** ADR-0023–0025, 0027, 0028, 0036, 0037, and 0040–0042.
 
@@ -82,4 +82,12 @@ An Architecture Decision Record captures an important architectural decision mad
 | 0055 | [Deterministic LLM Contract Fixture](0055-deterministic-llm-contract-fixture.md) | accepted |
 | 0056 | [Twin CI Evidence and Trusted Calibration](0056-twin-ci-evidence-and-calibration.md) | accepted |
 | 0057 | [Defer Recurring Mutation-Testing CI (Pilot Outcome)](0057-defer-recurring-mutation-testing-ci.md) | accepted |
+| 0059 | [Extend Source Artifact Reuse Across Research Passes](0059-extend-source-artifact-reuse-across-research-passes.md) | accepted |
+| 0060 | [Bounded Semantic Inference Execution](0060-bounded-semantic-inference-execution.md) | accepted |
+| 0061 | [Scraper Scale-Out with Bounded Capacity and Atomic Origin Pacing](0061-scraper-scaleout-capacity.md) | accepted |
+| 0062 | [Opt-In Browser Process Pool with Isolated Contexts](0062-opt-in-browser-process-pool.md) | accepted |
+| 0063 | [Offload and Batch Session Persistence](0063-offload-and-batch-session-persistence.md) | accepted |
+| 0064 | [One Final Research Synthesis](0064-one-final-research-synthesis.md) | accepted |
+| 0065 | [Stream Discovery Acquisitions as Queries Complete](0065-stream-discovery-acquisitions.md) | accepted |
+| 0066 | [Opt In to Independent Session Steps](0066-opt-in-to-independent-session-steps.md) | accepted |
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full ADR workflow: when to write an ADR, how to number it, and how to get it reviewed in a PR.

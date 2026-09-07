@@ -37,9 +37,16 @@ import time
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
+import inference as inference_module
 import numpy as np
 from auth import verify_api_key
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
+from fastapi.responses import JSONResponse
+from inference import (
+    InferenceManager,
+    InferenceOverloaded,
+    run_inference,
+)
 from metrics import METRICS
 from models import (
     EmbedRequest,
@@ -58,6 +65,7 @@ from common.middleware import add_request_id_middleware
 
 setup_logging()
 logger = logging.getLogger(__name__)
+_inference_manager = inference_module._inference_manager
 
 
 def _load_sentence_transformers():
@@ -116,8 +124,13 @@ class TaskTracker:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Load SentenceTransformer and CrossEncoder models at startup."""
-    global _embed_model, _rerank_model, _models_ready
+    global _embed_model, _rerank_model, _models_ready, _inference_manager
     app.state.task_tracker = TaskTracker()
+    # A fresh manager is tied to this event loop. Its workers drain native
+    # calls before the executor is closed during shutdown.
+    _inference_manager = InferenceManager()
+    inference_module._inference_manager = _inference_manager
+    app.state.inference_manager = _inference_manager
     logger.info("Loading semantic models (~2.2GB, 2-5s)...")
     loop = asyncio.get_event_loop()
     try:
@@ -139,9 +152,28 @@ async def lifespan(app: FastAPI):
     _models_ready = False
     _embed_model = None
     _rerank_model = None
+    await _inference_manager.shutdown()
 
 
 app = FastAPI(title="semantic-svc", lifespan=lifespan)
+
+
+@app.exception_handler(InferenceOverloaded)
+async def inference_overloaded_handler(
+    request: Request, exc: InferenceOverloaded
+) -> JSONResponse:
+    """Return a retryable overload response without exposing model internals."""
+    del request
+    return JSONResponse(
+        status_code=503,
+        content={
+            "detail": "Semantic inference capacity is temporarily unavailable",
+            "error": "inference_overloaded",
+            "operation": exc.operation,
+        },
+        headers={"Retry-After": str(max(1, math.ceil(exc.retry_after)))},
+    )
+
 
 # ── Instrumentation ──────────────────────────────────────────
 add_request_id_middleware(
@@ -440,9 +472,8 @@ async def embed(body: EmbedRequest):
         )
     model = _get_embed_model()
     embed_start = time.time()
-    loop = asyncio.get_event_loop()
-    embeddings = await loop.run_in_executor(
-        None,
+    embeddings = await run_inference(
+        "embed",
         lambda: model.encode(body.input, normalize_embeddings=True),
     )
     embeddings_list = embeddings.tolist()
@@ -463,7 +494,7 @@ async def rerank(body: RerankRequest):
         )
     model = _get_rerank_model()
     pairs = [[body.query, doc] for doc in body.documents]
-    scores = model.predict(pairs)
+    scores = await run_inference("rerank", lambda: model.predict(pairs))
     indices = np.argsort(scores)[::-1][: body.top_k]
     results = [RerankResult(index=int(i), score=float(scores[i])) for i in indices]
     return RerankResponse(results=results)
