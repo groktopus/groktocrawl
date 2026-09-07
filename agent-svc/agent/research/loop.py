@@ -37,10 +37,16 @@ from .sources import (
     SourceArtifact,
     SourceRegistry,
     artifacts_to_documents_and_details,
+    normalize_source_url,
 )
 from .utils import _validate_json_if_schema
 
 logger = logging.getLogger(__name__)
+
+
+def _deep_source_target(query_count: int) -> int:
+    """Set a bounded evidence floor for deep multi-query research."""
+    return max(3, min(5, query_count))
 
 
 async def _discover_with_progress(factory, initial_pending=None):
@@ -177,6 +183,20 @@ async def _run_research_events(
         combined_context = ""
         gap_topics: list[str] = []
         answer = ""
+        coverage: dict[str, Any] = {
+            "planned_queries": 0,
+            "executed_queries": 0,
+            "candidate_urls": 0,
+            "attempted_urls": 0,
+            "successful_sources": 0,
+            "refusals": 0,
+            "failures": 0,
+            "reused_sources": 0,
+            "pass_count": 0,
+            "minimum_sources": 0,
+            "uncovered_queries": [],
+        }
+        coverage_candidates: set[str] = set()
 
         while pass_count < max_passes:
             pass_count += 1
@@ -210,6 +230,7 @@ async def _run_research_events(
                             pass_number=_pass_count,
                             on_artifact=on_artifact,
                             on_search_results=on_search_results,
+                            min_sources=_deep_source_target(len(_queries)),
                         )
                 else:
                     query = queries[0] if queries else prompt
@@ -260,6 +281,7 @@ async def _run_research_events(
                         pass_number=_pass_count,
                         on_artifact=on_artifact,
                         on_search_results=on_search_results,
+                        min_sources=_deep_source_target(len(_gap_topics)),
                     )
 
             discovery_factory = (
@@ -291,6 +313,29 @@ async def _run_research_events(
             context = discovered["context"]
             source_details = discovered["source_details"]
             novel_artifacts = discovered.get("new_artifacts", [])
+            pass_coverage = discovered.get("coverage", {})
+            coverage["planned_queries"] += pass_coverage.get("planned_queries", 0)
+            coverage["executed_queries"] += pass_coverage.get("executed_queries", 0)
+            coverage["attempted_urls"] += pass_coverage.get("attempted_urls", 0)
+            coverage["refusals"] += pass_coverage.get("refusals", 0)
+            coverage["failures"] += pass_coverage.get("failures", 0)
+            coverage["reused_sources"] += pass_coverage.get("reused_sources", 0)
+            coverage["minimum_sources"] = max(
+                coverage["minimum_sources"],
+                pass_coverage.get("minimum_sources", 0),
+            )
+            coverage_candidates.update(
+                normalize_source_url(url) for url in discovered.get("target_urls", [])
+            )
+            coverage["uncovered_queries"] = list(
+                dict.fromkeys(
+                    [
+                        *coverage["uncovered_queries"],
+                        *pass_coverage.get("uncovered_queries", []),
+                    ]
+                )
+            )
+            coverage["pass_count"] = pass_count
             previous_context = combined_context
             if not context and not combined_context:
                 yield {"type": "sources", "sources": []}
@@ -303,10 +348,13 @@ async def _run_research_events(
                 }
                 if include_source_content:
                     no_source_done["source_contents"] = {}
+                no_source_done["coverage"] = coverage
                 yield no_source_done
                 return
 
             all_source_details = list(source_details)
+            coverage["successful_sources"] = len(all_source_details)
+            coverage["candidate_urls"] = len(coverage_candidates)
             credits_used += discovered.get("credits_used", len(novel_artifacts))
             combined_context = context
 
@@ -325,6 +373,7 @@ async def _run_research_events(
                 }
                 if include_source_content:
                     no_source_done["source_contents"] = {}
+                no_source_done["coverage"] = coverage
                 yield no_source_done
                 return
 
@@ -427,6 +476,12 @@ async def _run_research_events(
                 for artifact in source_registry.artifacts()
                 if artifact.markdown
             }
+        coverage["successful_sources"] = len(all_source_details)
+        coverage["candidate_urls"] = len(coverage_candidates)
+        coverage["coverage_complete"] = not coverage["uncovered_queries"] and (
+            coverage["successful_sources"] >= coverage["minimum_sources"]
+        )
+        done_event["coverage"] = coverage
         yield done_event
     finally:
         observe_elapsed(
@@ -494,6 +549,8 @@ async def run_research(
                 }
                 if "source_contents" in event:
                     result_payload["source_contents"] = event["source_contents"]
+                if "coverage" in event:
+                    result_payload["coverage"] = event["coverage"]
                 return result_payload
     raise RuntimeError("Research event engine ended without a terminal done event")
 

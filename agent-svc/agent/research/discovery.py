@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 ArtifactCallback = Callable[[SourceArtifact], Awaitable[None] | None]
 SearchCallback = Callable[[list[dict]], Awaitable[None] | None]
+OutcomeCallback = Callable[[str], Awaitable[None] | None]
 
 
 async def _notify_artifact(callback: ArtifactCallback | None, artifact: SourceArtifact):
@@ -38,6 +39,15 @@ async def _notify_search(callback: SearchCallback | None, results: list[dict]):
     outcome = callback(results)
     if outcome is not None:
         await outcome
+
+
+async def _notify_outcome(callback: OutcomeCallback | None, outcome: str):
+    """Report a scrape outcome without changing the acquisition result shape."""
+    if callback is None:
+        return
+    result = callback(outcome)
+    if result is not None:
+        await result
 
 
 def _rerank_artifact_flagged(artifact: SourceArtifact) -> bool:
@@ -58,6 +68,7 @@ async def _scrape_single(
     semaphore: asyncio.Semaphore,
     url_timeout: int = 70,
     scrape_options: dict | None = None,
+    on_outcome: OutcomeCallback | None = None,
 ) -> SourceArtifact | None:
     """Scrape a single URL with a semaphore for concurrency control.
 
@@ -75,6 +86,7 @@ async def _scrape_single(
             if result.get("success") and result.get("data", {}).get("markdown"):
                 if is_barrier_flagged(result):
                     log_refusal(url, result)
+                    await _notify_outcome(on_outcome, "refusal")
                     return None
                 md = result["data"]["markdown"]
                 return SourceArtifact(
@@ -88,12 +100,15 @@ async def _scrape_single(
                 )
             else:
                 logger.warning("Failed to scrape %s: %s", url, result.get("error"))
+                await _notify_outcome(on_outcome, "failure")
                 return None
         except TimeoutError:
             logger.warning("Timeout scraping %s after %ss", url, url_timeout)
+            await _notify_outcome(on_outcome, "failure")
             return None
         except Exception as e:
             logger.warning("Error scraping %s: %s", url, e)
+            await _notify_outcome(on_outcome, "failure")
             return None
 
 
@@ -228,6 +243,29 @@ def _dedupe_urls(urls: list[str]) -> list[str]:
     return result
 
 
+def _uncovered_queries(
+    queries: list[str],
+    ordered_results: dict[int, list[dict]],
+    scraped: dict[str, SourceArtifact],
+    source_registry: SourceRegistry,
+) -> list[str]:
+    """Return planned queries whose result set produced no acquired source."""
+    acquired_keys = set(scraped)
+    acquired_keys.update(
+        source_registry.key(artifact.url) for artifact in source_registry.artifacts()
+    )
+    uncovered: list[str] = []
+    for index, query in enumerate(queries):
+        results = ordered_results.get(index, [])
+        if not any(
+            normalize_source_url(result.get("url", "")) in acquired_keys
+            for result in results
+            if result.get("url")
+        ):
+            uncovered.append(query)
+    return uncovered
+
+
 def _apply_credit_budget(
     urls: list[str],
     max_credits: int | None,
@@ -259,6 +297,7 @@ def _discovery_result(
     source_registry: SourceRegistry | None,
     reusable_keys: set[str],
     pass_number: int | None = None,
+    coverage: dict[str, Any] | None = None,
 ) -> dict:
     """Project discovery with unique context and acquisition accounting."""
     all_artifacts = (
@@ -282,7 +321,7 @@ def _discovery_result(
             "Successfully acquired novel sources by research pass",
             ["pass"],
         ).inc({"pass": str(pass_number)}, len(novel_artifacts))
-    return {
+    result = {
         "search_results": search_results,
         "target_urls": target_urls,
         "documents": documents,
@@ -296,6 +335,13 @@ def _discovery_result(
         "credits_used": len(novel_artifacts),
         "fetches_deduped": len(reused_artifacts),
     }
+    if coverage is not None:
+        result["coverage"] = {
+            **coverage,
+            "successful_sources": len(all_artifacts),
+            "reused_sources": len(reused_artifacts),
+        }
+    return result
 
 
 async def _scrape_with_fallback(
@@ -361,6 +407,7 @@ async def _run_multi_query_discover_and_scrape(
     pass_number: int | None = None,
     on_artifact: ArtifactCallback | None = None,
     on_search_results: SearchCallback | None = None,
+    min_sources: int = 3,
 ) -> dict:
     """Search multiple sub-queries, deduplicate URLs, scrape, and merge context.
 
@@ -384,6 +431,13 @@ async def _run_multi_query_discover_and_scrape(
     scrape_by_key: dict[str, SourceArtifact] = {}
     streamed_acquisition = False
     admitted_urls: list[str] = []
+    outcome_counts = {"refusal": 0, "failure": 0}
+    ordered_results: dict[int, list[dict]] = {}
+    attempts = 0
+
+    async def on_outcome(outcome: str) -> None:
+        if outcome in outcome_counts:
+            outcome_counts[outcome] += 1
 
     # Truncate to search budget
     budget = min(len(queries), max_searches_per_request)
@@ -407,8 +461,6 @@ async def _run_multi_query_discover_and_scrape(
         candidate_urls: list[str] = []
         video_urls: list[str] = []
         attempted_keys: set[str] = set()
-        ordered_results: dict[int, list[dict]] = {}
-        attempts = 0
         max_attempts = 20 if max_credits is None else min(20, max(0, max_credits))
         scrape_semaphore = asyncio.Semaphore(5)
         admitted_query = 0
@@ -423,7 +475,7 @@ async def _run_multi_query_discover_and_scrape(
                     source_registry.get(a.url, scrape_options) is None
                     for a in scrape_by_key.values()
                 )
-                < 3
+                < min_sources
             ):
                 url = candidate_urls.pop(0)
                 key = normalize_source_url(url)
@@ -445,6 +497,7 @@ async def _run_multi_query_discover_and_scrape(
                             scrape_semaphore,
                             70,
                             scrape_options,
+                            on_outcome,
                         )
                     )
                 )
@@ -523,7 +576,7 @@ async def _run_multi_query_discover_and_scrape(
                     not search_tasks
                     and not scrape_tasks
                     and not candidate_urls
-                    and len(scrape_by_key) < 3
+                    and len(scrape_by_key) < min_sources
                 ):
                     candidate_urls.extend(video_urls)
                     video_urls.clear()
@@ -535,7 +588,7 @@ async def _run_multi_query_discover_and_scrape(
                         source_registry.get(a.url, scrape_options) is None
                         for a in scrape_by_key.values()
                     )
-                    >= 3
+                    >= min_sources
                 ):
                     for task in scrape_tasks:
                         task.cancel()
@@ -603,7 +656,7 @@ async def _run_multi_query_discover_and_scrape(
         artifacts = await _scrape_with_fallback(
             target_urls,
             scraper,
-            min_sources=3,
+            min_sources=min_sources,
             scrape_options=scrape_options,
             source_registry=source_registry,
             on_artifact=on_artifact,
@@ -615,6 +668,18 @@ async def _run_multi_query_discover_and_scrape(
         source_registry=source_registry,
         reusable_keys=reusable_keys,
         pass_number=pass_number,
+        coverage={
+            "planned_queries": len(queries_to_run),
+            "executed_queries": len(ordered_results),
+            "candidate_urls": len(target_urls),
+            "attempted_urls": attempts,
+            "refusals": outcome_counts["refusal"],
+            "failures": outcome_counts["failure"],
+            "minimum_sources": min_sources,
+            "uncovered_queries": _uncovered_queries(
+                queries_to_run, ordered_results, scrape_by_key, source_registry
+            ),
+        },
     )
 
 
