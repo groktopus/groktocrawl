@@ -934,6 +934,55 @@ class TestExpandedSurface:
         result = asyncio.run(run())
         assert result["sessions"][0]["id"] == "s1"
 
+    def test_research_session_lifecycle_requests(self):
+        captured: list[tuple[str, str, dict[str, Any] | None]] = []
+
+        def _handler(request: httpx.Request) -> httpx.Response:
+            import json
+
+            body = json.loads(request.content) if request.content else None
+            captured.append((request.method, request.url.path, body))
+            return httpx.Response(200, json={"success": True}, request=request)
+
+        transport = httpx.MockTransport(_handler)
+        client = GroktocrawlClient(base_url="http://test:8080", api_key=None)
+        client._client = httpx.AsyncClient(
+            base_url=client._base_url, headers=client._headers(), transport=transport
+        )
+
+        async def run() -> None:
+            await client.create_research_session(ttl=900)
+            await client.research_session_step(
+                "rs-1",
+                "search",
+                {"query": "MCP", "limit": 3},
+                parallel=True,
+                idempotency_key="step-1",
+            )
+            await client.get_research_session("rs-1")
+            await client.export_research_session("rs-1")
+            await client.resolve_research_session("rs-1", ["ref_1_1"])
+            await client.delete_research_session("rs-1")
+
+        asyncio.run(run())
+        assert captured == [
+            ("POST", "/v2/session/create", {"ttl": 900}),
+            (
+                "POST",
+                "/v2/session/rs-1/step",
+                {
+                    "action": "search",
+                    "params": {"query": "MCP", "limit": 3},
+                    "parallel": True,
+                    "idempotency_key": "step-1",
+                },
+            ),
+            ("GET", "/v2/session/rs-1", None),
+            ("POST", "/v2/session/rs-1/export", {}),
+            ("POST", "/v2/session/rs-1/resolve", {"ref_ids": ["ref_1_1"]}),
+            ("DELETE", "/v2/session/rs-1", None),
+        ]
+
     def test_monitor_get_verb(self):
         client = _make_matched_client(
             {

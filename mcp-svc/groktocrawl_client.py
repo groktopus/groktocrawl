@@ -443,6 +443,49 @@ class GroktocrawlClient:
             body["search_type"] = search_type
         return await self._post("/v2/agent", body)
 
+    async def create_research_session(self, ttl: int | None = None) -> dict:
+        """Create a server-side multi-step research session."""
+        body: dict[str, Any] = {}
+        if ttl is not None:
+            body["ttl"] = ttl
+        return await self._post("/v2/session/create", body)
+
+    async def research_session_step(
+        self,
+        session_id: str,
+        action: str,
+        params: dict[str, Any],
+        parallel: bool = False,
+        idempotency_key: str | None = None,
+    ) -> dict:
+        """Execute one typed research action within a session."""
+        body: dict[str, Any] = {"action": action, "params": params}
+        if parallel:
+            body["parallel"] = True
+        if idempotency_key:
+            body["idempotency_key"] = idempotency_key
+        return await self._post(f"/v2/session/{session_id}/step", body)
+
+    async def get_research_session(self, session_id: str) -> dict:
+        """Get session status, history, and artifact counts."""
+        return await self._get(f"/v2/session/{session_id}")
+
+    async def export_research_session(self, session_id: str) -> dict:
+        """Export the complete accumulated session artifact tree."""
+        return await self._post(f"/v2/session/{session_id}/export", {})
+
+    async def delete_research_session(self, session_id: str) -> dict:
+        """Delete a research session and all associated state."""
+        return await self._delete(f"/v2/session/{session_id}")
+
+    async def resolve_research_session(
+        self, session_id: str, ref_ids: list[str]
+    ) -> dict:
+        """Resolve session references to full source content."""
+        return await self._post(
+            f"/v2/session/{session_id}/resolve", {"ref_ids": ref_ids}
+        )
+
     async def answer(
         self,
         question: str,

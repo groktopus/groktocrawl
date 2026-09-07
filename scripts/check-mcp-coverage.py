@@ -42,12 +42,6 @@ EXEMPT: dict[str, str] = {
     "POST /v2/agent/plan": "Plan subsystem — backlog; MCP TBD.",
     "GET /v2/agent/plan/{plan_id}": "Plan subsystem — backlog; MCP TBD.",
     "POST /v2/agent/execute": "Plan subsystem — backlog; MCP TBD.",
-    "POST /v2/session/create": "Session protocol — backlog; MCP TBD.",
-    "POST /v2/session/{session_id}/step": "Session protocol — backlog; MCP TBD.",
-    "GET /v2/session/{session_id}": "Session protocol — backlog; MCP TBD.",
-    "POST /v2/session/{session_id}/export": "Session protocol — backlog; MCP TBD.",
-    "DELETE /v2/session/{session_id}": "Session protocol — backlog; MCP TBD.",
-    "POST /v2/session/{session_id}/resolve": "Session protocol — backlog; MCP TBD.",
     "POST /v2/research-memory/query": "Research memory — backlog; MCP TBD.",
     "POST /v2/research-memory/store": "Research memory — backlog; MCP TBD.",
     "DELETE /v2/research-memory/{artifact_id}": ("Research memory — backlog; MCP TBD."),
@@ -95,6 +89,12 @@ PATH_TO_MCP_TOOL: dict[str, str] = {
     "POST /v2/parse": "parse",
     "POST /v2/scrape": "scrape",
     "POST /v2/search": "search",
+    "POST /v2/session/create": "create_research_session",
+    "POST /v2/session/{session_id}/step": "research_session_step",
+    "GET /v2/session/{session_id}": "get_research_session",
+    "POST /v2/session/{session_id}/export": "export_research_session",
+    "DELETE /v2/session/{session_id}": "delete_research_session",
+    "POST /v2/session/{session_id}/resolve": "resolve_research_session",
 }
 
 
