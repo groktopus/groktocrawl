@@ -116,6 +116,7 @@ async def stream_research_live(
     citation_style: CitationStyle,
     search_type: str = "deep",
     max_credits: int | None = None,
+    include_source_content: bool = False,
     research_memory: Any = None,
     user_id: str | None = None,
     fingerprint: str | None = None,
@@ -145,6 +146,7 @@ async def stream_research_live(
         citation_style=citation_style,
         search_type=search_type,
         max_credits=max_credits,
+        include_source_content=include_source_content,
     ):
         if event["type"] in _content_events:
             timing.on_first_event()
@@ -200,6 +202,8 @@ async def stream_research_live(
                 done_payload["source_details"] = []
             else:
                 done_payload["source_details"] = source_details
+            if include_source_content:
+                done_payload["source_contents"] = event.get("source_contents", {})
             yield f"data: {json.dumps(done_payload)}\n\n"
         elif event["type"] == "error":
             payload: dict[str, Any] = {

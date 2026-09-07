@@ -76,6 +76,7 @@ def fingerprint_from_agent_request(body: AgentRequest) -> str:
         model=body.model,
         search_type=body.search_type,
         include_images=body.include_images,
+        include_source_content=body.include_source_content,
         citation_style=citation_style,
         strict_constrain_to_urls=body.strict_constrain_to_urls,
         force_fresh=body.force_fresh,
@@ -95,6 +96,11 @@ async def _lookup_agent_cache(
     or ``None`` on miss / incompatible / stale / error.
     """
     if body.force_fresh:
+        return None
+    if body.include_source_content:
+        # Research Memory stores compact source metadata, not scraped bodies.
+        # An export request must execute acquisition so the response can carry
+        # the requested source content.
         return None
     try:
         memory = request.app.state.research_memory
@@ -183,6 +189,7 @@ async def _handle_agent_streaming(
                     max_searches_per_request=max_searches,
                     max_credits=body.max_credits,
                     include_images=body.include_images,
+                    include_source_content=body.include_source_content,
                     citation_style=body.citation_style,
                     search_type=body.search_type,
                     user_id=_derive_user_id(request),
@@ -250,6 +257,7 @@ async def _handle_agent_streaming(
                 max_searches_per_request=max_searches,
                 max_credits=body.max_credits,
                 include_images=body.include_images,
+                include_source_content=body.include_source_content,
                 citation_style=body.citation_style,
                 search_type=body.search_type,
                 research_memory=request.app.state.research_memory,
@@ -350,6 +358,7 @@ async def create_agent(request: Request, body: AgentRequest, response: Response)
             webhook_config=body.webhook,
             requested_model=body.model,
             include_images=body.include_images,
+            include_source_content=body.include_source_content,
             citation_style=body.citation_style,
             force_fresh=body.force_fresh,
             stale_while_revalidate=body.stale_while_revalidate,

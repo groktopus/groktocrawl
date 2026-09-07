@@ -491,6 +491,13 @@ class AgentRequest(BaseModel):
     include_images: bool = Field(
         default=False, description="Collect images from scraped sources"
     )
+    include_source_content: bool = Field(
+        default=False,
+        description=(
+            "Include successfully scraped Markdown in the completed response. "
+            "Use only for artifact export; ordinary responses remain compact."
+        ),
+    )
     citation_style: CitationStyle = Field(
         default=CitationStyle.inline,
         description="Citation formatting style: inline or compact. inline uses bare [N] markers with a separate citations list; compact embeds [N](url) directly in the answer text.",

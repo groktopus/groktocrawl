@@ -36,6 +36,14 @@ The Artifact Pyramid pattern (progressive disclosure across three layers of incr
 
 The CLI runs the SSE stream as normal (fastest path — inline processing, no poll loop) but buffers tokens instead of printing them to stdout. Progress goes to stderr. On stream completion, writes the pyramid directory and prints the absolute path to stdout.
 
+Pyramid mode requests the opt-in `include_source_content` agent response field.
+The ordinary agent response remains compact: `sources` contains URL strings and
+`source_details` contains fetch metadata only. When the export field is enabled,
+the completed response additionally contains `source_contents`, a URL-to-Markdown
+mapping for successfully acquired sources. The CLI combines that mapping with the
+metadata to write L3 dossiers and fails clearly if a consulted source body is
+unavailable; it never writes `(no content available)` as a consulted dossier.
+
 **Positive:**
 - Zero server-side changes — works with the existing API
 - Uses the fastest execution path (inline SSE vs async job polling)
