@@ -486,6 +486,35 @@ class GroktocrawlClient:
             f"/v2/session/{session_id}/resolve", {"ref_ids": ref_ids}
         )
 
+    async def create_research_plan(
+        self,
+        prompt: str,
+        model: str | None = None,
+        urls: list[str] | None = None,
+    ) -> dict:
+        """Generate a reviewable, one-shot research plan."""
+        body: dict[str, Any] = {"prompt": prompt}
+        if model and model != "default":
+            body["model"] = model
+        if urls:
+            body["urls"] = urls
+        return await self._post("/v2/agent/plan", body)
+
+    async def get_research_plan(self, plan_id: str) -> dict:
+        """Retrieve a generated research plan without executing it."""
+        return await self._get(f"/v2/agent/plan/{plan_id}")
+
+    async def execute_research_plan(
+        self,
+        plan_id: str,
+        modifications: list[dict[str, Any]] | dict[str, Any] | None = None,
+    ) -> dict:
+        """Execute an approved research plan and return its job ID."""
+        body: dict[str, Any] = {"plan_id": plan_id}
+        if modifications:
+            body["modifications"] = modifications
+        return await self._post("/v2/agent/execute", body)
+
     async def answer(
         self,
         question: str,

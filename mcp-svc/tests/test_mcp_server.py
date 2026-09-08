@@ -132,12 +132,12 @@ class TestToolDiscovery:
     """VAL-MCP-B01: tools/list returns the complete MCP tool surface."""
 
     async def test_tool_count(self):
-        """tools/list returns exactly 41 tools."""
+        """tools/list returns exactly 44 tools."""
         tools = await mcp.list_tools()
-        assert len(tools) == 41, f"Expected 41 tools, got {len(tools)}"
+        assert len(tools) == 44, f"Expected 44 tools, got {len(tools)}"
 
     async def test_all_tool_names(self):
-        """All 41 expected tool names are present."""
+        """All 44 expected tool names are present."""
         tools = await mcp.list_tools()
         names = {t.name for t in tools}
         expected = {
@@ -182,6 +182,9 @@ class TestToolDiscovery:
             "export_research_session",
             "resolve_research_session",
             "delete_research_session",
+            "create_research_plan",
+            "get_research_plan",
+            "execute_research_plan",
         }
         missing = expected - names
         extra = names - expected
@@ -269,6 +272,9 @@ class TestToolDiscovery:
             "export_research_session": "session_id",
             "resolve_research_session": "session_id",
             "delete_research_session": "session_id",
+            "create_research_plan": "prompt",
+            "get_research_plan": "plan_id",
+            "execute_research_plan": "plan_id",
             "get_monitor": "monitor_id",
             "update_monitor": "monitor_id",
             "run_monitor": "monitor_id",
@@ -327,6 +333,8 @@ class TestToolAnnotations:
             "get_research_session",
             "export_research_session",
             "resolve_research_session",
+            "create_research_plan",
+            "get_research_plan",
         }
         for t in tools:
             if t.name in readonly_tools:
@@ -349,6 +357,7 @@ class TestToolAnnotations:
             "destroy_browser_session",
             "delete_monitor",
             "delete_research_session",
+            "execute_research_plan",
         }
         for t in tools:
             if t.name in destructive_tools:
@@ -809,6 +818,76 @@ class TestToolCallRouting:
             await mcp.call_tool(
                 "research_session_step",
                 {"session_id": "rs-1", "action": action, **arguments},
+            )
+
+    async def test_research_plan_lifecycle_routing(self, monkeypatch):
+        """Plan tools preserve review-before-execution and typed changes."""
+        import mcp_server as mod
+
+        captured: dict[str, Any] = {}
+
+        async def _fake_create(**kwargs: Any) -> dict:
+            captured["create"] = kwargs
+            return {"success": True, "plan_id": "plan-1", "plan": {"phases": []}}
+
+        async def _fake_get(plan_id: str) -> dict:
+            captured["get"] = plan_id
+            return {"success": True, "plan_id": plan_id}
+
+        async def _fake_execute(**kwargs: Any) -> dict:
+            captured["execute"] = kwargs
+            return {"success": True, "id": "job-1"}
+
+        monkeypatch.setattr(mod._client, "create_research_plan", _fake_create)
+        monkeypatch.setattr(mod._client, "get_research_plan", _fake_get)
+        monkeypatch.setattr(mod._client, "execute_research_plan", _fake_execute)
+
+        await mcp.call_tool(
+            "create_research_plan",
+            {"prompt": "Compare vector databases", "urls": ["https://a.test"]},
+        )
+        await mcp.call_tool("get_research_plan", {"plan_id": "plan-1"})
+        await mcp.call_tool(
+            "execute_research_plan",
+            {
+                "plan_id": "plan-1",
+                "approve": True,
+                "narrow": "focus on operational costs",
+                "add_dimensions": ["latency"],
+                "query_overrides": {"0": "vector database latency benchmarks"},
+            },
+        )
+
+        assert captured["create"] == {
+            "prompt": "Compare vector databases",
+            "model": None,
+            "urls": ["https://a.test"],
+        }
+        assert captured["get"] == "plan-1"
+        assert captured["execute"] == {
+            "plan_id": "plan-1",
+            "modifications": [
+                {
+                    "type": "narrow",
+                    "params": {"focus": "focus on operational costs"},
+                },
+                {"type": "add_dimension", "params": {"dimension": "latency"}},
+                {
+                    "type": "modify_query",
+                    "params": {
+                        "phase_index": 0,
+                        "new_query": "vector database latency benchmarks",
+                    },
+                },
+            ],
+        }
+
+    async def test_execute_research_plan_requires_explicit_approval(self):
+        """A plan cannot execute when the approval gate is false."""
+        with pytest.raises(Exception, match="approve=True"):
+            await mcp.call_tool(
+                "execute_research_plan",
+                {"plan_id": "plan-1", "approve": False},
             )
 
     async def test_crawl_passes_path_filters(self, monkeypatch):

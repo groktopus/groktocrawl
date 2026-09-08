@@ -983,6 +983,50 @@ class TestExpandedSurface:
             ("DELETE", "/v2/session/rs-1", None),
         ]
 
+    def test_research_plan_lifecycle_requests(self):
+        captured: list[tuple[str, str, dict[str, Any] | None]] = []
+
+        def _handler(request: httpx.Request) -> httpx.Response:
+            import json
+
+            body = json.loads(request.content) if request.content else None
+            captured.append((request.method, request.url.path, body))
+            return httpx.Response(200, json={"success": True}, request=request)
+
+        transport = httpx.MockTransport(_handler)
+        client = GroktocrawlClient(base_url="http://test:8080", api_key=None)
+        client._client = httpx.AsyncClient(
+            base_url=client._base_url, headers=client._headers(), transport=transport
+        )
+
+        async def run() -> None:
+            await client.create_research_plan(
+                "Compare vector databases", urls=["https://a.test"]
+            )
+            await client.get_research_plan("plan-1")
+            await client.execute_research_plan(
+                "plan-1",
+                [{"type": "narrow", "params": {"focus": "cost"}}],
+            )
+
+        asyncio.run(run())
+        assert captured == [
+            (
+                "POST",
+                "/v2/agent/plan",
+                {"prompt": "Compare vector databases", "urls": ["https://a.test"]},
+            ),
+            ("GET", "/v2/agent/plan/plan-1", None),
+            (
+                "POST",
+                "/v2/agent/execute",
+                {
+                    "plan_id": "plan-1",
+                    "modifications": [{"type": "narrow", "params": {"focus": "cost"}}],
+                },
+            ),
+        ]
+
     def test_monitor_get_verb(self):
         client = _make_matched_client(
             {
