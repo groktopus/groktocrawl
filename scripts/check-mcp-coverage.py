@@ -39,9 +39,6 @@ EXEMPT: dict[str, str] = {
     "POST /v2/crawl/params-preview": (
         "Internal helper for NL-parameter validation; crawl tool accepts prompt."
     ),
-    "POST /v2/agent/plan": "Plan subsystem — backlog; MCP TBD.",
-    "GET /v2/agent/plan/{plan_id}": "Plan subsystem — backlog; MCP TBD.",
-    "POST /v2/agent/execute": "Plan subsystem — backlog; MCP TBD.",
     "POST /v2/research-memory/query": "Research memory — backlog; MCP TBD.",
     "POST /v2/research-memory/store": "Research memory — backlog; MCP TBD.",
     "DELETE /v2/research-memory/{artifact_id}": ("Research memory — backlog; MCP TBD."),
@@ -58,6 +55,9 @@ PATH_TO_MCP_TOOL: dict[str, str] = {
     "POST /v2/agent": "agent",
     "GET /v2/agent/{job_id}": "get_agent_status",
     "DELETE /v2/agent/{job_id}": "cancel_agent",
+    "POST /v2/agent/plan": "create_research_plan",
+    "GET /v2/agent/plan/{plan_id}": "get_research_plan",
+    "POST /v2/agent/execute": "execute_research_plan",
     "POST /v2/answer": "answer",
     "POST /v2/batch/scrape": "batch_scrape",
     "GET /v2/batch/scrape/{job_id}": "get_batch_scrape_status",

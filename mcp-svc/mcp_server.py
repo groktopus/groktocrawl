@@ -639,6 +639,117 @@ async def delete_research_session(session_id: str) -> str:
     return _resp(result)
 
 
+# ── Tools 18–20: plan-consent research workflow ──────────────────
+
+
+@mcp.tool(annotations=_RO)
+async def create_research_plan(
+    prompt: str,
+    model: str | None = None,
+    urls: list[str] | None = None,
+) -> str:
+    """Generate a research plan for review without starting execution.
+
+    The response includes a one-shot ``plan_id`` plus proposed phases,
+    expected searches, estimated depth, and analysis dimensions. Review it
+    with get_research_plan before calling execute_research_plan.
+
+    Args:
+        prompt: Research question to decompose into an execution plan.
+        model: Optional LLM model override.
+        urls: Optional seed URLs to scope the plan.
+    """
+    result = await _client.create_research_plan(
+        prompt=prompt,
+        model=model,
+        urls=urls,
+    )
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_RO)
+async def get_research_plan(plan_id: str) -> str:
+    """Retrieve a proposed research plan for human or agent review."""
+    result = await _client.get_research_plan(plan_id)
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_DESTRUCTIVE)
+async def execute_research_plan(
+    plan_id: str,
+    approve: bool,
+    narrow: str | None = None,
+    add_dimensions: list[str] | None = None,
+    remove_dimensions: list[str] | None = None,
+    query_overrides: dict[str, str] | None = None,
+) -> str:
+    """Execute a reviewed research plan after explicit approval.
+
+    Set ``approve`` to True only after inspecting get_research_plan. The
+    plan is one-shot: a successful execution consumes it and returns an
+    asynchronous research job ID. Optional typed fields narrow scope, add
+    or remove analysis dimensions, or replace phase queries. Rejected,
+    expired, already-executed, and invalid plan IDs return actionable errors.
+
+    Args:
+        plan_id: Plan ID returned by create_research_plan.
+        approve: Explicit approval gate; must be True to execute.
+        narrow: Optional focus text that narrows the research scope.
+        add_dimensions: Optional analysis dimensions to add.
+        remove_dimensions: Optional analysis dimensions to remove.
+        query_overrides: Optional mapping of zero-based phase indexes to new
+            search queries.
+    """
+    if not approve:
+        raise ToolError(
+            "execute_research_plan requires approve=True after reviewing the plan"
+        )
+
+    if remove_dimensions and query_overrides:
+        raise ToolError(
+            "remove_dimensions cannot be combined with query_overrides by the plan API"
+        )
+
+    modifications: list[dict[str, Any]] | dict[str, Any] = []
+    if remove_dimensions:
+        # The API's legacy dict form is the typed representation that supports
+        # remove_dimension alongside narrow/add_dimension.
+        modifications = {
+            "narrow": narrow,
+            "add_dimension": add_dimensions,
+            "remove_dimension": remove_dimensions,
+        }
+    else:
+        if narrow:
+            modifications.append({"type": "narrow", "params": {"focus": narrow}})
+        for dimension in add_dimensions or []:
+            modifications.append(
+                {"type": "add_dimension", "params": {"dimension": dimension}}
+            )
+    for phase_index, new_query in (query_overrides or {}).items():
+        if not new_query.strip():
+            raise ToolError("query_overrides values must be non-empty queries")
+        try:
+            phase_number = int(phase_index)
+        except ValueError as exc:
+            raise ToolError("query_overrides keys must be phase indexes") from exc
+        modifications.append(
+            {
+                "type": "modify_query",
+                "params": {"phase_index": phase_number, "new_query": new_query},
+            }
+        )
+
+    result = await _client.execute_research_plan(
+        plan_id=plan_id,
+        modifications=modifications or None,
+    )
+    _ensure_success(result)
+    return _resp(result)
+
+
 # ── Tool 10: answer ────────────────────────────────────────────────
 
 
