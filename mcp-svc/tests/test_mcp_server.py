@@ -129,15 +129,15 @@ class TestTransportSecurity:
 
 
 class TestToolDiscovery:
-    """VAL-MCP-B01: tools/list returns exactly 35 tools."""
+    """VAL-MCP-B01: tools/list returns the complete MCP tool surface."""
 
     async def test_tool_count(self):
-        """tools/list returns exactly 35 tools."""
+        """tools/list returns exactly 41 tools."""
         tools = await mcp.list_tools()
-        assert len(tools) == 35, f"Expected 35 tools, got {len(tools)}"
+        assert len(tools) == 41, f"Expected 41 tools, got {len(tools)}"
 
     async def test_all_tool_names(self):
-        """All 35 expected tool names are present."""
+        """All 41 expected tool names are present."""
         tools = await mcp.list_tools()
         names = {t.name for t in tools}
         expected = {
@@ -176,6 +176,12 @@ class TestToolDiscovery:
             "update_monitor",
             "run_monitor",
             "delete_monitor",
+            "create_research_session",
+            "research_session_step",
+            "get_research_session",
+            "export_research_session",
+            "resolve_research_session",
+            "delete_research_session",
         }
         missing = expected - names
         extra = names - expected
@@ -258,6 +264,11 @@ class TestToolDiscovery:
             "get_batch_scrape_errors": "job_id",
             "browser_execute": "session_id",
             "destroy_browser_session": "session_id",
+            "research_session_step": "session_id",
+            "get_research_session": "session_id",
+            "export_research_session": "session_id",
+            "resolve_research_session": "session_id",
+            "delete_research_session": "session_id",
             "get_monitor": "monitor_id",
             "update_monitor": "monitor_id",
             "run_monitor": "monitor_id",
@@ -312,6 +323,10 @@ class TestToolAnnotations:
             "list_browser_sessions",
             "list_monitors",
             "get_monitor",
+            "create_research_session",
+            "get_research_session",
+            "export_research_session",
+            "resolve_research_session",
         }
         for t in tools:
             if t.name in readonly_tools:
@@ -333,6 +348,7 @@ class TestToolAnnotations:
             "cancel_batch_scrape",
             "destroy_browser_session",
             "delete_monitor",
+            "delete_research_session",
         }
         for t in tools:
             if t.name in destructive_tools:
@@ -352,6 +368,7 @@ class TestToolAnnotations:
             "browser_execute",
             "update_monitor",
             "run_monitor",
+            "research_session_step",
         }
         for t in tools:
             if t.name in neutral_tools:
@@ -705,6 +722,94 @@ class TestToolCallRouting:
         assert captured.get("style") == "compact"
 
     # ── New surface routing ──
+
+    async def test_research_session_lifecycle_routing(self, monkeypatch):
+        """Session tools preserve IDs and route each lifecycle operation."""
+        import mcp_server as mod
+
+        captured: dict[str, Any] = {}
+
+        async def _fake_create(**kwargs: Any) -> dict:
+            captured["create"] = kwargs
+            return {"success": True, "session_id": "rs-1"}
+
+        async def _fake_step(**kwargs: Any) -> dict:
+            captured["step"] = kwargs
+            return {"success": True, "step_index": 1}
+
+        async def _fake_get(session_id: str) -> dict:
+            captured["get"] = session_id
+            return {"success": True, "session_id": session_id}
+
+        async def _fake_export(session_id: str) -> dict:
+            captured["export"] = session_id
+            return {"success": True, "session_id": session_id, "artifact": "# Research"}
+
+        async def _fake_resolve(session_id: str, ref_ids: list[str]) -> dict:
+            captured["resolve"] = (session_id, ref_ids)
+            return {"success": True, "resolved": len(ref_ids)}
+
+        async def _fake_delete(session_id: str) -> dict:
+            captured["delete"] = session_id
+            return {"success": True, "deleted": True}
+
+        monkeypatch.setattr(mod._client, "create_research_session", _fake_create)
+        monkeypatch.setattr(mod._client, "research_session_step", _fake_step)
+        monkeypatch.setattr(mod._client, "get_research_session", _fake_get)
+        monkeypatch.setattr(mod._client, "export_research_session", _fake_export)
+        monkeypatch.setattr(mod._client, "resolve_research_session", _fake_resolve)
+        monkeypatch.setattr(mod._client, "delete_research_session", _fake_delete)
+
+        await mcp.call_tool("create_research_session", {"ttl": 900})
+        await mcp.call_tool(
+            "research_session_step",
+            {
+                "session_id": "rs-1",
+                "action": "search",
+                "query": "MCP session protocol",
+                "limit": 3,
+                "idempotency_key": "step-1",
+            },
+        )
+        await mcp.call_tool("get_research_session", {"session_id": "rs-1"})
+        await mcp.call_tool("export_research_session", {"session_id": "rs-1"})
+        await mcp.call_tool(
+            "resolve_research_session",
+            {"session_id": "rs-1", "ref_ids": ["ref_1_1"]},
+        )
+        await mcp.call_tool("delete_research_session", {"session_id": "rs-1"})
+
+        assert captured["create"] == {"ttl": 900}
+        assert captured["step"] == {
+            "session_id": "rs-1",
+            "action": "search",
+            "params": {"query": "MCP session protocol", "limit": 3},
+            "parallel": False,
+            "idempotency_key": "step-1",
+        }
+        assert captured["get"] == "rs-1"
+        assert captured["export"] == "rs-1"
+        assert captured["resolve"] == ("rs-1", ["ref_1_1"])
+        assert captured["delete"] == "rs-1"
+
+    @pytest.mark.parametrize(
+        ("action", "arguments", "message"),
+        [
+            ("search", {}, "search action requires"),
+            ("scrape", {}, "scrape action requires"),
+            ("query", {}, "query action requires"),
+            ("deepen", {}, "deepen action requires"),
+        ],
+    )
+    async def test_research_session_step_validates_action_payload(
+        self, action, arguments, message
+    ):
+        """Each session action rejects missing typed payload fields."""
+        with pytest.raises(Exception, match=message):
+            await mcp.call_tool(
+                "research_session_step",
+                {"session_id": "rs-1", "action": action, **arguments},
+            )
 
     async def test_crawl_passes_path_filters(self, monkeypatch):
         """Crawl passes include/exclude paths and concurrency through."""

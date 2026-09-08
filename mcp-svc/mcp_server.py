@@ -17,7 +17,7 @@ import json
 import logging
 import os
 import time
-from typing import Any
+from typing import Any, Literal
 
 from browser_handler import BrowserHandler
 from groktocrawl_client import GroktocrawlClient
@@ -523,6 +523,118 @@ async def cancel_agent(job_id: str) -> str:
         job_id: The agent job ID returned by the agent tool.
     """
     result = await _client.cancel_agent(job_id)
+    _ensure_success(result)
+    return _resp(result)
+
+
+# ── Tools 12–17: agent-native research sessions ──────────────────
+
+
+@mcp.tool(annotations=_RO)
+async def create_research_session(ttl: int | None = None) -> str:
+    """Create a durable server-side research session.
+
+    The returned session ID can be passed to research_session_step,
+    get_research_session, export_research_session, resolve_research_session,
+    and delete_research_session. Session state survives across MCP calls
+    until its TTL expires or it is explicitly deleted.
+
+    Args:
+        ttl: Optional session lifetime in seconds. The API default is used
+            when omitted.
+    """
+    result = await _client.create_research_session(ttl=ttl)
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_NEUTRAL)
+async def research_session_step(
+    session_id: str,
+    action: Literal["search", "scrape", "query", "deepen"],
+    query: str | None = None,
+    limit: int | None = None,
+    urls: list[str] | None = None,
+    question: str | None = None,
+    ref_id: str | None = None,
+    sub_topic: str | None = None,
+    max_sources: int | None = None,
+    parallel: bool = False,
+    idempotency_key: str | None = None,
+) -> str:
+    """Run one typed search, scrape, query, or deepen step in a session.
+
+    Supply only the fields for the selected action: search uses ``query``
+    and optional ``limit``; scrape uses ``urls``; query uses ``question``;
+    deepen uses ``ref_id``, ``sub_topic``, and optional ``max_sources``.
+    The API rejects missing sessions, invalid transitions, and conflicting
+    concurrent or idempotent steps with actionable errors.
+    """
+    params: dict[str, Any]
+    if action == "search":
+        if not query or not query.strip():
+            raise ToolError("search action requires a non-empty query")
+        params = {"query": query}
+        if limit is not None:
+            params["limit"] = limit
+    elif action == "scrape":
+        if not urls:
+            raise ToolError("scrape action requires a non-empty urls list")
+        params = {"urls": urls}
+    elif action == "query":
+        if not question or not question.strip():
+            raise ToolError("query action requires a non-empty question")
+        params = {"question": question}
+    else:
+        if not ref_id or not ref_id.strip():
+            raise ToolError("deepen action requires a non-empty ref_id")
+        if not sub_topic or not sub_topic.strip():
+            raise ToolError("deepen action requires a non-empty sub_topic")
+        params = {"ref_id": ref_id, "sub_topic": sub_topic}
+        if max_sources is not None:
+            params["max_sources"] = max_sources
+
+    result = await _client.research_session_step(
+        session_id=session_id,
+        action=action,
+        params=params,
+        parallel=parallel,
+        idempotency_key=idempotency_key,
+    )
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_RO)
+async def get_research_session(session_id: str) -> str:
+    """Get a research session's status, step history, and artifact counts."""
+    result = await _client.get_research_session(session_id)
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_RO)
+async def export_research_session(session_id: str) -> str:
+    """Export a complete, navigable artifact tree from a research session."""
+    result = await _client.export_research_session(session_id)
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_RO)
+async def resolve_research_session(session_id: str, ref_ids: list[str]) -> str:
+    """Resolve session reference IDs to full source content and metadata."""
+    if not ref_ids:
+        raise ToolError("resolve_research_session requires at least one ref_id")
+    result = await _client.resolve_research_session(session_id, ref_ids)
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_DESTRUCTIVE)
+async def delete_research_session(session_id: str) -> str:
+    """Delete a research session and all accumulated server-side state."""
+    result = await _client.delete_research_session(session_id)
     _ensure_success(result)
     return _resp(result)
 
