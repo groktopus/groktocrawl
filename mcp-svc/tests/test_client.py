@@ -1027,6 +1027,84 @@ class TestExpandedSurface:
             ),
         ]
 
+    def test_research_memory_lifecycle_requests(self):
+        captured: list[tuple[str, str, dict[str, Any] | None]] = []
+
+        def _handler(request: httpx.Request) -> httpx.Response:
+            import json
+
+            body = json.loads(request.content) if request.content else None
+            captured.append((request.method, request.url.path, body))
+            return httpx.Response(200, json={"success": True}, request=request)
+
+        transport = httpx.MockTransport(_handler)
+        client = GroktocrawlClient(base_url="http://test:8080", api_key=None)
+        client._client = httpx.AsyncClient(
+            base_url=client._base_url, headers=client._headers(), transport=transport
+        )
+
+        async def run() -> None:
+            await client.query_research_memory("MCP memory", max_age_hours=48)
+            await client.store_research_memory(
+                "MCP memory",
+                "answer",
+                [{"url": "https://a.test", "title": "A"}],
+                metadata={"model": "fixture"},
+            )
+            await client.delete_research_memory_artifact("artifact-1")
+            await client.get_research_memory("mem-1")
+            await client.delete_research_memory("mem-1")
+            await client.sweep_research_memory()
+            await client.batch_query_research_memory(["one", "two"])
+            await client.batch_store_research_memory(
+                [
+                    {
+                        "query": "one",
+                        "artifact": "answer",
+                        "sources": [{"url": "https://a.test"}],
+                        "model": "fixture",
+                    }
+                ]
+            )
+
+        asyncio.run(run())
+        assert captured == [
+            (
+                "POST",
+                "/v2/research-memory/query",
+                {"question": "MCP memory", "max_age_hours": 48},
+            ),
+            (
+                "POST",
+                "/v2/research-memory/store",
+                {
+                    "question": "MCP memory",
+                    "answer": "answer",
+                    "sources": [{"url": "https://a.test", "title": "A"}],
+                    "metadata": {"model": "fixture"},
+                },
+            ),
+            ("DELETE", "/v2/research-memory/artifact-1", None),
+            ("GET", "/v2/memory/mem-1", None),
+            ("DELETE", "/v2/memory/mem-1", None),
+            ("POST", "/v2/memory/sweep", {}),
+            ("POST", "/v2/memory/batch/query", {"queries": ["one", "two"]}),
+            (
+                "POST",
+                "/v2/memory/batch/store",
+                {
+                    "entries": [
+                        {
+                            "query": "one",
+                            "artifact": "answer",
+                            "sources": [{"url": "https://a.test"}],
+                            "model": "fixture",
+                        }
+                    ]
+                },
+            ),
+        ]
+
     def test_monitor_get_verb(self):
         client = _make_matched_client(
             {
