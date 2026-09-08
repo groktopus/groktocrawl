@@ -132,12 +132,12 @@ class TestToolDiscovery:
     """VAL-MCP-B01: tools/list returns the complete MCP tool surface."""
 
     async def test_tool_count(self):
-        """tools/list returns exactly 44 tools."""
+        """tools/list returns exactly 52 tools."""
         tools = await mcp.list_tools()
-        assert len(tools) == 44, f"Expected 44 tools, got {len(tools)}"
+        assert len(tools) == 52, f"Expected 52 tools, got {len(tools)}"
 
     async def test_all_tool_names(self):
-        """All 44 expected tool names are present."""
+        """All 52 expected tool names are present."""
         tools = await mcp.list_tools()
         names = {t.name for t in tools}
         expected = {
@@ -185,6 +185,14 @@ class TestToolDiscovery:
             "create_research_plan",
             "get_research_plan",
             "execute_research_plan",
+            "query_research_memory",
+            "store_research_memory",
+            "delete_research_memory_artifact",
+            "get_research_memory",
+            "delete_research_memory",
+            "sweep_research_memory",
+            "batch_query_research_memory",
+            "batch_store_research_memory",
         }
         missing = expected - names
         extra = names - expected
@@ -275,6 +283,13 @@ class TestToolDiscovery:
             "create_research_plan": "prompt",
             "get_research_plan": "plan_id",
             "execute_research_plan": "plan_id",
+            "query_research_memory": "question",
+            "store_research_memory": "question",
+            "delete_research_memory_artifact": "artifact_id",
+            "get_research_memory": "memory_id",
+            "delete_research_memory": "memory_id",
+            "batch_query_research_memory": "queries",
+            "batch_store_research_memory": "entries",
             "get_monitor": "monitor_id",
             "update_monitor": "monitor_id",
             "run_monitor": "monitor_id",
@@ -335,6 +350,9 @@ class TestToolAnnotations:
             "resolve_research_session",
             "create_research_plan",
             "get_research_plan",
+            "query_research_memory",
+            "get_research_memory",
+            "batch_query_research_memory",
         }
         for t in tools:
             if t.name in readonly_tools:
@@ -358,6 +376,9 @@ class TestToolAnnotations:
             "delete_monitor",
             "delete_research_session",
             "execute_research_plan",
+            "delete_research_memory_artifact",
+            "delete_research_memory",
+            "sweep_research_memory",
         }
         for t in tools:
             if t.name in destructive_tools:
@@ -378,6 +399,8 @@ class TestToolAnnotations:
             "update_monitor",
             "run_monitor",
             "research_session_step",
+            "store_research_memory",
+            "batch_store_research_memory",
         }
         for t in tools:
             if t.name in neutral_tools:
@@ -889,6 +912,107 @@ class TestToolCallRouting:
                 "execute_research_plan",
                 {"plan_id": "plan-1", "approve": False},
             )
+
+    async def test_research_memory_lifecycle_routing(self, monkeypatch):
+        """Memory tools preserve source metadata and route lifecycle IDs."""
+        import mcp_server as mod
+
+        captured: dict[str, Any] = {}
+
+        async def _fake_query(**kwargs: Any) -> dict:
+            captured["query"] = kwargs
+            return {
+                "hit": True,
+                "freshness": "fresh",
+                "compatibility": "compatible",
+                "memory_id": "mem-1",
+                "artifact": {"sources": [{"url": "https://a.test"}]},
+            }
+
+        async def _fake_store(**kwargs: Any) -> dict:
+            captured["store"] = kwargs
+            return {"artifact_id": "artifact-1"}
+
+        async def _fake_batch_store(entries: list[dict[str, Any]]) -> dict:
+            captured["batch_store"] = entries
+            return {"success": True, "stored_count": len(entries)}
+
+        async def _fake_batch_query(queries: list[str]) -> dict:
+            captured["batch_query"] = queries
+            return {"success": True, "results": []}
+
+        async def _fake_id(method: str, value: str) -> dict:
+            captured[method] = value
+            return {"success": True, "deleted": True}
+
+        async def _fake_get(memory_id: str) -> dict:
+            captured["get"] = memory_id
+            return {"success": True, "memory_id": memory_id}
+
+        async def _fake_sweep() -> dict:
+            captured["sweep"] = True
+            return {"success": True, "swept": 2}
+
+        monkeypatch.setattr(mod._client, "query_research_memory", _fake_query)
+        monkeypatch.setattr(mod._client, "store_research_memory", _fake_store)
+        monkeypatch.setattr(
+            mod._client,
+            "delete_research_memory_artifact",
+            lambda artifact_id: _fake_id("artifact_delete", artifact_id),
+        )
+        monkeypatch.setattr(mod._client, "get_research_memory", _fake_get)
+        monkeypatch.setattr(
+            mod._client,
+            "delete_research_memory",
+            lambda memory_id: _fake_id("memory_delete", memory_id),
+        )
+        monkeypatch.setattr(mod._client, "sweep_research_memory", _fake_sweep)
+        monkeypatch.setattr(
+            mod._client, "batch_query_research_memory", _fake_batch_query
+        )
+        monkeypatch.setattr(
+            mod._client, "batch_store_research_memory", _fake_batch_store
+        )
+
+        await mcp.call_tool(
+            "query_research_memory",
+            {"question": "MCP memory", "max_age_hours": 48},
+        )
+        await mcp.call_tool(
+            "store_research_memory",
+            {
+                "question": "MCP memory",
+                "answer": "answer",
+                "sources": [{"url": "https://a.test", "title": "A"}],
+                "metadata": {"model": "fixture"},
+            },
+        )
+        await mcp.call_tool(
+            "delete_research_memory_artifact", {"artifact_id": "artifact-1"}
+        )
+        await mcp.call_tool("get_research_memory", {"memory_id": "mem-1"})
+        await mcp.call_tool("delete_research_memory", {"memory_id": "mem-1"})
+        await mcp.call_tool("sweep_research_memory", {})
+        await mcp.call_tool("batch_query_research_memory", {"queries": ["one", "two"]})
+        entries = [
+            {
+                "query": "one",
+                "artifact": "answer",
+                "sources": [{"url": "https://a.test"}],
+                "model": "fixture",
+            }
+        ]
+        await mcp.call_tool("batch_store_research_memory", {"entries": entries})
+
+        assert captured["query"] == {"question": "MCP memory", "max_age_hours": 48}
+        assert captured["store"]["sources"][0]["title"] == "A"
+        assert captured["store"]["metadata"] == {"model": "fixture"}
+        assert captured["artifact_delete"] == "artifact-1"
+        assert captured["get"] == "mem-1"
+        assert captured["memory_delete"] == "mem-1"
+        assert captured["sweep"] is True
+        assert captured["batch_query"] == ["one", "two"]
+        assert captured["batch_store"] == entries
 
     async def test_crawl_passes_path_filters(self, monkeypatch):
         """Crawl passes include/exclude paths and concurrency through."""

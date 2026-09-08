@@ -515,6 +515,61 @@ class GroktocrawlClient:
             body["modifications"] = modifications
         return await self._post("/v2/agent/execute", body)
 
+    async def query_research_memory(
+        self,
+        question: str,
+        max_age_hours: int | None = None,
+    ) -> dict:
+        """Find a compatible cached research artifact by question."""
+        body: dict[str, Any] = {"question": question}
+        if max_age_hours is not None:
+            body["max_age_hours"] = max_age_hours
+        return await self._post("/v2/research-memory/query", body)
+
+    async def store_research_memory(
+        self,
+        question: str,
+        answer: str,
+        sources: list[dict[str, Any]],
+        metadata: dict[str, Any] | None = None,
+    ) -> dict:
+        """Store a completed research artifact with source metadata."""
+        body: dict[str, Any] = {
+            "question": question,
+            "answer": answer,
+            "sources": sources,
+        }
+        if metadata is not None:
+            body["metadata"] = metadata
+        return await self._post("/v2/research-memory/store", body)
+
+    async def delete_research_memory_artifact(self, artifact_id: str) -> dict:
+        """Delete an artifact by the ID returned from memory storage."""
+        return await self._delete(f"/v2/research-memory/{artifact_id}")
+
+    async def get_research_memory(self, memory_id: str) -> dict:
+        """Retrieve one complete research-memory artifact."""
+        return await self._get(f"/v2/memory/{memory_id}")
+
+    async def delete_research_memory(self, memory_id: str) -> dict:
+        """Delete one research-memory artifact by memory ID."""
+        return await self._delete(f"/v2/memory/{memory_id}")
+
+    async def sweep_research_memory(self) -> dict:
+        """Remove expired research-memory index entries."""
+        return await self._post("/v2/memory/sweep", {})
+
+    async def batch_query_research_memory(self, queries: list[str]) -> dict:
+        """Look up multiple research questions in input order."""
+        return await self._post("/v2/memory/batch/query", {"queries": queries})
+
+    async def batch_store_research_memory(
+        self,
+        entries: list[dict[str, Any]],
+    ) -> dict:
+        """Store multiple research artifacts with per-entry results."""
+        return await self._post("/v2/memory/batch/store", {"entries": entries})
+
     async def answer(
         self,
         question: str,

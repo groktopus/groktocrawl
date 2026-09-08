@@ -1,13 +1,13 @@
 """MCP server exposing GroktoCrawl tools via Model Context Protocol.
 
 Uses FastMCP from the official mcp SDK (v1.x) with Streamable HTTP
-transport.  Defines 35 tools matching the GroktoCrawl agent-svc
+transport.  Defines 52 tools matching the GroktoCrawl agent-svc
 API surface, with proper readOnlyHint/destructiveHint annotations.
 
 Tool surface policy (see scripts/check-mcp-coverage.py): every agent-svc
 ``/v2`` endpoint that is expressible as a tool has one.  SSE-streaming,
-two-phase-upload, and pre-admission-internal endpoints, plus the
-plan/session/research-memory subsystems, are exempted explicitly.
+two-phase-upload, and pre-admission-internal endpoints are exempted
+explicitly.
 """
 
 from __future__ import annotations
@@ -750,7 +750,154 @@ async def execute_research_plan(
     return _resp(result)
 
 
-# ── Tool 10: answer ────────────────────────────────────────────────
+# ── Tools 21–28: research-memory lifecycle ───────────────────────
+
+
+@mcp.tool(annotations=_RO)
+async def query_research_memory(
+    question: str,
+    max_age_hours: int | None = None,
+) -> str:
+    """Find a compatible cached research artifact by question.
+
+    Calls POST /v2/research-memory/query. The response preserves hit or
+    miss status, freshness, similarity, compatibility, artifact ID, and
+    source metadata so clients can decide whether to reuse the result.
+
+    Args:
+        question: Research question to match against stored artifacts.
+        max_age_hours: Optional maximum artifact age, from 1 to 720 hours.
+    """
+    result = await _client.query_research_memory(
+        question=question,
+        max_age_hours=max_age_hours,
+    )
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_NEUTRAL)
+async def store_research_memory(
+    question: str,
+    answer: str,
+    sources: list[dict[str, Any]],
+    metadata: dict[str, Any] | None = None,
+) -> str:
+    """Store a completed research artifact for reuse across sessions.
+
+    Calls POST /v2/research-memory/store. Source objects are retained with
+    the artifact; include URL, title, relevance, or other source metadata.
+
+    Args:
+        question: Original research question used for semantic indexing.
+        answer: Completed research answer in markdown or plain text.
+        sources: Source metadata objects, normally including ``url`` and
+            ``title``.
+        metadata: Optional model or workflow metadata to store with it.
+    """
+    result = await _client.store_research_memory(
+        question=question,
+        answer=answer,
+        sources=sources,
+        metadata=metadata,
+    )
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_DESTRUCTIVE)
+async def delete_research_memory_artifact(artifact_id: str) -> str:
+    """Delete a research-memory artifact by its stored artifact ID.
+
+    Calls DELETE /v2/research-memory/{artifact_id}. A successful response
+    reports whether the artifact was removed from the backing stores.
+
+    Args:
+        artifact_id: ID returned by store_research_memory.
+    """
+    result = await _client.delete_research_memory_artifact(artifact_id)
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_RO)
+async def get_research_memory(memory_id: str) -> str:
+    """Retrieve one complete research-memory artifact by memory ID.
+
+    Calls GET /v2/memory/{memory_id}. The response includes the stored
+    question, answer, sources, model, timestamps, and scope metadata.
+
+    Args:
+        memory_id: Memory ID returned by a query or batch-query result.
+    """
+    result = await _client.get_research_memory(memory_id)
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_DESTRUCTIVE)
+async def delete_research_memory(memory_id: str) -> str:
+    """Delete one research-memory artifact by memory ID.
+
+    Calls DELETE /v2/memory/{memory_id} and returns a verifiable deletion
+    result. Missing IDs are surfaced as an MCP tool error.
+
+    Args:
+        memory_id: Memory ID to delete.
+    """
+    result = await _client.delete_research_memory(memory_id)
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_DESTRUCTIVE)
+async def sweep_research_memory() -> str:
+    """Sweep expired research-memory index entries.
+
+    Calls POST /v2/memory/sweep. This admin-style maintenance operation
+    removes orphaned vector entries and returns the swept count.
+    """
+    result = await _client.sweep_research_memory()
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_RO)
+async def batch_query_research_memory(queries: list[str]) -> str:
+    """Look up multiple research questions in one memory request.
+
+    Calls POST /v2/memory/batch/query and preserves input ordering. Each
+    result includes hit or miss, freshness, similarity, memory ID, answer,
+    and source metadata when available.
+
+    Args:
+        queries: Research questions to search, up to the API batch limit.
+    """
+    result = await _client.batch_query_research_memory(queries)
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_NEUTRAL)
+async def batch_store_research_memory(
+    entries: list[dict[str, Any]],
+) -> str:
+    """Store multiple research artifacts with per-entry outcomes.
+
+    Calls POST /v2/memory/batch/store. Each entry must contain ``query``,
+    ``artifact``, and ``sources`` and may include ``model``. Partial success
+    is preserved in the returned stored and failed counts.
+
+    Args:
+        entries: Artifact objects with query, answer text, source metadata,
+            and optional model name.
+    """
+    result = await _client.batch_store_research_memory(entries)
+    _ensure_success(result)
+    return _resp(result)
+
+
+# ── Tool 29: answer ────────────────────────────────────────────────
 
 
 @mcp.tool(annotations=_RO)
