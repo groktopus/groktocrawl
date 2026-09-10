@@ -815,20 +815,10 @@ class ResearchMemory:
                     removed,
                 )
         except httpx.ConnectError as e:
-            # Qdrant/semantic-svc run under the `indexing` profile and are
-            # absent from the default stack.  Distinguish intentional absence
-            # (default URL, not configured) from a real outage (explicit URL).
-            import os as _os
-            explicitly_configured = _os.environ.get("QDRANT_URL") is not None
-            if explicitly_configured:
-                logger.warning(
-                    "Research memory sweep failed — Qdrant unreachable at configured URL: %s",
-                    e,
-                )
-            else:
-                logger.debug(
-                    "Research memory sweep skipped (Qdrant not deployed): %s", e
-                )
+            # Optional deployments can be unreachable without warranting a
+            # traceback. Keep the warning: a default URL also serves enabled
+            # indexing deployments, so URL configuration cannot identify intent.
+            logger.warning("Research memory sweep skipped (Qdrant unavailable): %s", e)
         except Exception:
             logger.warning("Research memory sweep failed", exc_info=True)
         finally:
