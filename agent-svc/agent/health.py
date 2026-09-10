@@ -63,11 +63,17 @@ async def check_searxng(url: str) -> dict[str, Any]:
                 try:
                     cfg = await client.get(f"{url.rstrip('/')}/config")
                     elapsed = (time.monotonic() - start) * 1000
-                    if cfg.status_code < 500:
+                    if cfg.status_code == 200:
                         return {
                             "status": "ok",
                             "latency_ms": round(elapsed, 1),
-                            "detail": f"SearXNG config ok (HTTP {cfg.status_code})",
+                            "detail": "SearXNG config ok",
+                        }
+                    if 300 <= cfg.status_code < 500:
+                        return {
+                            "status": "degraded",
+                            "latency_ms": round(elapsed, 1),
+                            "detail": f"SearXNG config returned HTTP {cfg.status_code} (expected 200)",
                         }
                     return {
                         "status": "down",
