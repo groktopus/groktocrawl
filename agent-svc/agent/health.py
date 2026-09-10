@@ -36,15 +36,18 @@ async def check_valkey(url: str) -> dict[str, Any]:
 
 
 async def check_searxng(url: str) -> dict[str, Any]:
-    """Probe SearXNG via its /health endpoint.
+    """Probe SearXNG liveness without sending a real search query.
 
-    Does NOT send a real search query. The /health endpoint reports
-    server liveness and Valkey connectivity without hitting any
-    external search API, so this probe has zero cost.
+    Supports both backends:
+    - SlopSearX (fixture/dev) exposes ``/health`` (server liveness +
+      Valkey connectivity, zero external API cost).
+    - Real SearXNG has no ``/health`` endpoint, so fall back to
+      ``/config`` (static JSON, zero search cost).
     """
     start = time.monotonic()
     try:
         async with httpx.AsyncClient(timeout=10) as client:
+            # 1. SlopSearX-style /health (preferred, zero cost).
             resp = await client.get(
                 f"{url.rstrip('/')}/health",
             )
@@ -55,6 +58,29 @@ async def check_searxng(url: str) -> dict[str, Any]:
                     "latency_ms": round(elapsed, 1),
                     "detail": "SearXNG health ok",
                 }
+            # 2. Real SearXNG: /config returns static JSON, no search cost.
+            if resp.status_code == 404:
+                try:
+                    cfg = await client.get(f"{url.rstrip('/')}/config")
+                    elapsed = (time.monotonic() - start) * 1000
+                    if cfg.status_code < 500:
+                        return {
+                            "status": "ok",
+                            "latency_ms": round(elapsed, 1),
+                            "detail": f"SearXNG config ok (HTTP {cfg.status_code})",
+                        }
+                    return {
+                        "status": "down",
+                        "latency_ms": round(elapsed, 1),
+                        "detail": f"SearXNG config returned HTTP {cfg.status_code}",
+                    }
+                except Exception as e:
+                    elapsed = (time.monotonic() - start) * 1000
+                    return {
+                        "status": "down",
+                        "latency_ms": round(elapsed, 1),
+                        "detail": f"SearXNG error: {e}",
+                    }
             elapsed = (time.monotonic() - start) * 1000
             return {
                 "status": "down",

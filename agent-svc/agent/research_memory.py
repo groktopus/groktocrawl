@@ -814,6 +814,11 @@ class ResearchMemory:
                     "Swept %d orphaned Qdrant points from research_memory",
                     removed,
                 )
+        except httpx.ConnectError as e:
+            # Qdrant/semantic-svc run under the `indexing` profile and are
+            # absent from the default stack — skip quietly, one line, no
+            # traceback spam every 5 min.
+            logger.info("Research memory sweep skipped (Qdrant unavailable): %s", e)
         except Exception:
             logger.warning("Research memory sweep failed", exc_info=True)
         finally:
