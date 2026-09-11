@@ -2,6 +2,36 @@
 
 All notable changes to GroktoCrawl are documented in this file.
 
+## [0.15.0](https://github.com/groktopus/groktocrawl/compare/v0.14.0...v0.15.0) (2026-09-11)
+
+
+### Features
+
+* **mcp:** expose plan consent workflow ([ba4d4a8](https://github.com/groktopus/groktocrawl/commit/ba4d4a88a6d8506bf784f2cf8cf9cf84dd1c0719))
+* **mcp:** expose plan consent workflow ([dced3d2](https://github.com/groktopus/groktocrawl/commit/dced3d277105221ba854e54ed7927d6179ca856e))
+* **mcp:** expose research memory lifecycle ([2b218cd](https://github.com/groktopus/groktocrawl/commit/2b218cd277bb4ba6568def87d74655237068b133))
+* **mcp:** expose research memory lifecycle ([6bc0abd](https://github.com/groktopus/groktocrawl/commit/6bc0abd3c8a8a229d7704673378acd89762701c8))
+* **mcp:** expose research session protocol ([45741ca](https://github.com/groktopus/groktocrawl/commit/45741ca37b73c211a7b1411bea1074e5ce7c2c8d))
+* **mcp:** expose research session protocol ([97c7b45](https://github.com/groktopus/groktocrawl/commit/97c7b458796e903b569385aa098e97c1525a02ac))
+
+
+### Bug Fixes
+
+* address review feedback — health requires 200, Qdrant outage vs disabled ([abdb56f](https://github.com/groktopus/groktocrawl/commit/abdb56f207bd7a1662b80a3fed3440590868d9dd))
+* **agent:** SearXNG health fallback, ofelia schedule, quiet sweep without Qdrant ([596eda9](https://github.com/groktopus/groktocrawl/commit/596eda92edc8de379ed9150165bd489ce6dd7d3d))
+* **agent:** SearXNG health fallback, ofelia schedule, quiet sweep without Qdrant ([8402c0a](https://github.com/groktopus/groktocrawl/commit/8402c0a2c0bf742814e705071e80862ea05af717))
+* preserve Qdrant outage warnings and cover health fallbacks ([f624964](https://github.com/groktopus/groktocrawl/commit/f624964c8afb67288376cb7962157a038e44aec5))
+* preserve scraped content in pyramid exports ([01bf04d](https://github.com/groktopus/groktocrawl/commit/01bf04dd69d5236a1aeb02b5aeedbbdd6182c4fa))
+* preserve scraped content in pyramid exports ([d9034ae](https://github.com/groktopus/groktocrawl/commit/d9034aeb7e58fe7f2e76547305c997da387c4ea9))
+* report deep research evidence coverage ([89d9a95](https://github.com/groktopus/groktocrawl/commit/89d9a9567e8af24c49623b77ca3c72d8f733c763))
+* report deep research evidence coverage ([d4742ce](https://github.com/groktopus/groktocrawl/commit/d4742ce8a9e0e8f45a4b073362758d0730111839))
+* satisfy research event type checking ([eb5649f](https://github.com/groktopus/groktocrawl/commit/eb5649fdef246963e7cd1a4ec753ad58e5eb9f30))
+
+
+### Tests
+
+* isolate adapter registration from shared module state ([6a7df88](https://github.com/groktopus/groktocrawl/commit/6a7df8848950dd326f3563fd82c77e5756635d49))
+
 ## [0.14.0](https://github.com/groktopus/groktocrawl/compare/v0.13.0...v0.14.0) (2026-09-07)
 
 
