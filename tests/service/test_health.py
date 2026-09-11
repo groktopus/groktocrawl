@@ -2,6 +2,7 @@
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import httpx
 import pytest
 
 
@@ -177,3 +178,56 @@ async def test_check_all_overall_status():
         assert result["status"] == "down"  # browser is down
         assert result["checks"]["valkey"]["status"] == "ok"
         assert result["checks"]["browser"]["status"] == "down"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("primary", "fallback", "expected"),
+    [(200, None, "ok"), (503, None, "down")]
+    + [
+        (404, code, status)
+        for code, status in [
+            (200, "ok"),
+            (302, "degraded"),
+            (401, "degraded"),
+            (403, "degraded"),
+            (404, "degraded"),
+            (429, "degraded"),
+            (500, "down"),
+            (503, "down"),
+        ]
+    ],
+)
+async def test_searxng_fallback_statuses(primary, fallback, expected):
+    from agent.health import check_searxng
+
+    responses = [httpx.Response(primary)]
+    if fallback is not None:
+        responses.append(httpx.Response(fallback))
+    client = AsyncMock()
+    client.get.side_effect = responses
+    with patch("agent.health.httpx.AsyncClient") as factory:
+        factory.return_value.__aenter__.return_value = client
+        result = await check_searxng("http://search:8080/")
+
+    assert result["status"] == expected
+    urls = [call.args[0] for call in client.get.await_args_list]
+    assert urls == ["http://search:8080/health"] + (
+        ["http://search:8080/config"] if fallback is not None else []
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("fallback", [False, True])
+@pytest.mark.parametrize("error", [httpx.ConnectError, httpx.ReadTimeout])
+async def test_searxng_connection_failures(fallback, error):
+    from agent.health import check_searxng
+
+    client = AsyncMock()
+    client.get.side_effect = ([httpx.Response(404)] if fallback else []) + [
+        error("unavailable")
+    ]
+    with patch("agent.health.httpx.AsyncClient") as factory:
+        factory.return_value.__aenter__.return_value = client
+        result = await check_searxng("http://search:8080")
+    assert result["status"] == "down"
