@@ -10,9 +10,11 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import httpx
 import pytest
 from agent.research_memory import (
     ResearchMemory,
@@ -853,3 +855,38 @@ class TestSweep:
         shutdown.set()
         await task
         assert memory.sweep.await_count >= 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("configured_url", [None, "http://custom-qdrant:6333"])
+async def test_sweep_connection_failure_warns_without_traceback(
+    configured_url, monkeypatch, caplog
+):
+    # An unset URL is valid both with and without the indexing profile.
+    monkeypatch.delenv("QDRANT_URL", raising=False)
+    if configured_url:
+        monkeypatch.setenv("QDRANT_URL", configured_url)
+    memory = ResearchMemory("redis://localhost:6379/0")
+    qdrant = AsyncMock()
+    qdrant.post.side_effect = httpx.ConnectError("connection refused")
+    memory._get_qdrant = AsyncMock(return_value=qdrant)
+
+    with caplog.at_level(logging.WARNING, logger="agent.research_memory"):
+        assert await memory.sweep() == 0
+    records = [r for r in caplog.records if "Qdrant unavailable" in r.message]
+    assert len(records) == 1
+    assert records[0].levelno == logging.WARNING
+    assert records[0].exc_info is None
+
+
+@pytest.mark.asyncio
+async def test_sweep_unexpected_error_retains_traceback(caplog):
+    memory = ResearchMemory("redis://localhost:6379/0")
+    qdrant = AsyncMock()
+    qdrant.post.side_effect = ValueError("unexpected response")
+    memory._get_qdrant = AsyncMock(return_value=qdrant)
+    with caplog.at_level(logging.WARNING, logger="agent.research_memory"):
+        assert await memory.sweep() == 0
+    records = [r for r in caplog.records if "sweep failed" in r.message]
+    assert len(records) == 1
+    assert records[0].exc_info is not None

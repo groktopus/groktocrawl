@@ -814,6 +814,11 @@ class ResearchMemory:
                     "Swept %d orphaned Qdrant points from research_memory",
                     removed,
                 )
+        except httpx.ConnectError as e:
+            # Optional deployments can be unreachable without warranting a
+            # traceback. Keep the warning: a default URL also serves enabled
+            # indexing deployments, so URL configuration cannot identify intent.
+            logger.warning("Research memory sweep skipped (Qdrant unavailable): %s", e)
         except Exception:
             logger.warning("Research memory sweep failed", exc_info=True)
         finally:
