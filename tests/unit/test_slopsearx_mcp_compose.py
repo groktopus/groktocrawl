@@ -59,6 +59,21 @@ def test_direct_slopsearx_mcp_is_opt_in_and_uses_shared_wiring():
     assert environment["VALKEY_URL"] == "redis://valkey:6379/0"
 
 
+def test_jev_key_is_optional_and_passed_to_both_slopsearx_services():
+    api = _environment(COMPOSE["services"]["slopsearx"])
+    mcp = _environment(COMPOSE["services"]["slopsearx-mcp"])
+    for environment in (api, mcp):
+        assert environment["TYPESAFE_API_KEY"] == "${TYPESAFE_API_KEY:-}"
+        assert _resolve(environment["TYPESAFE_API_KEY"], {}) == ""
+        assert (
+            _resolve(
+                environment["TYPESAFE_API_KEY"], {"TYPESAFE_API_KEY": "operator-key"}
+            )
+            == "operator-key"
+        )
+    assert "# TYPESAFE_API_KEY=" in (ROOT / ".env.sample").read_text()
+
+
 def test_direct_slopsearx_mcp_token_defaults_empty_so_compose_up_never_aborts():
     environment = _environment(COMPOSE["services"]["slopsearx-mcp"])
     # No `:?` guard: with no SLOPSEARX_MCP_AUTH_TOKEN set, interpolation yields an
