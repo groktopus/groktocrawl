@@ -11,7 +11,7 @@ services:
       retries: 20
 
   slopsearx:
-    image: ghcr.io/magnus919/slopsearx@sha256:91194d146d205b1cf4688c1989da8f5f6b599a9627be23fd1ee7a4e488fda5b7
+    image: ghcr.io/magnus919/slopsearx@sha256:0f89531014aa9692a555a8549d63f5e38a1f3d6fc56b6512f1af394574ba9c30
     restart: unless-stopped
     # SLOPSEARX_HOST_PORT moves only the published HOST side; the container
     # stays on 8080. Lets co-tenant compose stacks on a shared Docker host
@@ -31,7 +31,7 @@ services:
       retries: 3
 
   slopsearx-mcp:
-    image: ghcr.io/magnus919/slopsearx@sha256:91194d146d205b1cf4688c1989da8f5f6b599a9627be23fd1ee7a4e488fda5b7
+    image: ghcr.io/magnus919/slopsearx@sha256:0f89531014aa9692a555a8549d63f5e38a1f3d6fc56b6512f1af394574ba9c30
     # The MCP companion must never run unauthenticated, but a required-token
     # guard using the Compose `:?` operator would abort a no-config
     # `docker compose up` at load time (Compose interpolates the whole file
