@@ -44,7 +44,7 @@ def test_direct_slopsearx_mcp_is_opt_in_and_uses_shared_wiring():
     environment = _environment(service)
 
     assert service["image"] == (
-        "ghcr.io/magnus919/slopsearx@sha256:91194d146d205b1cf4688c1989da8f5f6b599a9627be23fd1ee7a4e488fda5b7"
+        "ghcr.io/magnus919/slopsearx@sha256:0f89531014aa9692a555a8549d63f5e38a1f3d6fc56b6512f1af394574ba9c30"
     )
     # Gated behind a profile so a no-config `docker compose up` does not start
     # the companion; it runs only when the `mcp` profile is enabled.
@@ -57,6 +57,21 @@ def test_direct_slopsearx_mcp_is_opt_in_and_uses_shared_wiring():
     )
     assert environment["ENGINE_BRAVE_API_KEY"] == "${BRAVE_API_KEY}"
     assert environment["VALKEY_URL"] == "redis://valkey:6379/0"
+
+
+def test_jev_key_is_optional_and_passed_to_both_slopsearx_services():
+    api = _environment(COMPOSE["services"]["slopsearx"])
+    mcp = _environment(COMPOSE["services"]["slopsearx-mcp"])
+    for environment in (api, mcp):
+        assert environment["TYPESAFE_API_KEY"] == "${TYPESAFE_API_KEY:-}"
+        assert _resolve(environment["TYPESAFE_API_KEY"], {}) == ""
+        assert (
+            _resolve(
+                environment["TYPESAFE_API_KEY"], {"TYPESAFE_API_KEY": "operator-key"}
+            )
+            == "operator-key"
+        )
+    assert "# TYPESAFE_API_KEY=" in (ROOT / ".env.sample").read_text()
 
 
 def test_direct_slopsearx_mcp_token_defaults_empty_so_compose_up_never_aborts():

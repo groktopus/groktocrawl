@@ -35,6 +35,12 @@ provider-quality model; its validity ceiling is the documented contract.
 
 Copy `.env.sample` to `.env` and configure an OpenAI-compatible LLM for non-fixture use. `BRAVE_API_KEY` is required for useful open-web search results. The [configuration inventory](../reference/public-surface.md#configuration-keys) is validated against `.env.sample`; it separates provider, service URLs, vector index, adapters, cache, politeness, search controls, crawl limits, and research-memory settings.
 
+Optional `TYPESAFE_API_KEY` is an explicit operator opt-in to paid TypeSafe Jev
+specialist routing in SlopSearX. The stack passes a nonempty key from `.env`
+to both the HTTP/portal service and the direct `slopsearx-mcp` companion;
+leaving it unset keeps both on deterministic routing. The unrelated
+GroktoCrawl `mcp-svc` does not need this key.
+
 Only expose or override internal service URLs when deliberately splitting the compose deployment. Persist Valkey and Qdrant volumes in production; the embedding model cache volume avoids repeated model downloads.
 
 ### Direct SlopSearX MCP grants

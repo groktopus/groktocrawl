@@ -199,6 +199,7 @@ The configuration inventory follows `.env.sample`; unlisted implementation-only 
 - SCRAPER_URL
 - SLOPSEARX_MCP_AUTH_TOKEN
 - SLOPSEARX_MCP_PORT
+- TYPESAFE_API_KEY
 - SCRAPE_CACHE_DOMAIN_TTLS
 - SCRAPE_CACHE_MAX_TTL
 - SCRAPE_CACHE_MIN_TTL
