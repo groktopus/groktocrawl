@@ -2,6 +2,8 @@
 
 GroktoCrawl is a self-hosted, MIT-licensed web data platform compatible with the Firecrawl v2 API surface. It combines scraping, crawl and map jobs, search, structured extraction, browser automation, monitors, semantic retrieval, an autonomous research agent, and an MCP server in one Docker deployment.
 
+It is designed as a local-first, observable, model-flexible foundation for organizations that want agentic research and web intelligence without surrendering control of their data, infrastructure, or model choices.
+
 ## Start here
 
 Choose your path. Both run the same Docker stack defined in `docker-compose.yml`; they differ in which services and credentials you configure.
