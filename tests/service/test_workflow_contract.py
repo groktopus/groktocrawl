@@ -1,5 +1,10 @@
 """Contract checks for sanitized LLM fixture CI evidence."""
 
+import os
+import re
+import subprocess
+import sys
+import textwrap
 from pathlib import Path
 
 import yaml
@@ -189,3 +194,103 @@ def test_compose_run_id_and_failure_provenance_are_unambiguous():
     assert f"--ignore=/app/{answer_eval}" in workflow
     assert answer_eval in compose_evidence
     assert "scripts/run_answer_evals.py --selection narrow" in workflow
+
+
+def test_droid_action_sanitizer_removes_debug_uploads_and_fails_closed(tmp_path):
+    root = Path(__file__).parents[2]
+    workflow = yaml.safe_load((root / ".github/workflows/droid-review.yml").read_text())
+    job = workflow["jobs"]["droid-review"]
+    checkout = next(
+        step
+        for step in job["steps"]
+        if step.get("name") == "Checkout pinned Droid action"
+    )
+    action_ref = checkout["with"]["ref"]
+    action_step = next(
+        step for step in job["steps"] if step.get("name") == "Run Droid Auto Review"
+    )
+    assert action_step["env"]["NOUS_API_KEY"] == "${{ secrets.NOUS_API_KEY }}"
+    assert "NOUS_API_KEY" not in job.get("env", {})
+    cleanup = next(
+        step for step in job["steps"] if step.get("name") == "Remove Droid runner state"
+    )
+    assert cleanup["if"] == "always()"
+    sanitizer = next(
+        step
+        for step in job["steps"]
+        if step.get("name") == "Disable credential-bearing Droid debug artifacts"
+    )
+    match = re.search(r"python3 - .*<<'PY'\n(.*?)\nPY\n", sanitizer["run"], re.DOTALL)
+    assert match is not None
+    sanitizer_code = textwrap.dedent(match.group(1))
+
+    action_dir = tmp_path / "droid-action"
+    action_dir.mkdir()
+    action_file = action_dir / "action.yml"
+    original = """\
+        name: Droid
+        runs:
+          using: composite
+          steps:
+            - name: Post review
+              run: publish
+            - name: Update comment with job link
+              run: update
+            - name: Collect .factory debug files
+              run: collect
+            - name: Upload debug artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                retention-days: 7
+        """
+    original = textwrap.dedent(original)
+    action_file.write_text(original)
+
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    fake_git = fake_bin / "git"
+    fake_git.write_text("#!/bin/sh\nprintf '%s\\n' \"$DROID_ACTION_TEST_REV\"\n")
+    fake_git.chmod(0o755)
+    env = dict(os.environ)
+    env["PATH"] = f"{fake_bin}{os.pathsep}{env['PATH']}"
+
+    env["DROID_ACTION_TEST_REV"] = "wrong-revision"
+    mismatch = subprocess.run(
+        [sys.executable, "-c", sanitizer_code, str(action_dir)],
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert mismatch.returncode != 0
+    assert action_file.read_text() == original
+
+    env["DROID_ACTION_TEST_REV"] = action_ref
+    changed_source = original.replace("Upload debug artifacts", "Upload diagnostics")
+    action_file.write_text(changed_source)
+    drift = subprocess.run(
+        [sys.executable, "-c", sanitizer_code, str(action_dir)],
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert drift.returncode != 0
+    assert action_file.read_text() == changed_source
+
+    env["DROID_ACTION_TEST_REV"] = action_ref
+    action_file.write_text(original)
+    sanitized = subprocess.run(
+        [sys.executable, "-c", sanitizer_code, str(action_dir)],
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert sanitized.returncode == 0, sanitized.stderr
+    result = action_file.read_text()
+    assert "name: Post review" in result
+    assert "name: Update comment with job link" in result
+    assert "Collect .factory debug files" not in result
+    assert "Upload debug artifacts" not in result
+    assert "actions/upload-artifact" not in result

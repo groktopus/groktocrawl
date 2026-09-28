@@ -58,8 +58,6 @@ jobs:
       format('{0}', github.event.pull_request.head.repo.fork) == 'false') ||
       github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    env:
-      NOUS_API_KEY: ${{ secrets.NOUS_API_KEY }}
     permissions:
       contents: read
       pull-requests: write
@@ -70,10 +68,58 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 1
+      - name: Checkout pinned Droid action
+        uses: actions/checkout@v7
+        with:
+          repository: Factory-AI/droid-action
+          ref: 9be8880c219c3e9341b8dfe235a33359ba1f062e
+          path: .github/actions/droid-action
+          persist-credentials: false
+      # This upstream revision adds deterministic publication after validation.
+      # Its built-in debug artifact includes ~/.factory, where Droid resolves
+      # model API keys, so remove the two debug artifact steps fail-closed.
+      - name: Disable credential-bearing Droid debug artifacts
+        shell: bash
+        run: |
+          python3 - "$GITHUB_WORKSPACE/.github/actions/droid-action" <<'PY'
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          action = Path(sys.argv[1])
+          expected = "9be8880c219c3e9341b8dfe235a33359ba1f062e"
+          actual = subprocess.check_output(
+              ["git", "-C", str(action), "rev-parse", "HEAD"], text=True
+          ).strip()
+          if actual != expected:
+              raise SystemExit(f"Unexpected Droid action revision: {actual}")
+
+          action_file = action / "action.yml"
+          contents = action_file.read_text()
+          collect = "    - name: Collect .factory debug files\n"
+          upload = "    - name: Upload debug artifacts\n"
+          if contents.count(collect) != 1 or contents.count(upload) != 1:
+              raise SystemExit("Droid debug artifact steps changed; refusing to run")
+          collect_at = contents.index(collect)
+          upload_at = contents.index(upload)
+          if upload_at <= collect_at:
+              raise SystemExit("Droid debug artifact steps are out of order")
+          tail = contents[collect_at:]
+          if not tail.rstrip().endswith("retention-days: 7"):
+              raise SystemExit("Droid action changed after its debug artifact steps")
+          safe_contents = contents[:collect_at].rstrip() + "\n"
+          if "name: Post review" not in safe_contents:
+              raise SystemExit("Droid deterministic review publisher is missing")
+          if "name: Update comment with job link" not in safe_contents:
+              raise SystemExit("Droid tracking comment publisher is missing")
+          if "actions/upload-artifact" in safe_contents:
+              raise SystemExit("Unexpected Droid artifact upload step; refusing to run")
+          action_file.write_text(safe_contents)
+          PY
       # BYOM review model: droid exec resolves "custom:" model references from
       # ~/.factory/settings.json on the runner. Factory expands the literal
-      # ${NOUS_API_KEY} reference from the job environment; the raw key is not
-      # written into the settings file (the action uploads ~/.factory/**).
+      # ${NOUS_API_KEY} reference from the action-step environment. The raw
+      # key is resolved by Droid at runtime.
       # GPT-6 Luna's Chat Completions tool calls require reasoning_effort=none.
       - name: Configure BYOM review model
         shell: bash
@@ -97,7 +143,7 @@ jobs:
           }
           EOF
       - name: Run Droid Auto Review
-        uses: Factory-AI/droid-action@2041e7cc36d1390346bdaa6616e4bf7ac6b96b27
+        uses: ./.github/actions/droid-action
         with:
           factory_api_key: ${{ secrets.FACTORY_API_KEY }}
           automatic_review: true
@@ -106,3 +152,11 @@ jobs:
           security_model: custom:Nous-GPT-6-Luna-0
           automatic_security_review: ${{ needs.assess-depth.outputs.security }}
           allowed_bots: "dependabot[bot]"
+        env:
+          NOUS_API_KEY: ${{ secrets.NOUS_API_KEY }}
+      - name: Remove Droid runner state
+        if: always()
+        shell: bash
+        run: |
+          rm -rf "$HOME/.factory" "$RUNNER_TEMP/.factory" "$RUNNER_TEMP/droid-prompts"
+          rm -rf "$GITHUB_WORKSPACE/.github/actions/droid-action"
