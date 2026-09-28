@@ -296,7 +296,6 @@
 
   let currentCitations = {};
   let fullAnswerText = '';
-  let mode = 'ask';  // 'ask' or 'deep'
 
   // ── Markdown renderer (uses marked library) ──
   function renderMarkdown(text) {
@@ -336,7 +335,7 @@
     recentList.querySelectorAll('.recent-item').forEach(el => {
       el.addEventListener('click', () => {
         input.value = el.dataset.q;
-        form.dispatchEvent(new Event('submit'));
+        startQuery();
       });
     });
   }
@@ -482,7 +481,7 @@
     setLoading(false);
   }
 
-  function setLoading(loading) {
+  function setLoading(loading, mode = 'ask') {
     if (loading) {
       askBtn.disabled = true;
       deepBtn.disabled = true;
@@ -496,9 +495,8 @@
     }
   }
 
-  // ── Form submit ──
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
+  // ── Shared query entry point ──
+  async function startQuery(mode = 'ask') {
     const query = input.value.trim();
     if (!query) return;
 
@@ -509,7 +507,7 @@
     answerArea.innerHTML = '<span class="cursor">|</span>';
     phaseIndicator.style.display = 'none';
     phaseIndicator.textContent = '';
-    setLoading(true);
+    setLoading(true, mode);
 
     saveRecent(query);
     renderRecent();
@@ -532,15 +530,18 @@
     } catch (err) {
       showError(err.message);
     }
-  });
+  }
 
   // ── Button click handlers ──
   // Ask button is type="submit", so clicking it or pressing Enter triggers form submit natively.
-  // Only Deep Research needs a manual click handler since it's type="button".
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    startQuery();
+  });
+
+  // Call directly: synthetic submit events can navigate and abort fetches in Firefox.
   deepBtn.addEventListener('click', () => {
-    mode = 'deep';
-    form.dispatchEvent(new Event('submit'));
-    mode = 'ask';
+    startQuery('deep');
   });
 
   // ── Init ──
