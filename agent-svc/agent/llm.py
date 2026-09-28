@@ -30,6 +30,18 @@ _LLM_CALLS_TOTAL_HELP = "Total LLM calls by research stage and outcome"
 _MAX_RETRY_AFTER_SECONDS = 60
 
 
+def _token_budget_params(*, health: bool = False) -> dict[str, int]:
+    """Return the configured budget under exactly the selected provider field."""
+    settings = load_settings()
+    if health:
+        budget = settings.llm_health_token_budget
+    elif settings.llm_token_parameter == "max_completion_tokens":
+        budget = settings.llm_max_completion_tokens
+    else:
+        budget = settings.llm_max_tokens
+    return {settings.llm_token_parameter: budget}
+
+
 def _completion_content(result: object) -> str:
     """Extract only a complete, non-refusal provider completion."""
     if not isinstance(result, dict):
@@ -174,9 +186,9 @@ class LLMClient:
             "model": self.model,
             "messages": messages,
             "temperature": 0.3,
-            "max_tokens": 8192,
             "stream": True,
         }
+        body.update(_token_budget_params())
 
         # Only enable thinking/reasoning for providers that support it
         # (Anthropic/DeepSeek). Default is off; omit the param otherwise.
@@ -355,8 +367,8 @@ class LLMClient:
             "model": self.model,
             "messages": messages,
             "temperature": 0.3,
-            "max_tokens": 8192,
         }
+        body.update(_token_budget_params())
 
         # Only enable thinking/reasoning for providers that support it
         # (Anthropic/DeepSeek). Default is off; omit the param otherwise.
@@ -448,16 +460,16 @@ class LLMClient:
     async def check_health(self) -> bool:
         """Check if the LLM backend is reachable and responding.
 
-        Sends a minimal request (max_tokens=1, stream=False) with a
+        Sends a minimal request using the configured budget field with a
         short 5s timeout. Returns True if the backend responds with
         HTTP 200, False otherwise. Never raises exceptions.
         """
         body = {
             "model": self.model,
             "messages": [{"role": "user", "content": "ping"}],
-            "max_tokens": 1,
             "stream": False,
         }
+        body.update(_token_budget_params(health=True))
         headers = {"Content-Type": "application/json"}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
