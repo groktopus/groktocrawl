@@ -151,11 +151,17 @@ The integration tests in `tests/test_stack.py` verify all endpoints against a li
 Docker/Integration Tests (self-hosted runner, runs when runtime code changes), and Architecture CI.
 The `main required checks` ruleset requires `Code Quality Gate` and `Runtime Gate`.
 
-**AI review loop (do not chase):** the `Droid Auto Review` workflow (`droid-review.yml`) posts review
-comments as the `factory-droid` bot and NEVER approves. Each re-run re-scans the whole diff and mints
-new (often minor) findings, so re-triggering it after every fix is an unbounded loop. Treat "review
-passed" as: all findings from ONE review pass fixed, CI green, and no blocking (P1/P2) findings
-remaining — do not iterate until the bot reports zero findings.
+**AI review loop (do not chase):** the `Droid Auto Review` workflow (`droid-review.yml`) publishes
+its findings or no-findings summary as a PR review/comment under the `factory-droid` bot and NEVER
+approves. A green workflow job alone does not prove the review was published; verify the visible PR
+review/comment includes the result and finding counts. A successful review with no findings is valid
+when the published summary says so. Each re-run re-scans the whole diff and mints new (often minor)
+findings, so re-triggering it after every fix is an unbounded loop. Treat "review passed" as: the
+published result from ONE review pass is visible, all findings from that pass are fixed, CI is green,
+and no blocking (P1/P2) findings remain — do not iterate until the bot reports zero findings.
+
+The workflow uses Nous Portal's `openai/gpt-6-luna` through `NOUS_API_KEY`. The Droid action's debug
+artifact upload is disabled because its `~/.factory` files can contain resolved provider credentials.
 
 **Merging to `main`:** gated by the `main review policy` ruleset (1 approving review + resolved review
 threads). Because the AI reviewer does not approve and human approval is often unavailable to automated
