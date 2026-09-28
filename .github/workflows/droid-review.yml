@@ -58,6 +58,8 @@ jobs:
       format('{0}', github.event.pull_request.head.repo.fork) == 'false') ||
       github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    env:
+      NOUS_API_KEY: ${{ secrets.NOUS_API_KEY }}
     permissions:
       contents: read
       pull-requests: write
@@ -69,25 +71,27 @@ jobs:
         with:
           fetch-depth: 1
       # BYOM review model: droid exec resolves "custom:" model references from
-      # ~/.factory/settings.json on the runner. The API key is exported via
-      # GITHUB_ENV and referenced as ${DEEPSEEK_API_KEY} so the raw key never
-      # lands in the settings file (the action uploads ~/.factory/** as a debug
-      # artifact). Add the DEEPSEEK_API_KEY secret in the repo/org settings.
+      # ~/.factory/settings.json on the runner. Factory expands the literal
+      # ${NOUS_API_KEY} reference from the job environment; the raw key is not
+      # written into the settings file (the action uploads ~/.factory/**).
+      # GPT-6 Luna's Chat Completions tool calls require reasoning_effort=none.
       - name: Configure BYOM review model
         shell: bash
         run: |
-          echo "DEEPSEEK_API_KEY=${{ secrets.DEEPSEEK_API_KEY }}" >> "$GITHUB_ENV"
           mkdir -p "$HOME/.factory"
           cat > "$HOME/.factory/settings.json" <<'EOF'
           {
             "customModels": [
               {
-                "model": "deepseek-v4-flash",
-                "displayName": "DeepSeek V4 Flash",
-                "baseUrl": "https://api.deepseek.com/v1",
-                "apiKey": "${DEEPSEEK_API_KEY}",
+                "model": "openai/gpt-6-luna",
+                "displayName": "Nous-GPT-6-Luna",
+                "baseUrl": "https://inference-api.nousresearch.com/v1",
+                "apiKey": "${NOUS_API_KEY}",
                 "provider": "generic-chat-completion-api",
-                "noImageSupport": true
+                "noImageSupport": true,
+                "extraArgs": {
+                  "reasoning_effort": "none"
+                }
               }
             ]
           }
@@ -98,7 +102,7 @@ jobs:
           factory_api_key: ${{ secrets.FACTORY_API_KEY }}
           automatic_review: true
           review_depth: ${{ needs.assess-depth.outputs.depth }}
-          review_model: custom:DeepSeek-V4-Flash-0
-          security_model: custom:DeepSeek-V4-Flash-0
+          review_model: custom:Nous-GPT-6-Luna-0
+          security_model: custom:Nous-GPT-6-Luna-0
           automatic_security_review: ${{ needs.assess-depth.outputs.security }}
           allowed_bots: "dependabot[bot]"
