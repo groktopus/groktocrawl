@@ -205,6 +205,7 @@ def test_droid_action_sanitizer_removes_debug_uploads_and_fails_closed(tmp_path)
         for step in job["steps"]
         if step.get("name") == "Checkout pinned Droid action"
     )
+    assert checkout["with"]["path"] == ".github/actions/droid-action"
     action_ref = checkout["with"]["ref"]
     action_step = next(
         step for step in job["steps"] if step.get("name") == "Run Droid Auto Review"
@@ -215,6 +216,7 @@ def test_droid_action_sanitizer_removes_debug_uploads_and_fails_closed(tmp_path)
         step for step in job["steps"] if step.get("name") == "Remove Droid runner state"
     )
     assert cleanup["if"] == "always()"
+    assert ".github/actions/droid-action" not in cleanup["run"]
     sanitizer = next(
         step
         for step in job["steps"]

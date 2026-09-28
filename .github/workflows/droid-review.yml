@@ -159,4 +159,3 @@ jobs:
         shell: bash
         run: |
           rm -rf "$HOME/.factory" "$RUNNER_TEMP/.factory" "$RUNNER_TEMP/droid-prompts"
-          rm -rf "$GITHUB_WORKSPACE/.github/actions/droid-action"
