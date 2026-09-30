@@ -52,6 +52,61 @@ def client():
     return client_cls(server="http://test-server:8080", dry_run=False)
 
 
+class TestPyramidSourceExport:
+    """Pyramid mode must serialize the source bodies it claims to consult."""
+
+    def test_writes_source_content_from_completed_agent_shape(self, tmp_path):
+        write_pyramid = _cli_ns["_write_pyramid"]
+        output = write_pyramid(
+            str(tmp_path / "pyramid"),
+            "Research topic",
+            "Synthesis",
+            ["https://example.com/article"],
+            [],
+            source_details=[
+                {
+                    "url": "https://example.com/article",
+                    "source": "content-negotiation",
+                    "char_count": 22,
+                }
+            ],
+            source_contents={
+                "https://example.com/article": "# Full source\n\nEvidence body."
+            },
+        )
+
+        dossier = next((Path(output) / "03-dossiers").glob("consulted-*.md"))
+        assert "# Full source" in dossier.read_text()
+        assert "source: content-negotiation" in dossier.read_text()
+        assert "char_count: 22" in dossier.read_text()
+        assert "(no content available)" not in dossier.read_text()
+
+    def test_rejects_url_only_completed_response(self, tmp_path):
+        write_pyramid = _cli_ns["_write_pyramid"]
+        with pytest.raises(ValueError, match="missing scraped content"):
+            write_pyramid(
+                str(tmp_path / "pyramid"),
+                "Research topic",
+                "Synthesis",
+                ["https://example.com/article"],
+                [],
+            )
+
+    def test_client_requests_source_export_only_when_opted_in(self, client):
+        calls = []
+
+        def _fake_request(method, path, json_data=None, **kwargs):
+            calls.append(json_data)
+            return {"success": True, "id": "job-1"}
+
+        client._request = _fake_request
+        client.create_agent(prompt="topic", include_source_content=True, retry=True)
+        client.create_agent(prompt="topic", retry=True)
+
+        assert calls[0]["include_source_content"] is True
+        assert "include_source_content" not in calls[1]
+
+
 # ── Client.crawl() tests ─────────────────────────────────────────────────────
 
 

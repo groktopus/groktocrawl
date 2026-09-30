@@ -443,6 +443,133 @@ class GroktocrawlClient:
             body["search_type"] = search_type
         return await self._post("/v2/agent", body)
 
+    async def create_research_session(self, ttl: int | None = None) -> dict:
+        """Create a server-side multi-step research session."""
+        body: dict[str, Any] = {}
+        if ttl is not None:
+            body["ttl"] = ttl
+        return await self._post("/v2/session/create", body)
+
+    async def research_session_step(
+        self,
+        session_id: str,
+        action: str,
+        params: dict[str, Any],
+        parallel: bool = False,
+        idempotency_key: str | None = None,
+    ) -> dict:
+        """Execute one typed research action within a session."""
+        body: dict[str, Any] = {"action": action, "params": params}
+        if parallel:
+            body["parallel"] = True
+        if idempotency_key:
+            body["idempotency_key"] = idempotency_key
+        return await self._post(f"/v2/session/{session_id}/step", body)
+
+    async def get_research_session(self, session_id: str) -> dict:
+        """Get session status, history, and artifact counts."""
+        return await self._get(f"/v2/session/{session_id}")
+
+    async def export_research_session(self, session_id: str) -> dict:
+        """Export the complete accumulated session artifact tree."""
+        return await self._post(f"/v2/session/{session_id}/export", {})
+
+    async def delete_research_session(self, session_id: str) -> dict:
+        """Delete a research session and all associated state."""
+        return await self._delete(f"/v2/session/{session_id}")
+
+    async def resolve_research_session(
+        self, session_id: str, ref_ids: list[str]
+    ) -> dict:
+        """Resolve session references to full source content."""
+        return await self._post(
+            f"/v2/session/{session_id}/resolve", {"ref_ids": ref_ids}
+        )
+
+    async def create_research_plan(
+        self,
+        prompt: str,
+        model: str | None = None,
+        urls: list[str] | None = None,
+    ) -> dict:
+        """Generate a reviewable, one-shot research plan."""
+        body: dict[str, Any] = {"prompt": prompt}
+        if model and model != "default":
+            body["model"] = model
+        if urls:
+            body["urls"] = urls
+        return await self._post("/v2/agent/plan", body)
+
+    async def get_research_plan(self, plan_id: str) -> dict:
+        """Retrieve a generated research plan without executing it."""
+        return await self._get(f"/v2/agent/plan/{plan_id}")
+
+    async def execute_research_plan(
+        self,
+        plan_id: str,
+        modifications: list[dict[str, Any]] | dict[str, Any] | None = None,
+    ) -> dict:
+        """Execute an approved research plan and return its job ID."""
+        body: dict[str, Any] = {"plan_id": plan_id}
+        if modifications:
+            body["modifications"] = modifications
+        return await self._post("/v2/agent/execute", body)
+
+    async def query_research_memory(
+        self,
+        question: str,
+        max_age_hours: int | None = None,
+    ) -> dict:
+        """Find a compatible cached research artifact by question."""
+        body: dict[str, Any] = {"question": question}
+        if max_age_hours is not None:
+            body["max_age_hours"] = max_age_hours
+        return await self._post("/v2/research-memory/query", body)
+
+    async def store_research_memory(
+        self,
+        question: str,
+        answer: str,
+        sources: list[dict[str, Any]],
+        metadata: dict[str, Any] | None = None,
+    ) -> dict:
+        """Store a completed research artifact with source metadata."""
+        body: dict[str, Any] = {
+            "question": question,
+            "answer": answer,
+            "sources": sources,
+        }
+        if metadata is not None:
+            body["metadata"] = metadata
+        return await self._post("/v2/research-memory/store", body)
+
+    async def delete_research_memory_artifact(self, artifact_id: str) -> dict:
+        """Delete an artifact by the ID returned from memory storage."""
+        return await self._delete(f"/v2/research-memory/{artifact_id}")
+
+    async def get_research_memory(self, memory_id: str) -> dict:
+        """Retrieve one complete research-memory artifact."""
+        return await self._get(f"/v2/memory/{memory_id}")
+
+    async def delete_research_memory(self, memory_id: str) -> dict:
+        """Delete one research-memory artifact by memory ID."""
+        return await self._delete(f"/v2/memory/{memory_id}")
+
+    async def sweep_research_memory(self) -> dict:
+        """Remove expired research-memory index entries."""
+        return await self._post("/v2/memory/sweep", {})
+
+    async def batch_query_research_memory(self, queries: list[str]) -> dict:
+        """Look up multiple research questions in input order."""
+        return await self._post("/v2/memory/batch/query", {"queries": queries})
+
+    async def batch_store_research_memory(
+        self,
+        entries: list[dict[str, Any]],
+    ) -> dict:
+        """Store multiple research artifacts with per-entry results."""
+        return await self._post("/v2/memory/batch/store", {"entries": entries})
+
     async def answer(
         self,
         question: str,

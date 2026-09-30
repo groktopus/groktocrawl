@@ -39,23 +39,6 @@ EXEMPT: dict[str, str] = {
     "POST /v2/crawl/params-preview": (
         "Internal helper for NL-parameter validation; crawl tool accepts prompt."
     ),
-    "POST /v2/agent/plan": "Plan subsystem — backlog; MCP TBD.",
-    "GET /v2/agent/plan/{plan_id}": "Plan subsystem — backlog; MCP TBD.",
-    "POST /v2/agent/execute": "Plan subsystem — backlog; MCP TBD.",
-    "POST /v2/session/create": "Session protocol — backlog; MCP TBD.",
-    "POST /v2/session/{session_id}/step": "Session protocol — backlog; MCP TBD.",
-    "GET /v2/session/{session_id}": "Session protocol — backlog; MCP TBD.",
-    "POST /v2/session/{session_id}/export": "Session protocol — backlog; MCP TBD.",
-    "DELETE /v2/session/{session_id}": "Session protocol — backlog; MCP TBD.",
-    "POST /v2/session/{session_id}/resolve": "Session protocol — backlog; MCP TBD.",
-    "POST /v2/research-memory/query": "Research memory — backlog; MCP TBD.",
-    "POST /v2/research-memory/store": "Research memory — backlog; MCP TBD.",
-    "DELETE /v2/research-memory/{artifact_id}": ("Research memory — backlog; MCP TBD."),
-    "GET /v2/memory/{memory_id}": "Research memory — backlog; MCP TBD.",
-    "DELETE /v2/memory/{memory_id}": "Research memory — backlog; MCP TBD.",
-    "POST /v2/memory/sweep": "Research memory — backlog; MCP TBD.",
-    "POST /v2/memory/batch/query": "Research memory — backlog; MCP TBD.",
-    "POST /v2/memory/batch/store": "Research memory — backlog; MCP TBD.",
 }
 
 # Map each expressible API path to the MCP tool that covers it.
@@ -64,6 +47,9 @@ PATH_TO_MCP_TOOL: dict[str, str] = {
     "POST /v2/agent": "agent",
     "GET /v2/agent/{job_id}": "get_agent_status",
     "DELETE /v2/agent/{job_id}": "cancel_agent",
+    "POST /v2/agent/plan": "create_research_plan",
+    "GET /v2/agent/plan/{plan_id}": "get_research_plan",
+    "POST /v2/agent/execute": "execute_research_plan",
     "POST /v2/answer": "answer",
     "POST /v2/batch/scrape": "batch_scrape",
     "GET /v2/batch/scrape/{job_id}": "get_batch_scrape_status",
@@ -86,6 +72,14 @@ PATH_TO_MCP_TOOL: dict[str, str] = {
     "POST /v2/generate-llmstxt": "generate_llmstxt",
     "GET /v2/generate-llmstxt/{job_id}": "get_llmstxt_status",
     "POST /v2/map": "map",
+    "POST /v2/research-memory/query": "query_research_memory",
+    "POST /v2/research-memory/store": "store_research_memory",
+    "DELETE /v2/research-memory/{artifact_id}": "delete_research_memory_artifact",
+    "GET /v2/memory/{memory_id}": "get_research_memory",
+    "DELETE /v2/memory/{memory_id}": "delete_research_memory",
+    "POST /v2/memory/sweep": "sweep_research_memory",
+    "POST /v2/memory/batch/query": "batch_query_research_memory",
+    "POST /v2/memory/batch/store": "batch_store_research_memory",
     "POST /v2/monitor": "create_monitor",
     "GET /v2/monitor": "list_monitors",
     "GET /v2/monitor/{monitor_id}": "get_monitor",
@@ -95,6 +89,12 @@ PATH_TO_MCP_TOOL: dict[str, str] = {
     "POST /v2/parse": "parse",
     "POST /v2/scrape": "scrape",
     "POST /v2/search": "search",
+    "POST /v2/session/create": "create_research_session",
+    "POST /v2/session/{session_id}/step": "research_session_step",
+    "GET /v2/session/{session_id}": "get_research_session",
+    "POST /v2/session/{session_id}/export": "export_research_session",
+    "DELETE /v2/session/{session_id}": "delete_research_session",
+    "POST /v2/session/{session_id}/resolve": "resolve_research_session",
 }
 
 

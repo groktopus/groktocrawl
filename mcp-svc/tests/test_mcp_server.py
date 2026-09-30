@@ -129,15 +129,15 @@ class TestTransportSecurity:
 
 
 class TestToolDiscovery:
-    """VAL-MCP-B01: tools/list returns exactly 35 tools."""
+    """VAL-MCP-B01: tools/list returns the complete MCP tool surface."""
 
     async def test_tool_count(self):
-        """tools/list returns exactly 35 tools."""
+        """tools/list returns exactly 52 tools."""
         tools = await mcp.list_tools()
-        assert len(tools) == 35, f"Expected 35 tools, got {len(tools)}"
+        assert len(tools) == 52, f"Expected 52 tools, got {len(tools)}"
 
     async def test_all_tool_names(self):
-        """All 35 expected tool names are present."""
+        """All 52 expected tool names are present."""
         tools = await mcp.list_tools()
         names = {t.name for t in tools}
         expected = {
@@ -176,6 +176,23 @@ class TestToolDiscovery:
             "update_monitor",
             "run_monitor",
             "delete_monitor",
+            "create_research_session",
+            "research_session_step",
+            "get_research_session",
+            "export_research_session",
+            "resolve_research_session",
+            "delete_research_session",
+            "create_research_plan",
+            "get_research_plan",
+            "execute_research_plan",
+            "query_research_memory",
+            "store_research_memory",
+            "delete_research_memory_artifact",
+            "get_research_memory",
+            "delete_research_memory",
+            "sweep_research_memory",
+            "batch_query_research_memory",
+            "batch_store_research_memory",
         }
         missing = expected - names
         extra = names - expected
@@ -258,6 +275,21 @@ class TestToolDiscovery:
             "get_batch_scrape_errors": "job_id",
             "browser_execute": "session_id",
             "destroy_browser_session": "session_id",
+            "research_session_step": "session_id",
+            "get_research_session": "session_id",
+            "export_research_session": "session_id",
+            "resolve_research_session": "session_id",
+            "delete_research_session": "session_id",
+            "create_research_plan": "prompt",
+            "get_research_plan": "plan_id",
+            "execute_research_plan": "plan_id",
+            "query_research_memory": "question",
+            "store_research_memory": "question",
+            "delete_research_memory_artifact": "artifact_id",
+            "get_research_memory": "memory_id",
+            "delete_research_memory": "memory_id",
+            "batch_query_research_memory": "queries",
+            "batch_store_research_memory": "entries",
             "get_monitor": "monitor_id",
             "update_monitor": "monitor_id",
             "run_monitor": "monitor_id",
@@ -312,6 +344,15 @@ class TestToolAnnotations:
             "list_browser_sessions",
             "list_monitors",
             "get_monitor",
+            "create_research_session",
+            "get_research_session",
+            "export_research_session",
+            "resolve_research_session",
+            "create_research_plan",
+            "get_research_plan",
+            "query_research_memory",
+            "get_research_memory",
+            "batch_query_research_memory",
         }
         for t in tools:
             if t.name in readonly_tools:
@@ -333,6 +374,11 @@ class TestToolAnnotations:
             "cancel_batch_scrape",
             "destroy_browser_session",
             "delete_monitor",
+            "delete_research_session",
+            "execute_research_plan",
+            "delete_research_memory_artifact",
+            "delete_research_memory",
+            "sweep_research_memory",
         }
         for t in tools:
             if t.name in destructive_tools:
@@ -352,6 +398,9 @@ class TestToolAnnotations:
             "browser_execute",
             "update_monitor",
             "run_monitor",
+            "research_session_step",
+            "store_research_memory",
+            "batch_store_research_memory",
         }
         for t in tools:
             if t.name in neutral_tools:
@@ -705,6 +754,265 @@ class TestToolCallRouting:
         assert captured.get("style") == "compact"
 
     # ── New surface routing ──
+
+    async def test_research_session_lifecycle_routing(self, monkeypatch):
+        """Session tools preserve IDs and route each lifecycle operation."""
+        import mcp_server as mod
+
+        captured: dict[str, Any] = {}
+
+        async def _fake_create(**kwargs: Any) -> dict:
+            captured["create"] = kwargs
+            return {"success": True, "session_id": "rs-1"}
+
+        async def _fake_step(**kwargs: Any) -> dict:
+            captured["step"] = kwargs
+            return {"success": True, "step_index": 1}
+
+        async def _fake_get(session_id: str) -> dict:
+            captured["get"] = session_id
+            return {"success": True, "session_id": session_id}
+
+        async def _fake_export(session_id: str) -> dict:
+            captured["export"] = session_id
+            return {"success": True, "session_id": session_id, "artifact": "# Research"}
+
+        async def _fake_resolve(session_id: str, ref_ids: list[str]) -> dict:
+            captured["resolve"] = (session_id, ref_ids)
+            return {"success": True, "resolved": len(ref_ids)}
+
+        async def _fake_delete(session_id: str) -> dict:
+            captured["delete"] = session_id
+            return {"success": True, "deleted": True}
+
+        monkeypatch.setattr(mod._client, "create_research_session", _fake_create)
+        monkeypatch.setattr(mod._client, "research_session_step", _fake_step)
+        monkeypatch.setattr(mod._client, "get_research_session", _fake_get)
+        monkeypatch.setattr(mod._client, "export_research_session", _fake_export)
+        monkeypatch.setattr(mod._client, "resolve_research_session", _fake_resolve)
+        monkeypatch.setattr(mod._client, "delete_research_session", _fake_delete)
+
+        await mcp.call_tool("create_research_session", {"ttl": 900})
+        await mcp.call_tool(
+            "research_session_step",
+            {
+                "session_id": "rs-1",
+                "action": "search",
+                "query": "MCP session protocol",
+                "limit": 3,
+                "idempotency_key": "step-1",
+            },
+        )
+        await mcp.call_tool("get_research_session", {"session_id": "rs-1"})
+        await mcp.call_tool("export_research_session", {"session_id": "rs-1"})
+        await mcp.call_tool(
+            "resolve_research_session",
+            {"session_id": "rs-1", "ref_ids": ["ref_1_1"]},
+        )
+        await mcp.call_tool("delete_research_session", {"session_id": "rs-1"})
+
+        assert captured["create"] == {"ttl": 900}
+        assert captured["step"] == {
+            "session_id": "rs-1",
+            "action": "search",
+            "params": {"query": "MCP session protocol", "limit": 3},
+            "parallel": False,
+            "idempotency_key": "step-1",
+        }
+        assert captured["get"] == "rs-1"
+        assert captured["export"] == "rs-1"
+        assert captured["resolve"] == ("rs-1", ["ref_1_1"])
+        assert captured["delete"] == "rs-1"
+
+    @pytest.mark.parametrize(
+        ("action", "arguments", "message"),
+        [
+            ("search", {}, "search action requires"),
+            ("scrape", {}, "scrape action requires"),
+            ("query", {}, "query action requires"),
+            ("deepen", {}, "deepen action requires"),
+        ],
+    )
+    async def test_research_session_step_validates_action_payload(
+        self, action, arguments, message
+    ):
+        """Each session action rejects missing typed payload fields."""
+        with pytest.raises(Exception, match=message):
+            await mcp.call_tool(
+                "research_session_step",
+                {"session_id": "rs-1", "action": action, **arguments},
+            )
+
+    async def test_research_plan_lifecycle_routing(self, monkeypatch):
+        """Plan tools preserve review-before-execution and typed changes."""
+        import mcp_server as mod
+
+        captured: dict[str, Any] = {}
+
+        async def _fake_create(**kwargs: Any) -> dict:
+            captured["create"] = kwargs
+            return {"success": True, "plan_id": "plan-1", "plan": {"phases": []}}
+
+        async def _fake_get(plan_id: str) -> dict:
+            captured["get"] = plan_id
+            return {"success": True, "plan_id": plan_id}
+
+        async def _fake_execute(**kwargs: Any) -> dict:
+            captured["execute"] = kwargs
+            return {"success": True, "id": "job-1"}
+
+        monkeypatch.setattr(mod._client, "create_research_plan", _fake_create)
+        monkeypatch.setattr(mod._client, "get_research_plan", _fake_get)
+        monkeypatch.setattr(mod._client, "execute_research_plan", _fake_execute)
+
+        await mcp.call_tool(
+            "create_research_plan",
+            {"prompt": "Compare vector databases", "urls": ["https://a.test"]},
+        )
+        await mcp.call_tool("get_research_plan", {"plan_id": "plan-1"})
+        await mcp.call_tool(
+            "execute_research_plan",
+            {
+                "plan_id": "plan-1",
+                "approve": True,
+                "narrow": "focus on operational costs",
+                "add_dimensions": ["latency"],
+                "query_overrides": {"0": "vector database latency benchmarks"},
+            },
+        )
+
+        assert captured["create"] == {
+            "prompt": "Compare vector databases",
+            "model": None,
+            "urls": ["https://a.test"],
+        }
+        assert captured["get"] == "plan-1"
+        assert captured["execute"] == {
+            "plan_id": "plan-1",
+            "modifications": [
+                {
+                    "type": "narrow",
+                    "params": {"focus": "focus on operational costs"},
+                },
+                {"type": "add_dimension", "params": {"dimension": "latency"}},
+                {
+                    "type": "modify_query",
+                    "params": {
+                        "phase_index": 0,
+                        "new_query": "vector database latency benchmarks",
+                    },
+                },
+            ],
+        }
+
+    async def test_execute_research_plan_requires_explicit_approval(self):
+        """A plan cannot execute when the approval gate is false."""
+        with pytest.raises(Exception, match="approve=True"):
+            await mcp.call_tool(
+                "execute_research_plan",
+                {"plan_id": "plan-1", "approve": False},
+            )
+
+    async def test_research_memory_lifecycle_routing(self, monkeypatch):
+        """Memory tools preserve source metadata and route lifecycle IDs."""
+        import mcp_server as mod
+
+        captured: dict[str, Any] = {}
+
+        async def _fake_query(**kwargs: Any) -> dict:
+            captured["query"] = kwargs
+            return {
+                "hit": True,
+                "freshness": "fresh",
+                "compatibility": "compatible",
+                "memory_id": "mem-1",
+                "artifact": {"sources": [{"url": "https://a.test"}]},
+            }
+
+        async def _fake_store(**kwargs: Any) -> dict:
+            captured["store"] = kwargs
+            return {"artifact_id": "artifact-1"}
+
+        async def _fake_batch_store(entries: list[dict[str, Any]]) -> dict:
+            captured["batch_store"] = entries
+            return {"success": True, "stored_count": len(entries)}
+
+        async def _fake_batch_query(queries: list[str]) -> dict:
+            captured["batch_query"] = queries
+            return {"success": True, "results": []}
+
+        async def _fake_id(method: str, value: str) -> dict:
+            captured[method] = value
+            return {"success": True, "deleted": True}
+
+        async def _fake_get(memory_id: str) -> dict:
+            captured["get"] = memory_id
+            return {"success": True, "memory_id": memory_id}
+
+        async def _fake_sweep() -> dict:
+            captured["sweep"] = True
+            return {"success": True, "swept": 2}
+
+        monkeypatch.setattr(mod._client, "query_research_memory", _fake_query)
+        monkeypatch.setattr(mod._client, "store_research_memory", _fake_store)
+        monkeypatch.setattr(
+            mod._client,
+            "delete_research_memory_artifact",
+            lambda artifact_id: _fake_id("artifact_delete", artifact_id),
+        )
+        monkeypatch.setattr(mod._client, "get_research_memory", _fake_get)
+        monkeypatch.setattr(
+            mod._client,
+            "delete_research_memory",
+            lambda memory_id: _fake_id("memory_delete", memory_id),
+        )
+        monkeypatch.setattr(mod._client, "sweep_research_memory", _fake_sweep)
+        monkeypatch.setattr(
+            mod._client, "batch_query_research_memory", _fake_batch_query
+        )
+        monkeypatch.setattr(
+            mod._client, "batch_store_research_memory", _fake_batch_store
+        )
+
+        await mcp.call_tool(
+            "query_research_memory",
+            {"question": "MCP memory", "max_age_hours": 48},
+        )
+        await mcp.call_tool(
+            "store_research_memory",
+            {
+                "question": "MCP memory",
+                "answer": "answer",
+                "sources": [{"url": "https://a.test", "title": "A"}],
+                "metadata": {"model": "fixture"},
+            },
+        )
+        await mcp.call_tool(
+            "delete_research_memory_artifact", {"artifact_id": "artifact-1"}
+        )
+        await mcp.call_tool("get_research_memory", {"memory_id": "mem-1"})
+        await mcp.call_tool("delete_research_memory", {"memory_id": "mem-1"})
+        await mcp.call_tool("sweep_research_memory", {})
+        await mcp.call_tool("batch_query_research_memory", {"queries": ["one", "two"]})
+        entries = [
+            {
+                "query": "one",
+                "artifact": "answer",
+                "sources": [{"url": "https://a.test"}],
+                "model": "fixture",
+            }
+        ]
+        await mcp.call_tool("batch_store_research_memory", {"entries": entries})
+
+        assert captured["query"] == {"question": "MCP memory", "max_age_hours": 48}
+        assert captured["store"]["sources"][0]["title"] == "A"
+        assert captured["store"]["metadata"] == {"model": "fixture"}
+        assert captured["artifact_delete"] == "artifact-1"
+        assert captured["get"] == "mem-1"
+        assert captured["memory_delete"] == "mem-1"
+        assert captured["sweep"] is True
+        assert captured["batch_query"] == ["one", "two"]
+        assert captured["batch_store"] == entries
 
     async def test_crawl_passes_path_filters(self, monkeypatch):
         """Crawl passes include/exclude paths and concurrency through."""

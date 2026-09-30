@@ -133,6 +133,8 @@ def _write_pyramid(
     sources: list,
     citations: list,
     search_results: list | None = None,
+    source_details: list[dict] | None = None,
+    source_contents: dict[str, str] | None = None,
 ) -> str:
     """Write an artifact-pyramid directory and return the absolute path.
 
@@ -146,6 +148,27 @@ def _write_pyramid(
         03-dossiers/consulted-*.md     (scraped sources)
         03-dossiers/discovered-*.md    (search results)
     """
+    source_details_by_url = {
+        item.get("url", ""): item
+        for item in (source_details or [])
+        if isinstance(item, dict) and item.get("url")
+    }
+    enriched_sources: list[dict] = []
+    for source in sources or []:
+        item = dict(source) if isinstance(source, dict) else {"url": str(source)}
+        url = item.get("url", "")
+        item.update(source_details_by_url.get(url, {}))
+        if source_contents and url in source_contents:
+            item["markdown"] = source_contents[url]
+        if not item.get("markdown"):
+            raise ValueError(
+                "Pyramid export is missing scraped content for "
+                f"{url or 'an unnamed source'}; rerun with a server that supports "
+                "include_source_content."
+            )
+        enriched_sources.append(item)
+    sources = enriched_sources
+
     pyramid_root = os.path.abspath(output_dir)
     l1_dir = os.path.join(pyramid_root, "01-summary")
     l2_dir = os.path.join(pyramid_root, "02-analysis")
@@ -318,6 +341,8 @@ def _write_pyramid(
                 f"title: {title}",
                 f"domain: {domain}",
                 f"fetched_at: {now}",
+                f"source: {s.get('source', 'unknown')}",
+                f"char_count: {s.get('char_count', len(content))}",
                 f"word_count: {len(content.split())}",
                 "status: consulted",
                 "---",
@@ -1027,6 +1052,7 @@ class Client:
         schema: dict | None = None,
         include_images: bool = False,
         search_type: str = "deep",
+        include_source_content: bool = False,
         retry: bool = False,
     ) -> dict[str, Any]:
         data: dict[str, Any] = {"prompt": prompt, "search_type": search_type}
@@ -1036,6 +1062,8 @@ class Client:
             data["schema"] = schema
         if include_images:
             data["include_images"] = True
+        if include_source_content:
+            data["include_source_content"] = True
         return self._request(
             "POST", "/agent", json_data=data, retry=retry, operation="agent"
         )
@@ -1046,6 +1074,7 @@ class Client:
         urls: list[str] | None = None,
         include_images: bool = False,
         search_type: str = "deep",
+        include_source_content: bool = False,
         retry: bool = False,
     ) -> dict[str, Any]:
         """Create an agent research job with SSE streaming.
@@ -1063,6 +1092,8 @@ class Client:
             data["urls"] = urls
         if include_images:
             data["include_images"] = True
+        if include_source_content:
+            data["include_source_content"] = True
         resp = self._post_stream_with_retry("/agent", data, "agent", timeout=300)
         return {"_stream": resp}
 
@@ -1659,23 +1690,31 @@ def cmd_agent(client: Client, args: argparse.Namespace) -> None:
         search_type = getattr(args, "search_type", "deep")
         if args.sync:
             # Non-streaming path: create job and poll
+            agent_kwargs: dict[str, Any] = {
+                "prompt": args.prompt,
+                "urls": args.urls,
+                "schema": None,
+                "include_images": include_images,
+                "search_type": search_type,
+                "retry": True,
+            }
+            if pyramid_mode:
+                agent_kwargs["include_source_content"] = True
             result = client.create_agent(
-                prompt=args.prompt,
-                urls=args.urls,
-                schema=None,
-                include_images=include_images,
-                search_type=search_type,
-                retry=True,
+                **agent_kwargs,
             )
         else:
             # Streaming path (default)
-            result = client.create_agent_stream(
-                prompt=args.prompt,
-                urls=args.urls,
-                include_images=include_images,
-                search_type=search_type,
-                retry=True,
-            )
+            agent_kwargs = {
+                "prompt": args.prompt,
+                "urls": args.urls,
+                "include_images": include_images,
+                "search_type": search_type,
+                "retry": True,
+            }
+            if pyramid_mode:
+                agent_kwargs["include_source_content"] = True
+            result = client.create_agent_stream(**agent_kwargs)
     except ApiError as e:
         die(e)
 
@@ -1708,15 +1747,22 @@ def cmd_agent(client: Client, args: argparse.Namespace) -> None:
                 data = status.get("data", {})
                 result_text = data.get("result", "(no result)")
                 sources = data.get("sources", [])
+                source_details = data.get("source_details", [])
+                source_contents = data.get("source_contents", {})
 
                 if pyramid_mode:
-                    path = _write_pyramid(
-                        output_dir=output_dir,
-                        query=args.prompt,
-                        result_text=result_text,
-                        sources=sources,
-                        citations=[],
-                    )
+                    try:
+                        path = _write_pyramid(
+                            output_dir=output_dir,
+                            query=args.prompt,
+                            result_text=result_text,
+                            sources=sources,
+                            citations=[],
+                            source_details=source_details,
+                            source_contents=source_contents,
+                        )
+                    except ValueError as exc:
+                        die(exc)
                     emit(path, {"pyramid": path})
                 elif JSON_OUTPUT:
                     emit("", {"job_id": job_id, "status": "completed", "result": data})
@@ -1739,6 +1785,8 @@ def cmd_agent(client: Client, args: argparse.Namespace) -> None:
         sources_shown = False
         full_result = ""
         agent_sources = []
+        agent_source_details = []
+        agent_source_contents = {}
         for line in resp.iter_lines(decode_unicode=True):
             if not line or not line.startswith("data: "):
                 continue
@@ -1769,6 +1817,8 @@ def cmd_agent(client: Client, args: argparse.Namespace) -> None:
                         print(event["content"], end="", flush=True)
                 elif event["type"] == "done":
                     full_result = event.get("result", full_result)
+                    agent_source_details = event.get("source_details", [])
+                    agent_source_contents = event.get("source_contents", {})
                     if not pyramid_mode:
                         print()
                 elif event["type"] == "error":
@@ -1779,13 +1829,18 @@ def cmd_agent(client: Client, args: argparse.Namespace) -> None:
 
         if pyramid_mode:
             # Write pyramid from captured SSE result
-            path = _write_pyramid(
-                output_dir=output_dir,
-                query=args.prompt,
-                result_text=full_result,
-                sources=agent_sources,
-                citations=[],
-            )
+            try:
+                path = _write_pyramid(
+                    output_dir=output_dir,
+                    query=args.prompt,
+                    result_text=full_result,
+                    sources=agent_sources,
+                    citations=[],
+                    source_details=agent_source_details,
+                    source_contents=agent_source_contents,
+                )
+            except ValueError as exc:
+                die(exc)
             emit(path, {"pyramid": path})
         elif JSON_OUTPUT:
             emit("", {"result": full_result})

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -334,6 +334,47 @@ async def test_two_pass_partial_overlap_fetches_only_novel_source():
     assert llm.generate.await_count == 1
     assert len(result["sources"]) == 4
     assert result["sources"].count("https://new.example/page") == 1
+
+
+@pytest.mark.asyncio
+async def test_deep_research_acquires_beyond_three_source_floor_and_reports_coverage():
+    from agent.research.loop import run_research
+
+    query_results = {
+        f"dimension-{index}": [{"url": f"https://dimension{index}.example/source"}]
+        for index in range(5)
+    }
+    clients = _research_clients(query_results)
+    _searxng, scraper, llm = clients
+    plan = {
+        "focused_queries": list(query_results),
+        "research_strategy": "deep",
+        "reasoning": "five independent dimensions",
+    }
+    with patch.multiple(
+        "agent.research.loop",
+        SearXNGClient=MagicMock(return_value=_searxng),
+        ScraperClient=MagicMock(return_value=scraper),
+        LLMClient=MagicMock(return_value=llm),
+        _generate_research_plan=AsyncMock(return_value=plan),
+        _detect_gaps=AsyncMock(return_value=[]),
+    ):
+        result = await run_research(
+            prompt="broad question", llm_model="fixture", search_type="deep"
+        )
+
+    coverage = result["coverage"]
+    assert len(result["sources"]) == 5
+    assert coverage["planned_queries"] == 5
+    assert coverage["executed_queries"] == 5
+    assert coverage["candidate_urls"] == 5
+    assert coverage["attempted_urls"] == 5
+    assert coverage["successful_sources"] == 5
+    assert coverage["refusals"] == 0
+    assert coverage["failures"] == 0
+    assert coverage["pass_count"] == 1
+    assert coverage["uncovered_queries"] == []
+    assert coverage["coverage_complete"] is True
 
 
 @pytest.mark.asyncio

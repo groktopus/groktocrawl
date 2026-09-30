@@ -4,7 +4,10 @@ Tests the base contracts: AdapterResult, AdapterContext, SiteAdapter,
 AdapterRegistry, and the @adapter decorator.
 """
 
+import os
 import re
+import subprocess
+import sys
 
 import pytest
 from scraper.adapters.base import (
@@ -261,22 +264,19 @@ class TestAdapterDecorator:
 
     def test_registry_load_all(self):
         """load_all() triggers @adapter registration and populates the registry."""
-        import importlib
-
-        import scraper.adapters.base as base_mod
-
-        # Clear any previously consumed state and reload adapter modules
-        base_mod._registry_list.clear()
-        for mod_name in ["bluesky", "github", "github_social", "substack", "youtube"]:
-            try:
-                mod = importlib.import_module(f"scraper.adapters.{mod_name}")
-                importlib.reload(mod)
-            except Exception:
-                pass
-
-        registry = AdapterRegistry()
-        registry.load_all()
-        names = [e.name for e in registry._entries]
-        assert "youtube" in names
-        assert "github" in names
-        assert "substack" in names
+        # Exercise fresh-import registration in a separate interpreter. Reloading
+        # adapters in the pytest worker invalidates classes imported by other tests.
+        code = """
+from scraper.adapters.base import AdapterRegistry
+registry = AdapterRegistry()
+registry.load_all()
+names = {entry.name for entry in registry._entries}
+assert {"youtube", "github", "substack"} <= names, names
+"""
+        subprocess.run(
+            [sys.executable, "-c", code],
+            env={**os.environ, "PYTHONPATH": os.pathsep.join(sys.path)},
+            check=True,
+            capture_output=True,
+            text=True,
+        )
