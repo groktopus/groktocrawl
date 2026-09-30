@@ -20,6 +20,7 @@ services:
       - "${SLOPSEARX_HOST_PORT:-8081}:8080"
     environment:
       - ENGINE_BRAVE_API_KEY=${BRAVE_API_KEY}
+      - ENGINE_SEMANTICSCHOLAR_API_KEY=${ENGINE_SEMANTICSCHOLAR_API_KEY:-}
       - VALKEY_URL=redis://valkey:6379/0
     healthcheck:
       test: ["CMD", "python", "/app/healthcheck.py"]
@@ -53,6 +54,7 @@ services:
       - "${SLOPSEARX_MCP_PORT:-8007}:8000"
     environment:
       - ENGINE_BRAVE_API_KEY=${BRAVE_API_KEY}
+      - ENGINE_SEMANTICSCHOLAR_API_KEY=${ENGINE_SEMANTICSCHOLAR_API_KEY:-}
       - VALKEY_URL=redis://valkey:6379/0
       - MCP_TRANSPORT=http
       - MCP_HOST=0.0.0.0
