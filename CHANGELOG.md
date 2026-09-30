@@ -2,6 +2,67 @@
 
 All notable changes to GroktoCrawl are documented in this file.
 
+## [0.15.0](https://github.com/groktopus/groktocrawl/compare/v0.14.0...v0.15.0) (2026-09-30)
+
+
+### Features
+
+* **mcp:** expose plan consent workflow ([ba4d4a8](https://github.com/groktopus/groktocrawl/commit/ba4d4a88a6d8506bf784f2cf8cf9cf84dd1c0719))
+* **mcp:** expose plan consent workflow ([dced3d2](https://github.com/groktopus/groktocrawl/commit/dced3d277105221ba854e54ed7927d6179ca856e))
+* **mcp:** expose research memory lifecycle ([2b218cd](https://github.com/groktopus/groktocrawl/commit/2b218cd277bb4ba6568def87d74655237068b133))
+* **mcp:** expose research memory lifecycle ([6bc0abd](https://github.com/groktopus/groktocrawl/commit/6bc0abd3c8a8a229d7704673378acd89762701c8))
+* **mcp:** expose research session protocol ([45741ca](https://github.com/groktopus/groktocrawl/commit/45741ca37b73c211a7b1411bea1074e5ce7c2c8d))
+* **mcp:** expose research session protocol ([97c7b45](https://github.com/groktopus/groktocrawl/commit/97c7b458796e903b569385aa098e97c1525a02ac))
+* opt both SlopSearX services into Jev via stack env ([7608ac2](https://github.com/groktopus/groktocrawl/commit/7608ac2ac3aca855390523cfc3068dcca65ceab3))
+* opt SlopSearX services into Jev via stack env ([69572f1](https://github.com/groktopus/groktocrawl/commit/69572f16708adb7eddb82feccd928857de747ed5))
+
+
+### Bug Fixes
+
+* address review feedback — health requires 200, Qdrant outage vs disabled ([abdb56f](https://github.com/groktopus/groktocrawl/commit/abdb56f207bd7a1662b80a3fed3440590868d9dd))
+* **agent:** SearXNG health fallback, ofelia schedule, quiet sweep without Qdrant ([596eda9](https://github.com/groktopus/groktocrawl/commit/596eda92edc8de379ed9150165bd489ce6dd7d3d))
+* **agent:** SearXNG health fallback, ofelia schedule, quiet sweep without Qdrant ([8402c0a](https://github.com/groktopus/groktocrawl/commit/8402c0a2c0bf742814e705071e80862ea05af717))
+* align CloakBrowser test dependency and lockfile ([1a0a24d](https://github.com/groktopus/groktocrawl/commit/1a0a24d4c66f2848330b4b6cc8a35a2cf4f4d1ef))
+* **ci:** publish Droid review results and disable unsafe debug artifacts ([2a7ee58](https://github.com/groktopus/groktocrawl/commit/2a7ee58cd8a3317a7178ffe9cdc7377419e9e584))
+* **ci:** publish Droid reviews and stop credential-bearing artifacts ([6395f0e](https://github.com/groktopus/groktocrawl/commit/6395f0e3242a620b0bad38efc5bfa3e67feec16b))
+* **ci:** retain local Droid action for post-job hooks ([f54d45c](https://github.com/groktopus/groktocrawl/commit/f54d45c136e9aa586d3ede4ec263d515fbfdfc85))
+* configure LLM completion token policy and budgets ([39d096b](https://github.com/groktopus/groktocrawl/commit/39d096bb65f651dbbadd8970949a2b6428b0e7f0))
+* pass Semantic Scholar key to SlopSearX ([8be260a](https://github.com/groktopus/groktocrawl/commit/8be260a4cafab87c330698cb265e3d261c86e35f))
+* pass Semantic Scholar key to SlopSearX ([7685d0b](https://github.com/groktopus/groktocrawl/commit/7685d0b98f6ba86c81060f3dd1aa35faf21ac0b2))
+* preserve Qdrant outage warnings and cover health fallbacks ([f624964](https://github.com/groktopus/groktocrawl/commit/f624964c8afb67288376cb7962157a038e44aec5))
+* preserve scraped content in pyramid exports ([01bf04d](https://github.com/groktopus/groktocrawl/commit/01bf04dd69d5236a1aeb02b5aeedbbdd6182c4fa))
+* preserve scraped content in pyramid exports ([d9034ae](https://github.com/groktopus/groktocrawl/commit/d9034aeb7e58fe7f2e76547305c997da387c4ea9))
+* prevent Firefox portal research submission aborts ([8665a85](https://github.com/groktopus/groktocrawl/commit/8665a85f781ca221cf5f3c09d8724fc1ea2fc082))
+* prevent Firefox portal research submission aborts ([36711b7](https://github.com/groktopus/groktocrawl/commit/36711b78b22196dae9a8e48c67c0acab1f4a1b64))
+* report deep research evidence coverage ([89d9a95](https://github.com/groktopus/groktocrawl/commit/89d9a9567e8af24c49623b77ca3c72d8f733c763))
+* report deep research evidence coverage ([d4742ce](https://github.com/groktopus/groktocrawl/commit/d4742ce8a9e0e8f45a4b073362758d0730111839))
+* satisfy research event type checking ([eb5649f](https://github.com/groktopus/groktocrawl/commit/eb5649fdef246963e7cd1a4ec753ad58e5eb9f30))
+* support configurable LLM completion token budgets ([46b188e](https://github.com/groktopus/groktocrawl/commit/46b188e506ca7f0052527c5c8384c5acef7f71cf))
+
+
+### Documentation
+
+* inventory Jev opt-in and deployment behavior ([c31ed1e](https://github.com/groktopus/groktocrawl/commit/c31ed1ed6b49d294952fdc71dd5a32f5c010feed))
+* list Semantic Scholar configuration key ([d8ef4b6](https://github.com/groktopus/groktocrawl/commit/d8ef4b6a7de662df31de509dca9747a2078a03dc))
+* require visible Droid review publication evidence ([52f4f28](https://github.com/groktopus/groktocrawl/commit/52f4f28c12379f8d99df4154e0aba113951a9bc7))
+* verify visible Droid review results before merging ([98d39ae](https://github.com/groktopus/groktocrawl/commit/98d39aeb07997eab71a6a06b1523afb0c4fcdfc3))
+
+
+### CI/CD
+
+* route Droid reviews through Nous Portal GPT-6 Luna ([f47d4bd](https://github.com/groktopus/groktocrawl/commit/f47d4bdfb1d8a1562dfe5b9c984fcce93a1e1465))
+* use Nous Portal GPT-6 Luna for Droid review ([6943b9f](https://github.com/groktopus/groktocrawl/commit/6943b9f5cfcc0dd3d1a7762c574aa9c44948f9e8))
+
+
+### Tests
+
+* isolate adapter registration from shared module state ([6a7df88](https://github.com/groktopus/groktocrawl/commit/6a7df8848950dd326f3563fd82c77e5756635d49))
+
+
+### Chores
+
+* pin Jev-enabled SlopSearX image digest ([59618b2](https://github.com/groktopus/groktocrawl/commit/59618b254d3e65bca353c8ee9c7280be22e9bb73))
+
 ## [0.14.0](https://github.com/groktopus/groktocrawl/compare/v0.13.0...v0.14.0) (2026-09-07)
 
 
