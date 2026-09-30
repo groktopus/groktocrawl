@@ -22,6 +22,7 @@ services:
       - ENGINE_BRAVE_API_KEY=${BRAVE_API_KEY}
       # Optional: presence in the stack .env opts this container into paid Jev routing.
       - TYPESAFE_API_KEY=${TYPESAFE_API_KEY:-}
+      - ENGINE_SEMANTICSCHOLAR_API_KEY=${ENGINE_SEMANTICSCHOLAR_API_KEY:-}
       - VALKEY_URL=redis://valkey:6379/0
     healthcheck:
       test: ["CMD", "python", "/app/healthcheck.py"]
@@ -57,6 +58,7 @@ services:
       - ENGINE_BRAVE_API_KEY=${BRAVE_API_KEY}
       # Keep direct SlopSearX MCP routing aligned with the HTTP API/portal.
       - TYPESAFE_API_KEY=${TYPESAFE_API_KEY:-}
+      - ENGINE_SEMANTICSCHOLAR_API_KEY=${ENGINE_SEMANTICSCHOLAR_API_KEY:-}
       - VALKEY_URL=redis://valkey:6379/0
       - MCP_TRANSPORT=http
       - MCP_HOST=0.0.0.0

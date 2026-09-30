@@ -2,6 +2,7 @@
 
 import functools
 import os
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -19,6 +20,19 @@ class AgentSettings(BaseModel):
     llm_base_url: str = Field(default="http://llm-svc:8011/v1", alias="LLM_BASE_URL")
     llm_api_key: str = Field(default="", alias="LLM_API_KEY")
     llm_model: str = Field(default="deepseek-v4-flash", alias="LLM_MODEL")
+    # OpenAI-compatible providers disagree on the completion-budget field.
+    # Keep the legacy field as the default and require explicit operator choice.
+    llm_token_parameter: Literal["max_tokens", "max_completion_tokens"] = Field(
+        default="max_tokens", alias="LLM_TOKEN_PARAMETER"
+    )
+    llm_max_tokens: int = Field(default=8192, alias="LLM_MAX_TOKENS", gt=0)
+    # This budget counts reasoning and visible output together.
+    llm_max_completion_tokens: int = Field(
+        default=32768, alias="LLM_MAX_COMPLETION_TOKENS", gt=0
+    )
+    llm_health_token_budget: int = Field(
+        default=1, alias="LLM_HEALTH_TOKEN_BUDGET", gt=0
+    )
     llm_enable_thinking: bool = Field(default=False, alias="LLM_ENABLE_THINKING")
     llm_llama_cpp_disable_thinking: bool = Field(
         default=False, alias="LLM_LLAMA_CPP_DISABLE_THINKING"
