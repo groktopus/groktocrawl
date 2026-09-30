@@ -204,7 +204,7 @@ fast-tests = [
     "PyYAML>=6.0",
     "jsonschema>=4.23.0",
     # Service imports exercised by tests/unit and tests/service, excluding ML models.
-    "cloakbrowser==0.5.3",
+    "cloakbrowser==0.5.9",
     "firecrawl-anydoc==0.2.4",
     "curl_cffi>=0.15.0",
     "jinja2>=3.1.0",
