@@ -30,6 +30,7 @@ from .discovery import (
     _scrape_urls,
 )
 from .events import ResearchEvent
+from .evidence import DEFAULT_EVIDENCE_CHARS, build_evidence
 from .gaps import _detect_gaps
 from .plan import _generate_research_plan
 from .prompts import ANSWER_SYSTEM_PROMPT, EXTRACT_SYSTEM_PROMPT, SYSTEM_PROMPT
@@ -142,6 +143,7 @@ async def _run_research_events(
     search_type: str = "deep",
     stream_tokens: bool = False,
     include_source_content: bool = False,
+    evidence_budget_chars: int = DEFAULT_EVIDENCE_CHARS,
 ) -> AsyncGenerator[ResearchEvent, None]:
     """Execute the canonical research loop and emit progress and terminal events."""
     start = time.monotonic()
@@ -311,6 +313,19 @@ async def _run_research_events(
                 raise RuntimeError("Discovery ended without a result")
 
             context = discovered["context"]
+            retained = source_registry.artifacts()
+            if retained:
+                selected = await asyncio.to_thread(
+                    build_evidence,
+                    [
+                        {"id": a.url, "url": a.url, "markdown": a.markdown}
+                        for a in retained
+                    ],
+                    prompt,
+                    evidence_budget_chars,
+                )
+                context = selected["context"]
+                coverage["evidence"] = selected["coverage"]
             source_details = discovered["source_details"]
             novel_artifacts = discovered.get("new_artifacts", [])
             pass_coverage = discovered.get("coverage", {})
@@ -478,9 +493,11 @@ async def _run_research_events(
             }
         coverage["successful_sources"] = len(all_source_details)
         coverage["candidate_urls"] = len(coverage_candidates)
-        coverage["coverage_complete"] = not coverage["uncovered_queries"] and (
+        coverage["discovery_target_met"] = not coverage["uncovered_queries"] and (
             coverage["successful_sources"] >= coverage["minimum_sources"]
         )
+        coverage["coverage_complete"] = False
+        coverage["scope"] = "bounded_discovery_not_exhaustive"
         done_event["coverage"] = coverage
         yield done_event
     finally:
@@ -511,6 +528,7 @@ async def run_research(
     citation_style: Any = None,
     search_type: str = "deep",
     include_source_content: bool = False,
+    evidence_budget_chars: int = DEFAULT_EVIDENCE_CHARS,
 ) -> dict:
     """Consume the canonical research event stream and return its terminal result."""
     async with contextlib.aclosing(
@@ -530,6 +548,7 @@ async def run_research(
             citation_style,
             search_type,
             include_source_content=include_source_content,
+            evidence_budget_chars=evidence_budget_chars,
         )
     ) as research_events:
         async for event in research_events:
@@ -571,6 +590,7 @@ async def run_research_stream(
     citation_style: Any = None,
     search_type: str = "deep",
     include_source_content: bool = False,
+    evidence_budget_chars: int = DEFAULT_EVIDENCE_CHARS,
 ) -> AsyncGenerator[ResearchEvent, None]:
     """Expose events from the canonical research engine for SSE adaptation."""
     async with contextlib.aclosing(
@@ -591,6 +611,7 @@ async def run_research_stream(
             search_type,
             stream_tokens=True,
             include_source_content=include_source_content,
+            evidence_budget_chars=evidence_budget_chars,
         )
     ) as research_events:
         async for event in research_events:
@@ -660,6 +681,7 @@ async def run_answer(
     max_searches_per_request: int = 5,
     output_schema: dict | None = None,
     citation_style: Any = None,
+    evidence_budget_chars: int = DEFAULT_EVIDENCE_CHARS,
 ) -> dict:
     """Run a grounded Q&A pipeline: search → scrape → LLM → citations.
 
@@ -697,6 +719,7 @@ async def run_answer(
             llm_api_key=llm_api_key,
             llm_model=llm_model,
             requested_model=requested_model,
+            evidence_budget_chars=evidence_budget_chars,
         )
 
         context = discovered["context"]
@@ -709,6 +732,7 @@ async def run_answer(
                 "sources": [],
                 "citations": [],
                 "search_type": search_type,
+                "evidence_coverage": discovered.get("evidence_coverage"),
                 "latency_ms": elapsed,
             }
 
@@ -757,6 +781,7 @@ async def run_answer(
             "citations": citations,
             "search_type": search_type,
             "latency_ms": elapsed,
+            "evidence_coverage": discovered["evidence_coverage"],
         }
     finally:
         await searxng.close()
@@ -779,6 +804,7 @@ async def run_answer_stream(
     max_searches_per_request: int = 5,
     output_schema: dict | None = None,
     citation_style: Any = None,
+    evidence_budget_chars: int = DEFAULT_EVIDENCE_CHARS,
 ) -> AsyncGenerator[dict[str, Any], None]:
     """Streaming version of run_answer. Yields SSE-suitable dicts.
 
@@ -853,7 +879,13 @@ async def run_answer_stream(
         )
 
         # Step 3: Build context + citation source map from artifacts
-        built = _build_answer_context(search_results, artifacts)
+        built = await asyncio.to_thread(
+            _build_answer_context,
+            search_results,
+            artifacts,
+            query,
+            evidence_budget_chars,
+        )
         context = built["context"]
         source_map = built["source_map"]
 
@@ -862,6 +894,7 @@ async def run_answer_stream(
             yield {
                 "type": "done",
                 "answer": "No relevant web pages found.",
+                "evidence_coverage": built["evidence_coverage"],
                 "citations": [],
                 "latency_ms": int((time.monotonic() - start) * 1000),
             }
@@ -944,6 +977,7 @@ async def run_answer_stream(
         yield {
             "type": "done",
             "answer": full_answer,
+            "evidence_coverage": built["evidence_coverage"],
             "citations": citations,
             "latency_ms": elapsed,
         }

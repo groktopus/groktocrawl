@@ -91,4 +91,5 @@ An Architecture Decision Record captures an important architectural decision mad
 | 0065 | [Stream Discovery Acquisitions as Queries Complete](0065-stream-discovery-acquisitions.md) | accepted |
 | 0066 | [Opt In to Independent Session Steps](0066-opt-in-to-independent-session-steps.md) | accepted |
 | 0067 | [Select the LLM Token Budget Parameter Explicitly](0067-explicit-llm-token-budget-parameter.md) | accepted |
+| 0068 | [Select bounded evidence from complete sources](0068-bounded-full-source-evidence.md) | proposed |
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full ADR workflow: when to write an ADR, how to number it, and how to get it reviewed in a PR.

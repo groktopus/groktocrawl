@@ -243,8 +243,14 @@ async def search(
     retrieval_mode: str | None = None,
     output_schema: dict[str, Any] | None = None,
     system_prompt: str | None = None,
+    page: int = 1,
+    offset: int = 0,
 ) -> str:
     """Search the web and return results with URLs titles and snippets.
+
+    page/offset continue a non-streaming fast keyword upstream page; upstream
+    pagination support is unknown and repeated query ordering may change.
+    Response coverage/continuation describe captured results, not all web results.
 
     Calls POST /v2/search on the GroktoCrawl API.  Supports fast mode
     (raw results, <1s) and rich mode (scraped + LLM synthesis, 1-3s).
@@ -273,6 +279,7 @@ async def search(
         retrieval_mode=retrieval_mode,
         output_schema=output_schema,
         system_prompt=system_prompt,
+        **({"page": page, "offset": offset} if page != 1 or offset else {}),
     )
     _ensure_success(result)
     return _resp(result)
@@ -909,8 +916,13 @@ async def answer(
     citation_style: str | None = None,
     search_type: str | None = None,
     retrieval_mode: str | None = None,
+    evidence_budget_chars: int | None = None,
 ) -> str:
     """Grounded Q&A: search → scrape → LLM answer with inline citations.
+
+    evidence_budget_chars bounds selected source text (256–128000; default
+    32000). Full bodies are scanned; evidence_coverage reports hashes, character
+    spans and omissions. Selection does not establish answer completeness.
 
     Calls POST /v2/answer on the GroktoCrawl API.  This is a synchronous
     single-turn endpoint designed for 1-3s latency.  Returns a markdown
@@ -937,6 +949,11 @@ async def answer(
         citation_style=citation_style,
         search_type=search_type,
         retrieval_mode=retrieval_mode,
+        **(
+            {"evidence_budget_chars": evidence_budget_chars}
+            if evidence_budget_chars is not None
+            else {}
+        ),
     )
     _ensure_success(result)
     return _resp(result)

@@ -918,12 +918,16 @@ class Client:
         output_schema: dict | None = None,
         system_prompt: str | None = None,
         contents: dict | None = None,
+        page: int = 1,
+        offset: int = 0,
     ) -> dict[str, Any]:
         data: dict[str, Any] = {
             "query": query,
             "limit": limit,
             "search_type": search_type,
         }
+        if page != 1 or offset:
+            data.update(page=page, offset=offset)
         if scrape:
             data["scrapeOptions"] = {"formats": ["markdown"]}
         if categories:
@@ -1109,6 +1113,7 @@ class Client:
         num_sources: int = 5,
         stream: bool = False,
         retry: bool = False,
+        evidence_budget_chars: int | None = None,
     ) -> dict[str, Any]:
         """Grounded Q&A: synchronous, cited answer.
 
@@ -1120,6 +1125,8 @@ class Client:
             "num_sources": num_sources,
             "stream": stream,
         }
+        if evidence_budget_chars is not None:
+            data["evidence_budget_chars"] = evidence_budget_chars
         if stream:
             resp = self._post_stream_with_retry("/answer", data, "answer", timeout=120)
             return {"_stream": resp}
@@ -1431,6 +1438,10 @@ def cmd_search(client: Client, args: argparse.Namespace) -> None:
             sources = ["images"]
             search_type = "fast"
 
+        if args.stream and (
+            getattr(args, "page", 1) != 1 or getattr(args, "offset", 0)
+        ):
+            die("Search page/offset requires omitting --stream")
         if args.stream:
             result = client.search_stream(
                 query=args.query,
@@ -1481,16 +1492,33 @@ def cmd_search(client: Client, args: argparse.Namespace) -> None:
             output_schema=output_schema,
             system_prompt=args.system_prompt,
             contents=contents,
+            **(
+                {"page": args.page, "offset": args.offset}
+                if getattr(args, "page", 1) != 1 or getattr(args, "offset", 0)
+                else {}
+            ),
         )
     except ApiError as e:
         die(e)
 
+    if not JSON_OUTPUT and result.get("coverage"):
+        coverage = result["coverage"]
+        log(
+            f"Returned {coverage.get('returned_results', 0)} of {coverage.get('captured_results', 0)} captured page results; upstream completeness unknown."
+        )
+        if result.get("continuation"):
+            log(
+                f"Continue with --page {result['continuation']['page']} --offset {result['continuation']['offset']}"
+            )
     data = result.get("data", {}).get("web", [])
     image_data = result.get("data", {}).get("images", [])
 
     # Show structured output if present
     if JSON_OUTPUT:
         output_data = {"results": data, "query": args.query}
+        if result.get("coverage") is not None:
+            output_data["coverage"] = result["coverage"]
+            output_data["continuation"] = result.get("continuation")
         if image_data:
             output_data["images"] = image_data
         if result.get("output"):
@@ -1871,6 +1899,11 @@ def cmd_answer(client: Client, args: argparse.Namespace) -> None:
             num_sources=args.num_sources,
             stream=not args.sync,
             retry=True,
+            **(
+                {"evidence_budget_chars": args.evidence_budget_chars}
+                if getattr(args, "evidence_budget_chars", None) is not None
+                else {}
+            ),
         )
     except ApiError as e:
         die(e)
@@ -2847,6 +2880,18 @@ def make_parser() -> argparse.ArgumentParser:
     p_search = subparsers.add_parser("search", help="Search the web")
     p_search.add_argument("query", help="Search query")
     p_search.add_argument(
+        "--page",
+        type=int,
+        default=1,
+        help="Upstream page (fast keyword non-streaming search only; upstream support varies)",
+    )
+    p_search.add_argument(
+        "--offset",
+        type=int,
+        default=0,
+        help="Offset within upstream page; use response continuation",
+    )
+    p_search.add_argument(
         "--limit", "-l", type=int, default=5, help="Max results (default: 5)"
     )
     p_search.add_argument(
@@ -3121,6 +3166,11 @@ def make_parser() -> argparse.ArgumentParser:
     # --- Answer ---
     p_answer = subparsers.add_parser("answer", help="Grounded Q&A with citations")
     p_answer.add_argument("query", help="Natural language question")
+    p_answer.add_argument(
+        "--evidence-budget-chars",
+        type=int,
+        help="Selected source character budget (256-128000; default 32000)",
+    )
     p_answer.add_argument(
         "-n",
         "--num-sources",

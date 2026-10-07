@@ -298,6 +298,12 @@ async def _process_agent_async(
                         "sources": [s.get("url", "") for s in sources],
                         "source_details": sources,
                         "from_cache": True,
+                        "coverage": entry.get("metadata", {}).get("coverage")
+                        or {
+                            "scope": "cached_answer",
+                            "coverage_complete": False,
+                            "evidence": {"status": "not_retained"},
+                        },
                         "freshness": freshness,
                         "similarity": cache_result.get("similarity", 0),
                         "memory_id": cache_result.get("memory_id", ""),
@@ -342,6 +348,12 @@ async def _process_agent_async(
                         "sources": [s.get("url", "") for s in sources],
                         "source_details": sources,
                         "from_cache": True,
+                        "coverage": entry.get("metadata", {}).get("coverage")
+                        or {
+                            "scope": "cached_answer",
+                            "coverage_complete": False,
+                            "evidence": {"status": "not_retained"},
+                        },
                         "freshness": "stale",
                         "refreshed": False,
                         "age_hours": cache_result.get("age_hours"),

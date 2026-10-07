@@ -29,6 +29,7 @@ async def stream_cached_artifact(
     has_schema: bool,
     age_hours: float | None = None,
     refresh_awaitable: Any = None,
+    coverage: dict | None = None,
 ) -> Any:
     """Replay cached agent results as SSE token events.
 
@@ -58,6 +59,12 @@ async def stream_cached_artifact(
         "sources": [s.get("url", "") for s in sources],
         "latency_ms": latency_ms,
         "from_cache": True,
+        "coverage": coverage
+        or {
+            "scope": "cached_answer",
+            "coverage_complete": False,
+            "evidence": {"status": "not_retained"},
+        },
         "memory_id": memory_id,
         "freshness": freshness,
         "similarity": similarity,
@@ -173,6 +180,7 @@ async def stream_research_live(
                     prompt=prompt,
                     artifact=transformed_result,
                     source_details=source_details,
+                    coverage=event.get("coverage"),
                     model=llm_model,
                     citation_style=cs.value,
                     requested_model=requested_model,

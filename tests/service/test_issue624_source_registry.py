@@ -374,7 +374,8 @@ async def test_deep_research_acquires_beyond_three_source_floor_and_reports_cove
     assert coverage["failures"] == 0
     assert coverage["pass_count"] == 1
     assert coverage["uncovered_queries"] == []
-    assert coverage["coverage_complete"] is True
+    assert coverage["discovery_target_met"] is True
+    assert coverage["coverage_complete"] is False
 
 
 @pytest.mark.asyncio
