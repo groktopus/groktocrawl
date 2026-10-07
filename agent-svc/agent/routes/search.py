@@ -250,7 +250,7 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
                 sources=effective_sources,
                 **continuation_params,
             )
-            result_coverage = _health.result_coverage
+            result_coverage = getattr(_health, "result_coverage", None)
             if not results and _health.engines_responding == 0:
                 warning_msg = (
                     "All search engines returned no results. "
