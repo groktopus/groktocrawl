@@ -56,6 +56,16 @@ async def search_v1(request: Request, body: SearchRequest) -> dict[str, Any]:
 
 @router.post("/v2/search", response_model=SearchResponse)
 async def search(request: Request, body: SearchRequest) -> SearchResponse:
+    if (body.page != 1 or body.offset) and (
+        body.search_type != "fast"
+        or body.retrieval_mode != "keyword"
+        or body.stream
+        or (body.sources and "images" in body.sources)
+    ):
+        raise HTTPException(
+            status_code=422,
+            detail="page/offset continuation currently requires non-streaming fast keyword search without images",
+        )
     if body.stream:
 
         async def event_stream():
@@ -86,6 +96,7 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
 
     searxng = SearXNGClient(request.app.state.searxng_url)
     warning_msg: str | None = None
+    result_coverage: dict | None = None
     acquired_artifacts = []
     refused_urls: set[str] = set()
     unavailable_urls: set[str] = set()
@@ -227,12 +238,19 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
 
         else:
             # Keyword, semantic, hybrid: standard SearXNG path
+            continuation_params: dict[str, Any] = (
+                {"page": body.page, "offset": body.offset}
+                if body.page != 1 or body.offset
+                else {}
+            )
             results, _health = await searxng.search(
                 body.query,
                 limit=body.limit,
                 categories=body.categories,
                 sources=effective_sources,
+                **continuation_params,
             )
+            result_coverage = _health.result_coverage
             if not results and _health.engines_responding == 0:
                 warning_msg = (
                     "All search engines returned no results. "
@@ -417,6 +435,32 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
         if image_results:
             result_data["images"] = [r.model_dump() for r in image_results]
 
-        return SearchResponse(data=result_data, output=output, warning=warning_msg)
+        continuation = None
+        if (
+            result_coverage
+            and result_coverage["has_more_in_page"]
+            and body.search_type == "fast"
+            and body.retrieval_mode == "keyword"
+        ):
+            continuation = body.model_dump(by_alias=True, exclude_none=True)
+            continuation.update(
+                sources=effective_sources,
+                offset=body.offset + len(search_results),
+                stream=False,
+            )
+        if result_coverage:
+            result_coverage["next_upstream_page"] = (
+                body.page + 1 if body.page < 1000 else None
+            )
+            result_coverage["continuation_consistency"] = (
+                "repeat upstream query; ordering may change (not a snapshot)"
+            )
+        return SearchResponse(
+            data=result_data,
+            output=output,
+            warning=warning_msg,
+            coverage=result_coverage,
+            continuation=continuation,
+        )
     finally:
         await searxng.close()

@@ -4,6 +4,7 @@ import asyncio
 import logging
 
 from .acquisition import acquire_source_artifacts
+from .evidence import select_passages
 from .prompts import HIGHLIGHTS_SYSTEM_PROMPT, SUMMARY_SYSTEM_PROMPT
 from .sources import SourceArtifact, normalize_source_url
 
@@ -36,7 +37,10 @@ async def extract_highlights(
         return ""
 
     effective_query = query or "the main topic"
-    truncated = text[:10000]
+    selected = select_passages(text, query or "", 10000)
+    truncated = "\n\n[omitted source content]\n\n".join(
+        s["text"] for s in selected["spans"]
+    )
 
     try:
         user_prompt = (
@@ -83,7 +87,10 @@ async def extract_summary(
         return ""
 
     focus_clause = f" with focus on: {query}" if query else ""
-    truncated = text[:10000]
+    selected = select_passages(text, query or "", 10000)
+    truncated = "\n\n[omitted source content]\n\n".join(
+        s["text"] for s in selected["spans"]
+    )
 
     try:
         user_prompt = (

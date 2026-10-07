@@ -49,3 +49,11 @@ The checked [CLI inventory](../reference/public-surface.md#cli-commands) tracks 
 ```
 
 Commands that start asynchronous work print a job identifier unless polling is enabled. The API guide explains the matching status, cancellation, webhook, and streaming behavior.
+
+## Evidence budgets and search continuation
+
+`groktocrawl answer "capacitor measurements" --evidence-budget-chars 64000 --sync` selects up to 64,000 source characters from complete bodies; default is 32,000 and allowed range is 256–128,000. JSON and SSE done metadata expose evidence_coverage, including content hashes, offsets and omissions. Model context headers are additional. Text coverage does not establish answer completeness.
+
+`groktocrawl search "capacitor measurements" --limit 20 --page 1 --offset 20 --json` continues within the selected upstream page. JSON exposes coverage and a request-shaped continuation; text mode prints captured/returned counts and the next page/offset for captured results. Omit --stream for continuation. Upstream ordering may change between calls; pagination support and additional upstream results remain unknown. Page/offset currently require fast keyword search without images.
+
+MCP search exposes page/offset and MCP answer exposes evidence_budget_chars with the same API contracts. Session query/deepen can set evidence_budget_chars; query can restrict ref_ids to refs in its own session. Full session evidence remains available through resolve until session TTL/deletion. Agent completion reports its default selection budget; existing include_source_content exports full acquired Markdown.

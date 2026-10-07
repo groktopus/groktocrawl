@@ -357,9 +357,13 @@ class GroktocrawlClient:
         retrieval_mode: str | None = None,
         output_schema: dict | None = None,
         system_prompt: str | None = None,
+        page: int = 1,
+        offset: int = 0,
     ) -> dict:
         """Web search with optional source filtering and search type."""
         body: dict[str, Any] = {"query": query, "limit": limit}
+        if page != 1 or offset:
+            body.update(page=page, offset=offset)
         if sources:
             body["sources"] = sources
         if categories:
@@ -579,9 +583,12 @@ class GroktocrawlClient:
         citation_style: str | None = None,
         search_type: str | None = None,
         retrieval_mode: str | None = None,
+        evidence_budget_chars: int | None = None,
     ) -> dict:
         """Grounded Q&A — synchronous."""
         body: dict[str, Any] = {"query": question, "num_sources": num_sources}
+        if evidence_budget_chars is not None:
+            body["evidence_budget_chars"] = evidence_budget_chars
         if model and model != "default":
             body["model"] = model
         if output_schema:

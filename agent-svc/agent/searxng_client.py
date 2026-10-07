@@ -36,6 +36,7 @@ class SearchHealth:
     empty_result: bool = False
     degraded: bool = False
     detail: str = ""
+    result_coverage: dict | None = None
 
 
 # ── Firecrawl v2 → SearXNG category translation ────────────────
@@ -169,6 +170,8 @@ class SearXNGClient:
         *,
         raise_on_rate_limit: bool = False,
         scenario: str | None = None,
+        page: int = 1,
+        offset: int = 0,
     ) -> tuple[list[dict], SearchHealth]:
         """Search the web and return structured results with health info.
 
@@ -195,6 +198,17 @@ class SearXNGClient:
         from .exceptions import RateLimitedError
 
         started = time.monotonic()
+        if (
+            type(limit) is not int
+            or not 1 <= limit <= 1000
+            or type(page) is not int
+            or not 1 <= page <= 1000
+            or type(offset) is not int
+            or not 0 <= offset <= 100000
+        ):
+            raise ValueError(
+                "search limit/page/offset outside supported resource bounds"
+            )
         outcome = "success"
 
         try:
@@ -217,7 +231,7 @@ class SearXNGClient:
                 "q": query,
                 "format": "json",
                 "language": "en",
-                "pageno": 1,
+                "pageno": page,
             }
             params["categories"] = ",".join(effective_categories)
             run_id = os.getenv("TWIN_RUN_ID")
@@ -283,10 +297,25 @@ class SearXNGClient:
                     }
                 )
 
-            results = results[:limit]
+            captured_count = len(results)
+            results = results[offset : offset + limit]
 
             # ── Parse engine health ────────────────────────────────────
             health = self._parse_engine_health(data, results)
+            health.result_coverage = {
+                "scope": "upstream_page",
+                "page": page,
+                "offset": offset,
+                "captured_results": captured_count,
+                "returned_results": len(results),
+                "omitted_results": max(0, captured_count - len(results)),
+                "has_more_in_page": offset + len(results) < captured_count,
+                "upstream_has_more": None,
+                "complete": False,
+                "pagination_enforcement": data.get("meta", {})
+                .get("enforcement", {})
+                .get("pagination"),
+            }
 
             return results, health
 

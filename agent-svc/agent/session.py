@@ -16,6 +16,11 @@ from typing import Any
 
 from .barrier_guard import is_barrier_flagged, log_refusal
 from .llm import LLMClient
+from .research.evidence import (
+    DEFAULT_EVIDENCE_CHARS,
+    build_evidence,
+    validate_evidence_budget,
+)
 from .scraper_client import ScraperClient
 from .searxng_client import SearXNGClient
 from .session_store import SessionStore
@@ -498,6 +503,11 @@ class SessionManager:
                 limit=limit,
                 sources=sources,
                 categories=categories,
+                **(
+                    {"page": params.get("page", 1), "offset": params.get("offset", 0)}
+                    if params.get("page", 1) != 1 or params.get("offset", 0)
+                    else {}
+                ),
             )
         finally:
             await searxng.close()
@@ -540,6 +550,7 @@ class SessionManager:
             refs_to_add[ref_id] = ref_data
             ref_count += 1
 
+        result_coverage = getattr(_health, "result_coverage", None)
         # Append search results section to artifact
         section = f"\n\n## Step {step_index}: Search — {query}\n\n"
         for r in top_urls[:10]:
@@ -549,6 +560,19 @@ class SessionManager:
             "step_index": step_index,
             "action": "search",
             "query": query,
+            "coverage": result_coverage,
+            "continuation": (
+                {
+                    "query": query,
+                    "limit": limit,
+                    "page": params.get("page", 1),
+                    "offset": params.get("offset", 0) + len(results),
+                    "sources": sources,
+                    "categories": categories,
+                }
+                if result_coverage and result_coverage["has_more_in_page"]
+                else None
+            ),
             "ref_count": ref_count,
             "top_refs": top_urls[:10],
             "summary": f"Search '{query}' returned {ref_count} results, stored as refs {step_index}_1 through {step_index}_{ref_count}",
@@ -729,17 +753,32 @@ class SessionManager:
                 "Session has no accumulated context. Run a search or scrape step first."
             )
 
-        # Build context with ref summaries (not full content — too large)
-        context_parts = [f"## Accumulated Research\n\n{artifact}\n\n"]
-        context_parts.append("## Reference Index\n\n")
-        for ref_id, ref_data in refs.items():
-            url = ref_data.get("url", "")
-            title = ref_data.get("title", "")
-            chars = ref_data.get("char_count", 0)
-            context_parts.append(
-                f"- `{ref_id}`: [{title or url}]({url}) ({chars} chars)\n"
-            )
-        context = "".join(context_parts)
+        budget = validate_evidence_budget(
+            params.get("evidence_budget_chars", DEFAULT_EVIDENCE_CHARS)
+        )
+        requested_refs = params.get("ref_ids")
+        if requested_refs is not None:
+            if not isinstance(requested_refs, list) or any(
+                not isinstance(ref, str) or ref not in refs for ref in requested_refs
+            ):
+                raise ValueError("ref_ids must contain references from this session")
+            refs = {ref: refs[ref] for ref in dict.fromkeys(requested_refs)}
+        selected = await asyncio.to_thread(
+            build_evidence,
+            [
+                {
+                    "id": ref,
+                    "url": data.get("url", ""),
+                    "markdown": data.get("markdown", ""),
+                }
+                for ref, data in refs.items()
+            ],
+            question,
+            budget,
+        )
+        context = selected["context"]
+        if not context:
+            raise ValueError("Selected session references contain no evidence")
 
         effective_model = model if model != "default" else llm_model
         llm = LLMClient(llm_base_url, llm_api_key, effective_model)
@@ -778,6 +817,7 @@ class SessionManager:
             "action": "query",
             "question": question,
             "answer": answer,
+            "evidence_coverage": selected["coverage"],
             "ref_count": len(refs),
             "summary": f"Query answered ({len(answer)} chars), {len(refs)} refs available",
         }
@@ -849,7 +889,16 @@ class SessionManager:
 
         # 2. Generate a targeted search query
         # Build context from the source content (truncated for LLM efficiency)
-        source_context = source_markdown[:3000]
+        budget = validate_evidence_budget(
+            params.get("evidence_budget_chars", DEFAULT_EVIDENCE_CHARS)
+        )
+        source_evidence = await asyncio.to_thread(
+            build_evidence,
+            [{"id": ref_id, "url": source_url, "markdown": source_markdown}],
+            sub_topic,
+            budget,
+        )
+        source_context = source_evidence["context"]
         query_prompt = (
             f"Based on the following source content and the user's follow-up question, "
             f"generate 2-3 highly specific web search queries to find additional "
@@ -921,8 +970,6 @@ class SessionManager:
         # 4. Scrape new sources
         scraper = ScraperClient(scraper_url)
         try:
-            import asyncio
-
             semaphore = asyncio.Semaphore(3)
             scraped: list[dict] = []
 
@@ -960,8 +1007,18 @@ class SessionManager:
 
         # 5. Run LLM to synthesise findings
         if scraped:
-            new_context_parts = [s["markdown"] for s in scraped]
-            new_context = "\n\n---\n\n".join(new_context_parts)
+            source_evidence = await asyncio.to_thread(
+                build_evidence,
+                [{"id": ref_id, "url": source_url, "markdown": source_markdown}]
+                + [
+                    {"id": s["url"], "url": s["url"], "markdown": s["markdown"]}
+                    for s in scraped
+                ],
+                sub_topic,
+                budget,
+            )
+            source_context = source_evidence["contexts"][0]
+            new_context = "\n\n---\n\n".join(source_evidence["contexts"][1:])
 
             synthesis_prompt = (
                 f"ORIGINAL SOURCE ({ref_id}):\n{source_context}\n\n"
@@ -1055,6 +1112,7 @@ class SessionManager:
             "step_index": step_index,
             "action": "deepen",
             "new_findings": new_findings,
+            "evidence_coverage": source_evidence["coverage"],
             "new_sources": new_sources_list,
             "inserted_at": inserted_at,
             "ref_id": ref_id,

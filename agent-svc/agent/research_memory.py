@@ -132,6 +132,7 @@ def compute_fingerprint(
     canonical_schema = _canonical_json(schema) if schema else None
     canonical_model = "" if model in (None, "", "default") else model
     canonical = {
+        "evidence_selection": "lexical_passages_v1",
         "prompt": normalized_prompt,
         "urls": sorted_urls,
         "schema": canonical_schema,

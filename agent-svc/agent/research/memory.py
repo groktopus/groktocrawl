@@ -22,6 +22,7 @@ async def admit_research_memory(
     latency_ms: int = 0,
     user_id: str | None = None,
     fingerprint: str | None = None,
+    coverage: dict | None = None,
 ) -> str | None:
     """Store a valid final artifact, treating unavailable memory as non-fatal."""
     if (
@@ -40,6 +41,8 @@ async def admit_research_memory(
         "citation_style": citation_style,
         "latency_ms": latency_ms,
     }
+    if coverage is not None:
+        metadata["coverage"] = coverage
     if requested_model and requested_model != "default":
         metadata["requested_model"] = requested_model
 
@@ -103,6 +106,7 @@ async def finalize_and_admit(
         citation_style=citation_style.value,
         requested_model=requested_model,
         latency_ms=result.get("latency_ms", 0),
+        coverage=result.get("coverage"),
         user_id=user_id,
         fingerprint=fingerprint,
     )

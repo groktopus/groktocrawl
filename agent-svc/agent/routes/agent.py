@@ -48,6 +48,7 @@ async def _serialize_answer_stream(
                 "answer": event["answer"],
                 "citations": event["citations"],
                 "latency_ms": event["latency_ms"],
+                "evidence_coverage": event.get("evidence_coverage"),
             }
         elif event["type"] == "error":
             payload = {"type": "error", "content": event["content"]}
@@ -201,6 +202,7 @@ async def _handle_agent_streaming(
         return StreamingResponse(
             stream_cached_artifact(
                 artifact_text=artifact_text,
+                coverage=entry.get("metadata", {}).get("coverage"),
                 sources=sources,
                 memory_id=cache_hit_data.get("memory_id", ""),
                 freshness=freshness,
@@ -461,6 +463,7 @@ async def answer(request: Request, body: AnswerRequest, response: Response) -> A
 
             events = run_answer_stream(
                 query=body.query,
+                evidence_budget_chars=body.evidence_budget_chars,
                 num_sources=body.num_sources,
                 search_type=body.search_type,
                 retrieval_mode=body.retrieval_mode,
@@ -493,6 +496,7 @@ async def answer(request: Request, body: AnswerRequest, response: Response) -> A
 
     result = await run_answer(
         query=body.query,
+        evidence_budget_chars=body.evidence_budget_chars,
         num_sources=body.num_sources,
         search_type=body.search_type,
         retrieval_mode=body.retrieval_mode,
@@ -513,6 +517,7 @@ async def answer(request: Request, body: AnswerRequest, response: Response) -> A
     )
     return AnswerResponse(
         success=True,
+        evidence_coverage=result.get("evidence_coverage"),
         answer=result["answer"],
         sources=[Source(**s) for s in result["sources"]],
         citations=[Citation(**c) for c in result["citations"]],

@@ -877,7 +877,9 @@ class BatchScrapeRequest(BaseModel):
 
 class SearchRequest(BaseModel):
     query: str
-    limit: int = 5
+    limit: int = Field(default=5, ge=1, le=1000)
+    page: int = Field(default=1, ge=1, le=1000)
+    offset: int = Field(default=0, ge=0, le=100000)
     search_type: str = "fast"  # "fast" | "rich" | "deep"
     retrieval_mode: str = (
         "keyword"  # "keyword" | "semantic" | "hybrid" | "vector" | "hybrid_vector"
@@ -916,6 +918,8 @@ class ImageSearchResult(BaseModel):
 
 
 class SearchResponse(BaseModel):
+    coverage: dict[str, Any] | None = None
+    continuation: dict[str, Any] | None = None
     success: bool = True
     data: dict = Field(default_factory=lambda: {"web": [], "images": [], "news": []})
     output: dict[str, Any] | None = None  # Present only when output_schema provided
@@ -1167,6 +1171,12 @@ class Citation(BaseModel):
 
 
 class AnswerRequest(BaseModel):
+    evidence_budget_chars: int = Field(
+        default=32000,
+        ge=256,
+        le=128000,
+        description="Maximum source characters selected for synthesis; complete sources remain retained separately",
+    )
     query: str = Field(..., max_length=10000, description="Natural language question")
     search_type: str = Field(default="auto", description="Hint for search depth")
     retrieval_mode: str = Field(
@@ -1219,6 +1229,7 @@ class AnswerRequest(BaseModel):
 
 
 class AnswerResponse(BaseModel):
+    evidence_coverage: dict[str, Any] | None = None
     success: bool = True
     answer: str = ""
     sources: list[Source] = Field(default_factory=list)
