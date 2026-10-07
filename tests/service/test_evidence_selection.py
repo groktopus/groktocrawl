@@ -229,3 +229,31 @@ async def test_unsupported_continuation_rejected_before_network(fields):
             SimpleNamespace(), SearchRequest(query="capacitor", offset=1, **fields)
         )
     assert error.value.status_code == 422
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("helper_name", ["extract_highlights", "extract_summary"])
+async def test_large_source_selection_allows_concurrent_progress(
+    monkeypatch, helper_name
+):
+    import asyncio
+    import threading
+
+    from agent.research import contents
+
+    release = threading.Event()
+    original = contents.select_passages
+
+    def slow_selection(*args):
+        assert release.wait(timeout=1), "Source selection stalled the event loop"
+        return original(*args)
+
+    monkeypatch.setattr(contents, "select_passages", slow_selection)
+    llm = SimpleNamespace(generate=AsyncMock(return_value="470.25 uF"))
+    task = asyncio.create_task(
+        getattr(contents, helper_name)(late_document(), "capacitor", 100, llm)
+    )
+    await asyncio.sleep(0.01)
+    release.set()
+    assert await task == "470.25 uF"
+    assert "470.25" in llm.generate.call_args.kwargs["context"]

@@ -879,8 +879,12 @@ async def run_answer_stream(
         )
 
         # Step 3: Build context + citation source map from artifacts
-        built = _build_answer_context(
-            search_results, artifacts, query, evidence_budget_chars
+        built = await asyncio.to_thread(
+            _build_answer_context,
+            search_results,
+            artifacts,
+            query,
+            evidence_budget_chars,
         )
         context = built["context"]
         source_map = built["source_map"]

@@ -37,7 +37,7 @@ async def extract_highlights(
         return ""
 
     effective_query = query or "the main topic"
-    selected = select_passages(text, query or "", 10000)
+    selected = await asyncio.to_thread(select_passages, text, query or "", 10000)
     truncated = "\n\n[omitted source content]\n\n".join(
         s["text"] for s in selected["spans"]
     )
@@ -87,7 +87,7 @@ async def extract_summary(
         return ""
 
     focus_clause = f" with focus on: {query}" if query else ""
-    selected = select_passages(text, query or "", 10000)
+    selected = await asyncio.to_thread(select_passages, text, query or "", 10000)
     truncated = "\n\n[omitted source content]\n\n".join(
         s["text"] for s in selected["spans"]
     )

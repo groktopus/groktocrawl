@@ -966,9 +966,7 @@ async def _run_answer_discover_and_scrape(
         target_urls, rerank_artifacts, scraper, num_sources
     )
 
-    return {
-        "search_results": search_results,
-        **_build_answer_context(
-            search_results, artifacts, query, evidence_budget_chars
-        ),
-    }
+    built = await asyncio.to_thread(
+        _build_answer_context, search_results, artifacts, query, evidence_budget_chars
+    )
+    return {"search_results": search_results, **built}
