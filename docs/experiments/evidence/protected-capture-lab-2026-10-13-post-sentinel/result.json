@@ -1,0 +1,122 @@
+{
+  "schema": "protected-capture-post-sentinel-readiness/2",
+  "status": "lab-boundary-and-public-capture-readiness-passed-research-quality-unqualified",
+  "source_revision": "ab8ffb5efec63df6c2f329b12b28eb80c316c434",
+  "rendered_configuration_sha256": "b9026f78a3bca28112b6d65d9c32a168c786fab5c9582d0c5567cf3b82502099",
+  "deployment_acceptance": {
+    "receipt_sha256": "cd80b00022cbc4fdfb5da035dabbcf0b90038f629e307b01d268a03f0efb39b6",
+    "target_services_healthy": 5,
+    "non_target_services_unchanged": 20,
+    "network_identities_and_addresses_preserved": 9,
+    "images_environment_and_security_preserved": true,
+    "accepted_metadata_equivalences": [
+      "compose-working-directory-and-dependency-metadata",
+      "empty-dns-options-and-search-arrays-versus-null",
+      "read-only-ingress-probe-relocation-with-identical-bytes"
+    ]
+  },
+  "boundary_qualification": {
+    "receipt_sha256": "d7445c106d17093aed6107863da8bf05eedd820d56b8dbf629743258cb9797a0",
+    "retries": 0,
+    "probes": [
+      {
+        "name": "scraper-ingress",
+        "exit_code": 0,
+        "elapsed_seconds": 3.171,
+        "stderr_bytes": 0
+      },
+      {
+        "name": "scraper-egress",
+        "exit_code": 0,
+        "elapsed_seconds": 9.58,
+        "stderr_bytes": 0
+      },
+      {
+        "name": "protected-flare-api",
+        "exit_code": 0,
+        "elapsed_seconds": 6.575,
+        "stderr_bytes": 0
+      },
+      {
+        "name": "browser-controller",
+        "exit_code": 0,
+        "elapsed_seconds": 2.342,
+        "stderr_bytes": 0
+      },
+      {
+        "name": "browser-renderer",
+        "exit_code": 0,
+        "elapsed_seconds": 0.139,
+        "stderr_bytes": 0
+      },
+      {
+        "name": "flare-renderer",
+        "exit_code": 0,
+        "elapsed_seconds": 0.102,
+        "stderr_bytes": 0
+      }
+    ],
+    "sentinel_ledgers": {
+      "host_positive_records_before": 0,
+      "host_positive_records_after": 1,
+      "private_positive_records_before": 2,
+      "private_positive_records_after": 3,
+      "forbidden_records_before": 0,
+      "forbidden_records_after": 0,
+      "ledger_reset": false,
+      "positive_control_retries": 0
+    },
+    "engineering_transport_request": {
+      "count": 1,
+      "maximum_output_tokens": 8,
+      "scientific_credit": false
+    }
+  },
+  "public_capture_and_tls_readiness": {
+    "status": "passed-once",
+    "receipt_sha256": "ed33d459f781585e9b2c921a1a84a1efde0b4c90e14ce83cac00ca3f2bafe0e2",
+    "tls_and_authentication_checks": 10,
+    "checks_passed": [
+      "missing-bearer-rejected",
+      "invalid-bearer-rejected",
+      "authenticated-health-accepted",
+      "get-scrape-route-rejected",
+      "post-health-route-rejected",
+      "health-query-rejected",
+      "non-allowlisted-metrics-route-rejected",
+      "duplicate-authorization-rejected",
+      "untrusted-ca-rejected-during-certificate-validation",
+      "wrong-tls-hostname-rejected-during-certificate-validation"
+    ],
+    "asynchronous_hostname_policy": {
+      "public_hostname_accepted": true,
+      "private_literal_denied": true
+    },
+    "public_capture": {
+      "count": 1,
+      "destination_class": "IANA-public-test-site",
+      "http_status": 200,
+      "expected_marker_found": true,
+      "markdown_characters": 2207,
+      "response_bytes": 2654
+    },
+    "search_calls": 0,
+    "retries": 0,
+    "model_or_internal_fanout_assessed": false
+  },
+  "historical_preflight_failure": {
+    "reason": "short-network-identifier-used-instead-of-full-identifier",
+    "boundary_probes_started": false,
+    "model_calls": 0,
+    "positive_controls_run": false,
+    "retained_as_setup_history": true,
+    "qualification_credit": false
+  },
+  "unqualified_surfaces": [
+    "research-quality",
+    "study-admission",
+    "internal-model-fanout-during-capture"
+  ],
+  "source_profile_sha256": "38176b5e36dfbd4af3e441a68f959dc460ad6b313c3b4729726da3684749dce0",
+  "operator_qualification_sha256": "10b0286bb82fd18ee024c0e9e16333588a64f2590f97b833000a0cccb6e34f62"
+}
