@@ -45,7 +45,11 @@ from .fetch_tiers import (
 )
 from .proxy import _get_httpx_proxies, _redact_proxy_url
 from .settings import load_settings
-from .source_http import capture_egress_proxy_url, source_curl_options
+from .source_http import (
+    SourceDestinationPolicyUnavailableError,
+    capture_egress_proxy_url,
+    source_curl_options,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +76,7 @@ def _private_url_allowlisted(url: str) -> bool:
     return hostname in allowed
 
 
-def _private_destination_error(
+async def _private_destination_error(
     url: str, *, allow_adapter_identifier: bool = False
 ) -> dict | None:
     """Return the standard denial envelope for an unapproved private target.
@@ -85,7 +89,16 @@ def _private_destination_error(
         return None
     if _private_url_allowlisted(url):
         return None
-    is_private, reason = _is_private_url(url)
+    try:
+        is_private, reason = await _is_private_url(url)
+    except SourceDestinationPolicyUnavailableError:
+        return {
+            "markdown": "",
+            "source": "blocked",
+            "url": url,
+            "error": "Destination validation is temporarily unavailable",
+            "error_code": "SOURCE_DESTINATION_VALIDATION_UNAVAILABLE",
+        }
     if not is_private:
         return None
     return {
@@ -445,7 +458,7 @@ async def smart_scrape(
     # Validate source destinations before adapters, which may perform their
     # own HTTP requests and otherwise bypass the generic fetch guard. Opaque
     # adapter identifiers (for example cve:CVE-...) are not network targets.
-    destination_error = _private_destination_error(
+    destination_error = await _private_destination_error(
         url, allow_adapter_identifier=not force_browser
     )
     if destination_error:
@@ -466,7 +479,7 @@ async def smart_scrape(
         if _CVE_IDENTIFIER.fullmatch(url):
             # Preserve the prior terminal behavior when no CVE adapter accepts
             # an identifier; it must never fall through to an HTTP fetch tier.
-            return _private_destination_error(url) or {
+            return await _private_destination_error(url) or {
                 "markdown": "",
                 "source": "blocked",
                 "url": url,

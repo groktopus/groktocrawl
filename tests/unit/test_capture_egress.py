@@ -1,5 +1,6 @@
 import asyncio
 import ipaddress
+import json
 import socket
 import sys
 from collections.abc import Awaitable, Callable
@@ -11,6 +12,8 @@ import pytest
 
 _service_root = Path(__file__).resolve().parents[2] / "capture-egress-svc"
 sys.path.insert(0, str(_service_root))
+_scraper_root = Path(__file__).resolve().parents[2] / "scraper-svc"
+sys.path.insert(0, str(_scraper_root))
 
 from capture_egress_svc.proxy import (
     CaptureEgressProxy,
@@ -18,9 +21,19 @@ from capture_egress_svc.proxy import (
     _proxy_bind_host,
     health_handler,
 )
+from scraper.fetch_tiers import _is_private_url, fetch_via_content_negotiation
+from scraper.source_http import (
+    CAPTURE_EGRESS_PROXY_ENV,
+    capture_gateway_hostname_is_public,
+    source_httpx_client,
+)
 
 from common import capture_destination
-from common.capture_destination import BoundConnection, parse_authority
+from common.capture_destination import (
+    BoundConnection,
+    DestinationResolutionError,
+    parse_authority,
+)
 
 
 def test_proxy_bind_host_keeps_default_compatible_and_accepts_numeric_interface(
@@ -82,6 +95,216 @@ async def read_to_eof(reader: asyncio.StreamReader) -> bytes:
     while chunk := await reader.read(4096):
         chunks.append(chunk)
     return b"".join(chunks)
+
+
+async def send_dns_policy_request(
+    address: tuple[str, int], *, hostname: str = "example.com", headers: bytes = b""
+) -> bytes:
+    reader, writer = await asyncio.open_connection(*address)
+    body = json.dumps({"hostname": hostname}, separators=(",", ":")).encode()
+    request_headers = headers or (
+        b"Host: capture-egress.internal:8080\r\n"
+        b"Content-Type: application/json\r\n"
+        b"Connection: close\r\n"
+        + b"Content-Length: "
+        + str(len(body)).encode()
+        + b"\r\n"
+    )
+    writer.write(
+        b"POST /_control/public-dns-check HTTP/1.1\r\n"
+        + request_headers
+        + b"\r\n"
+        + body
+    )
+    await writer.drain()
+    response = await read_to_eof(reader)
+    writer.close()
+    await writer.wait_closed()
+    return response
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("answers", "expected_status", "expected_body"),
+    [
+        (["93.184.216.34", "2606:4700:4700::1111"], b"200 OK", b'{"status":"public"}'),
+        (["93.184.216.34", "10.0.0.1"], b"403 Forbidden", b'{"status":"denied"}'),
+        (["10.0.0.1"], b"403 Forbidden", b'{"status":"denied"}'),
+    ],
+)
+async def test_dns_policy_rpc_uses_shared_address_policy_without_connecting(
+    answers: list[str], expected_status: bytes, expected_body: bytes
+) -> None:
+    async def resolver(_host: str, _port: int) -> list[str]:
+        return answers
+
+    async def unexpected_connector(_authority: str) -> BoundConnection:
+        raise AssertionError("DNS policy oracle must never connect to an origin")
+
+    proxy = CaptureEgressProxy(
+        resolver=resolver,
+        destination_connector=unexpected_connector,
+        enable_dns_policy_rpc=True,
+    )
+    server, host, port = await start_proxy(proxy)
+    try:
+        response = await send_dns_policy_request((host, port))
+        head, body = response.split(b"\r\n\r\n", 1)
+        assert expected_status in head.split(b"\r\n", 1)[0]
+        assert body == expected_body
+        assert b"93.184.216.34" not in response
+        assert b"10.0.0.1" not in response
+    finally:
+        await stop_server(server)
+
+
+@pytest.mark.asyncio
+async def test_scraper_async_oracle_client_round_trips_through_policy_rpc(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def resolver(host: str, port: int) -> list[str]:
+        assert host == "example.com"
+        assert port in {80, 443}
+        return ["93.184.216.34"]
+
+    async def unexpected_connector(_authority: str) -> BoundConnection:
+        raise AssertionError("preflight must not connect to the origin")
+
+    proxy = CaptureEgressProxy(
+        resolver=resolver,
+        destination_connector=unexpected_connector,
+        enable_dns_policy_rpc=True,
+    )
+    server, host, port = await start_proxy(proxy)
+    monkeypatch.setenv(CAPTURE_EGRESS_PROXY_ENV, f"http://{host}:{port}")
+    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_IP", host)
+    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_PORT", str(port))
+    try:
+        assert await capture_gateway_hostname_is_public("example.com") is True
+    finally:
+        await stop_server(server)
+
+
+@pytest.mark.asyncio
+async def test_protected_scrape_uses_gateway_dns_when_local_dns_is_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    origin_requests: list[bytes] = []
+
+    async def origin_handler(
+        reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+    ) -> None:
+        request = await reader.readuntil(b"\r\n\r\n")
+        origin_requests.append(request)
+        body = (
+            b"# Fixture page\n\n## Protected route\n\n"
+            b"- Public content through the gateway.\n"
+        )
+        writer.write(
+            b"HTTP/1.1 200 OK\r\nContent-Type: text/markdown\r\n"
+            + f"Content-Length: {len(body)}\r\nConnection: close\r\n\r\n".encode()
+            + body
+        )
+        await writer.drain()
+        writer.close()
+        await writer.wait_closed()
+
+    origin = await asyncio.start_server(origin_handler, "127.0.0.1", 0)
+    origin_address = origin.sockets[0].getsockname()
+
+    async def resolver(host: str, port: int) -> list[str]:
+        assert host == "example.com"
+        assert port in {80, 443}
+        return ["93.184.216.34"]
+
+    proxy = CaptureEgressProxy(
+        resolver=resolver,
+        destination_connector=local_connector(origin_address),
+        enable_dns_policy_rpc=True,
+    )
+    gateway, host, port = await start_proxy(proxy)
+    monkeypatch.setenv(CAPTURE_EGRESS_PROXY_ENV, f"http://{host}:{port}")
+    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_IP", host)
+    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_PORT", str(port))
+    monkeypatch.setattr(
+        "scraper.fetch_tiers.is_private_host",
+        lambda _url: (_ for _ in ()).throw(
+            socket.gaierror(-3, "temporary failure in name resolution")
+        ),
+    )
+    try:
+        # Protected mode must ask the gateway, not the isolated scraper's
+        # failing local resolver, before it starts the source request.
+        assert await _is_private_url("http://example.com/article") == (False, "")
+        async with source_httpx_client(timeout=2) as http_client:
+
+            class CurlCompatibleClient:
+                async def get(self, url, **kwargs):
+                    allow_redirects = kwargs.pop("allow_redirects", False)
+                    return await http_client.get(
+                        url, follow_redirects=allow_redirects, **kwargs
+                    )
+
+            result = await fetch_via_content_negotiation(
+                "http://example.com/article", CurlCompatibleClient()
+            )
+        assert result is not None
+        assert result["markdown"].startswith("# Fixture page")
+        assert len(origin_requests) == 1
+        assert origin_requests[0].startswith(b"GET /article HTTP/1.1\r\n")
+    finally:
+        await stop_server(gateway)
+        await stop_server(origin)
+
+
+@pytest.mark.asyncio
+async def test_dns_policy_rpc_reports_resolver_outage_as_unavailable() -> None:
+    async def resolver(_host: str, _port: int) -> list[str]:
+        raise DestinationResolutionError()
+
+    proxy = CaptureEgressProxy(resolver=resolver, enable_dns_policy_rpc=True)
+    server, host, port = await start_proxy(proxy)
+    try:
+        response = await send_dns_policy_request((host, port))
+        assert response.startswith(b"HTTP/1.1 503 Service Unavailable\r\n")
+        assert response.endswith(b'{"status":"unavailable"}')
+    finally:
+        await stop_server(server)
+
+
+@pytest.mark.asyncio
+async def test_dns_policy_rpc_requires_fixed_origin_form_and_exact_host() -> None:
+    async def resolver(_host: str, _port: int) -> list[str]:
+        raise AssertionError("malformed policy request must not query DNS")
+
+    proxy = CaptureEgressProxy(resolver=resolver, enable_dns_policy_rpc=True)
+    server, host, port = await start_proxy(proxy)
+    try:
+        response = await send_dns_policy_request(
+            (host, port),
+            headers=(
+                b"Host: candidate-model-upstream:8080\r\n"
+                b"Content-Type: application/json\r\n"
+                b"Connection: close\r\n"
+                b"Content-Length: 25\r\n"
+            ),
+        )
+        assert response.startswith(b"HTTP/1.1 400 Bad Request\r\n")
+    finally:
+        await stop_server(server)
+
+
+@pytest.mark.asyncio
+async def test_model_proxy_shape_does_not_enable_dns_policy_rpc() -> None:
+    from capture_egress_svc.model_proxy import make_model_proxy
+
+    proxy = make_model_proxy(frozenset({"model.example:443"}), frozenset())
+    server, host, port = await start_proxy(proxy)
+    try:
+        response = await send_dns_policy_request((host, port))
+        assert response.startswith(b"HTTP/1.1 400 Bad Request\r\n")
+    finally:
+        await stop_server(server)
 
 
 class FakeTransport:
@@ -212,7 +435,9 @@ async def test_absolute_form_http_post_streams_body_and_strips_hop_headers() -> 
 
 
 @pytest.mark.asyncio
-async def test_absolute_http_preserves_origin_response_after_complete_length_body() -> None:
+async def test_absolute_http_preserves_origin_response_after_complete_length_body() -> (
+    None
+):
     request_body_seen = asyncio.Event()
 
     async def origin_handler(

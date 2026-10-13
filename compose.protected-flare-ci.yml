@@ -1,16 +1,10 @@
 name: groktocrawl-x-protected-flare-ci
 
 services:
-  candidate-scraper:
-    extra_hosts:
-      - "flare-origin.test:93.184.216.34"
-
   candidate-capture-egress:
     networks:
       candidate_flare_fixture:
         ipv4_address: 93.184.216.38
-    extra_hosts:
-      - "flare-origin.test:93.184.216.34"
 
   candidate-flare-test-origin:
     build:
@@ -21,6 +15,7 @@ services:
     networks:
       candidate_flare_fixture:
         ipv4_address: 93.184.216.34
+        aliases: [flare-origin.test]
     read_only: true
     tmpfs: [/tmp]
     cap_drop: [ALL]

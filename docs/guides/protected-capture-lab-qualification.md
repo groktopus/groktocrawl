@@ -84,6 +84,16 @@ CI composition still uses its separate fixture-model overlay and is not a
 substitute for a lab run. A passing configuration or synthetic test does not
 qualify a deployed lab profile.
 
+Before capture checks, confirm the configured source-gateway resolver is ready
+to resolve public hostnames. The scraper's isolated resolver is not expected to
+resolve public names: its pre-adapter guard asks the source gateway's bounded
+DNS-policy endpoint, then the actual request is independently resolved and
+connected through that same gateway. Run a representative public-URL capture
+through the complete scraper path after resolver readiness. API health and a
+successful DNS-policy preflight alone do not establish capture readiness; the
+check must include the actual proxied request. After any IPAM change, recreate
+the affected network and containers before repeating these checks.
+
 After the six probes, generate the separate sentinel positive control once.
 Do not repeat it or clear retained sentinel files when resuming a run:
 

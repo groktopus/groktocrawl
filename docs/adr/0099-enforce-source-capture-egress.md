@@ -87,6 +87,21 @@ retain explicit prior provenance. The record remains proposed. Fresh study
 registration and independent admission remain required, with no reduction in
 tools or gates; other image/configuration sets require their own qualification.
 
+The scraper's isolated network intentionally cannot resolve public source
+names locally. Its pre-adapter URL check therefore uses a bounded, fixed-path
+DNS-policy request to the source-capture gateway. The request carries only a
+hostname; the gateway validates every DNS answer and returns a status without
+addresses or opening an origin connection. The subsequent source request still
+goes through the gateway, which resolves again, validates all answers, dials a
+numeric address, and checks the connected peer. A missing or unavailable
+preflight fails closed. This control endpoint is enabled only on the
+source-capture gateway, never on the model-only proxy.
+
+Protected-profile readiness must verify this preflight and a representative
+public capture through the source gateway after the configured resolver is
+ready. Container/API health alone is insufficient. A network/IPAM change also
+requires recreating the affected networks and containers before that check.
+
 Before enabling the profile, exact-image integration tests must exercise adapter,
 metadata, redirect, inline-browser, browser-service, and FlareSolverr traffic.
 Private sentinels must receive zero forbidden requests. Gateway outage, client

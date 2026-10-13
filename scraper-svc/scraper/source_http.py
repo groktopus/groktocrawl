@@ -9,12 +9,17 @@ until they have an independently qualified route through the gateway.
 
 from __future__ import annotations
 
+import asyncio
+import ipaddress
+import json
 import os
 from typing import Any
 from urllib.parse import urlsplit
 
 import httpx
 from curl_cffi.const import CurlOpt
+
+from common.capture_destination import DestinationError, parse_authority
 
 CAPTURE_EGRESS_PROXY_ENV = "SCRAPER_CAPTURE_EGRESS_PROXY_URL"
 MODEL_EGRESS_PROXY_ENV = "MODEL_EGRESS_PROXY_URL"
@@ -32,6 +37,10 @@ _SCRAPER_API_SOCKET = "/run/scraper/app.sock"
 
 class SourceTransportConfigurationError(RuntimeError):
     """The configured source route cannot be used safely."""
+
+
+class SourceDestinationPolicyUnavailableError(SourceTransportConfigurationError):
+    """The source gateway cannot currently verify a hostname destination."""
 
 
 class ProtectedSourceToolUnavailableError(RuntimeError):
@@ -91,6 +100,96 @@ def model_egress_proxy_url() -> str | None:
 def protected_source_mode() -> bool:
     """Whether source HTTP traffic is configured to require the gateway."""
     return bool(os.environ.get(CAPTURE_EGRESS_PROXY_ENV, ""))
+
+
+async def capture_gateway_hostname_is_public(hostname: str) -> bool:
+    """Ask the fixed capture gateway to apply its DNS policy without dialing.
+
+    The real source request still goes through the HTTP proxy, which resolves
+    and validates again immediately before its numeric dial. This preflight
+    exists only to preserve the scraper's early SSRF rejection behavior when
+    its isolated namespace cannot resolve public DNS locally.
+    """
+    raw_proxy = os.environ.get(CAPTURE_EGRESS_PROXY_ENV, "")
+    try:
+        parsed = urlsplit(raw_proxy)
+        proxy_ip = ipaddress.ip_address(parsed.hostname or "")
+        expected_ip = ipaddress.ip_address(
+            os.environ.get("SCRAPER_CAPTURE_GATEWAY_IP", "172.31.254.2")
+        )
+        expected_port = int(os.environ.get("SCRAPER_CAPTURE_GATEWAY_PORT", "8080"))
+        if (
+            parsed.scheme.lower() != "http"
+            or not isinstance(expected_ip, ipaddress.IPv4Address)
+            or proxy_ip != expected_ip
+            or parsed.port != expected_port
+            or parsed.path not in ("", "/")
+            or parsed.query
+            or parsed.fragment
+            or parsed.username is not None
+            or parsed.password is not None
+        ):
+            raise ValueError
+    except (ValueError, TypeError) as exc:
+        raise SourceDestinationPolicyUnavailableError(
+            "capture-egress-policy-peer-invalid"
+        ) from exc
+
+    try:
+        authority = parse_authority(f"{hostname}:443")
+        if authority.literal is not None:
+            return False
+        canonical_hostname = authority.host
+    except (DestinationError, ValueError):
+        return False
+    endpoint = (
+        f"http://{expected_ip.compressed}:{expected_port}/_control/public-dns-check"
+    )
+    body = json.dumps({"hostname": canonical_hostname}, separators=(",", ":"))
+    try:
+        async with asyncio.timeout(2.0):
+            async with httpx.AsyncClient(
+                trust_env=False,
+                follow_redirects=False,
+                timeout=None,
+            ) as client:
+                async with client.stream(
+                    "POST",
+                    endpoint,
+                    content=body,
+                    headers={
+                        "Host": "capture-egress.internal:8080",
+                        "Content-Type": "application/json",
+                        "Connection": "close",
+                    },
+                ) as response:
+                    if response.status_code != 200:
+                        if response.status_code == 403:
+                            return False
+                        raise SourceDestinationPolicyUnavailableError(
+                            "capture-egress-policy-unavailable"
+                        )
+                    chunks: list[bytes] = []
+                    size = 0
+                    async for chunk in response.aiter_bytes():
+                        size += len(chunk)
+                        if size > 1024:
+                            raise SourceDestinationPolicyUnavailableError(
+                                "capture-egress-policy-response-too-large"
+                            )
+                        chunks.append(chunk)
+                    payload = json.loads(b"".join(chunks))
+    except SourceDestinationPolicyUnavailableError:
+        raise
+    except (httpx.HTTPError, OSError, TimeoutError, ValueError, TypeError) as exc:
+        raise SourceDestinationPolicyUnavailableError(
+            "capture-egress-policy-unavailable"
+        ) from exc
+    if payload != {"status": "public"}:
+        raise SourceDestinationPolicyUnavailableError(
+            "capture-egress-policy-response-invalid"
+        )
+    return True
 
 
 def source_httpx_client(**kwargs) -> httpx.AsyncClient:

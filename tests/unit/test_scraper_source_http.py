@@ -19,11 +19,14 @@ _SCRAPER_SVC = Path(__file__).parents[2] / "scraper-svc"
 if str(_SCRAPER_SVC) not in sys.path:
     sys.path.insert(0, str(_SCRAPER_SVC))
 
+from scraper import source_http as source_http_module
 from scraper.llm_control_entrypoint import bind_control_listener
 from scraper.source_http import (
     CAPTURE_EGRESS_PROXY_ENV,
     MODEL_EGRESS_PROXY_ENV,
+    SourceDestinationPolicyUnavailableError,
     SourceTransportConfigurationError,
+    capture_gateway_hostname_is_public,
     source_curl_options,
     source_httpx_client,
     source_httpx_sync_client,
@@ -57,6 +60,221 @@ def test_source_httpx_client_preserves_default_constructor(monkeypatch):
 
     assert source_httpx_client(timeout=12) == "client"
     constructor.assert_called_once_with(timeout=12)
+
+
+@pytest.mark.asyncio
+async def test_capture_gateway_hostname_oracle_uses_fixed_ip_and_no_env_proxy(
+    monkeypatch,
+):
+    monkeypatch.setenv(CAPTURE_EGRESS_PROXY_ENV, "http://172.31.254.2:8080")
+    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_IP", "172.31.254.2")
+    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_PORT", "8080")
+    observed = {}
+
+    class Response:
+        status_code = 200
+
+        async def aiter_bytes(self):
+            yield b'{"status":"public"}'
+
+    class ResponseContext:
+        async def __aenter__(self):
+            return Response()
+
+        async def __aexit__(self, *_args):
+            return None
+
+    class Client:
+        def __init__(self, **kwargs):
+            observed["client_kwargs"] = kwargs
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *_args):
+            return None
+
+        def stream(self, method, url, **kwargs):
+            observed["method"] = method
+            observed["url"] = url
+            observed["request"] = kwargs
+            return ResponseContext()
+
+    monkeypatch.setattr(httpx, "AsyncClient", Client)
+    assert await capture_gateway_hostname_is_public("example.com") is True
+    assert observed["url"] == ("http://172.31.254.2:8080/_control/public-dns-check")
+    assert observed["client_kwargs"]["trust_env"] is False
+    assert observed["client_kwargs"]["follow_redirects"] is False
+    assert observed["request"]["headers"]["Host"] == "capture-egress.internal:8080"
+    assert observed["method"] == "POST"
+    assert observed["request"]["content"] == '{"hostname":"example.com"}'
+
+
+@pytest.mark.asyncio
+async def test_capture_gateway_oracle_normalizes_idna_and_trailing_dot(monkeypatch):
+    monkeypatch.setenv(CAPTURE_EGRESS_PROXY_ENV, "http://172.31.254.2:8080")
+    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_IP", "172.31.254.2")
+    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_PORT", "8080")
+    observed = {}
+
+    class Response:
+        status_code = 200
+
+        async def aiter_bytes(self):
+            yield b'{"status":"public"}'
+
+    class ResponseContext:
+        async def __aenter__(self):
+            return Response()
+
+        async def __aexit__(self, *_args):
+            return None
+
+    class Client:
+        def __init__(self, **_kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *_args):
+            return None
+
+        def stream(self, _method, _url, **kwargs):
+            observed["body"] = kwargs["content"]
+            return ResponseContext()
+
+    monkeypatch.setattr(httpx, "AsyncClient", Client)
+    assert await capture_gateway_hostname_is_public("BÜCHER.example.") is True
+    assert observed["body"] == '{"hostname":"xn--bcher-kva.example"}'
+
+
+@pytest.mark.asyncio
+async def test_capture_gateway_oracle_bounds_response_body(monkeypatch):
+    monkeypatch.setenv(CAPTURE_EGRESS_PROXY_ENV, "http://172.31.254.2:8080")
+    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_IP", "172.31.254.2")
+    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_PORT", "8080")
+
+    class Response:
+        status_code = 200
+
+        async def aiter_bytes(self):
+            yield b"x" * 1025
+
+    class ResponseContext:
+        async def __aenter__(self):
+            return Response()
+
+        async def __aexit__(self, *_args):
+            return None
+
+    class Client:
+        def __init__(self, **_kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *_args):
+            return None
+
+        def stream(self, *_args, **_kwargs):
+            return ResponseContext()
+
+    monkeypatch.setattr(httpx, "AsyncClient", Client)
+    with pytest.raises(
+        SourceDestinationPolicyUnavailableError, match="response-too-large"
+    ):
+        await capture_gateway_hostname_is_public("example.com")
+
+
+@pytest.mark.asyncio
+async def test_capture_gateway_oracle_distinguishes_outage_from_policy_denial(
+    monkeypatch,
+):
+    monkeypatch.setenv(CAPTURE_EGRESS_PROXY_ENV, "http://172.31.254.2:8080")
+    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_IP", "172.31.254.2")
+    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_PORT", "8080")
+
+    class Response:
+        status_code = 503
+
+    class ResponseContext:
+        async def __aenter__(self):
+            return Response()
+
+        async def __aexit__(self, *_args):
+            return None
+
+    class Client:
+        def __init__(self, **_kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *_args):
+            return None
+
+        def stream(self, *_args, **_kwargs):
+            return ResponseContext()
+
+    monkeypatch.setattr(httpx, "AsyncClient", Client)
+    with pytest.raises(SourceTransportConfigurationError, match="policy-unavailable"):
+        await capture_gateway_hostname_is_public("example.com")
+
+
+@pytest.mark.asyncio
+async def test_capture_gateway_oracle_uses_total_deadline(monkeypatch):
+    monkeypatch.setenv(CAPTURE_EGRESS_PROXY_ENV, "http://172.31.254.2:8080")
+    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_IP", "172.31.254.2")
+    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_PORT", "8080")
+    real_timeout = asyncio.timeout
+
+    class Response:
+        status_code = 200
+
+        async def aiter_bytes(self):
+            await asyncio.sleep(0.05)
+            yield b'{"status":"public"}'
+
+    class ResponseContext:
+        async def __aenter__(self):
+            return Response()
+
+        async def __aexit__(self, *_args):
+            return None
+
+    class Client:
+        def __init__(self, **_kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *_args):
+            return None
+
+        def stream(self, *_args, **_kwargs):
+            return ResponseContext()
+
+    monkeypatch.setattr(
+        source_http_module.asyncio, "timeout", lambda _seconds: real_timeout(0.001)
+    )
+    monkeypatch.setattr(httpx, "AsyncClient", Client)
+    with pytest.raises(SourceTransportConfigurationError, match="policy-unavailable"):
+        await capture_gateway_hostname_is_public("example.com")
+
+
+@pytest.mark.asyncio
+async def test_capture_gateway_hostname_oracle_rejects_unavailable_or_mismatched_peer(
+    monkeypatch,
+):
+    monkeypatch.setenv(CAPTURE_EGRESS_PROXY_ENV, "http://example.internal:8080")
+    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_IP", "172.31.254.2")
+    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_PORT", "8080")
+    with pytest.raises(SourceTransportConfigurationError, match="policy-peer-invalid"):
+        await capture_gateway_hostname_is_public("example.com")
 
 
 def test_model_control_listener_is_prebound_private_and_inheritable():
@@ -175,9 +393,12 @@ def test_private_model_upstream_requires_isolated_gateway(monkeypatch):
     constructor = Mock(return_value="model")
     monkeypatch.setattr(httpx, "AsyncClient", constructor)
 
-    assert trusted_llm_upstream_client(
-        "http://llm-svc:4001/v1/chat/completions", timeout=10
-    ) == "model"
+    assert (
+        trusted_llm_upstream_client(
+            "http://llm-svc:4001/v1/chat/completions", timeout=10
+        )
+        == "model"
+    )
     constructor.assert_called_once_with(
         timeout=10,
         follow_redirects=False,
@@ -201,7 +422,9 @@ def test_model_gateway_cannot_fall_back_to_source_gateway(monkeypatch):
     monkeypatch.setenv(MODEL_EGRESS_PROXY_ENV, "http://user:secret@source-egress:8080")
     constructor = Mock()
     monkeypatch.setattr(httpx, "AsyncClient", constructor)
-    with pytest.raises(SourceTransportConfigurationError, match="model-egress-proxy-invalid"):
+    with pytest.raises(
+        SourceTransportConfigurationError, match="model-egress-proxy-invalid"
+    ):
         trusted_llm_upstream_client("https://model.example/v1/chat/completions")
     constructor.assert_not_called()
 
@@ -277,7 +500,9 @@ def test_fixed_control_client_does_not_inherit_source_proxy(monkeypatch):
     assert trusted_control_httpx_client(service="browser", timeout=7) == "control"
     assert constructor.call_args.kwargs["timeout"] == 7
     assert constructor.call_args.kwargs["trust_env"] is False
-    assert isinstance(constructor.call_args.kwargs["transport"], httpx.AsyncHTTPTransport)
+    assert isinstance(
+        constructor.call_args.kwargs["transport"], httpx.AsyncHTTPTransport
+    )
 
 
 def test_protected_llm_is_a_fixed_keyless_socket_capability(monkeypatch):
@@ -437,7 +662,11 @@ def test_candidate_scraper_is_not_attached_to_direct_egress_network():
     assert "candidate_flare_control_socket:/run/flare-control:ro" in scraper["volumes"]
     assert services["candidate-flare-control"]["network_mode"] == "none"
     model_control = services["candidate-scraper-model-control"]
-    assert model_control["command"] == ["python", "-m", "scraper.llm_control_entrypoint"]
+    assert model_control["command"] == [
+        "python",
+        "-m",
+        "scraper.llm_control_entrypoint",
+    ]
     assert set(model_control["networks"]) == {"candidate_model_gateway"}
     model_gateway = services["candidate-model-egress"]
     assert set(model_gateway["networks"]) == {
@@ -449,9 +678,11 @@ def test_candidate_scraper_is_not_attached_to_direct_egress_network():
     assert "LLM_GATEWAY_PRIVATE_HOSTS" in model_gateway["environment"]
     assert compose["networks"]["candidate_model_gateway"]["internal"] is True
     assert compose["networks"]["candidate_model_upstream"].get("internal") is not True
-    assert ci_overlay["services"]["candidate-scraper"]["extra_hosts"] == [
-        "flare-origin.test:93.184.216.34"
-    ]
+    assert "candidate-scraper" not in ci_overlay["services"]
+    assert "extra_hosts" not in ci_overlay["services"]["candidate-capture-egress"]
+    assert ci_overlay["services"]["candidate-flare-test-origin"]["networks"][
+        "candidate_flare_fixture"
+    ]["aliases"] == ["flare-origin.test"]
     assert model_control["environment"]["MODEL_EGRESS_PROXY_URL"] == (
         "http://172.31.254.34:8080"
     )
@@ -497,7 +728,9 @@ def test_adapter_browser_fallbacks_remain_available_in_protected_mode(monkeypatc
     assert asyncio.run(bluesky._fetch_via_browser("https://source.example", context))
     assert asyncio.run(shopify._fetch_via_browser("https://source.example", context))
     assert asyncio.run(substack._fetch_via_browser("https://source.example", context))
-    assert asyncio.run(youtube._fetch_via_browser("https://source.example", "video", context))
+    assert asyncio.run(
+        youtube._fetch_via_browser("https://source.example", "video", context)
+    )
     assert client.post.await_count > 0
 
 
