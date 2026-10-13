@@ -83,7 +83,7 @@ services:
       - candidate_capture_probe_state:/state
     networks:
       candidate_capture:
-        ipv4_address: 172.31.254.6
+        ipv4_address: 172.31.254.3
     read_only: true
     tmpfs: [/tmp]
     cap_drop: [ALL]

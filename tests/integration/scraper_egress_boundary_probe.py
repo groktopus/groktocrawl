@@ -19,7 +19,7 @@ from scraper.source_http import source_httpx_client
 from scraper.valkey_control import RESERVE_SLOT_SCRIPT, ValkeyControlClient
 
 PRIVATE_IP = "172.31.253.250"
-CAPTURE_PEER_IP = "172.31.254.6"
+CAPTURE_PEER_IP = "172.31.254.3"
 CAPTURE_HOST_GATEWAY_IP = "172.31.254.1"
 MODEL_GATEWAY_IP = "172.31.254.34"
 FIXTURE_ORIGIN = os.environ.get("CAPTURE_FIXTURE_ORIGIN", "http://flare-origin.test").rstrip("/")
