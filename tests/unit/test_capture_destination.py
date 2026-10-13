@@ -12,6 +12,7 @@ from common.capture_destination import (
     DestinationTimeoutError,
     resolve_and_connect,
     resolve_and_connect_model_target,
+    resolve_and_validate,
 )
 
 
@@ -93,6 +94,33 @@ async def test_resolves_once_and_dials_selected_numeric_address() -> None:
     assert dials == [ipaddress.ip_address("93.184.216.34")]
     assert bound.address == ipaddress.ip_address("93.184.216.34")
     assert not sock.closed
+
+
+@pytest.mark.asyncio
+async def test_resolve_and_validate_checks_every_answer_without_dialing() -> None:
+    calls: list[tuple[str, int]] = []
+
+    async def resolver(host: str, port: int) -> list[str]:
+        calls.append((host, port))
+        return ["93.184.216.34", "2606:4700:4700::1111"]
+
+    parsed, addresses = await resolve_and_validate("example.com:443", resolver=resolver)
+
+    assert parsed.host == "example.com"
+    assert calls == [("example.com", 443)]
+    assert addresses == [
+        ipaddress.ip_address("93.184.216.34"),
+        ipaddress.ip_address("2606:4700:4700::1111"),
+    ]
+
+
+@pytest.mark.asyncio
+async def test_resolve_and_validate_denies_mixed_answers_without_dialing() -> None:
+    async def resolver(_host: str, _port: int) -> list[str]:
+        return ["93.184.216.34", "10.0.0.1"]
+
+    with pytest.raises(DestinationDeniedError):
+        await resolve_and_validate("example.com:443", resolver=resolver)
 
 
 @pytest.mark.asyncio
@@ -485,7 +513,9 @@ async def test_model_target_rejects_mixed_private_public_dns_answers() -> None:
 
 
 @pytest.mark.asyncio
-async def test_model_target_closes_connection_when_numeric_peer_does_not_match() -> None:
+async def test_model_target_closes_connection_when_numeric_peer_does_not_match() -> (
+    None
+):
     socket = FakeSocket("172.31.253.21")
 
     async def resolver(host: str, port: int) -> list[str]:

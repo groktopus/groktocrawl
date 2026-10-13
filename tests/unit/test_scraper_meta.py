@@ -116,7 +116,11 @@ class TestScrapeMetaDestinationGuard:
         from scraper.exceptions import InvalidRequestError
 
         monkeypatch.setattr(fetch._settings, "scraper_private_url_allowlist", "")
-        monkeypatch.setattr(fetch, "_is_private_url", lambda _url: (True, "private target"))
+
+        async def private_url(_url):
+            return True, "private target"
+
+        monkeypatch.setattr(fetch, "_is_private_url", private_url)
         fetches = []
 
         async def unexpected_fetch(url):
@@ -131,18 +135,46 @@ class TestScrapeMetaDestinationGuard:
         assert fetches == []
 
     @pytest.mark.asyncio
-    async def test_explicit_private_allowlist_still_allows_meta_fetch(self, monkeypatch):
+    async def test_policy_oracle_outage_returns_unavailable_without_fetch(
+        self, monkeypatch
+    ):
+        from types import SimpleNamespace
+
+        import scraper.app as app
+        import scraper.fetch as fetch
+        from scraper.exceptions import DestinationValidationUnavailableError
+        from scraper.source_http import SourceDestinationPolicyUnavailableError
+
+        monkeypatch.setattr(fetch._settings, "scraper_private_url_allowlist", "")
+
+        async def unavailable(_url):
+            raise SourceDestinationPolicyUnavailableError("test-outage")
+
+        async def unexpected_fetch(_url):
+            raise AssertionError("unverified destination must not be fetched")
+
+        monkeypatch.setattr(fetch, "_is_private_url", unavailable)
+        monkeypatch.setattr(app, "fetch_meta_tags", unexpected_fetch)
+        with pytest.raises(DestinationValidationUnavailableError):
+            await app.scrape_meta(SimpleNamespace(url="https://example.test/meta"))
+
+    @pytest.mark.asyncio
+    async def test_explicit_private_allowlist_still_allows_meta_fetch(
+        self, monkeypatch
+    ):
         from types import SimpleNamespace
 
         import scraper.app as app
         import scraper.fetch as fetch
 
-        monkeypatch.setattr(fetch._settings, "scraper_private_url_allowlist", "private.test")
         monkeypatch.setattr(
-            fetch,
-            "_is_private_url",
-            lambda _url: (_ for _ in ()).throw(AssertionError("allowlist should bypass private check")),
+            fetch._settings, "scraper_private_url_allowlist", "private.test"
         )
+
+        async def unexpected_private_check(_url):
+            raise AssertionError("allowlist should bypass private check")
+
+        monkeypatch.setattr(fetch, "_is_private_url", unexpected_private_check)
         fetched = []
 
         async def fake_fetch(url):
@@ -150,7 +182,9 @@ class TestScrapeMetaDestinationGuard:
             return {"title": "Allowed", "description": None, "og_description": None}
 
         monkeypatch.setattr(app, "fetch_meta_tags", fake_fetch)
-        result = await app.scrape_meta(SimpleNamespace(url="http://private.test/metadata"))
+        result = await app.scrape_meta(
+            SimpleNamespace(url="http://private.test/metadata")
+        )
 
         assert result.success is True
         assert result.title == "Allowed"

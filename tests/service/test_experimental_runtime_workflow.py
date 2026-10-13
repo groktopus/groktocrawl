@@ -307,6 +307,30 @@ def test_lab_qualification_overlay_keeps_live_model_route_and_bounds_sentinels()
     assert services["candidate-flare-test-origin"]["pids_limit"] == 32
 
 
+def test_ci_public_capture_dns_is_available_only_to_the_gateway():
+    base = yaml.safe_load((ROOT / "compose.experimental-candidate.yml").read_text())
+    ci = yaml.safe_load((ROOT / "compose.protected-flare-ci.yml").read_text())
+    services = ci["services"]
+    scraper = base["services"]["candidate-scraper"]
+    gateway = services["candidate-capture-egress"]
+    origin = services["candidate-flare-test-origin"]
+
+    assert set(scraper["networks"]) == {"candidate_capture"}
+    assert "extra_hosts" not in scraper
+    assert "extra_hosts" not in gateway
+    assert "candidate_flare_fixture" not in scraper["networks"]
+    assert gateway["networks"]["candidate_flare_fixture"]["ipv4_address"] == (
+        "93.184.216.38"
+    )
+    assert origin["networks"]["candidate_flare_fixture"]["aliases"] == [
+        "flare-origin.test"
+    ]
+    probe = (ROOT / "tests/integration/scraper_egress_boundary_probe.py").read_text()
+    assert "socket.getaddrinfo(fixture_host, None)" in probe
+    assert "capture_gateway_hostname_is_public(fixture_host)" in probe
+    assert "response = await client.get(FIXTURE_URL)" in probe
+
+
 def test_compose_image_digests_are_full_sha256_values():
     compose_files = [*ROOT.glob("compose*.yml"), *ROOT.glob("docker-compose*.yml")]
     assert compose_files

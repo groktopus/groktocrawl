@@ -33,6 +33,12 @@ class InvalidRequestError(GroktoCrawlError):
     detail = "Invalid request"
 
 
+class DestinationValidationUnavailableError(GroktoCrawlError):
+    status_code = 503
+    error_code = "SOURCE_DESTINATION_VALIDATION_UNAVAILABLE"
+    detail = "Source destination validation is temporarily unavailable"
+
+
 class ScrapeError(GroktoCrawlError):
     status_code = 502
     error_code = "SCRAPE_FAILED"

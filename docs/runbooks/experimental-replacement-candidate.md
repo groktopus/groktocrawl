@@ -117,7 +117,11 @@ upstream services. After changing Compose IPAM ranges, recreate the affected
 containers and networks with the updated Compose configuration before checking
 scrape behavior; restarting containers on the old networks retains the old
 address allocations. Confirm the resolver gateways and public DNS are ready,
-then verify a representative public scrape and the protected-route probes.
+then verify the source gateway's hostname-policy preflight and a representative
+public scrape through the complete scraper path, followed by the protected-route
+probes. The scraper's local resolver is intentionally isolated; a successful
+preflight does not replace the proxied scrape check. API health alone is not a
+capture-readiness signal.
 
 ## Verify and freeze the receipt
 

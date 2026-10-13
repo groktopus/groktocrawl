@@ -23,6 +23,7 @@ from .exceptions import (
     BarrierDetectedError,
     BrowserError,
     CaptchaError,
+    DestinationValidationUnavailableError,
     GroktoCrawlError,
     InvalidRequestError,
     UpstreamError,
@@ -350,6 +351,10 @@ async def scrape(request: ScrapeRequest):
                         "recovery": result.get("recovery"),
                     },
                 )
+            if result.get("error_code") == "SOURCE_DESTINATION_VALIDATION_UNAVAILABLE":
+                raise DestinationValidationUnavailableError(
+                    detail="Source destination validation is temporarily unavailable"
+                )
             raise UpstreamError(
                 detail=result["error"],
                 details={
@@ -470,8 +475,12 @@ async def scrape_meta(request: ScrapeRequest):
     Returns <title>, <meta name="description">, and
     <meta property="og:description"> without full page rendering.
     """
-    blocked = _private_destination_error(request.url)
+    blocked = await _private_destination_error(request.url)
     if blocked:
+        if blocked.get("error_code") == "SOURCE_DESTINATION_VALIDATION_UNAVAILABLE":
+            raise DestinationValidationUnavailableError(
+                detail="Source destination validation is temporarily unavailable"
+            )
         raise InvalidRequestError(
             detail=blocked["error"],
             details={"error_code": blocked["error_code"]},

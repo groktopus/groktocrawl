@@ -15,7 +15,10 @@ from urllib.parse import urlsplit
 from uuid import uuid4
 
 import httpx
-from scraper.source_http import source_httpx_client
+from scraper.source_http import (
+    capture_gateway_hostname_is_public,
+    source_httpx_client,
+)
 from scraper.valkey_control import RESERVE_SLOT_SCRIPT, ValkeyControlClient
 
 PRIVATE_IP = "172.31.253.250"
@@ -307,6 +310,14 @@ async def main() -> None:
     _assert_process_identity(_protected_worker_pid(), 10001, 20000)
     _assert_process_identity(1, 10001, 20000)
     _assert_control_socket_permissions()
+    try:
+        socket.getaddrinfo(fixture_host, None)
+    except socket.gaierror:
+        pass
+    else:
+        raise RuntimeError("fixture DNS unexpectedly resolved in isolated scraper")
+    if not await capture_gateway_hostname_is_public(fixture_host):
+        raise RuntimeError("capture gateway DNS policy rejected the public fixture")
     _direct_tcp_denied(PRIVATE_IP, 19001)
     _direct_tcp_denied(CAPTURE_PEER_IP, 19001)
     _direct_tcp_denied(CAPTURE_HOST_GATEWAY_IP, 19001)

@@ -782,8 +782,11 @@ async def test_smart_scrape_blocks_private_url_before_any_fetch_tier(monkeypatch
     async def unexpected_fetch(*_args, **_kwargs):
         raise AssertionError("fetch tier must not run for a private destination")
 
+    async def private_guard(_url):
+        return True, "blocked"
+
     monkeypatch.setattr(fetch._settings, "scraper_private_url_allowlist", "")
-    monkeypatch.setattr(fetch, "_is_private_url", lambda _url: (True, "blocked"))
+    monkeypatch.setattr(fetch, "_is_private_url", private_guard)
     monkeypatch.setattr(fetch, "fetch_via_playwright", unexpected_fetch)
 
     result = await fetch.smart_scrape("http://127.0.0.1/private", force_browser=True)
@@ -805,13 +808,43 @@ async def test_smart_scrape_blocks_private_url_before_adapter_dispatch(monkeypat
             dispatches.append(url)
             raise AssertionError("private destination must be denied before adapters")
 
+    async def private_guard(_url):
+        return True, "blocked"
+
     monkeypatch.setattr(fetch, "get_registry", lambda: Registry())
     monkeypatch.setattr(fetch._settings, "scraper_private_url_allowlist", "")
-    monkeypatch.setattr(fetch, "_is_private_url", lambda _url: (True, "blocked"))
+    monkeypatch.setattr(fetch, "_is_private_url", private_guard)
 
     result = await fetch.smart_scrape("http://127.0.0.1/private")
 
     assert result["error_code"] == "PRIVATE_URL_BLOCKED"
+    assert dispatches == []
+
+
+@pytest.mark.asyncio
+async def test_policy_oracle_outage_fails_closed_before_adapter_dispatch(monkeypatch):
+    import scraper.fetch as fetch
+    from scraper.source_http import SourceDestinationPolicyUnavailableError
+
+    dispatches = []
+
+    class Registry:
+        _entries = [object()]
+
+        async def dispatch(self, url, _ctx):
+            dispatches.append(url)
+            raise AssertionError("unverified destination must be denied")
+
+    async def unavailable(_url):
+        raise SourceDestinationPolicyUnavailableError("test-outage")
+
+    monkeypatch.setattr(fetch, "get_registry", lambda: Registry())
+    monkeypatch.setattr(fetch._settings, "scraper_private_url_allowlist", "")
+    monkeypatch.setattr(fetch, "_is_private_url", unavailable)
+
+    result = await fetch.smart_scrape("https://example.test/article")
+
+    assert result["error_code"] == "SOURCE_DESTINATION_VALIDATION_UNAVAILABLE"
     assert dispatches == []
 
 
@@ -836,11 +869,15 @@ async def test_explicit_private_allowlist_still_allows_adapter_dispatch(monkeypa
             return AdapterResult()
 
     monkeypatch.setattr(fetch, "get_registry", lambda: Registry())
-    monkeypatch.setattr(fetch._settings, "scraper_private_url_allowlist", "private.test")
+    monkeypatch.setattr(
+        fetch._settings, "scraper_private_url_allowlist", "private.test"
+    )
     monkeypatch.setattr(
         fetch,
         "_is_private_url",
-        lambda _url: (_ for _ in ()).throw(AssertionError("allowlist should bypass private check")),
+        lambda _url: (_ for _ in ()).throw(
+            AssertionError("allowlist should bypass private check")
+        ),
     )
 
     result = await fetch.smart_scrape("http://private.test/article")
@@ -850,7 +887,9 @@ async def test_explicit_private_allowlist_still_allows_adapter_dispatch(monkeypa
 
 
 @pytest.mark.asyncio
-async def test_public_adapter_dispatch_is_unchanged_after_destination_check(monkeypatch):
+async def test_public_adapter_dispatch_is_unchanged_after_destination_check(
+    monkeypatch,
+):
     import scraper.fetch as fetch
 
     seen = []
@@ -869,9 +908,12 @@ async def test_public_adapter_dispatch_is_unchanged_after_destination_check(monk
             seen.append(url)
             return AdapterResult()
 
+    async def public_guard(_url):
+        return False, ""
+
     monkeypatch.setattr(fetch, "get_registry", lambda: Registry())
     monkeypatch.setattr(fetch._settings, "scraper_private_url_allowlist", "")
-    monkeypatch.setattr(fetch, "_is_private_url", lambda _url: (False, ""))
+    monkeypatch.setattr(fetch, "_is_private_url", public_guard)
 
     result = await fetch.smart_scrape("https://public.example/article")
 

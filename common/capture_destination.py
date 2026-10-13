@@ -247,6 +247,60 @@ async def resolve_and_connect(
         or not 0 < timeout <= 30
     ):
         raise ValueError("timeout must be > 0 and <= 30 seconds")
+    try:
+        async with asyncio.timeout(timeout):
+            parsed, addresses = await resolve_and_validate(
+                authority, resolver=resolver, timeout=timeout
+            )
+            connected = await dialer(addresses[0], parsed.port)
+    except asyncio.CancelledError:
+        raise
+    except DestinationError:
+        raise
+    except TimeoutError as exc:
+        raise DestinationTimeoutError() from exc
+    except Exception as exc:
+        raise DestinationConnectionError() from exc
+
+    try:
+        peer = connected.getpeername()
+        peer_ip = ipaddress.ip_address(str(peer[0]))
+        if isinstance(peer_ip, ipaddress.IPv6Address) and peer_ip.ipv4_mapped:
+            peer_ip = peer_ip.ipv4_mapped
+        if peer_ip != addresses[0] or len(peer) < 2 or peer[1] != parsed.port:
+            raise DestinationConnectionError()
+        return BoundConnection(parsed, addresses[0], connected)
+    except asyncio.CancelledError:
+        connected.close()
+        raise
+    except Exception as exc:
+        connected.close()
+        if isinstance(exc, DestinationConnectionError):
+            raise
+        raise DestinationConnectionError() from exc
+    except BaseException:
+        connected.close()
+        raise
+
+
+async def resolve_and_validate(
+    authority: str,
+    *,
+    resolver: Resolver = _system_resolver,
+    timeout: float = 2.0,
+) -> tuple[DestinationAuthority, list[IPAddress]]:
+    """Resolve an authority and vet every answer without opening a socket.
+
+    This is suitable for a policy preflight oracle. The eventual proxy request
+    must still call :func:`resolve_and_connect`, which repeats resolution and
+    binds the real connection to a vetted numeric peer.
+    """
+    if (
+        not isinstance(timeout, (int, float))
+        or isinstance(timeout, bool)
+        or not 0 < timeout <= 30
+    ):
+        raise ValueError("timeout must be > 0 and <= 30 seconds")
     parsed = parse_authority(authority)
     try:
         async with asyncio.timeout(timeout):
@@ -268,33 +322,7 @@ async def resolve_and_connect(
             # Deduplicate while preserving resolver order. Every answer must
             # pass policy before any address is attempted.
             unique = list(dict.fromkeys(vetted))
-            selected = unique[0]
-            try:
-                connected = await dialer(selected, parsed.port)
-            except asyncio.CancelledError:
-                raise
-            except Exception as exc:
-                raise DestinationConnectionError() from exc
-
-            try:
-                peer = connected.getpeername()
-                peer_ip = ipaddress.ip_address(str(peer[0]))
-                if isinstance(peer_ip, ipaddress.IPv6Address) and peer_ip.ipv4_mapped:
-                    peer_ip = peer_ip.ipv4_mapped
-                if peer_ip != selected or len(peer) < 2 or peer[1] != parsed.port:
-                    raise DestinationConnectionError()
-                return BoundConnection(parsed, selected, connected)
-            except asyncio.CancelledError:
-                connected.close()
-                raise
-            except Exception as exc:
-                connected.close()
-                if isinstance(exc, DestinationConnectionError):
-                    raise
-                raise DestinationConnectionError() from exc
-            except BaseException:
-                connected.close()
-                raise
+            return parsed, unique
     except TimeoutError as exc:
         raise DestinationTimeoutError() from exc
 
@@ -384,7 +412,9 @@ async def resolve_and_connect_model_target(
                     answer_scope = "global"
                     vetted.append(address)
                     continue
-                if private_granted and any(address in network for network in private_ranges):
+                if private_granted and any(
+                    address in network for network in private_ranges
+                ):
                     if answer_scope == "global":
                         raise DestinationDeniedError()
                     answer_scope = "private"

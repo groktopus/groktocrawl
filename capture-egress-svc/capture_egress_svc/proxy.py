@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import ipaddress
+import json
 import logging
 import os
 import re
@@ -24,8 +25,10 @@ from common.capture_destination import (
     DestinationError,
     DestinationResolutionError,
     DestinationTimeoutError,
+    Resolver,
     parse_authority,
     resolve_and_connect,
+    resolve_and_validate,
 )
 
 _HEADER_END = b"\r\n\r\n"
@@ -52,6 +55,36 @@ _HOP_HEADERS = {
     b"transfer-encoding",
     b"upgrade",
 }
+_DNS_POLICY_PATH = b"/_control/public-dns-check"
+_DNS_POLICY_HOST = b"capture-egress.internal:8080"
+_DNS_POLICY_BODY_LIMIT = 512
+
+
+def _unique_json_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("duplicate JSON object key")
+        result[key] = value
+    return result
+
+
+async def _send_policy_result(writer: asyncio.StreamWriter, status: str) -> None:
+    status_line = {
+        "public": b"200 OK",
+        "denied": b"403 Forbidden",
+        "unavailable": b"503 Service Unavailable",
+    }[status]
+    body = json.dumps({"status": status}, separators=(",", ":")).encode("ascii")
+    writer.write(
+        b"HTTP/1.1 "
+        + status_line
+        + b"\r\nContent-Type: application/json\r\nConnection: close\r\nContent-Length: "
+        + str(len(body)).encode("ascii")
+        + b"\r\n\r\n"
+        + body
+    )
+    await writer.drain()
 
 
 class ProxyProtocolError(Exception):
@@ -275,10 +308,14 @@ class CaptureEgressProxy:
         config: ProxyConfig | None = None,
         *,
         destination_connector: DestinationConnector | None = None,
+        resolver: Resolver | None = None,
+        enable_dns_policy_rpc: bool = False,
         trace_http_events: bool = False,
     ) -> None:
         self.config = config or ProxyConfig()
         self._connector = destination_connector or self._connect_destination
+        self._resolver = resolver
+        self._enable_dns_policy_rpc = enable_dns_policy_rpc
         self._trace_http_events = trace_http_events
         self._active = 0
 
@@ -299,7 +336,8 @@ class CaptureEgressProxy:
                 event,
                 byte_count,
                 error_type,
-        )
+            )
+
     async def _connect_destination(self, authority: str) -> BoundConnection:
         return await resolve_and_connect(authority, timeout=self.config.connect_timeout)
 
@@ -343,7 +381,11 @@ class CaptureEgressProxy:
             if len(parts) != 3 or parts[2] not in (b"HTTP/1.0", b"HTTP/1.1"):
                 raise ProxyProtocolError()
             method, target, version = parts
-            if method == b"CONNECT":
+            if method == b"POST" and target == _DNS_POLICY_PATH:
+                if not self._enable_dns_policy_rpc:
+                    raise ProxyProtocolError()
+                await self._handle_dns_policy(reader, writer, version, headers)
+            elif method == b"CONNECT":
                 await self._handle_connect(reader, writer, target, headers)
             elif method in (
                 b"GET",
@@ -375,6 +417,84 @@ class CaptureEgressProxy:
             await _send_error(writer, 413)
         except TimeoutError:
             await _send_error(writer, 408)
+
+    async def _handle_dns_policy(
+        self,
+        reader: asyncio.StreamReader,
+        writer: asyncio.StreamWriter,
+        version: bytes,
+        headers: list[tuple[bytes, bytes]],
+    ) -> None:
+        """Answer a hostname policy preflight without connecting to its origin."""
+        if version != b"HTTP/1.1":
+            raise ProxyProtocolError()
+        names = [name for name, _ in headers]
+        required_headers = {
+            b"host",
+            b"content-type",
+            b"connection",
+            b"content-length",
+        }
+        allowed_headers = required_headers | {
+            b"accept",
+            b"accept-encoding",
+            b"user-agent",
+        }
+        if (
+            len(names) != len(set(names))
+            or not required_headers.issubset(names)
+            or not set(names).issubset(allowed_headers)
+        ):
+            raise ProxyProtocolError()
+        if _one_header(headers, b"host", required=True) != _DNS_POLICY_HOST:
+            raise ProxyProtocolError()
+        if _one_header(headers, b"content-type", required=True) != b"application/json":
+            raise ProxyProtocolError()
+        if _one_header(headers, b"connection", required=True) != b"close":
+            raise ProxyProtocolError()
+        if _one_header(headers, b"transfer-encoding") is not None:
+            raise ProxyProtocolError()
+        if _one_header(headers, b"expect") is not None:
+            raise ProxyProtocolError()
+        raw_length = _one_header(headers, b"content-length", required=True)
+        if raw_length is None or not raw_length.isdigit() or len(raw_length) > 3:
+            raise ProxyProtocolError()
+        body_length = int(raw_length)
+        if not 1 <= body_length <= _DNS_POLICY_BODY_LIMIT:
+            raise ProxyProtocolError(413)
+        try:
+            body = await asyncio.wait_for(reader.readexactly(body_length), timeout=1.0)
+        except (asyncio.IncompleteReadError, TimeoutError) as exc:
+            raise ProxyProtocolError() from exc
+        try:
+            payload = json.loads(body, object_pairs_hook=_unique_json_object)
+            if not isinstance(payload, dict) or set(payload) != {"hostname"}:
+                raise ValueError
+            hostname = payload["hostname"]
+            if not isinstance(hostname, str) or not hostname or len(hostname) > 253:
+                raise ValueError
+            hostname_bytes = hostname.encode("ascii", "strict")
+            if hostname_bytes.decode("ascii") != hostname:
+                raise ValueError
+            parsed = parse_authority(f"{hostname}:443")
+            if parsed.literal is not None or parsed.host != hostname.lower():
+                raise ValueError
+        except (ValueError, TypeError, UnicodeError, DestinationError) as exc:
+            raise ProxyProtocolError() from exc
+
+        try:
+            resolver_kwargs = {"resolver": self._resolver} if self._resolver else {}
+            await resolve_and_validate(
+                f"{parsed.host}:443",
+                timeout=self.config.connect_timeout,
+                **resolver_kwargs,
+            )
+        except DestinationDeniedError:
+            await _send_policy_result(writer, "denied")
+        except (DestinationError, TimeoutError, OSError):
+            await _send_policy_result(writer, "unavailable")
+        else:
+            await _send_policy_result(writer, "public")
 
     async def _handle_connect(
         self,
@@ -507,9 +627,7 @@ class CaptureEgressProxy:
                 self._trace_http(
                     phase,
                     byte_count=(
-                        request_bytes
-                        if phase == "request_body"
-                        else response_bytes
+                        request_bytes if phase == "request_body" else response_bytes
                     ),
                     error_type=type(exc).__name__,
                 )
@@ -699,7 +817,7 @@ async def health_handler(
 
 
 async def serve() -> None:
-    proxy = CaptureEgressProxy()
+    proxy = CaptureEgressProxy(enable_dns_policy_rpc=True)
     bind_host = _proxy_bind_host()
     server = await asyncio.start_server(
         proxy.handle_client,
@@ -714,11 +832,15 @@ async def serve() -> None:
 
 def _proxy_bind_host(value: str | None = None) -> str:
     """Use an explicit numeric interface address; retain the default behavior."""
-    host = value if value is not None else os.environ.get(
-        "CAPTURE_PROXY_BIND_HOST", "0.0.0.0"
+    host = (
+        value
+        if value is not None
+        else os.environ.get("CAPTURE_PROXY_BIND_HOST", "0.0.0.0")
     )
     try:
         ipaddress.ip_address(host)
     except ValueError as exc:
-        raise ValueError("capture proxy bind host must be a numeric IP address") from exc
+        raise ValueError(
+            "capture proxy bind host must be a numeric IP address"
+        ) from exc
     return host
