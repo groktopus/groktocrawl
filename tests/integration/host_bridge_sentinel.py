@@ -40,11 +40,19 @@ def validate_capture_address_plan(
     ):
         raise RuntimeError("capture bridge requires IPv4 addresses")
     gateway_ip = addresses[0]
+
     def usable(address: ipaddress.IPv4Address) -> bool:
         return address in network and address not in {
             network.network_address,
             network.broadcast_address,
         }
+
+    reserved_in_pool = sum(address in pool for address in addresses)
+    parent_network_reserved = sum(
+        address in pool
+        for address in (network.network_address, network.broadcast_address)
+    )
+    available_dynamic = pool.num_addresses - reserved_in_pool - parent_network_reserved
     if (
         not pool.subnet_of(network)
         or not network.is_private
@@ -52,10 +60,10 @@ def validate_capture_address_plan(
         or network.is_link_local
         or network.is_multicast
         or network.is_reserved
-        or pool.num_addresses - 2 < MIN_DYNAMIC_ADDRESSES
+        or available_dynamic < MIN_DYNAMIC_ADDRESSES
         or any(not usable(address) for address in addresses)
         or len(set(addresses)) != len(addresses)
-        or any(address in pool for address in addresses)
+        or any(address in pool for address in addresses[1:])
         or any(
             not address.is_private
             or address.is_loopback

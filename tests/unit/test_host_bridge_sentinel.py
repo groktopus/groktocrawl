@@ -72,6 +72,27 @@ def test_configured_target_uses_one_gateway_value_for_all_roles():
         )
 
 
+def test_capture_address_plan_allows_gateway_in_pool_and_counts_remaining_capacity():
+    assert validate_capture_address_plan(
+        "10.73.19.0/28",
+        "10.73.19.1",
+        "10.73.19.0/29",
+        "10.73.19.10",
+        "10.73.19.11",
+    ) == "10.73.19.1"
+
+    # The pool has no dynamic addresses after excluding its network address
+    # and the gateway reserved by Docker.
+    with pytest.raises(RuntimeError, match="overlaps or is out of range"):
+        validate_capture_address_plan(
+            "10.73.19.0/28",
+            "10.73.19.1",
+            "10.73.19.0/31",
+            "10.73.19.10",
+            "10.73.19.11",
+        )
+
+
 @pytest.mark.parametrize(
     ("subnet", "gateway", "pool", "egress", "peer"),
     [
