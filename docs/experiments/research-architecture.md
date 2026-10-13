@@ -866,14 +866,18 @@ The optional HTTPS capture edge merged in
 [#437](https://github.com/magnus919/groktocrawl-x/pull/437), with deployment and
 browser-controller fixes in #441 and #442. The
 [2026-10-11 live lab packet](evidence/protected-capture-lab-2026-10-11/README.md)
-records ten passing HTTPS checks, all six passing protected-capture probes,
-zero unwanted sentinel requests, and one deliberate positive control on its
-recorded image/configuration set. One bounded `free` model diagnostic was
-accepted; upstream usage remains unknown. Only the agent was rebuilt, with
-unchanged services and their prior definitions explicitly retained. Earlier
-failures remain evidence. This closes the recorded lab's transport checks;
-fresh study registration and independent admission remain outstanding. A
-materially different runtime needs its own qualification. No research-quality
-credit or default activation follows from these checks. The fresh
-evaluation and shared ranking implementation remain tracked in
+records the initial transport qualification. The follow-up
+[2026-10-13 packet](evidence/protected-capture-lab-2026-10-13/README.md)
+records ten passing TLS/authentication checks, all six passing protected
+boundary probes, a successful public capture, one bounded `free` model
+transport check, zero forbidden sentinel events, and exactly one appended
+positive control. Only the scraper was recreated to remove its fixture-host
+alias; snapshots for the other 24 services remained unchanged. This closes the
+recorded API profile's transport and boundary qualification in experimental
+issue #450. Candidate MCP remains uninstantiated and unqualified; internal
+model fanout, research quality, fresh study registration, and independent
+admission remain outstanding. A materially different runtime needs its own
+qualification. No research-quality credit or default activation follows from
+these checks. The fresh evaluation and shared ranking implementation remain
+tracked in
 [SlopSearX #516](https://github.com/magnus919/SlopSearX/issues/516).

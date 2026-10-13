@@ -1,0 +1,121 @@
+{
+  "schema": "protected-capture-lab-result/2",
+  "qualification_scope": "api-only-transport-and-boundary",
+  "issue": 450,
+  "source_revisions": [
+    {
+      "pull_request": 451,
+      "merge_commit": "a65cc51455fd4fdae42d1af09cf260141dca27a2",
+      "scope": "source-hostname-policy-through-capture-gateway"
+    },
+    {
+      "pull_request": 452,
+      "merge_commit": "9318a89a5f0b2ba49d7c93c811527548262b1a41",
+      "scope": "fixture-host-alias-confined-to-capture-gateway"
+    }
+  ],
+  "effective_compose_config_sha256": "1f4469d8ee9a1c0ab0961af8a295b169e9efc0cad7e7a9669d36352386d4820b",
+  "runtime": {
+    "configured_services": 25,
+    "running_services": 23,
+    "completed_initialization_services": 2,
+    "recreated_service": "candidate-scraper",
+    "other_service_snapshots_unchanged": 24,
+    "provider_environment_unchanged": true,
+    "image_references_unchanged": true,
+    "mounts_networks_and_other_host_settings_unchanged": true
+  },
+  "protected_boundary_probes": [
+    {"probe": "ingress", "exit_code": 0, "elapsed_seconds": 1.673, "retries": 0},
+    {"probe": "egress", "exit_code": 0, "elapsed_seconds": 6.563, "retries": 0},
+    {"probe": "flare-api", "exit_code": 0, "elapsed_seconds": 5.637, "retries": 0},
+    {"probe": "browser-controller", "exit_code": 0, "elapsed_seconds": 2.112, "retries": 0},
+    {"probe": "browser-renderer", "exit_code": 0, "elapsed_seconds": 0.085, "retries": 0},
+    {"probe": "flare-renderer", "exit_code": 0, "elapsed_seconds": 0.075, "retries": 0}
+  ],
+  "public_capture": {
+    "status_code": 200,
+    "markdown_characters": 2207,
+    "response_bytes": 2654,
+    "expected_marker_present": true,
+    "authenticated": true,
+    "tls_verified": true,
+    "private_literal_guard": "denied",
+    "public_hostname_policy": "accepted",
+    "private_receipt_sha256": "b99e5208a015d2dae069da67e2c7c0452b41bdc61c4fbcc88d9b645ba2e99971",
+    "phase": "passed"
+  },
+  "tls_authentication_surface": {
+    "checks_passed": 10,
+    "checks": {
+      "missing_bearer": 401,
+      "invalid_bearer": 401,
+      "authenticated_health": 200,
+      "get_scrape": 404,
+      "post_health": 404,
+      "health_query": 404,
+      "unlisted_route": 404,
+      "duplicate_authorization_headers": 400,
+      "untrusted_ca": "certificate_validation_rejected",
+      "wrong_tls_hostname": "certificate_validation_rejected"
+    },
+    "scrape_calls": 0,
+    "model_calls": 0,
+    "search_calls": 0,
+    "private_receipt_sha256": "04e81c307b9accbe8416ed38089f49325cab259521e9ba8e3c3cc00e1b811a4e"
+  },
+  "fresh_boundary_receipt": {
+    "historical_positive_records_before": 1,
+    "positive_records_after": 2,
+    "fresh_positive_records_appended": 1,
+    "historical_prefix_preserved": true,
+    "forbidden_event_lines": 0,
+    "private_receipt_sha256": "fe1dbdde9990fe60cdcb7f74b27ee5b21372178f75afe9b6e10d58ed418f915b"
+  },
+  "readiness_helper": {
+    "initial_readiness_check": "failed_closed_before_request",
+    "corrected_check": "validated_existing_publication_through_loopback",
+    "rendered_runtime_config_match": true,
+    "network_or_listener_changes": 0
+  },
+  "model_transport_probe": {
+    "alias": "free",
+    "requests_attempted": 1,
+    "maximum_output_tokens": 8,
+    "retries": 0,
+    "status": "passed",
+    "research_quality_assessed": false,
+    "upstream_usage": "not_assessed",
+    "internal_model_fanout": "not_assessed"
+  },
+  "sentinel": {
+    "historical_positive_records_preserved": 1,
+    "fresh_positive_records_appended": 1,
+    "forbidden_requests": 0
+  },
+  "external_call_counts": {
+    "brave": 0,
+    "jev": 0,
+    "answerer": 0,
+    "native_grader": 0
+  },
+  "unqualified_surfaces": [
+    "candidate-mcp-not-instantiated",
+    "research-quality",
+    "internal-model-fanout",
+    "study-admission",
+    "mainline-replacement"
+  ],
+  "historical_failures_retained": true,
+  "historical_failure_classes": [
+    "fixture-dns-boundary-failure",
+    "strict-upgrade-postcheck-failure",
+    "runtime-image-patch-version-drift",
+    "compose-bind-order-discrepancy",
+    "helper-environment-setup-failure",
+    "helper-readiness-assumption-failure",
+    "wildcard-publication-helper-assumption-failure"
+  ],
+  "historical_attempts_receive_quality_credit": false,
+  "private_details_excluded": true
+}
