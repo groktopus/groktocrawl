@@ -6,6 +6,7 @@ import json
 import os
 import re
 import socket
+import sys
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -16,9 +17,41 @@ POSITIVE_EVENTS = Path(
     os.environ.get("SENTINEL_POSITIVE_EVENTS", "/state/positive-control.jsonl")
 )
 POSITIVE_CONTROL_PREFIX = b"PRIVATE_SENTINEL_RESPONSE_V1:"
-BIND_HOST = os.environ.get("SENTINEL_BIND_HOST", "0.0.0.0")
-if BIND_HOST not in {"0.0.0.0", "172.31.254.1"}:
-    raise RuntimeError("sentinel bind host is outside the CI/lab fixture allowlist")
+def configured_bind_host() -> str:
+    sys.path.insert(0, str(Path(__file__).parent))
+    from host_bridge_sentinel import (
+        configured_host_bridge_target,
+        validate_sentinel_target,
+    )
+
+    if os.environ.get("CAPTURE_HOST_BRIDGE_IP"):
+        bridge_target = configured_host_bridge_target()
+        return validate_sentinel_target(
+            os.environ.get("SENTINEL_EXPECTED_SUBNET"),
+            bridge_target,
+            os.environ.get("SENTINEL_BIND_HOST"),
+            os.environ.get("SENTINEL_EXPECTED_BIND_HOST"),
+            tuple(
+                item
+                for item in os.environ.get("SENTINEL_RESERVED_ADDRESSES", "").split(",")
+                if item
+            ),
+        )
+
+    return validate_sentinel_target(
+        os.environ.get("SENTINEL_EXPECTED_SUBNET"),
+        os.environ.get("SENTINEL_EXPECTED_BIND_HOST"),
+        os.environ.get("SENTINEL_BIND_HOST"),
+        os.environ.get("SENTINEL_EXPECTED_BIND_HOST"),
+        tuple(
+            item
+            for item in os.environ.get("SENTINEL_RESERVED_ADDRESSES", "").split(",")
+            if item
+        ),
+    )
+
+
+BIND_HOST = configured_bind_host()
 
 # Keep the negative event file separate and append-only. The independent
 # positive control has its own retained file and can never clear a negative hit.
@@ -27,10 +60,15 @@ EVENTS.touch(exist_ok=True)
 POSITIVE_EVENTS.touch(exist_ok=True)
 
 
-def record(kind: str, peer: object, destination: Path = EVENTS) -> None:
+def record(
+    kind: str, peer: object, destination: Path = EVENTS, *, nonce: str | None = None
+) -> None:
     destination.parent.mkdir(parents=True, exist_ok=True)
+    event = {"kind": kind, "peer": str(peer)}
+    if nonce is not None:
+        event["nonce"] = nonce
     with destination.open("a", encoding="utf-8") as stream:
-        stream.write(json.dumps({"kind": kind, "peer": str(peer)}) + "\n")
+        stream.write(json.dumps(event) + "\n")
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -45,13 +83,13 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(body)
             return
-        elif self.path.startswith("/positive-control/"):
-            record("positive-control", self.client_address, POSITIVE_EVENTS)
-        else:
-            record("http", self.client_address)
         parts = urlsplit(self.path).path.split("/")
         nonce = parts[-1] if len(parts) == 3 else ""
         valid_nonce = re.fullmatch(r"[0-9a-f]{32}", nonce) is not None
+        if self.path.startswith("/positive-control/") and valid_nonce:
+            record("positive-control", self.client_address, POSITIVE_EVENTS, nonce=nonce)
+        else:
+            record("http", self.client_address)
         status = 200 if valid_nonce else 400
         body = POSITIVE_CONTROL_PREFIX + nonce.encode("ascii", errors="ignore") if valid_nonce else b"invalid nonce"
         self.send_response(status)

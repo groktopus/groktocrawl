@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from types import SimpleNamespace
 
 import httpx
 import pytest
@@ -141,19 +142,35 @@ def test_diagnostics_are_versioned_filterable_bounded_and_resettable(
 
 
 @pytest.mark.asyncio
-async def test_timeout_scenario_is_bounded() -> None:
+async def test_timeout_scenario_is_bounded(monkeypatch: pytest.MonkeyPatch) -> None:
+    import llm_svc.app as llm_app
+
     app = create_app()
     transport = httpx.ASGITransport(app=app)
+    delay_started = asyncio.Event()
+    real_sleep = asyncio.sleep
+
+    async def observable_sleep(delay: float) -> None:
+        delay_started.set()
+        await real_sleep(delay)
+
+    monkeypatch.setattr(
+        llm_app,
+        "asyncio",
+        SimpleNamespace(sleep=observable_sleep, CancelledError=asyncio.CancelledError),
+    )
     async with httpx.AsyncClient(
         transport=transport, base_url="http://fixture"
     ) as client:
-        with pytest.raises(asyncio.TimeoutError):
-            await asyncio.wait_for(
-                client.post(
-                    "/v1/chat/completions?scenario=timeout",
-                    json={"model": "fixture", "messages": []},
-                ),
-                timeout=0.05,
+        request = asyncio.create_task(
+            client.post(
+                "/v1/chat/completions?scenario=timeout",
+                json={"model": "fixture", "messages": []},
             )
+        )
+        await asyncio.wait_for(delay_started.wait(), timeout=1.0)
+        request.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await request
         diagnostics = (await client.get("/diagnostics")).json()
         assert diagnostics["entries"][-1]["classification"] == "cancelled"

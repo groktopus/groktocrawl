@@ -72,10 +72,15 @@ def test_https_overlay_is_opt_in_and_replaces_plaintext_host_publication() -> No
     assert edge["driver"] == "bridge"
     edge_subnet = ipaddress.ip_network(edge["ipam"]["config"][0]["subnet"])
     assert edge_subnet == ipaddress.ip_network("172.31.251.0/24")
-    base_subnets = {
-        name: ipaddress.ip_network(network["ipam"]["config"][0]["subnet"])
-        for name, network in base["networks"].items()
-    }
+    base_subnets = {}
+    for name, network in base["networks"].items():
+        subnet = network["ipam"]["config"][0]["subnet"]
+        # Compose resolves this profile setting at runtime; validate its safe
+        # default here without treating the interpolation syntax as a CIDR.
+        if name == "candidate_capture":
+            assert subnet == "${CAPTURE_HOST_BRIDGE_SUBNET:-172.31.254.0/29}"
+            subnet = subnet.removeprefix("${CAPTURE_HOST_BRIDGE_SUBNET:-").removesuffix("}")
+        base_subnets[name] = ipaddress.ip_network(subnet)
     assert all(not edge_subnet.overlaps(subnet) for subnet in base_subnets.values())
     assert frontend["ports"] == [
         "${CAPTURE_HTTPS_BIND_IP:-127.0.0.1}:${CAPTURE_HTTPS_HOST_PORT:-18443}:8443"

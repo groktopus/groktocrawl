@@ -22,8 +22,6 @@ from scraper.source_http import (
 from scraper.valkey_control import RESERVE_SLOT_SCRIPT, ValkeyControlClient
 
 PRIVATE_IP = "172.31.253.250"
-CAPTURE_PEER_IP = "172.31.254.3"
-CAPTURE_HOST_GATEWAY_IP = "172.31.254.1"
 MODEL_GATEWAY_IP = "172.31.254.34"
 FIXTURE_ORIGIN = os.environ.get("CAPTURE_FIXTURE_ORIGIN", "http://flare-origin.test").rstrip("/")
 FIXTURE_URL = f"{FIXTURE_ORIGIN}/get"
@@ -301,7 +299,19 @@ async def _exercise_model_broker() -> None:
 
 
 async def main() -> None:
+    sys.path.insert(0, "/probe")
+    from host_bridge_sentinel import validate_capture_address_plan
+
     fixture_host = _validate_fixture_origin(FIXTURE_ORIGIN)
+    host_bridge_ip = validate_capture_address_plan(
+        os.environ.get("CAPTURE_HOST_BRIDGE_SUBNET"),
+        os.environ.get("CAPTURE_HOST_BRIDGE_IP"),
+        os.environ.get("CAPTURE_HOST_BRIDGE_IP_RANGE"),
+        os.environ.get("CAPTURE_EGRESS_IP"),
+        os.environ.get("CAPTURE_PEER_IP"),
+    )
+    capture_peer_ip = os.environ["CAPTURE_PEER_IP"]
+    capture_egress_ip = os.environ["CAPTURE_EGRESS_IP"]
     if not MODEL_PROBE_NAME or len(MODEL_PROBE_NAME) > 256:
         raise RuntimeError("capture model probe name is invalid")
     _drop_probe_capabilities()
@@ -319,11 +329,12 @@ async def main() -> None:
     if not await capture_gateway_hostname_is_public(fixture_host):
         raise RuntimeError("capture gateway DNS policy rejected the public fixture")
     _direct_tcp_denied(PRIVATE_IP, 19001)
-    _direct_tcp_denied(CAPTURE_PEER_IP, 19001)
-    _direct_tcp_denied(CAPTURE_HOST_GATEWAY_IP, 19001)
+    _direct_tcp_denied(capture_peer_ip, 19001)
+    _direct_tcp_denied(host_bridge_ip, 19001)
+    _direct_tcp_denied(capture_egress_ip, 19001)
     _direct_tcp_denied("1.1.1.1", 80)
     _direct_tcp_denied(MODEL_GATEWAY_IP, 8080)
-    for target in (PRIVATE_IP, CAPTURE_PEER_IP, CAPTURE_HOST_GATEWAY_IP):
+    for target in (PRIVATE_IP, capture_peer_ip, host_bridge_ip, capture_egress_ip):
         udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
             with suppress(OSError):
