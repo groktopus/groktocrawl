@@ -76,7 +76,7 @@ services:
       candidate_egress:
         gw_priority: 1
       candidate_capture:
-        ipv4_address: 172.31.254.2
+        ipv4_address: ${CAPTURE_EGRESS_IP:-172.31.254.2}
       candidate_browser_capture:
         ipv4_address: 172.31.254.10
       candidate_flare_capture:
@@ -423,8 +423,10 @@ services:
       BROWSER_CONTROL_SOCKET: /run/browser-control/controller.sock
       FLARE_CONTROL_SOCKET: /run/flare-control/control.sock
       SCRAPER_API_SOCKET: /run/scraper/app.sock
-      SCRAPER_CAPTURE_EGRESS_PROXY_URL: http://172.31.254.2:8080
-      SCRAPER_CAPTURE_GATEWAY_IP: 172.31.254.2
+      SCRAPER_CAPTURE_EGRESS_PROXY_URL: http://${CAPTURE_EGRESS_IP:-172.31.254.2}:8080
+      SCRAPER_CAPTURE_GATEWAY_IP: ${CAPTURE_EGRESS_IP:-172.31.254.2}
+      CAPTURE_PEER_IP: ${CAPTURE_PEER_IP:-172.31.254.3}
+      CAPTURE_EGRESS_IP: ${CAPTURE_EGRESS_IP:-172.31.254.2}
       SCRAPER_CAPTURE_GATEWAY_PORT: "8080"
       SCRAPER_MAX_BROWSER_CONCURRENCY: ${SCRAPER_MAX_BROWSER_CONCURRENCY:-4}
       SCRAPER_BROWSER_POOL_ENABLED: ${SCRAPER_BROWSER_POOL_ENABLED:-false}
@@ -782,8 +784,9 @@ networks:
     internal: true
     ipam:
       config:
-        - subnet: 172.31.254.0/29
-          ip_range: 172.31.254.4/30
+        - subnet: ${CAPTURE_HOST_BRIDGE_SUBNET:-172.31.254.0/29}
+          ip_range: ${CAPTURE_HOST_BRIDGE_IP_RANGE:-172.31.254.4/30}
+          gateway: ${CAPTURE_HOST_BRIDGE_IP:-172.31.254.1}
   candidate_browser_capture:
     internal: true
     ipam:

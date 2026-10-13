@@ -1,6 +1,16 @@
 name: groktocrawl-x-protected-capture-ci
 
 services:
+  candidate-scraper:
+    environment:
+      CAPTURE_HOST_BRIDGE_IP: ${CAPTURE_HOST_BRIDGE_IP:-172.31.254.1}
+      CAPTURE_HOST_BRIDGE_SUBNET: ${CAPTURE_HOST_BRIDGE_SUBNET:-172.31.254.0/29}
+      CAPTURE_HOST_BRIDGE_IP_RANGE: ${CAPTURE_HOST_BRIDGE_IP_RANGE:-172.31.254.4/30}
+      CAPTURE_PEER_IP: ${CAPTURE_PEER_IP:-172.31.254.3}
+      CAPTURE_EGRESS_IP: ${CAPTURE_EGRESS_IP:-172.31.254.2}
+    volumes:
+      - ./tests/integration/host_bridge_sentinel.py:/probe/host_bridge_sentinel.py:ro
+
   candidate-llm:
     build:
       context: .
@@ -27,6 +37,14 @@ services:
       LLM_GATEWAY_PRIVATE_HOSTS: candidate-llm
 
   candidate-capture-egress:
+    environment:
+      CAPTURE_HOST_BRIDGE_IP: ${CAPTURE_HOST_BRIDGE_IP:-172.31.254.1}
+      CAPTURE_HOST_BRIDGE_SUBNET: ${CAPTURE_HOST_BRIDGE_SUBNET:-172.31.254.0/29}
+      CAPTURE_HOST_BRIDGE_IP_RANGE: ${CAPTURE_HOST_BRIDGE_IP_RANGE:-172.31.254.4/30}
+      CAPTURE_PEER_IP: ${CAPTURE_PEER_IP:-172.31.254.3}
+      CAPTURE_EGRESS_IP: ${CAPTURE_EGRESS_IP:-172.31.254.2}
+    volumes:
+      - ./tests/integration/host_bridge_sentinel.py:/probe/host_bridge_sentinel.py:ro
     networks:
       candidate_flare_fixture:
         ipv4_address: 93.184.216.38
@@ -35,8 +53,15 @@ services:
     image: python:3.13-slim@sha256:ffb752e139c0a19692a43af8d8523b274222dd68eebad5d583b45c2201c6e30a
     profiles: [protected-capture]
     command: [python, /probe/private_network_sentinel.py]
+    environment:
+      SENTINEL_EVENTS: /state/events.jsonl
+      SENTINEL_BIND_HOST: 172.31.253.250
+      SENTINEL_EXPECTED_BIND_HOST: 172.31.253.250
+      SENTINEL_EXPECTED_SUBNET: 172.31.253.0/24
     volumes:
       - ./tests/integration/private_network_sentinel.py:/probe/private_network_sentinel.py:ro
+      - ./tests/integration/host_bridge_sentinel.py:/probe/host_bridge_sentinel.py:ro
+      - ./tests/integration/sentinel_ledger.py:/probe/sentinel_ledger.py:ro
       - ./tests/integration/scraper_ingress_boundary_probe.py:/probe/scraper_ingress_boundary_probe.py:ro
       - candidate_capture_probe_state:/state
     networks:
@@ -47,7 +72,7 @@ services:
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
     healthcheck:
-      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:19001/health', timeout=2)"]
+      test: [CMD, python, -c, "import os, urllib.request; host=os.environ['SENTINEL_BIND_HOST']; urllib.request.urlopen(f'http://{host}:19001/health', timeout=2)"]
       interval: 2s
       timeout: 3s
       retries: 20
@@ -61,18 +86,22 @@ services:
     command: [python, /probe/private_network_sentinel.py]
     environment:
       SENTINEL_EVENTS: /state/events.jsonl
+      SENTINEL_BIND_HOST: ${CAPTURE_PEER_IP:-172.31.254.3}
+      SENTINEL_EXPECTED_BIND_HOST: ${CAPTURE_PEER_IP:-172.31.254.3}
+      SENTINEL_EXPECTED_SUBNET: ${CAPTURE_HOST_BRIDGE_SUBNET:-172.31.254.0/29}
     volumes:
       - ./tests/integration/private_network_sentinel.py:/probe/private_network_sentinel.py:ro
+      - ./tests/integration/host_bridge_sentinel.py:/probe/host_bridge_sentinel.py:ro
       - candidate_capture_probe_state:/state
     networks:
       candidate_capture:
-        ipv4_address: 172.31.254.3
+        ipv4_address: ${CAPTURE_PEER_IP:-172.31.254.3}
     read_only: true
     tmpfs: [/tmp]
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
     healthcheck:
-      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:19001/health', timeout=2)"]
+      test: [CMD, python, -c, "import os, urllib.request; host=os.environ['SENTINEL_BIND_HOST']; urllib.request.urlopen(f'http://{host}:19001/health', timeout=2)"]
       interval: 2s
       timeout: 3s
       retries: 20
@@ -86,8 +115,19 @@ services:
     command: [python, /probe/private_network_sentinel.py]
     environment:
       SENTINEL_EVENTS: /state/events.jsonl
+      SENTINEL_POSITIVE_EVENTS: /state/host-bridge-positive-control.jsonl
+      SENTINEL_RESERVED_ADDRESSES: ${CAPTURE_EGRESS_IP:-172.31.254.2},${CAPTURE_PEER_IP:-172.31.254.3}
+      CAPTURE_HOST_BRIDGE_IP: ${CAPTURE_HOST_BRIDGE_IP:-172.31.254.1}
+      CAPTURE_HOST_BRIDGE_SUBNET: ${CAPTURE_HOST_BRIDGE_SUBNET:-172.31.254.0/29}
+      CAPTURE_HOST_BRIDGE_IP_RANGE: ${CAPTURE_HOST_BRIDGE_IP_RANGE:-172.31.254.4/30}
+      CAPTURE_EGRESS_IP: ${CAPTURE_EGRESS_IP:-172.31.254.2}
+      CAPTURE_PEER_IP: ${CAPTURE_PEER_IP:-172.31.254.3}
+      SENTINEL_BIND_HOST: ${CAPTURE_HOST_BRIDGE_IP:-172.31.254.1}
+      SENTINEL_EXPECTED_BIND_HOST: ${CAPTURE_HOST_BRIDGE_IP:-172.31.254.1}
+      SENTINEL_EXPECTED_SUBNET: ${CAPTURE_HOST_BRIDGE_SUBNET:-172.31.254.0/29}
     volumes:
       - ./tests/integration/private_network_sentinel.py:/probe/private_network_sentinel.py:ro
+      - ./tests/integration/host_bridge_sentinel.py:/probe/host_bridge_sentinel.py:ro
       - candidate_capture_probe_state:/state
     network_mode: host
     read_only: true
@@ -95,7 +135,7 @@ services:
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
     healthcheck:
-      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:19001/health', timeout=2)"]
+      test: [CMD, python, -c, "import os, urllib.request; host=os.environ['SENTINEL_BIND_HOST']; urllib.request.urlopen(f'http://{host}:19001/health', timeout=2)"]
       interval: 2s
       timeout: 3s
       retries: 20

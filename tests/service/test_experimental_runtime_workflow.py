@@ -14,6 +14,7 @@ import pytest
 import yaml
 
 from scripts.classify_ci_changes import requires_full_runtime, requires_twin_contracts
+from tests.integration.host_bridge_sentinel import validate_capture_address_plan
 
 ROOT = Path(__file__).parents[2]
 WORKFLOW = yaml.safe_load((ROOT / ".github/workflows/runtime.yml").read_text())
@@ -134,13 +135,25 @@ def test_capture_composition_runs_real_ingress_scrape_meta_and_network_probes():
     )
     assert "positive-control/" in positive_control["run"]
     assert "Access-Control-Allow-Origin" in positive_control["run"]
+    baseline = next(
+        step for step in steps if step.get("name") == "Snapshot append-only sentinel evidence before controls"
+    )
+    assert "sentinel_ledger.py snapshot" in baseline["run"]
+    assert "SENTINEL_LEDGER_BASELINE" in baseline["run"]
+    host_positive = next(
+        step for step in steps if step.get("name") == "Verify host bridge sentinel positive viability before denial probes"
+    )
+    assert "candidate-capture-egress" in host_positive["run"]
+    assert "host_bridge_sentinel.py" in host_positive["run"]
+    assert "HOST_BRIDGE_POSITIVE_NONCE" in host_positive["run"]
+    egress = next(step for step in steps if step.get("name") == "Verify direct scraper network denial and fixed model/source brokers")
+    assert steps.index(host_positive) < steps.index(egress)
     diagnostics = next(step for step in steps if step.get("name") == "Collect bounded composition diagnostics")
     assert "candidate-scraper-socket-init" in diagnostics["run"]
     assert "candidate-flare-control-socket-init" in diagnostics["run"]
     ingress = next(step for step in steps if step.get("name") == "Verify the fixed agent-to-scraper HTTP ingress bridge")
     assert "docker compose exec -T candidate-private-sentinel" in ingress["run"]
     assert "scraper_ingress_boundary_probe.py" in ingress["run"]
-    egress = next(step for step in steps if step.get("name") == "Verify direct scraper network denial and fixed model/source brokers")
     assert "docker compose exec -T --user 10001:20000 candidate-scraper" in egress["run"]
     assert "scraper_egress_boundary_probe.py" in egress["run"]
     ingress_source = (ROOT / "tests/integration/scraper_ingress_boundary_probe.py").read_text()
@@ -151,18 +164,17 @@ def test_capture_composition_runs_real_ingress_scrape_meta_and_network_probes():
         assert f'"{capability}"' in egress_source
     assert "RESERVE_SLOT_SCRIPT" in egress_source
     compose = yaml.safe_load((ROOT / "compose.protected-capture-ci.yml").read_text())
-    assert compose["services"]["candidate-capture-peer-sentinel"]["networks"]["candidate_capture"]["ipv4_address"] == "172.31.254.3"
+    assert compose["services"]["candidate-capture-peer-sentinel"]["networks"]["candidate_capture"]["ipv4_address"] == "${CAPTURE_PEER_IP:-172.31.254.3}"
     assert compose["services"]["candidate-host-bridge-sentinel"]["network_mode"] == "host"
     assert '"degraded"' not in ingress_source
     sentinel_check = next(
         step for step in steps if step.get("name") == "Verify hostile JavaScript did not reach the private sentinel"
     )
     assert sentinel_check["if"] == "always()"
-    assert "p.is_file()" in sentinel_check["run"]
-    assert "private_sentinel_hits=" in sentinel_check["run"]
-    assert "assert not lines" in sentinel_check["run"]
-    assert "positive-control.jsonl" in sentinel_check["run"]
-    assert "assert len(positive_lines) == 1" in sentinel_check["run"]
+    assert "sentinel_ledger.py verify" in sentinel_check["run"]
+    assert "SENTINEL_LEDGER_BASELINE" in sentinel_check["run"]
+    assert "PRIVATE_SENTINEL_POSITIVE_NONCE" in sentinel_check["run"]
+    assert "HOST_BRIDGE_POSITIVE_NONCE" in sentinel_check["run"]
     assert "private_denial.status_code != 403" in egress_source
     sentinel_source = (ROOT / "tests/integration/private_network_sentinel.py").read_text()
     assert "POSITIVE_EVENTS" in sentinel_source
@@ -187,7 +199,10 @@ def test_fixture_subnet_static_addresses_avoid_gateway_and_collisions():
             network = network or {}
             for config in network.get("ipam", {}).get("config", []):
                 if "subnet" in config:
-                    subnet = ipaddress.ip_network(config["subnet"])
+                    subnet_value = config["subnet"]
+                    if isinstance(subnet_value, str) and subnet_value.startswith("${"):
+                        subnet_value = subnet_value.split(":-", 1)[1].removesuffix("}")
+                    subnet = ipaddress.ip_network(subnet_value)
                     previous = network_subnets.setdefault(network_name, subnet)
                     assert previous == subnet
         for service_name, service in document.get("services", {}).items():
@@ -225,13 +240,18 @@ def test_fixture_subnet_static_addresses_avoid_gateway_and_collisions():
     }
     for network_name, (expected_pool, capacity) in expected_pools.items():
         config = base_compose["networks"][network_name]["ipam"]["config"][0]
-        pool = ipaddress.ip_network(config["ip_range"])
+        pool_value = config["ip_range"]
+        if isinstance(pool_value, str) and pool_value.startswith("${"):
+            pool_value = pool_value.split(":-", 1)[1].removesuffix("}")
+        pool = ipaddress.ip_network(pool_value)
         assert pool == ipaddress.ip_network(expected_pool)
         assert pool.subnet_of(network_subnets[network_name])
         assert pool.num_addresses - 2 >= capacity
         for (service_name, assigned_network), address in assignments.items():
             if assigned_network == network_name:
-                assert ipaddress.ip_address(address) not in pool, (
+                    if isinstance(address, str) and address.startswith("${"):
+                        address = address.split(":-", 1)[1].removesuffix("}")
+                    assert ipaddress.ip_address(address) not in pool, (
                     f"{service_name} static address overlaps {network_name} pool"
                 )
         assert base_compose["networks"][network_name]["internal"] is True
@@ -290,11 +310,17 @@ def test_lab_qualification_overlay_keeps_live_model_route_and_bounds_sentinels()
     host_sentinel = services["candidate-host-bridge-sentinel"]
     assert host_sentinel["network_mode"] == "host"
     assert "ports" not in host_sentinel
-    capture_subnet = ipaddress.ip_network(
-        base["networks"]["candidate_capture"]["ipam"]["config"][0]["subnet"]
-    )
-    assert host_sentinel["environment"]["SENTINEL_BIND_HOST"] == str(
-        next(capture_subnet.hosts())
+    subnet_setting = "${CAPTURE_HOST_BRIDGE_SUBNET:-172.31.254.0/29}"
+    gateway_setting = "${CAPTURE_HOST_BRIDGE_IP:-172.31.254.1}"
+    assert base["networks"]["candidate_capture"]["ipam"]["config"][0]["gateway"] == gateway_setting
+    assert host_sentinel["environment"]["SENTINEL_BIND_HOST"] == gateway_setting
+    assert host_sentinel["environment"]["SENTINEL_EXPECTED_BIND_HOST"] == gateway_setting
+    assert host_sentinel["environment"]["SENTINEL_EXPECTED_SUBNET"] == subnet_setting
+    assert services["candidate-scraper"]["environment"]["CAPTURE_HOST_BRIDGE_IP"] == gateway_setting
+    assert services["candidate-capture-egress"]["environment"]["CAPTURE_HOST_BRIDGE_IP"] == gateway_setting
+    assert host_sentinel["healthcheck"]["test"][-1].find("SENTINEL_BIND_HOST") >= 0
+    assert host_sentinel["environment"]["SENTINEL_POSITIVE_EVENTS"] == (
+        "/state/host-bridge-positive-control.jsonl"
     )
     assert host_sentinel["mem_limit"] == "64m"
     assert host_sentinel["cpus"] == 0.25
@@ -312,6 +338,86 @@ def test_lab_qualification_overlay_keeps_live_model_route_and_bounds_sentinels()
     assert services["candidate-flare-test-origin"]["mem_limit"] == "64m"
     assert services["candidate-flare-test-origin"]["cpus"] == 0.25
     assert services["candidate-flare-test-origin"]["pids_limit"] == 32
+
+
+def test_host_bridge_target_is_coherent_across_default_and_operator_gateways():
+    gateway_setting = "${CAPTURE_HOST_BRIDGE_IP:-172.31.254.1}"
+    subnet_setting = "${CAPTURE_HOST_BRIDGE_SUBNET:-172.31.254.0/29}"
+    dynamic_range_setting = "${CAPTURE_HOST_BRIDGE_IP_RANGE:-172.31.254.4/30}"
+    egress_ip_setting = "${CAPTURE_EGRESS_IP:-172.31.254.2}"
+    peer_ip_setting = "${CAPTURE_PEER_IP:-172.31.254.3}"
+    base = yaml.safe_load((ROOT / "compose.experimental-candidate.yml").read_text())
+    network = base["networks"][
+        "candidate_capture"
+    ]["ipam"]["config"][0]
+    lab = yaml.safe_load((ROOT / "compose.protected-capture-lab.yml").read_text())["services"]
+    ci = yaml.safe_load((ROOT / "compose.protected-capture-ci.yml").read_text())["services"]
+    for services in (lab, ci):
+        assert services["candidate-host-bridge-sentinel"]["environment"]["SENTINEL_BIND_HOST"] == gateway_setting
+        assert services["candidate-host-bridge-sentinel"]["environment"]["SENTINEL_EXPECTED_BIND_HOST"] == gateway_setting
+        assert services["candidate-host-bridge-sentinel"]["environment"]["SENTINEL_EXPECTED_SUBNET"] == subnet_setting
+        host_environment = services["candidate-host-bridge-sentinel"]["environment"]
+        assert host_environment["SENTINEL_RESERVED_ADDRESSES"] == f"{egress_ip_setting},{peer_ip_setting}"
+        assert host_environment["CAPTURE_HOST_BRIDGE_SUBNET"] == subnet_setting
+        assert host_environment["CAPTURE_HOST_BRIDGE_IP_RANGE"] == dynamic_range_setting
+        assert host_environment["CAPTURE_EGRESS_IP"] == egress_ip_setting
+        assert host_environment["CAPTURE_PEER_IP"] == peer_ip_setting
+        assert services["candidate-scraper"]["environment"]["CAPTURE_HOST_BRIDGE_IP"] == gateway_setting
+        assert services["candidate-scraper"]["environment"]["CAPTURE_HOST_BRIDGE_SUBNET"] == subnet_setting
+        assert services["candidate-scraper"]["environment"]["CAPTURE_HOST_BRIDGE_IP_RANGE"] == dynamic_range_setting
+        assert services["candidate-scraper"]["environment"]["CAPTURE_PEER_IP"] == peer_ip_setting
+        assert services["candidate-scraper"]["environment"]["CAPTURE_EGRESS_IP"] == egress_ip_setting
+        assert services["candidate-capture-egress"]["environment"]["CAPTURE_HOST_BRIDGE_IP"] == gateway_setting
+        assert services["candidate-capture-egress"]["environment"]["CAPTURE_HOST_BRIDGE_SUBNET"] == subnet_setting
+        assert services["candidate-capture-egress"]["environment"]["CAPTURE_HOST_BRIDGE_IP_RANGE"] == dynamic_range_setting
+        assert services["candidate-capture-egress"]["environment"]["CAPTURE_PEER_IP"] == peer_ip_setting
+        assert services["candidate-capture-egress"]["environment"]["CAPTURE_EGRESS_IP"] == egress_ip_setting
+        assert network["gateway"] == gateway_setting
+        assert network["subnet"] == subnet_setting
+        assert network["ip_range"] == dynamic_range_setting
+        assert services["candidate-capture-peer-sentinel"]["networks"]["candidate_capture"]["ipv4_address"] == peer_ip_setting
+        assert services["candidate-capture-peer-sentinel"]["environment"]["SENTINEL_BIND_HOST"] == peer_ip_setting
+        assert services["candidate-capture-peer-sentinel"]["environment"]["SENTINEL_EXPECTED_BIND_HOST"] == peer_ip_setting
+    assert base["services"]["candidate-capture-egress"]["networks"]["candidate_capture"]["ipv4_address"] == egress_ip_setting
+    assert base["services"]["candidate-scraper"]["environment"]["SCRAPER_CAPTURE_GATEWAY_IP"] == egress_ip_setting
+
+    def interpolate(value: str, variables: dict[str, str]) -> str:
+        return re.sub(
+            r"\$\{([^}:]+):-([^}]+)\}",
+            lambda match: variables.get(match.group(1), match.group(2)),
+            value,
+        )
+
+    override = {
+        "CAPTURE_HOST_BRIDGE_IP": "10.73.19.1",
+        "CAPTURE_HOST_BRIDGE_SUBNET": "10.73.19.0/29",
+        "CAPTURE_HOST_BRIDGE_IP_RANGE": "10.73.19.4/30",
+        "CAPTURE_EGRESS_IP": "10.73.19.2",
+        "CAPTURE_PEER_IP": "10.73.19.3",
+    }
+    rendered_network = {
+        key: interpolate(value, override)
+        for key, value in network.items()
+        if isinstance(value, str)
+    }
+    assert rendered_network == {
+        "subnet": "10.73.19.0/29",
+        "ip_range": "10.73.19.4/30",
+        "gateway": "10.73.19.1",
+    }
+    assert validate_capture_address_plan(
+        rendered_network["subnet"],
+        rendered_network["gateway"],
+        rendered_network["ip_range"],
+        override["CAPTURE_EGRESS_IP"],
+        override["CAPTURE_PEER_IP"],
+    ) == "10.73.19.1"
+    for services in (lab, ci):
+        host = services["candidate-host-bridge-sentinel"]["environment"]
+        assert interpolate(host["SENTINEL_BIND_HOST"], override) == rendered_network["gateway"]
+        assert interpolate(host["SENTINEL_EXPECTED_SUBNET"], override) == rendered_network["subnet"]
+        assert interpolate(host["SENTINEL_RESERVED_ADDRESSES"], override) == "10.73.19.2,10.73.19.3"
+
 
 
 def test_ci_public_capture_dns_is_available_only_to_the_gateway():
