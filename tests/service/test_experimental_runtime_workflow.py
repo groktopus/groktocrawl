@@ -7,6 +7,7 @@ import os
 import re
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -338,29 +339,55 @@ def test_ci_public_capture_dns_is_available_only_to_the_gateway():
 
 
 def test_rendered_lab_fixture_hostname_is_available_only_to_capture_gateway():
-    if shutil.which("docker") is None:
-        pytest.skip("Docker Compose is required to render the lab composition")
-
-    rendered = subprocess.run(
-        [
-            "docker",
-            "compose",
-            "-f",
-            "compose.experimental-candidate.yml",
-            "-f",
-            "compose.protected-capture-lab.yml",
-            "config",
-            "--format",
-            "json",
-        ],
-        cwd=ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    services = json.loads(rendered.stdout)["services"]
     fixture_host = "capture-origin.example.test"
     fixture_alias = f"{fixture_host}:93.184.216.34"
+
+    if shutil.which("docker") is None:
+        base = yaml.safe_load((ROOT / "compose.experimental-candidate.yml").read_text())
+        lab = yaml.safe_load((ROOT / "compose.protected-capture-lab.yml").read_text())
+        services = {**base["services"], **lab["services"]}
+        scraper = {**base["services"]["candidate-scraper"], **lab["services"]["candidate-scraper"]}
+        gateway = services["candidate-capture-egress"]
+        assert "extra_hosts" not in scraper
+        assert gateway["extra_hosts"] == [
+            "${CAPTURE_FIXTURE_HOST:-capture-origin.example.test}:93.184.216.34"
+        ]
+        assert scraper["environment"]["CAPTURE_FIXTURE_ORIGIN"] == (
+            "http://${CAPTURE_FIXTURE_HOST:-capture-origin.example.test}"
+        )
+        return
+
+    with tempfile.TemporaryDirectory() as temporary_directory:
+        password_file = Path(temporary_directory) / "postgres-password"
+        password_file.write_text("render-only-placeholder")
+        compose_environment = os.environ.copy()
+        compose_environment.update(
+            {
+                "CANDIDATE_API_KEY": "render-only-placeholder",
+                "CANDIDATE_POSTGRES_PASSWORD_FILE": str(password_file),
+                "LLM_API_KEY": "render-only-placeholder",
+                "LLM_BASE_URL": "http://127.0.0.1:1/v1",
+            }
+        )
+        rendered = subprocess.run(
+            [
+                "docker",
+                "compose",
+                "-f",
+                "compose.experimental-candidate.yml",
+                "-f",
+                "compose.protected-capture-lab.yml",
+                "config",
+                "--format",
+                "json",
+            ],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+            env=compose_environment,
+        )
+    services = json.loads(rendered.stdout)["services"]
     scraper_hosts = services["candidate-scraper"].get("extra_hosts", {})
     gateway_hosts = services["candidate-capture-egress"].get("extra_hosts", {})
 
