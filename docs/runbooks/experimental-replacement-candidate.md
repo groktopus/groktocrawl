@@ -116,10 +116,12 @@ scraper health check does not prove that those routes can resolve or reach their
 upstream services. After changing Compose IPAM ranges, recreate the affected
 containers and networks with the updated Compose configuration before checking
 scrape behavior; restarting containers on the old networks retains the old
-address allocations. Confirm the resolver gateways and public DNS are ready,
-then verify the source gateway's hostname-policy preflight and a representative
-public scrape through the complete scraper path, followed by the protected-route
-probes. The scraper's local resolver is intentionally isolated; a successful
+address allocations. Confirm the resolver gateways and public DNS are ready.
+The deterministic fixture hostname mapping belongs only to the capture
+gateway; the isolated scraper must not resolve that fixture through a local
+host alias. Then verify the source gateway's hostname-policy preflight and a
+representative public scrape through the complete scraper path, followed by the
+protected-route probes. The scraper's local resolver is intentionally isolated; a successful
 preflight does not replace the proxied scrape check. API health alone is not a
 capture-readiness signal.
 

@@ -5,8 +5,6 @@ name: groktocrawl-x-protected-capture-lab
 # LLM route remains the one supplied by the private candidate environment.
 services:
   candidate-scraper:
-    extra_hosts:
-      - "${CAPTURE_FIXTURE_HOST:-capture-origin.example.test}:93.184.216.34"
     environment:
       CAPTURE_FIXTURE_ORIGIN: "http://${CAPTURE_FIXTURE_HOST:-capture-origin.example.test}"
       CAPTURE_PROBE_MODEL_NAME: ${LLM_MODEL:-local}
