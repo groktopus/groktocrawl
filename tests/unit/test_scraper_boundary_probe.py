@@ -23,6 +23,7 @@ def _probe():
     package.__path__ = []
     source_http = types.ModuleType("scraper.source_http")
     source_http.source_httpx_client = lambda: None
+    source_http.capture_gateway_hostname_is_public = lambda _hostname: None
     valkey = types.ModuleType("scraper.valkey_control")
     valkey.RESERVE_SLOT_SCRIPT = ""
     valkey.ValkeyControlClient = type("ValkeyControlClient", (), {})
