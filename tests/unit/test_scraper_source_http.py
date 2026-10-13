@@ -24,6 +24,7 @@ from scraper.llm_control_entrypoint import bind_control_listener
 from scraper.source_http import (
     CAPTURE_EGRESS_PROXY_ENV,
     MODEL_EGRESS_PROXY_ENV,
+    SourceDestinationPolicyUnavailableError,
     SourceTransportConfigurationError,
     capture_gateway_hostname_is_public,
     source_curl_options,
@@ -181,7 +182,10 @@ async def test_capture_gateway_oracle_bounds_response_body(monkeypatch):
             return ResponseContext()
 
     monkeypatch.setattr(httpx, "AsyncClient", Client)
-    assert await capture_gateway_hostname_is_public("example.com") is False
+    with pytest.raises(
+        SourceDestinationPolicyUnavailableError, match="response-too-large"
+    ):
+        await capture_gateway_hostname_is_public("example.com")
 
 
 @pytest.mark.asyncio

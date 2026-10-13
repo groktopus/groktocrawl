@@ -174,7 +174,9 @@ async def capture_gateway_hostname_is_public(hostname: str) -> bool:
                     async for chunk in response.aiter_bytes():
                         size += len(chunk)
                         if size > 1024:
-                            return False
+                            raise SourceDestinationPolicyUnavailableError(
+                                "capture-egress-policy-response-too-large"
+                            )
                         chunks.append(chunk)
                     payload = json.loads(b"".join(chunks))
     except SourceDestinationPolicyUnavailableError:
