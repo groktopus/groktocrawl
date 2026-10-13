@@ -4,12 +4,17 @@ from __future__ import annotations
 
 import ipaddress
 import os
-from urllib.request import urlopen
+from urllib.request import HTTPRedirectHandler, ProxyHandler, build_opener
 from uuid import uuid4
 
 POSITIVE_CONTROL_PREFIX = b"PRIVATE_SENTINEL_RESPONSE_V1:"
 HOST_BRIDGE_PORT = 19001
 MIN_DYNAMIC_ADDRESSES = 2
+
+
+class _NoRedirectHandler(HTTPRedirectHandler):
+    def redirect_request(self, *_args, **_kwargs):
+        return None
 
 
 def validate_capture_address_plan(
@@ -153,13 +158,14 @@ def configured_host_bridge_target(environ: dict[str, str] | None = None) -> str:
 def verify_host_bridge_positive_control(
     target: str,
     *,
-    opener=urlopen,
+    opener=None,
     timeout: float = 2.0,
 ) -> str:
     """Make one nonce-bound positive request; a timeout or unrelated peer fails."""
     nonce = uuid4().hex
     expected_body = POSITIVE_CONTROL_PREFIX + nonce.encode("ascii")
-    with opener(
+    request_opener = opener or build_opener(ProxyHandler({}), _NoRedirectHandler()).open
+    with request_opener(
         f"http://{target}:{HOST_BRIDGE_PORT}/positive-control/{nonce}", timeout=timeout
     ) as response:
         body = response.read(len(expected_body) + 1)

@@ -693,9 +693,10 @@ def test_candidate_scraper_is_not_attached_to_direct_egress_network():
         "/run/scraper-llm/control.sock"
     )
     assert "LLM_API_KEY" in model_control["environment"]
-    assert (
-        scraper["environment"]["SCRAPER_CAPTURE_EGRESS_PROXY_URL"]
-        == "http://172.31.254.2:8080"
+    capture_proxy = scraper["environment"]["SCRAPER_CAPTURE_EGRESS_PROXY_URL"]
+    assert capture_proxy == "http://${CAPTURE_EGRESS_IP:-172.31.254.2}:8080"
+    assert scraper["environment"]["SCRAPER_CAPTURE_GATEWAY_IP"] == (
+        "${CAPTURE_EGRESS_IP:-172.31.254.2}"
     )
 
 
