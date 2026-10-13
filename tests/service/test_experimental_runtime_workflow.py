@@ -148,7 +148,7 @@ def test_capture_composition_runs_real_ingress_scrape_meta_and_network_probes():
         assert f'"{capability}"' in egress_source
     assert "RESERVE_SLOT_SCRIPT" in egress_source
     compose = yaml.safe_load((ROOT / "compose.protected-capture-ci.yml").read_text())
-    assert compose["services"]["candidate-capture-peer-sentinel"]["networks"]["candidate_capture"]["ipv4_address"] == "172.31.254.6"
+    assert compose["services"]["candidate-capture-peer-sentinel"]["networks"]["candidate_capture"]["ipv4_address"] == "172.31.254.3"
     assert compose["services"]["candidate-host-bridge-sentinel"]["network_mode"] == "host"
     assert '"degraded"' not in ingress_source
     sentinel_check = next(
@@ -168,6 +168,9 @@ def test_capture_composition_runs_real_ingress_scrape_meta_and_network_probes():
 
 
 def test_fixture_subnet_static_addresses_avoid_gateway_and_collisions():
+    base_compose = yaml.safe_load(
+        (ROOT / "compose.experimental-candidate.yml").read_text()
+    )
     assignments: dict[tuple[str, str], str] = {}
     network_subnets: dict[str, ipaddress.IPv4Network] = {}
     for filename in (
@@ -209,6 +212,26 @@ def test_fixture_subnet_static_addresses_avoid_gateway_and_collisions():
     assert network_subnets["candidate_egress"] == ipaddress.ip_network(
         "172.31.252.0/24"
     )
+    # Keep Docker's dynamic allocator inside ranges that cannot consume fixed
+    # gateway, renderer, or peer addresses from the parent /29 networks.
+    expected_pools = {
+        "candidate_capture": ("172.31.254.4/30", 2),
+        "candidate_browser_capture": ("172.31.254.12/30", 2),
+        "candidate_flare_capture": ("172.31.254.20/30", 2),
+        "candidate_model_gateway": ("172.31.254.36/30", 2),
+    }
+    for network_name, (expected_pool, capacity) in expected_pools.items():
+        config = base_compose["networks"][network_name]["ipam"]["config"][0]
+        pool = ipaddress.ip_network(config["ip_range"])
+        assert pool == ipaddress.ip_network(expected_pool)
+        assert pool.subnet_of(network_subnets[network_name])
+        assert pool.num_addresses - 2 >= capacity
+        for (service_name, assigned_network), address in assignments.items():
+            if assigned_network == network_name:
+                assert ipaddress.ip_address(address) not in pool, (
+                    f"{service_name} static address overlaps {network_name} pool"
+                )
+        assert base_compose["networks"][network_name]["internal"] is True
     for (left_name, left), (right_name, right) in itertools.combinations(
         network_subnets.items(), 2
     ):
@@ -216,9 +239,6 @@ def test_fixture_subnet_static_addresses_avoid_gateway_and_collisions():
             f"{left_name} {left} overlaps {right_name} {right}"
         )
 
-    base_compose = yaml.safe_load(
-        (ROOT / "compose.experimental-candidate.yml").read_text()
-    )
     for service_name, service in base_compose["services"].items():
         assert service.get("network_mode") or service.get("networks"), (
             f"{service_name} would create an implicit default network"

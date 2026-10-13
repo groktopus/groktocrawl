@@ -783,21 +783,25 @@ networks:
     ipam:
       config:
         - subnet: 172.31.254.0/29
+          ip_range: 172.31.254.4/30
   candidate_browser_capture:
     internal: true
     ipam:
       config:
         - subnet: 172.31.254.8/29
+          ip_range: 172.31.254.12/30
   candidate_flare_capture:
     internal: true
     ipam:
       config:
         - subnet: 172.31.254.16/29
+          ip_range: 172.31.254.20/30
   candidate_model_gateway:
     internal: true
     ipam:
       config:
         - subnet: 172.31.254.32/29
+          ip_range: 172.31.254.36/30
   candidate_model_upstream:
     ipam:
       config:

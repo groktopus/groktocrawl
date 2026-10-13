@@ -110,6 +110,15 @@ first start, PostgreSQL applies the ordered research migrations through schema
 ready. The semantic health response must identify pgvector as the serving store
 and Qdrant as rollback-ready.
 
+The protected capture routes also depend on the fixed capture and model gateway
+addresses and on working Docker DNS for public source hosts. A healthy API or
+scraper health check does not prove that those routes can resolve or reach their
+upstream services. After changing Compose IPAM ranges, recreate the affected
+containers and networks with the updated Compose configuration before checking
+scrape behavior; restarting containers on the old networks retains the old
+address allocations. Confirm the resolver gateways and public DNS are ready,
+then verify a representative public scrape and the protected-route probes.
+
 ## Verify and freeze the receipt
 
 Load only the candidate API key into the verifier process and write the receipt
