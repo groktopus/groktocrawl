@@ -16,10 +16,12 @@ or search calls. Their private receipt is bound by the hash in
 [result.json](result.json).
 
 The exact tested configuration is identified by the sanitized rendered
-Compose SHA-256 in [result.json](result.json). The candidate scraper was the
-only service recreated to remove its local fixture-host alias; the other 24
-service snapshots remained unchanged. The profile contained 25 services: 23
-running services and two completed initialization services. The API path is
+Compose SHA-256 in [result.json](result.json). The final profile had 26
+configured services, of which 25 were deployed: 23 running services and two
+completed initialization services. For the final fixture-alias removal step,
+the candidate scraper was the only service recreated; the other 24 deployed
+service snapshots remained unchanged, including their provider environment,
+image references, mounts, networks, and host settings. The API path is
 qualified for this recorded profile. The candidate MCP path was not
 instantiated and is not qualified.
 
@@ -62,5 +64,5 @@ changes.
 - [Sanitized result](result.json)
 - [Issue #450](https://github.com/magnus919/groktocrawl-x/issues/450)
 
-Result SHA-256: `1c4d5e0514e455084eff9e056a953b58e7823390d3aef89411f378e28de94e6d`.
+Result SHA-256: `96cd2d80bff1158172ff385b0413414fff2d4a4a05715d827431ea2f0718080a`.
 

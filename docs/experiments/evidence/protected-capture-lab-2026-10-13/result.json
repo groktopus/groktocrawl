@@ -16,14 +16,17 @@
   ],
   "effective_compose_config_sha256": "1f4469d8ee9a1c0ab0961af8a295b169e9efc0cad7e7a9669d36352386d4820b",
   "runtime": {
-    "configured_services": 25,
+    "configured_services": 26,
+    "deployed_services": 25,
     "running_services": 23,
     "completed_initialization_services": 2,
-    "recreated_service": "candidate-scraper",
-    "other_service_snapshots_unchanged": 24,
-    "provider_environment_unchanged": true,
-    "image_references_unchanged": true,
-    "mounts_networks_and_other_host_settings_unchanged": true
+    "final_fixture_alias_removal": {
+      "recreated_service": "candidate-scraper",
+      "other_service_snapshots_unchanged": 24,
+      "provider_environment_unchanged": true,
+      "image_references_unchanged": true,
+      "mounts_networks_and_other_host_settings_unchanged": true
+    }
   },
   "protected_boundary_probes": [
     {"probe": "ingress", "exit_code": 0, "elapsed_seconds": 1.673, "retries": 0},
