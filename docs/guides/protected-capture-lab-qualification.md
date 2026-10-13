@@ -1,6 +1,6 @@
 # Protected capture lab qualification
 
-The [2026-10-11 live lab packet](../experiments/evidence/protected-capture-lab-2026-10-11/README.md) records ten passing HTTPS checks, six passing capture probes, and one accepted `free` model diagnostic. It is setup evidence for that recorded configuration; it does not admit a research study or establish research quality. Qualify any materially different runtime separately.
+The [2026-10-13 live lab packet](../experiments/evidence/protected-capture-lab-2026-10-13/README.md) records ten passing TLS/authentication checks, six passing capture-boundary probes, a verified public capture, and one bounded `free` model transport check. It qualifies only the recorded API profile and configuration; the candidate MCP path was not instantiated. It does not admit a research study or establish research quality. The [2026-10-11 packet](../experiments/evidence/protected-capture-lab-2026-10-11/README.md) remains as historical evidence. Qualify any materially different runtime separately.
 
 `compose.protected-capture-lab.yml` adds deterministic, internal-only origin
 and sentinel fixtures to the candidate profile. It does not replace the
