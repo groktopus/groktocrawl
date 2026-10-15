@@ -2354,14 +2354,24 @@ def cmd_agent(client: Client, args: argparse.Namespace) -> None:
                     sources_shown = True
                 elif event["type"] == "token":
                     full_result += event["content"]
-                    if not pyramid_mode:
+                    if not pyramid_mode and not JSON_OUTPUT:
                         print(event["content"], end="", flush=True)
                 elif event["type"] == "done":
                     full_result = event.get("result", full_result)
                     evidence_coverage = event.get("evidence_coverage")
-                    if not pyramid_mode:
+                    if not pyramid_mode and not JSON_OUTPUT:
                         print()
                 elif event["type"] == "error":
+                    if JSON_OUTPUT and not pyramid_mode:
+                        payload = {
+                            "success": False,
+                            "error": event.get("content", "Agent stream failed"),
+                        }
+                        for key in ("classification", "retry_after_seconds"):
+                            if key in event:
+                                payload[key] = event[key]
+                        emit("", payload)
+                        sys.exit(1)
                     print(f"\nError: {event['content']}", flush=True)
                     sys.exit(1)
             except json.JSONDecodeError:
@@ -2378,7 +2388,7 @@ def cmd_agent(client: Client, args: argparse.Namespace) -> None:
             )
             emit(path, {"pyramid": path})
         elif JSON_OUTPUT:
-            payload = {"result": full_result}
+            payload = {"result": full_result, "sources": agent_sources}
             if evidence_coverage is not None:
                 payload["evidence_coverage"] = evidence_coverage
             emit("", payload)

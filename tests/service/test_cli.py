@@ -1701,6 +1701,87 @@ class TestImageSupport:
             retry=True,
         )
 
+
+def test_agent_json_stream_emits_one_result_with_sources(monkeypatch, capsys):
+    cmd_agent = _cli_ns["cmd_agent"]
+    events = [
+        {
+            "type": "sources",
+            "sources": ["https://example.test/a", "https://example.test/b"],
+        },
+        {"type": "token", "content": "First "},
+        {"type": "token", "content": "second."},
+        {
+            "type": "done",
+            "result": "First second.",
+            "evidence_coverage": {"selected": 2},
+        },
+    ]
+    response = MagicMock()
+    response.iter_lines.return_value = [
+        "data: " + json.dumps(event) for event in events
+    ] + ["data: [DONE]"]
+    client = MagicMock()
+    client.dry_run = False
+    client.create_agent_stream.return_value = {"_stream": response}
+    args = MagicMock()
+    args.prompt = "question"
+    args.urls = None
+    args.sync = False
+    args.no_poll = False
+    args.pyramid = False
+    args.output_dir = ""
+    args.include_images = False
+    args.search_type = "focused"
+
+    monkeypatch.setitem(_cli_ns, "JSON_OUTPUT", True)
+    cmd_agent(client, args)
+
+    output = capsys.readouterr().out
+    assert json.loads(output) == {
+        "result": "First second.",
+        "sources": ["https://example.test/a", "https://example.test/b"],
+        "evidence_coverage": {"selected": 2},
+    }
+
+
+def test_agent_json_stream_error_exits_nonzero_with_json(monkeypatch, capsys):
+    cmd_agent = _cli_ns["cmd_agent"]
+    response = MagicMock()
+    response.iter_lines.return_value = [
+        "data: "
+        + json.dumps(
+            {
+                "type": "error",
+                "content": "provider unavailable",
+                "classification": "non_retryable",
+            }
+        )
+    ]
+    client = MagicMock()
+    client.dry_run = False
+    client.create_agent_stream.return_value = {"_stream": response}
+    args = MagicMock()
+    args.prompt = "question"
+    args.urls = None
+    args.sync = False
+    args.no_poll = False
+    args.pyramid = False
+    args.output_dir = ""
+    args.include_images = False
+    args.search_type = "focused"
+
+    monkeypatch.setitem(_cli_ns, "JSON_OUTPUT", True)
+    with pytest.raises(SystemExit) as exc:
+        cmd_agent(client, args)
+
+    assert exc.value.code == 1
+    assert json.loads(capsys.readouterr().out) == {
+        "success": False,
+        "error": "provider unavailable",
+        "classification": "non_retryable",
+    }
+
     def test_search_type_images_in_choices(self):
         """search --search-type includes 'images' in choices."""
         make_parser = _cli_ns["make_parser"]
