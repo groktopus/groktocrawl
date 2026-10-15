@@ -4,14 +4,11 @@ from __future__ import annotations
 
 import json
 import sys
-from pathlib import Path
 
 import pytest
 import requests
 
-_CLI_PATH = Path(__file__).resolve().parents[2] / "groktocrawl"
-_cli_ns: dict = {"__name__": "groktocrawl_test"}
-exec(compile(_CLI_PATH.read_text(), str(_CLI_PATH), "exec"), _cli_ns)
+from tests.service.test_cli import _cli_ns
 
 
 class JsonResponse:
