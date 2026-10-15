@@ -359,6 +359,10 @@ class GroktocrawlClient:
         system_prompt: str | None = None,
         page: int = 1,
         offset: int = 0,
+        date_from: str | None = None,
+        date_to: str | None = None,
+        time_range: str | None = None,
+        engines: list[str] | None = None,
     ) -> dict:
         """Web search with optional source filtering and search type."""
         body: dict[str, Any] = {"query": query, "limit": limit}
@@ -376,6 +380,14 @@ class GroktocrawlClient:
             body["output_schema"] = output_schema
         if system_prompt:
             body["system_prompt"] = system_prompt
+        for key, value in {
+            "date_from": date_from,
+            "date_to": date_to,
+            "time_range": time_range,
+            "engines": engines,
+        }.items():
+            if value is not None:
+                body[key] = value
         return await self._post("/v2/search", body)
 
     async def agent(

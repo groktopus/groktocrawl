@@ -77,3 +77,29 @@ Research-agent completion `coverage.evidence` exposes the same default budget. `
 Fast non-streaming keyword search accepts `limit` (1–1000), `page` (1–1000) and `offset` (0–100000, within that upstream page). `coverage` reports captured_results, returned_results, omitted_results, has_more_in_page and unknown upstream_has_more. If more captured results remain, submit the returned `continuation` object to `/v2/search`. After exhausting that page, callers may request coverage.next_upstream_page with offset=0; engine support and further availability are unknown. Each continuation repeats the upstream query, so ordering can change. No exhaustive or snapshot guarantee is made. Images, streaming and non-fast/non-keyword modes reject nondefault page/offset with 422.
 
 For example: `{"query":"capacitor measurements","limit":20,"page":1,"offset":0}`. Narrow a session question with `{"question":"Amber voltage","ref_ids":["ref_1_2"],"evidence_budget_chars":64000}`. Lexical selection scans all retained content but may miss synonyms; use coverage and complete refs when auditing omissions.
+
+### Inclusive scholarly publication dates
+
+`POST /v1/search` and `POST /v2/search` accept optional `date_from` and
+`date_to` as inclusive `YYYY-MM-DD` publication dates. Either endpoint may
+be omitted. Set `engines: ["openalex"]` explicitly. For example:
+
+```json
+{"query":"language model evaluation","engines":["openalex"],"date_from":"2026-01-01","date_to":"2026-01-31"}
+```
+
+Only non-streaming `fast` / `keyword` search without contents extraction or
+structured output is currently supported. Sources must be omitted or `web`;
+categories must be omitted, `science`, or `research`. Other scopes and modes
+are rejected before acquisition. Malformed/reversed dates, unknown date
+controls, and `time_range` are rejected; relative ranges are not part of this
+initial exact-date contract. Searches without date controls retain existing
+behavior.
+
+Results preserve source `publishedDate`. Additive top-level `date_filter`
+metadata reports requested/applied bounds, audited engines, enforcement status,
+reason, and warnings. A backend lacking matching audited enforcement evidence,
+or returning undated/out-of-range results, causes an upstream error rather
+than a successful unbounded response. Upgrade the SlopSearX backend first.
+This audited OpenAlex scope does not claim exact-date coverage for general news.
+The MCP `search` tool exposes the same fields and restrictions.

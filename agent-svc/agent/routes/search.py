@@ -22,6 +22,14 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+def _date_params(body: SearchRequest) -> dict[str, Any]:
+    return {
+        key: getattr(body, key)
+        for key in ("date_from", "date_to", "time_range", "engines")
+        if getattr(body, key) is not None
+    }
+
+
 @router.post("/v1/search")
 async def search_v1(request: Request, body: SearchRequest) -> dict[str, Any]:
     """Firecrawl v1-compatible search endpoint.
@@ -38,14 +46,21 @@ async def search_v1(request: Request, body: SearchRequest) -> dict[str, Any]:
             limit=body.limit,
             categories=body.categories,
             sources=body.sources,
+            **_date_params(body),
         )
         return {
             "success": True,
+            **({"date_filter": _health.date_filter} if _date_params(body) else {}),
             "data": [
                 {
                     "url": r["url"],
                     "title": r["title"],
                     "description": r.get("description", ""),
+                    **(
+                        {"publishedDate": r.get("publishedDate")}
+                        if _date_params(body)
+                        else {}
+                    ),
                 }
                 for r in results
             ],
@@ -97,6 +112,7 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
     searxng = SearXNGClient(request.app.state.searxng_url)
     warning_msg: str | None = None
     result_coverage: dict | None = None
+    date_filter: dict | None = None
     acquired_artifacts = []
     refused_urls: set[str] = set()
     unavailable_urls: set[str] = set()
@@ -249,8 +265,10 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
                 categories=body.categories,
                 sources=effective_sources,
                 **continuation_params,
+                **_date_params(body),
             )
             result_coverage = getattr(_health, "result_coverage", None)
+            date_filter = getattr(_health, "date_filter", None)
             if not results and _health.engines_responding == 0:
                 warning_msg = (
                     "All search engines returned no results. "
@@ -258,7 +276,10 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
                 )
             search_results = [
                 SearchResult(
-                    url=r["url"], title=r["title"], description=r.get("description", "")
+                    url=r["url"],
+                    title=r["title"],
+                    description=r.get("description", ""),
+                    publishedDate=r.get("publishedDate"),
                 )
                 for r in results
             ]
@@ -461,6 +482,7 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
             warning=warning_msg,
             coverage=result_coverage,
             continuation=continuation,
+            date_filter=date_filter,
         )
     finally:
         await searxng.close()

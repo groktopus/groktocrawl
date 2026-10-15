@@ -245,6 +245,10 @@ async def search(
     system_prompt: str | None = None,
     page: int = 1,
     offset: int = 0,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    time_range: str | None = None,
+    engines: list[str] | None = None,
 ) -> str:
     """Search the web and return results with URLs titles and snippets.
 
@@ -280,6 +284,16 @@ async def search(
         output_schema=output_schema,
         system_prompt=system_prompt,
         **({"page": page, "offset": offset} if page != 1 or offset else {}),
+        **{
+            key: value
+            for key, value in {
+                "date_from": date_from,
+                "date_to": date_to,
+                "time_range": time_range,
+                "engines": engines,
+            }.items()
+            if value is not None
+        },
     )
     _ensure_success(result)
     return _resp(result)

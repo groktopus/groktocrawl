@@ -920,6 +920,10 @@ class Client:
         contents: dict | None = None,
         page: int = 1,
         offset: int = 0,
+        date_from: str | None = None,
+        date_to: str | None = None,
+        time_range: str | None = None,
+        engines: list[str] | None = None,
     ) -> dict[str, Any]:
         data: dict[str, Any] = {
             "query": query,
@@ -928,6 +932,14 @@ class Client:
         }
         if page != 1 or offset:
             data.update(page=page, offset=offset)
+        for key, value in {
+            "date_from": date_from,
+            "date_to": date_to,
+            "time_range": time_range,
+            "engines": engines,
+        }.items():
+            if value is not None:
+                data[key] = value
         if scrape:
             data["scrapeOptions"] = {"formats": ["markdown"]}
         if categories:
@@ -1442,6 +1454,11 @@ def cmd_search(client: Client, args: argparse.Namespace) -> None:
             getattr(args, "page", 1) != 1 or getattr(args, "offset", 0)
         ):
             die("Search page/offset requires omitting --stream")
+        if args.stream and any(
+            getattr(args, key, None) is not None
+            for key in ("date_from", "date_to", "time_range")
+        ):
+            die("Date bounds require omitting --stream")
         if args.stream:
             result = client.search_stream(
                 query=args.query,
@@ -1492,6 +1509,11 @@ def cmd_search(client: Client, args: argparse.Namespace) -> None:
             output_schema=output_schema,
             system_prompt=args.system_prompt,
             contents=contents,
+            **{
+                key: getattr(args, key, None)
+                for key in ("date_from", "date_to", "time_range", "engines")
+                if getattr(args, key, None) is not None
+            },
             **(
                 {"page": args.page, "offset": args.offset}
                 if getattr(args, "page", 1) != 1 or getattr(args, "offset", 0)
@@ -1521,6 +1543,8 @@ def cmd_search(client: Client, args: argparse.Namespace) -> None:
             output_data["continuation"] = result.get("continuation")
         if image_data:
             output_data["images"] = image_data
+        if result.get("date_filter"):
+            output_data["date_filter"] = result["date_filter"]
         if result.get("output"):
             output_data["output"] = result["output"]
         emit("", output_data)
@@ -2934,6 +2958,13 @@ def make_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="SSE streaming output (results appear as they arrive)",
     )
+
+    p_search.add_argument("--date-from", help="Inclusive publication start YYYY-MM-DD")
+    p_search.add_argument("--date-to", help="Inclusive publication end YYYY-MM-DD")
+    p_search.add_argument(
+        "--time-range", help="Reserved; use explicit publication dates"
+    )
+    p_search.add_argument("--engines", nargs="+", help="Exact dates require openalex")
 
     p_map = subparsers.add_parser("map", help="Discover URLs on a site")
     p_map.add_argument("url", help="Site URL to map")

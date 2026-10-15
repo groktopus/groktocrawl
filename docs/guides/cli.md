@@ -57,3 +57,10 @@ Commands that start asynchronous work print a job identifier unless polling is e
 `groktocrawl search "capacitor measurements" --limit 20 --page 1 --offset 20 --json` continues within the selected upstream page. JSON exposes coverage and a request-shaped continuation; text mode prints captured/returned counts and the next page/offset for captured results. Omit --stream for continuation. Upstream ordering may change between calls; pagination support and additional upstream results remain unknown. Page/offset currently require fast keyword search without images.
 
 MCP search exposes page/offset and MCP answer exposes evidence_budget_chars with the same API contracts. Session query/deepen can set evidence_budget_chars; query can restrict ref_ids to refs in its own session. Full session evidence remains available through resolve until session TTL/deletion. Agent completion reports its default selection budget; existing include_source_content exports full acquired Markdown.
+
+For inclusive scholarly publication dates use
+`groktocrawl search "language model evaluation" --engines openalex --date-from 2026-01-01 --date-to 2026-01-31 --json`.
+Either bound can be omitted. This requires fast, non-streaming keyword search
+and an upgraded SlopSearX backend; unsupported modes/scopes fail explicitly.
+`--time-range` is reserved and rejected; use explicit calendar bounds.
+JSON output includes the backend's `date_filter` enforcement evidence.
