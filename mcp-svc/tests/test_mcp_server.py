@@ -2051,3 +2051,25 @@ class TestMCPSurfaceCoverage:
         assert proc.returncode == 0, (
             f"check-mcp-coverage.py failed:\n{proc.stdout}\n{proc.stderr}"
         )
+
+
+@pytest.mark.asyncio
+async def test_bounded_search_tool_forwarding(monkeypatch):
+    captured = {}
+
+    async def fake_search(**kwargs):
+        captured.update(kwargs)
+        return {
+            "success": True,
+            "data": {"web": []},
+            "date_filter": {"status": "enforced"},
+        }
+
+    monkeypatch.setattr(
+        __import__("mcp_server", fromlist=["_client"])._client, "search", fake_search
+    )
+    await mcp.call_tool(
+        "search", {"query": "paper", "date_from": "2026-01-01", "engines": ["openalex"]}
+    )
+    assert captured["date_from"] == "2026-01-01"
+    assert captured["engines"] == ["openalex"]

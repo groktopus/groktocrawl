@@ -1539,3 +1539,28 @@ class TestLifecycle:
 
         was_open = asyncio.run(run())
         assert was_open is True
+
+
+def test_bounded_search_http_contract():
+    import json
+
+    captured = []
+
+    def respond(request):
+        captured.append(json.loads(request.content))
+        return httpx.Response(
+            200,
+            json={"success": True, "date_filter": {"status": "enforced"}},
+            request=request,
+        )
+
+    client = _make_matched_client({("POST", "/v2/search"): respond})
+    result = asyncio.run(
+        client.search(
+            "paper", date_from="2026-01-01", date_to="2026-01-31", engines=["openalex"]
+        )
+    )
+    assert captured[0]["date_from"] == "2026-01-01"
+    assert captured[0]["date_to"] == "2026-01-31"
+    assert captured[0]["engines"] == ["openalex"]
+    assert result["date_filter"]["status"] == "enforced"
