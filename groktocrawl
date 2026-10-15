@@ -1596,30 +1596,75 @@ def cmd_search(client: Client, args: argparse.Namespace) -> None:
             resp = result["_stream"]
             shown_header = False
             result_count = 0
-            for line in resp.iter_lines(decode_unicode=True):
-                if not line or not line.startswith("data: "):
-                    continue
-                data_str = line[6:].strip()
-                if data_str == "[DONE]":
-                    break
-                try:
-                    event = json.loads(data_str)
+            stream_error: str | None = None
+            token_started = False
+            token_received = False
+            try:
+                for line in resp.iter_lines(decode_unicode=True):
+                    if not line or not line.startswith("data: "):
+                        continue
+                    data_str = line[6:].strip()
+                    if data_str == "[DONE]":
+                        break
+                    try:
+                        event = json.loads(data_str)
+                    except json.JSONDecodeError:
+                        continue
+                    event_type = event.get("type")
+                    if event_type == "error":
+                        stream_error = str(
+                            event.get("content") or "Search stream failed"
+                        )
                     if JSON_OUTPUT:
                         emit("", event)
-                    elif event["type"] == "search_result":
-                        r = event["result"]
+                    elif event_type == "search_result":
+                        row = event.get("result", {})
                         result_count += 1
                         if not shown_header:
                             print(f"Search results for: {args.query}\n")
                             shown_header = True
-                        print(f"{result_count}. {r.get('title', '(no title)')}")
-                        print(f"   {r.get('url', '')}")
-                        desc = r.get("description", "")
-                        if desc:
-                            print(f"   {desc[:200]}")
+                        print(f"{result_count}. {row.get('title', '(no title)')}")
+                        print(f"   {row.get('url', '')}")
+                        description = row.get("description", "")
+                        if description:
+                            print(f"   {description[:200]}")
                         print()
-                except (json.JSONDecodeError, KeyError):
-                    pass
+                    elif event_type == "token":
+                        if not token_started:
+                            print("Answer:")
+                            token_started = True
+                        token_received = True
+                        sys.stdout.write(str(event.get("content", "")))
+                        sys.stdout.flush()
+                    elif event_type == "done":
+                        if token_started:
+                            print()
+                        output = event.get("output")
+                        if isinstance(output, dict):
+                            content = output.get("content")
+                            if content is not None and not token_received:
+                                label = (
+                                    "Structured output:"
+                                    if args.output_schema
+                                    or isinstance(content, (dict, list))
+                                    else "Answer:"
+                                )
+                                print(label)
+                                if isinstance(content, (dict, list)):
+                                    print(json.dumps(content, indent=2))
+                                else:
+                                    print(content)
+                        variations = event.get("query_variations")
+                        if variations:
+                            print("Search queries: " + ", ".join(map(str, variations)))
+                    elif event_type == "error":
+                        print(f"Error: {stream_error}", file=sys.stderr)
+            finally:
+                close = getattr(resp, "close", None)
+                if close is not None:
+                    close()
+            if stream_error is not None:
+                die(f"Search stream failed: {stream_error}")
             return
 
         result = client.search(
@@ -1645,8 +1690,9 @@ def cmd_search(client: Client, args: argparse.Namespace) -> None:
         output_data = {"results": data, "query": args.query}
         if image_data:
             output_data["images"] = image_data
-        if result.get("output"):
-            output_data["output"] = result["output"]
+        for key in ("evidence_coverage", "output", "query_variations", "warning"):
+            if key in result:
+                output_data[key] = result[key]
         emit("", output_data)
         return
 
