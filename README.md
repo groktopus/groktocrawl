@@ -7,6 +7,7 @@
 > The bounded research substrate is implemented and has passed its seven-day pilot (36 successful operations, three checkpoints). Read the [readiness recommendation and limits](docs/experiments/w9-replacement-readiness-decision.md) and [experiment plan](docs/experiments/research-architecture.md). Magnus approved the bounded ADR recommendations on September 30, 2026.
 
 > The [operational follow-ups](docs/experiments/research-architecture.md#post-roadmap-operational-follow-ups) are complete. Current browser/API health hardening is documented separately from the historical seven-day pilot.
+> The [October 15 release check](docs/experiments/release-readiness-2026-10-15.md) records the deployed API/MCP and CLI fixes, real client checks, retained-data verification and rollback rehearsal. Date-bounded searches currently return an explicit unsupported-backend error; ordinary search works.
 > The [October 3 search and Jev studies](docs/experiments/upstream-search-reconciliation.md) retain the current ranking policy and recommend revision or continued shadow testing. Their results do not change deployment defaults or establish production adoption.
 >
 > The repository preserves upstream Git history but is hosted as a separate GitHub repository. The inherited documentation below describes the starting implementation; it does not promise compatibility for future experiments. No upstream releases, images, or support channels represent this fork.

@@ -885,3 +885,11 @@ existing search API; it does not require changes to the search engine. Current
 work verifies consistent search ordering, filters, evidence metadata, failure
 reporting and credential-derived cache scope across the supported client paths.
 The optional studies in issues #444–448 remain separate from this delivery work.
+
+### October 15 release gap closure
+
+The [release check](release-readiness-2026-10-15.md) records the date-filter,
+focused-pass and streaming-JSON repairs from PR #457, together with current
+client, retained-data and rollback checks. This is release maintenance after the
+completed architecture roadmap. It does not reopen optional studies #444–448
+or require search-engine development.
