@@ -455,3 +455,20 @@ def test_called_runtime_artifacts_do_not_collide_with_parent_workflow():
         assert len(names) == len(set(names))
         artifact_sets.append(set(names))
     assert not artifact_sets[0] & artifact_sets[1]
+
+
+def test_image_publication_preserves_untagged_multiarch_child_manifests():
+    workflow = yaml.safe_load(
+        (Path(__file__).parents[2] / ".github/workflows/docker.yml").read_text()
+    )
+    for job in workflow["jobs"].values():
+        for step in job.get("steps", []):
+            # GHCR exposes platform and attestation manifests as untagged versions.
+            # A generic untagged-version cleanup destroys live index dependencies.
+            assert "prune untagged" not in step.get("name", "").lower()
+            action = step.get("uses", "").lower()
+            assert "delete-package-versions" not in action
+            assert "container-retention-policy" not in action
+            command = step.get("run", "")
+            if "/packages/container/" in command:
+                assert not re.search(r"(?:--method|-X)\s+DELETE\b", command)

@@ -291,23 +291,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Prune untagged versions
-        if: github.event_name == 'push'
-        shell: bash
-        run: |
-          PACKAGE_NAME=$(echo "${{ matrix.image }}" | sed 's|.*/||')
-          echo "Pruning untagged versions of $PACKAGE_NAME"
-          gh api \
-            --method GET \
-            "/orgs/${{ env.REGISTRY_OWNER }}/packages/container/$PACKAGE_NAME/versions?per_page=100" \
-            --jq '.[] | select(.metadata.container.tags == null or .metadata.container.tags == []) | .id' \
-            | while read version_id; do
-              echo "  Deleting version $version_id"
-              gh api --method DELETE \
-                "/orgs/${{ env.REGISTRY_OWNER }}/packages/container/$PACKAGE_NAME/versions/$version_id" --silent
-          done
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Keep untagged manifests: multi-architecture indexes reference untagged
+      # platform and attestation manifests, so deleting them breaks published images.
 
   integration-tests:
     name: Integration Tests
