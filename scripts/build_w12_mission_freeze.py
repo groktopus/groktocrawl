@@ -70,7 +70,7 @@ def main() -> int:
             "intake_and_evaluator_lanes": 20000,
         },
         "model_identity_policy": "record provider-returned identity on every call",
-        "endpoint_origin": "https://gpuslut.brandyapple.com/",
+        "endpoint_origin": "https://research-provider.example/",
         "concurrency": 5,
         "maximum_authorized_concurrency": 10,
         "transport_attempt_limit": 3,
