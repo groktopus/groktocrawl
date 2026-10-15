@@ -207,6 +207,12 @@ services:
       dockerfile: browser-svc/Dockerfile
     image: ghcr.io/groktopus/groktocrawl-browser
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8012/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 10
 
   flare-solverr:
     image: ghcr.io/flaresolverr/flaresolverr:latest
@@ -431,6 +437,12 @@ services:
       - "${PORTAL_HOST_PORT:-8082}:8081"
     environment:
       - AGENT_BASE_URL=http://agent-svc:8080
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8081/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      start_period: 5s
+      retries: 5
 
   parse-svc:
     build:
@@ -438,6 +450,12 @@ services:
       dockerfile: parse-svc/Dockerfile
     image: ghcr.io/groktopus/groktocrawl-parse
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8013/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      start_period: 5s
+      retries: 5
 
   mcp-svc:
     build:

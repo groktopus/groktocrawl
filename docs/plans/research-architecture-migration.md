@@ -59,5 +59,6 @@ results.
 
 - Both source baselines fetched and compared.
 - Mainline-only runtime, documentation, and deployment contracts audited.
-- Integration and compatibility testing in progress.
-- Release, data rehearsal, deployment, and repository consolidation pending.
+- Integration and compatibility checks passed on the prior integration head; final startup and health-check patch verification is in progress.
+- Isolated restoration and shadow-backfill rehearsal completed: all 11,852 vector records matched across IDs, payload/content, and vectors.
+- Release, live deployment verification, and repository consolidation remain pending.

@@ -158,6 +158,14 @@ down -v`. PostgreSQL gets a new volume named from the project and
   result parity, vector counts, PostgreSQL saturation, Qdrant write freshness,
   request errors, and latency for the agreed observation window.
 
+   Record the promotion evidence in the operator change record: schema version
+   16; exact Qdrant-to-pgvector ID/content/vector parity with zero mismatches;
+   zero missing IDs and shadow-write failures during comparison; and fresh
+   Qdrant dual writes. Also record the target immutable image digests and
+   healthy readiness of API, MCP, semantic, portal, and parse endpoints. Verify
+   SlopSearX, Valkey, and Qdrant container/image/volume identities are unchanged
+   after rollout. Do not promote if any result is missing or unexplained.
+
 ## Rollback and recovery
 
 - **Vector read rollback:** set `VECTOR_STORE_MODE=qdrant`, keep

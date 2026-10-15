@@ -254,3 +254,15 @@ def test_protected_capture_publishes_only_ingress_and_preserves_approved_api_por
         "flare-control-svc",
     ):
         assert not overlay_services[name].get("ports"), name
+
+
+def test_portal_parse_browser_rollout_targets_have_endpoint_healthchecks() -> None:
+    services = BASE["services"]
+    for service, port in (
+        ("portal-svc", "8081"),
+        ("parse-svc", "8013"),
+        ("browser-svc", "8012"),
+    ):
+        assert "/health" in services[service]["healthcheck"]["test"][-1]
+        assert f"127.0.0.1:{port}" in services[service]["healthcheck"]["test"][-1]
+    assert "HEALTHCHECK" in (ROOT / "mcp-svc/Dockerfile").read_text(encoding="utf-8")
