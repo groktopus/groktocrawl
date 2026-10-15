@@ -37,6 +37,7 @@ class SseResponse:
         self.lines.append("data: [DONE]")
 
     def iter_lines(self, decode_unicode=True):
+        assert decode_unicode is True
         yield from self.lines
 
     def close(self):
