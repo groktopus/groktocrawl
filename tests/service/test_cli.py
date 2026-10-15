@@ -1604,3 +1604,96 @@ class TestImageSupport:
             if "--search-type" in action.option_strings:
                 assert "images" in action.choices
                 break
+
+
+def _bounded_cli_receipt():
+    bounds = {"date_from": "2026-01-01", "date_to": "2026-01-31"}
+    return {
+        "requested": {**bounds, "time_range": None},
+        "applied": bounds,
+        "status": "enforced",
+        "engines": ["openalex"],
+        "enforced_by": ["upstream:openalex"],
+        "reason": "audited",
+        "warnings": [],
+    }
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        {"success": True, "data": {"web": []}},
+        {"success": True, "date_filter": {"status": "enforced"}, "data": {"web": []}},
+        {
+            "success": True,
+            "date_filter": _bounded_cli_receipt(),
+            "data": {"web": [{"publishedDate": "2025-01-01"}]},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_cli_receipt(),
+            "data": {"web": [{"publishedDate": None}]},
+        },
+    ],
+)
+def test_bounded_cli_rejects_unproven_old_agent(client, response):
+    client._request = MagicMock(return_value=response)
+    with pytest.raises(_cli_ns["ApiError"]):
+        client.search(
+            "paper", date_from="2026-01-01", date_to="2026-01-31", engines=["openalex"]
+        )
+
+
+def test_bounded_cli_accepts_empty_with_exact_proof(client):
+    response = {
+        "success": True,
+        "date_filter": _bounded_cli_receipt(),
+        "data": {"web": []},
+    }
+    client._request = MagicMock(return_value=response)
+    assert (
+        client.search(
+            "paper", date_from="2026-01-01", date_to="2026-01-31", engines=["openalex"]
+        )
+        == response
+    )
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"date_from": "bad"},
+        {"date_to": "2025-01-01"},
+        {"engines": ["arxiv"]},
+        {"search_type": "deep"},
+        {"retrieval_mode": "vector"},
+        {"time_range": "week"},
+        {"contents": {}},
+        {"scrape": True},
+    ],
+)
+def test_bounded_cli_validates_before_dispatch(client, changes):
+    client._request = MagicMock()
+    with pytest.raises(_cli_ns["ApiError"]):
+        client.search(
+            "paper",
+            **(
+                {
+                    "date_from": "2026-01-01",
+                    "date_to": "2026-01-31",
+                    "engines": ["openalex"],
+                }
+                | changes
+            ),
+        )
+    client._request.assert_not_called()
+
+
+def test_bounded_cli_command_exits_on_old_agent(client):
+    args = _cli_ns["make_parser"]().parse_args(
+        ["search", "paper", "--date-from", "2026-01-01", "--engines", "openalex"]
+    )
+    client._request = MagicMock(return_value={"success": True, "data": {"web": []}})
+    with pytest.raises(SystemExit) as exc:
+        _cli_ns["cmd_search"](client, args)
+    assert exc.value.code != 0

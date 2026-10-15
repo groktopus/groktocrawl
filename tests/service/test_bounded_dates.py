@@ -34,6 +34,7 @@ def proof(bounds=DATES):
         {"date_from": "2026-02-01"},
         {"dateFrom": "2026-01-01"},
         {"date_form": "2026-01-01"},
+        {"published_after": "2026-01-01"},
         {"time_range": "week"},
         {"engines": ["openalex", "arxiv"]},
         {"engines": None},

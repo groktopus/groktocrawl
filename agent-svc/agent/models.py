@@ -888,7 +888,9 @@ class SearchRequest(BaseModel):
             for key in value:
                 normalized = key.lower().replace("_", "").replace("-", "")
                 if (
-                    normalized.startswith(("date", "publicationdate", "timerange"))
+                    normalized.startswith(
+                        ("date", "publication", "published", "timerange")
+                    )
                     or normalized in {"startdate", "enddate", "fromdate", "todate"}
                 ) and key not in {"date_from", "date_to", "time_range"}:
                     raise ValueError(f"Unknown date control: {key}")

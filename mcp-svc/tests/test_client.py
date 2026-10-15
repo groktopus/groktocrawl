@@ -1550,7 +1550,11 @@ def test_bounded_search_http_contract():
         captured.append(json.loads(request.content))
         return httpx.Response(
             200,
-            json={"success": True, "date_filter": {"status": "enforced"}},
+            json={
+                "success": True,
+                "data": {"web": []},
+                "date_filter": _bounded_proof(),
+            },
             request=request,
         )
 
@@ -1564,3 +1568,91 @@ def test_bounded_search_http_contract():
     assert captured[0]["date_to"] == "2026-01-31"
     assert captured[0]["engines"] == ["openalex"]
     assert result["date_filter"]["status"] == "enforced"
+
+
+def _bounded_proof():
+    bounds = {"date_from": "2026-01-01", "date_to": "2026-01-31"}
+    return {
+        "requested": {**bounds, "time_range": None},
+        "applied": bounds,
+        "status": "enforced",
+        "engines": ["openalex"],
+        "enforced_by": ["upstream:openalex"],
+        "reason": "audited",
+        "warnings": [],
+    }
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        {"success": True, "data": {"web": []}},
+        {
+            "success": True,
+            "date_filter": _bounded_proof() | {"applied": {}},
+            "data": {"web": []},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_proof(),
+            "data": {"web": [{"publishedDate": "2025-01-01"}]},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_proof(),
+            "data": {"web": [{"publishedDate": None}]},
+        },
+    ],
+)
+def test_bounded_mcp_rejects_old_or_mismatched_agent(response):
+    client = _make_matched_client({("POST", "/v2/search"): _json_handler(response)})
+    result = asyncio.run(
+        client.search(
+            "paper", date_from="2026-01-01", date_to="2026-01-31", engines=["openalex"]
+        )
+    )
+    assert "error" in result
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"date_from": "bad"},
+        {"date_to": "2025-01-01"},
+        {"engines": ["arxiv"]},
+        {"search_type": "deep"},
+        {"retrieval_mode": "vector"},
+        {"time_range": "week"},
+    ],
+)
+def test_bounded_mcp_validates_before_dispatch(changes):
+    client = _make_matched_client({})
+    result = asyncio.run(
+        client.search(
+            "paper",
+            **(
+                {
+                    "date_from": "2026-01-01",
+                    "date_to": "2026-01-31",
+                    "engines": ["openalex"],
+                }
+                | changes
+            ),
+        )
+    )
+    assert result["status_code"] == 422
+
+
+@pytest.mark.parametrize("error", [None, "upstream failure"])
+def test_bounded_mcp_error_key_never_bypasses_proof(error):
+    client = _make_matched_client(
+        {
+            ("POST", "/v2/search"): _json_handler(
+                {"success": True, "error": error, "data": {"web": []}}
+            )
+        }
+    )
+    result = asyncio.run(
+        client.search("paper", date_from="2026-01-01", engines=["openalex"])
+    )
+    assert result.get("error")

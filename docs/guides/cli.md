@@ -64,3 +64,5 @@ Either bound can be omitted. This requires fast, non-streaming keyword search
 and an upgraded SlopSearX backend; unsupported modes/scopes fail explicitly.
 `--time-range` is reserved and rejected; use explicit calendar bounds.
 JSON output includes the backend's `date_filter` enforcement evidence.
+The CLI validates bounded requests locally and rejects successful responses from
+older agents unless they include a matching audited receipt and dated results.

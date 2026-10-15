@@ -2073,3 +2073,55 @@ async def test_bounded_search_tool_forwarding(monkeypatch):
     )
     assert captured["date_from"] == "2026-01-01"
     assert captured["engines"] == ["openalex"]
+
+
+@pytest.mark.asyncio
+async def test_bounded_tool_old_agent_is_error(monkeypatch):
+    client = __import__("mcp_server", fromlist=["_client"])._client
+
+    async def old_agent(*args, **kwargs):
+        return {"success": True, "data": {"web": []}}
+
+    monkeypatch.setattr(client, "_post", old_agent)
+    from mcp.server.fastmcp.exceptions import ToolError
+
+    with pytest.raises(ToolError, match="did not prove"):
+        await mcp.call_tool(
+            "search",
+            {"query": "paper", "date_from": "2026-01-01", "engines": ["openalex"]},
+        )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "key",
+    ["dateFrom", "date_form", "timeRange", "publication_date_from", "published_after"],
+)
+async def test_unknown_tool_date_controls_rejected_before_http(monkeypatch, key):
+    from unittest.mock import AsyncMock
+
+    from mcp.server.fastmcp.exceptions import ToolError
+
+    client = __import__("mcp_server", fromlist=["_client"])._client
+    send = AsyncMock()
+    monkeypatch.setattr(client, "_post", send)
+    with pytest.raises(ToolError, match="Unknown date control"):
+        await mcp.call_tool("search", {"query": "paper", key: "2026-01-01"})
+    send.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_tool_unrelated_legacy_extras_remain_compatible(monkeypatch):
+    captured = {}
+
+    async def fake_search(**kwargs):
+        captured.update(kwargs)
+        return {"success": True, "data": {"web": []}}
+
+    monkeypatch.setattr(
+        __import__("mcp_server", fromlist=["_client"])._client, "search", fake_search
+    )
+    await mcp.call_tool(
+        "search", {"query": "paper", "candidate": True, "update": 1, "timeout": 2}
+    )
+    assert captured["query"] == "paper"

@@ -103,3 +103,7 @@ or returning undated/out-of-range results, causes an upstream error rather
 than a successful unbounded response. Upgrade the SlopSearX backend first.
 This audited OpenAlex scope does not claim exact-date coverage for general news.
 The MCP `search` tool exposes the same fields and restrictions.
+
+The MCP client independently validates bounded requests and verifies the agent's
+receipt and result dates, so connecting a new MCP service to an old agent fails
+explicitly. Misspelled date controls are rejected before MCP dispatch.
