@@ -266,3 +266,27 @@ def test_unrelated_legacy_extras_remain_compatible():
         SearchRequest(query="paper", candidate="value", update=True, timeout=5).query
         == "paper"
     )
+
+
+@pytest.mark.asyncio
+async def test_audited_empty_result_has_no_unrelated_brave_warning(monkeypatch):
+    from agent.routes.search import search
+
+    mock = SimpleNamespace(
+        search=AsyncMock(
+            return_value=(
+                [],
+                SimpleNamespace(
+                    date_filter=proof(), result_coverage=None, engines_responding=0
+                ),
+            )
+        ),
+        close=AsyncMock(),
+    )
+    monkeypatch.setattr("agent.searxng_client.SearXNGClient", lambda _: mock)
+    request = SimpleNamespace(
+        app=SimpleNamespace(state=SimpleNamespace(searxng_url="http://backend"))
+    )
+    result = await search(request, SearchRequest(query="paper", **DATES))
+    assert result.warning is None
+    assert result.date_filter == proof()

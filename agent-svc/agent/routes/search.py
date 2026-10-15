@@ -269,7 +269,7 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
             )
             result_coverage = getattr(_health, "result_coverage", None)
             date_filter = getattr(_health, "date_filter", None)
-            if not results and _health.engines_responding == 0:
+            if not results and _health.engines_responding == 0 and not date_filter:
                 warning_msg = (
                     "All search engines returned no results. "
                     "Check your BRAVE_API_KEY configuration."
