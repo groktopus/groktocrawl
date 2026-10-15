@@ -408,6 +408,36 @@ class GroktocrawlClient:
         engines: list[str] | None = None,
     ) -> dict:
         """Web search with optional source filtering and search type."""
+        bounded = date_from is not None or date_to is not None or time_range is not None
+        expected = {"date_from": date_from, "date_to": date_to}
+        if bounded:
+            import re
+            from datetime import date
+
+            try:
+                for value in expected.values():
+                    if value is not None:
+                        if not isinstance(value, str) or not re.fullmatch(
+                            r"[0-9]{4}-[0-9]{2}-[0-9]{2}", value
+                        ):
+                            raise ValueError("Date bounds require YYYY-MM-DD")
+                        date.fromisoformat(value)
+                if date_from and date_to and date_from > date_to:
+                    raise ValueError("date_from must not exceed date_to")
+                if (
+                    time_range is not None
+                    or engines != ["openalex"]
+                    or search_type not in (None, "fast")
+                    or retrieval_mode not in (None, "keyword")
+                    or output_schema is not None
+                    or sources not in (None, [], ["web"])
+                    or categories not in (None, [], ["research"], ["science"])
+                ):
+                    raise ValueError(
+                        "Date bounds require fast keyword OpenAlex search without enrichment or time_range"
+                    )
+            except ValueError as exc:
+                return self._error_result(str(exc), status_code=422)
         body: dict[str, Any] = {"query": query, "limit": limit}
         if sources:
             body["sources"] = sources
@@ -429,7 +459,56 @@ class GroktocrawlClient:
         }.items():
             if value is not None:
                 body[key] = value
-        return await self._post("/v2/search", body)
+        result = await self._post("/v2/search", body)
+        if not bounded:
+            return result
+        if result.get("success") is not True and result.get("error"):
+            return result
+        if result.get("success") is not True or result.get("error"):
+            return self._error_result(
+                "Agent did not confirm bounded search success", status_code=502
+            )
+        proof = result.get("date_filter")
+        if not isinstance(proof, dict) or (
+            proof.get("requested") != {**expected, "time_range": None}
+            or proof.get("applied") != expected
+            or proof.get("status") != "enforced"
+            or proof.get("engines") != ["openalex"]
+            or proof.get("enforced_by") != ["upstream:openalex"]
+            or not isinstance(proof.get("warnings"), list)
+            or not isinstance(proof.get("reason"), str)
+        ):
+            return self._error_result(
+                "Agent did not prove requested publication-date enforcement",
+                status_code=502,
+            )
+        try:
+            data = result["data"]
+            if (
+                not isinstance(data, dict)
+                or data.get("images")
+                or data.get("news")
+                or not isinstance(data.get("web"), list)
+            ):
+                raise ValueError("Invalid bounded result envelope")
+            for row in data["web"]:
+                published = row.get("publishedDate")
+                if (
+                    not isinstance(published, str)
+                    or date.fromisoformat(published).isoformat() != published
+                ):
+                    raise ValueError("Missing publication date")
+                if (
+                    row.get("engine", "openalex") != "openalex"
+                    or (date_from and published < date_from)
+                    or (date_to and published > date_to)
+                ):
+                    raise ValueError("Out-of-range publication date")
+        except (KeyError, TypeError, ValueError, AttributeError):
+            return self._error_result(
+                "Agent returned invalid bounded publication dates", status_code=502
+            )
+        return result
 
     async def agent(
         self,

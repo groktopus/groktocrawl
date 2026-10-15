@@ -1844,7 +1844,15 @@ def test_search_forwards_date_controls(client):
         ]
     )
     assert args.date_from == "2026-01-01" and args.engines == ["openalex"]
-    with patch.object(client, "_request", return_value={"data": {}}) as request:
+    with patch.object(
+        client,
+        "_request",
+        return_value={
+            "success": True,
+            "date_filter": _bounded_cli_receipt(),
+            "data": {"web": []},
+        },
+    ) as request:
         client.search(
             "paper",
             date_from=args.date_from,
@@ -1857,10 +1865,167 @@ def test_search_forwards_date_controls(client):
     assert body["engines"] == ["openalex"]
 
 
-def test_search_stream_does_not_drop_date_controls(client):
-    with patch.object(
-        client, "_post_stream_with_retry", return_value=MagicMock()
-    ) as request:
-        client.search_stream("paper", date_from="2026-01-01", engines=["openalex"])
-    body = request.call_args.args[1]
-    assert body["date_from"] == "2026-01-01" and body["stream"] is True
+def test_search_stream_rejects_bounds_before_dispatch(client):
+    with patch.object(client, "_post_stream_with_retry") as request:
+        with pytest.raises(_cli_ns["ApiError"]):
+            client.search_stream("paper", date_from="2026-01-01", engines=["openalex"])
+    request.assert_not_called()
+
+
+def _bounded_cli_receipt():
+    bounds = {"date_from": "2026-01-01", "date_to": "2026-01-31"}
+    return {
+        "requested": {**bounds, "time_range": None},
+        "applied": bounds,
+        "status": "enforced",
+        "engines": ["openalex"],
+        "enforced_by": ["upstream:openalex"],
+        "reason": "audited",
+        "warnings": [],
+    }
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        {"success": True, "error": None, "data": {"web": []}},
+        {"success": True, "error": "legacy", "data": {"web": []}},
+        {
+            "success": True,
+            "error": "failure",
+            "date_filter": _bounded_cli_receipt(),
+            "data": {"web": []},
+        },
+        {"success": True, "data": {"web": []}},
+        {"success": True, "date_filter": {"status": "enforced"}, "data": {"web": []}},
+        {
+            "success": True,
+            "date_filter": _bounded_cli_receipt(),
+            "data": {"web": [{"publishedDate": "2025-01-01"}]},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_cli_receipt(),
+            "data": {"web": [{"publishedDate": None}]},
+        },
+        {"success": False, "date_filter": _bounded_cli_receipt(), "data": {"web": []}},
+        {
+            "success": True,
+            "date_filter": _bounded_cli_receipt() | {"status": "partially_enforced"},
+            "data": {"web": []},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_cli_receipt() | {"requested": {}},
+            "data": {"web": []},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_cli_receipt() | {"engines": ["brave"]},
+            "data": {"web": []},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_cli_receipt() | {"warnings": "bad"},
+            "data": {"web": []},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_cli_receipt() | {"reason": None},
+            "data": {"web": []},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_cli_receipt(),
+            "data": {"web": [{"publishedDate": "2026-02-30"}]},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_cli_receipt(),
+            "data": {"web": [{"publishedDate": "2026-01-01", "engine": "brave"}]},
+        },
+    ],
+)
+def test_bounded_cli_rejects_unproven_old_agent(client, response):
+    client._request = MagicMock(return_value=response)
+    with pytest.raises(_cli_ns["ApiError"]):
+        client.search(
+            "paper", date_from="2026-01-01", date_to="2026-01-31", engines=["openalex"]
+        )
+
+
+def test_bounded_cli_accepts_empty_with_exact_proof(client):
+    response = {
+        "success": True,
+        "date_filter": _bounded_cli_receipt(),
+        "data": {"web": []},
+    }
+    client._request = MagicMock(return_value=response)
+    assert (
+        client.search(
+            "paper", date_from="2026-01-01", date_to="2026-01-31", engines=["openalex"]
+        )
+        == response
+    )
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"date_from": "bad"},
+        {"date_to": "2025-01-01"},
+        {"engines": ["arxiv"]},
+        {"search_type": "deep"},
+        {"retrieval_mode": "vector"},
+        {"time_range": "week"},
+        {"contents": {}},
+        {"scrape": True},
+    ],
+)
+def test_bounded_cli_validates_before_dispatch(client, changes):
+    client._request = MagicMock()
+    with pytest.raises(_cli_ns["ApiError"]):
+        client.search(
+            "paper",
+            **(
+                {
+                    "date_from": "2026-01-01",
+                    "date_to": "2026-01-31",
+                    "engines": ["openalex"],
+                }
+                | changes
+            ),
+        )
+    client._request.assert_not_called()
+
+
+def test_bounded_cli_command_exits_on_old_agent(client):
+    args = _cli_ns["make_parser"]().parse_args(
+        ["search", "paper", "--date-from", "2026-01-01", "--engines", "openalex"]
+    )
+    client._request = MagicMock(return_value={"success": True, "data": {"web": []}})
+    with pytest.raises(SystemExit) as exc:
+        _cli_ns["cmd_search"](client, args)
+    assert exc.value.code != 0
+
+
+@pytest.mark.parametrize(
+    "bounds",
+    [
+        {"date_from": "2026-01-01", "date_to": None},
+        {"date_from": None, "date_to": "2026-01-01"},
+        {"date_from": "2026-01-01", "date_to": "2026-01-01"},
+    ],
+)
+def test_bounded_cli_accepts_inclusive_one_sided_results(client, bounds):
+    proof = _bounded_cli_receipt() | {
+        "requested": {**bounds, "time_range": None},
+        "applied": bounds,
+    }
+    response = {
+        "success": True,
+        "data": {"web": [{"publishedDate": "2026-01-01", "engine": "openalex"}]},
+        "date_filter": proof,
+    }
+    client._request = MagicMock(return_value=response)
+    assert client.search("paper", engines=["openalex"], **bounds) == response

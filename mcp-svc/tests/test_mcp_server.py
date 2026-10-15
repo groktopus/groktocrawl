@@ -1904,3 +1904,56 @@ async def test_search_tool_exposes_and_forwards_date_controls(monkeypatch):
     assert {"date_from", "date_to", "time_range", "engines"} <= tool.inputSchema[
         "properties"
     ].keys()
+
+
+@pytest.mark.asyncio
+async def test_bounded_search_old_agent_is_tool_error(monkeypatch):
+    from unittest.mock import AsyncMock
+
+    import mcp_server as mod
+    from mcp.server.fastmcp.exceptions import ToolError
+
+    monkeypatch.setattr(
+        mod._client,
+        "_post",
+        AsyncMock(return_value={"success": True, "data": {"web": []}}),
+    )
+    with pytest.raises(ToolError, match="did not prove"):
+        await mcp.call_tool(
+            "search",
+            {"query": "paper", "date_from": "2026-01-01", "engines": ["openalex"]},
+        )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "alias",
+    ["dateFrom", "date_form", "from_date", "endDate", "published_after", "timeRange"],
+)
+async def test_search_rejects_unknown_date_arguments_before_dispatch(
+    monkeypatch, alias
+):
+    from unittest.mock import AsyncMock
+
+    import mcp_server as mod
+    from mcp.server.fastmcp.exceptions import ToolError
+
+    call = AsyncMock(return_value={"success": True, "data": {"web": []}})
+    monkeypatch.setattr(mod._client, "search", call)
+    with pytest.raises(ToolError, match="Unknown date control"):
+        await mcp.call_tool("search", {"query": "paper", alias: "2026-01-01"})
+    call.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_search_preserves_unrelated_legacy_extra_arguments(monkeypatch):
+    from unittest.mock import AsyncMock
+
+    import mcp_server as mod
+
+    call = AsyncMock(return_value={"success": True, "data": {"web": []}})
+    monkeypatch.setattr(mod._client, "search", call)
+    await mcp.call_tool(
+        "search", {"query": "paper", "candidate": "legacy", "timeout": 5}
+    )
+    call.assert_awaited_once()
