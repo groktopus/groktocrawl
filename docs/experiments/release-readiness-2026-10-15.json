@@ -1,0 +1,51 @@
+{
+  "application_revision": "071b8ada7de9f67ba4746c7c5d5898c01de8a580",
+  "merge_commit": "b3293f4986fe76fbe518563039a3d5a2282886bf",
+  "experimental_only": true,
+  "model_alias": "free",
+  "required_ci": "passed",
+  "runtime_ci_run": 38805102725,
+  "integration": {
+    "passed": 2433,
+    "skipped": 212,
+    "deselected": 17
+  },
+  "post_update_functional_checks": 17,
+  "post_update_checks_passed": true,
+  "candidate_healthy_services": 11,
+  "retained_data_digest_verified": true,
+  "isolated_database_cache_restore": "passed",
+  "old_new_reader_compatibility": "passed",
+  "isolated_application_rollback_rollforward": "passed",
+  "database_migrations_in_release": false,
+  "first_update_attempt": "verifier_generated_label_mismatch_automatic_rollback_succeeded",
+  "corrected_update_attempt": "passed",
+  "cli": {
+    "source_installed_identical": true,
+    "atomic_replace": true,
+    "syntax_check": true,
+    "installed_capabilities": "passed",
+    "installed_seeded_model_json_with_sources": "passed"
+  },
+  "hermes": {
+    "actual_configured_tool_call": true,
+    "capability_call_count": 1,
+    "tool_succeeded": true,
+    "hermes_exit_code": 0,
+    "configuration_unchanged": true,
+    "no_search_calls": true
+  },
+  "search_engine_code_configuration_deployment_changed": false,
+  "other_candidate_containers_restarted_or_replaced": false,
+  "mainline_api_search_containers_changed": false,
+  "disposable_project_removed": true,
+  "date_bounded_live_success": false,
+  "date_bounded_unsupported_backend_rejected": true,
+  "optional_research_issues": [
+    444,
+    445,
+    446,
+    447,
+    448
+  ]
+}

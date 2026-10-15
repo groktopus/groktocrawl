@@ -12,6 +12,52 @@ an unchanged rollback target until the migration and rollback rehearsal in W9
 is complete. The incumbent deployment is not a rollback target and is never
 mutated by this procedure.
 
+## Updating an existing candidate
+
+For an existing deployment, use its active resolved Compose configuration, not
+an older sample environment file. A global image-tag change can unintentionally
+replace services that are meant to stay pinned. Preserve credentials, ports,
+networks and every dependency image. Keep the resolved configuration and prior
+image identities in private, durable storage outside the repository.
+
+The [October 15 release check](../experiments/release-readiness-2026-10-15.md)
+updates only `candidate-agent`, `candidate-mcp` and the installed CLI. It makes
+no database migrations and does not change the search engine. Its retained-data
+checks use schema 16; the schema-14 instructions below describe the original
+candidate bootstrap, not an upgrade from the current deployment.
+
+Before updating:
+
+1. Confirm required CI passes on the exact source revision. Build and record the
+   two application images from that revision; retain the prior images.
+2. Check all services are healthy and no research or crawl jobs are active.
+   Record a retained workspace revision and the digest of a rendered artifact.
+3. Restore PostgreSQL and Valkey backups into a separate disposable project.
+   Verify the new application and the prior application can both read the
+   restored data. Test rollback there before changing the live candidate.
+4. Prepare a private resolved Compose configuration that changes only those two
+   application images and the reported API revision. Stop admission through the
+   API and MCP services, then take fresh database and cache backups. Do not
+   describe independently captured live snapshots as an atomic backup.
+
+Use explicit service names when starting the prepared application configuration:
+
+```sh
+docker compose -p groktocrawl-x-candidate -f "$CANDIDATE_RESOLVED_COMPOSE"   up -d --no-deps --wait candidate-agent candidate-mcp
+```
+
+Verify exact image and runtime revision, model identity, published ports, CLI
+and MCP calls, retained artifact digests, and unchanged dependency containers.
+If these checks fail, start the two prior application images using the saved
+configuration and `--no-deps`. An application rollback does not require restoring
+or deleting database data when the schema is unchanged and old-reader
+compatibility has been verified. Retain the backups for recovery; never delete
+candidate volumes as part of an application update.
+
+Replace the CLI atomically with the complete reviewed executable, retain the
+previous file, and compare source and installed hashes. Test the installed
+executable itself. Existing agent configuration should not need rewriting.
+
 ## Frozen topology
 
 | Responsibility | Candidate service | Durable state |
