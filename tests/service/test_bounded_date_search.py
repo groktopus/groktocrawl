@@ -110,7 +110,18 @@ async def test_client_forwards_bounds_and_preserves_proof(cached):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "mutation", ["missing", "mismatch", "partial", "engine", "timeout", "row_date"]
+    "mutation",
+    [
+        "missing",
+        "mismatch",
+        "partial",
+        "engine",
+        "timeout",
+        "row_date",
+        "row_missing_date",
+        "row_malformed_date",
+        "row_engine",
+    ],
 )
 async def test_client_rejects_unproven_success(mutation):
     proof = deepcopy(PROOF)
@@ -123,6 +134,13 @@ async def test_client_rejects_unproven_success(mutation):
         proof["engines"] = ["brave"]
     if mutation == "row_date":
         row["publishedDate"] = "2025-12-31"
+
+    if mutation == "row_missing_date":
+        row.pop("publishedDate")
+    if mutation == "row_malformed_date":
+        row["publishedDate"] = "2026-02-30"
+    if mutation == "row_engine":
+        row["engine"] = "brave"
 
     def respond(request):
         if mutation == "timeout":
