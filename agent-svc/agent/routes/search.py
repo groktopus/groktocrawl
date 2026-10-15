@@ -163,6 +163,8 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
                 llm_base_url=request.app.state.llm_base_url,
                 llm_api_key=request.app.state.llm_api_key,
                 llm_model=request.app.state.llm_model,
+                categories=body.categories,
+                sources=effective_sources,
             )
             search_results = deep_result["results"]
             deep_data: dict[str, list] = {
