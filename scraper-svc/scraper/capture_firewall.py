@@ -55,12 +55,12 @@ def install_firewall() -> None:
     port = int(port_raw)
     if (
         not any(
-            gateway in ipaddress.ip_network(block)
+            gateway in ipaddress.IPv4Network(block)
             for block in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16")
         )
         or not subnet.is_private
         or not any(
-            subnet.subnet_of(ipaddress.ip_network(block))
+            subnet.subnet_of(ipaddress.IPv4Network(block))
             for block in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16")
         )
         or gateway not in subnet

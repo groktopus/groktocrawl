@@ -123,7 +123,7 @@ async def capture_gateway_hostname_is_public(hostname: str) -> bool:
         )
         expected_port = int(os.environ.get("SCRAPER_CAPTURE_GATEWAY_PORT", "8080"))
         private_networks = tuple(
-            ipaddress.ip_network(block)
+            ipaddress.IPv4Network(block)
             for block in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16")
         )
         if (
