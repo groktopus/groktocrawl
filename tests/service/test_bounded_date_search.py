@@ -206,3 +206,23 @@ async def test_empty_results_require_completed_acquisition(status):
 
 def test_unrelated_legacy_extras_remain_ignored():
     assert SearchRequest(query="paper", candidate="legacy", timeout=5).query == "paper"
+
+
+@pytest.mark.asyncio
+async def test_successful_empty_route_does_not_claim_backend_failure(monkeypatch):
+    client = SimpleNamespace(
+        search=AsyncMock(
+            return_value=([], SimpleNamespace(date_filter=PROOF, engines_responding=0))
+        ),
+        close=AsyncMock(),
+    )
+    monkeypatch.setattr("agent.searxng_client.SearXNGClient", lambda _: client)
+    request = SimpleNamespace(
+        app=SimpleNamespace(
+            state=SimpleNamespace(searxng_url="https://search.example.test")
+        )
+    )
+    result = await search(
+        request, SearchRequest(query="paper", engines=["openalex"], **BOUNDS)
+    )
+    assert result.warning is None and result.date_filter == PROOF
