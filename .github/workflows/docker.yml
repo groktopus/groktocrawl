@@ -171,13 +171,12 @@ jobs:
           TWIN_TEST_OUTCOME: ${{ steps.twin_tests.outcome }}
           TWIN_RESULT: ${{ steps.twin_tests.outcome == 'success' && 'success' || 'failure' }}
           TWIN_FAILURE_SOURCE: ${{ steps.twin_tests.outcome == 'success' && 'none' || 'twin' }}
-          TWIN_CHANGED_PATHS_JSON: ${{ needs.changes.outputs.changed_paths_json }}
           TWIN_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           TWIN_EVENT_KIND: ${{ github.event_name }}
           TWIN_EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           TWIN_EXECUTION_MODE: hosted
         run: |
-          uv run --no-sync python scripts/twin_provenance.py --output twin-out --changed-paths-json "$TWIN_CHANGED_PATHS_JSON"
+          uv run --no-sync python scripts/twin_provenance.py --output twin-out --changed-paths-from-event
           uv run --no-sync python -m jsonschema -i twin-out/twin-evidence.json provenance/twin-evidence.schema.json
       - name: Upload twin outcomes and provenance
         if: always()
@@ -998,7 +997,6 @@ jobs:
           TWIN_RESULT: ${{ job.status }}
           TWIN_FAILURE_SOURCE: ${{ job.status == 'success' && 'none' || 'implementation' }}
           TWIN_TEST_OUTCOME: ${{ job.status }}
-          TWIN_CHANGED_PATHS_JSON: ${{ needs.changes.outputs.changed_paths_json }}
           TWIN_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           TWIN_EVENT_KIND: ${{ github.event_name }}
           TWIN_EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -1010,7 +1008,7 @@ jobs:
           TWIN_EXCLUDED_TESTS: '["tests/service/test_twin_contract.py","tests/service/test_twin_network_isolation.py","tests/service/test_workflow_contract.py","tests/service/test_answer_evals.py"]'
           TWIN_CHECKS: scenario-version-precheck,manifest-validation
         run: |
-          uv run --no-sync python scripts/twin_provenance.py --output twin-compose-out --changed-paths-json "$TWIN_CHANGED_PATHS_JSON"
+          uv run --no-sync python scripts/twin_provenance.py --output twin-compose-out --changed-paths-from-event
           uv run --no-sync python -m jsonschema -i twin-compose-out/twin-evidence.json provenance/twin-evidence.schema.json
 
       - name: Publish coverage summary

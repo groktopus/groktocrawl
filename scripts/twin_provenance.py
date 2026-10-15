@@ -759,7 +759,13 @@ def build_manifest(
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--changed-paths-json", default="[]")
+    changed_paths = parser.add_mutually_exclusive_group()
+    changed_paths.add_argument("--changed-paths-json", default="[]")
+    changed_paths.add_argument(
+        "--changed-paths-from-event",
+        action="store_true",
+        help="Derive paths from the verified immutable event SHAs without passing the diff through env or argv",
+    )
     parser.add_argument("--calibration-artifact", type=Path)
     args = parser.parse_args()
     if args.calibration_artifact:
@@ -776,8 +782,13 @@ def main() -> int:
     if search_backend == "fixture":
         required_digests.remove("slopsearx")
         required_checkout.add("slopsearx")
+    actual_paths, event_diff = _event_diff_identity(_execution_mode())
     try:
-        paths = json.loads(args.changed_paths_json)
+        paths = (
+            actual_paths
+            if args.changed_paths_from_event
+            else json.loads(args.changed_paths_json)
+        )
         if not isinstance(paths, list) or not all(
             isinstance(path, str) for path in paths
         ):
@@ -787,13 +798,19 @@ def main() -> int:
         invalid = True
         os.environ["TWIN_RESULT"] = "failure"
         os.environ["TWIN_FAILURE_SOURCE"] = "harness"
-    invalid_paths = [path for path in paths if not _known_repo_path(path)]
+    # Git-derived paths are authoritative and may name deleted files, which
+    # no longer appear in the checked-out index. Explicit caller input still
+    # receives the existing repository-path and exact-diff checks below.
+    invalid_paths = (
+        []
+        if args.changed_paths_from_event
+        else [path for path in paths if not _known_repo_path(path)]
+    )
     if invalid_paths:
         invalid = True
         os.environ["TWIN_RESULT"] = "failure"
         os.environ["TWIN_FAILURE_SOURCE"] = "harness"
         os.environ["TWIN_FAILURE_DETAIL"] = "invalid changed paths"
-    actual_paths, event_diff = _event_diff_identity(_execution_mode())
     if actual_paths is None or sorted(paths) != actual_paths:
         invalid = True
         os.environ["TWIN_RESULT"] = "failure"

@@ -161,7 +161,9 @@ def test_pull_request_diff_uses_event_identity_when_base_advances(
 def test_pull_request_diff_fails_closed_for_missing_or_invalid_head(
     tmp_path, monkeypatch, event_head
 ):
-    provenance = _load("invalid_event_diff_provenance", ROOT / "scripts/twin_provenance.py")
+    provenance = _load(
+        "invalid_event_diff_provenance", ROOT / "scripts/twin_provenance.py"
+    )
     repo, event_base, _, _ = _advanced_base_and_pr_merge(tmp_path)
     monkeypatch.setattr(provenance, "ROOT", repo)
     monkeypatch.setenv("TWIN_EVENT_KIND", "pull_request")
@@ -173,7 +175,9 @@ def test_pull_request_diff_fails_closed_for_missing_or_invalid_head(
 def test_pull_request_context_without_explicit_event_kind_or_head_fails_closed(
     tmp_path, monkeypatch
 ):
-    provenance = _load("github_pr_context_provenance", ROOT / "scripts/twin_provenance.py")
+    provenance = _load(
+        "github_pr_context_provenance", ROOT / "scripts/twin_provenance.py"
+    )
     repo, event_base, _, _ = _advanced_base_and_pr_merge(tmp_path)
     monkeypatch.setattr(provenance, "ROOT", repo)
     monkeypatch.setenv("GITHUB_EVENT_NAME", "pull_request")
@@ -185,7 +189,9 @@ def test_pull_request_context_without_explicit_event_kind_or_head_fails_closed(
 
 
 def test_pull_request_diff_fails_closed_for_non_ancestor_head(tmp_path, monkeypatch):
-    provenance = _load("nonancestor_event_diff_provenance", ROOT / "scripts/twin_provenance.py")
+    provenance = _load(
+        "nonancestor_event_diff_provenance", ROOT / "scripts/twin_provenance.py"
+    )
     repo, event_base, _, checked_out = _advanced_base_and_pr_merge(tmp_path)
     tree = _git(repo, "rev-parse", f"{checked_out}^{{tree}}")
     unrelated_head = subprocess.check_output(
@@ -205,7 +211,9 @@ def test_pull_request_diff_fails_closed_for_non_ancestor_head(tmp_path, monkeypa
 def test_push_diff_uses_before_and_event_head_including_root_commit(
     tmp_path, monkeypatch, root_event
 ):
-    provenance = _load("push_event_diff_provenance", ROOT / "scripts/twin_provenance.py")
+    provenance = _load(
+        "push_event_diff_provenance", ROOT / "scripts/twin_provenance.py"
+    )
     repo = tmp_path / "push-repo"
     repo.mkdir()
     _git(repo, "init", "--quiet")
@@ -954,3 +962,103 @@ def test_calibration_artifact_has_bounded_fingerprints_latency_and_identity(
     assert "private response" not in serialized
     assert "brave-secret" not in serialized
     assert "llm-secret" not in serialized
+
+
+def test_event_derived_large_diff_never_enters_process_arguments(tmp_path, monkeypatch):
+    provenance = _load("large_event_provenance", ROOT / "scripts/twin_provenance.py")
+    paths = [f"docs/{index:05d}-{'bounded-' * 16}.md" for index in range(2500)]
+    assert len(json.dumps(paths)) > 131072  # Linux's per-env/argument size limit.
+    identity = {
+        "event": "push",
+        "base_sha": "a" * 40,
+        "head_sha": "b" * 40,
+        "comparison_base_sha": "a" * 40,
+        "checked_out_sha": "b" * 40,
+    }
+    monkeypatch.setattr(
+        provenance, "_event_diff_identity", lambda _mode: (paths, identity)
+    )
+    monkeypatch.setenv("TWIN_EXECUTION_MODE", "hosted")
+    monkeypatch.setenv("TWIN_SELECTION", "all")
+    argv = ["twin_provenance", "--output", str(tmp_path), "--changed-paths-from-event"]
+    monkeypatch.setattr("sys.argv", argv)
+    assert len(" ".join(argv)) < 512
+    assert provenance.main() == 0
+    manifest = json.loads((tmp_path / "twin-evidence.json").read_text())
+    assert manifest["selection"]["inputs"] == paths
+    assert manifest["event_diff"] == identity
+
+
+def test_event_derived_deleted_paths_preserve_verified_provenance(
+    tmp_path, monkeypatch
+):
+    provenance = _load("deleted_event_provenance", ROOT / "scripts/twin_provenance.py")
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _git(repo, "init", "--quiet")
+    _git(repo, "config", "user.name", "Twin contract test")
+    _git(repo, "config", "user.email", "twin-contract@example.invalid")
+    (repo / "deleted.txt").write_text("retired\n")
+    _git(repo, "add", "deleted.txt")
+    _git(repo, "commit", "--quiet", "-m", "base")
+    base = _git(repo, "rev-parse", "HEAD")
+    _git(repo, "rm", "--quiet", "deleted.txt")
+    _git(repo, "commit", "--quiet", "-m", "delete")
+    head = _git(repo, "rev-parse", "HEAD")
+    monkeypatch.setattr(provenance, "ROOT", repo)
+    monkeypatch.setenv("TWIN_EXECUTION_MODE", "hosted")
+    monkeypatch.setenv("TWIN_EVENT_KIND", "push")
+    monkeypatch.setenv("TWIN_BASE_SHA", base)
+    monkeypatch.setenv("TWIN_EVENT_HEAD_SHA", head)
+    monkeypatch.setenv("TWIN_SELECTION", "all")
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "twin_provenance",
+            "--output",
+            str(tmp_path / "output"),
+            "--changed-paths-from-event",
+        ],
+    )
+    assert provenance.main() == 0
+    manifest = json.loads((tmp_path / "output/twin-evidence.json").read_text())
+    assert manifest["selection"]["inputs"] == ["deleted.txt"]
+    assert manifest["event_diff"]["head_sha"] == head
+
+
+def test_event_derived_paths_fail_closed_when_event_cannot_be_verified(
+    tmp_path, monkeypatch
+):
+    provenance = _load(
+        "unverified_event_provenance", ROOT / "scripts/twin_provenance.py"
+    )
+    monkeypatch.setattr(
+        provenance,
+        "_event_diff_identity",
+        lambda _mode: (None, {"event": "pull_request"}),
+    )
+    monkeypatch.setattr(
+        "sys.argv",
+        ["twin_provenance", "--output", str(tmp_path), "--changed-paths-from-event"],
+    )
+    assert provenance.main() == 1
+    manifest = json.loads((tmp_path / "twin-evidence.json").read_text())
+    assert manifest["outcome"]["failure_source"] == "harness"
+    assert (
+        manifest["outcome"]["failure_detail"]
+        == "changed paths do not match checked-out event diff"
+    )
+
+
+@pytest.mark.parametrize("workflow", ["docker.yml", "runtime.yml"])
+def test_workflow_twin_provenance_uses_bounded_event_identity(workflow):
+    text = (ROOT / ".github/workflows" / workflow).read_text()
+    assert "TWIN_CHANGED_PATHS_JSON" not in text
+    invocations = [
+        line
+        for line in text.splitlines()
+        if "python scripts/twin_provenance.py" in line
+    ]
+    assert len(invocations) == 2
+    assert all("--changed-paths-from-event" in line for line in invocations)
+    assert "TWIN_BASE_SHA:" in text and "TWIN_EVENT_HEAD_SHA:" in text
