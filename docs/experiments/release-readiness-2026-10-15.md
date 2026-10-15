@@ -61,14 +61,10 @@ database migrations are included.
 The [sanitized result receipt](release-readiness-2026-10-15.json) records these
 outcomes without research content or deployment identifiers.
 
-The first application update was rejected by the private deployment verifier
-because it compared a Compose-generated dependency label against the old
-container rather than the services selected by `--no-deps`. Automatic rollback
-restored the prior applications. All 11 services were healthy afterward, with
-unchanged dependency containers and published ports. The verifier was corrected
-to check that label against the selected application graph; the complete
-prepared dependency configuration remained unchanged. The failed attempt is
-retained in the private operational record.
+The first update was automatically rolled back after a deployment validation
+check failed. The prior applications returned healthy, with unchanged dependency
+containers and ports. The validation was corrected and the next update passed.
+The failed attempt remains in the private operational record.
 
 ## Remaining limitation
 

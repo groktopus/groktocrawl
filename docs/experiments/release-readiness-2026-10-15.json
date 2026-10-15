@@ -18,7 +18,7 @@
   "old_new_reader_compatibility": "passed",
   "isolated_application_rollback_rollforward": "passed",
   "database_migrations_in_release": false,
-  "first_update_attempt": "verifier_generated_label_mismatch_automatic_rollback_succeeded",
+  "first_update_attempt": "deployment_validation_failed_automatic_rollback_succeeded",
   "corrected_update_attempt": "passed",
   "cli": {
     "source_installed_identical": true,
@@ -47,5 +47,10 @@
     446,
     447,
     448
-  ]
+  ],
+  "recovery_materials_retained": {
+    "fresh_backups": true,
+    "prior_application_images": true,
+    "private_recovery_instructions": true
+  }
 }
