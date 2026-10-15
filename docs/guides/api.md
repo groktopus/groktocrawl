@@ -6,6 +6,8 @@ The API is served by `agent-svc` on port 8080. FastAPI publishes the authoritati
 
 Authentication is optional for local development and required for production. Set `API_KEY`, then send either `Authorization: Bearer <key>` or `X-API-Key: <key>`. `/health` and `/metrics` remain unauthenticated for infrastructure probes.
 
+If both key headers are sent, a valid Bearer key takes precedence; otherwise a valid `X-API-Key` is used. Sessions and per-user research memory use that same key for their scope. `RESEARCH_MEMORY_SCOPE=global` still shares cached research. Without authentication, supplied key headers are cache-partition hints and do not establish caller identity.
+
 Errors use a common object with `error`, `error_code`, and optional `details`. Typical codes are `INVALID_REQUEST`, `AUTH_ERROR`, `NOT_FOUND`, `RATE_LIMITED`, `UPSTREAM_ERROR`, and `INTERNAL_ERROR`.
 
 ```bash
