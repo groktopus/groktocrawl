@@ -21,6 +21,7 @@ from capture_egress_svc.proxy import (
     _proxy_bind_host,
     health_handler,
 )
+from scraper import source_http as source_http_module
 from scraper.fetch_tiers import _is_private_url, fetch_via_content_negotiation
 from scraper.source_http import (
     CAPTURE_EGRESS_PROXY_ENV,
@@ -88,6 +89,39 @@ def local_connector(
 async def stop_server(server: asyncio.AbstractServer) -> None:
     server.close()
     await server.wait_closed()
+
+
+class _LocalQualifiedGatewayTransport(httpx.AsyncBaseTransport):
+    """Route a qualified RFC1918 test peer to a loopback fixture listener."""
+
+    def __init__(self, host: str, port: int) -> None:
+        self._host = host
+        self._port = port
+        self._inner = httpx.AsyncHTTPTransport(retries=0)
+
+    async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
+        url = request.url.copy_with(host=self._host, port=self._port)
+        routed = httpx.Request(
+            request.method,
+            url,
+            headers=request.headers,
+            stream=request.stream,
+            extensions=request.extensions,
+        )
+        return await self._inner.handle_async_request(routed)
+
+    async def aclose(self) -> None:
+        await self._inner.aclose()
+
+
+def _route_qualified_oracle_to_local_gateway(monkeypatch, host: str, port: int) -> None:
+    real_client = httpx.AsyncClient
+
+    def local_client(*args, **kwargs):
+        kwargs["transport"] = _LocalQualifiedGatewayTransport(host, port)
+        return real_client(*args, **kwargs)
+
+    monkeypatch.setattr(source_http_module.httpx, "AsyncClient", local_client)
 
 
 async def read_to_eof(reader: asyncio.StreamReader) -> bytes:
@@ -176,9 +210,11 @@ async def test_scraper_async_oracle_client_round_trips_through_policy_rpc(
         enable_dns_policy_rpc=True,
     )
     server, host, port = await start_proxy(proxy)
-    monkeypatch.setenv(CAPTURE_EGRESS_PROXY_ENV, f"http://{host}:{port}")
-    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_IP", host)
-    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_PORT", str(port))
+    monkeypatch.setenv(CAPTURE_EGRESS_PROXY_ENV, "http://10.73.19.2:8080")
+    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_IP", "10.73.19.2")
+    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_SUBNET", "10.73.19.0/29")
+    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_PORT", "8080")
+    _route_qualified_oracle_to_local_gateway(monkeypatch, host, port)
     try:
         assert await capture_gateway_hostname_is_public("example.com") is True
     finally:
@@ -223,9 +259,10 @@ async def test_protected_scrape_uses_gateway_dns_when_local_dns_is_unavailable(
         enable_dns_policy_rpc=True,
     )
     gateway, host, port = await start_proxy(proxy)
-    monkeypatch.setenv(CAPTURE_EGRESS_PROXY_ENV, f"http://{host}:{port}")
-    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_IP", host)
-    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_PORT", str(port))
+    monkeypatch.setenv(CAPTURE_EGRESS_PROXY_ENV, "http://10.73.19.2:8080")
+    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_IP", "10.73.19.2")
+    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_SUBNET", "10.73.19.0/29")
+    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_PORT", "8080")
     monkeypatch.setattr(
         "scraper.fetch_tiers.is_private_host",
         lambda _url: (_ for _ in ()).throw(
@@ -235,7 +272,12 @@ async def test_protected_scrape_uses_gateway_dns_when_local_dns_is_unavailable(
     try:
         # Protected mode must ask the gateway, not the isolated scraper's
         # failing local resolver, before it starts the source request.
-        assert await _is_private_url("http://example.com/article") == (False, "")
+        with monkeypatch.context() as oracle_context:
+            _route_qualified_oracle_to_local_gateway(oracle_context, host, port)
+            assert await _is_private_url("http://example.com/article") == (False, "")
+        # The actual source HTTP request uses the test's loopback proxy socket;
+        # only the oracle endpoint is translated from the qualified private IP.
+        monkeypatch.setenv(CAPTURE_EGRESS_PROXY_ENV, f"http://{host}:{port}")
         async with source_httpx_client(timeout=2) as http_client:
 
             class CurlCompatibleClient:

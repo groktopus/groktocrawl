@@ -121,6 +121,7 @@ POST /experimental/research/v1/workspace/{run_id}/actions
 - parse-svc
 - portal-svc
 - qdrant
+- research-postgres
 - scraper-svc
 - semantic-svc
 - slopsearx
@@ -134,6 +135,10 @@ POST /experimental/research/v1/workspace/{run_id}/actions
 ## Configuration keys
 
 The configuration inventory follows `.env.sample`; unlisted implementation-only defaults and test variables are intentionally excluded.
+The protected Compose override's `PROTECTED_*` settings configure its isolated
+network subnets, address pools, gateways, and static service addresses.
+`LLM_GATEWAY_PRIVATE_HOSTS` is a model-gateway-only allowlist for an explicitly
+configured private model endpoint; it does not permit private scrape targets.
 
 <!-- env-inventory:start -->
 - ACTIVE_EMBED_MODEL
@@ -193,6 +198,7 @@ The configuration inventory follows `.env.sample`; unlisted implementation-only 
 - LLM_CALL_TIMEOUT
 - LLM_ENABLE_THINKING
 - LLM_HEALTH_TOKEN_BUDGET
+- LLM_GATEWAY_PRIVATE_HOSTS
 - LLM_LLAMA_CPP_DISABLE_THINKING
 - LLM_MAX_COMPLETION_TOKENS
 - LLM_MAX_OUTPUT_TOKENS
@@ -221,6 +227,25 @@ The configuration inventory follows `.env.sample`; unlisted implementation-only 
 - PGVECTOR_SHADOW_SAMPLE_RATE
 - PGVECTOR_SHADOW_SCORE_TOLERANCE
 - PGVECTOR_SHADOW_TIMEOUT_SECONDS
+- PROTECTED_CAPTURE_BROWSER_GATEWAY_IP
+- PROTECTED_CAPTURE_BROWSER_POOL
+- PROTECTED_CAPTURE_BROWSER_RENDERER_IP
+- PROTECTED_CAPTURE_BROWSER_SUBNET
+- PROTECTED_CAPTURE_EGRESS_SUBNET
+- PROTECTED_CAPTURE_FLARE_GATEWAY_IP
+- PROTECTED_CAPTURE_FLARE_POOL
+- PROTECTED_CAPTURE_FLARE_RENDERER_IP
+- PROTECTED_CAPTURE_FLARE_SUBNET
+- PROTECTED_CAPTURE_SOURCE_GATEWAY
+- PROTECTED_CAPTURE_SOURCE_IP
+- PROTECTED_CAPTURE_SOURCE_POOL
+- PROTECTED_CAPTURE_SOURCE_SUBNET
+- PROTECTED_CONTROL_PRIVATE_SUBNET
+- PROTECTED_MODEL_GATEWAY_IP
+- PROTECTED_MODEL_GATEWAY_POOL
+- PROTECTED_MODEL_GATEWAY_SUBNET
+- PROTECTED_MODEL_UPSTREAM_SUBNET
+- PROTECTED_SCRAPER_PRIVATE_SUBNET
 - QA_MAX_BOILERPLATE_RATIO
 - QA_MIN_CONTENT_CHARS
 - QA_MIN_QUALITY_THRESHOLD
@@ -242,7 +267,6 @@ The configuration inventory follows `.env.sample`; unlisted implementation-only 
 - SCRAPER_BROWSER_POOL_IDLE_TTL_SECONDS
 - SCRAPER_BROWSER_POOL_MAX_AGE_SECONDS
 - SCRAPER_BROWSER_POOL_MAX_PROCESSES
-- SCRAPER_CAPTURE_EGRESS_PROXY_URL
 - SCRAPER_DISTRIBUTED_POLITENESS
 - SCRAPER_MAX_BROWSER_CONCURRENCY
 - SCRAPER_POLITENESS_CRAWL_DELAY

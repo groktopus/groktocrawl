@@ -12,7 +12,7 @@ import sys
 import types
 from datetime import datetime
 from pathlib import Path
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import httpx
 import pytest
@@ -168,11 +168,21 @@ def authority_app(monkeypatch: pytest.MonkeyPatch):
     url = os.environ.get("DURABLE_RESEARCH_REDIS_URL") or os.environ.get("VALKEY_URL")
     if url is None:
         raise RuntimeError("DURABLE_RESEARCH_REDIS_URL or VALKEY_URL is required")
-    # The older durable-route suite flushes database 15. Give each xdist worker
-    # a separate database so fixture cleanup cannot delete another test's run.
-    worker = os.environ.get("PYTEST_XDIST_WORKER", "local")
-    database = 14 if worker == "local" else 10 + int(worker.removeprefix("gw"))
-    url = f"{url.rsplit('/', 1)[0]}/{database}"
+    # Keep the caller's supported database and isolate each test by namespace.
+    # Worker indexes are unbounded; mapping them onto database numbers exceeds
+    # Valkey's default database count and broad FLUSHDB would erase other tests.
+    namespace = f"groktocrawl:test:authority:{uuid4()}"
+    redis = Redis.from_url(url, decode_responses=True)
+    created_ledgers: list[DurableResearchLedger] = []
+
+    def namespaced_ledger_factory(redis_url: str) -> DurableResearchLedger:
+        ledger = DurableResearchLedger(redis_url, namespace=namespace)
+        created_ledgers.append(ledger)
+        return ledger
+
+    monkeypatch.setattr(
+        experimental, "DurableResearchLedger", namespaced_ledger_factory
+    )
     for name in (
         "EXPERIMENTAL_RESEARCH",
         "EXPERIMENTAL_RESEARCH_RUNS",
@@ -180,7 +190,6 @@ def authority_app(monkeypatch: pytest.MonkeyPatch):
         "EXPERIMENTAL_RESEARCH_POSTGRES_ARTIFACTS",
     ):
         monkeypatch.setenv(f"FEATURE_{name}", "true")
-    Redis.from_url(url, decode_responses=True).flushdb()
     experimental._RUNS.clear()
     experimental._IDEMPOTENCY.clear()
     experimental._DURABLE_LEDGERS.clear()
@@ -189,9 +198,22 @@ def authority_app(monkeypatch: pytest.MonkeyPatch):
     experimental._ARTIFACT_AUTHORITIES["fixture-postgres"] = authority  # type: ignore[assignment]
     app = FastAPI()
     app.state.valkey_url = url
+    app.state.research_durable_namespace = namespace
     app.state.research_postgres_dsn = "fixture-postgres"
     app.include_router(experimental.router)
-    return app, authority, url
+    try:
+        yield app, authority, url
+    finally:
+        prefix = f"{namespace}:"
+        for key in redis.scan_iter(match=f"{prefix}*"):
+            if isinstance(key, bytes):
+                key = key.decode("utf-8")
+            if key.startswith(prefix):
+                redis.delete(key)
+        for ledger in created_ledgers:
+            ledger.redis.close()
+        experimental._DURABLE_LEDGERS.pop(url, None)
+        redis.close()
 
 
 async def _wait(client: httpx.AsyncClient, url: str) -> dict:
@@ -217,8 +239,12 @@ async def test_valkey_has_pointers_and_postgres_recovers_exact_bytes(
             json={"objective": "Retain exact artifacts"},
         )
         status = await _wait(client, created.json()["status_url"])
-        raw = DurableResearchLedger(url).redis.get(
-            DurableResearchLedger(url)._run_key(status["run_id"])
+        raw = DurableResearchLedger(
+            url, namespace=app.state.research_durable_namespace
+        ).redis.get(
+            DurableResearchLedger(
+                url, namespace=app.state.research_durable_namespace
+            )._run_key(status["run_id"])
         )
         terminal = json.loads(raw)["terminal_payload"]
         assert "artifact_authority" in terminal
@@ -264,7 +290,9 @@ async def test_postgres_commit_reconciles_after_valkey_interruption(
         assert task is not None
         with pytest.raises(RuntimeError, match="projection interruption"):
             await task
-        ledger = DurableResearchLedger(url)
+        ledger = DurableResearchLedger(
+            url, namespace=app.state.research_durable_namespace
+        )
         ledger.redis.delete(ledger._lease_key(created.json()["run_id"]))
         experimental._RUNS.clear()
         await client.get(created.json()["status_url"])
