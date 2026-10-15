@@ -10,6 +10,11 @@ command -v iptables >/dev/null 2>&1 || fail_closed
 command -v ip6tables >/dev/null 2>&1 || fail_closed
 command -v setpriv >/dev/null 2>&1 || fail_closed
 
+# The Compose address plan injects this exact peer into both the forced
+# upstream proxy and this firewall. Reject public, special-use, or mismatched
+# addresses before installing any policy.
+flare_gateway=$(python /usr/local/bin/protected-flare-proxy-contract.py) || fail_closed
+
 for tool in iptables ip6tables; do
     "$tool" -w -F INPUT || fail_closed
     "$tool" -w -F OUTPUT || fail_closed
@@ -23,8 +28,8 @@ for tool in iptables ip6tables; do
     "$tool" -w -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT || fail_closed
 done
 
-# The capture network assigns this fixed address to the guarded gateway.
-iptables -w -A OUTPUT -p tcp -d 172.31.254.18/32 --dport 8080 -j ACCEPT || fail_closed
+# The capture network assigns this configured private address to the guarded gateway.
+iptables -w -A OUTPUT -p tcp -d "$flare_gateway/32" --dport 8080 -j ACCEPT || fail_closed
 
 flare_uid=$(id -u flaresolverr) || fail_closed
 flare_gid=$(id -g flaresolverr) || fail_closed

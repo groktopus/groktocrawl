@@ -15,7 +15,9 @@ RUN apt-get update \
 COPY flare-protected/patch_upstream.py /tmp/patch_upstream.py
 RUN python /tmp/patch_upstream.py && rm /tmp/patch_upstream.py
 COPY flare-protected/entrypoint.sh /usr/local/bin/protected-flare-entrypoint
-RUN chmod 0755 /usr/local/bin/protected-flare-entrypoint
+COPY flare-protected/proxy_contract.py /usr/local/bin/protected-flare-proxy-contract.py
+RUN chmod 0755 /usr/local/bin/protected-flare-entrypoint \
+    /usr/local/bin/protected-flare-proxy-contract.py
 
 ENTRYPOINT ["/usr/local/bin/protected-flare-entrypoint"]
 CMD ["/usr/bin/dumb-init", "--", "/usr/local/bin/python", "-u", "/app/flaresolverr.py"]

@@ -36,7 +36,13 @@ def patch(source: str) -> str:
             or parsed_target.password is not None
         ):
             raise ValueError("request URL is not an allowed HTTP destination")
-    data["proxy"] = {"url": "http://172.31.254.18:8080"}
+    gateway_ip = os.environ.get("FLARE_CAPTURE_GATEWAY_IP", "172.31.254.18")
+    proxy_url = os.environ.get(
+        "FLARE_CAPTURE_PROXY_URL", f"http://{gateway_ip}:8080"
+    )
+    if proxy_url != f"http://{gateway_ip}:8080":
+        raise RuntimeError("protected capture proxy does not match its gateway")
+    data["proxy"] = {"url": proxy_url}
     req = V1RequestBase(data)""",
         label="force-fixed-proxy-and-http-url",
     )

@@ -114,7 +114,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: hosted-twin-contracts
+          name: research-hosted-twin-contracts
           path: twin-out/
           if-no-files-found: error
       - name: Fail after publishing twin evidence
@@ -533,7 +533,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: answer-evals-provenance
+          name: research-answer-evals-provenance
           path: eval-out/
           if-no-files-found: warn
 
@@ -735,7 +735,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: integration-test-outcomes
+          name: research-integration-test-outcomes
           path: qa-outcomes-*
           if-no-files-found: warn
 
@@ -743,7 +743,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: llm-fixture-diagnostics
+          name: research-llm-fixture-diagnostics
           path: llm-fixture-diagnostics.json
           if-no-files-found: warn
 
@@ -751,7 +751,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: search-fixture-ledger-and-twin-provenance
+          name: research-search-fixture-ledger-and-twin-provenance
           path: |
             search-fixture-ledger.json
             twin-compose-out/twin-evidence.json
@@ -761,7 +761,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: integration-test-coverage
+          name: research-integration-test-coverage
           path: coverage/*
           if-no-files-found: warn
 
@@ -806,7 +806,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: integration-test-diagnostics
+          name: research-integration-test-diagnostics
           path: integration-test-diagnostics.txt
           if-no-files-found: warn
 

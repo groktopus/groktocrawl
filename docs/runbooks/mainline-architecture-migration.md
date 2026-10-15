@@ -203,10 +203,17 @@ Before changing the live stack:
    host architecture. Verify the pinned FlareSolverr base digest supports that
    architecture; fail the rollout if the image was published only for another
    platform. Record the exact application image digests.
-2. Confirm the host has no route or bridge subnet overlap with
-   `172.31.252.0/24`, `172.31.253.0/24`, `172.31.255.0/24`, or the fixed capture/model subnets in
-   the overlay. These addresses are coupled to the worker firewall and renderer
-   proxy configuration; changing only Compose IPAM is unsafe.
+2. Confirm the host has no route or bridge subnet overlap with the overlay's
+   default `10.240.251.0/24` through `10.240.255.0/24` plan. Check both
+   `ip route` and all existing Docker network IPAM subnets. The mainline host's
+   existing `172.31.0.0/16` Docker network conflicts with the experimental
+   overlay's former 172.31 address plan; the protected overlay now defaults to
+   the verified-free 10.240 plan. If any host has a conflict, set every
+   `PROTECTED_*_SUBNET`, `PROTECTED_*_POOL`, `PROTECTED_*_IP`, and source
+   gateway variable in `.env` as a coherent address plan and rerun the
+   non-overlap and Compose checks. Source and Flare worker firewalls require
+   their selected private peer, subnet, and exact HTTP proxy URL to match;
+   changing only an IPAM subnet is unsafe.
 3. Render and review the merged model without printing it or exposing the
    resolved environment:
 

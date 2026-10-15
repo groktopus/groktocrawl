@@ -21,9 +21,13 @@ services:
       BROWSER_CONTROL_SOCKET: /run/browser-control/controller.sock
       FLARE_SOLVERR_URL: http://flare-control-svc:8191/v1
       FLARE_CONTROL_SOCKET: /run/flare-control/control.sock
+      FLARE_CAPTURE_GATEWAY_IP: ${PROTECTED_CAPTURE_FLARE_GATEWAY_IP:-10.240.254.18}
+      FLARE_CAPTURE_GATEWAY_SUBNET: ${PROTECTED_CAPTURE_FLARE_SUBNET:-10.240.254.16/29}
+      FLARE_CAPTURE_PROXY_URL: http://${PROTECTED_CAPTURE_FLARE_GATEWAY_IP:-10.240.254.18}:8080
       SCRAPER_API_SOCKET: /run/scraper/app.sock
-      SCRAPER_CAPTURE_EGRESS_PROXY_URL: http://172.31.254.2:8080
-      SCRAPER_CAPTURE_GATEWAY_IP: 172.31.254.2
+      SCRAPER_CAPTURE_EGRESS_PROXY_URL: http://${PROTECTED_CAPTURE_SOURCE_IP:-10.240.254.2}:8080
+      SCRAPER_CAPTURE_GATEWAY_IP: ${PROTECTED_CAPTURE_SOURCE_IP:-10.240.254.2}
+      SCRAPER_CAPTURE_GATEWAY_SUBNET: ${PROTECTED_CAPTURE_SOURCE_SUBNET:-10.240.254.0/29}
       SCRAPER_CAPTURE_GATEWAY_PORT: "8080"
       SCRAPER_MAX_BROWSER_CONCURRENCY: ${SCRAPER_MAX_BROWSER_CONCURRENCY:-4}
       SCRAPER_BROWSER_POOL_ENABLED: ${SCRAPER_BROWSER_POOL_ENABLED:-false}
@@ -215,11 +219,11 @@ services:
       capture_egress:
         gw_priority: 1
       capture_source:
-        ipv4_address: 172.31.254.2
+        ipv4_address: ${PROTECTED_CAPTURE_SOURCE_IP:-10.240.254.2}
       capture_browser:
-        ipv4_address: 172.31.254.10
+        ipv4_address: ${PROTECTED_CAPTURE_BROWSER_GATEWAY_IP:-10.240.254.10}
       capture_flare:
-        ipv4_address: 172.31.254.18
+        ipv4_address: ${PROTECTED_CAPTURE_FLARE_GATEWAY_IP:-10.240.254.18}
     environment:
       CAPTURE_PROXY_BIND_HOST: 0.0.0.0
     healthcheck:
@@ -240,10 +244,10 @@ services:
     group_add: ["20000"]
     networks:
       capture_browser:
-        ipv4_address: 172.31.254.11
+        ipv4_address: ${PROTECTED_CAPTURE_BROWSER_RENDERER_IP:-10.240.254.11}
     environment:
       BROWSER_PROTECTED_RENDERER: "1"
-      BROWSER_CAPTURE_PROXY_URL: http://172.31.254.10:8080
+      BROWSER_CAPTURE_PROXY_URL: http://${PROTECTED_CAPTURE_BROWSER_GATEWAY_IP:-10.240.254.10}:8080
       BROWSER_RENDERER_SOCKET: /run/browser/renderer.sock
       BROWSER_COOKIE_RPC_SOCKET: /run/browser/cookies.sock
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
@@ -324,7 +328,7 @@ services:
       LLM_API_KEY: ${LLM_API_KEY:-}
       CAPTCHA_VISION_BASE_URL: ${CAPTCHA_VISION_BASE_URL:-}
       CAPTCHA_VISION_API_KEY: ${CAPTCHA_VISION_API_KEY:-}
-      MODEL_EGRESS_PROXY_URL: http://172.31.254.34:8080
+      MODEL_EGRESS_PROXY_URL: http://${PROTECTED_MODEL_GATEWAY_IP:-10.240.254.34}:8080
     volumes:
       - scraper_llm_socket:/run/scraper-llm
     depends_on:
@@ -362,7 +366,7 @@ services:
       model_upstream:
         gw_priority: 1
       model_gateway:
-        ipv4_address: 172.31.254.34
+        ipv4_address: ${PROTECTED_MODEL_GATEWAY_IP:-10.240.254.34}
     healthcheck:
       test:
         - CMD
@@ -405,9 +409,12 @@ services:
     group_add: ["20000"]
     networks:
       capture_flare:
-        ipv4_address: 172.31.254.19
+        ipv4_address: ${PROTECTED_CAPTURE_FLARE_RENDERER_IP:-10.240.254.19}
     environment:
       FLARE_API_UNIX_SOCKET: /run/flaresolverr/api.sock
+      FLARE_CAPTURE_GATEWAY_IP: ${PROTECTED_CAPTURE_FLARE_GATEWAY_IP:-10.240.254.18}
+      FLARE_CAPTURE_GATEWAY_SUBNET: ${PROTECTED_CAPTURE_FLARE_SUBNET:-10.240.254.16/29}
+      FLARE_CAPTURE_PROXY_URL: http://${PROTECTED_CAPTURE_FLARE_GATEWAY_IP:-10.240.254.18}:8080
       LOG_LEVEL: ${FLARE_SOLVERR_LOG_LEVEL:-info}
       LOG_HTML: "false"
       CAPTCHA_SOLVER: ${FLARE_SOLVERR_CAPTCHA_SOLVER:-none}
@@ -481,46 +488,46 @@ networks:
   capture_egress:
     ipam:
       config:
-        - subnet: 172.31.252.0/24
+        - subnet: ${PROTECTED_CAPTURE_EGRESS_SUBNET:-10.240.251.0/24}
   control_private:
     internal: true
     ipam:
       config:
-        - subnet: 172.31.253.0/24
+        - subnet: ${PROTECTED_CONTROL_PRIVATE_SUBNET:-10.240.252.0/24}
   scraper_private:
     internal: true
     ipam:
       config:
-        - subnet: 172.31.255.0/24
+        - subnet: ${PROTECTED_SCRAPER_PRIVATE_SUBNET:-10.240.253.0/24}
   capture_source:
     internal: true
     ipam:
       config:
-        - subnet: 172.31.254.0/29
-          ip_range: 172.31.254.4/30
-          gateway: 172.31.254.1
+        - subnet: ${PROTECTED_CAPTURE_SOURCE_SUBNET:-10.240.254.0/29}
+          ip_range: ${PROTECTED_CAPTURE_SOURCE_POOL:-10.240.254.4/30}
+          gateway: ${PROTECTED_CAPTURE_SOURCE_GATEWAY:-10.240.254.1}
   capture_browser:
     internal: true
     ipam:
       config:
-        - subnet: 172.31.254.8/29
-          ip_range: 172.31.254.12/30
+        - subnet: ${PROTECTED_CAPTURE_BROWSER_SUBNET:-10.240.254.8/29}
+          ip_range: ${PROTECTED_CAPTURE_BROWSER_POOL:-10.240.254.12/30}
   capture_flare:
     internal: true
     ipam:
       config:
-        - subnet: 172.31.254.16/29
-          ip_range: 172.31.254.20/30
+        - subnet: ${PROTECTED_CAPTURE_FLARE_SUBNET:-10.240.254.16/29}
+          ip_range: ${PROTECTED_CAPTURE_FLARE_POOL:-10.240.254.20/30}
   model_gateway:
     internal: true
     ipam:
       config:
-        - subnet: 172.31.254.32/29
-          ip_range: 172.31.254.36/30
+        - subnet: ${PROTECTED_MODEL_GATEWAY_SUBNET:-10.240.254.32/29}
+          ip_range: ${PROTECTED_MODEL_GATEWAY_POOL:-10.240.254.36/30}
   model_upstream:
     ipam:
       config:
-        - subnet: 172.31.254.40/29
+        - subnet: ${PROTECTED_MODEL_UPSTREAM_SUBNET:-10.240.254.40/29}
 
 volumes:
   scraper_api_socket:

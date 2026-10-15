@@ -383,3 +383,19 @@ def test_published_agent_health_revision_is_baked_into_image():
         value.startswith("GROKTOCRAWL_REVISION=")
         for value in compose["services"]["agent-svc"]["environment"]
     )
+
+
+def test_called_runtime_artifacts_do_not_collide_with_parent_workflow():
+    root = Path(__file__).parents[2] / ".github/workflows"
+    artifact_sets = []
+    for filename in ("docker.yml", "runtime.yml"):
+        workflow = yaml.safe_load((root / filename).read_text())
+        names = [
+            step["with"]["name"]
+            for job in workflow["jobs"].values()
+            for step in job.get("steps", [])
+            if "upload-artifact" in step.get("uses", "")
+        ]
+        assert len(names) == len(set(names))
+        artifact_sets.append(set(names))
+    assert not artifact_sets[0] & artifact_sets[1]

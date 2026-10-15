@@ -51,6 +51,13 @@ def _env(service: dict[str, Any]) -> dict[str, str]:
     return values
 
 
+def _default(value: str) -> str:
+    """Use a Compose interpolation's checked-in default for static checks."""
+    if value.startswith("${") and ":-" in value and value.endswith("}"):
+        return value.split(":-", 1)[1][:-1]
+    return value
+
+
 def _contract_digest(service: dict[str, Any]) -> str:
     """Hash the parsed complete service block, independent of YAML key order."""
     canonical = json.dumps(service, sort_keys=True, separators=(",", ":"))
@@ -120,7 +127,7 @@ def test_protected_networks_do_not_overlap_and_static_roles_use_expected_segment
     for name, network in networks.items():
         config = network["ipam"]["config"]
         assert len(config) == 1, f"{name} must have one unambiguous subnet"
-        subnets[name] = ipaddress.ip_network(config[0]["subnet"])
+        subnets[name] = ipaddress.ip_network(_default(config[0]["subnet"]))
 
     names = list(subnets)
     for index, left in enumerate(names):
@@ -136,7 +143,9 @@ def test_protected_networks_do_not_overlap_and_static_roles_use_expected_segment
     assert services["scraper-state-control"]["networks"] == ["control_private"]
     assert services["browser-svc"]["networks"] == ["control_private"]
     assert services["flare-renderer-svc"]["networks"] == {
-        "capture_flare": {"ipv4_address": "172.31.254.19"}
+        "capture_flare": {
+            "ipv4_address": "${PROTECTED_CAPTURE_FLARE_RENDERER_IP:-10.240.254.19}"
+        }
     }
     assert services["flare-control-svc"]["network_mode"] == "none"
     assert list(services["browser-renderer-svc"]["networks"]) == ["capture_browser"]
@@ -152,18 +161,20 @@ def test_protected_networks_do_not_overlap_and_static_roles_use_expected_segment
             attached = {name: {} for name in attached}
         for network_name, settings in attached.items():
             address = (
-                settings.get("ipv4_address") if isinstance(settings, dict) else None
+                _default(settings["ipv4_address"])
+                if isinstance(settings, dict) and settings.get("ipv4_address")
+                else None
             )
             if address:
                 assert ipaddress.ip_address(address) in subnets[network_name]
 
     assert (
         services["scraper-svc"]["environment"]["SCRAPER_CAPTURE_EGRESS_PROXY_URL"]
-        == "http://172.31.254.2:8080"
+        == "http://${PROTECTED_CAPTURE_SOURCE_IP:-10.240.254.2}:8080"
     )
     assert (
         services["capture-egress-svc"]["networks"]["capture_source"]["ipv4_address"]
-        == "172.31.254.2"
+        == "${PROTECTED_CAPTURE_SOURCE_IP:-10.240.254.2}"
     )
 
 
@@ -202,7 +213,7 @@ def test_protected_roles_have_required_health_dependencies_and_no_worker_model_s
     assert "CAPTCHA_VISION_API_KEY" in _env(services["scraper-model-control"])
     assert (
         services["model-egress-svc"]["networks"]["model_gateway"]["ipv4_address"]
-        == "172.31.254.34"
+        == "${PROTECTED_MODEL_GATEWAY_IP:-10.240.254.34}"
     )
     assert worker_env["LLM_CONTROL_SOCKET"] == "/run/scraper-llm/control.sock"
 

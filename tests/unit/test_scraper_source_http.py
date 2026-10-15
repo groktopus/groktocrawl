@@ -66,8 +66,9 @@ def test_source_httpx_client_preserves_default_constructor(monkeypatch):
 async def test_capture_gateway_hostname_oracle_uses_fixed_ip_and_no_env_proxy(
     monkeypatch,
 ):
-    monkeypatch.setenv(CAPTURE_EGRESS_PROXY_ENV, "http://172.31.254.2:8080")
-    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_IP", "172.31.254.2")
+    monkeypatch.setenv(CAPTURE_EGRESS_PROXY_ENV, "http://10.73.19.2:8080")
+    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_IP", "10.73.19.2")
+    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_SUBNET", "10.73.19.0/29")
     monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_PORT", "8080")
     observed = {}
 
@@ -102,7 +103,7 @@ async def test_capture_gateway_hostname_oracle_uses_fixed_ip_and_no_env_proxy(
 
     monkeypatch.setattr(httpx, "AsyncClient", Client)
     assert await capture_gateway_hostname_is_public("example.com") is True
-    assert observed["url"] == ("http://172.31.254.2:8080/_control/public-dns-check")
+    assert observed["url"] == ("http://10.73.19.2:8080/_control/public-dns-check")
     assert observed["client_kwargs"]["trust_env"] is False
     assert observed["client_kwargs"]["follow_redirects"] is False
     assert observed["request"]["headers"]["Host"] == "capture-egress.internal:8080"
@@ -272,6 +273,25 @@ async def test_capture_gateway_hostname_oracle_rejects_unavailable_or_mismatched
 ):
     monkeypatch.setenv(CAPTURE_EGRESS_PROXY_ENV, "http://example.internal:8080")
     monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_IP", "172.31.254.2")
+    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_PORT", "8080")
+    with pytest.raises(SourceTransportConfigurationError, match="policy-peer-invalid"):
+        await capture_gateway_hostname_is_public("example.com")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("gateway", "proxy"),
+    [
+        ("8.8.8.8", "http://8.8.8.8:8080"),
+        ("127.0.0.1", "http://127.0.0.1:8080"),
+        ("10.73.19.2", "http://10.73.19.3:8080"),
+    ],
+)
+async def test_capture_gateway_oracle_rejects_unqualified_or_mismatched_config(
+    monkeypatch, gateway, proxy
+):
+    monkeypatch.setenv(CAPTURE_EGRESS_PROXY_ENV, proxy)
+    monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_IP", gateway)
     monkeypatch.setenv("SCRAPER_CAPTURE_GATEWAY_PORT", "8080")
     with pytest.raises(SourceTransportConfigurationError, match="policy-peer-invalid"):
         await capture_gateway_hostname_is_public("example.com")

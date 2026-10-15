@@ -31,6 +31,9 @@ PROXY = _load_module(ROOT / "flare-control/control_proxy.py", "flare_control_pro
 RENDERER_PROBE = _load_module(
     ROOT / "tests/integration/protected_flare_renderer_probe.py", "flare_renderer_probe"
 )
+PROXY_CONTRACT = _load_module(
+    ROOT / "flare-protected/proxy_contract.py", "flare_proxy_contract"
+)
 
 
 def test_flare_bootstrap_has_only_required_setup_caps_and_drops_them_before_chmod():
@@ -152,11 +155,40 @@ req = V1RequestBase(data)
 serve(handler, host=self.host, port=self.port, asyncore_use_poll=True)
 """
     patched = PATCHER.patch(source)
-    assert 'data["proxy"] = {"url": "http://172.31.254.18:8080"}' in patched
+    assert 'data["proxy"] = {"url": proxy_url}' in patched
+    assert 'proxy_url != f"http://{gateway_ip}:8080"' in patched
+    assert "FLARE_CAPTURE_PROXY_URL" in patched
     assert 'command in {"request.get", "request.post"}' in patched
     assert 'parsed_target.scheme not in {"http", "https"}' in patched
     assert "unix_socket=socket_path" in patched
     assert "host=self.host, port=self.port" not in patched
+
+
+def test_flare_proxy_contract_accepts_only_matching_private_gateway():
+    assert (
+        PROXY_CONTRACT.configured_gateway(
+            "10.73.19.18", "http://10.73.19.18:8080", "10.73.19.16/29"
+        )
+        == "10.73.19.18"
+    )
+    for gateway, proxy, subnet in (
+        ("8.8.8.8", "http://8.8.8.8:8080", "8.8.8.0/24"),
+        ("127.0.0.1", "http://127.0.0.1:8080", "127.0.0.0/8"),
+        ("2001:db8::1", "http://[2001:db8::1]:8080", "2001:db8::/64"),
+        ("10.73.19.18", "http://10.73.19.19:8080", "10.73.19.16/29"),
+        ("10.73.19.18", "http://10.73.19.18:8081", "10.73.19.16/29"),
+        ("10.73.19.18", "http://user@10.73.19.18:8080", "10.73.19.16/29"),
+        ("10.73.19.16", "http://10.73.19.16:8080", "10.73.19.16/29"),
+    ):
+        with pytest.raises(ValueError, match="configuration is invalid"):
+            PROXY_CONTRACT.configured_gateway(gateway, proxy, subnet)
+
+
+def test_flare_entrypoint_installs_only_the_validated_gateway_peer():
+    entrypoint = (ROOT / "flare-protected/entrypoint.sh").read_text()
+    assert "protected-flare-proxy-contract.py" in entrypoint
+    assert '"$flare_gateway/32" --dport 8080' in entrypoint
+    assert "172.31.254.18/32" not in entrypoint
 
 
 def test_upstream_patch_fails_closed_on_source_drift():

@@ -117,12 +117,29 @@ async def capture_gateway_hostname_is_public(hostname: str) -> bool:
         expected_ip = ipaddress.ip_address(
             os.environ.get("SCRAPER_CAPTURE_GATEWAY_IP", "172.31.254.2")
         )
+        expected_subnet = ipaddress.ip_network(
+            os.environ.get("SCRAPER_CAPTURE_GATEWAY_SUBNET", "172.31.254.0/29"),
+            strict=True,
+        )
         expected_port = int(os.environ.get("SCRAPER_CAPTURE_GATEWAY_PORT", "8080"))
+        private_networks = tuple(
+            ipaddress.ip_network(block)
+            for block in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16")
+        )
         if (
             parsed.scheme.lower() != "http"
             or not isinstance(expected_ip, ipaddress.IPv4Address)
+            or not isinstance(expected_subnet, ipaddress.IPv4Network)
+            or not any(expected_ip in network for network in private_networks)
+            or not any(
+                expected_subnet.subnet_of(network) for network in private_networks
+            )
+            or expected_ip not in expected_subnet
+            or expected_ip
+            in (expected_subnet.network_address, expected_subnet.broadcast_address)
             or proxy_ip != expected_ip
             or parsed.port != expected_port
+            or expected_port != 8080
             or parsed.path not in ("", "/")
             or parsed.query
             or parsed.fragment
