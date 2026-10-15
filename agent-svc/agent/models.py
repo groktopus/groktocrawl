@@ -913,6 +913,7 @@ class SearchRequest(BaseModel):
                     normalized.startswith(
                         ("date", "publicationdate", "published", "timerange")
                     )
+                    or normalized in {"startdate", "enddate", "fromdate", "todate"}
                 ) and key not in {"date_from", "date_to", "time_range"}:
                     raise ValueError(f"Unknown date control: {key}")
         return value

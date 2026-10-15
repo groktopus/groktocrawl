@@ -42,6 +42,8 @@ ROW = {
         {"engines": ["openalex", "brave"]},
         {"dateFrom": "2026-01-01"},
         {"date_form": "2026-01-01"},
+        {"from_date": "2026-01-01"},
+        {"endDate": "2026-01-01"},
         {"stream": True},
         {"search_type": "rich"},
         {"search_type": "deep"},
