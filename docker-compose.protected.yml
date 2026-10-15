@@ -6,6 +6,10 @@ services:
     networks: !override [default, control_private]
 
   scraper-svc:
+    # The protected entrypoint drops to its worker UID, then execs its own
+    # tini. An outer Compose init would remain PID 1 as root and fail the
+    # scraper's PID-1 identity check.
+    init: false
     ports: !override []
     env_file: !override []
     environment: !override

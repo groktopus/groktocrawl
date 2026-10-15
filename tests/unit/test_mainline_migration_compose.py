@@ -183,6 +183,10 @@ def test_protected_roles_have_required_health_dependencies_and_no_worker_model_s
 ):
     services = PROTECTED["services"]
     worker = services["scraper-svc"]
+    # The protected entrypoint drops to UID 10001 and then execs its own tini.
+    # Leaving the base Compose init enabled would keep an outer root-owned PID 1,
+    # which violates the worker's runtime identity check.
+    assert worker["init"] is False
     deps = worker["depends_on"]
     for name in (
         "scraper-socket-init",
