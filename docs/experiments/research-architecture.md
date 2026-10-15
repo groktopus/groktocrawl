@@ -878,6 +878,10 @@ issue #450. Candidate MCP remains uninstantiated and unqualified; internal
 model fanout, research quality, fresh study registration, and independent
 admission remain outstanding. A materially different runtime needs its own
 qualification. No research-quality credit or default activation follows from
-these checks. The fresh evaluation and shared ranking implementation remain
-tracked in
-[SlopSearX #516](https://github.com/magnus919/SlopSearX/issues/516).
+these checks. Search-service ranking experiments remain external follow-ons, including
+[SlopSearX #516](https://github.com/magnus919/SlopSearX/issues/516). They are not
+prerequisites for GroktoCrawl fixes or release checks. GroktoCrawl consumes the
+existing search API; it does not require changes to the search engine. Current
+work verifies consistent search ordering, filters, evidence metadata, failure
+reporting and credential-derived cache scope across the supported client paths.
+The optional studies in issues #444–448 remain separate from this delivery work.

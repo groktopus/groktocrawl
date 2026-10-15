@@ -713,11 +713,24 @@ class Client:
         return self._request("POST", "/v2/followup/preview", json_data=body)
 
     def experimental_research_workspace(
-        self, run_id: str | None = None, offset: int = 0, limit: int = 50, run_offset: int = 0, expected_revision: str | None = None
+        self,
+        run_id: str | None = None,
+        offset: int = 0,
+        limit: int = 50,
+        run_offset: int = 0,
+        expected_revision: str | None = None,
     ) -> dict[str, Any]:
         path = "/experimental/research/v1/workspace"
-        params = {"expected_revision":expected_revision} if run_id and expected_revision else {} if run_id else {"offset":offset,"limit":limit,"run_offset":run_offset}
-        return self._request("GET", f"{path}/{run_id}" if run_id else path, params=params)
+        params = (
+            {"expected_revision": expected_revision}
+            if run_id and expected_revision
+            else {}
+            if run_id
+            else {"offset": offset, "limit": limit, "run_offset": run_offset}
+        )
+        return self._request(
+            "GET", f"{path}/{run_id}" if run_id else path, params=params
+        )
 
     def experimental_research_resume(
         self, run_id: str, action: str, **options: Any
@@ -1242,18 +1255,27 @@ class Client:
         return self._request("GET", f"/batch/scrape/{job_id}/errors")
 
     def select_session_evidence(
-        self, session_id: str, ref_id: str, query: str = "",
-        budget_chars: int = 32_000, offset: int = 0,
+        self,
+        session_id: str,
+        ref_id: str,
+        query: str = "",
+        budget_chars: int = 32_000,
+        offset: int = 0,
         expected_digest: str | None = None,
     ) -> dict[str, Any]:
         """Read bounded exact evidence and digest-bound continuation metadata."""
         from urllib.parse import quote
 
-        params: dict[str, Any] = {"query": query, "budget_chars": budget_chars, "offset": offset}
+        params: dict[str, Any] = {
+            "query": query,
+            "budget_chars": budget_chars,
+            "offset": offset,
+        }
         if expected_digest is not None:
             params["expected_digest"] = expected_digest
         return self._request(
-            "GET", f"/v2/session/{quote(session_id, safe='')}/evidence/{quote(ref_id, safe='')}",
+            "GET",
+            f"/v2/session/{quote(session_id, safe='')}/evidence/{quote(ref_id, safe='')}",
             params=params,
         )
 
@@ -1481,7 +1503,9 @@ class Client:
             )
         return resp.json()
 
-    def document_attach(self, session_id: str, filepath: str | None = None, upload_id: str | None = None) -> dict[str, Any]:
+    def document_attach(
+        self, session_id: str, filepath: str | None = None, upload_id: str | None = None
+    ) -> dict[str, Any]:
         """Attach a bounded local file or scoped staged upload to a session."""
         import mimetypes
 
@@ -1489,21 +1513,36 @@ class Client:
 
         url = self._url(f"/session/{quote(session_id, safe='')}/documents")
         if self.dry_run:
-            return {"dry_run": True, "method": "POST", "url": url, "file": filepath, "upload_id": upload_id}
+            return {
+                "dry_run": True,
+                "method": "POST",
+                "url": url,
+                "file": filepath,
+                "upload_id": upload_id,
+            }
         headers = {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
         if upload_id:
-            response = requests.post(url, data={"upload_id": upload_id}, headers=headers, timeout=120)
+            response = requests.post(
+                url, data={"upload_id": upload_id}, headers=headers, timeout=120
+            )
         elif filepath:
             with open(filepath, "rb") as handle:
                 body = handle.read(10 * 1024 * 1024 + 1)
             if len(body) > 10 * 1024 * 1024:
                 raise ApiError("Document exceeds 10 MiB admission limit")
             media_type = mimetypes.guess_type(filepath)[0] or "application/octet-stream"
-            response = requests.post(url, files={"file": (os.path.basename(filepath), body, media_type)}, headers=headers, timeout=120)
+            response = requests.post(
+                url,
+                files={"file": (os.path.basename(filepath), body, media_type)},
+                headers=headers,
+                timeout=120,
+            )
         else:
             raise ApiError("Provide a file or --upload-id")
         if response.status_code >= 400:
-            raise ApiError(f"Document attachment error ({response.status_code}): {response.json().get('error', response.json().get('detail', 'request failed'))}")
+            raise ApiError(
+                f"Document attachment error ({response.status_code}): {response.json().get('error', response.json().get('detail', 'request failed'))}"
+            )
         return response.json()
 
     def parse_upload_file(self, upload_id: str, filepath: str) -> dict[str, Any]:
@@ -1707,30 +1746,75 @@ def cmd_search(client: Client, args: argparse.Namespace) -> None:
             resp = result["_stream"]
             shown_header = False
             result_count = 0
-            for line in resp.iter_lines(decode_unicode=True):
-                if not line or not line.startswith("data: "):
-                    continue
-                data_str = line[6:].strip()
-                if data_str == "[DONE]":
-                    break
-                try:
-                    event = json.loads(data_str)
+            stream_error: str | None = None
+            token_started = False
+            token_received = False
+            try:
+                for line in resp.iter_lines(decode_unicode=True):
+                    if not line or not line.startswith("data: "):
+                        continue
+                    data_str = line[6:].strip()
+                    if data_str == "[DONE]":
+                        break
+                    try:
+                        event = json.loads(data_str)
+                    except json.JSONDecodeError:
+                        continue
+                    event_type = event.get("type")
+                    if event_type == "error":
+                        stream_error = str(
+                            event.get("content") or "Search stream failed"
+                        )
                     if JSON_OUTPUT:
                         emit("", event)
-                    elif event["type"] == "search_result":
-                        r = event["result"]
+                    elif event_type == "search_result":
+                        row = event.get("result", {})
                         result_count += 1
                         if not shown_header:
                             print(f"Search results for: {args.query}\n")
                             shown_header = True
-                        print(f"{result_count}. {r.get('title', '(no title)')}")
-                        print(f"   {r.get('url', '')}")
-                        desc = r.get("description", "")
-                        if desc:
-                            print(f"   {desc[:200]}")
+                        print(f"{result_count}. {row.get('title', '(no title)')}")
+                        print(f"   {row.get('url', '')}")
+                        description = row.get("description", "")
+                        if description:
+                            print(f"   {description[:200]}")
                         print()
-                except (json.JSONDecodeError, KeyError):
-                    pass
+                    elif event_type == "token":
+                        if not token_started:
+                            print("Answer:")
+                            token_started = True
+                        token_received = True
+                        sys.stdout.write(str(event.get("content", "")))
+                        sys.stdout.flush()
+                    elif event_type == "done":
+                        if token_started:
+                            print()
+                        output = event.get("output")
+                        if isinstance(output, dict):
+                            content = output.get("content")
+                            if content is not None and not token_received:
+                                label = (
+                                    "Structured output:"
+                                    if args.output_schema
+                                    or isinstance(content, (dict, list))
+                                    else "Answer:"
+                                )
+                                print(label)
+                                if isinstance(content, (dict, list)):
+                                    print(json.dumps(content, indent=2))
+                                else:
+                                    print(content)
+                        variations = event.get("query_variations")
+                        if variations:
+                            print("Search queries: " + ", ".join(map(str, variations)))
+                    elif event_type == "error":
+                        print(f"Error: {stream_error}", file=sys.stderr)
+            finally:
+                close = getattr(resp, "close", None)
+                if close is not None:
+                    close()
+            if stream_error is not None:
+                die(f"Search stream failed: {stream_error}")
             return
 
         result = client.search(
@@ -1762,8 +1846,9 @@ def cmd_search(client: Client, args: argparse.Namespace) -> None:
             output_data["images"] = image_data
         if result.get("date_filter"):
             output_data["date_filter"] = result["date_filter"]
-        if result.get("output"):
-            output_data["output"] = result["output"]
+        for key in ("evidence_coverage", "output", "query_variations", "warning"):
+            if key in result:
+                output_data[key] = result[key]
         emit("", output_data)
         return
 
@@ -1994,7 +2079,13 @@ def cmd_research(client: Client, args: argparse.Namespace) -> None:
 
     try:
         if action == "workspace":
-            result = client.experimental_research_workspace(args.run_id, offset=args.offset, limit=args.limit, run_offset=args.run_offset, expected_revision=args.expected_revision)
+            result = client.experimental_research_workspace(
+                args.run_id,
+                offset=args.offset,
+                limit=args.limit,
+                run_offset=args.run_offset,
+                expected_revision=args.expected_revision,
+            )
             emit("Retained research workspace", result)
         elif action == "resume":
             result = client.experimental_research_resume(
@@ -2005,7 +2096,10 @@ def cmd_research(client: Client, args: argparse.Namespace) -> None:
                 snapshot_id=args.snapshot_id,
                 session_id=args.session_id,
                 expected_session_revision=args.expected_session_revision,
-                ref_id=args.ref_id, start=args.start, end=args.end, wording=args.wording,
+                ref_id=args.ref_id,
+                start=args.start,
+                end=args.end,
+                wording=args.wording,
                 selected=json.loads(args.selected) if args.selected else [],
             )
             emit("Named research workspace action", result)
@@ -2086,8 +2180,11 @@ def cmd_evidence(client: Client, args: argparse.Namespace) -> None:
         die("Use either --query or --offset")
     try:
         result = client.select_session_evidence(
-            args.session_id, args.ref_id, query=args.query,
-            budget_chars=args.budget_chars, offset=args.offset,
+            args.session_id,
+            args.ref_id,
+            query=args.query,
+            budget_chars=args.budget_chars,
+            offset=args.offset,
             expected_digest=args.expected_digest,
         )
     except ApiError as exc:
@@ -2100,7 +2197,9 @@ def cmd_evidence(client: Client, args: argparse.Namespace) -> None:
 def _evidence_budget_arg(value: str) -> int:
     number = int(value)
     if not 256 <= number <= 128_000:
-        raise argparse.ArgumentTypeError("Evidence budget must be 256..128000 characters")
+        raise argparse.ArgumentTypeError(
+            "Evidence budget must be 256..128000 characters"
+        )
     return number
 
 
@@ -2113,7 +2212,9 @@ def _evidence_offset_arg(value: str) -> int:
 
 def _evidence_digest_arg(value: str) -> str:
     if not re.fullmatch(r"[0-9a-f]{64}", value):
-        raise argparse.ArgumentTypeError("Expected digest must be 64 lowercase hexadecimal characters")
+        raise argparse.ArgumentTypeError(
+            "Expected digest must be 64 lowercase hexadecimal characters"
+        )
     return value
 
 
@@ -2392,7 +2493,11 @@ def cmd_answer(client: Client, args: argparse.Namespace) -> None:
                 "answer": result.get("answer", ""),
                 "sources": result.get("sources", []),
                 "citations": result.get("citations", []),
-                **({"evidence_coverage": result["evidence_coverage"]} if "evidence_coverage" in result else {}),
+                **(
+                    {"evidence_coverage": result["evidence_coverage"]}
+                    if "evidence_coverage" in result
+                    else {}
+                ),
             },
         )
     else:
@@ -3068,15 +3173,21 @@ def cmd_document(client: Client, args: argparse.Namespace) -> None:
     try:
         action = args.document_action
         if action == "create-session":
-            result = client._request("POST", "/session/create", json_data={"ttl": args.ttl})
+            result = client._request(
+                "POST", "/session/create", json_data={"ttl": args.ttl}
+            )
         elif action == "attach":
             if bool(args.file) == bool(args.upload_id):
                 die("Provide exactly one file or --upload-id")
             result = client.document_attach(args.session_id, args.file, args.upload_id)
         elif action == "export-session":
-            result = client._request("POST", f"/session/{quote(args.session_id, safe='')}/export")
+            result = client._request(
+                "POST", f"/session/{quote(args.session_id, safe='')}/export"
+            )
         elif action == "delete-session":
-            result = client._request("DELETE", f"/session/{quote(args.session_id, safe='')}")
+            result = client._request(
+                "DELETE", f"/session/{quote(args.session_id, safe='')}"
+            )
         elif action == "query":
             params: dict[str, Any] = {"question": args.question}
             if args.model is not None:
@@ -3085,13 +3196,26 @@ def cmd_document(client: Client, args: argparse.Namespace) -> None:
                 params["evidence_budget_chars"] = args.evidence_budget_chars
             if args.ref:
                 params["ref_ids"] = args.ref
-            result = client._request("POST", f"/session/{quote(args.session_id, safe='')}/step", json_data={"action": "query", "params": params})
+            result = client._request(
+                "POST",
+                f"/session/{quote(args.session_id, safe='')}/step",
+                json_data={"action": "query", "params": params},
+            )
         else:
             path = f"/session/{quote(args.session_id, safe='')}/documents"
             if action in {"show", "detach"}:
                 path += f"/{quote(args.ref_id, safe='')}"
-            query = {key: value for key, value in {"start": getattr(args, "start", None), "end": getattr(args, "end", None)}.items() if value is not None}
-            result = client._request("DELETE" if action == "detach" else "GET", path, params=query or None)
+            query = {
+                key: value
+                for key, value in {
+                    "start": getattr(args, "start", None),
+                    "end": getattr(args, "end", None),
+                }.items()
+                if value is not None
+            }
+            result = client._request(
+                "DELETE" if action == "detach" else "GET", path, params=query or None
+            )
         emit("Session document evidence", result)
     except (ApiError, OSError) as error:
         die(error)
@@ -3442,7 +3566,12 @@ def make_parser() -> argparse.ArgumentParser:
 
     p_agent = subparsers.add_parser("agent", help="Start an autonomous research agent")
     p_agent.add_argument("prompt", help="Research prompt/question")
-    p_agent.add_argument("--evidence-budget-chars", type=_evidence_budget_arg, default=None, help="Aggregate verbatim evidence budget (256..128000 characters)")
+    p_agent.add_argument(
+        "--evidence-budget-chars",
+        type=_evidence_budget_arg,
+        default=None,
+        help="Aggregate verbatim evidence budget (256..128000 characters)",
+    )
     p_agent.add_argument("--urls", nargs="+", help="Seed URLs to focus research")
     p_agent.add_argument(
         "--no-poll", action="store_true", help="Don't poll for results (sync mode only)"
@@ -3469,15 +3598,23 @@ def make_parser() -> argparse.ArgumentParser:
         default="deep",
         help="Research depth: deep (multi-query, multi-pass, default) or focused (single-query, single-pass)",
     )
-    p_evidence = subparsers.add_parser("evidence", help="Inspect exact retained session evidence")
+    p_evidence = subparsers.add_parser(
+        "evidence", help="Inspect exact retained session evidence"
+    )
     p_evidence.add_argument("session_id")
     p_evidence.add_argument("ref_id")
-    p_evidence.add_argument("--query", default="", help="Select relevant exact spans (exclusive with --offset)")
+    p_evidence.add_argument(
+        "--query",
+        default="",
+        help="Select relevant exact spans (exclusive with --offset)",
+    )
     p_evidence.add_argument("--budget-chars", type=_evidence_budget_arg, default=32_000)
     p_evidence.add_argument("--offset", type=_evidence_offset_arg, default=0)
     p_evidence.add_argument("--expected-digest", type=_evidence_digest_arg)
 
-    p_followup = subparsers.add_parser("followup", help="Preview explicit contextual follow-ups without executing")
+    p_followup = subparsers.add_parser(
+        "followup", help="Preview explicit contextual follow-ups without executing"
+    )
     p_followup.add_argument("request", help="JSON request or @file.json")
 
     p_research = subparsers.add_parser(
@@ -3501,7 +3638,17 @@ def make_parser() -> argparse.ArgumentParser:
     p_resume.add_argument("run_id")
     p_resume.add_argument(
         "operation",
-        choices=["render", "export", "request_evidence", "attach", "cancel", "delete", "documents", "document_evidence", "followup_preview"],
+        choices=[
+            "render",
+            "export",
+            "request_evidence",
+            "attach",
+            "cancel",
+            "delete",
+            "documents",
+            "document_evidence",
+            "followup_preview",
+        ],
     )
     p_resume.add_argument("--expected-revision")
     p_resume.add_argument(
@@ -3560,15 +3707,28 @@ def make_parser() -> argparse.ArgumentParser:
         "--expected-revision", type=int, required=True, help="Expected session revision"
     )
 
-    p_document = subparsers.add_parser("document", help="Attach and question private session document evidence")
+    p_document = subparsers.add_parser(
+        "document", help="Attach and question private session document evidence"
+    )
     p_document_sub = p_document.add_subparsers(dest="document_action", required=True)
-    p_document_create = p_document_sub.add_parser("create-session", help="Create an owned research session")
+    p_document_create = p_document_sub.add_parser(
+        "create-session", help="Create an owned research session"
+    )
     p_document_create.add_argument("--ttl", type=int, default=3600)
-    p_document_attach = p_document_sub.add_parser("attach", help="Attach a local file or staged upload")
+    p_document_attach = p_document_sub.add_parser(
+        "attach", help="Attach a local file or staged upload"
+    )
     p_document_attach.add_argument("session_id")
     p_document_attach.add_argument("file", nargs="?")
     p_document_attach.add_argument("--upload-id")
-    for action in ("list", "show", "detach", "query", "export-session", "delete-session"):
+    for action in (
+        "list",
+        "show",
+        "detach",
+        "query",
+        "export-session",
+        "delete-session",
+    ):
         command = p_document_sub.add_parser(action)
         command.add_argument("session_id")
         if action in {"show", "detach"}:
@@ -3580,7 +3740,11 @@ def make_parser() -> argparse.ArgumentParser:
             command.add_argument("question")
             command.add_argument("--model")
             command.add_argument("--evidence-budget-chars", type=_evidence_budget_arg)
-            command.add_argument("--ref", action="append", help="Select an attached document or web ref (repeatable)")
+            command.add_argument(
+                "--ref",
+                action="append",
+                help="Select an attached document or web ref (repeatable)",
+            )
 
     p_download = subparsers.add_parser(
         "download", help="Download binary content (PDF, EPUB, image, etc.) to disk"
@@ -3733,7 +3897,12 @@ def make_parser() -> argparse.ArgumentParser:
     # --- Answer ---
     p_answer = subparsers.add_parser("answer", help="Grounded Q&A with citations")
     p_answer.add_argument("query", help="Natural language question")
-    p_answer.add_argument("--evidence-budget-chars", type=_evidence_budget_arg, default=None, help="Aggregate verbatim evidence budget (256..128000 characters)")
+    p_answer.add_argument(
+        "--evidence-budget-chars",
+        type=_evidence_budget_arg,
+        default=None,
+        help="Aggregate verbatim evidence budget (256..128000 characters)",
+    )
     p_answer.add_argument(
         "-n",
         "--num-sources",

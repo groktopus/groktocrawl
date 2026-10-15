@@ -50,7 +50,7 @@ def _derive_user_id(request: Request) -> str | None:
     """Derive a user identifier from the request for cache scoping.
 
     When RESEARCH_MEMORY_SCOPE=per_user, the user_id is derived from
-    the ``X-API-Key`` or ``Authorization: Bearer`` header.  When no
+    the credential accepted from ``Authorization: Bearer`` or ``X-API-Key``. When no
     API key is present, the client IP is used as a fallback.
 
     Returns ``None`` for global scope (no per-user isolation).
@@ -59,11 +59,9 @@ def _derive_user_id(request: Request) -> str | None:
     if scope != "per_user":
         return None
 
-    # Try API key first
-    api_key = (
-        request.headers.get("X-API-Key", "")
-        or request.headers.get("Authorization", "").removeprefix("Bearer ").strip()
-    )
+    from ..auth import request_credential
+
+    api_key = request_credential(request)
     if api_key:
         # Hash the key for privacy — we only need a stable identifier
         return hashlib.sha256(api_key.encode()).hexdigest()[:16]
