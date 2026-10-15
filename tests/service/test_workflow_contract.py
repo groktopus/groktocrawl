@@ -8,6 +8,7 @@ import textwrap
 import tomllib
 from pathlib import Path
 
+import pytest
 import yaml
 
 
@@ -123,9 +124,10 @@ def test_published_service_images_target_amd64_and_arm64():
     assert build_step["with"]["platforms"] == "linux/amd64,linux/arm64"
 
 
-def test_runtime_container_tests_use_hash_locked_fast_test_requirements():
+@pytest.mark.parametrize("filename", ["docker.yml", "runtime.yml"])
+def test_runtime_container_tests_use_hash_locked_fast_test_requirements(filename):
     root = Path(__file__).parents[2]
-    workflow = yaml.safe_load((root / ".github/workflows/runtime.yml").read_text())
+    workflow = yaml.safe_load((root / ".github/workflows" / filename).read_text())
     runtime = workflow["jobs"]["integration-tests"]
     steps = {step.get("name"): step.get("run", "") for step in runtime["steps"]}
     export_command = (
@@ -152,6 +154,36 @@ def test_runtime_container_tests_use_hash_locked_fast_test_requirements():
     assert any(item.startswith("pytest-timeout>=2") for item in fast_tests)
     lock = (root / "uv.lock").read_text()
     assert 'name = "pytest-timeout"' in lock
+
+
+@pytest.mark.parametrize("filename", ["docker.yml", "runtime.yml"])
+def test_container_test_staging_includes_service_contract_inputs(filename):
+    root = Path(__file__).parents[2]
+    workflow = yaml.safe_load((root / ".github/workflows" / filename).read_text())
+    steps = workflow["jobs"]["integration-tests"]["steps"]
+    staging = next(
+        step["run"]
+        for step in steps
+        if step.get("name") == "Copy test files and source directories"
+    )
+    for fixture in (
+        ".env.sample",
+        "groktocrawl",
+        "docker-compose.ci.yml",
+        "compose.experimental-candidate.yml",
+        "compose.protected-flare-ci.yml",
+        "compose.protected-capture-ci.yml",
+        "compose.protected-capture-lab.yml",
+    ):
+        assert f'docker cp {fixture} "$svc":/app/{fixture}' in staging
+    assert 'docker cp .github/workflows/. "$svc":/app/.github/workflows/' in staging
+    assert (
+        "for script in ci_fork_pr_guard.py enforce-branch-protection.py reconcile-jobs.py; do"
+        in staging
+    )
+    assert 'docker cp "scripts/$script" "$svc:/app/scripts/$script"' in staging
+    assert 'docker cp agent-svc/agent/. "$svc":/app/agent/' in staging
+    assert "docker cp pyproject.toml" not in staging
 
 
 def test_answer_evals_workflow_is_advisory_and_not_pr_gated():

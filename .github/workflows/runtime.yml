@@ -433,9 +433,15 @@ jobs:
           docker compose exec -T agent-svc mkdir -p /app/w6-fixtures
           docker cp groktocrawl "$svc":/app/w6-fixtures/groktocrawl
           docker cp docker-compose.yml "$svc":/app/docker-compose.yml
+          docker cp .env.sample "$svc":/app/.env.sample
+          docker cp groktocrawl "$svc":/app/groktocrawl
           docker compose exec -T agent-svc mkdir -p /app/scripts
           docker cp scripts/classify_ci_changes.py "$svc":/app/scripts/classify_ci_changes.py
           docker cp scripts/coverage_gate.py "$svc":/app/scripts/coverage_gate.py
+          # Service tests exercise these executable policy/maintenance seams.
+          for script in ci_fork_pr_guard.py enforce-branch-protection.py reconcile-jobs.py; do
+            docker cp "scripts/$script" "$svc:/app/scripts/$script"
+          done
           # Copy the stdlib benchmark harness so tests/service/test_benchmark_harness.py
           # can import the benchmark helpers inside the container.
           docker compose exec -T agent-svc mkdir -p /app/benchmarks
@@ -618,7 +624,6 @@ jobs:
 
       - name: Run mcp-svc integration tests (Host-header / transport security)
         run: |
-          docker compose exec -T agent-svc pip install pytest pytest-asyncio httpx -q
           set +e
           docker compose exec -T agent-svc env \
             MCP_URL=http://mcp-svc:8002/mcp \

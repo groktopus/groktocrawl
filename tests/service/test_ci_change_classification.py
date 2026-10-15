@@ -487,7 +487,7 @@ class RuntimeGateWorkflowContractTests(unittest.TestCase):
         # an already-provisioned image set.
         self.assertNotIn("up --build", self.integration_tests)
 
-    def test_integration_test_staging_copies_only_required_contract_inputs(
+    def test_integration_test_staging_copies_required_contract_inputs(
         self,
     ) -> None:
         self.assertIn(
@@ -576,8 +576,24 @@ class RuntimeGateWorkflowContractTests(unittest.TestCase):
         )
         self.assertIn("--cov=/app/agent", self.integration_tests)
         self.assertNotIn("--cov=/app/agent-svc/agent", self.integration_tests)
-        self.assertNotIn(
+        self.assertIn(
             'docker cp .github/workflows/. "$svc":/app/.github/workflows/',
+            self.integration_tests,
+        )
+        for fixture in (
+            ".env.sample",
+            "groktocrawl",
+            "docker-compose.ci.yml",
+            "compose.experimental-candidate.yml",
+            "compose.protected-flare-ci.yml",
+            "compose.protected-capture-ci.yml",
+            "compose.protected-capture-lab.yml",
+        ):
+            self.assertIn(
+                f'docker cp {fixture} "$svc":/app/{fixture}', self.integration_tests
+            )
+        self.assertIn(
+            "for script in ci_fork_pr_guard.py enforce-branch-protection.py reconcile-jobs.py; do",
             self.integration_tests,
         )
         self.assertIn("-m 'not external'", self.integration_tests)
