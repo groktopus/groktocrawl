@@ -401,9 +401,8 @@ async def _run_research_events(
                 }
                 return
 
-            # Coverage depends only on evidence, so decide follow-up work
-            # before the one final synthesis in every response mode.
-            if pass_count == 1:
+            # Only multi-pass deep research plans a follow-up before final synthesis.
+            if pass_count == 1 and max_passes > 1:
                 # Count novel successful acquisitions; reuse remains free.
                 budget_spent = max_credits is not None and credits_used >= max_credits
                 gap_topics = (
