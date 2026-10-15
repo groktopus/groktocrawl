@@ -34,6 +34,8 @@ async def run_deep_search(
     llm_base_url: str = "https://api.openai.com/v1",
     llm_api_key: str = "",
     llm_model: str | None = None,
+    categories: list[str] | None = None,
+    sources: list[str] | None = None,
 ) -> dict:
     """Multi-pass search with LLM gap analysis and follow-up queries.
 
@@ -51,103 +53,135 @@ async def run_deep_search(
     llm = LLMClient(llm_base_url, llm_api_key, llm_model)
 
     try:
-        # 1. Initial search
-        results, _health = await searxng.search(query, limit=max(limit, 5))
-
-        if not results:
-            return {"results": [], "query_variations": [query]}
-
-        # 2. Gap analysis via LLM
-        # Build context from result URLs, titles, descriptions (no scraping)
-        result_summaries = [
-            {
-                "title": r.get("title", ""),
-                "url": r.get("url", ""),
-                "description": r.get("description", ""),
-            }
-            for r in results[:limit]
-        ]
-        context = json.dumps(result_summaries)
-
-        gap_prompt = (
-            f'Search query: "{query}"\n\n'
-            f"Current search results:\n{context}\n\n"
-            f"What sub-topics, angles, or specific aspects are NOT covered by these results? "
-            f"Suggest 2-4 additional search queries that would fill these gaps. "
-            f"Return ONLY a JSON array of query strings. No other text."
+        return await _run_deep_search_with_clients(
+            query, limit, searxng, llm, categories=categories, sources=sources
         )
-
-        follow_ups: list[str] = []
-        try:
-            gap_result = await llm.generate(
-                system_prompt=DEEP_SEARCH_GAP_PROMPT,
-                user_prompt=gap_prompt,
-                stage="deep_search_gap",
-            )
-            if gap_result and not gap_result.startswith("Error:"):
-                # Parse the JSON array from the LLM response
-                cleaned = gap_result.strip()
-                cleaned = cleaned.removeprefix("```json")
-                cleaned = cleaned.removeprefix("```")
-                cleaned = cleaned.removesuffix("```")
-                parsed = json.loads(cleaned)
-                if isinstance(parsed, list):
-                    follow_ups = [str(q) for q in parsed if q and str(q).strip()]
-        except (json.JSONDecodeError, Exception) as e:
-            logger.warning("Deep search gap analysis failed: %s", e)
-
-        # 3. Run all queries (original + follow-ups) in parallel
-        all_queries = [query, *follow_ups]
-
-        async def search_one(q: str) -> list[dict]:
-            r, _ = await searxng.search(q, limit=limit)
-            return r
-
-        all_result_lists = [results]
-        if follow_ups:
-            follow_up_results = await asyncio.gather(
-                *[search_one(q) for q in follow_ups], return_exceptions=True
-            )
-            for fr in follow_up_results:
-                if isinstance(fr, list):
-                    all_result_lists.append(fr)
-                elif isinstance(fr, Exception):
-                    logger.warning("Follow-up search failed: %s", fr)
-
-        # 4. Merge and URL-dedup (first occurrence wins)
-        from ..models import SearchResult
-
-        seen_urls: set[str] = set()
-        merged: list[SearchResult] = []
-        for result_list in all_result_lists:
-            for r in result_list:
-                url = r.get("url", "")
-                if url and url not in seen_urls:
-                    seen_urls.add(url)
-                    merged.append(
-                        SearchResult(
-                            url=url,
-                            title=r.get("title", ""),
-                            description=r.get("description", ""),
-                            **search_metadata(r),
-                        )
-                    )
-
-        logger.info(
-            "Deep search: %d unique results from %d queries for: %s",
-            len(merged),
-            len(all_queries),
-            query,
-        )
-
-        return {
-            "results": merged[:limit],
-            "query_variations": all_queries,
-        }
-
     finally:
         await searxng.close()
         await llm.close()
+
+
+async def _run_deep_search_with_clients(
+    query: str,
+    limit: int,
+    searxng: SearXNGClient,
+    llm: LLMClient,
+    *,
+    categories: list[str] | None = None,
+    sources: list[str] | None = None,
+) -> dict:
+    """Run the bounded deep-search workflow on caller-owned clients."""
+    # 1. Initial search
+    results, _health = await searxng.search(
+        query,
+        limit=max(limit, 5),
+        categories=categories,
+        sources=sources,
+    )
+
+    if not results:
+        return {"results": [], "query_variations": [query]}
+
+    # 2. Gap analysis via LLM
+    # Build context from result URLs, titles, descriptions (no scraping)
+    result_summaries = [
+        {
+            "title": r.get("title", ""),
+            "url": r.get("url", ""),
+            "description": r.get("description", ""),
+        }
+        for r in results[:limit]
+    ]
+    context = json.dumps(result_summaries)
+
+    gap_prompt = (
+        f'Search query: "{query}"\n\n'
+        f"Current search results:\n{context}\n\n"
+        f"What sub-topics, angles, or specific aspects are NOT covered by these results? "
+        f"Suggest 2-4 additional search queries that would fill these gaps. "
+        f"Return ONLY a JSON array of query strings. No other text."
+    )
+
+    follow_ups: list[str] = []
+    try:
+        gap_result = await llm.generate(
+            system_prompt=DEEP_SEARCH_GAP_PROMPT,
+            user_prompt=gap_prompt,
+            stage="deep_search_gap",
+        )
+        if gap_result and not gap_result.startswith("Error:"):
+            cleaned = gap_result.strip()
+            cleaned = cleaned.removeprefix("```json")
+            cleaned = cleaned.removeprefix("```")
+            cleaned = cleaned.removesuffix("```")
+            parsed = json.loads(cleaned)
+            if isinstance(parsed, list):
+                original_key = " ".join(query.casefold().split())
+                seen_queries = {original_key}
+                for item in parsed:
+                    if not isinstance(item, str):
+                        continue
+                    candidate = " ".join(item.split())
+                    key = candidate.casefold()
+                    if not candidate or key in seen_queries:
+                        continue
+                    seen_queries.add(key)
+                    follow_ups.append(candidate)
+                    if len(follow_ups) == 4:
+                        break
+    except (json.JSONDecodeError, Exception) as e:
+        logger.warning("Deep search gap analysis failed: %s", e)
+
+    # 3. Run all queries (original + at most four unique follow-ups) in parallel
+    all_queries = [query, *follow_ups]
+
+    async def search_one(q: str) -> list[dict]:
+        r, _ = await searxng.search(
+            q, limit=limit, categories=categories, sources=sources
+        )
+        return r
+
+    all_result_lists = [results]
+    if follow_ups:
+        follow_up_results = await asyncio.gather(
+            *[search_one(q) for q in follow_ups], return_exceptions=True
+        )
+        for fr in follow_up_results:
+            if isinstance(fr, list):
+                all_result_lists.append(fr)
+            elif isinstance(fr, Exception):
+                logger.warning("Follow-up search failed: %s", fr)
+
+    # 4. Merge and URL-dedup (first occurrence wins)
+    from ..models import SearchResult
+
+    seen_urls: set[str] = set()
+    merged: list[SearchResult] = []
+    for result_list in all_result_lists:
+        for r in result_list:
+            url = r.get("url", "")
+            if url and url not in seen_urls:
+                seen_urls.add(url)
+                merged.append(
+                    SearchResult(
+                        url=url,
+                        title=r.get("title", ""),
+                        description=r.get("description", ""),
+                        **search_metadata(r),
+                    )
+                )
+
+    logger.info(
+        "Deep search: %d unique results from %d queries for: %s",
+        len(merged),
+        len(all_queries),
+        query,
+    )
+
+    return {
+        "results": merged[:limit],
+        "query_variations": all_queries,
+    }
 
 
 async def _rich_evidence_context(enriched: list[dict], query: str) -> dict[str, Any]:
@@ -354,10 +388,25 @@ async def run_search_stream(
     acquired_artifacts: list[SourceArtifact] = []
     refused_urls: set[str] = set()
     unavailable_urls: set[str] = set()
+    query_variations: list[str] | None = None
 
     try:
         # ── Phase 1: Search ──────────────────────────────────────
-        if retrieval_mode == "vector":
+        if search_type == "deep":
+            deep_result = await _run_deep_search_with_clients(
+                query,
+                limit,
+                searxng,
+                llm,
+                categories=categories,
+                sources=sources,
+            )
+            search_results = [
+                result.model_dump() if hasattr(result, "model_dump") else result
+                for result in deep_result["results"]
+            ]
+            query_variations = deep_result.get("query_variations", [query])
+        elif retrieval_mode == "vector":
             from ..semantic_client import SEMANTIC_UNAVAILABLE, SemanticClient
 
             semantic = SemanticClient(semantic_url)
@@ -399,23 +448,12 @@ async def run_search_stream(
             )
             search_results = results
 
-        # ── Yield search_result events ──────────────────────────
-        for r in search_results:
-            timing.on_first_event()
-            yield {
-                "type": "search_result",
-                "result": {
-                    "url": r.get("url", ""),
-                    "title": r.get("title", ""),
-                    "description": r.get("description", ""),
-                    **search_metadata(r),
-                },
-            }
-
-        total_results = len(search_results)
-
         # Semantic/hybrid reranking for keyword results
-        if retrieval_mode in ("semantic", "hybrid") and search_results:
+        if (
+            search_type != "deep"
+            and retrieval_mode in ("semantic", "hybrid")
+            and search_results
+        ):
             from ..semantic_client import SemanticClient
 
             semantic = SemanticClient(semantic_url)
@@ -468,6 +506,34 @@ async def run_search_stream(
                     ]
             finally:
                 await semantic.close()
+
+        # Emit only the final result order so streamed rows match the order
+        # consumers receive in the non-streaming response.
+        for r in search_results:
+            timing.on_first_event()
+            yield {
+                "type": "search_result",
+                "result": {
+                    "url": r.get("url", ""),
+                    "title": r.get("title", ""),
+                    "description": r.get("description", ""),
+                    **search_metadata(r),
+                },
+            }
+
+        total_results = len(search_results)
+
+        # Deep mode is discovery-only in the non-streaming route as well.
+        # The search_result events carry the rows; done carries final metadata.
+        if search_type == "deep":
+            timing.on_first_event()
+            yield {
+                "type": "done",
+                "total_results": total_results,
+                "latency_ms": int((time.monotonic() - start) * 1000),
+                "query_variations": query_variations or [query],
+            }
+            return
 
         # ── Phase 2: Rich enrichment (scrape + LLM) ─────────────
         output = None

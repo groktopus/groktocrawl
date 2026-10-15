@@ -58,6 +58,16 @@ async def search_v1(request: Request, body: SearchRequest) -> dict[str, Any]:
 @router.post("/v2/search", response_model=SearchResponse)
 async def search(request: Request, body: SearchRequest) -> SearchResponse:
     if body.stream:
+        stream_sources = body.sources
+        if (
+            body.search_type == "deep"
+            and body.sources
+            and "images" in body.sources
+            and any(source != "images" for source in body.sources)
+        ):
+            # Deep search returns web rows; mirror the non-stream route's
+            # mixed-source filter without introducing image SSE events.
+            stream_sources = [source for source in body.sources if source != "images"]
 
         async def event_stream():
             from ..research import run_search_stream
@@ -68,7 +78,7 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
                 search_type=body.search_type,
                 retrieval_mode=body.retrieval_mode,
                 categories=body.categories,
-                sources=body.sources,
+                sources=stream_sources,
                 output_schema=body.output_schema,
                 system_prompt=body.system_prompt,
                 searxng_url=request.app.state.searxng_url,
@@ -163,6 +173,8 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
                 llm_base_url=request.app.state.llm_base_url,
                 llm_api_key=request.app.state.llm_api_key,
                 llm_model=request.app.state.llm_model,
+                categories=body.categories,
+                sources=effective_sources,
             )
             search_results = deep_result["results"]
             deep_data: dict[str, list] = {

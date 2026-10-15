@@ -9,19 +9,9 @@ from .exceptions import NotFoundError
 
 
 def request_scope(request: Request) -> str:
-    from . import auth
+    from .auth import request_credential
 
-    authorization = request.headers.get("Authorization", "")
-    bearer = authorization[7:] if authorization.startswith("Bearer ") else None
-    api_key = request.headers.get("X-API-Key")
-    # Match authentication's accepted credential, including its X-API-Key
-    # fallback when Authorization is present but invalid. Header aliases for
-    # one credential must have one ownership scope.
-    credential = (
-        (bearer if bearer == auth.API_KEY else api_key)
-        if auth.AUTH_ENABLED
-        else (bearer or api_key)
-    )
+    credential = request_credential(request)
     return (
         "key:" + hashlib.sha256(credential.encode()).hexdigest()[:32]
         if credential
