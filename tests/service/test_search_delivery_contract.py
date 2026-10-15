@@ -110,6 +110,91 @@ async def test_nonstream_deep_route_forwards_requested_categories_and_sources(
 
 
 @pytest.mark.asyncio
+async def test_stream_deep_mixed_image_and_web_sources_match_nonstream_filters(
+    monkeypatch,
+):
+    import agent.routes.search as route
+    from agent.models import SearchRequest
+
+    captured = {}
+
+    async def deep_stream(**kwargs):
+        captured.update(kwargs)
+        yield {"type": "done", "total_results": 0, "query_variations": ["q"]}
+
+    monkeypatch.setattr("agent.research.run_search_stream", deep_stream)
+    request = SimpleNamespace(
+        app=SimpleNamespace(
+            state=SimpleNamespace(
+                searxng_url="fixture",
+                scraper_url="fixture",
+                semantic_url="fixture",
+                llm_base_url="fixture",
+                llm_api_key="",
+                llm_model="fixture",
+            )
+        )
+    )
+
+    response = await route.search(
+        request,
+        SearchRequest(
+            query="q",
+            stream=True,
+            search_type="deep",
+            categories=["science"],
+            sources=["images", "web"],
+        ),
+    )
+    chunks = [chunk async for chunk in response.body_iterator]
+
+    assert captured["categories"] == ["science"]
+    assert captured["sources"] == ["web"]
+    assert '"type": "done"' in "".join(chunks)
+
+
+@pytest.mark.asyncio
+async def test_nonstream_deep_image_only_keeps_existing_image_response(monkeypatch):
+    import agent.routes.search as route
+    from agent.models import SearchRequest
+
+    image_row = {
+        "url": "https://example.test/page",
+        "title": "Picture",
+        "description": "640 x 480",
+        "media": {"url": "https://cdn.example.test/image.png", "width": 640},
+    }
+    searcher = SimpleNamespace(
+        search=AsyncMock(return_value=([image_row], None)), close=AsyncMock()
+    )
+    monkeypatch.setattr(
+        "agent.searxng_client.SearXNGClient", lambda *_a, **_kw: searcher
+    )
+
+    request = SimpleNamespace(
+        app=SimpleNamespace(
+            state=SimpleNamespace(
+                searxng_url="fixture",
+                scraper_url="fixture",
+                semantic_url="fixture",
+                llm_base_url="fixture",
+                llm_api_key="",
+                llm_model="fixture",
+            )
+        )
+    )
+    response = await route.search(
+        request,
+        SearchRequest(query="q", search_type="deep", sources=["images"]),
+    )
+
+    assert response.data["web"] == []
+    assert len(response.data["images"]) == 1
+    searcher.search.assert_awaited_once_with("q", limit=5, sources=["images"])
+    searcher.close.assert_awaited_once()
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("retrieval_mode", ["semantic", "hybrid"])
 async def test_reranked_stream_emits_final_order(monkeypatch, retrieval_mode):
     import agent.research.search as module
