@@ -14,6 +14,7 @@ Owner: GroktoCrawl maintainers
 
 - [InterruptedJobs](interrupted-jobs.md) — identify and reconcile jobs stranded in `processing` after a restart
 - [ReleaseDependencyTriage](release-dependency-triage.md) — weekly routine for triaging dependabot, pip-audit, and release-please PRs
+- [Release Images](release-images.md) — promote verified published image indexes to stable and version tags
 
 ## Emergency Procedures
 
