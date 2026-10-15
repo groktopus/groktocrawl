@@ -259,3 +259,10 @@ async def test_upstream_failure_never_degrades_bounded_search(failure):
             await client.search("paper", **DATES)
     finally:
         await client.close()
+
+
+def test_unrelated_legacy_extras_remain_compatible():
+    assert (
+        SearchRequest(query="paper", candidate="value", update=True, timeout=5).query
+        == "paper"
+    )
