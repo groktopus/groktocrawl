@@ -28,8 +28,12 @@ import time
 import xml.etree.ElementTree as ET
 from urllib.parse import urlparse
 
-import httpx
-
+from ..source_http import (
+    source_httpx_client,
+    source_httpx_sync_client,
+    trusted_control_base_url,
+    trusted_control_httpx_client,
+)
 from .base import AdapterContext, AdapterError, AdapterResult, SiteAdapter, adapter
 
 logger = logging.getLogger(__name__)
@@ -73,7 +77,8 @@ def _is_substack_origin(origin: str) -> bool:
     # Probe via RSS feed
     feed_url = f"{origin}/feed"
     try:
-        resp = httpx.get(feed_url, timeout=8, follow_redirects=True)
+        with source_httpx_sync_client(timeout=8, follow_redirects=True) as client:
+            resp = client.get(feed_url)
         if resp.status_code == 200 and "Substack" in resp.text:
             # Quick check: look for <generator>Substack</generator>
             if re.search(r"<generator[^>]*>Substack<", resp.text):
@@ -157,7 +162,7 @@ async def _fetch_feed(origin: str) -> str | None:
     """Fetch the RSS feed XML from *origin*/feed."""
     feed_url = _feed_url_for(origin)
     try:
-        async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
+        async with source_httpx_client(timeout=15, follow_redirects=True) as client:
             resp = await client.get(
                 feed_url,
                 headers={
@@ -214,7 +219,7 @@ def _rss_content_to_markdown(html_content: str) -> str:
 async def _fetch_via_readability(url: str) -> str | None:
     """Fallback: fetch the page HTML and extract via readability-lxml."""
     try:
-        async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
+        async with source_httpx_client(timeout=15, follow_redirects=True) as client:
             resp = await client.get(
                 url,
                 headers={
@@ -237,10 +242,12 @@ async def _fetch_via_readability(url: str) -> str | None:
 
 async def _fetch_via_browser(url: str, ctx: AdapterContext) -> str | None:
     """Last-resort fallback: render the page via browser-svc."""
-    browser_svc_url = ctx.config.get("BROWSER_SVC_URL", "http://browser-svc:8012")
+    browser_svc_url = trusted_control_base_url(
+        ctx.config.get("BROWSER_SVC_URL", "http://browser-svc:8012"), "browser"
+    )
     session_id = None
     try:
-        async with httpx.AsyncClient(timeout=45) as client:
+        async with trusted_control_httpx_client(service="browser", timeout=45) as client:
             # Create session
             create_resp = await client.post(
                 f"{browser_svc_url}/browsers",
@@ -282,7 +289,7 @@ async def _fetch_via_browser(url: str, ctx: AdapterContext) -> str | None:
     finally:
         if session_id:
             try:
-                async with httpx.AsyncClient(timeout=5) as c:
+                async with trusted_control_httpx_client(service="browser", timeout=5) as c:
                     await c.delete(f"{browser_svc_url}/browsers/{session_id}")
             except Exception as e:
                 logger.debug("Session cleanup failed for %s: %s", url, e)

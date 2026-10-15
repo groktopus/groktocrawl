@@ -13,6 +13,7 @@ dependencies = [
     "markdownify>=0.14.0",
     "beautifulsoup4>=4.13.0",
     "redis>=5.0",
+    "requests>=2.32.0",
     "youtube_transcript_api>=1.0.0",
     "yt-dlp>=2026.3.13",
     "cloakbrowser==0.5.9",

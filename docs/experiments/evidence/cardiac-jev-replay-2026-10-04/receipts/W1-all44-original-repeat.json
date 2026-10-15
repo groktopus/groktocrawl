@@ -1,0 +1,994 @@
+{
+  "id": "W1-all44-original-repeat",
+  "pool": "all44",
+  "order": "original",
+  "wording": "W1",
+  "kind": "repeat",
+  "candidate_ids": [
+    "c0",
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c5",
+    "c6",
+    "c7",
+    "c8",
+    "c9",
+    "c10",
+    "c11",
+    "c12",
+    "c13",
+    "c14",
+    "c15",
+    "c16",
+    "c17",
+    "c18",
+    "c19",
+    "c20",
+    "c21",
+    "c22",
+    "c23",
+    "c24",
+    "c25",
+    "c26",
+    "c27",
+    "c28",
+    "c29",
+    "c30",
+    "c31",
+    "c32",
+    "c33",
+    "c34",
+    "c35",
+    "c36",
+    "c37",
+    "c38",
+    "c39",
+    "c40",
+    "c41",
+    "c42",
+    "c43"
+  ],
+  "request_bytes": 90836,
+  "request_sha256": "2e8f00b90635e654d42dc0a82d9df5b93ced0fe08c0571a693020d11cc663523",
+  "status": "valid",
+  "started_at": "2026-10-04T03:25:02.269265+00:00",
+  "model": "jev-1.13.0",
+  "answers": {
+    "c0_evidence": {
+      "type": "score",
+      "score": 2.71,
+      "confidence": 0.71,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.0,
+        "2": 0.28,
+        "3": 0.72
+      }
+    },
+    "c0_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.98,
+      "probabilities": {
+        "skip": 0.0,
+        "maybe": 0.01,
+        "fetch": 0.99
+      }
+    },
+    "c1_evidence": {
+      "type": "score",
+      "score": 1.82,
+      "confidence": 0.71,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.23,
+        "2": 0.72,
+        "3": 0.05
+      }
+    },
+    "c1_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.97,
+      "probabilities": {
+        "skip": 0.0,
+        "maybe": 0.02,
+        "fetch": 0.98
+      }
+    },
+    "c2_evidence": {
+      "type": "score",
+      "score": 1.88,
+      "confidence": 0.83,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.14,
+        "2": 0.84,
+        "3": 0.02
+      }
+    },
+    "c2_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.64,
+      "probabilities": {
+        "skip": 0.01,
+        "maybe": 0.23,
+        "fetch": 0.76
+      }
+    },
+    "c3_evidence": {
+      "type": "score",
+      "score": 1.74,
+      "confidence": 0.63,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.31,
+        "2": 0.63,
+        "3": 0.06
+      }
+    },
+    "c3_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.89,
+      "probabilities": {
+        "skip": 0.0,
+        "maybe": 0.07,
+        "fetch": 0.93
+      }
+    },
+    "c4_evidence": {
+      "type": "score",
+      "score": 1.38,
+      "confidence": 0.61,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.64,
+        "2": 0.34,
+        "3": 0.02
+      }
+    },
+    "c4_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.94,
+      "probabilities": {
+        "skip": 0.01,
+        "maybe": 0.03,
+        "fetch": 0.96
+      }
+    },
+    "c5_evidence": {
+      "type": "score",
+      "score": 2.18,
+      "confidence": 0.64,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.09,
+        "2": 0.64,
+        "3": 0.27
+      }
+    },
+    "c5_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.95,
+      "probabilities": {
+        "skip": 0.0,
+        "maybe": 0.03,
+        "fetch": 0.97
+      }
+    },
+    "c6_evidence": {
+      "type": "score",
+      "score": 2.39,
+      "confidence": 0.5,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.05,
+        "2": 0.51,
+        "3": 0.44
+      }
+    },
+    "c6_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.99,
+      "probabilities": {
+        "skip": 0.0,
+        "maybe": 0.0,
+        "fetch": 1.0
+      }
+    },
+    "c7_evidence": {
+      "type": "score",
+      "score": 2.28,
+      "confidence": 0.7,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.01,
+        "2": 0.7,
+        "3": 0.29
+      }
+    },
+    "c7_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.85,
+      "probabilities": {
+        "skip": 0.01,
+        "maybe": 0.09,
+        "fetch": 0.9
+      }
+    },
+    "c8_evidence": {
+      "type": "score",
+      "score": 1.6,
+      "confidence": 0.52,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.44,
+        "2": 0.52,
+        "3": 0.04
+      }
+    },
+    "c8_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.4,
+      "probabilities": {
+        "skip": 0.05,
+        "maybe": 0.35,
+        "fetch": 0.6
+      }
+    },
+    "c9_evidence": {
+      "type": "score",
+      "score": 1.51,
+      "confidence": 0.49,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.5,
+        "2": 0.49,
+        "3": 0.01
+      }
+    },
+    "c9_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.74,
+      "probabilities": {
+        "skip": 0.0,
+        "maybe": 0.17,
+        "fetch": 0.83
+      }
+    },
+    "c10_evidence": {
+      "type": "score",
+      "score": 2.25,
+      "confidence": 0.65,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.05,
+        "2": 0.65,
+        "3": 0.3
+      }
+    },
+    "c10_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.97,
+      "probabilities": {
+        "skip": 0.0,
+        "maybe": 0.02,
+        "fetch": 0.98
+      }
+    },
+    "c11_evidence": {
+      "type": "score",
+      "score": 0.98,
+      "confidence": 0.97,
+      "probabilities": {
+        "0": 0.02,
+        "1": 0.98,
+        "2": 0.0,
+        "3": 0.0
+      }
+    },
+    "c11_fetch": {
+      "type": "choice",
+      "choice": "skip",
+      "confidence": 0.27,
+      "probabilities": {
+        "skip": 0.51,
+        "maybe": 0.27,
+        "fetch": 0.22
+      }
+    },
+    "c12_evidence": {
+      "type": "score",
+      "score": 2.08,
+      "confidence": 0.74,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.09,
+        "2": 0.74,
+        "3": 0.17
+      }
+    },
+    "c12_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.37,
+      "probabilities": {
+        "skip": 0.02,
+        "maybe": 0.4,
+        "fetch": 0.58
+      }
+    },
+    "c13_evidence": {
+      "type": "score",
+      "score": 1.01,
+      "confidence": 0.97,
+      "probabilities": {
+        "0": 0.01,
+        "1": 0.98,
+        "2": 0.01,
+        "3": 0.0
+      }
+    },
+    "c13_fetch": {
+      "type": "choice",
+      "choice": "skip",
+      "confidence": 0.59,
+      "probabilities": {
+        "skip": 0.73,
+        "maybe": 0.22,
+        "fetch": 0.05
+      }
+    },
+    "c14_evidence": {
+      "type": "score",
+      "score": 2.18,
+      "confidence": 0.67,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.07,
+        "2": 0.67,
+        "3": 0.26
+      }
+    },
+    "c14_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.98,
+      "probabilities": {
+        "skip": 0.0,
+        "maybe": 0.01,
+        "fetch": 0.99
+      }
+    },
+    "c15_evidence": {
+      "type": "score",
+      "score": 2.4,
+      "confidence": 0.55,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.02,
+        "2": 0.56,
+        "3": 0.42
+      }
+    },
+    "c15_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.89,
+      "probabilities": {
+        "skip": 0.0,
+        "maybe": 0.07,
+        "fetch": 0.93
+      }
+    },
+    "c16_evidence": {
+      "type": "score",
+      "score": 2.13,
+      "confidence": 0.77,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.05,
+        "2": 0.77,
+        "3": 0.18
+      }
+    },
+    "c16_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.87,
+      "probabilities": {
+        "skip": 0.01,
+        "maybe": 0.08,
+        "fetch": 0.91
+      }
+    },
+    "c17_evidence": {
+      "type": "score",
+      "score": 2.9,
+      "confidence": 0.9,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.0,
+        "2": 0.1,
+        "3": 0.9
+      }
+    },
+    "c17_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.99,
+      "probabilities": {
+        "skip": 0.0,
+        "maybe": 0.0,
+        "fetch": 1.0
+      }
+    },
+    "c18_evidence": {
+      "type": "score",
+      "score": 1.76,
+      "confidence": 0.59,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.32,
+        "2": 0.6,
+        "3": 0.08
+      }
+    },
+    "c18_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.96,
+      "probabilities": {
+        "skip": 0.0,
+        "maybe": 0.02,
+        "fetch": 0.98
+      }
+    },
+    "c19_evidence": {
+      "type": "score",
+      "score": 2.62,
+      "confidence": 0.62,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.0,
+        "2": 0.37,
+        "3": 0.63
+      }
+    },
+    "c19_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.99,
+      "probabilities": {
+        "skip": 0.0,
+        "maybe": 0.0,
+        "fetch": 1.0
+      }
+    },
+    "c20_evidence": {
+      "type": "score",
+      "score": 1.07,
+      "confidence": 0.93,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.95,
+        "2": 0.04,
+        "3": 0.01
+      }
+    },
+    "c20_fetch": {
+      "type": "choice",
+      "choice": "maybe",
+      "confidence": 0.25,
+      "probabilities": {
+        "skip": 0.1,
+        "maybe": 0.5,
+        "fetch": 0.4
+      }
+    },
+    "c21_evidence": {
+      "type": "score",
+      "score": 1.04,
+      "confidence": 0.95,
+      "probabilities": {
+        "0": 0.01,
+        "1": 0.96,
+        "2": 0.02,
+        "3": 0.01
+      }
+    },
+    "c21_fetch": {
+      "type": "choice",
+      "choice": "maybe",
+      "confidence": 0.25,
+      "probabilities": {
+        "skip": 0.06,
+        "maybe": 0.5,
+        "fetch": 0.44
+      }
+    },
+    "c22_evidence": {
+      "type": "score",
+      "score": 1.02,
+      "confidence": 0.94,
+      "probabilities": {
+        "0": 0.02,
+        "1": 0.94,
+        "2": 0.03,
+        "3": 0.01
+      }
+    },
+    "c22_fetch": {
+      "type": "choice",
+      "choice": "maybe",
+      "confidence": 0.49,
+      "probabilities": {
+        "skip": 0.23,
+        "maybe": 0.66,
+        "fetch": 0.11
+      }
+    },
+    "c23_evidence": {
+      "type": "score",
+      "score": 2.29,
+      "confidence": 0.65,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.03,
+        "2": 0.65,
+        "3": 0.32
+      }
+    },
+    "c23_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.79,
+      "probabilities": {
+        "skip": 0.01,
+        "maybe": 0.13,
+        "fetch": 0.86
+      }
+    },
+    "c24_evidence": {
+      "type": "score",
+      "score": 1.97,
+      "confidence": 0.76,
+      "probabilities": {
+        "0": 0.01,
+        "1": 0.13,
+        "2": 0.76,
+        "3": 0.1
+      }
+    },
+    "c24_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.77,
+      "probabilities": {
+        "skip": 0.01,
+        "maybe": 0.14,
+        "fetch": 0.85
+      }
+    },
+    "c25_evidence": {
+      "type": "score",
+      "score": 1.01,
+      "confidence": 0.99,
+      "probabilities": {
+        "0": 0.0,
+        "1": 1.0,
+        "2": 0.0,
+        "3": 0.0
+      }
+    },
+    "c25_fetch": {
+      "type": "choice",
+      "choice": "maybe",
+      "confidence": 0.29,
+      "probabilities": {
+        "skip": 0.06,
+        "maybe": 0.53,
+        "fetch": 0.41
+      }
+    },
+    "c26_evidence": {
+      "type": "score",
+      "score": 2.02,
+      "confidence": 0.75,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.11,
+        "2": 0.75,
+        "3": 0.14
+      }
+    },
+    "c26_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.84,
+      "probabilities": {
+        "skip": 0.01,
+        "maybe": 0.1,
+        "fetch": 0.89
+      }
+    },
+    "c27_evidence": {
+      "type": "score",
+      "score": 1.01,
+      "confidence": 0.99,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.99,
+        "2": 0.01,
+        "3": 0.0
+      }
+    },
+    "c27_fetch": {
+      "type": "choice",
+      "choice": "maybe",
+      "confidence": 0.28,
+      "probabilities": {
+        "skip": 0.05,
+        "maybe": 0.52,
+        "fetch": 0.43
+      }
+    },
+    "c28_evidence": {
+      "type": "score",
+      "score": 2.56,
+      "confidence": 0.56,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.01,
+        "2": 0.42,
+        "3": 0.57
+      }
+    },
+    "c28_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.92,
+      "probabilities": {
+        "skip": 0.0,
+        "maybe": 0.05,
+        "fetch": 0.95
+      }
+    },
+    "c29_evidence": {
+      "type": "score",
+      "score": 1.02,
+      "confidence": 0.98,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.98,
+        "2": 0.01,
+        "3": 0.01
+      }
+    },
+    "c29_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.38,
+      "probabilities": {
+        "skip": 0.04,
+        "maybe": 0.38,
+        "fetch": 0.58
+      }
+    },
+    "c30_evidence": {
+      "type": "score",
+      "score": 2.26,
+      "confidence": 0.63,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.05,
+        "2": 0.64,
+        "3": 0.31
+      }
+    },
+    "c30_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.93,
+      "probabilities": {
+        "skip": 0.01,
+        "maybe": 0.04,
+        "fetch": 0.95
+      }
+    },
+    "c31_evidence": {
+      "type": "score",
+      "score": 1.87,
+      "confidence": 0.67,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.22,
+        "2": 0.68,
+        "3": 0.1
+      }
+    },
+    "c31_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.8,
+      "probabilities": {
+        "skip": 0.01,
+        "maybe": 0.13,
+        "fetch": 0.86
+      }
+    },
+    "c32_evidence": {
+      "type": "score",
+      "score": 2.09,
+      "confidence": 0.62,
+      "probabilities": {
+        "0": 0.01,
+        "1": 0.13,
+        "2": 0.62,
+        "3": 0.24
+      }
+    },
+    "c32_fetch": {
+      "type": "choice",
+      "choice": "maybe",
+      "confidence": 0.35,
+      "probabilities": {
+        "skip": 0.04,
+        "maybe": 0.5599999999999999,
+        "fetch": 0.4
+      }
+    },
+    "c33_evidence": {
+      "type": "score",
+      "score": 1.93,
+      "confidence": 0.61,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.22,
+        "2": 0.62,
+        "3": 0.16
+      }
+    },
+    "c33_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.62,
+      "probabilities": {
+        "skip": 0.02,
+        "maybe": 0.23,
+        "fetch": 0.75
+      }
+    },
+    "c34_evidence": {
+      "type": "score",
+      "score": 1.18,
+      "confidence": 0.82,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.86,
+        "2": 0.1,
+        "3": 0.04
+      }
+    },
+    "c34_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.84,
+      "probabilities": {
+        "skip": 0.01,
+        "maybe": 0.1,
+        "fetch": 0.89
+      }
+    },
+    "c35_evidence": {
+      "type": "score",
+      "score": 1.07,
+      "confidence": 0.93,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.95,
+        "2": 0.04,
+        "3": 0.01
+      }
+    },
+    "c35_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.88,
+      "probabilities": {
+        "skip": 0.0,
+        "maybe": 0.07,
+        "fetch": 0.93
+      }
+    },
+    "c36_evidence": {
+      "type": "score",
+      "score": 1.03,
+      "confidence": 0.97,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.98,
+        "2": 0.01,
+        "3": 0.01
+      }
+    },
+    "c36_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.56,
+      "probabilities": {
+        "skip": 0.02,
+        "maybe": 0.27,
+        "fetch": 0.71
+      }
+    },
+    "c37_evidence": {
+      "type": "score",
+      "score": 1.07,
+      "confidence": 0.92,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.95,
+        "2": 0.03,
+        "3": 0.02
+      }
+    },
+    "c37_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.79,
+      "probabilities": {
+        "skip": 0.01,
+        "maybe": 0.13,
+        "fetch": 0.86
+      }
+    },
+    "c38_evidence": {
+      "type": "score",
+      "score": 1.02,
+      "confidence": 0.93,
+      "probabilities": {
+        "0": 0.02,
+        "1": 0.94,
+        "2": 0.03,
+        "3": 0.01
+      }
+    },
+    "c38_fetch": {
+      "type": "choice",
+      "choice": "maybe",
+      "confidence": 0.55,
+      "probabilities": {
+        "skip": 0.14,
+        "maybe": 0.7,
+        "fetch": 0.16
+      }
+    },
+    "c39_evidence": {
+      "type": "score",
+      "score": 1.02,
+      "confidence": 0.97,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.98,
+        "2": 0.01,
+        "3": 0.01
+      }
+    },
+    "c39_fetch": {
+      "type": "choice",
+      "choice": "maybe",
+      "confidence": 0.35,
+      "probabilities": {
+        "skip": 0.03,
+        "maybe": 0.57,
+        "fetch": 0.4
+      }
+    },
+    "c40_evidence": {
+      "type": "score",
+      "score": 1.15,
+      "confidence": 0.84,
+      "probabilities": {
+        "0": 0.01,
+        "1": 0.87,
+        "2": 0.09,
+        "3": 0.03
+      }
+    },
+    "c40_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.83,
+      "probabilities": {
+        "skip": 0.01,
+        "maybe": 0.1,
+        "fetch": 0.89
+      }
+    },
+    "c41_evidence": {
+      "type": "score",
+      "score": 1.03,
+      "confidence": 0.96,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.97,
+        "2": 0.02,
+        "3": 0.01
+      }
+    },
+    "c41_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.35,
+      "probabilities": {
+        "skip": 0.02,
+        "maybe": 0.41,
+        "fetch": 0.57
+      }
+    },
+    "c42_evidence": {
+      "type": "score",
+      "score": 1.09,
+      "confidence": 0.9,
+      "probabilities": {
+        "0": 0.01,
+        "1": 0.91,
+        "2": 0.06,
+        "3": 0.02
+      }
+    },
+    "c42_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.45,
+      "probabilities": {
+        "skip": 0.02,
+        "maybe": 0.35,
+        "fetch": 0.63
+      }
+    },
+    "c43_evidence": {
+      "type": "score",
+      "score": 1.1,
+      "confidence": 0.9,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.93,
+        "2": 0.05,
+        "3": 0.02
+      }
+    },
+    "c43_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.98,
+      "probabilities": {
+        "skip": 0.0,
+        "maybe": 0.01,
+        "fetch": 0.99
+      }
+    }
+  },
+  "validation_errors": [],
+  "validation_protocol": "v2-rounding-feasibility",
+  "usage": {
+    "input_tokens": 21673,
+    "output_tokens": 2447
+  },
+  "provider_ms": 330.9840941801667,
+  "total_ms": 664.727,
+  "error": null,
+  "http_status": null
+}

@@ -10,6 +10,8 @@ import httpx
 
 from common.stage_metrics import inc_counter, observe_elapsed
 
+from .search_metadata import search_metadata
+
 logger = logging.getLogger(__name__)
 
 _SEARCH_QUERY_SECONDS = "groktocrawl_search_query_seconds"
@@ -37,6 +39,7 @@ class SearchHealth:
     degraded: bool = False
     detail: str = ""
     result_coverage: dict | None = None
+    date_filter: dict | None = None
 
 
 # ── Firecrawl v2 → SearXNG category translation ────────────────
@@ -164,7 +167,7 @@ class SearXNGClient:
     async def search(
         self,
         query: str,
-        limit: int = 10,
+        limit: int | None = 10,
         categories: list[str] | None = None,
         sources: list[str] | None = None,
         *,
@@ -172,12 +175,16 @@ class SearXNGClient:
         scenario: str | None = None,
         page: int = 1,
         offset: int = 0,
+        date_from: str | None = None,
+        date_to: str | None = None,
+        time_range: str | None = None,
+        engines: list[str] | None = None,
     ) -> tuple[list[dict], SearchHealth]:
         """Search the web and return structured results with health info.
 
-        Uses SearXNG's JSON API. When categories is None, defaults to "general".
-        ``sources`` and ``categories`` are merged via ``_translate()`` before
-        being passed to SearXNG.
+        Uses SearXNG's JSON API. An unscoped search leaves categories unset so
+        the upstream can choose engines for the query. Explicit ``sources`` and
+        ``categories`` are merged via ``_translate()`` and passed upstream.
 
         Enforces a per-request search budget. Raises ``RateLimitedError``
         when the budget is exhausted.
@@ -195,12 +202,13 @@ class SearXNGClient:
         - results: list of dicts with keys: url, title, description, engine.
         - health: SearchHealth dataclass with engine status information.
         """
-        from .exceptions import RateLimitedError
+        from .date_filters import validate_dates, verify_date_proof
+        from .exceptions import RateLimitedError, UpstreamError
 
+        bounded = validate_dates(date_from, date_to, time_range, engines)
         started = time.monotonic()
         if (
-            type(limit) is not int
-            or not 1 <= limit <= 1000
+            (limit is not None and (type(limit) is not int or not 1 <= limit <= 1000))
             or type(page) is not int
             or not 1 <= page <= 1000
             or type(offset) is not int
@@ -226,14 +234,23 @@ class SearXNGClient:
                 )
             self._search_count += 1
 
-            effective_categories = self._translate(sources, categories)
             params = {
                 "q": query,
                 "format": "json",
                 "language": "en",
                 "pageno": page,
             }
-            params["categories"] = ",".join(effective_categories)
+            if sources or categories:
+                effective_categories = self._translate(sources, categories)
+                params["categories"] = ",".join(effective_categories)
+            if engines is not None:
+                params["engines"] = ",".join(engines)
+            if bounded:
+                params["categories"] = "science"
+                if date_from is not None:
+                    params["date_from"] = date_from
+                if date_to is not None:
+                    params["date_to"] = date_to
             run_id = os.getenv("TWIN_RUN_ID")
             if run_id:
                 params["run_id"] = run_id
@@ -244,6 +261,8 @@ class SearXNGClient:
                 f"{self.base_url}/search",
                 params=params,  # type: ignore[arg-type]
             )
+            if bounded:
+                resp.raise_for_status()
             if resp.status_code == 429:
                 # Downstream capacity condition (ADR-0053): opt-in call
                 # sites raise a retryable error so sync routes render a
@@ -286,6 +305,24 @@ class SearXNGClient:
                 )
 
             data = resp.json()
+            proof = (
+                verify_date_proof(
+                    data.get("meta", {}).get("date_filter"), date_from, date_to
+                )
+                if bounded
+                else None
+            )
+            if bounded:
+                meta = data.get("meta", {})
+                if (
+                    meta.get("engine_status", {}).get("openalex", {}).get("status")
+                    != "ok"
+                    or meta.get("partial") is not False
+                    or meta.get("deadline_exceeded") is not False
+                ):
+                    raise ValueError(
+                        "Bounded search acquisition did not complete successfully"
+                    )
             results = []
             for item in data.get("results", []):
                 results.append(
@@ -293,12 +330,36 @@ class SearXNGClient:
                         "url": item.get("url", ""),
                         "title": item.get("title", ""),
                         "description": item.get("content", ""),
-                        "engine": item.get("engine", ""),
+                        **search_metadata(item),
+                        **(
+                            {
+                                "publishedDate": item.get("published_date")
+                                or item.get("publishedDate")
+                            }
+                            if bounded
+                            else {}
+                        ),
                     }
                 )
 
+            if bounded:
+                from datetime import date
+
+                for item in results:
+                    published = item.get("publishedDate")
+                    if (
+                        not isinstance(published, str)
+                        or date.fromisoformat(published).isoformat() != published
+                    ):
+                        raise ValueError("Missing or invalid publication date")
+                    if (
+                        item.get("engine") != "openalex"
+                        or (date_from and published < date_from)
+                        or (date_to and published > date_to)
+                    ):
+                        raise ValueError("Result outside audited date scope")
             captured_count = len(results)
-            results = results[offset : offset + limit]
+            results = results[offset : offset + limit if limit is not None else None]
 
             # ── Parse engine health ────────────────────────────────────
             health = self._parse_engine_health(data, results)
@@ -316,16 +377,23 @@ class SearXNGClient:
                 .get("enforcement", {})
                 .get("pagination"),
             }
+            health.date_filter = proof
 
             return results, health
 
         except RateLimitedError:
             raise
-        except httpx.TimeoutException:
+        except httpx.TimeoutException as exc:
+            if bounded:
+                raise UpstreamError(detail="Bounded search backend timed out") from exc
             outcome = "timeout"
             logger.warning("SearXNG search timed out")
             return [], SearchHealth(detail="SearXNG request timed out")
         except Exception as e:
+            if bounded:
+                raise UpstreamError(
+                    detail="Bounded search failed: missing or invalid enforcement proof"
+                ) from e
             outcome = "error"
             logger.error("SearXNG search failed: %s", type(e).__name__)
             return [], SearchHealth(detail="SearXNG search failed")

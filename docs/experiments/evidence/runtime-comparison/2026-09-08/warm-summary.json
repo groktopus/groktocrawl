@@ -1,0 +1,65 @@
+{
+  "schema_version": "runtime-comparison/measurement/1",
+  "status": "completed",
+  "mode": "warm",
+  "dependency": "langgraph==0.6.11",
+  "seed": 20260908,
+  "paired_repetitions": 30,
+  "workloads": [
+    "fanout_join",
+    "serial",
+    "wide_join"
+  ],
+  "records": 180,
+  "conformance_failures": 0,
+  "latency_ms": {
+    "fanout_join": {
+      "imperative": {
+        "p50": 2.8,
+        "p95": 2.905,
+        "mean": 2.805,
+        "min": 2.699,
+        "max": 3.12
+      },
+      "langgraph": {
+        "p50": 5.752,
+        "p95": 6.424,
+        "mean": 5.8,
+        "min": 5.317,
+        "max": 6.579
+      }
+    },
+    "serial": {
+      "imperative": {
+        "p50": 2.064,
+        "p95": 2.207,
+        "mean": 2.079,
+        "min": 1.999,
+        "max": 2.412
+      },
+      "langgraph": {
+        "p50": 4.87,
+        "p95": 5.626,
+        "mean": 11.754,
+        "min": 4.437,
+        "max": 210.257
+      }
+    },
+    "wide_join": {
+      "imperative": {
+        "p50": 3.514,
+        "p95": 3.789,
+        "mean": 3.534,
+        "min": 3.395,
+        "max": 3.874
+      },
+      "langgraph": {
+        "p50": 6.365,
+        "p95": 6.964,
+        "mean": 6.408,
+        "min": 5.914,
+        "max": 7.009
+      }
+    }
+  }
+}

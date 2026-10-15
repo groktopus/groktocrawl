@@ -1,13 +1,14 @@
 """HTTP client for the GroktoCrawl agent-svc API."""
 
 import asyncio
+import base64
 import ipaddress
 import logging
 import os
 import socket
 import time
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import quote, urlencode, urlparse
 
 import httpx
 
@@ -123,6 +124,15 @@ def _retry_after_seconds(response: httpx.Response) -> float:
     return _MIN_RETRY_WAIT_SECONDS
 
 
+def _extract_response_body(response: httpx.Response) -> dict[str, Any]:
+    """Return a safe, machine-readable upstream error body when possible."""
+    try:
+        body = response.json()
+    except (ValueError, TypeError):
+        return {}
+    return body if isinstance(body, dict) else {}
+
+
 def _extract_response_detail(response: httpx.Response) -> str:
     """Extract a human-readable detail from an error response body.
 
@@ -130,7 +140,7 @@ def _extract_response_detail(response: httpx.Response) -> str:
     keys), then falls back to the raw text (truncated).
     """
     try:
-        body = response.json()
+        body = _extract_response_body(response)
         if isinstance(body, dict):
             # FastAPI-style validation errors have a 'detail' key
             if "detail" in body:
@@ -219,10 +229,18 @@ class GroktocrawlClient:
 
     # ── helpers ─────────────────────────────────────────────────
 
-    def _error_result(self, msg: str, *, status_code: int | None = None) -> dict:
+    def _error_result(
+        self,
+        msg: str,
+        *,
+        status_code: int | None = None,
+        error_code: str | None = None,
+    ) -> dict:
         result: dict[str, Any] = {"error": msg}
         if status_code is not None:
             result["status_code"] = status_code
+        if error_code:
+            result["error_code"] = error_code
         return result
 
     async def _request(
@@ -264,6 +282,8 @@ class GroktocrawlClient:
                     continue
                 duration = time.monotonic() - start
                 detail = _extract_response_detail(exc.response)
+                upstream_body = _extract_response_body(exc.response)
+                error_code = upstream_body.get("error_code")
                 if status_code == 429:
                     # Retry budget exhausted — report distinctly from a
                     # one-off 429 so callers can distinguish.
@@ -289,6 +309,7 @@ class GroktocrawlClient:
                 return self._error_result(
                     f"HTTP {status_code}: {detail}",
                     status_code=status_code,
+                    error_code=error_code if isinstance(error_code, str) else None,
                 )
             except httpx.TimeoutException:
                 duration = time.monotonic() - start
@@ -326,6 +347,30 @@ class GroktocrawlClient:
     async def _delete(self, path: str) -> dict:
         return await self._request("DELETE", path)
 
+    async def select_session_evidence(
+        self,
+        session_id: str,
+        ref_id: str,
+        query: str = "",
+        budget_chars: int = 32_000,
+        offset: int = 0,
+        expected_digest: str | None = None,
+    ) -> dict:
+        """Return exact spans, coverage and digest-bound continuation without acquisition."""
+        params: dict[str, Any] = {
+            "query": query,
+            "budget_chars": budget_chars,
+            "offset": offset,
+        }
+        if expected_digest is not None:
+            params["expected_digest"] = expected_digest
+        path = f"/v2/session/{quote(session_id, safe='')}/evidence/{quote(ref_id, safe='')}"
+        return await self._get(path + "?" + urlencode(params))
+
+    async def followup_preview(self, body: dict) -> dict:
+        """Read-only preview; proposed actions are never executed."""
+        return await self._post("/v2/followup/preview", body)
+
     # ── API methods ─────────────────────────────────────────────
 
     async def scrape(
@@ -359,8 +404,42 @@ class GroktocrawlClient:
         system_prompt: str | None = None,
         page: int = 1,
         offset: int = 0,
+        date_from: str | None = None,
+        date_to: str | None = None,
+        time_range: str | None = None,
+        engines: list[str] | None = None,
     ) -> dict:
         """Web search with optional source filtering and search type."""
+        bounded = date_from is not None or date_to is not None or time_range is not None
+        expected = {"date_from": date_from, "date_to": date_to}
+        if bounded:
+            import re
+            from datetime import date
+
+            try:
+                for value in expected.values():
+                    if value is not None:
+                        if not isinstance(value, str) or not re.fullmatch(
+                            r"[0-9]{4}-[0-9]{2}-[0-9]{2}", value
+                        ):
+                            raise ValueError("Date bounds require YYYY-MM-DD")
+                        date.fromisoformat(value)
+                if date_from and date_to and date_from > date_to:
+                    raise ValueError("date_from must not exceed date_to")
+                if (
+                    time_range is not None
+                    or engines != ["openalex"]
+                    or search_type not in (None, "fast")
+                    or retrieval_mode not in (None, "keyword")
+                    or output_schema is not None
+                    or sources not in (None, [], ["web"])
+                    or categories not in (None, [], ["research"], ["science"])
+                ):
+                    raise ValueError(
+                        "Date bounds require fast keyword OpenAlex search without enrichment or time_range"
+                    )
+            except ValueError as exc:
+                return self._error_result(str(exc), status_code=422)
         body: dict[str, Any] = {"query": query, "limit": limit}
         if page != 1 or offset:
             body.update(page=page, offset=offset)
@@ -376,16 +455,76 @@ class GroktocrawlClient:
             body["output_schema"] = output_schema
         if system_prompt:
             body["system_prompt"] = system_prompt
-        return await self._post("/v2/search", body)
+        for key, value in {
+            "date_from": date_from,
+            "date_to": date_to,
+            "time_range": time_range,
+            "engines": engines,
+        }.items():
+            if value is not None:
+                body[key] = value
+        result = await self._post("/v2/search", body)
+        if not bounded:
+            return result
+        if result.get("success") is not True and result.get("error"):
+            return result
+        if result.get("success") is not True or result.get("error"):
+            return self._error_result(
+                "Agent did not confirm bounded search success", status_code=502
+            )
+        proof = result.get("date_filter")
+        if not isinstance(proof, dict) or (
+            proof.get("requested") != {**expected, "time_range": None}
+            or proof.get("applied") != expected
+            or proof.get("status") != "enforced"
+            or proof.get("engines") != ["openalex"]
+            or proof.get("enforced_by") != ["upstream:openalex"]
+            or not isinstance(proof.get("warnings"), list)
+            or not isinstance(proof.get("reason"), str)
+        ):
+            return self._error_result(
+                "Agent did not prove requested publication-date enforcement",
+                status_code=502,
+            )
+        try:
+            data = result["data"]
+            if (
+                not isinstance(data, dict)
+                or data.get("images")
+                or data.get("news")
+                or not isinstance(data.get("web"), list)
+            ):
+                raise ValueError("Invalid bounded result envelope")
+            for row in data["web"]:
+                published = row.get("publishedDate")
+                if (
+                    not isinstance(published, str)
+                    or date.fromisoformat(published).isoformat() != published
+                ):
+                    raise ValueError("Missing publication date")
+                if (
+                    row.get("engine", "openalex") != "openalex"
+                    or (date_from and published < date_from)
+                    or (date_to and published > date_to)
+                ):
+                    raise ValueError("Out-of-range publication date")
+        except (KeyError, TypeError, ValueError, AttributeError):
+            return self._error_result(
+                "Agent returned invalid bounded publication dates", status_code=502
+            )
+        return result
 
     async def agent(
         self,
         prompt: str,
         model: str | None = None,
         output_schema: dict | None = None,
+        evidence_budget_chars: int | None = None,
     ) -> dict:
         """Autonomous research agent — create job and poll until complete."""
         body: dict[str, Any] = {"prompt": prompt}
+        if evidence_budget_chars is not None:
+            body["evidence_budget_chars"] = evidence_budget_chars
         if model and model != "default":
             body["model"] = model
         if output_schema:
@@ -421,6 +560,7 @@ class GroktocrawlClient:
         include_images: bool = False,
         force_fresh: bool = False,
         search_type: str | None = None,
+        evidence_budget_chars: int | None = None,
     ) -> dict:
         """Create an agent research job without polling for completion.
 
@@ -429,6 +569,8 @@ class GroktocrawlClient:
         :meth:`cancel_agent` to stop an in-progress job.
         """
         body: dict[str, Any] = {"prompt": prompt}
+        if evidence_budget_chars is not None:
+            body["evidence_budget_chars"] = evidence_budget_chars
         if model and model != "default":
             body["model"] = model
         if urls:
@@ -1109,6 +1251,216 @@ class GroktocrawlClient:
     async def health(self) -> dict:
         """Server health check."""
         return await self._get("/health")
+
+    async def experimental_research_workspace(
+        self,
+        run_id: str | None = None,
+        offset: int = 0,
+        limit: int = 50,
+        run_offset: int = 0,
+        expected_revision: str | None = None,
+    ) -> dict:
+        path = "/experimental/research/v1/workspace"
+        params = (
+            {"expected_revision": expected_revision}
+            if run_id and expected_revision
+            else {}
+            if run_id
+            else {"offset": offset, "limit": limit, "run_offset": run_offset}
+        )
+        path = f"{path}/{run_id}" if run_id else path
+        return await self._get(path + ("?" + urlencode(params) if params else ""))
+
+    async def experimental_research_resume(
+        self, run_id: str, action: str, **options
+    ) -> dict:
+        return await self._post(
+            f"/experimental/research/v1/workspace/{run_id}/actions",
+            {
+                "action": action,
+                **{key: value for key, value in options.items() if value is not None},
+            },
+        )
+
+    async def experimental_research_capabilities(self) -> dict:
+        """Return opt-in experimental research protocol capabilities."""
+        return await self._get("/experimental/research/v1/capabilities")
+
+    async def experimental_research_create(
+        self, objective: str, idempotency_key: str, webhook: str | None = None
+    ) -> dict:
+        """Admit one experimental fixture-backed research run."""
+        body: dict[str, Any] = {"objective": objective}
+        if webhook is not None:
+            body["webhook"] = webhook
+        return await self._request_with_headers(
+            "POST",
+            "/experimental/research/v1/runs",
+            body,
+            {"Idempotency-Key": idempotency_key},
+        )
+
+    async def _request_with_headers(
+        self,
+        method: str,
+        path: str,
+        json_data: dict | None,
+        headers: dict[str, str],
+    ) -> dict:
+        client = await self._client_ctx()
+        try:
+            response = await client.request(
+                method, path, json=json_data, headers=headers
+            )
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPStatusError as exc:
+            return self._error_result(
+                f"HTTP {exc.response.status_code}: {_extract_response_detail(exc.response)}",
+                status_code=exc.response.status_code,
+            )
+        except Exception as exc:
+            return self._error_result(str(exc))
+
+    async def experimental_research_status(self, run_id: str) -> dict:
+        return await self._get(f"/experimental/research/v1/runs/{run_id}")
+
+    async def experimental_research_cancel(self, run_id: str) -> dict:
+        return await self._post(f"/experimental/research/v1/runs/{run_id}/cancel")
+
+    async def experimental_research_artifact_set(self, artifact_set_id: str) -> dict:
+        return await self._get(
+            f"/experimental/research/v1/artifact-sets/{artifact_set_id}"
+        )
+
+    async def experimental_research_artifact(self, artifact_id: str) -> dict:
+        """Return exact artifact bytes as a typed base64 projection for MCP."""
+        client = await self._client_ctx()
+        path = f"/experimental/research/v1/artifacts/{artifact_id}"
+        try:
+            response = await client.get(path)
+            response.raise_for_status()
+            return {
+                "artifact_id": artifact_id,
+                "content_type": response.headers.get("content-type", "text/markdown"),
+                "content_base64": base64.b64encode(response.content).decode("ascii"),
+            }
+        except httpx.HTTPStatusError as exc:
+            return self._error_result(
+                f"HTTP {exc.response.status_code}: {_extract_response_detail(exc.response)}",
+                status_code=exc.response.status_code,
+            )
+        except Exception as exc:
+            return self._error_result(str(exc))
+
+    async def experimental_research_evidence(
+        self, research_id: str, snapshot_id: str
+    ) -> dict:
+        return await self._get(
+            f"/experimental/research/v1/research/{research_id}/evidence/{snapshot_id}"
+        )
+
+    async def experimental_research_delete(self, research_id: str) -> dict:
+        return await self._delete(f"/experimental/research/v1/research/{research_id}")
+
+    async def experimental_research_attach(
+        self, session_id: str, run_id: str, expected_revision: int
+    ) -> dict:
+        return await self._post(
+            f"/experimental/research/v1/sessions/{session_id}/attachments",
+            {"run_id": run_id, "expected_revision": expected_revision},
+        )
+
+    async def session_create(self, ttl: int = 3600) -> dict:
+        return await self._post("/v2/session/create", {"ttl": ttl})
+
+    async def session_query(
+        self,
+        session_id: str,
+        question: str,
+        ref_ids: list[str] | None = None,
+        evidence_budget_chars: int | None = None,
+        model: str | None = None,
+    ) -> dict:
+        params: dict[str, Any] = {"question": question}
+        if evidence_budget_chars is not None:
+            params["evidence_budget_chars"] = evidence_budget_chars
+        if model is not None:
+            params["model"] = model
+        if ref_ids is not None:
+            params["ref_ids"] = ref_ids
+        return await self._post(
+            f"/v2/session/{quote(session_id, safe='')}/step",
+            {"action": "query", "params": params},
+        )
+
+    async def session_export(self, session_id: str) -> dict:
+        return await self._post(f"/v2/session/{quote(session_id, safe='')}/export")
+
+    async def session_delete(self, session_id: str) -> dict:
+        return await self._delete(f"/v2/session/{quote(session_id, safe='')}")
+
+    async def document_attach(
+        self,
+        session_id: str,
+        filename: str,
+        content_base64: str | None = None,
+        upload_id: str | None = None,
+        media_type: str = "application/octet-stream",
+    ) -> dict:
+        """Accept explicit bytes or a staged ID, never a path or acquisition URL."""
+        if (content_base64 is None) == (upload_id is None):
+            raise ValueError("Provide exactly one content_base64 or upload_id")
+        client = await self._client_ctx()
+        if upload_id is not None:
+            response = await client.post(
+                f"/v2/session/{quote(session_id, safe='')}/documents",
+                data={"upload_id": upload_id},
+            )
+        else:
+            if content_base64 is None or len(content_base64) > 4 * (
+                (10 * 1024 * 1024 + 2) // 3
+            ):
+                raise ValueError("Document exceeds 10 MiB admission limit")
+            content = base64.b64decode(content_base64, validate=True)
+            if len(content) > 10 * 1024 * 1024:
+                raise ValueError("Document exceeds 10 MiB admission limit")
+            response = await client.post(
+                f"/v2/session/{quote(session_id, safe='')}/documents",
+                files={"file": (filename, content, media_type)},
+                timeout=120,
+            )
+        if response.status_code >= 400:
+            return self._error_result(
+                f"Document admission failed ({response.status_code})",
+                status_code=response.status_code,
+            )
+        return response.json()
+
+    async def document_list(self, session_id: str) -> dict:
+        return await self._get(f"/v2/session/{quote(session_id, safe='')}/documents")
+
+    async def document_read(
+        self,
+        session_id: str,
+        ref_id: str,
+        start: int | None = None,
+        end: int | None = None,
+    ) -> dict:
+        params = {
+            key: value
+            for key, value in {"start": start, "end": end}.items()
+            if value is not None
+        }
+        suffix = "?" + urlencode(params) if params else ""
+        return await self._get(
+            f"/v2/session/{quote(session_id, safe='')}/documents/{quote(ref_id, safe='')}{suffix}"
+        )
+
+    async def document_detach(self, session_id: str, ref_id: str) -> dict:
+        return await self._delete(
+            f"/v2/session/{quote(session_id, safe='')}/documents/{quote(ref_id, safe='')}"
+        )
 
     async def browser_create(self, ttl: int = 300) -> dict:
         """Create a browser session."""

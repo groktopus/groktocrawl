@@ -1,0 +1,101 @@
+{
+  "arm": "treatment",
+  "case_id": "mission-ambiguous-ship",
+  "completed_at": "2026-09-19T05:53:01.558705+00:00",
+  "position": 1,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "7602b83ff4b209195ec2d4a11078ddaa43e731f36764561c854f078c29cfaa16",
+    "finish_reason": "stop",
+    "latency_ms": 37579.708,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "6f08b4c1fd7c5544e773d3e30b9ab955b28ef65edd6cc09527aed69d3f88ede4",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 4980,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 4102
+      },
+      "cost": 0.00252612,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.00249,
+        "upstream_inference_cost": 0.00252612,
+        "upstream_inference_prompt_cost": 3.612e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 804,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 704,
+        "video_tokens": 0
+      },
+      "total_tokens": 5784
+    }
+  },
+  "repetition": 3,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "**Decision withheld: 'ship' is ambiguous in the supplied record.** The record does not state which action or environment the requester intends, and the scope forbids assuming it. Before any shipping action, obtain the answer to the blocking clarification: *Do you mean opening pull requests, deploying a disposable test environment, or deploying production?* (c1, blocking.) The three meanings carry materially different approval requirements and cannot be treated as interchangeable. | Shipping action | Stated authorization boundary | Source | | --- | --- | --- | | Open a pull request | Permitted once tests pass; no additional approval is stated for PR creation | `delivery-policy` | | Deploy to disposable test environments | Automatic deployment was allowed within the sandbox experiment, scoped to disposable test environments | `delivery-context` | | Deploy to production | Requires service-owner approval **and** a recorded rollback plan | `delivery-policy` | The two records are consistent, not contradictory: the sandbox experiment's authorization for disposable test deployments explicitly did not extend to production, matching the policy's production gate. **Unresolved limits:** (1) The requester's intended action and environment cannot be established from the supplied record; the ship decision is withheld pending the clarification above. (2) The record does not state whether the sandbox experiment's authorization for disposable test deployments remains active or applies outside that experiment. (3) No approval requirement for disposable test deployments outside the sandbox experiment is stated; none is inferred. (4) No additional approvals (for example, security review) beyond those stated above appear in the supplied record.",
+    "candidate_id": "candidate-a46fa680ca6665d24837",
+    "citations": [
+      "delivery-policy",
+      "delivery-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-context"
+        ],
+        "text": "The supplied record does not state which shipping action or environment the requester intends by 'ship'; the decision cannot be made without the blocking clarification.",
+        "uncertainty": "Requester intent is unresolved; blocking clarification c1 must be answered before any shipping action."
+      },
+      {
+        "source_ids": [
+          "delivery-policy"
+        ],
+        "text": "Opening a pull request is permitted once tests pass, and the policy states no additional approval requirement for pull-request creation.",
+        "uncertainty": "No material uncertainty for the stated boundary; the policy is silent on further PR approvals and none is inferred."
+      },
+      {
+        "source_ids": [
+          "delivery-context"
+        ],
+        "text": "A sandbox experiment allowed automatic deployment to disposable test environments, scoped to those environments.",
+        "uncertainty": "The record does not state whether this authorization remains active or applies outside the sandbox experiment."
+      },
+      {
+        "source_ids": [
+          "delivery-policy"
+        ],
+        "text": "Production deployment requires approval by the service owner and a recorded rollback plan.",
+        "uncertainty": "No material uncertainty; this is the stated production gate."
+      },
+      {
+        "source_ids": [
+          "delivery-context"
+        ],
+        "text": "The sandbox experiment did not authorize production deployment.",
+        "uncertainty": "No material uncertainty; stated explicitly in the context record."
+      },
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-context"
+        ],
+        "text": "The policy and context records are consistent rather than contradictory: the experiment's test-environment authorization does not conflict with the policy's production approval gate, and the three shipping actions carry materially different approval requirements.",
+        "uncertainty": "No contradiction identified between the supplied records; the requester's intended meaning remains unresolved."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:52:23.976816+00:00",
+  "status": "completed",
+  "trial_id": "mission-ambiguous-ship-r3-treatment"
+}

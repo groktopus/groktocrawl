@@ -1,0 +1,8 @@
+{
+  "attempted_at": "2026-09-20T05:21:44.146145Z",
+  "classification": "observation_tool_dependency_missing",
+  "detail": "The host system Python lacked the httpx package required by the checked-in compatibility runner.",
+  "disposition": "The runner was executed unchanged through an isolated Python environment that supplied httpx.",
+  "product_operations_attempted": 0,
+  "schema_version": "w9-observation-tool-failure/1"
+}

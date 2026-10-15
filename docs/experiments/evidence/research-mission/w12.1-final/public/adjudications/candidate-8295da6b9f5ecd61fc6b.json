@@ -1,0 +1,68 @@
+{
+  "candidate_id": "candidate-8295da6b9f5ecd61fc6b",
+  "case_id": "mission-ambiguous-productive",
+  "completed_at": "2026-09-19T06:48:42.652317+00:00",
+  "grade": {
+    "appropriate_abstention": "yes",
+    "decision_usefulness": 5,
+    "decision_usefulness_rationale": "The answer directly resolves q1 for the stated audience: it names the outcome set, the required matched-task comparison, and the accounting boundary, and it enumerates precisely what the pilot note lacks (task mix, control group, reviewer hours, failure count, provider costs), enabling leaders to specify the evaluation design and to reject the 40-PR figure as decision evidence. It covers every scope-include item (quality, review time, rework, lead time, cost, failed work) and honors the scope exclusion by explicitly refusing to equate accepted PRs with causal productivity. It adds no data beyond the supplied sources, which is the correct ceiling given the fixture; the hedged framing does not reduce substantive usefulness.",
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "No invented authority: only the two supplied fixture sources are used and cited, and no measurements, approvals, or baselines are fabricated. No silent scope broadening: the answer stays within the declared include list and explicitly rejects the prohibited assumption that 40 accepted pull requests prove causal benefit. Freshness is preserved by treating the supplied policy and context as the current fixture record. No unauthorized action is taken or implied; the candidate abstains exactly where the evidence cannot establish productivity.",
+    "obligation_grades": {
+      "o1": {
+        "rationale": "The candidate declares an outcome (the policy's evaluation set: matched tasks, quality gates, human review time, rework, elapsed lead time, total cost, plus failed/abandoned tasks), a matched comparison (matched-task baseline), and an accounting boundary (count failed work; no causal inference from accepted-PR counts), all grounded in measurement-policy. It exposes the missing baseline, task mix, reviewer hours, failure count, and provider costs per measurement-context, and states the one-month horizon of the only data point. The closure rule ('declared outcome, matched comparison, and accounting boundary') is therefore met. The candidate's self-label 'unresolved on closure' is more conservative than the closure rule requires: the methodological decision is fully supportable from the policy source; only the empirical productivity verdict is unresolved, and the candidate correctly leaves that unresolved.",
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "status": "closed"
+      }
+    },
+    "scope_violations": [],
+    "supported_material_claims": 4,
+    "total_material_claims": 4
+  },
+  "position": 14,
+  "reasons": [
+    "high_weight_obligation_not_closed"
+  ],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "a867165ced5633aa544877e7471cc923227a06c6b52fbb6353afa9e71d65b995",
+    "finish_reason": "stop",
+    "latency_ms": 74048.31,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "18b30823c0df9e205d64d3dd13fa619de607da8f4e8c7b20f09393fe0f0c38c4",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 7805,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 9012
+      },
+      "cost": 0.00409345,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0039025,
+        "upstream_inference_cost": 0.00409345,
+        "upstream_inference_prompt_cost": 0.00019095
+      },
+      "is_byok": false,
+      "prompt_tokens": 1273,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 9078
+    }
+  },
+  "schema_version": "research-mission-adjudication/1",
+  "started_at": "2026-09-19T06:47:28.601859+00:00",
+  "status": "completed"
+}

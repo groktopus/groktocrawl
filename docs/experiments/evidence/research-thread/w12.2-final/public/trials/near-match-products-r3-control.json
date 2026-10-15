@@ -1,0 +1,70 @@
+{
+  "answer": {
+    "answer": "No — the supplied sources do not show that Harbor Agent gained offline mode. The only offline capability mentioned anywhere in the sources belongs to a different subject: Harbor Agent Cloud (subject_id 'harbor-agent-cloud'), whose guide states it 'added an offline export mode' (harbor-cloud-doc). Harbor Agent's own guide (subject_id 'harbor-agent') states 'Harbor Agent requires a network connection' (harbor-agent-doc), with no mention of an offline mode. Because the two snapshots have different subject_ids and different lineage_ids, and the task prohibits inferring identity from name similarity, the Harbor Agent Cloud change cannot be attributed to Harbor Agent. What changed: Harbor Agent Cloud gained an offline export mode (harbor-cloud-doc). What is current: Harbor Agent requires a network connection (harbor-agent-doc); Harbor Agent Cloud has an offline export mode (harbor-cloud-doc). What remains historically valid: no snapshot ever documents an offline mode for Harbor Agent itself. What is unresolved: whether Harbor Agent has since gained offline capability, and the relative timing of the two undated snapshots.",
+    "change_events": [
+      "Harbor Agent Cloud added an offline export mode (harbor-cloud-doc). This change is documented for subject_id 'harbor-agent-cloud' only; it is a distinct subject from Harbor Agent (subject_id 'harbor-agent') and cannot be attributed to Harbor Agent without inferring identity from name similarity, which is not permitted."
+    ],
+    "citations": [
+      "harbor-agent-doc",
+      "harbor-cloud-doc"
+    ],
+    "current_truths": [
+      "Harbor Agent requires a network connection (harbor-agent-doc).",
+      "Harbor Agent Cloud has an offline export mode (harbor-cloud-doc)."
+    ],
+    "historical_truths": [
+      "No supplied snapshot documents any offline capability for Harbor Agent at any point; the only statement about Harbor Agent (harbor-agent-doc) is that it requires a network connection, and no snapshot supersedes or contradicts it for that subject."
+    ],
+    "unresolved": [
+      "Whether Harbor Agent (subject_id 'harbor-agent') itself has gained any offline mode at any time; no snapshot addresses this for that subject.",
+      "The temporal relationship between the two snapshots (no dates are supplied), so it cannot be confirmed that harbor-agent-doc reflects the latest state of Harbor Agent.",
+      "Whether Harbor Agent and Harbor Agent Cloud are related products at all; the snapshots carry different subject_ids ('harbor-agent' vs 'harbor-agent-cloud') and different lineage_ids ('harbor-agent-docs' vs 'harbor-cloud-docs'), and identity must not be inferred from name similarity."
+    ]
+  },
+  "arm": "control",
+  "case_id": "near-match-products",
+  "completed_at": "2026-09-19T07:51:22.382195+00:00",
+  "position": 48,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "1a657c1bdc8b0bea48dadbe63b3b6b24b16998f27ca494db96929a3b8e47a1e0",
+    "finish_reason": "stop",
+    "latency_ms": 18542.514,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "1abdd8ff4449c184966b765e252606422afb9dde7c5a305be37f8c309de56d45",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 1535,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 968
+      },
+      "cost": 0.00084295,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0007675,
+        "upstream_inference_cost": 0.00084295,
+        "upstream_inference_prompt_cost": 7.545e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 503,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 2038
+    }
+  },
+  "repetition": 3,
+  "schema_version": "research-thread-trial/1",
+  "started_at": "2026-09-19T07:51:03.839252+00:00",
+  "status": "completed",
+  "stratum": "near_match",
+  "trial_id": "near-match-products-r3-control"
+}

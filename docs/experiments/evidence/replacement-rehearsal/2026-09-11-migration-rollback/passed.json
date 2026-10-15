@@ -1,0 +1,134 @@
+{
+  "after_delete": {
+    "health": "ok",
+    "model": "v_bge-m3",
+    "qdrant_count": 6,
+    "qdrant_id_digest": "b719be86ee334f62108e4d22ad54eb6e969502e600915c4b9ff1b4084fdb9b03",
+    "search_urls": [
+      "https://w9-2.invalid/evidence",
+      "https://w9-4.invalid/evidence",
+      "https://w9-3.invalid/evidence",
+      "https://w9-5.invalid/evidence",
+      "https://w9-1.invalid/evidence",
+      "https://docs.python.org/3/tutorial/introduction.html"
+    ],
+    "served_count": 6,
+    "vector_store": "pgvector"
+  },
+  "after_restart": {
+    "health": "ok",
+    "model": "v_bge-m3",
+    "qdrant_count": 6,
+    "qdrant_id_digest": "b719be86ee334f62108e4d22ad54eb6e969502e600915c4b9ff1b4084fdb9b03",
+    "search_urls": [
+      "https://w9-2.invalid/evidence",
+      "https://w9-4.invalid/evidence",
+      "https://w9-3.invalid/evidence",
+      "https://w9-5.invalid/evidence",
+      "https://w9-1.invalid/evidence",
+      "https://docs.python.org/3/tutorial/introduction.html"
+    ],
+    "served_count": 6,
+    "vector_store": "pgvector"
+  },
+  "before_delete": {
+    "health": "ok",
+    "model": "v_bge-m3",
+    "qdrant_count": 7,
+    "qdrant_id_digest": "1c3811eb36b91e255726193fb7e262271b1d7e873dc709a5597b576ea02cea83",
+    "search_urls": [
+      "https://w9-2.invalid/evidence",
+      "https://w9-4.invalid/evidence",
+      "https://w9-3.invalid/evidence",
+      "https://w9-5.invalid/evidence",
+      "https://w9-6.invalid/evidence",
+      "https://w9-1.invalid/evidence"
+    ],
+    "served_count": 7,
+    "vector_store": "pgvector"
+  },
+  "corpus_size": 6,
+  "deleted_documents": 1,
+  "final": {
+    "health": "ok",
+    "model": "v_bge-m3",
+    "qdrant_count": 6,
+    "qdrant_id_digest": "b719be86ee334f62108e4d22ad54eb6e969502e600915c4b9ff1b4084fdb9b03",
+    "search_urls": [
+      "https://w9-2.invalid/evidence",
+      "https://w9-4.invalid/evidence",
+      "https://w9-3.invalid/evidence",
+      "https://w9-5.invalid/evidence",
+      "https://w9-1.invalid/evidence",
+      "https://docs.python.org/3/tutorial/introduction.html"
+    ],
+    "served_count": 6,
+    "vector_store": "pgvector"
+  },
+  "git_revision": "e4301eb32dd3b1e4ef83aec658fba754a2be31ec",
+  "initial": {
+    "health": "ok",
+    "model": "v_bge-m3",
+    "qdrant_count": 6,
+    "qdrant_id_digest": "b719be86ee334f62108e4d22ad54eb6e969502e600915c4b9ff1b4084fdb9b03",
+    "search_urls": [
+      "https://w9-2.invalid/evidence",
+      "https://w9-4.invalid/evidence",
+      "https://w9-3.invalid/evidence",
+      "https://w9-5.invalid/evidence",
+      "https://w9-1.invalid/evidence",
+      "https://docs.python.org/3/tutorial/introduction.html"
+    ],
+    "served_count": 6,
+    "vector_store": "pgvector"
+  },
+  "postgres_manifest": {
+    "artifact_sets": {
+      "active": 9,
+      "deleted": 0,
+      "digest": "624d0106f9e1ab9fa48b83da99ba4c2faf61d05327099469033899e4a4fd2cc3",
+      "total": 9
+    },
+    "artifacts": {
+      "digest": "915493cb1386263061739d5767bb941dd47c8f1c0fa13d63dc3db149c9a230e4",
+      "total": 27
+    },
+    "claims_and_evidence": "covered_by_artifact_content_digests",
+    "retention_roots": {
+      "deleted": 0,
+      "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "total": 0
+    },
+    "schema_version": 14,
+    "vector_model": "v_bge-m3",
+    "vectors": {
+      "active": 6,
+      "deleted": 1,
+      "digest": "6440c744e3db726777e7e6db4499dfad0fc2067771fcc9b5511c35003fdfacec"
+    }
+  },
+  "restart_ready_ms": 12092.805,
+  "restored_manifest_match": true,
+  "return_to_pgvector_ready_ms": 11126.039,
+  "rollback": {
+    "health": "ok",
+    "model": "v_bge-m3",
+    "qdrant_count": 6,
+    "qdrant_id_digest": "b719be86ee334f62108e4d22ad54eb6e969502e600915c4b9ff1b4084fdb9b03",
+    "search_urls": [
+      "https://w9-2.invalid/evidence",
+      "https://w9-4.invalid/evidence",
+      "https://w9-3.invalid/evidence",
+      "https://w9-5.invalid/evidence",
+      "https://w9-1.invalid/evidence",
+      "https://docs.python.org/3/tutorial/introduction.html"
+    ],
+    "served_count": 6,
+    "vector_store": "qdrant"
+  },
+  "rollback_ready_ms": 12065.995,
+  "rollback_target_ms": 120000,
+  "schema_version": "w9-migration-rollback/1",
+  "status": "passed",
+  "zero_unexplained_differences": true
+}

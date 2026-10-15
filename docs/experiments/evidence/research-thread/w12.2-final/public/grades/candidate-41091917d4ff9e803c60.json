@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-41091917d4ff9e803c60",
+  "case_id": "near-match-products",
+  "completed_at": "2026-09-19T09:13:29.705688+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 90,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "The candidate correctly answers 'No': Harbor Agent's own source still states it requires a network connection, and the offline export mode is correctly attributed solely to Harbor Agent Cloud (distinct subject_id and lineage_id), avoiding the prohibited capability transfer. Current truths match the reference exactly, and history is preserved (no offline mode ever documented for Harbor Agent). Change accuracy is slightly reduced because the reference ledger records no change events for the queried subject, while the candidate lists the Harbor Agent Cloud change as a change event (accurate per source but peripheral to the question). Unresolved accuracy is partial: the first item aligns with the reference, but the snapshot-timing and product-relationship items are invented peripheral questions not grounded in the reference. No unsupported factual claims, no false merge, no stale-current leak, no lost history.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 60,
+    "unsupported_claims": 0,
+    "usefulness": 95
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "c17a4b838e0ac2e9adb3fb7d7db8c732cd996582e48f11247e105530d4dcfb1a",
+    "finish_reason": "stop",
+    "latency_ms": 11073.65,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "894c3ccc4726db604e56db12570631726896551c8b073a9add313c8014751858",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 749,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 511
+      },
+      "cost": 0.00054775,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0003745,
+        "upstream_inference_cost": 0.00054775,
+        "upstream_inference_prompt_cost": 0.00017325
+      },
+      "is_byok": false,
+      "prompt_tokens": 1155,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1904
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:13:18.631652+00:00",
+  "status": "completed",
+  "trial_id": "near-match-products-r3-control"
+}

@@ -1,0 +1,84 @@
+{
+  "case_id": "unsupported-soc2",
+  "completed_at": "2026-09-19T10:10:36.115832+00:00",
+  "completion_attempt": 1,
+  "position": 28,
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "edb0309a3e06efa97f260f2c8b4a5b2df0739edf03dd35b00a6bf20c3abad562",
+    "finish_reason": "stop",
+    "latency_ms": 10760.77,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "89cd3759e5c31dca41352ff4e2efad49091456bed115d519cde6d1c5e06275fd",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 657,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 663
+      },
+      "cost": 0.00037875,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0003285,
+        "upstream_inference_cost": 0.00037875,
+        "upstream_inference_prompt_cost": 5.025e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 335,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 992
+    }
+  },
+  "repetition": 3,
+  "schema_version": "claim-verification-trial/1",
+  "started_at": "2026-09-19T10:10:25.353478+00:00",
+  "status": "completed",
+  "trial_id": "unsupported-soc2-r3",
+  "verification": {
+    "checked_input": {
+      "case_id": "unsupported-soc2",
+      "claim": "The service is SOC 2 Type II certified.",
+      "claim_id": "claim-unsupported-soc2",
+      "evidence": [
+        {
+          "contains_instructions": false,
+          "source_id": "source-security-page",
+          "source_kind": "primary",
+          "span_id": "security-page",
+          "temporal_status": "current",
+          "text": "We design our controls with SOC 2 principles in mind."
+        }
+      ],
+      "evidence_obligation": "A current audit report or first-party certification statement.",
+      "risk": "high",
+      "schema_version": "claim-verification-input/1"
+    },
+    "checked_input_digest": "9aaee8b8dc54afd90ae8088afd7c74d39867bdf0c75173e23fa00fc44a74cad0",
+    "confidence": 95,
+    "contradiction_span_ids": [],
+    "evidence_span_ids": [
+      "security-page"
+    ],
+    "publish_recommendation": false,
+    "reason": "The only available span states controls are 'designed with SOC 2 principles in mind' — a design-alignment statement, not a certification claim. It does not mention certification, Type II status, or any audit, and it does not satisfy the evidence obligation of a current audit report or first-party certification statement. No span contradicts the claim, but none entails it.",
+    "schema_version": "independent-claim-verification/1",
+    "verdict": "insufficient",
+    "verification_id": "verification-unsupported-soc2-r3",
+    "verifier": {
+      "model": "general",
+      "prompt_version": "w12.3-verifier/1",
+      "route": "local-litellm"
+    }
+  }
+}

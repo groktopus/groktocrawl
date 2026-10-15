@@ -1,0 +1,52 @@
+{
+  "case_id": "mission-temporal-provider",
+  "completed_at": "2026-09-19T06:05:33.484861+00:00",
+  "position": 11,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "ef9841c235c6f474fd3334bd1ca064622c17613c9333eb6ddba7c744b08f1bef",
+    "finish_reason": "stop",
+    "latency_ms": 10013.254,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "46d345706b877a40d850211ccc24178ef135740822daf091030d8c7690d72d54",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 2106,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 2434
+      },
+      "cost": 0.00136215,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.001053,
+        "upstream_inference_cost": 0.00136215,
+        "upstream_inference_prompt_cost": 0.00030915
+      },
+      "is_byok": false,
+      "prompt_tokens": 2061,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 4167
+    }
+  },
+  "repetition": 2,
+  "result": {
+    "action": "clarify",
+    "clarifying_question": "The policy and vendor note your request depends on were not included in the materials I received — can you supply them (or their key terms) and name the current and candidate provider(s), so the mission can be scoped to the actual decision criteria rather than assumptions about what the policy requires or what triggered the vendor note?",
+    "mission": null,
+    "rationale": "The request conditions a go/no-go provider-switch decision on two referenced documents — a policy and a vendor note — that are absent from the supplied materials. Their contents determine the decision criteria, the triggering event, and which providers are in scope; building a mission now would require inventing scope, facts, and decision authority, which the request boundary forbids. Research itself is appropriate (this is not an abstain case), but it cannot be scoped without the decision inputs, so one blocking clarification is issued and no mission object is emitted until the referenced policy, vendor note, and provider identities are provided."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:05:23.456175+00:00",
+  "status": "completed",
+  "trial_id": "mission-temporal-provider-intake-r2"
+}

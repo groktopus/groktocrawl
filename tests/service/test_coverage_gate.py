@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
+import sys
 from datetime import date
 
 import pytest
@@ -128,7 +130,9 @@ rename to common/url_validation.py
     renamed = parse_renamed_paths(diff)
 
     assert renamed == {"common/url_validation.py": "common/url.py"}
-    with pytest.raises(CoverageGateError, match=r"common/url\.py -> common/url_validation\.py"):
+    with pytest.raises(
+        CoverageGateError, match=r"common/url\.py -> common/url_validation\.py"
+    ):
         validate_high_risk_path_changes(renamed, set(), _policy())
 
 
@@ -808,7 +812,7 @@ def test_exception_is_visible_when_changed_lines_are_not_executable():
     )
 
 
-def test_unmeasured_changed_module_is_informational():
+def test_unmeasured_high_risk_changed_module_fails():
     results = evaluate(
         {"common/url.py": {10}},
         {},
@@ -817,10 +821,79 @@ def test_unmeasured_changed_module_is_informational():
 
     assert results[0].changed_lines == 0
     assert results[0].coverage_percent is None
-    assert results[0].passed is True
-    assert "INFO (no executable lines)" in render_summary(
+    assert results[0].passed is False
+    assert "FAIL (unmeasured module)" in render_summary(
         results,
         {},
         base_sha="base",
         head_sha="head",
+    )
+
+
+def test_ci_relative_agent_copy_binds_executable_diff(tmp_path):
+    report = tmp_path / "integration.json"
+    report.write_text(
+        json.dumps(
+            {
+                "files": {
+                    "agent/llm.py": {"executed_lines": [10, 11], "missing_lines": [12]}
+                }
+            }
+        )
+    )
+    coverage = load_coverage([report], tmp_path)
+    results = evaluate({"agent-svc/agent/llm.py": {10, 12}}, coverage, _policy())
+    assert results[0].measured
+    assert results[0].changed_lines == 2
+    assert results[0].covered_lines == 1
+    assert "INFO (no executable lines)" not in render_summary(
+        results, coverage, base_sha="base", head_sha="head"
+    )
+
+
+def test_unmeasured_standard_module_is_explicitly_informational():
+    results = evaluate({"agent-svc/agent/llm.py": {10}}, {}, _policy())
+    assert results[0].passed
+    assert not results[0].measured
+    assert "INFO (unmeasured module)" in render_summary(
+        results, {}, base_sha="base", head_sha="head"
+    )
+
+
+def test_measured_comment_only_change_remains_informational():
+    coverage = {"common/url.py": CoverageLines(frozenset({1}), frozenset())}
+    results = evaluate({"common/url.py": {2}}, coverage, _policy())
+    assert results[0].passed
+    assert results[0].measured
+    assert "INFO (no executable lines)" in render_summary(
+        results, coverage, base_sha="base", head_sha="head"
+    )
+
+
+def test_container_import_layout_maps_baked_agent_copy(tmp_path):
+    app = tmp_path / "app"
+    package = app / "agent"
+    package.mkdir(parents=True)
+    (package / "__init__.py").write_text("")
+    (package / "llm.py").write_text("value = 1\n")
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "import agent.llm; from pathlib import Path; "
+            "print(Path(agent.llm.__file__).relative_to(Path.cwd()))",
+        ],
+        cwd=app,
+        env={
+            **os.environ,
+            "PYTHONPATH": str(app / "agent-svc") + os.pathsep + str(app),
+        },
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert result.stdout.strip() == "agent/llm.py"
+    assert (
+        coverage_gate.normalize_coverage_path(result.stdout.strip(), tmp_path)
+        == "agent-svc/agent/llm.py"
     )

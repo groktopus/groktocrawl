@@ -1,0 +1,218 @@
+{
+  "all_gates_passed": true,
+  "created_at": "2026-09-08T17:23:13.802929+00:00",
+  "decision": "evaluation_only",
+  "follow_up": "Repeat these scenarios against each isolated provider before any migration decision.",
+  "manifest": {
+    "corpus_sha256": "5817c09ae7b94803b760a3003b967a5a223264dc265f5caf9b773d0da33462b7",
+    "dimension": 3,
+    "distance": "cosine",
+    "embedding_model": "fixture-vector-3d-v1",
+    "failure_policy": "no success claim after an injected failure",
+    "query_count": 4,
+    "random_seed": 0,
+    "record_count": 6,
+    "scenarios": [
+      "write-timeout",
+      "partial-write",
+      "malformed-search",
+      "interrupted-restore",
+      "interrupted-migration",
+      "cleanup-timeout"
+    ],
+    "schema_version": "vector-store-fault-evaluation/1"
+  },
+  "production_change": false,
+  "provider_backed": false,
+  "qdrant_removal": false,
+  "scenarios": [
+    {
+      "after": {
+        "active_version": "v1",
+        "record_ids": [
+          "doc-001",
+          "doc-002",
+          "doc-003",
+          "doc-004",
+          "doc-005",
+          "doc-006"
+        ],
+        "staged_version": null
+      },
+      "before": {
+        "active_version": "v1",
+        "record_ids": [
+          "doc-001",
+          "doc-002",
+          "doc-003",
+          "doc-004",
+          "doc-005",
+          "doc-006"
+        ]
+      },
+      "error": "write timeout before commit acknowledgement",
+      "expected": "unchanged",
+      "gate": true,
+      "name": "write-timeout",
+      "observed": "failed",
+      "operation": "write"
+    },
+    {
+      "after": {
+        "active_version": "v1",
+        "record_ids": [
+          "doc-001",
+          "doc-002",
+          "doc-003",
+          "doc-004",
+          "doc-005",
+          "doc-006",
+          "partial-doc"
+        ],
+        "staged_version": null
+      },
+      "before": {
+        "active_version": "v1",
+        "record_ids": [
+          "doc-001",
+          "doc-002",
+          "doc-003",
+          "doc-004",
+          "doc-005",
+          "doc-006"
+        ]
+      },
+      "error": "write interrupted after one record",
+      "expected": "reconcile_required",
+      "gate": true,
+      "name": "partial-write",
+      "observed": "failed",
+      "operation": "partial_write"
+    },
+    {
+      "after": {
+        "active_version": "v1",
+        "record_ids": [
+          "doc-001",
+          "doc-002",
+          "doc-003",
+          "doc-004",
+          "doc-005",
+          "doc-006"
+        ],
+        "staged_version": null
+      },
+      "before": {
+        "active_version": "v1",
+        "record_ids": [
+          "doc-001",
+          "doc-002",
+          "doc-003",
+          "doc-004",
+          "doc-005",
+          "doc-006"
+        ]
+      },
+      "error": null,
+      "expected": "rejected",
+      "gate": true,
+      "name": "malformed-search",
+      "observed": "rejected",
+      "operation": "malformed_search"
+    },
+    {
+      "after": {
+        "active_version": "v1",
+        "record_ids": [
+          "doc-001",
+          "doc-002",
+          "doc-003",
+          "doc-004",
+          "doc-005",
+          "doc-006"
+        ],
+        "staged_version": null
+      },
+      "before": {
+        "active_version": "v1",
+        "record_ids": [
+          "doc-001",
+          "doc-002",
+          "doc-003",
+          "doc-004",
+          "doc-005",
+          "doc-006"
+        ]
+      },
+      "error": "restore interrupted before activation",
+      "expected": "active_preserved",
+      "gate": true,
+      "name": "interrupted-restore",
+      "observed": "failed",
+      "operation": "restore"
+    },
+    {
+      "after": {
+        "active_version": "v1",
+        "record_ids": [
+          "doc-001",
+          "doc-002",
+          "doc-003",
+          "doc-004",
+          "doc-005",
+          "doc-006"
+        ],
+        "staged_version": null
+      },
+      "before": {
+        "active_version": "v1",
+        "record_ids": [
+          "doc-001",
+          "doc-002",
+          "doc-003",
+          "doc-004",
+          "doc-005",
+          "doc-006"
+        ]
+      },
+      "error": "migration interrupted before cutover",
+      "expected": "active_preserved",
+      "gate": true,
+      "name": "interrupted-migration",
+      "observed": "failed",
+      "operation": "migration"
+    },
+    {
+      "after": {
+        "active_version": "v1",
+        "record_ids": [
+          "doc-001",
+          "doc-002",
+          "doc-003",
+          "doc-004",
+          "doc-005",
+          "doc-006"
+        ],
+        "staged_version": null
+      },
+      "before": {
+        "active_version": "v1",
+        "record_ids": [
+          "doc-001",
+          "doc-002",
+          "doc-003",
+          "doc-004",
+          "doc-005",
+          "doc-006"
+        ]
+      },
+      "error": "deletion acknowledgement timed out",
+      "expected": "deletion_unconfirmed",
+      "gate": true,
+      "name": "cleanup-timeout",
+      "observed": "failed",
+      "operation": "cleanup"
+    }
+  ],
+  "schema_version": "vector-store-fault-evaluation/1"
+}

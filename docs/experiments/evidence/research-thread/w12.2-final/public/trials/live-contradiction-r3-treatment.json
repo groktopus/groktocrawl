@@ -1,0 +1,71 @@
+{
+  "answer": {
+    "answer": "Delta Queue's documentation claims exactly-once delivery (snapshot delta-doc), but this is contradicted by operational evidence: an incident report records that during incident DQ-17, some messages were delivered twice (snapshot delta-incident). Therefore, the documented guarantee cannot be treated as reliably holding in practice based on the supplied sources. What changed: incident evidence now qualifies the earlier documentation-only claim. What is current: the documentation still describes exactly-once delivery, and the DQ-17 incident is documented. What remains historically valid: the documentation's exactly-once claim, now shown to have failed in at least one case. Unresolved: whether the guarantee was fixed or re-scoped after DQ-17, the incident's root cause, and whether duplicates were isolated or ongoing.",
+    "change_events": [
+      "An incident report (snapshot delta-incident) documents that during incident DQ-17, some Delta Queue messages were delivered twice, contradicting the exactly-once delivery claim in the documentation (snapshot delta-doc)."
+    ],
+    "citations": [
+      "delta-doc",
+      "delta-incident"
+    ],
+    "current_truths": [
+      "Delta Queue's documentation describes exactly-once delivery (snapshot delta-doc).",
+      "An incident report records that during incident DQ-17, some messages were delivered twice (snapshot delta-incident)."
+    ],
+    "historical_truths": [
+      "Delta Queue's documentation described exactly-once delivery (snapshot delta-doc); this documented claim remains historically valid, but the DQ-17 incident shows it did not hold in at least one operational case (snapshot delta-incident)."
+    ],
+    "unresolved": [
+      "The supplied snapshots do not indicate whether the exactly-once guarantee was changed, fixed, or re-scoped after incident DQ-17, so the current operational guarantee cannot be confirmed.",
+      "The documentation snapshot does not specify the scope or conditions of the exactly-once guarantee (e.g., which delivery modes or configurations it applies to).",
+      "The incident report does not state the root cause of the duplicate deliveries or whether it was resolved.",
+      "No source establishes whether incident DQ-17 was an isolated exception or indicative of ongoing behavior."
+    ]
+  },
+  "arm": "treatment",
+  "case_id": "live-contradiction",
+  "completed_at": "2026-09-19T07:51:23.117440+00:00",
+  "position": 44,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "4002907a1897226c10a157aeeff32817ff57fca1f36f021408cafdd74d1e1a02",
+    "finish_reason": "stop",
+    "latency_ms": 29615.927,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "ca4d45b24d939bab43cce8ba69b676ac22a058c8b864e30f56d0676cef3fc8ba",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 437,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0.0003445,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0002185,
+        "upstream_inference_cost": 0.0003445,
+        "upstream_inference_prompt_cost": 0.000126
+      },
+      "is_byok": false,
+      "prompt_tokens": 840,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1277
+    }
+  },
+  "repetition": 3,
+  "schema_version": "research-thread-trial/1",
+  "started_at": "2026-09-19T07:50:53.501098+00:00",
+  "status": "completed",
+  "stratum": "contradiction",
+  "trial_id": "live-contradiction-r3-treatment"
+}

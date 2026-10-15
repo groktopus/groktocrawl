@@ -1,6 +1,7 @@
 """Async HTTP client for semantic-svc."""
 
 import logging
+import os
 from typing import Any
 
 import httpx
@@ -13,14 +14,23 @@ SEMANTIC_UNAVAILABLE = "Semantic service is unavailable"
 class SemanticClient:
     """Client for the semantic-svc embedding and reranking service."""
 
-    def __init__(self, base_url: str = "http://semantic-svc:8003"):
+    def __init__(
+        self,
+        base_url: str = "http://semantic-svc:8003",
+        timeout_seconds: float | None = None,
+    ):
         self.base_url = base_url.rstrip("/")
+        self.timeout_seconds = timeout_seconds or float(
+            os.getenv("SEMANTIC_CLIENT_TIMEOUT_SECONDS", "60")
+        )
+        if self.timeout_seconds <= 0:
+            raise ValueError("SEMANTIC_CLIENT_TIMEOUT_SECONDS must be > 0")
         self._client: httpx.AsyncClient | None = None
 
     async def _ensure_client(self) -> httpx.AsyncClient:
         if self._client is None:
             self._client = httpx.AsyncClient(
-                timeout=30,
+                timeout=self.timeout_seconds,
                 headers={"User-Agent": "GroktoCrawl/0.6"},
             )
         return self._client

@@ -1,0 +1,86 @@
+{
+  "arm": "control",
+  "case_id": "mission-ambiguous-productive",
+  "completed_at": "2026-09-19T05:55:46.991568+00:00",
+  "position": 1,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "b711a91b68ab7bbaafdc76406560e4170bee25ed9c92ec83d71562aec4ec26cc",
+    "finish_reason": "stop",
+    "latency_ms": 11726.565,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "e47fe283ceadee2ff9f99ed65aabceafe76e7365819d5f5805d17e8cc9e16bae",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 368,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 11
+      },
+      "cost": 0.0001443,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0001288,
+        "upstream_inference_cost": 0.0001443,
+        "upstream_inference_prompt_cost": 1.55e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 667,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 640,
+        "video_tokens": 0
+      },
+      "total_tokens": 1035
+    }
+  },
+  "repetition": 3,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "**Recommended outcome and comparison (per the supplied policy record)** — treat this as an unresolved decision: the fixture defines *how* to measure but supplies no data enabling a conclusion today; do not equate the 40 accepted PRs with productivity. (Sources: `measurement-policy`, `measurement-context`.)",
+    "candidate_id": "candidate-4ea1ce3b8e62ce23671d",
+    "citations": [
+      "measurement-policy",
+      "measurement-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "measurement-policy"
+        ],
+        "text": "The declared outcome must be agent-assisted delivery evaluated with matched tasks, quality gates, human review time, rework, elapsed lead time, and total cost.",
+        "uncertainty": "No material uncertainty: stated directly in the policy."
+      },
+      {
+        "source_ids": [
+          "measurement-policy"
+        ],
+        "text": "Failed or abandoned tasks must be counted; accepted-PR counts alone do not establish causal benefit.",
+        "uncertainty": "No material uncertainty: explicit policy prohibition."
+      },
+      {
+        "source_ids": [
+          "measurement-context"
+        ],
+        "text": "The pilot's 40 accepted pull requests in one month lack task mix, control group, reviewer hours, failure count, and provider costs, so it cannot serve as a baseline for a productivity decision.",
+        "uncertainty": "The supplied fixture contains no compensating measurements; this gap is unresolved."
+      },
+      {
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "text": "The necessary matched comparison, baseline, task mix, and time horizon are missing from the evidence pack, so the productivity decision cannot be closed and should be treated as unresolved pending a controlled, like-for-like evaluation.",
+        "uncertainty": "The supplied sources cannot establish any productivity effect, cost impact, or quality change; drawing one would require inventing missing measurements."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:55:35.264631+00:00",
+  "status": "completed",
+  "trial_id": "mission-ambiguous-productive-r3-control"
+}

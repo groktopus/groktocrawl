@@ -1,0 +1,103 @@
+{
+  "model": {
+    "body": {
+      "active_named_vector": "v_bge-m3",
+      "collection": "groktocrawl_pages",
+      "current_dim": 1024,
+      "current_model": "BAAI/bge-m3",
+      "max_docs": 250000,
+      "migration": {
+        "docs_processed": 0,
+        "docs_total": 0,
+        "source_model": "BAAI/bge-m3",
+        "status": "idle",
+        "target_model": ""
+      },
+      "total_docs": 285
+    },
+    "digest": "d0d24240003796ec83b29901e40e72f7fcfc4e7ba435cd1e7a35a208034fc831",
+    "elapsed_ms": 1.279,
+    "status": 200
+  },
+  "phase": "read",
+  "search": {
+    "body": {
+      "results": [
+        {
+          "score": 1.0,
+          "title": "Cutover sample 0",
+          "url": "https://pilot.invalid/cutover/f458cbb1d43eb5f0"
+        },
+        {
+          "score": 0.9860149915818872,
+          "title": "Cutover sample 5",
+          "url": "https://pilot.invalid/cutover/08aeafb67c6e8d4b"
+        },
+        {
+          "score": 0.9846463203430176,
+          "title": "Cutover sample 3",
+          "url": "https://pilot.invalid/cutover/75836ccfd6baa9f9"
+        },
+        {
+          "score": 0.9807057392176562,
+          "title": "Cutover sample 4",
+          "url": "https://pilot.invalid/cutover/0b371eacd50589cd"
+        },
+        {
+          "score": 0.9675121307373047,
+          "title": "Cutover sample 1",
+          "url": "https://pilot.invalid/cutover/5b70893b896cb66a"
+        },
+        {
+          "score": 0.9587500144541314,
+          "title": "Lag sample 212",
+          "url": "https://pilot.invalid/sustained/fd52ec53d2a4a5ad"
+        }
+      ]
+    },
+    "digest": "24ac2a60f4dfd26fae18e8cc6674f2bad55e1b30af02003bc86206a1828502f8",
+    "elapsed_ms": 57.836,
+    "normalized": [
+      {
+        "score": 1.0,
+        "title": "Cutover sample 0",
+        "url": "https://pilot.invalid/cutover/f458cbb1d43eb5f0"
+      },
+      {
+        "score": 0.98601,
+        "title": "Cutover sample 5",
+        "url": "https://pilot.invalid/cutover/08aeafb67c6e8d4b"
+      },
+      {
+        "score": 0.98465,
+        "title": "Cutover sample 3",
+        "url": "https://pilot.invalid/cutover/75836ccfd6baa9f9"
+      },
+      {
+        "score": 0.98071,
+        "title": "Cutover sample 4",
+        "url": "https://pilot.invalid/cutover/0b371eacd50589cd"
+      },
+      {
+        "score": 0.96751,
+        "title": "Cutover sample 1",
+        "url": "https://pilot.invalid/cutover/5b70893b896cb66a"
+      },
+      {
+        "score": 0.95875,
+        "title": "Lag sample 212",
+        "url": "https://pilot.invalid/sustained/fd52ec53d2a4a5ad"
+      }
+    ],
+    "status": 200
+  },
+  "stats": {
+    "body": {
+      "max_docs": 250000,
+      "total_docs": 285
+    },
+    "digest": "4a2357b6fb2eb628158f059b307f9a1117a7433a69a8cff1e87636a6fc8d8564",
+    "elapsed_ms": 1.602,
+    "status": 200
+  }
+}

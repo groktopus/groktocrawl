@@ -1,0 +1,17 @@
+{
+  "arm": "candidate",
+  "executed_at_unix": 1790104752,
+  "fixture_url": "https://docs.python.org/3/tutorial/introduction.html",
+  "query": "agentic engineering software factory enterprise",
+  "question_sha256": "143d371a5aeac7da9bad5dd21a25fb46c5a89d83e934164160d3a0aab2c7e2a6",
+  "repetitions": 1,
+  "schema_version": "w9-compatibility-arm/1",
+  "trials": [
+    {
+      "error": "Server error '502 Bad Gateway' for url 'http://127.0.0.1:18080/v2/answer'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/502",
+      "error_type": "HTTPStatusError",
+      "outcome": "failed",
+      "repetition": 0
+    }
+  ]
+}

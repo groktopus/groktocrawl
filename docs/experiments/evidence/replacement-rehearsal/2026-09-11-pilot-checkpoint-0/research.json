@@ -1,0 +1,228 @@
+{
+  "cli": {
+    "artifact_set_match": true,
+    "research_state": "completed",
+    "search_result_count": 3,
+    "summary_digest_match": true
+  },
+  "compose": {
+    "images": [
+      {
+        "id": "sha256:b6e4cbb218caf6aca483322faa1398b75a600d5502be72dd9b08fdb1b58eb077",
+        "platform": "linux/amd64",
+        "repository": "ghcr.io/magnus919/slopsearx",
+        "size_bytes": 273041687,
+        "tag": ""
+      },
+      {
+        "id": "sha256:092d7ac8f8c4c04bfbaef0a4a109543d40f1afb9ed5c27df434a472349aec205",
+        "platform": "linux/amd64",
+        "repository": "groktocrawl-x-candidate-agent",
+        "size_bytes": 209539175,
+        "tag": "6b46bc9a3f44a1571ad68d5453fef90edc99466b"
+      },
+      {
+        "id": "sha256:9b3a0a692a884aa5002a0f5ca42d53871820ec96546d1a1baf10db59b8d47cbc",
+        "platform": "linux/amd64",
+        "repository": "groktocrawl-x-candidate-browser",
+        "size_bytes": 1376312940,
+        "tag": "6b46bc9a3f44a1571ad68d5453fef90edc99466b"
+      },
+      {
+        "id": "sha256:8247b1635a1736680c627382d650532cb9ce5bf5d7c91cc79d0f4e2985c80a2d",
+        "platform": "linux/amd64",
+        "repository": "groktocrawl-x-candidate-mcp",
+        "size_bytes": 197350098,
+        "tag": "6b46bc9a3f44a1571ad68d5453fef90edc99466b"
+      },
+      {
+        "id": "sha256:0b909ea1771d4045410c48075d1df5acd8850c930df79ec91404e79acb7ba10f",
+        "platform": "linux/amd64",
+        "repository": "groktocrawl-x-candidate-portal",
+        "size_bytes": 177932645,
+        "tag": "6b46bc9a3f44a1571ad68d5453fef90edc99466b"
+      },
+      {
+        "id": "sha256:b23c3776717771d6b72566cd8a0d41788f7598f47244778c0d7edbfa4d847715",
+        "platform": "linux/amd64",
+        "repository": "groktocrawl-x-candidate-scraper",
+        "size_bytes": 1478018852,
+        "tag": "6b46bc9a3f44a1571ad68d5453fef90edc99466b"
+      },
+      {
+        "id": "sha256:47089fa0bd385edaac1ac8a68954c6ea11b787fac9d3f8ac1ae1f2d6168eba47",
+        "platform": "linux/amd64",
+        "repository": "groktocrawl-x-candidate-semantic",
+        "size_bytes": 1510813759,
+        "tag": "6b46bc9a3f44a1571ad68d5453fef90edc99466b"
+      },
+      {
+        "id": "sha256:17a06c0a60bf6fb548a8493b8f6057dc830b791bbbe1f1ab706ca4b9d97c8180",
+        "platform": "linux/amd64",
+        "repository": "pgvector/pgvector",
+        "size_bytes": 442786570,
+        "tag": ""
+      },
+      {
+        "id": "sha256:e13294053db80229932ca53f6ace97c3da1ae2581b770373e187a15707244eb5",
+        "platform": "linux/amd64",
+        "repository": "qdrant/qdrant",
+        "size_bytes": 184562888,
+        "tag": ""
+      },
+      {
+        "id": "sha256:c326b3ef584399b57afe334c4952af7b464b81f2c69bc36297c6e7fe2db6e03a",
+        "platform": "linux/amd64",
+        "repository": "valkey/valkey",
+        "size_bytes": 48145970,
+        "tag": ""
+      }
+    ],
+    "services": [
+      {
+        "health": "healthy",
+        "image": "groktocrawl-x-candidate-agent:6b46bc9a3f44a1571ad68d5453fef90edc99466b",
+        "ports": "127.0.0.1:18080->8080/tcp",
+        "service": "candidate-agent",
+        "state": "running"
+      },
+      {
+        "health": "healthy",
+        "image": "groktocrawl-x-candidate-browser:6b46bc9a3f44a1571ad68d5453fef90edc99466b",
+        "ports": "8012/tcp",
+        "service": "candidate-browser",
+        "state": "running"
+      },
+      {
+        "health": "healthy",
+        "image": "groktocrawl-x-candidate-mcp:6b46bc9a3f44a1571ad68d5453fef90edc99466b",
+        "ports": "127.0.0.1:18002->8002/tcp",
+        "service": "candidate-mcp",
+        "state": "running"
+      },
+      {
+        "health": "healthy",
+        "image": "groktocrawl-x-candidate-portal:6b46bc9a3f44a1571ad68d5453fef90edc99466b",
+        "ports": "",
+        "service": "candidate-portal",
+        "state": "running"
+      },
+      {
+        "health": "healthy",
+        "image": "pgvector/pgvector@sha256:cf134a767f474095eeba57e0117be8e568e011a63f33fbf252f14c9b760f8e6f",
+        "ports": "5432/tcp",
+        "service": "candidate-postgres",
+        "state": "running"
+      },
+      {
+        "health": "healthy",
+        "image": "qdrant/qdrant@sha256:75eab8c4ba42096724fdcfde8b4de0b5713d529dde32f285a1f86fdcb2c9e50c",
+        "ports": "6333-6334/tcp",
+        "service": "candidate-qdrant-rollback",
+        "state": "running"
+      },
+      {
+        "health": "healthy",
+        "image": "groktocrawl-x-candidate-scraper:6b46bc9a3f44a1571ad68d5453fef90edc99466b",
+        "ports": "8001/tcp",
+        "service": "candidate-scraper",
+        "state": "running"
+      },
+      {
+        "health": "healthy",
+        "image": "groktocrawl-x-candidate-semantic:6b46bc9a3f44a1571ad68d5453fef90edc99466b",
+        "ports": "8003/tcp",
+        "service": "candidate-semantic",
+        "state": "running"
+      },
+      {
+        "health": "healthy",
+        "image": "ghcr.io/magnus919/slopsearx@sha256:8643ed14703bf899bd579b1b06f4b62b798d7f42f303ce9af8aa2386c928108d",
+        "ports": "8080/tcp",
+        "service": "candidate-slopsearx",
+        "state": "running"
+      },
+      {
+        "health": "healthy",
+        "image": "valkey/valkey@sha256:cfb2aa4c8352930130fd45eb231a57310ac326d7323edae12b384b9270c46dda",
+        "ports": "6379/tcp",
+        "service": "candidate-valkey",
+        "state": "running"
+      }
+    ],
+    "version": "5.1.3"
+  },
+  "git_revision": "e4301eb32dd3b1e4ef83aec658fba754a2be31ec",
+  "mcp": {
+    "artifact_set_match": true,
+    "research_capabilities": true,
+    "research_state": "completed",
+    "summary_digest_match": true
+  },
+  "postgres": {
+    "pgvector_version": "0.8.6",
+    "research_schema_version": 14
+  },
+  "research": {
+    "artifact_sha256": {
+      "analysis": "9a981d48ecad80e606588bccaa37d2da1b1b352cbea9370c67a5560321160113",
+      "dossier": "515f04f874de36bf2c939a6c3b1738d75e58dcff93cafa470a26079829d08245",
+      "summary": "fab8d81ed9f509675bd915115bbe7ccd66b0f745e608f5962e76fb4e4311fa91"
+    },
+    "manifest_sha256": "df6859d74b53029d3425876a206fb3910ca01852d58b0ff77b76bce861599fad",
+    "research_id": "e13a2d52-ee69-40b5-9ba8-3dc74d4fd0fe",
+    "run_id": "31fe9ef2-c2b4-4da6-a053-fe2ce4823a77",
+    "sse_events": [
+      "accepted",
+      "progress",
+      "done"
+    ],
+    "state": "completed"
+  },
+  "schema_version": "experimental-candidate-verification/1",
+  "search": {
+    "result_count": 3
+  },
+  "semantic": {
+    "models": "loaded",
+    "pgvector": "ready",
+    "qdrant": "rollback_ready",
+    "status": "ok",
+    "vector_store": "pgvector"
+  },
+  "service_health": {
+    "checks": {
+      "browser": {
+        "detail": "Browser responded HTTP 404",
+        "latency_ms": 9.0,
+        "status": "ok"
+      },
+      "portal": {
+        "detail": "Portal responded HTTP 200",
+        "latency_ms": 5.3,
+        "status": "ok"
+      },
+      "scraper": {
+        "detail": "Scraper responded HTTP 404",
+        "latency_ms": 13.7,
+        "status": "ok"
+      },
+      "searxng": {
+        "detail": "SearXNG health ok",
+        "latency_ms": 17.9,
+        "status": "ok"
+      },
+      "valkey": {
+        "detail": "Valkey PING ok",
+        "latency_ms": 1.3,
+        "status": "ok"
+      }
+    },
+    "status": "ok"
+  },
+  "source": {
+    "compose_sha256": "7d567e795e57ae9b155cf196b68f3e169a78d75c8d333247d4d0183ef5a7af66",
+    "uv_lock_sha256": "4c383538479287eedaf4ffde5f2044f29972897a256e07f9b57fa3d1bc42648a"
+  },
+  "verified_at_unix": 1789147711
+}

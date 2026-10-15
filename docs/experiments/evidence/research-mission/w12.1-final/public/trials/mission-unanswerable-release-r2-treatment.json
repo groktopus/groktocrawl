@@ -1,0 +1,96 @@
+{
+  "arm": "treatment",
+  "case_id": "mission-unanswerable-release",
+  "completed_at": "2026-09-19T05:47:25.848988+00:00",
+  "position": 1,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "98c63d15753a8ef5efe19a0ac30f18a16cd5b8d0b5ba7ea685f604c20127e2b5",
+    "finish_reason": "stop",
+    "latency_ms": 18381.675,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "1c091ee1a80309d07ca26b58f4b38c984d3f8795d23856337befc1ca6ddd796e",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 693,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 13
+      },
+      "cost": 0.00026577,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.00024255,
+        "upstream_inference_cost": 0.00026577,
+        "upstream_inference_prompt_cost": 2.322e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 949,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 896,
+        "video_tokens": 0
+      },
+      "total_tokens": 1642
+    }
+  },
+  "repetition": 2,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "**No — the packet does not establish service-owner approval for the timed-out release.** Under the delivery policy, production deployment requires approval by the service owner and a recorded rollback plan [delivery-policy]. The packet contains only evidence of a remote completion report following an ambiguous timeout [reliability-context], and the reliability policy explicitly warns that a local checkpoint alone does not prove an external write failed — remote state must be reconciled before retrying [reliability-policy]. Remote completion is evidence of an operation's execution status, not of the required approval or rollback record. No approval record or rollback plan appears anywhere in the supplied sources; the approval determination is therefore unresolved, and no approval should be inferred.",
+    "candidate_id": "candidate-01e52e26f4ce464595de",
+    "citations": [
+      "delivery-policy",
+      "reliability-policy",
+      "reliability-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "delivery-policy"
+        ],
+        "text": "Production deployment requires approval by the service owner and a recorded rollback plan.",
+        "uncertainty": "No material uncertainty."
+      },
+      {
+        "source_ids": [
+          "reliability-context"
+        ],
+        "text": "During a controlled test, a worker timed out after submitting a release request, and the remote service later reported the original request as completed.",
+        "uncertainty": "The remote completion is documented, but its relation to any approval is not established by the evidence."
+      },
+      {
+        "source_ids": [
+          "reliability-policy"
+        ],
+        "text": "The reliability policy requires recording operation identity before an external write and reconciling remote state before retrying after ambiguous completion; a local checkpoint alone does not prove the external write failed.",
+        "uncertainty": "No material uncertainty."
+      },
+      {
+        "source_ids": [
+          "delivery-policy",
+          "reliability-context"
+        ],
+        "text": "The supplied packet contains no service-owner approval record and no recorded rollback plan for the release.",
+        "uncertainty": "The packet is a fixed fixture; any approval held outside the supplied sources cannot be verified."
+      },
+      {
+        "source_ids": [
+          "delivery-policy",
+          "reliability-policy",
+          "reliability-context"
+        ],
+        "text": "Remote completion of the release request does not constitute proof of service-owner approval.",
+        "uncertainty": "The sources do not explicitly define the relationship between remote completion and approval; this inference follows from the approval requirement in the delivery policy but is not stated verbatim."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:47:07.466566+00:00",
+  "status": "completed",
+  "trial_id": "mission-unanswerable-release-r2-treatment"
+}

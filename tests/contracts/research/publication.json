@@ -1,0 +1,1753 @@
+{
+  "publication": {
+    "audits": [
+      {
+        "audit_id": "audit-summary",
+        "checked_at": "2026-09-05T00:00:00Z",
+        "checked_input": {
+          "artifact": {
+            "artifact_id": "summary",
+            "conflict_ids": [],
+            "layer": "summary",
+            "question_ids": [
+              "q-1"
+            ],
+            "statements": [
+              {
+                "claim_ids": [
+                  "c-1"
+                ],
+                "evidence_ids": [
+                  "e-1"
+                ],
+                "text": "Source says retained evidence."
+              }
+            ]
+          },
+          "artifact_set_id": "00000000-0000-0000-0000-000000000005",
+          "auditor": {
+            "identity": "storage-fixture",
+            "kind": "fixture_expectation",
+            "version": "1"
+          },
+          "renderer_version": "fixture-render/1",
+          "research": {
+            "conflicts": [],
+            "objective": "Inspect fixture evidence",
+            "questions": [
+              {
+                "question": "What did the fixture say?",
+                "question_id": "q-1",
+                "report_claim_id": "c-1",
+                "status": "answered"
+              }
+            ],
+            "verifications": {
+              "assessment_links": [
+                {
+                  "assessment_ids": [
+                    "a-1-00000000-0000-0000-0000-000000000003"
+                  ],
+                  "claim_id": "c-1"
+                }
+              ],
+              "assessments": [
+                {
+                  "assessment_id": "a-1-00000000-0000-0000-0000-000000000003",
+                  "checked_at": "2026-09-05T00:00:00Z",
+                  "checked_input": {
+                    "check_type": "assessment",
+                    "evidence_ids": [
+                      "e-1"
+                    ],
+                    "freshness": null,
+                    "policy_version": "storage-fixture/1",
+                    "schema_version": "fixture-verification-input/1",
+                    "structure": {
+                      "as_of": "2026-09-05T00:00:00Z",
+                      "claims": [
+                        {
+                          "assessment": "supported",
+                          "claim_id": "c-1",
+                          "kind": "source_statement",
+                          "qualifiers": [
+                            "Fixture source attribution only."
+                          ],
+                          "temporal_scope": "historical",
+                          "text": "Source says retained evidence."
+                        }
+                      ],
+                      "evidence": [
+                        {
+                          "end": 23,
+                          "evidence_id": "e-1",
+                          "quote": "Retained café evidence.",
+                          "quote_digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                          "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                          "start": 0
+                        }
+                      ],
+                      "relationships": [
+                        {
+                          "assumptions": [],
+                          "kind": "supports",
+                          "rationale": "Fixture relation; not semantic verification.",
+                          "relationship_id": "r-1",
+                          "rule": null,
+                          "source_id": "e-1",
+                          "target_id": "c-1"
+                        }
+                      ],
+                      "research_id": "00000000-0000-0000-0000-000000000002",
+                      "revision_id": "00000000-0000-0000-0000-000000000003",
+                      "schema_version": "knowledge-structure-prototype/1",
+                      "scope_id": "00000000-0000-0000-0000-000000000001",
+                      "snapshots": [
+                        {
+                          "canonical_url": "https://example.test/revision",
+                          "digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                          "effective_at": null,
+                          "lineage_id": null,
+                          "media_type": "text/plain",
+                          "normalization_version": "utf8-exact/1",
+                          "origin_id": null,
+                          "published_at": null,
+                          "retrieved_at": "2026-09-01T00:00:00Z",
+                          "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                          "text": "Retained café evidence."
+                        }
+                      ]
+                    },
+                    "subject_id": "c-1",
+                    "verifier": {
+                      "identity": "storage-fixture",
+                      "kind": "fixture_expectation",
+                      "version": "1"
+                    }
+                  },
+                  "checked_input_digest": "a505d7c206ca8f065476f86c56d57a60934b4d4d18e41bcfa39810e29b494128",
+                  "outcome": "supported",
+                  "reason": "Hand-authored fixture assessment only"
+                }
+              ],
+              "policy_version": "storage-fixture/1",
+              "records": [
+                {
+                  "checked_at": "2026-09-05T00:00:00Z",
+                  "checked_input": {
+                    "check_type": "semantic_support",
+                    "evidence_ids": [
+                      "e-1"
+                    ],
+                    "freshness": null,
+                    "policy_version": "storage-fixture/1",
+                    "schema_version": "fixture-verification-input/1",
+                    "structure": {
+                      "as_of": "2026-09-05T00:00:00Z",
+                      "claims": [
+                        {
+                          "assessment": "supported",
+                          "claim_id": "c-1",
+                          "kind": "source_statement",
+                          "qualifiers": [
+                            "Fixture source attribution only."
+                          ],
+                          "temporal_scope": "historical",
+                          "text": "Source says retained evidence."
+                        }
+                      ],
+                      "evidence": [
+                        {
+                          "end": 23,
+                          "evidence_id": "e-1",
+                          "quote": "Retained café evidence.",
+                          "quote_digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                          "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                          "start": 0
+                        }
+                      ],
+                      "relationships": [
+                        {
+                          "assumptions": [],
+                          "kind": "supports",
+                          "rationale": "Fixture relation; not semantic verification.",
+                          "relationship_id": "r-1",
+                          "rule": null,
+                          "source_id": "e-1",
+                          "target_id": "c-1"
+                        }
+                      ],
+                      "research_id": "00000000-0000-0000-0000-000000000002",
+                      "revision_id": "00000000-0000-0000-0000-000000000003",
+                      "schema_version": "knowledge-structure-prototype/1",
+                      "scope_id": "00000000-0000-0000-0000-000000000001",
+                      "snapshots": [
+                        {
+                          "canonical_url": "https://example.test/revision",
+                          "digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                          "effective_at": null,
+                          "lineage_id": null,
+                          "media_type": "text/plain",
+                          "normalization_version": "utf8-exact/1",
+                          "origin_id": null,
+                          "published_at": null,
+                          "retrieved_at": "2026-09-01T00:00:00Z",
+                          "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                          "text": "Retained café evidence."
+                        }
+                      ]
+                    },
+                    "subject_id": "c-1",
+                    "verifier": {
+                      "identity": "storage-fixture",
+                      "kind": "fixture_expectation",
+                      "version": "1"
+                    }
+                  },
+                  "checked_input_digest": "33b8a25d1f9e2f881eb27e5cf0d46e83c8538b97e8c047cf5b8e94d922d2749e",
+                  "reason": "Hand-authored fixture expectation only",
+                  "verdict": "pass",
+                  "verification_id": "v-semantic_support-00000000-0000-0000-0000-000000000003"
+                },
+                {
+                  "checked_at": "2026-09-05T00:00:00Z",
+                  "checked_input": {
+                    "check_type": "freshness",
+                    "evidence_ids": [
+                      "e-1"
+                    ],
+                    "freshness": {
+                      "as_of": "2026-09-05T00:00:00Z",
+                      "evaluated_at": "2026-09-05T00:00:00Z",
+                      "policy_version": "storage-fixture/1",
+                      "sources": [
+                        {
+                          "basis": "historical_snapshot",
+                          "max_age_seconds": 604800,
+                          "reason": "Historical fixture only",
+                          "snapshot_id": "00000000-0000-0000-0000-000000000004"
+                        }
+                      ]
+                    },
+                    "policy_version": "storage-fixture/1",
+                    "schema_version": "fixture-verification-input/1",
+                    "structure": {
+                      "as_of": "2026-09-05T00:00:00Z",
+                      "claims": [
+                        {
+                          "assessment": "supported",
+                          "claim_id": "c-1",
+                          "kind": "source_statement",
+                          "qualifiers": [
+                            "Fixture source attribution only."
+                          ],
+                          "temporal_scope": "historical",
+                          "text": "Source says retained evidence."
+                        }
+                      ],
+                      "evidence": [
+                        {
+                          "end": 23,
+                          "evidence_id": "e-1",
+                          "quote": "Retained café evidence.",
+                          "quote_digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                          "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                          "start": 0
+                        }
+                      ],
+                      "relationships": [
+                        {
+                          "assumptions": [],
+                          "kind": "supports",
+                          "rationale": "Fixture relation; not semantic verification.",
+                          "relationship_id": "r-1",
+                          "rule": null,
+                          "source_id": "e-1",
+                          "target_id": "c-1"
+                        }
+                      ],
+                      "research_id": "00000000-0000-0000-0000-000000000002",
+                      "revision_id": "00000000-0000-0000-0000-000000000003",
+                      "schema_version": "knowledge-structure-prototype/1",
+                      "scope_id": "00000000-0000-0000-0000-000000000001",
+                      "snapshots": [
+                        {
+                          "canonical_url": "https://example.test/revision",
+                          "digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                          "effective_at": null,
+                          "lineage_id": null,
+                          "media_type": "text/plain",
+                          "normalization_version": "utf8-exact/1",
+                          "origin_id": null,
+                          "published_at": null,
+                          "retrieved_at": "2026-09-01T00:00:00Z",
+                          "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                          "text": "Retained café evidence."
+                        }
+                      ]
+                    },
+                    "subject_id": "c-1",
+                    "verifier": {
+                      "identity": "storage-fixture",
+                      "kind": "fixture_expectation",
+                      "version": "1"
+                    }
+                  },
+                  "checked_input_digest": "755bd7e7e03d9ef038592b24349afe3eaff8789d86182bbb5d7cde76c6057793",
+                  "reason": "Hand-authored fixture expectation only",
+                  "verdict": "pass",
+                  "verification_id": "v-freshness-00000000-0000-0000-0000-000000000003"
+                },
+                {
+                  "checked_at": "2026-09-05T00:00:00Z",
+                  "checked_input": {
+                    "check_type": "conflict_coverage",
+                    "evidence_ids": [
+                      "e-1"
+                    ],
+                    "freshness": null,
+                    "policy_version": "storage-fixture/1",
+                    "schema_version": "fixture-verification-input/1",
+                    "structure": {
+                      "as_of": "2026-09-05T00:00:00Z",
+                      "claims": [
+                        {
+                          "assessment": "supported",
+                          "claim_id": "c-1",
+                          "kind": "source_statement",
+                          "qualifiers": [
+                            "Fixture source attribution only."
+                          ],
+                          "temporal_scope": "historical",
+                          "text": "Source says retained evidence."
+                        }
+                      ],
+                      "evidence": [
+                        {
+                          "end": 23,
+                          "evidence_id": "e-1",
+                          "quote": "Retained café evidence.",
+                          "quote_digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                          "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                          "start": 0
+                        }
+                      ],
+                      "relationships": [
+                        {
+                          "assumptions": [],
+                          "kind": "supports",
+                          "rationale": "Fixture relation; not semantic verification.",
+                          "relationship_id": "r-1",
+                          "rule": null,
+                          "source_id": "e-1",
+                          "target_id": "c-1"
+                        }
+                      ],
+                      "research_id": "00000000-0000-0000-0000-000000000002",
+                      "revision_id": "00000000-0000-0000-0000-000000000003",
+                      "schema_version": "knowledge-structure-prototype/1",
+                      "scope_id": "00000000-0000-0000-0000-000000000001",
+                      "snapshots": [
+                        {
+                          "canonical_url": "https://example.test/revision",
+                          "digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                          "effective_at": null,
+                          "lineage_id": null,
+                          "media_type": "text/plain",
+                          "normalization_version": "utf8-exact/1",
+                          "origin_id": null,
+                          "published_at": null,
+                          "retrieved_at": "2026-09-01T00:00:00Z",
+                          "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                          "text": "Retained café evidence."
+                        }
+                      ]
+                    },
+                    "subject_id": "c-1",
+                    "verifier": {
+                      "identity": "storage-fixture",
+                      "kind": "fixture_expectation",
+                      "version": "1"
+                    }
+                  },
+                  "checked_input_digest": "e0082b0eca3fef448c1fd3930d87b96b5162a10d5d0332dc43ca7814d200e13b",
+                  "reason": "Hand-authored fixture expectation only",
+                  "verdict": "pass",
+                  "verification_id": "v-conflict_coverage-00000000-0000-0000-0000-000000000003"
+                }
+              ],
+              "schema_version": "fixture-verifications/1",
+              "structure": {
+                "as_of": "2026-09-05T00:00:00Z",
+                "claims": [
+                  {
+                    "assessment": "supported",
+                    "claim_id": "c-1",
+                    "kind": "source_statement",
+                    "qualifiers": [
+                      "Fixture source attribution only."
+                    ],
+                    "temporal_scope": "historical",
+                    "text": "Source says retained evidence."
+                  }
+                ],
+                "evidence": [
+                  {
+                    "end": 23,
+                    "evidence_id": "e-1",
+                    "quote": "Retained café evidence.",
+                    "quote_digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                    "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                    "start": 0
+                  }
+                ],
+                "relationships": [
+                  {
+                    "assumptions": [],
+                    "kind": "supports",
+                    "rationale": "Fixture relation; not semantic verification.",
+                    "relationship_id": "r-1",
+                    "rule": null,
+                    "source_id": "e-1",
+                    "target_id": "c-1"
+                  }
+                ],
+                "research_id": "00000000-0000-0000-0000-000000000002",
+                "revision_id": "00000000-0000-0000-0000-000000000003",
+                "schema_version": "knowledge-structure-prototype/1",
+                "scope_id": "00000000-0000-0000-0000-000000000001",
+                "snapshots": [
+                  {
+                    "canonical_url": "https://example.test/revision",
+                    "digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                    "effective_at": null,
+                    "lineage_id": null,
+                    "media_type": "text/plain",
+                    "normalization_version": "utf8-exact/1",
+                    "origin_id": null,
+                    "published_at": null,
+                    "retrieved_at": "2026-09-01T00:00:00Z",
+                    "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                    "text": "Retained café evidence."
+                  }
+                ]
+              },
+              "verifier": {
+                "identity": "storage-fixture",
+                "kind": "fixture_expectation",
+                "version": "1"
+              }
+            }
+          },
+          "schema_version": "fixture-render-input/1"
+        },
+        "checked_input_digest": "9eda99674bfed3bf9ffdf0ac3d5bddfb2be1503b3f6088cf8cbd4bdb2d4e036f",
+        "checked_output_digest": "c33d7abf1aa0f6ecb5dc0a9cfe67d5110ff49595b12a5deec54de73cddaca15e",
+        "reason": "Hand-authored fixture render audit only",
+        "verdict": "pass"
+      },
+      {
+        "audit_id": "audit-analysis",
+        "checked_at": "2026-09-05T00:00:00Z",
+        "checked_input": {
+          "artifact": {
+            "artifact_id": "analysis",
+            "conflict_ids": [],
+            "layer": "analysis",
+            "question_ids": [
+              "q-1"
+            ],
+            "statements": [
+              {
+                "claim_ids": [
+                  "c-1"
+                ],
+                "evidence_ids": [
+                  "e-1"
+                ],
+                "text": "Source says retained evidence."
+              }
+            ]
+          },
+          "artifact_set_id": "00000000-0000-0000-0000-000000000005",
+          "auditor": {
+            "identity": "storage-fixture",
+            "kind": "fixture_expectation",
+            "version": "1"
+          },
+          "renderer_version": "fixture-render/1",
+          "research": {
+            "conflicts": [],
+            "objective": "Inspect fixture evidence",
+            "questions": [
+              {
+                "question": "What did the fixture say?",
+                "question_id": "q-1",
+                "report_claim_id": "c-1",
+                "status": "answered"
+              }
+            ],
+            "verifications": {
+              "assessment_links": [
+                {
+                  "assessment_ids": [
+                    "a-1-00000000-0000-0000-0000-000000000003"
+                  ],
+                  "claim_id": "c-1"
+                }
+              ],
+              "assessments": [
+                {
+                  "assessment_id": "a-1-00000000-0000-0000-0000-000000000003",
+                  "checked_at": "2026-09-05T00:00:00Z",
+                  "checked_input": {
+                    "check_type": "assessment",
+                    "evidence_ids": [
+                      "e-1"
+                    ],
+                    "freshness": null,
+                    "policy_version": "storage-fixture/1",
+                    "schema_version": "fixture-verification-input/1",
+                    "structure": {
+                      "as_of": "2026-09-05T00:00:00Z",
+                      "claims": [
+                        {
+                          "assessment": "supported",
+                          "claim_id": "c-1",
+                          "kind": "source_statement",
+                          "qualifiers": [
+                            "Fixture source attribution only."
+                          ],
+                          "temporal_scope": "historical",
+                          "text": "Source says retained evidence."
+                        }
+                      ],
+                      "evidence": [
+                        {
+                          "end": 23,
+                          "evidence_id": "e-1",
+                          "quote": "Retained café evidence.",
+                          "quote_digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                          "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                          "start": 0
+                        }
+                      ],
+                      "relationships": [
+                        {
+                          "assumptions": [],
+                          "kind": "supports",
+                          "rationale": "Fixture relation; not semantic verification.",
+                          "relationship_id": "r-1",
+                          "rule": null,
+                          "source_id": "e-1",
+                          "target_id": "c-1"
+                        }
+                      ],
+                      "research_id": "00000000-0000-0000-0000-000000000002",
+                      "revision_id": "00000000-0000-0000-0000-000000000003",
+                      "schema_version": "knowledge-structure-prototype/1",
+                      "scope_id": "00000000-0000-0000-0000-000000000001",
+                      "snapshots": [
+                        {
+                          "canonical_url": "https://example.test/revision",
+                          "digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                          "effective_at": null,
+                          "lineage_id": null,
+                          "media_type": "text/plain",
+                          "normalization_version": "utf8-exact/1",
+                          "origin_id": null,
+                          "published_at": null,
+                          "retrieved_at": "2026-09-01T00:00:00Z",
+                          "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                          "text": "Retained café evidence."
+                        }
+                      ]
+                    },
+                    "subject_id": "c-1",
+                    "verifier": {
+                      "identity": "storage-fixture",
+                      "kind": "fixture_expectation",
+                      "version": "1"
+                    }
+                  },
+                  "checked_input_digest": "a505d7c206ca8f065476f86c56d57a60934b4d4d18e41bcfa39810e29b494128",
+                  "outcome": "supported",
+                  "reason": "Hand-authored fixture assessment only"
+                }
+              ],
+              "policy_version": "storage-fixture/1",
+              "records": [
+                {
+                  "checked_at": "2026-09-05T00:00:00Z",
+                  "checked_input": {
+                    "check_type": "semantic_support",
+                    "evidence_ids": [
+                      "e-1"
+                    ],
+                    "freshness": null,
+                    "policy_version": "storage-fixture/1",
+                    "schema_version": "fixture-verification-input/1",
+                    "structure": {
+                      "as_of": "2026-09-05T00:00:00Z",
+                      "claims": [
+                        {
+                          "assessment": "supported",
+                          "claim_id": "c-1",
+                          "kind": "source_statement",
+                          "qualifiers": [
+                            "Fixture source attribution only."
+                          ],
+                          "temporal_scope": "historical",
+                          "text": "Source says retained evidence."
+                        }
+                      ],
+                      "evidence": [
+                        {
+                          "end": 23,
+                          "evidence_id": "e-1",
+                          "quote": "Retained café evidence.",
+                          "quote_digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                          "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                          "start": 0
+                        }
+                      ],
+                      "relationships": [
+                        {
+                          "assumptions": [],
+                          "kind": "supports",
+                          "rationale": "Fixture relation; not semantic verification.",
+                          "relationship_id": "r-1",
+                          "rule": null,
+                          "source_id": "e-1",
+                          "target_id": "c-1"
+                        }
+                      ],
+                      "research_id": "00000000-0000-0000-0000-000000000002",
+                      "revision_id": "00000000-0000-0000-0000-000000000003",
+                      "schema_version": "knowledge-structure-prototype/1",
+                      "scope_id": "00000000-0000-0000-0000-000000000001",
+                      "snapshots": [
+                        {
+                          "canonical_url": "https://example.test/revision",
+                          "digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                          "effective_at": null,
+                          "lineage_id": null,
+                          "media_type": "text/plain",
+                          "normalization_version": "utf8-exact/1",
+                          "origin_id": null,
+                          "published_at": null,
+                          "retrieved_at": "2026-09-01T00:00:00Z",
+                          "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                          "text": "Retained café evidence."
+                        }
+                      ]
+                    },
+                    "subject_id": "c-1",
+                    "verifier": {
+                      "identity": "storage-fixture",
+                      "kind": "fixture_expectation",
+                      "version": "1"
+                    }
+                  },
+                  "checked_input_digest": "33b8a25d1f9e2f881eb27e5cf0d46e83c8538b97e8c047cf5b8e94d922d2749e",
+                  "reason": "Hand-authored fixture expectation only",
+                  "verdict": "pass",
+                  "verification_id": "v-semantic_support-00000000-0000-0000-0000-000000000003"
+                },
+                {
+                  "checked_at": "2026-09-05T00:00:00Z",
+                  "checked_input": {
+                    "check_type": "freshness",
+                    "evidence_ids": [
+                      "e-1"
+                    ],
+                    "freshness": {
+                      "as_of": "2026-09-05T00:00:00Z",
+                      "evaluated_at": "2026-09-05T00:00:00Z",
+                      "policy_version": "storage-fixture/1",
+                      "sources": [
+                        {
+                          "basis": "historical_snapshot",
+                          "max_age_seconds": 604800,
+                          "reason": "Historical fixture only",
+                          "snapshot_id": "00000000-0000-0000-0000-000000000004"
+                        }
+                      ]
+                    },
+                    "policy_version": "storage-fixture/1",
+                    "schema_version": "fixture-verification-input/1",
+                    "structure": {
+                      "as_of": "2026-09-05T00:00:00Z",
+                      "claims": [
+                        {
+                          "assessment": "supported",
+                          "claim_id": "c-1",
+                          "kind": "source_statement",
+                          "qualifiers": [
+                            "Fixture source attribution only."
+                          ],
+                          "temporal_scope": "historical",
+                          "text": "Source says retained evidence."
+                        }
+                      ],
+                      "evidence": [
+                        {
+                          "end": 23,
+                          "evidence_id": "e-1",
+                          "quote": "Retained café evidence.",
+                          "quote_digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                          "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                          "start": 0
+                        }
+                      ],
+                      "relationships": [
+                        {
+                          "assumptions": [],
+                          "kind": "supports",
+                          "rationale": "Fixture relation; not semantic verification.",
+                          "relationship_id": "r-1",
+                          "rule": null,
+                          "source_id": "e-1",
+                          "target_id": "c-1"
+                        }
+                      ],
+                      "research_id": "00000000-0000-0000-0000-000000000002",
+                      "revision_id": "00000000-0000-0000-0000-000000000003",
+                      "schema_version": "knowledge-structure-prototype/1",
+                      "scope_id": "00000000-0000-0000-0000-000000000001",
+                      "snapshots": [
+                        {
+                          "canonical_url": "https://example.test/revision",
+                          "digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                          "effective_at": null,
+                          "lineage_id": null,
+                          "media_type": "text/plain",
+                          "normalization_version": "utf8-exact/1",
+                          "origin_id": null,
+                          "published_at": null,
+                          "retrieved_at": "2026-09-01T00:00:00Z",
+                          "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                          "text": "Retained café evidence."
+                        }
+                      ]
+                    },
+                    "subject_id": "c-1",
+                    "verifier": {
+                      "identity": "storage-fixture",
+                      "kind": "fixture_expectation",
+                      "version": "1"
+                    }
+                  },
+                  "checked_input_digest": "755bd7e7e03d9ef038592b24349afe3eaff8789d86182bbb5d7cde76c6057793",
+                  "reason": "Hand-authored fixture expectation only",
+                  "verdict": "pass",
+                  "verification_id": "v-freshness-00000000-0000-0000-0000-000000000003"
+                },
+                {
+                  "checked_at": "2026-09-05T00:00:00Z",
+                  "checked_input": {
+                    "check_type": "conflict_coverage",
+                    "evidence_ids": [
+                      "e-1"
+                    ],
+                    "freshness": null,
+                    "policy_version": "storage-fixture/1",
+                    "schema_version": "fixture-verification-input/1",
+                    "structure": {
+                      "as_of": "2026-09-05T00:00:00Z",
+                      "claims": [
+                        {
+                          "assessment": "supported",
+                          "claim_id": "c-1",
+                          "kind": "source_statement",
+                          "qualifiers": [
+                            "Fixture source attribution only."
+                          ],
+                          "temporal_scope": "historical",
+                          "text": "Source says retained evidence."
+                        }
+                      ],
+                      "evidence": [
+                        {
+                          "end": 23,
+                          "evidence_id": "e-1",
+                          "quote": "Retained café evidence.",
+                          "quote_digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                          "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                          "start": 0
+                        }
+                      ],
+                      "relationships": [
+                        {
+                          "assumptions": [],
+                          "kind": "supports",
+                          "rationale": "Fixture relation; not semantic verification.",
+                          "relationship_id": "r-1",
+                          "rule": null,
+                          "source_id": "e-1",
+                          "target_id": "c-1"
+                        }
+                      ],
+                      "research_id": "00000000-0000-0000-0000-000000000002",
+                      "revision_id": "00000000-0000-0000-0000-000000000003",
+                      "schema_version": "knowledge-structure-prototype/1",
+                      "scope_id": "00000000-0000-0000-0000-000000000001",
+                      "snapshots": [
+                        {
+                          "canonical_url": "https://example.test/revision",
+                          "digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                          "effective_at": null,
+                          "lineage_id": null,
+                          "media_type": "text/plain",
+                          "normalization_version": "utf8-exact/1",
+                          "origin_id": null,
+                          "published_at": null,
+                          "retrieved_at": "2026-09-01T00:00:00Z",
+                          "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                          "text": "Retained café evidence."
+                        }
+                      ]
+                    },
+                    "subject_id": "c-1",
+                    "verifier": {
+                      "identity": "storage-fixture",
+                      "kind": "fixture_expectation",
+                      "version": "1"
+                    }
+                  },
+                  "checked_input_digest": "e0082b0eca3fef448c1fd3930d87b96b5162a10d5d0332dc43ca7814d200e13b",
+                  "reason": "Hand-authored fixture expectation only",
+                  "verdict": "pass",
+                  "verification_id": "v-conflict_coverage-00000000-0000-0000-0000-000000000003"
+                }
+              ],
+              "schema_version": "fixture-verifications/1",
+              "structure": {
+                "as_of": "2026-09-05T00:00:00Z",
+                "claims": [
+                  {
+                    "assessment": "supported",
+                    "claim_id": "c-1",
+                    "kind": "source_statement",
+                    "qualifiers": [
+                      "Fixture source attribution only."
+                    ],
+                    "temporal_scope": "historical",
+                    "text": "Source says retained evidence."
+                  }
+                ],
+                "evidence": [
+                  {
+                    "end": 23,
+                    "evidence_id": "e-1",
+                    "quote": "Retained café evidence.",
+                    "quote_digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                    "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                    "start": 0
+                  }
+                ],
+                "relationships": [
+                  {
+                    "assumptions": [],
+                    "kind": "supports",
+                    "rationale": "Fixture relation; not semantic verification.",
+                    "relationship_id": "r-1",
+                    "rule": null,
+                    "source_id": "e-1",
+                    "target_id": "c-1"
+                  }
+                ],
+                "research_id": "00000000-0000-0000-0000-000000000002",
+                "revision_id": "00000000-0000-0000-0000-000000000003",
+                "schema_version": "knowledge-structure-prototype/1",
+                "scope_id": "00000000-0000-0000-0000-000000000001",
+                "snapshots": [
+                  {
+                    "canonical_url": "https://example.test/revision",
+                    "digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                    "effective_at": null,
+                    "lineage_id": null,
+                    "media_type": "text/plain",
+                    "normalization_version": "utf8-exact/1",
+                    "origin_id": null,
+                    "published_at": null,
+                    "retrieved_at": "2026-09-01T00:00:00Z",
+                    "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                    "text": "Retained café evidence."
+                  }
+                ]
+              },
+              "verifier": {
+                "identity": "storage-fixture",
+                "kind": "fixture_expectation",
+                "version": "1"
+              }
+            }
+          },
+          "schema_version": "fixture-render-input/1"
+        },
+        "checked_input_digest": "ad37c78fe6cb207380f6789fb338d772d746f83cdb2f57381b204fa06596df86",
+        "checked_output_digest": "c33d7abf1aa0f6ecb5dc0a9cfe67d5110ff49595b12a5deec54de73cddaca15e",
+        "reason": "Hand-authored fixture render audit only",
+        "verdict": "pass"
+      },
+      {
+        "audit_id": "audit-dossier",
+        "checked_at": "2026-09-05T00:00:00Z",
+        "checked_input": {
+          "artifact": {
+            "artifact_id": "dossier",
+            "conflict_ids": [],
+            "layer": "dossier",
+            "question_ids": [
+              "q-1"
+            ],
+            "statements": [
+              {
+                "claim_ids": [
+                  "c-1"
+                ],
+                "evidence_ids": [
+                  "e-1"
+                ],
+                "text": "Source says retained evidence."
+              }
+            ]
+          },
+          "artifact_set_id": "00000000-0000-0000-0000-000000000005",
+          "auditor": {
+            "identity": "storage-fixture",
+            "kind": "fixture_expectation",
+            "version": "1"
+          },
+          "renderer_version": "fixture-render/1",
+          "research": {
+            "conflicts": [],
+            "objective": "Inspect fixture evidence",
+            "questions": [
+              {
+                "question": "What did the fixture say?",
+                "question_id": "q-1",
+                "report_claim_id": "c-1",
+                "status": "answered"
+              }
+            ],
+            "verifications": {
+              "assessment_links": [
+                {
+                  "assessment_ids": [
+                    "a-1-00000000-0000-0000-0000-000000000003"
+                  ],
+                  "claim_id": "c-1"
+                }
+              ],
+              "assessments": [
+                {
+                  "assessment_id": "a-1-00000000-0000-0000-0000-000000000003",
+                  "checked_at": "2026-09-05T00:00:00Z",
+                  "checked_input": {
+                    "check_type": "assessment",
+                    "evidence_ids": [
+                      "e-1"
+                    ],
+                    "freshness": null,
+                    "policy_version": "storage-fixture/1",
+                    "schema_version": "fixture-verification-input/1",
+                    "structure": {
+                      "as_of": "2026-09-05T00:00:00Z",
+                      "claims": [
+                        {
+                          "assessment": "supported",
+                          "claim_id": "c-1",
+                          "kind": "source_statement",
+                          "qualifiers": [
+                            "Fixture source attribution only."
+                          ],
+                          "temporal_scope": "historical",
+                          "text": "Source says retained evidence."
+                        }
+                      ],
+                      "evidence": [
+                        {
+                          "end": 23,
+                          "evidence_id": "e-1",
+                          "quote": "Retained café evidence.",
+                          "quote_digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                          "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                          "start": 0
+                        }
+                      ],
+                      "relationships": [
+                        {
+                          "assumptions": [],
+                          "kind": "supports",
+                          "rationale": "Fixture relation; not semantic verification.",
+                          "relationship_id": "r-1",
+                          "rule": null,
+                          "source_id": "e-1",
+                          "target_id": "c-1"
+                        }
+                      ],
+                      "research_id": "00000000-0000-0000-0000-000000000002",
+                      "revision_id": "00000000-0000-0000-0000-000000000003",
+                      "schema_version": "knowledge-structure-prototype/1",
+                      "scope_id": "00000000-0000-0000-0000-000000000001",
+                      "snapshots": [
+                        {
+                          "canonical_url": "https://example.test/revision",
+                          "digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                          "effective_at": null,
+                          "lineage_id": null,
+                          "media_type": "text/plain",
+                          "normalization_version": "utf8-exact/1",
+                          "origin_id": null,
+                          "published_at": null,
+                          "retrieved_at": "2026-09-01T00:00:00Z",
+                          "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                          "text": "Retained café evidence."
+                        }
+                      ]
+                    },
+                    "subject_id": "c-1",
+                    "verifier": {
+                      "identity": "storage-fixture",
+                      "kind": "fixture_expectation",
+                      "version": "1"
+                    }
+                  },
+                  "checked_input_digest": "a505d7c206ca8f065476f86c56d57a60934b4d4d18e41bcfa39810e29b494128",
+                  "outcome": "supported",
+                  "reason": "Hand-authored fixture assessment only"
+                }
+              ],
+              "policy_version": "storage-fixture/1",
+              "records": [
+                {
+                  "checked_at": "2026-09-05T00:00:00Z",
+                  "checked_input": {
+                    "check_type": "semantic_support",
+                    "evidence_ids": [
+                      "e-1"
+                    ],
+                    "freshness": null,
+                    "policy_version": "storage-fixture/1",
+                    "schema_version": "fixture-verification-input/1",
+                    "structure": {
+                      "as_of": "2026-09-05T00:00:00Z",
+                      "claims": [
+                        {
+                          "assessment": "supported",
+                          "claim_id": "c-1",
+                          "kind": "source_statement",
+                          "qualifiers": [
+                            "Fixture source attribution only."
+                          ],
+                          "temporal_scope": "historical",
+                          "text": "Source says retained evidence."
+                        }
+                      ],
+                      "evidence": [
+                        {
+                          "end": 23,
+                          "evidence_id": "e-1",
+                          "quote": "Retained café evidence.",
+                          "quote_digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                          "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                          "start": 0
+                        }
+                      ],
+                      "relationships": [
+                        {
+                          "assumptions": [],
+                          "kind": "supports",
+                          "rationale": "Fixture relation; not semantic verification.",
+                          "relationship_id": "r-1",
+                          "rule": null,
+                          "source_id": "e-1",
+                          "target_id": "c-1"
+                        }
+                      ],
+                      "research_id": "00000000-0000-0000-0000-000000000002",
+                      "revision_id": "00000000-0000-0000-0000-000000000003",
+                      "schema_version": "knowledge-structure-prototype/1",
+                      "scope_id": "00000000-0000-0000-0000-000000000001",
+                      "snapshots": [
+                        {
+                          "canonical_url": "https://example.test/revision",
+                          "digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                          "effective_at": null,
+                          "lineage_id": null,
+                          "media_type": "text/plain",
+                          "normalization_version": "utf8-exact/1",
+                          "origin_id": null,
+                          "published_at": null,
+                          "retrieved_at": "2026-09-01T00:00:00Z",
+                          "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                          "text": "Retained café evidence."
+                        }
+                      ]
+                    },
+                    "subject_id": "c-1",
+                    "verifier": {
+                      "identity": "storage-fixture",
+                      "kind": "fixture_expectation",
+                      "version": "1"
+                    }
+                  },
+                  "checked_input_digest": "33b8a25d1f9e2f881eb27e5cf0d46e83c8538b97e8c047cf5b8e94d922d2749e",
+                  "reason": "Hand-authored fixture expectation only",
+                  "verdict": "pass",
+                  "verification_id": "v-semantic_support-00000000-0000-0000-0000-000000000003"
+                },
+                {
+                  "checked_at": "2026-09-05T00:00:00Z",
+                  "checked_input": {
+                    "check_type": "freshness",
+                    "evidence_ids": [
+                      "e-1"
+                    ],
+                    "freshness": {
+                      "as_of": "2026-09-05T00:00:00Z",
+                      "evaluated_at": "2026-09-05T00:00:00Z",
+                      "policy_version": "storage-fixture/1",
+                      "sources": [
+                        {
+                          "basis": "historical_snapshot",
+                          "max_age_seconds": 604800,
+                          "reason": "Historical fixture only",
+                          "snapshot_id": "00000000-0000-0000-0000-000000000004"
+                        }
+                      ]
+                    },
+                    "policy_version": "storage-fixture/1",
+                    "schema_version": "fixture-verification-input/1",
+                    "structure": {
+                      "as_of": "2026-09-05T00:00:00Z",
+                      "claims": [
+                        {
+                          "assessment": "supported",
+                          "claim_id": "c-1",
+                          "kind": "source_statement",
+                          "qualifiers": [
+                            "Fixture source attribution only."
+                          ],
+                          "temporal_scope": "historical",
+                          "text": "Source says retained evidence."
+                        }
+                      ],
+                      "evidence": [
+                        {
+                          "end": 23,
+                          "evidence_id": "e-1",
+                          "quote": "Retained café evidence.",
+                          "quote_digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                          "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                          "start": 0
+                        }
+                      ],
+                      "relationships": [
+                        {
+                          "assumptions": [],
+                          "kind": "supports",
+                          "rationale": "Fixture relation; not semantic verification.",
+                          "relationship_id": "r-1",
+                          "rule": null,
+                          "source_id": "e-1",
+                          "target_id": "c-1"
+                        }
+                      ],
+                      "research_id": "00000000-0000-0000-0000-000000000002",
+                      "revision_id": "00000000-0000-0000-0000-000000000003",
+                      "schema_version": "knowledge-structure-prototype/1",
+                      "scope_id": "00000000-0000-0000-0000-000000000001",
+                      "snapshots": [
+                        {
+                          "canonical_url": "https://example.test/revision",
+                          "digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                          "effective_at": null,
+                          "lineage_id": null,
+                          "media_type": "text/plain",
+                          "normalization_version": "utf8-exact/1",
+                          "origin_id": null,
+                          "published_at": null,
+                          "retrieved_at": "2026-09-01T00:00:00Z",
+                          "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                          "text": "Retained café evidence."
+                        }
+                      ]
+                    },
+                    "subject_id": "c-1",
+                    "verifier": {
+                      "identity": "storage-fixture",
+                      "kind": "fixture_expectation",
+                      "version": "1"
+                    }
+                  },
+                  "checked_input_digest": "755bd7e7e03d9ef038592b24349afe3eaff8789d86182bbb5d7cde76c6057793",
+                  "reason": "Hand-authored fixture expectation only",
+                  "verdict": "pass",
+                  "verification_id": "v-freshness-00000000-0000-0000-0000-000000000003"
+                },
+                {
+                  "checked_at": "2026-09-05T00:00:00Z",
+                  "checked_input": {
+                    "check_type": "conflict_coverage",
+                    "evidence_ids": [
+                      "e-1"
+                    ],
+                    "freshness": null,
+                    "policy_version": "storage-fixture/1",
+                    "schema_version": "fixture-verification-input/1",
+                    "structure": {
+                      "as_of": "2026-09-05T00:00:00Z",
+                      "claims": [
+                        {
+                          "assessment": "supported",
+                          "claim_id": "c-1",
+                          "kind": "source_statement",
+                          "qualifiers": [
+                            "Fixture source attribution only."
+                          ],
+                          "temporal_scope": "historical",
+                          "text": "Source says retained evidence."
+                        }
+                      ],
+                      "evidence": [
+                        {
+                          "end": 23,
+                          "evidence_id": "e-1",
+                          "quote": "Retained café evidence.",
+                          "quote_digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                          "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                          "start": 0
+                        }
+                      ],
+                      "relationships": [
+                        {
+                          "assumptions": [],
+                          "kind": "supports",
+                          "rationale": "Fixture relation; not semantic verification.",
+                          "relationship_id": "r-1",
+                          "rule": null,
+                          "source_id": "e-1",
+                          "target_id": "c-1"
+                        }
+                      ],
+                      "research_id": "00000000-0000-0000-0000-000000000002",
+                      "revision_id": "00000000-0000-0000-0000-000000000003",
+                      "schema_version": "knowledge-structure-prototype/1",
+                      "scope_id": "00000000-0000-0000-0000-000000000001",
+                      "snapshots": [
+                        {
+                          "canonical_url": "https://example.test/revision",
+                          "digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                          "effective_at": null,
+                          "lineage_id": null,
+                          "media_type": "text/plain",
+                          "normalization_version": "utf8-exact/1",
+                          "origin_id": null,
+                          "published_at": null,
+                          "retrieved_at": "2026-09-01T00:00:00Z",
+                          "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                          "text": "Retained café evidence."
+                        }
+                      ]
+                    },
+                    "subject_id": "c-1",
+                    "verifier": {
+                      "identity": "storage-fixture",
+                      "kind": "fixture_expectation",
+                      "version": "1"
+                    }
+                  },
+                  "checked_input_digest": "e0082b0eca3fef448c1fd3930d87b96b5162a10d5d0332dc43ca7814d200e13b",
+                  "reason": "Hand-authored fixture expectation only",
+                  "verdict": "pass",
+                  "verification_id": "v-conflict_coverage-00000000-0000-0000-0000-000000000003"
+                }
+              ],
+              "schema_version": "fixture-verifications/1",
+              "structure": {
+                "as_of": "2026-09-05T00:00:00Z",
+                "claims": [
+                  {
+                    "assessment": "supported",
+                    "claim_id": "c-1",
+                    "kind": "source_statement",
+                    "qualifiers": [
+                      "Fixture source attribution only."
+                    ],
+                    "temporal_scope": "historical",
+                    "text": "Source says retained evidence."
+                  }
+                ],
+                "evidence": [
+                  {
+                    "end": 23,
+                    "evidence_id": "e-1",
+                    "quote": "Retained café evidence.",
+                    "quote_digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                    "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                    "start": 0
+                  }
+                ],
+                "relationships": [
+                  {
+                    "assumptions": [],
+                    "kind": "supports",
+                    "rationale": "Fixture relation; not semantic verification.",
+                    "relationship_id": "r-1",
+                    "rule": null,
+                    "source_id": "e-1",
+                    "target_id": "c-1"
+                  }
+                ],
+                "research_id": "00000000-0000-0000-0000-000000000002",
+                "revision_id": "00000000-0000-0000-0000-000000000003",
+                "schema_version": "knowledge-structure-prototype/1",
+                "scope_id": "00000000-0000-0000-0000-000000000001",
+                "snapshots": [
+                  {
+                    "canonical_url": "https://example.test/revision",
+                    "digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                    "effective_at": null,
+                    "lineage_id": null,
+                    "media_type": "text/plain",
+                    "normalization_version": "utf8-exact/1",
+                    "origin_id": null,
+                    "published_at": null,
+                    "retrieved_at": "2026-09-01T00:00:00Z",
+                    "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                    "text": "Retained café evidence."
+                  }
+                ]
+              },
+              "verifier": {
+                "identity": "storage-fixture",
+                "kind": "fixture_expectation",
+                "version": "1"
+              }
+            }
+          },
+          "schema_version": "fixture-render-input/1"
+        },
+        "checked_input_digest": "6665b0e908bcad75fb6ff5ebf6a84053e9bb95eabaac5879a3a5ad38b824697c",
+        "checked_output_digest": "e5ae7789b97787550764c81ea904b02065fe30ad5a76580325e22d818c52d740",
+        "reason": "Hand-authored fixture render audit only",
+        "verdict": "pass"
+      }
+    ],
+    "schema_version": "fixture-publication/1"
+  },
+  "research": {
+    "conflicts": [],
+    "objective": "Inspect fixture evidence",
+    "questions": [
+      {
+        "question": "What did the fixture say?",
+        "question_id": "q-1",
+        "report_claim_id": "c-1",
+        "status": "answered"
+      }
+    ],
+    "verifications": {
+      "assessment_links": [
+        {
+          "assessment_ids": [
+            "a-1-00000000-0000-0000-0000-000000000003"
+          ],
+          "claim_id": "c-1"
+        }
+      ],
+      "assessments": [
+        {
+          "assessment_id": "a-1-00000000-0000-0000-0000-000000000003",
+          "checked_at": "2026-09-05T00:00:00Z",
+          "checked_input": {
+            "check_type": "assessment",
+            "evidence_ids": [
+              "e-1"
+            ],
+            "freshness": null,
+            "policy_version": "storage-fixture/1",
+            "schema_version": "fixture-verification-input/1",
+            "structure": {
+              "as_of": "2026-09-05T00:00:00Z",
+              "claims": [
+                {
+                  "assessment": "supported",
+                  "claim_id": "c-1",
+                  "kind": "source_statement",
+                  "qualifiers": [
+                    "Fixture source attribution only."
+                  ],
+                  "temporal_scope": "historical",
+                  "text": "Source says retained evidence."
+                }
+              ],
+              "evidence": [
+                {
+                  "end": 23,
+                  "evidence_id": "e-1",
+                  "quote": "Retained café evidence.",
+                  "quote_digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                  "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                  "start": 0
+                }
+              ],
+              "relationships": [
+                {
+                  "assumptions": [],
+                  "kind": "supports",
+                  "rationale": "Fixture relation; not semantic verification.",
+                  "relationship_id": "r-1",
+                  "rule": null,
+                  "source_id": "e-1",
+                  "target_id": "c-1"
+                }
+              ],
+              "research_id": "00000000-0000-0000-0000-000000000002",
+              "revision_id": "00000000-0000-0000-0000-000000000003",
+              "schema_version": "knowledge-structure-prototype/1",
+              "scope_id": "00000000-0000-0000-0000-000000000001",
+              "snapshots": [
+                {
+                  "canonical_url": "https://example.test/revision",
+                  "digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                  "effective_at": null,
+                  "lineage_id": null,
+                  "media_type": "text/plain",
+                  "normalization_version": "utf8-exact/1",
+                  "origin_id": null,
+                  "published_at": null,
+                  "retrieved_at": "2026-09-01T00:00:00Z",
+                  "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                  "text": "Retained café evidence."
+                }
+              ]
+            },
+            "subject_id": "c-1",
+            "verifier": {
+              "identity": "storage-fixture",
+              "kind": "fixture_expectation",
+              "version": "1"
+            }
+          },
+          "checked_input_digest": "a505d7c206ca8f065476f86c56d57a60934b4d4d18e41bcfa39810e29b494128",
+          "outcome": "supported",
+          "reason": "Hand-authored fixture assessment only"
+        }
+      ],
+      "policy_version": "storage-fixture/1",
+      "records": [
+        {
+          "checked_at": "2026-09-05T00:00:00Z",
+          "checked_input": {
+            "check_type": "semantic_support",
+            "evidence_ids": [
+              "e-1"
+            ],
+            "freshness": null,
+            "policy_version": "storage-fixture/1",
+            "schema_version": "fixture-verification-input/1",
+            "structure": {
+              "as_of": "2026-09-05T00:00:00Z",
+              "claims": [
+                {
+                  "assessment": "supported",
+                  "claim_id": "c-1",
+                  "kind": "source_statement",
+                  "qualifiers": [
+                    "Fixture source attribution only."
+                  ],
+                  "temporal_scope": "historical",
+                  "text": "Source says retained evidence."
+                }
+              ],
+              "evidence": [
+                {
+                  "end": 23,
+                  "evidence_id": "e-1",
+                  "quote": "Retained café evidence.",
+                  "quote_digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                  "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                  "start": 0
+                }
+              ],
+              "relationships": [
+                {
+                  "assumptions": [],
+                  "kind": "supports",
+                  "rationale": "Fixture relation; not semantic verification.",
+                  "relationship_id": "r-1",
+                  "rule": null,
+                  "source_id": "e-1",
+                  "target_id": "c-1"
+                }
+              ],
+              "research_id": "00000000-0000-0000-0000-000000000002",
+              "revision_id": "00000000-0000-0000-0000-000000000003",
+              "schema_version": "knowledge-structure-prototype/1",
+              "scope_id": "00000000-0000-0000-0000-000000000001",
+              "snapshots": [
+                {
+                  "canonical_url": "https://example.test/revision",
+                  "digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                  "effective_at": null,
+                  "lineage_id": null,
+                  "media_type": "text/plain",
+                  "normalization_version": "utf8-exact/1",
+                  "origin_id": null,
+                  "published_at": null,
+                  "retrieved_at": "2026-09-01T00:00:00Z",
+                  "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                  "text": "Retained café evidence."
+                }
+              ]
+            },
+            "subject_id": "c-1",
+            "verifier": {
+              "identity": "storage-fixture",
+              "kind": "fixture_expectation",
+              "version": "1"
+            }
+          },
+          "checked_input_digest": "33b8a25d1f9e2f881eb27e5cf0d46e83c8538b97e8c047cf5b8e94d922d2749e",
+          "reason": "Hand-authored fixture expectation only",
+          "verdict": "pass",
+          "verification_id": "v-semantic_support-00000000-0000-0000-0000-000000000003"
+        },
+        {
+          "checked_at": "2026-09-05T00:00:00Z",
+          "checked_input": {
+            "check_type": "freshness",
+            "evidence_ids": [
+              "e-1"
+            ],
+            "freshness": {
+              "as_of": "2026-09-05T00:00:00Z",
+              "evaluated_at": "2026-09-05T00:00:00Z",
+              "policy_version": "storage-fixture/1",
+              "sources": [
+                {
+                  "basis": "historical_snapshot",
+                  "max_age_seconds": 604800,
+                  "reason": "Historical fixture only",
+                  "snapshot_id": "00000000-0000-0000-0000-000000000004"
+                }
+              ]
+            },
+            "policy_version": "storage-fixture/1",
+            "schema_version": "fixture-verification-input/1",
+            "structure": {
+              "as_of": "2026-09-05T00:00:00Z",
+              "claims": [
+                {
+                  "assessment": "supported",
+                  "claim_id": "c-1",
+                  "kind": "source_statement",
+                  "qualifiers": [
+                    "Fixture source attribution only."
+                  ],
+                  "temporal_scope": "historical",
+                  "text": "Source says retained evidence."
+                }
+              ],
+              "evidence": [
+                {
+                  "end": 23,
+                  "evidence_id": "e-1",
+                  "quote": "Retained café evidence.",
+                  "quote_digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                  "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                  "start": 0
+                }
+              ],
+              "relationships": [
+                {
+                  "assumptions": [],
+                  "kind": "supports",
+                  "rationale": "Fixture relation; not semantic verification.",
+                  "relationship_id": "r-1",
+                  "rule": null,
+                  "source_id": "e-1",
+                  "target_id": "c-1"
+                }
+              ],
+              "research_id": "00000000-0000-0000-0000-000000000002",
+              "revision_id": "00000000-0000-0000-0000-000000000003",
+              "schema_version": "knowledge-structure-prototype/1",
+              "scope_id": "00000000-0000-0000-0000-000000000001",
+              "snapshots": [
+                {
+                  "canonical_url": "https://example.test/revision",
+                  "digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                  "effective_at": null,
+                  "lineage_id": null,
+                  "media_type": "text/plain",
+                  "normalization_version": "utf8-exact/1",
+                  "origin_id": null,
+                  "published_at": null,
+                  "retrieved_at": "2026-09-01T00:00:00Z",
+                  "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                  "text": "Retained café evidence."
+                }
+              ]
+            },
+            "subject_id": "c-1",
+            "verifier": {
+              "identity": "storage-fixture",
+              "kind": "fixture_expectation",
+              "version": "1"
+            }
+          },
+          "checked_input_digest": "755bd7e7e03d9ef038592b24349afe3eaff8789d86182bbb5d7cde76c6057793",
+          "reason": "Hand-authored fixture expectation only",
+          "verdict": "pass",
+          "verification_id": "v-freshness-00000000-0000-0000-0000-000000000003"
+        },
+        {
+          "checked_at": "2026-09-05T00:00:00Z",
+          "checked_input": {
+            "check_type": "conflict_coverage",
+            "evidence_ids": [
+              "e-1"
+            ],
+            "freshness": null,
+            "policy_version": "storage-fixture/1",
+            "schema_version": "fixture-verification-input/1",
+            "structure": {
+              "as_of": "2026-09-05T00:00:00Z",
+              "claims": [
+                {
+                  "assessment": "supported",
+                  "claim_id": "c-1",
+                  "kind": "source_statement",
+                  "qualifiers": [
+                    "Fixture source attribution only."
+                  ],
+                  "temporal_scope": "historical",
+                  "text": "Source says retained evidence."
+                }
+              ],
+              "evidence": [
+                {
+                  "end": 23,
+                  "evidence_id": "e-1",
+                  "quote": "Retained café evidence.",
+                  "quote_digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                  "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                  "start": 0
+                }
+              ],
+              "relationships": [
+                {
+                  "assumptions": [],
+                  "kind": "supports",
+                  "rationale": "Fixture relation; not semantic verification.",
+                  "relationship_id": "r-1",
+                  "rule": null,
+                  "source_id": "e-1",
+                  "target_id": "c-1"
+                }
+              ],
+              "research_id": "00000000-0000-0000-0000-000000000002",
+              "revision_id": "00000000-0000-0000-0000-000000000003",
+              "schema_version": "knowledge-structure-prototype/1",
+              "scope_id": "00000000-0000-0000-0000-000000000001",
+              "snapshots": [
+                {
+                  "canonical_url": "https://example.test/revision",
+                  "digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+                  "effective_at": null,
+                  "lineage_id": null,
+                  "media_type": "text/plain",
+                  "normalization_version": "utf8-exact/1",
+                  "origin_id": null,
+                  "published_at": null,
+                  "retrieved_at": "2026-09-01T00:00:00Z",
+                  "snapshot_id": "00000000-0000-0000-0000-000000000004",
+                  "text": "Retained café evidence."
+                }
+              ]
+            },
+            "subject_id": "c-1",
+            "verifier": {
+              "identity": "storage-fixture",
+              "kind": "fixture_expectation",
+              "version": "1"
+            }
+          },
+          "checked_input_digest": "e0082b0eca3fef448c1fd3930d87b96b5162a10d5d0332dc43ca7814d200e13b",
+          "reason": "Hand-authored fixture expectation only",
+          "verdict": "pass",
+          "verification_id": "v-conflict_coverage-00000000-0000-0000-0000-000000000003"
+        }
+      ],
+      "schema_version": "fixture-verifications/1",
+      "structure": {
+        "as_of": "2026-09-05T00:00:00Z",
+        "claims": [
+          {
+            "assessment": "supported",
+            "claim_id": "c-1",
+            "kind": "source_statement",
+            "qualifiers": [
+              "Fixture source attribution only."
+            ],
+            "temporal_scope": "historical",
+            "text": "Source says retained evidence."
+          }
+        ],
+        "evidence": [
+          {
+            "end": 23,
+            "evidence_id": "e-1",
+            "quote": "Retained café evidence.",
+            "quote_digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+            "snapshot_id": "00000000-0000-0000-0000-000000000004",
+            "start": 0
+          }
+        ],
+        "relationships": [
+          {
+            "assumptions": [],
+            "kind": "supports",
+            "rationale": "Fixture relation; not semantic verification.",
+            "relationship_id": "r-1",
+            "rule": null,
+            "source_id": "e-1",
+            "target_id": "c-1"
+          }
+        ],
+        "research_id": "00000000-0000-0000-0000-000000000002",
+        "revision_id": "00000000-0000-0000-0000-000000000003",
+        "schema_version": "knowledge-structure-prototype/1",
+        "scope_id": "00000000-0000-0000-0000-000000000001",
+        "snapshots": [
+          {
+            "canonical_url": "https://example.test/revision",
+            "digest": "30da963b81a73217fa8ed09fdb4865fbcc262ee7aafac0ee4753027b73c3742a",
+            "effective_at": null,
+            "lineage_id": null,
+            "media_type": "text/plain",
+            "normalization_version": "utf8-exact/1",
+            "origin_id": null,
+            "published_at": null,
+            "retrieved_at": "2026-09-01T00:00:00Z",
+            "snapshot_id": "00000000-0000-0000-0000-000000000004",
+            "text": "Retained café evidence."
+          }
+        ]
+      },
+      "verifier": {
+        "identity": "storage-fixture",
+        "kind": "fixture_expectation",
+        "version": "1"
+      }
+    }
+  },
+  "revision_digest": "4f24abc501035930729d7bc52770691d9ee626bddbd2c51efba2d43e5e2eeeab",
+  "revision_id": "00000000-0000-0000-0000-000000000003",
+  "schema_version": "retained-research-publication-prototype/1"
+}

@@ -1,0 +1,26 @@
+{
+  "absence_semantics_disclosed": true,
+  "at_least_once_replay_stable": true,
+  "baseline_report_count": 1,
+  "comparison_report_count": 2,
+  "deleted": true,
+  "engine_scope_sha256": "80033284a5ef281b24bfac11e3a0582f7e386083fd6d5ffeb6f821ef92d6c5a0",
+  "event_ack_stable": true,
+  "event_types": [
+    "report_created",
+    "report_created",
+    "definition_paused"
+  ],
+  "hard_gate_passed": true,
+  "no_change_event_count": 0,
+  "paused": true,
+  "paused_report_count": 2,
+  "post_ack_event_count": 0,
+  "query_sha256": "ec72420df5dfbdce4111f715c96338df3b7cb75f58e478d2449c9720e560de8c",
+  "report_statuses": [
+    "compared",
+    "baseline_initialized"
+  ],
+  "resumed": true,
+  "schema_version": "enterprise-evaluation/w11-saved-search-live/1"
+}

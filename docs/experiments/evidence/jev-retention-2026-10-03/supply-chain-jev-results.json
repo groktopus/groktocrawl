@@ -1,0 +1,611 @@
+{
+  "acquisition": {
+    "attempted": 20,
+    "distinct_urls": 20,
+    "distinct_work_version_ids_returned": 0,
+    "duplicate_page_content_hash_groups": 0,
+    "failed_or_no_markdown": 0,
+    "pages_over_8000_chars": 14,
+    "returned_cards": 20,
+    "same_hash_is_independent_confirmation": false,
+    "source_quality_note": "all pages returned nonempty Markdown; scraper quality score/checks are transport/content heuristics, not factual correctness",
+    "total_markdown_chars": 327605,
+    "unique_page_hashes": 20,
+    "usable_markdown": 20
+  },
+  "assessment": {
+    "all_sources_chunk_count": 1,
+    "charged_cost": "not returned by proxy/provider",
+    "failed_or_invalid": 0,
+    "in_flight": 1,
+    "input_tokens": 79886,
+    "model": "jev-1.13.0",
+    "output_tokens": 460,
+    "provider_latency_ms": {
+      "max": 227.86104900296777,
+      "median": 203.70209350949153,
+      "min": 163.97594194859266,
+      "p95": 226.47878096904606
+    },
+    "requests": 20,
+    "score_max": 0.98,
+    "score_mean": 0.958,
+    "score_median": 0.97,
+    "score_min": 0.83,
+    "scores_at_or_above_threshold": 20,
+    "scores_below_threshold": 0,
+    "threshold": 0.1,
+    "valid": 20
+  },
+  "deployed_search_revision": "not provided",
+  "interpretation": "One query, single-reviewer best-effort labels, all sources one Jev chunk. The cutoff made no source-set change, so this batch provides no answer-quality effect estimate. The keyless projection omits some labeled late spans, but answer impact is unmeasured.",
+  "jev_rerank_explanation_present": false,
+  "label_freeze_commit": "fc54186",
+  "label_freeze_sha256": "91fba7f976d681432334baaffdee29848b600fa392dc57b71c81b391dd10c4e9",
+  "private_run_receipt_sha256": "db2faefd4c858d014ba926cb8dac6f9af813bb4d941cda728a892281c3c6c6c9",
+  "protocol_commit": "d46f852",
+  "protocol_sha256": "647fcd553ee2584da02696ee322066b5f6b46ad397173dec5ee8d7b5eae4b02d",
+  "retention": {
+    "keyless_8000_labeled_spans_not_fully_represented": [
+      {
+        "end": 15124,
+        "facet": "verification_vs_signing",
+        "keyless_state": "absent",
+        "source_id": "url-02",
+        "start": 14593
+      },
+      {
+        "end": 8682,
+        "facet": "trust_and_limits",
+        "keyless_state": "partial",
+        "source_id": "url-04",
+        "start": 7282
+      },
+      {
+        "end": 12477,
+        "facet": "verification_procedure",
+        "keyless_state": "absent",
+        "source_id": "url-06",
+        "start": 12282
+      },
+      {
+        "end": 13657,
+        "facet": "attestation_verification",
+        "keyless_state": "absent",
+        "source_id": "url-06",
+        "start": 13291
+      },
+      {
+        "end": 21016,
+        "facet": "verification",
+        "keyless_state": "absent",
+        "source_id": "url-09",
+        "start": 20890
+      },
+      {
+        "end": 11853,
+        "facet": "verification_procedure",
+        "keyless_state": "absent",
+        "source_id": "url-16",
+        "start": 11007
+      }
+    ],
+    "keyless_8000_projection_span_status": {
+      "absent": 5,
+      "partial": 1,
+      "present": 22
+    },
+    "positive_pages": 19,
+    "positive_pages_excluded": 0,
+    "positive_pages_retained": 19,
+    "positive_spans": 28,
+    "spans_missed_by_jev_filter": [],
+    "spans_retained_full_text": 28,
+    "uncertain_pages_retained": 1
+  },
+  "runner_commit": "9c29cd5",
+  "runner_sha256": "0b628ce45f91f1ecf7aee3b8d261a01be832c512ff70550b09685d762960d106",
+  "schema_version": "jev-retention-results/1",
+  "search_cached": false,
+  "search_partial": true,
+  "search_query_id": "ssx-4ba02ef6",
+  "search_snapshot_sha256": "8c94ecf1e09a5e005fc7692b29bc0519233d64a7a5d057eb246428b025b14904",
+  "sources": [
+    {
+      "assessment_complete": true,
+      "chars": 17346,
+      "chunk_count": 1,
+      "failed_calls": 0,
+      "id": "url-01",
+      "label": "yes",
+      "page_sha256": "cff0e37881762abf7782268bc7afd371cfd29cf3ad59f2a82974fb078de134f9",
+      "priority": "core candidate facet",
+      "projection_labels": [
+        {
+          "facet": "slsa_definition_and_provenance",
+          "state": "present"
+        },
+        {
+          "facet": "provenance_model",
+          "state": "present"
+        }
+      ],
+      "rank": 1,
+      "retained": true,
+      "score": 0.97,
+      "scores": [
+        0.97
+      ],
+      "url": "https://slsa.dev/spec/v0.1/provenance"
+    },
+    {
+      "assessment_complete": true,
+      "chars": 23752,
+      "chunk_count": 1,
+      "failed_calls": 0,
+      "id": "url-02",
+      "label": "yes",
+      "page_sha256": "7f7803620a3b06924e9a5e0953b8a36f40dcf59168523e68ef4289e423d28e1a",
+      "priority": "context candidate",
+      "projection_labels": [
+        {
+          "facet": "provenance_definition",
+          "state": "present"
+        },
+        {
+          "facet": "verification_vs_signing",
+          "state": "absent"
+        }
+      ],
+      "rank": 2,
+      "retained": true,
+      "score": 0.97,
+      "scores": [
+        0.97
+      ],
+      "url": "https://www.encryptionconsulting.com/slsa-build-provenance-and-signing-in-ci-cd-pipelines/"
+    },
+    {
+      "assessment_complete": true,
+      "chars": 25747,
+      "chunk_count": 1,
+      "failed_calls": 0,
+      "id": "url-03",
+      "label": "yes",
+      "page_sha256": "1f8ecd99838c2f402c3f9309df53367986f632351580eab42168c3b6acd1b9ef",
+      "priority": "core candidate facet",
+      "projection_labels": [
+        {
+          "facet": "verification_vs_signing",
+          "state": "present"
+        }
+      ],
+      "rank": 3,
+      "retained": true,
+      "score": 0.98,
+      "scores": [
+        0.98
+      ],
+      "url": "https://secure-pipelines.com/ci-cd-security/artifact-provenance-attestations-slsa-in-toto/"
+    },
+    {
+      "assessment_complete": true,
+      "chars": 32808,
+      "chunk_count": 1,
+      "failed_calls": 0,
+      "id": "url-04",
+      "label": "yes",
+      "page_sha256": "8c79f2fb8b70c62ab6729fe7424059c5287bb48dc39bf6282f170c3bdcfbf91d",
+      "priority": "context candidate",
+      "projection_labels": [
+        {
+          "facet": "provenance_contents",
+          "state": "present"
+        },
+        {
+          "facet": "trust_and_limits",
+          "state": "partial"
+        }
+      ],
+      "rank": 4,
+      "retained": true,
+      "score": 0.98,
+      "scores": [
+        0.98
+      ],
+      "url": "https://www.ostering.com/slsa-and-provenance/"
+    },
+    {
+      "assessment_complete": true,
+      "chars": 31793,
+      "chunk_count": 1,
+      "failed_calls": 0,
+      "id": "url-05",
+      "label": "yes",
+      "page_sha256": "a25a8f8529b2a0d50c203838fd508758f51e9e1a7c3fe1ea8a6aa5c299eef0e9",
+      "priority": "core candidate facet",
+      "projection_labels": [
+        {
+          "facet": "reproducible_builds_and_levels",
+          "state": "present"
+        }
+      ],
+      "rank": 5,
+      "retained": true,
+      "score": 0.96,
+      "scores": [
+        0.96
+      ],
+      "url": "https://www.kusari.dev/learning-center/slsa-supply-chain-levels-for-software-artifacts/"
+    },
+    {
+      "assessment_complete": true,
+      "chars": 21692,
+      "chunk_count": 1,
+      "failed_calls": 0,
+      "id": "url-06",
+      "label": "yes",
+      "page_sha256": "c01b0fd3d7043867b13396b4e05a3b1d05a5cd2b59695bf40b7fb50ab1ca5424",
+      "priority": "core candidate facet",
+      "projection_labels": [
+        {
+          "facet": "verification_procedure",
+          "state": "absent"
+        },
+        {
+          "facet": "attestation_verification",
+          "state": "absent"
+        }
+      ],
+      "rank": 6,
+      "retained": true,
+      "score": 0.98,
+      "scores": [
+        0.98
+      ],
+      "url": "https://www.systemshardening.com/articles/cicd/slsa-build-provenance/"
+    },
+    {
+      "assessment_complete": true,
+      "chars": 9997,
+      "chunk_count": 1,
+      "failed_calls": 0,
+      "id": "url-07",
+      "label": "yes",
+      "page_sha256": "e71d58bd856b74553103fc27e667536a73593816661e7cb89a76e2e6aba5b07e",
+      "priority": "core candidate facet",
+      "projection_labels": [
+        {
+          "facet": "reproducible_builds_and_limits",
+          "state": "present"
+        }
+      ],
+      "rank": 7,
+      "retained": true,
+      "score": 0.97,
+      "scores": [
+        0.97
+      ],
+      "url": "https://slsa.dev/spec/v1.1/faq"
+    },
+    {
+      "assessment_complete": true,
+      "chars": 10684,
+      "chunk_count": 1,
+      "failed_calls": 0,
+      "id": "url-08",
+      "label": "yes",
+      "page_sha256": "54d1396d218176f09455db3699f3ca4a4d310d5a73178fc7caf7c4a5663c0c15",
+      "priority": "context candidate",
+      "projection_labels": [
+        {
+          "facet": "provenance_definition",
+          "state": "present"
+        },
+        {
+          "facet": "reproducible_builds_and_levels",
+          "state": "present"
+        }
+      ],
+      "rank": 8,
+      "retained": true,
+      "score": 0.97,
+      "scores": [
+        0.97
+      ],
+      "url": "https://aquilax.ai/blog/supply-chain-artifact-signing-slsa"
+    },
+    {
+      "assessment_complete": true,
+      "chars": 25684,
+      "chunk_count": 1,
+      "failed_calls": 0,
+      "id": "url-09",
+      "label": "yes",
+      "page_sha256": "9c26a4dc42af365b533d12f2524dcba43519e8ae9a265a921de22fec509f032c",
+      "priority": "core candidate facet",
+      "projection_labels": [
+        {
+          "facet": "provenance_definition",
+          "state": "present"
+        },
+        {
+          "facet": "verification",
+          "state": "absent"
+        }
+      ],
+      "rank": 9,
+      "retained": true,
+      "score": 0.97,
+      "scores": [
+        0.97
+      ],
+      "url": "https://slsa.dev/spec/draft/build-provenance"
+    },
+    {
+      "assessment_complete": true,
+      "chars": 3183,
+      "chunk_count": 1,
+      "failed_calls": 0,
+      "id": "url-10",
+      "label": "yes",
+      "page_sha256": "7e20ef71fc63331296dc62bd688efc6b3d7445248a92b51250707bbbb291d0d2",
+      "priority": "core candidate facet",
+      "projection_labels": [
+        {
+          "facet": "verification_procedure",
+          "state": "present"
+        }
+      ],
+      "rank": 10,
+      "retained": true,
+      "score": 0.95,
+      "scores": [
+        0.95
+      ],
+      "url": "https://docs.gitlab.com/ci/pipeline_security/slsa/"
+    },
+    {
+      "assessment_complete": true,
+      "chars": 6884,
+      "chunk_count": 1,
+      "failed_calls": 0,
+      "id": "url-11",
+      "label": "yes",
+      "page_sha256": "a0f8f1479cd4d62d65c3620426ac4052cbde7b96320a99b42b5065e463626d5b",
+      "priority": "core candidate facet",
+      "projection_labels": [
+        {
+          "facet": "levels_and_tracks",
+          "state": "present"
+        },
+        {
+          "facet": "build_level_guarantees",
+          "state": "present"
+        }
+      ],
+      "rank": 11,
+      "retained": true,
+      "score": 0.96,
+      "scores": [
+        0.96
+      ],
+      "url": "https://slsa.dev/spec/v1.0/levels"
+    },
+    {
+      "assessment_complete": true,
+      "chars": 24451,
+      "chunk_count": 1,
+      "failed_calls": 0,
+      "id": "url-12",
+      "label": "yes",
+      "page_sha256": "d80602ed8e23ced2fc59c7da6ba3255a141793154f8fc0bbb3225651855186a2",
+      "priority": "context candidate",
+      "projection_labels": [
+        {
+          "facet": "build_level_guarantees",
+          "state": "present"
+        }
+      ],
+      "rank": 12,
+      "retained": true,
+      "score": 0.97,
+      "scores": [
+        0.97
+      ],
+      "url": "https://www.softwareseni.com/implementing-slsa-build-integrity-framework-for-software-supply-chain-security/"
+    },
+    {
+      "assessment_complete": true,
+      "chars": 11654,
+      "chunk_count": 1,
+      "failed_calls": 0,
+      "id": "url-13",
+      "label": "yes",
+      "page_sha256": "51230725e10a6b6c87ab5c960296419c6e20a2176737f4b4052e3752cee281fb",
+      "priority": "core candidate facet",
+      "projection_labels": [
+        {
+          "facet": "trust_and_limits",
+          "state": "present"
+        }
+      ],
+      "rank": 13,
+      "retained": true,
+      "score": 0.97,
+      "scores": [
+        0.97
+      ],
+      "url": "https://www.wiz.io/academy/application-security/slsa-framework"
+    },
+    {
+      "assessment_complete": true,
+      "chars": 12954,
+      "chunk_count": 1,
+      "failed_calls": 0,
+      "id": "url-14",
+      "label": "yes",
+      "page_sha256": "045d2347003ef6ce2dc7212312ed20eaf26842b18ca755e990a8f1b9974fc2bc",
+      "priority": "context candidate",
+      "projection_labels": [
+        {
+          "facet": "slsa_definition_and_provenance",
+          "state": "present"
+        },
+        {
+          "facet": "build_level_guarantees",
+          "state": "present"
+        }
+      ],
+      "rank": 14,
+      "retained": true,
+      "score": 0.95,
+      "scores": [
+        0.95
+      ],
+      "url": "https://cloudsmith.com/blog/slsa-a-route-to-tamper-proof-builds-and-secure-software-provenance"
+    },
+    {
+      "assessment_complete": true,
+      "chars": 5570,
+      "chunk_count": 1,
+      "failed_calls": 0,
+      "id": "url-15",
+      "label": "yes",
+      "page_sha256": "948b2dce1d2a4037d526c60ac52e536a9aba558e9dca4029ad29e77ca3cf0248",
+      "priority": "context candidate",
+      "projection_labels": [
+        {
+          "facet": "implementation_steps",
+          "state": "present"
+        }
+      ],
+      "rank": 15,
+      "retained": true,
+      "score": 0.95,
+      "scores": [
+        0.95
+      ],
+      "url": "https://developer.harness.io/docs/software-supply-chain-assurance/artifact-security/slsa/overview/"
+    },
+    {
+      "assessment_complete": true,
+      "chars": 31585,
+      "chunk_count": 1,
+      "failed_calls": 0,
+      "id": "url-16",
+      "label": "yes",
+      "page_sha256": "15e04952c4607ccda5187bce5c1eb394225504f30c190679fc2f1fc6b5ee43ba",
+      "priority": "core candidate facet",
+      "projection_labels": [
+        {
+          "facet": "verification_procedure",
+          "state": "absent"
+        }
+      ],
+      "rank": 16,
+      "retained": true,
+      "score": 0.94,
+      "scores": [
+        0.94
+      ],
+      "url": "https://www.kusari.dev/learning-center/build-provenance/"
+    },
+    {
+      "assessment_complete": true,
+      "chars": 7664,
+      "chunk_count": 1,
+      "failed_calls": 0,
+      "id": "url-17",
+      "label": "yes",
+      "page_sha256": "d0c453696e4e8c30658fedb2ee031a69002b27ce508c3758be676a2600b1bace",
+      "priority": "context candidate",
+      "projection_labels": [
+        {
+          "facet": "build_level_guarantees",
+          "state": "present"
+        }
+      ],
+      "rank": 17,
+      "retained": true,
+      "score": 0.95,
+      "scores": [
+        0.95
+      ],
+      "url": "https://jfrog.com/learn/grc/slsa-framework/"
+    },
+    {
+      "assessment_complete": true,
+      "chars": 5995,
+      "chunk_count": 1,
+      "failed_calls": 0,
+      "id": "url-18",
+      "label": "uncertain",
+      "page_sha256": "0c232e45473ca8d69a14faf5a04fc73501003f6da6976a30ea113ef1e633dc03",
+      "priority": "uncertain version claim",
+      "projection_labels": [
+        {
+          "facet": "version_status_claim",
+          "state": "present"
+        }
+      ],
+      "rank": 18,
+      "retained": true,
+      "score": 0.97,
+      "scores": [
+        0.97
+      ],
+      "url": "https://rywalker.com/research/slsa"
+    },
+    {
+      "assessment_complete": true,
+      "chars": 14325,
+      "chunk_count": 1,
+      "failed_calls": 0,
+      "id": "url-19",
+      "label": "yes",
+      "page_sha256": "03dcc79e0c3b0f3976d93c6fd2d95a68be031eb2f1412a084ec3ebe57c62cba0",
+      "priority": "core candidate facet",
+      "projection_labels": [
+        {
+          "facet": "attestation_format",
+          "state": "present"
+        },
+        {
+          "facet": "provenance_definition",
+          "state": "present"
+        }
+      ],
+      "rank": 19,
+      "retained": true,
+      "score": 0.97,
+      "scores": [
+        0.97
+      ],
+      "url": "https://www.legitsecurity.com/blog/slsa-provenance-blog-series-part-2-deeper-dive-into-slsa-provenance"
+    },
+    {
+      "assessment_complete": true,
+      "chars": 3837,
+      "chunk_count": 1,
+      "failed_calls": 0,
+      "id": "url-20",
+      "label": "yes",
+      "page_sha256": "4e24f133938cef568d8552b7e5eb3bf2aa2992c464c3d9b501b32e51b0748b88",
+      "priority": "core candidate facet",
+      "projection_labels": [
+        {
+          "facet": "slsa_definition_and_assurance",
+          "state": "present"
+        }
+      ],
+      "rank": 20,
+      "retained": true,
+      "score": 0.83,
+      "scores": [
+        0.83
+      ],
+      "url": "https://slsa.dev/"
+    }
+  ]
+}

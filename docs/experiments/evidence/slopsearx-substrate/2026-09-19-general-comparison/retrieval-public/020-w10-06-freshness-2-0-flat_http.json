@@ -1,0 +1,35 @@
+{
+  "arm": "flat_http",
+  "attempts": [
+    {
+      "coverage": null,
+      "query_sha256": "a1253de9a3ce4d97f609eeaa4f0a89400fbd464f8625a1347f2d5cce78221f13",
+      "result_count": 20,
+      "result_url_sha256": [
+        "d79622583bf1ea82a0774163086e302f2d5cf35cb3f9e8369748946738351a99",
+        "c0939d77ee74a2e165c3cac8754f4c79176d24c834696ed2c9a6ce9e7ce0a11a",
+        "66c4f93e6f6159dd9a31dc7cad0cc7389b830886bc69567f353226c5c00adacf",
+        "6437e51ffb9b7e06d0a9d868cb22edae9822bb5bb55b6272f5eb65b24927702a",
+        "0b6464efbdb4c5c92497786f3164685225d29aa1261cc426b73152900e333201",
+        "f75b1ac3c42552bc04f00295d020d12ab7302d6d0e1038a20f0d60fce4dcddfc",
+        "49db1e63f8e9aa8618751840542bca88bfdb90bb591354e2a128a9299565b4d9",
+        "9c9e57feaeee2936e69de5a48ee71348a079260d4fa3a04f013444a8b0e3fd8d"
+      ],
+      "returned_results": 8,
+      "unresponsive_engine_count": 3
+    }
+  ],
+  "case_id": "w10-06-freshness-2",
+  "challenge_type": "stale_evidence",
+  "control_policy": "fixed",
+  "elapsed_ms": 1089.332,
+  "engine_count": 7,
+  "engine_scope_sha256": "552d0a8e54100ffed23f23474d8aa8eabcb63c6ed43060cd3c3427d56869f6eb",
+  "position": 20,
+  "query_count": 1,
+  "query_plan_sha256": "4ec519b3e3c22388e351c92627177db44d9f20b0906dcf66ed0311a61d2f8160",
+  "repetition": 0,
+  "schema_version": "enterprise-evaluation/w11-general-retrieval/1",
+  "status": "completed",
+  "w10_source_record_sha256": "9a39a4ae814f8ce46ac0feadd7cbdac87e4d6ead664facee7fc88c34b6cb4543"
+}

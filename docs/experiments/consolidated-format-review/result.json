@@ -1,0 +1,10 @@
+{
+  "status": "incomplete_timeout",
+  "timeout_seconds": 180,
+  "response_bytes": 0,
+  "prompt_sha256": "ea6df9c92d2bfae051409ebc04ce5c2b77140e203a5c7e9e3291963fce8a5159",
+  "reviewer": "Hermes CLI",
+  "resolved_model": null,
+  "usage": null,
+  "independent_review_completed": false
+}

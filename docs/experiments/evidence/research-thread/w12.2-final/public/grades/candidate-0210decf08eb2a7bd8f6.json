@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-0210decf08eb2a7bd8f6",
+  "case_id": "later-resolution",
+  "completed_at": "2026-09-19T09:17:54.677126+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 100,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "The candidate correctly answers yes: fern-faq-new supports the current truth that Fern CI retains build logs for 30 days, and fern-faq-old supports the historical truth that the period was previously not specified, exactly matching the reference change event, current truth, and historical truth. The 30-day claim is correctly scoped to build logs. Both snapshots share subject_id fern-ci and lineage_id fern-faq, so treating the new snapshot as an update of the same FAQ is correct; no distinct subjects or capabilities were merged (false_merge false). The prior 'not specified' state is kept historical, not current (stale_current_leak false), and no historically valid claim was dropped (lost_history false). Every factual claim traces to the supplied snapshots, so unsupported_claims is 0. The only deduction is unresolved_accuracy: the reference ledger lists no unresolved items, and the candidate appended three peripheral observations (no effective date, no timestamps, retention scope beyond build logs) that are accurate about the sources but are invented peripheral questions that earn no credit. Usefulness remains very high given the direct yes/no answer, correct identity reasoning, and clean current/historical separation, with only minor noise from the extra unresolved items.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 50,
+    "unsupported_claims": 0,
+    "usefulness": 95
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "fb1fcf97a121f3630e8a6fd1f18619bac0ef0fd2da65d8e2f6cd0167f28d2f4b",
+    "finish_reason": "stop",
+    "latency_ms": 222998.469,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "b32ce82f0649c30ee7adbcb4221b5a4b3ab8b7c27de4a1cdd21d613f1a2b3cb4",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 3313,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 3720
+      },
+      "cost": 0.00180875,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0016565,
+        "upstream_inference_cost": 0.00180875,
+        "upstream_inference_prompt_cost": 0.00015225
+      },
+      "is_byok": false,
+      "prompt_tokens": 1015,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 4328
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:14:11.676689+00:00",
+  "status": "completed",
+  "trial_id": "later-resolution-r2-treatment"
+}

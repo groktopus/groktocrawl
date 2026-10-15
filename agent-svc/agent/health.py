@@ -12,6 +12,8 @@ from typing import Any
 
 import httpx
 
+from .browser_client import browser_request_url, create_browser_client
+
 
 async def check_valkey(url: str) -> dict[str, Any]:
     """Probe Valkey via PING."""
@@ -147,14 +149,17 @@ async def check_scraper(url: str) -> dict[str, Any]:
         }
 
 
-async def check_browser(url: str) -> dict[str, Any]:
-    """Probe browser-svc by hitting its root endpoint."""
+async def check_browser(url: str, socket_path: str | None = None) -> dict[str, Any]:
+    """Probe browser-svc through its resource-aware /health endpoint."""
     start = time.monotonic()
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            resp = await client.get(f"{url.rstrip('/')}/", timeout=10)
+        async with create_browser_client(socket_path=socket_path, timeout=10) as client:
+            target = browser_request_url(
+                "/health", socket_path=socket_path, legacy_base_url=url
+            )
+            resp = await client.get(target, timeout=10)
             elapsed = (time.monotonic() - start) * 1000
-            if resp.status_code < 500:
+            if resp.status_code == 200:
                 return {
                     "status": "ok",
                     "latency_ms": round(elapsed, 1),
@@ -221,6 +226,7 @@ async def check_all(
     scraper_url: str = "http://scraper-svc:8001",
     browser_url: str = "http://browser-svc:8012",
     portal_url: str = "http://portal-svc:8081",
+    browser_socket_path: str | None = None,
 ) -> dict[str, Any]:
     """Probe all dependencies and return aggregated health.
 
@@ -233,7 +239,7 @@ async def check_all(
         check_valkey(valkey_url),
         check_searxng(searxng_url),
         check_scraper(scraper_url),
-        check_browser(browser_url),
+        check_browser(browser_url, socket_path=browser_socket_path),
         check_portal(portal_url),
         return_exceptions=True,
     )

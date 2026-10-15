@@ -1,0 +1,52 @@
+{
+  "case_id": "mission-temporal-provider",
+  "completed_at": "2026-09-19T06:01:55.134637+00:00",
+  "position": 8,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "da22ffd60a5b9cf4da7bd1f4470df71fc74da14e5d37447fc087fece18532a7c",
+    "finish_reason": "stop",
+    "latency_ms": 18278.822,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "e13da471bdc1ce9ecfba51c89805bd2c3e2c34aef91b72de7b10533e0dde01e4",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 2787,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 3290
+      },
+      "cost": 0.00170265,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0013935,
+        "upstream_inference_cost": 0.00170265,
+        "upstream_inference_prompt_cost": 0.00030915
+      },
+      "is_byok": false,
+      "prompt_tokens": 2061,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 4848
+    }
+  },
+  "repetition": 1,
+  "result": {
+    "action": "clarify",
+    "clarifying_question": "Please attach or quote the policy and vendor note referenced in the request, and identify the current provider and the candidate provider under consideration — without these documents the switching criteria, constraints, and vendor claims that must define the research scope cannot be known and would have to be guessed.",
+    "mission": null,
+    "rationale": "The request's premise contradicts its contents: it cites a 'supplied policy and vendor note,' but no source text is present in the payload. That contradiction is preserved and reported, not resolved by assumption. The policy would define the switching criteria, constraints, and the timing implied by 'now'; the vendor note would contain the claims requiring verification. Constructing a mission without them would require inventing scope, decision criteria, and source findings, which the contract forbids. The gap is decision-changing — a cost-driven policy, a risk-driven policy, or a contractually locked state would each produce a different research boundary — so one blocking clarification is issued rather than a guessed mission. Clarify rather than abstain because research on a provider-switch decision is appropriate in principle; only its inputs are missing. Even once the documents are supplied, the resulting mission will be a caller-reviewed research boundary only — not permission to switch and not a truth verdict — and the switch decision itself remains with the requester."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:01:36.848660+00:00",
+  "status": "completed",
+  "trial_id": "mission-temporal-provider-intake-r1"
+}

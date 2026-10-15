@@ -1,0 +1,87 @@
+{
+  "arm": "treatment",
+  "case_id": "mission-unanswerable-release",
+  "completed_at": "2026-09-19T05:55:43.655658+00:00",
+  "position": 2,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "324c621d74052eba1b24d884932abc6a52067547c3e9cfec5471a2190006d1c6",
+    "finish_reason": "stop",
+    "latency_ms": 19509.323,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "eed9cfc3607a50570899c5b3e4e4eba25ba31f306550a9f5dadee4b30e4d236f",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 498,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 9
+      },
+      "cost": 0.0002692,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0001743,
+        "upstream_inference_cost": 0.0002692,
+        "upstream_inference_prompt_cost": 9.49e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 949,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1447
+    }
+  },
+  "repetition": 3,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "**Decision-support answer: the packet does not establish service-owner approval for the timed-out release.** The retained evidence shows only that a release request was submitted and later reported by the remote service as completed (reliability-context). The delivery policy requires service-owner approval and a recorded rollback plan before production deployment (delivery-policy), but no approval record or rollback plan appears in the packet. Under the reliability policy, remote completion after an ambiguous timeout does not itself prove anything about prior compliance, and a worker must reconcile remote state before retrying rather than treat a local checkpoint as conclusive (reliability-policy). Per the scope, remote completion is not equated with approval. **Abstain:** no approval is inferred or invented; the approval question is left unresolved pending the approval record and rollback plan.",
+    "candidate_id": "candidate-1242c9480a031c6f070e",
+    "citations": [
+      "delivery-policy",
+      "reliability-policy",
+      "reliability-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "delivery-policy"
+        ],
+        "text": "Production deployment requires service-owner approval and a recorded rollback plan.",
+        "uncertainty": "None; stated explicitly in policy."
+      },
+      {
+        "source_ids": [
+          "reliability-context"
+        ],
+        "text": "A worker timed out after submitting a release request, and the remote service later reported the original request as completed.",
+        "uncertainty": "Controlled-test observation only; establishes remote completion, not approval or compliance."
+      },
+      {
+        "source_ids": [
+          "delivery-policy",
+          "reliability-context"
+        ],
+        "text": "Remote completion of the release request does not constitute evidence of service-owner approval or a recorded rollback plan; no approval record appears in the packet.",
+        "uncertainty": "Unresolved: the packet contains no approval or rollback artifacts, so approval cannot be established or denied."
+      },
+      {
+        "source_ids": [
+          "reliability-policy"
+        ],
+        "text": "After ambiguous completion, the worker must reconcile remote state before retrying; a local checkpoint alone does not prove the external write failed.",
+        "uncertainty": "None as policy; application to the specific worker's actions is not evidenced."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:55:24.145861+00:00",
+  "status": "completed",
+  "trial_id": "mission-unanswerable-release-r3-treatment"
+}

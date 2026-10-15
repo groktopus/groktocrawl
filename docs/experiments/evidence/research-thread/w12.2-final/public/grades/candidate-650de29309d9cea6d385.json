@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-650de29309d9cea6d385",
+  "case_id": "near-match-products",
+  "completed_at": "2026-09-19T09:24:39.883524+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 95,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 90,
+    "lost_history": false,
+    "rationale": "Candidate correctly answers no, keeps Harbor Agent's network requirement current, and avoids transferring Harbor Agent Cloud's offline export mode to Harbor Agent. Change and current truths are well supported. Historical truths are preserved as standing documented state. Unresolved list includes some invented peripheral questions (timing, whether export mode is a broader offline mode) not present in the reference, lowering unresolved_accuracy.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 70,
+    "unsupported_claims": 0,
+    "usefulness": 95
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "0181e266996767764b9c6ba87eb3e43ff2229cf519a29fc96807790cb67ebf02",
+    "finish_reason": "stop",
+    "latency_ms": 13081.983,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "462f9baeaebeddfc79dcd484332bfedf05d90d50a3098781b86d06c982a928ed",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 180,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 31
+      },
+      "cost": 0.0001416,
+      "cost_details": {
+        "upstream_inference_completions_cost": 4.5e-05,
+        "upstream_inference_cost": 0.0001416,
+        "upstream_inference_prompt_cost": 9.66e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 1288,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1468
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:24:26.801158+00:00",
+  "status": "completed",
+  "trial_id": "near-match-products-r1-treatment"
+}

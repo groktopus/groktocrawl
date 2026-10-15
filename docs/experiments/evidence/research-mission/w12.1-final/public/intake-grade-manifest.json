@@ -1,0 +1,10 @@
+{
+  "base_url_origin": "https://research-provider.example/",
+  "concurrency": 5,
+  "eligible_candidate_count": 36,
+  "model_route": "general",
+  "schema_version": "research-mission-intake-grade-manifest/1",
+  "source_revision": "a2a743b44bb2c2420d523703ff15afb6e84c97c5",
+  "started_at": "2026-09-19T06:25:11.804429+00:00",
+  "work_order_sha256": "2588e0a0fe43ebc74c69474214fc6d22a2677c86e3c6c1832ee1539ac93d9e5f"
+}

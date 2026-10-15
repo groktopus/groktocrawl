@@ -6,6 +6,8 @@ The API is served by `agent-svc` on port 8080. FastAPI publishes the authoritati
 
 Authentication is optional for local development and required for production. Set `API_KEY`, then send either `Authorization: Bearer <key>` or `X-API-Key: <key>`. `/health` and `/metrics` remain unauthenticated for infrastructure probes.
 
+If both key headers are sent, a valid Bearer key takes precedence; otherwise a valid `X-API-Key` is used. Sessions and per-user research memory use that same key for their scope. `RESEARCH_MEMORY_SCOPE=global` still shares cached research. Without authentication, supplied key headers are cache-partition hints and do not establish caller identity.
+
 Errors use a common object with `error`, `error_code`, and optional `details`. Typical codes are `INVALID_REQUEST`, `AUTH_ERROR`, `NOT_FOUND`, `RATE_LIMITED`, `UPSTREAM_ERROR`, and `INTERNAL_ERROR`.
 
 ```bash
@@ -52,6 +54,12 @@ sources, pass count, the evidence floor, and any uncovered query dimensions.
 `coverage_complete=false` means synthesis completed with those limitations
 reported; it does not claim that three sources are comprehensive coverage.
 
+The `/v2/agent` acquisition policy no longer accepts `max_results_per_query`; the old
+JSON field is rejected with HTTP 422 rather than ignored. The matching CLI
+flag and MCP argument are also removed. Omit them and use `max_credits` only
+when an explicit attempt budget is required. This does not change the
+caller-provided `limit` on `POST /v2/search`.
+
 ### Search and retrieval
 
 `/v2/search` supports source/category filters, content extraction, optional streaming, structured extraction, and keyword/semantic/hybrid retrieval modes. Semantic modes depend on `semantic-svc` and Qdrant; keyword search depends on SlopSearX and its configured search provider.
@@ -68,6 +76,25 @@ Use the two-step parse flow when an upload must be staged: `PUT /v2/parse/upload
 
 GroktoCrawl targets Firecrawl v2 request/response conventions for its compatible operations. GroktoCrawl-specific facilities—plans, sessions, research memory, citation resolution, enrichment, semantic similarity, portal support, and MCP—extend that surface. Do not infer unsupported Firecrawl options from compatibility language; consult `/openapi.json` for accepted fields.
 
+### Experimental research protocol
+
+The opt-in research protocol is separate from `/v2/agent` and `/v2/answer`:
+`GET /experimental/research/v1/capabilities` reports enabled capabilities, and
+`POST /experimental/research/v1/runs` starts a bounded run. Run status and events
+are available under `/runs/{run_id}` and `/runs/{run_id}/events`; audited artifacts,
+evidence, and explicit workspace actions have routes under the same prefix. See the
+[retained research workspace guide](research-workspace.md) for named actions and
+state boundaries.
+
+The protocol uses `FEATURE_EXPERIMENTAL_RESEARCH`; run creation, durable execution,
+and PostgreSQL artifact authority have separate feature flags during rollout. A
+disabled capability returns 404. PostgreSQL is included in the standard Compose
+deployment; durable operation requires its configured connection and explicit ordered
+schema migrations. Existing inline jobs, sessions, research-memory records, and `/v2/*`
+contracts are not imported or changed by enabling the protocol. The route name remains
+`experimental` for compatibility and API stability while its capabilities mature; it
+does not require a separate deployment or repository.
+
 ## Evidence selection and search continuation
 
 `POST /v2/answer` accepts `evidence_budget_chars` (256–128000; default 32000). Its JSON response and SSE `done` event include `evidence_coverage`: method, budget_chars, selected_chars, complete, and sources with id/url, content_sha256, source_chars, selected_chars, omitted_chars and start/end spans. Offsets count Unicode characters into the full Markdown whose UTF-8 SHA-256 is reported. The budget counts source text; context headers are additional. `complete` means all supplied text was selected, not that an answer or discovery is exhaustive.
@@ -77,3 +104,37 @@ Research-agent completion `coverage.evidence` exposes the same default budget. `
 Fast non-streaming keyword search accepts `limit` (1–1000), `page` (1–1000) and `offset` (0–100000, within that upstream page). `coverage` reports captured_results, returned_results, omitted_results, has_more_in_page and unknown upstream_has_more. If more captured results remain, submit the returned `continuation` object to `/v2/search`. After exhausting that page, callers may request coverage.next_upstream_page with offset=0; engine support and further availability are unknown. Each continuation repeats the upstream query, so ordering can change. No exhaustive or snapshot guarantee is made. Images, streaming and non-fast/non-keyword modes reject nondefault page/offset with 422.
 
 For example: `{"query":"capacitor measurements","limit":20,"page":1,"offset":0}`. Narrow a session question with `{"question":"Amber voltage","ref_ids":["ref_1_2"],"evidence_budget_chars":64000}`. Lexical selection scans all retained content but may miss synonyms; use coverage and complete refs when auditing omissions.
+
+
+### Source-reported media metadata
+
+Search results may include optional `media` records with `media_type` (`image`
+or `video`), original `url`, `thumbnail`, source-page `source`, pixel `width`/
+`height`, and `duration` in seconds. Values are retained only when reported by
+the upstream engine; missing values stay absent. Existing engine attribution
+and scholarly fields remain intact. API sync/SSE, CLI JSON, MCP and session refs
+retain the same bounded record. Image search retains its existing Firecrawl
+fields and adds this metadata. News does not acquire a fabricated media kind.
+
+This is discovery metadata: previews/originals are not downloaded or used as
+crawl evidence. Unsafe/private/local URLs, signed or credential-bearing links,
+malformed values, unknown fields and embed HTML are omitted. A public hostname
+is not a guarantee about DNS or permission to fetch/render it. See
+[X ADR-0095](../adr/experimental/groktocrawl-x/0095-retain-bounded-source-media-metadata.md) for bounds.
+
+### Bounded scholarly search
+
+`POST /v1/search` and `POST /v2/search` accept optional inclusive publication
+`date_from` and `date_to` strings in canonical `YYYY-MM-DD` format. One-sided
+ranges are supported. Explicit `engines: ["openalex"]` is required. Exact dates
+cannot be combined with `time_range`; relative windows are not supported on this
+API. This audited slice requires non-streaming `fast` search with `keyword`
+retrieval, optional `web` source and `science`/`research` category, and no content
+or structured-output enrichment. Other combinations fail validation before work.
+
+Successful bounded responses include `date_filter` with requested and applied
+bounds, enforcement status, engine identity and warnings. Results retain
+`publishedDate`. An old or incompatible backend, missing enforcement proof,
+failed acquisition, or out-of-range result fails closed rather than returning an
+unbounded success. Deploy the compatible search backend before this client.
+This contract does not establish publication-date coverage for general news.

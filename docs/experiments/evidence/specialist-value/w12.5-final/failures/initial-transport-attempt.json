@@ -1,0 +1,8 @@
+{
+  "attempt": "direct-lan-route",
+  "completed": 0,
+  "failed": 36,
+  "error_type": "ConnectError",
+  "error": "[Errno 65] No route to host",
+  "disposition": "Retained as an invalid transport attempt; rerun through a verified SSH tunnel without changing frozen experiment inputs."
+}

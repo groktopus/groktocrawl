@@ -1,0 +1,1283 @@
+{
+  "candidates": [
+    {
+      "errors": [],
+      "gates": {
+        "deleted_doc_absent": true,
+        "provider_ok": true,
+        "scope_alpha-x": true,
+        "scope_alpha-y": true,
+        "scope_beta-x": true,
+        "scope_beta-z": true,
+        "top_k_alpha-x": true,
+        "top_k_alpha-y": true,
+        "top_k_beta-x": true,
+        "top_k_beta-z": true
+      },
+      "latency_summary_ms": {
+        "bulk_upsert": {
+          "mean": 2.1917836666650223,
+          "p50": 1.757236000003104,
+          "p95": 3.1399049999976114
+        },
+        "delete": {
+          "mean": 1.376576999997307,
+          "p50": 1.2835329999916212,
+          "p95": 1.5883419999909165
+        },
+        "duplicate_replay": {
+          "mean": 1.2296796666646514,
+          "p50": 1.2421360000018922,
+          "p95": 1.251623999991125
+        },
+        "filtered_search": {
+          "mean": 1.4378513333343317,
+          "p50": 1.2531189999975823,
+          "p95": 2.7662680000020146
+        },
+        "post_delete_search": {
+          "mean": 1.9346576666663395,
+          "p50": 1.2307049999975561,
+          "p95": 3.3428830000019616
+        }
+      },
+      "metrics_ms": {
+        "bulk_upsert": [
+          3.1399049999976114,
+          1.757236000003104,
+          1.6782099999943512
+        ],
+        "delete": [
+          1.257856000009383,
+          1.2835329999916212,
+          1.5883419999909165
+        ],
+        "duplicate_replay": [
+          1.251623999991125,
+          1.2421360000018922,
+          1.1952790000009372
+        ],
+        "filtered_search": [
+          2.7662680000020146,
+          1.3129790000050434,
+          1.2320969999990439,
+          1.2440189999978202,
+          1.4964009999971495,
+          1.2417260000034958,
+          1.2189720000037596,
+          1.2295230000063384,
+          1.7539090000013857,
+          1.2531189999975823,
+          1.2565840000036133,
+          1.2486189999947328
+        ],
+        "post_delete_search": [
+          1.2307049999975561,
+          3.3428830000019616,
+          1.230384999999501
+        ]
+      },
+      "name": "qdrant",
+      "ok": true,
+      "post_delete": {
+        "query_id": "alpha-x",
+        "results": [
+          {
+            "id": "doc-002",
+            "score": 0.9938837
+          },
+          {
+            "id": "doc-003",
+            "score": 0.0
+          }
+        ]
+      },
+      "rounds": [
+        {
+          "errors": [],
+          "gates": {
+            "deleted_doc_absent": true,
+            "provider_ok": true,
+            "scope_alpha-x": true,
+            "scope_alpha-y": true,
+            "scope_beta-x": true,
+            "scope_beta-z": true,
+            "top_k_alpha-x": true,
+            "top_k_alpha-y": true,
+            "top_k_beta-x": true,
+            "top_k_beta-z": true
+          },
+          "latency_summary_ms": {
+            "bulk_upsert": {
+              "mean": 3.1399049999976114,
+              "p50": 3.1399049999976114,
+              "p95": 3.1399049999976114
+            },
+            "delete": {
+              "mean": 1.257856000009383,
+              "p50": 1.257856000009383,
+              "p95": 1.257856000009383
+            },
+            "duplicate_replay": {
+              "mean": 1.251623999991125,
+              "p50": 1.251623999991125,
+              "p95": 1.251623999991125
+            },
+            "filtered_search": {
+              "mean": 1.6388407500009805,
+              "p50": 1.3129790000050434,
+              "p95": 2.7662680000020146
+            },
+            "post_delete_search": {
+              "mean": 1.2307049999975561,
+              "p50": 1.2307049999975561,
+              "p95": 1.2307049999975561
+            }
+          },
+          "metrics_ms": {
+            "bulk_upsert": [
+              3.1399049999976114
+            ],
+            "delete": [
+              1.257856000009383
+            ],
+            "duplicate_replay": [
+              1.251623999991125
+            ],
+            "filtered_search": [
+              2.7662680000020146,
+              1.3129790000050434,
+              1.2320969999990439,
+              1.2440189999978202
+            ],
+            "post_delete_search": [
+              1.2307049999975561
+            ]
+          },
+          "name": "qdrant",
+          "ok": true,
+          "post_delete": {
+            "query_id": "alpha-x",
+            "results": [
+              {
+                "id": "doc-002",
+                "score": 0.9938837
+              },
+              {
+                "id": "doc-003",
+                "score": 0.0
+              }
+            ]
+          },
+          "round": 1,
+          "searches": [
+            {
+              "query_id": "alpha-x",
+              "results": [
+                {
+                  "id": "doc-001",
+                  "score": 1.0
+                },
+                {
+                  "id": "doc-002",
+                  "score": 0.9938837
+                },
+                {
+                  "id": "doc-003",
+                  "score": 0.0
+                }
+              ],
+              "scope": "alpha"
+            },
+            {
+              "query_id": "alpha-y",
+              "results": [
+                {
+                  "id": "doc-003",
+                  "score": 1.0
+                },
+                {
+                  "id": "doc-002",
+                  "score": 0.11043153
+                },
+                {
+                  "id": "doc-001",
+                  "score": 0.0
+                }
+              ],
+              "scope": "alpha"
+            },
+            {
+              "query_id": "beta-x",
+              "results": [
+                {
+                  "id": "doc-004",
+                  "score": 1.0
+                },
+                {
+                  "id": "doc-006",
+                  "score": 0.0
+                },
+                {
+                  "id": "doc-005",
+                  "score": 0.0
+                }
+              ],
+              "scope": "beta"
+            },
+            {
+              "query_id": "beta-z",
+              "results": [
+                {
+                  "id": "doc-005",
+                  "score": 1.0
+                },
+                {
+                  "id": "doc-006",
+                  "score": 0.0
+                },
+                {
+                  "id": "doc-004",
+                  "score": 0.0
+                }
+              ],
+              "scope": "beta"
+            }
+          ]
+        },
+        {
+          "errors": [],
+          "gates": {
+            "deleted_doc_absent": true,
+            "provider_ok": true,
+            "scope_alpha-x": true,
+            "scope_alpha-y": true,
+            "scope_beta-x": true,
+            "scope_beta-z": true,
+            "top_k_alpha-x": true,
+            "top_k_alpha-y": true,
+            "top_k_beta-x": true,
+            "top_k_beta-z": true
+          },
+          "latency_summary_ms": {
+            "bulk_upsert": {
+              "mean": 1.757236000003104,
+              "p50": 1.757236000003104,
+              "p95": 1.757236000003104
+            },
+            "delete": {
+              "mean": 1.2835329999916212,
+              "p50": 1.2835329999916212,
+              "p95": 1.2835329999916212
+            },
+            "duplicate_replay": {
+              "mean": 1.2421360000018922,
+              "p50": 1.2421360000018922,
+              "p95": 1.2421360000018922
+            },
+            "filtered_search": {
+              "mean": 1.2966555000026858,
+              "p50": 1.2417260000034958,
+              "p95": 1.4964009999971495
+            },
+            "post_delete_search": {
+              "mean": 3.3428830000019616,
+              "p50": 3.3428830000019616,
+              "p95": 3.3428830000019616
+            }
+          },
+          "metrics_ms": {
+            "bulk_upsert": [
+              1.757236000003104
+            ],
+            "delete": [
+              1.2835329999916212
+            ],
+            "duplicate_replay": [
+              1.2421360000018922
+            ],
+            "filtered_search": [
+              1.4964009999971495,
+              1.2417260000034958,
+              1.2189720000037596,
+              1.2295230000063384
+            ],
+            "post_delete_search": [
+              3.3428830000019616
+            ]
+          },
+          "name": "qdrant",
+          "ok": true,
+          "post_delete": {
+            "query_id": "alpha-x",
+            "results": [
+              {
+                "id": "doc-002",
+                "score": 0.9938837
+              },
+              {
+                "id": "doc-003",
+                "score": 0.0
+              }
+            ]
+          },
+          "round": 2,
+          "searches": [
+            {
+              "query_id": "alpha-x",
+              "results": [
+                {
+                  "id": "doc-001",
+                  "score": 1.0
+                },
+                {
+                  "id": "doc-002",
+                  "score": 0.9938837
+                },
+                {
+                  "id": "doc-003",
+                  "score": 0.0
+                }
+              ],
+              "scope": "alpha"
+            },
+            {
+              "query_id": "alpha-y",
+              "results": [
+                {
+                  "id": "doc-003",
+                  "score": 1.0
+                },
+                {
+                  "id": "doc-002",
+                  "score": 0.11043153
+                },
+                {
+                  "id": "doc-001",
+                  "score": 0.0
+                }
+              ],
+              "scope": "alpha"
+            },
+            {
+              "query_id": "beta-x",
+              "results": [
+                {
+                  "id": "doc-004",
+                  "score": 1.0
+                },
+                {
+                  "id": "doc-006",
+                  "score": 0.0
+                },
+                {
+                  "id": "doc-005",
+                  "score": 0.0
+                }
+              ],
+              "scope": "beta"
+            },
+            {
+              "query_id": "beta-z",
+              "results": [
+                {
+                  "id": "doc-005",
+                  "score": 1.0
+                },
+                {
+                  "id": "doc-004",
+                  "score": 0.0
+                },
+                {
+                  "id": "doc-006",
+                  "score": 0.0
+                }
+              ],
+              "scope": "beta"
+            }
+          ]
+        },
+        {
+          "errors": [],
+          "gates": {
+            "deleted_doc_absent": true,
+            "provider_ok": true,
+            "scope_alpha-x": true,
+            "scope_alpha-y": true,
+            "scope_beta-x": true,
+            "scope_beta-z": true,
+            "top_k_alpha-x": true,
+            "top_k_alpha-y": true,
+            "top_k_beta-x": true,
+            "top_k_beta-z": true
+          },
+          "latency_summary_ms": {
+            "bulk_upsert": {
+              "mean": 1.6782099999943512,
+              "p50": 1.6782099999943512,
+              "p95": 1.6782099999943512
+            },
+            "delete": {
+              "mean": 1.5883419999909165,
+              "p50": 1.5883419999909165,
+              "p95": 1.5883419999909165
+            },
+            "duplicate_replay": {
+              "mean": 1.1952790000009372,
+              "p50": 1.1952790000009372,
+              "p95": 1.1952790000009372
+            },
+            "filtered_search": {
+              "mean": 1.3780577499993285,
+              "p50": 1.2565840000036133,
+              "p95": 1.7539090000013857
+            },
+            "post_delete_search": {
+              "mean": 1.230384999999501,
+              "p50": 1.230384999999501,
+              "p95": 1.230384999999501
+            }
+          },
+          "metrics_ms": {
+            "bulk_upsert": [
+              1.6782099999943512
+            ],
+            "delete": [
+              1.5883419999909165
+            ],
+            "duplicate_replay": [
+              1.1952790000009372
+            ],
+            "filtered_search": [
+              1.7539090000013857,
+              1.2531189999975823,
+              1.2565840000036133,
+              1.2486189999947328
+            ],
+            "post_delete_search": [
+              1.230384999999501
+            ]
+          },
+          "name": "qdrant",
+          "ok": true,
+          "post_delete": {
+            "query_id": "alpha-x",
+            "results": [
+              {
+                "id": "doc-002",
+                "score": 0.9938837
+              },
+              {
+                "id": "doc-003",
+                "score": 0.0
+              }
+            ]
+          },
+          "round": 3,
+          "searches": [
+            {
+              "query_id": "alpha-x",
+              "results": [
+                {
+                  "id": "doc-001",
+                  "score": 1.0
+                },
+                {
+                  "id": "doc-002",
+                  "score": 0.9938837
+                },
+                {
+                  "id": "doc-003",
+                  "score": 0.0
+                }
+              ],
+              "scope": "alpha"
+            },
+            {
+              "query_id": "alpha-y",
+              "results": [
+                {
+                  "id": "doc-003",
+                  "score": 1.0
+                },
+                {
+                  "id": "doc-002",
+                  "score": 0.11043153
+                },
+                {
+                  "id": "doc-001",
+                  "score": 0.0
+                }
+              ],
+              "scope": "alpha"
+            },
+            {
+              "query_id": "beta-x",
+              "results": [
+                {
+                  "id": "doc-004",
+                  "score": 1.0
+                },
+                {
+                  "id": "doc-006",
+                  "score": 0.0
+                },
+                {
+                  "id": "doc-005",
+                  "score": 0.0
+                }
+              ],
+              "scope": "beta"
+            },
+            {
+              "query_id": "beta-z",
+              "results": [
+                {
+                  "id": "doc-005",
+                  "score": 1.0
+                },
+                {
+                  "id": "doc-004",
+                  "score": 0.0
+                },
+                {
+                  "id": "doc-006",
+                  "score": 0.0
+                }
+              ],
+              "scope": "beta"
+            }
+          ]
+        }
+      ],
+      "searches": [
+        {
+          "query_id": "alpha-x",
+          "results": [
+            {
+              "id": "doc-001",
+              "score": 1.0
+            },
+            {
+              "id": "doc-002",
+              "score": 0.9938837
+            },
+            {
+              "id": "doc-003",
+              "score": 0.0
+            }
+          ],
+          "scope": "alpha"
+        },
+        {
+          "query_id": "alpha-y",
+          "results": [
+            {
+              "id": "doc-003",
+              "score": 1.0
+            },
+            {
+              "id": "doc-002",
+              "score": 0.11043153
+            },
+            {
+              "id": "doc-001",
+              "score": 0.0
+            }
+          ],
+          "scope": "alpha"
+        },
+        {
+          "query_id": "beta-x",
+          "results": [
+            {
+              "id": "doc-004",
+              "score": 1.0
+            },
+            {
+              "id": "doc-006",
+              "score": 0.0
+            },
+            {
+              "id": "doc-005",
+              "score": 0.0
+            }
+          ],
+          "scope": "beta"
+        },
+        {
+          "query_id": "beta-z",
+          "results": [
+            {
+              "id": "doc-005",
+              "score": 1.0
+            },
+            {
+              "id": "doc-004",
+              "score": 0.0
+            },
+            {
+              "id": "doc-006",
+              "score": 0.0
+            }
+          ],
+          "scope": "beta"
+        }
+      ]
+    },
+    {
+      "errors": [],
+      "gates": {
+        "deleted_doc_absent": true,
+        "provider_ok": true,
+        "scope_alpha-x": true,
+        "scope_alpha-y": true,
+        "scope_beta-x": true,
+        "scope_beta-z": true,
+        "top_k_alpha-x": true,
+        "top_k_alpha-y": true,
+        "top_k_beta-x": true,
+        "top_k_beta-z": true
+      },
+      "latency_summary_ms": {
+        "bulk_upsert": {
+          "mean": 2.480916000000851,
+          "p50": 2.4498380000039788,
+          "p95": 2.566615999995747
+        },
+        "delete": {
+          "mean": 0.35354266666824213,
+          "p50": 0.3628560000095149,
+          "p95": 0.37215399999013243
+        },
+        "duplicate_replay": {
+          "mean": 0.5434796666700473,
+          "p50": 0.5493139999970253,
+          "p95": 0.5731780000104436
+        },
+        "filtered_search": {
+          "mean": 0.36310699999949253,
+          "p50": 0.23655100000041784,
+          "p95": 0.8841479999972535
+        },
+        "post_delete_search": {
+          "mean": 0.23116166666644253,
+          "p50": 0.23123199999020017,
+          "p95": 0.2327340000078948
+        }
+      },
+      "metrics_ms": {
+        "bulk_upsert": [
+          2.566615999995747,
+          2.4498380000039788,
+          2.4262940000028266
+        ],
+        "delete": [
+          0.325618000005079,
+          0.3628560000095149,
+          0.37215399999013243
+        ],
+        "duplicate_replay": [
+          0.5493139999970253,
+          0.5079470000026731,
+          0.5731780000104436
+        ],
+        "filtered_search": [
+          0.8841479999972535,
+          0.2506069999981264,
+          0.22814499999412874,
+          0.22468900000660597,
+          0.7229280000018434,
+          0.23655100000041784,
+          0.2136190000072702,
+          0.20595399999479014,
+          0.6849569999900496,
+          0.25339199999052653,
+          0.2304500000036569,
+          0.22184400000924143
+        ],
+        "post_delete_search": [
+          0.2327340000078948,
+          0.23123199999020017,
+          0.2295190000012326
+        ]
+      },
+      "name": "pgvector",
+      "ok": true,
+      "post_delete": {
+        "query_id": "alpha-x",
+        "results": [
+          {
+            "id": "doc-002",
+            "score": 0.9938837488013375
+          },
+          {
+            "id": "doc-003",
+            "score": 0.0
+          }
+        ]
+      },
+      "rounds": [
+        {
+          "errors": [],
+          "gates": {
+            "deleted_doc_absent": true,
+            "provider_ok": true,
+            "scope_alpha-x": true,
+            "scope_alpha-y": true,
+            "scope_beta-x": true,
+            "scope_beta-z": true,
+            "top_k_alpha-x": true,
+            "top_k_alpha-y": true,
+            "top_k_beta-x": true,
+            "top_k_beta-z": true
+          },
+          "latency_summary_ms": {
+            "bulk_upsert": {
+              "mean": 2.566615999995747,
+              "p50": 2.566615999995747,
+              "p95": 2.566615999995747
+            },
+            "delete": {
+              "mean": 0.325618000005079,
+              "p50": 0.325618000005079,
+              "p95": 0.325618000005079
+            },
+            "duplicate_replay": {
+              "mean": 0.5493139999970253,
+              "p50": 0.5493139999970253,
+              "p95": 0.5493139999970253
+            },
+            "filtered_search": {
+              "mean": 0.39689724999902865,
+              "p50": 0.2506069999981264,
+              "p95": 0.8841479999972535
+            },
+            "post_delete_search": {
+              "mean": 0.2327340000078948,
+              "p50": 0.2327340000078948,
+              "p95": 0.2327340000078948
+            }
+          },
+          "metrics_ms": {
+            "bulk_upsert": [
+              2.566615999995747
+            ],
+            "delete": [
+              0.325618000005079
+            ],
+            "duplicate_replay": [
+              0.5493139999970253
+            ],
+            "filtered_search": [
+              0.8841479999972535,
+              0.2506069999981264,
+              0.22814499999412874,
+              0.22468900000660597
+            ],
+            "post_delete_search": [
+              0.2327340000078948
+            ]
+          },
+          "name": "pgvector",
+          "ok": true,
+          "post_delete": {
+            "query_id": "alpha-x",
+            "results": [
+              {
+                "id": "doc-002",
+                "score": 0.9938837488013375
+              },
+              {
+                "id": "doc-003",
+                "score": 0.0
+              }
+            ]
+          },
+          "round": 1,
+          "searches": [
+            {
+              "query_id": "alpha-x",
+              "results": [
+                {
+                  "id": "doc-001",
+                  "score": 1.0
+                },
+                {
+                  "id": "doc-002",
+                  "score": 0.9938837488013375
+                },
+                {
+                  "id": "doc-003",
+                  "score": 0.0
+                }
+              ],
+              "scope": "alpha"
+            },
+            {
+              "query_id": "alpha-y",
+              "results": [
+                {
+                  "id": "doc-003",
+                  "score": 1.0
+                },
+                {
+                  "id": "doc-002",
+                  "score": 0.11043153221558755
+                },
+                {
+                  "id": "doc-001",
+                  "score": 0.0
+                }
+              ],
+              "scope": "alpha"
+            },
+            {
+              "query_id": "beta-x",
+              "results": [
+                {
+                  "id": "doc-004",
+                  "score": 1.0
+                },
+                {
+                  "id": "doc-005",
+                  "score": 0.0
+                },
+                {
+                  "id": "doc-006",
+                  "score": 0.0
+                }
+              ],
+              "scope": "beta"
+            },
+            {
+              "query_id": "beta-z",
+              "results": [
+                {
+                  "id": "doc-005",
+                  "score": 1.0
+                },
+                {
+                  "id": "doc-004",
+                  "score": 0.0
+                },
+                {
+                  "id": "doc-006",
+                  "score": 0.0
+                }
+              ],
+              "scope": "beta"
+            }
+          ]
+        },
+        {
+          "errors": [],
+          "gates": {
+            "deleted_doc_absent": true,
+            "provider_ok": true,
+            "scope_alpha-x": true,
+            "scope_alpha-y": true,
+            "scope_beta-x": true,
+            "scope_beta-z": true,
+            "top_k_alpha-x": true,
+            "top_k_alpha-y": true,
+            "top_k_beta-x": true,
+            "top_k_beta-z": true
+          },
+          "latency_summary_ms": {
+            "bulk_upsert": {
+              "mean": 2.4498380000039788,
+              "p50": 2.4498380000039788,
+              "p95": 2.4498380000039788
+            },
+            "delete": {
+              "mean": 0.3628560000095149,
+              "p50": 0.3628560000095149,
+              "p95": 0.3628560000095149
+            },
+            "duplicate_replay": {
+              "mean": 0.5079470000026731,
+              "p50": 0.5079470000026731,
+              "p95": 0.5079470000026731
+            },
+            "filtered_search": {
+              "mean": 0.3447630000010804,
+              "p50": 0.23655100000041784,
+              "p95": 0.7229280000018434
+            },
+            "post_delete_search": {
+              "mean": 0.23123199999020017,
+              "p50": 0.23123199999020017,
+              "p95": 0.23123199999020017
+            }
+          },
+          "metrics_ms": {
+            "bulk_upsert": [
+              2.4498380000039788
+            ],
+            "delete": [
+              0.3628560000095149
+            ],
+            "duplicate_replay": [
+              0.5079470000026731
+            ],
+            "filtered_search": [
+              0.7229280000018434,
+              0.23655100000041784,
+              0.2136190000072702,
+              0.20595399999479014
+            ],
+            "post_delete_search": [
+              0.23123199999020017
+            ]
+          },
+          "name": "pgvector",
+          "ok": true,
+          "post_delete": {
+            "query_id": "alpha-x",
+            "results": [
+              {
+                "id": "doc-002",
+                "score": 0.9938837488013375
+              },
+              {
+                "id": "doc-003",
+                "score": 0.0
+              }
+            ]
+          },
+          "round": 2,
+          "searches": [
+            {
+              "query_id": "alpha-x",
+              "results": [
+                {
+                  "id": "doc-001",
+                  "score": 1.0
+                },
+                {
+                  "id": "doc-002",
+                  "score": 0.9938837488013375
+                },
+                {
+                  "id": "doc-003",
+                  "score": 0.0
+                }
+              ],
+              "scope": "alpha"
+            },
+            {
+              "query_id": "alpha-y",
+              "results": [
+                {
+                  "id": "doc-003",
+                  "score": 1.0
+                },
+                {
+                  "id": "doc-002",
+                  "score": 0.11043153221558755
+                },
+                {
+                  "id": "doc-001",
+                  "score": 0.0
+                }
+              ],
+              "scope": "alpha"
+            },
+            {
+              "query_id": "beta-x",
+              "results": [
+                {
+                  "id": "doc-004",
+                  "score": 1.0
+                },
+                {
+                  "id": "doc-005",
+                  "score": 0.0
+                },
+                {
+                  "id": "doc-006",
+                  "score": 0.0
+                }
+              ],
+              "scope": "beta"
+            },
+            {
+              "query_id": "beta-z",
+              "results": [
+                {
+                  "id": "doc-005",
+                  "score": 1.0
+                },
+                {
+                  "id": "doc-004",
+                  "score": 0.0
+                },
+                {
+                  "id": "doc-006",
+                  "score": 0.0
+                }
+              ],
+              "scope": "beta"
+            }
+          ]
+        },
+        {
+          "errors": [],
+          "gates": {
+            "deleted_doc_absent": true,
+            "provider_ok": true,
+            "scope_alpha-x": true,
+            "scope_alpha-y": true,
+            "scope_beta-x": true,
+            "scope_beta-z": true,
+            "top_k_alpha-x": true,
+            "top_k_alpha-y": true,
+            "top_k_beta-x": true,
+            "top_k_beta-z": true
+          },
+          "latency_summary_ms": {
+            "bulk_upsert": {
+              "mean": 2.4262940000028266,
+              "p50": 2.4262940000028266,
+              "p95": 2.4262940000028266
+            },
+            "delete": {
+              "mean": 0.37215399999013243,
+              "p50": 0.37215399999013243,
+              "p95": 0.37215399999013243
+            },
+            "duplicate_replay": {
+              "mean": 0.5731780000104436,
+              "p50": 0.5731780000104436,
+              "p95": 0.5731780000104436
+            },
+            "filtered_search": {
+              "mean": 0.3476607499983686,
+              "p50": 0.25339199999052653,
+              "p95": 0.6849569999900496
+            },
+            "post_delete_search": {
+              "mean": 0.2295190000012326,
+              "p50": 0.2295190000012326,
+              "p95": 0.2295190000012326
+            }
+          },
+          "metrics_ms": {
+            "bulk_upsert": [
+              2.4262940000028266
+            ],
+            "delete": [
+              0.37215399999013243
+            ],
+            "duplicate_replay": [
+              0.5731780000104436
+            ],
+            "filtered_search": [
+              0.6849569999900496,
+              0.25339199999052653,
+              0.2304500000036569,
+              0.22184400000924143
+            ],
+            "post_delete_search": [
+              0.2295190000012326
+            ]
+          },
+          "name": "pgvector",
+          "ok": true,
+          "post_delete": {
+            "query_id": "alpha-x",
+            "results": [
+              {
+                "id": "doc-002",
+                "score": 0.9938837488013375
+              },
+              {
+                "id": "doc-003",
+                "score": 0.0
+              }
+            ]
+          },
+          "round": 3,
+          "searches": [
+            {
+              "query_id": "alpha-x",
+              "results": [
+                {
+                  "id": "doc-001",
+                  "score": 1.0
+                },
+                {
+                  "id": "doc-002",
+                  "score": 0.9938837488013375
+                },
+                {
+                  "id": "doc-003",
+                  "score": 0.0
+                }
+              ],
+              "scope": "alpha"
+            },
+            {
+              "query_id": "alpha-y",
+              "results": [
+                {
+                  "id": "doc-003",
+                  "score": 1.0
+                },
+                {
+                  "id": "doc-002",
+                  "score": 0.11043153221558755
+                },
+                {
+                  "id": "doc-001",
+                  "score": 0.0
+                }
+              ],
+              "scope": "alpha"
+            },
+            {
+              "query_id": "beta-x",
+              "results": [
+                {
+                  "id": "doc-004",
+                  "score": 1.0
+                },
+                {
+                  "id": "doc-005",
+                  "score": 0.0
+                },
+                {
+                  "id": "doc-006",
+                  "score": 0.0
+                }
+              ],
+              "scope": "beta"
+            },
+            {
+              "query_id": "beta-z",
+              "results": [
+                {
+                  "id": "doc-005",
+                  "score": 1.0
+                },
+                {
+                  "id": "doc-004",
+                  "score": 0.0
+                },
+                {
+                  "id": "doc-006",
+                  "score": 0.0
+                }
+              ],
+              "scope": "beta"
+            }
+          ]
+        }
+      ],
+      "searches": [
+        {
+          "query_id": "alpha-x",
+          "results": [
+            {
+              "id": "doc-001",
+              "score": 1.0
+            },
+            {
+              "id": "doc-002",
+              "score": 0.9938837488013375
+            },
+            {
+              "id": "doc-003",
+              "score": 0.0
+            }
+          ],
+          "scope": "alpha"
+        },
+        {
+          "query_id": "alpha-y",
+          "results": [
+            {
+              "id": "doc-003",
+              "score": 1.0
+            },
+            {
+              "id": "doc-002",
+              "score": 0.11043153221558755
+            },
+            {
+              "id": "doc-001",
+              "score": 0.0
+            }
+          ],
+          "scope": "alpha"
+        },
+        {
+          "query_id": "beta-x",
+          "results": [
+            {
+              "id": "doc-004",
+              "score": 1.0
+            },
+            {
+              "id": "doc-005",
+              "score": 0.0
+            },
+            {
+              "id": "doc-006",
+              "score": 0.0
+            }
+          ],
+          "scope": "beta"
+        },
+        {
+          "query_id": "beta-z",
+          "results": [
+            {
+              "id": "doc-005",
+              "score": 1.0
+            },
+            {
+              "id": "doc-004",
+              "score": 0.0
+            },
+            {
+              "id": "doc-006",
+              "score": 0.0
+            }
+          ],
+          "scope": "beta"
+        }
+      ]
+    }
+  ],
+  "created_at": "2026-09-08T08:05:21.966171+00:00",
+  "decision": "evaluation_only",
+  "manifest": {
+    "corpus_sha256": "5817c09ae7b94803b760a3003b967a5a223264dc265f5caf9b773d0da33462b7",
+    "dimension": 3,
+    "distance": "cosine",
+    "duplicate_replay_count": 2,
+    "embedding_model": "fixture-vector-3d-v1",
+    "query_count": 4,
+    "random_seed": 0,
+    "record_count": 6,
+    "schema_version": "vector-store-evaluation/2",
+    "scopes": [
+      "alpha",
+      "beta"
+    ],
+    "workloads": [
+      "bulk_upsert",
+      "duplicate_replay",
+      "filtered_search",
+      "delete"
+    ]
+  },
+  "production_change": false,
+  "qdrant_removal": false,
+  "round_mode": "fresh",
+  "rounds": 3,
+  "run_id": "run_20260908T080520Z",
+  "schema_version": "vector-store-evaluation/2"
+}

@@ -1,0 +1,70 @@
+{
+  "answer": {
+    "answer": "After Grove's old advisory URL disappeared, we can establish: (1) historically, per snapshot grove-g12-old, advisory G-12 reported that versions before 4.2 were affected; (2) currently, per snapshot grove-g12-gone, the former G-12 URL returns a notice that the requested advisory is unavailable. The snapshots do not explain why the advisory is unavailable, whether it was revised or withdrawn, which product the version range refers to, or whether 4.2 and later are affected.",
+    "change_events": [
+      "The former URL for Grove advisory G-12 now returns an unavailability notice instead of the advisory content (grove-g12-gone)."
+    ],
+    "citations": [
+      "grove-g12-old",
+      "grove-g12-gone"
+    ],
+    "current_truths": [
+      "The advisory G-12 URL is currently unavailable; the page states the requested advisory is unavailable at this URL (grove-g12-gone)."
+    ],
+    "historical_truths": [
+      "As captured in snapshot grove-g12-old, Grove advisory G-12 reported that versions before 4.2 were affected."
+    ],
+    "unresolved": [
+      "Why the advisory became unavailable (moved, withdrawn, or removed) is not stated.",
+      "Whether the advisory content was revised or superseded before removal is unknown.",
+      "The product to which 'versions before 4.2' refers remains unidentified.",
+      "Whether version 4.2 or later versions are affected remains unknown."
+    ]
+  },
+  "arm": "treatment",
+  "case_id": "rotated-link",
+  "completed_at": "2026-09-19T07:49:14.528108+00:00",
+  "position": 21,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "e25563b4bd487b0816f7c15493fba35c6b62968b4eccccccd48bdce3ec23f425",
+    "finish_reason": "stop",
+    "latency_ms": 6020.018,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "30414e588e810a369397d65a0a523b950e6598e89600a3949da39a57cd7759a2",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 307,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0.00042594,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0001842,
+        "upstream_inference_cost": 0.00042594,
+        "upstream_inference_prompt_cost": 0.00024174
+      },
+      "is_byok": false,
+      "prompt_tokens": 1343,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1650
+    }
+  },
+  "repetition": 2,
+  "schema_version": "research-thread-trial/1",
+  "started_at": "2026-09-19T07:49:08.507680+00:00",
+  "status": "completed",
+  "stratum": "unavailable",
+  "trial_id": "rotated-link-r2-treatment"
+}

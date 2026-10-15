@@ -1,0 +1,198 @@
+{
+  "case_id": "mission-ambiguous-ship",
+  "completed_at": "2026-09-19T06:06:56.997824+00:00",
+  "position": 6,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "64b91c8f2c6fdc9111d114c52635b2aa88ff4937b9486586f03aa3548761ac2d",
+    "finish_reason": "stop",
+    "latency_ms": 151040.026,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "ebd19764dd925ddb8c1e609ea054aed5c9e382b8f7f0414470ecc312a0d3d778",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 10347,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 8331
+      },
+      "cost": 0.00524352,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0051735,
+        "upstream_inference_cost": 0.00524352,
+        "upstream_inference_prompt_cost": 7.002e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 2054,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 1984,
+        "video_tokens": 0
+      },
+      "total_tokens": 12401
+    }
+  },
+  "repetition": 2,
+  "result": {
+    "action": "ready",
+    "clarifying_question": null,
+    "mission": {
+      "abstain_when": [
+        "The request shifts from informing the shipping decision to obtaining authorization or permission to ship.",
+        "Only vendor marketing is accessible and no primary, official, or independent source can be obtained.",
+        "The decision reduces to organization-specific legal or regulatory determinations that only qualified counsel can make, and the requester expects research to substitute for counsel."
+      ],
+      "acceptable_uncertainty": "Directional findings are acceptable where independent evidence is thin; thin or absent evidence on autonomous-shipping safety must itself be reported as a finding, not bridged by extrapolation or vendor marketing.",
+      "audience": "Engineering leadership, platform engineering and DevOps governance owners, and security/risk/compliance reviewers evaluating agent autonomy in the software delivery pipeline.",
+      "budget": {
+        "max_elapsed_seconds": 300,
+        "max_model_calls": 6,
+        "max_searches": 4,
+        "max_sources": 10
+      },
+      "clarifications": [
+        {
+          "blocking": true,
+          "clarification_id": "cl.ship-boundary",
+          "question": "Does 'ship' in your context include autonomous release to external customers, or only merges and production deploys behind human-approved gates?",
+          "trigger": "Evidence shows risk, controls, and compliance obligations differ materially between autonomous merge, autonomous production deploy, and autonomous customer release, and closing compliance or guardrail obligations requires knowing the intended boundary."
+        },
+        {
+          "blocking": false,
+          "clarification_id": "cl.regulated-industry",
+          "question": "Which industry and jurisdictional requirements apply to your deployments (e.g., finance, health, public sector), so compliance evidence can be scoped correctly?",
+          "trigger": "Compliance research indicates obligations vary materially by industry or jurisdiction."
+        }
+      ],
+      "contradiction_policy": "preserve_and_report",
+      "decision": "Whether the enterprise should permit autonomous agents in its software factory to ship software changes — spanning merge to main, deployment to production, and release to customers — and, if permitted, under which guardrails, human approval gates, and controls. This mission frames research to inform that governance decision; it does not itself grant permission or authorize shipping.",
+      "freshness": {
+        "as_of": null,
+        "mode": "current",
+        "rationale": "Agent capabilities and governance practice are evolving quickly; prioritize evidence from roughly the last 18 months and date-stamp older standards or case studies rather than treating them as current."
+      },
+      "mission_id": "agent-shipping-governance",
+      "obligations": [
+        {
+          "closure_rule": "Closed when two dated independent accounts are recorded, or when searched absence is documented within budget.",
+          "description": "Capture outcomes evidence on autonomous agent shipping from at least two independent publishers (case studies, evaluations, incident reporting), each dated.",
+          "evidence_role": "independent_corroboration",
+          "obligation_id": "ob.outcomes.corroboration",
+          "question_id": "agent-shipping-outcomes",
+          "weight": 5
+        },
+        {
+          "closure_rule": "Closed when at least one primary and one independent source evidence concrete failure modes, or when absence is explicitly reported.",
+          "description": "Collect documented failure modes and risk evidence for agent-authored changes reaching production, prioritizing primary incident data over commentary.",
+          "evidence_role": "counterevidence",
+          "obligation_id": "ob.failure-modes.counterevidence",
+          "question_id": "agent-shipping-failure-modes",
+          "weight": 4
+        },
+        {
+          "closure_rule": "Closed when at least one official/primary authority and one independent source describe control patterns; conflicts preserved and reported.",
+          "description": "Identify guardrail and governance recommendations for autonomous delivery from official or primary authorities, cross-checked against independent analysis.",
+          "evidence_role": "primary_authority",
+          "obligation_id": "ob.guardrails.authority",
+          "question_id": "guardrails-and-controls",
+          "weight": 5
+        },
+        {
+          "closure_rule": "Closed when official control text is captured with citation; industry- or jurisdiction-specific application is flagged, never assumed.",
+          "description": "Quote change-management and compliance control language relevant to automated deployments from official standards or auditable catalogs, with version and section.",
+          "evidence_role": "primary_authority",
+          "obligation_id": "ob.compliance.official-controls",
+          "question_id": "compliance-change-management",
+          "weight": 4
+        },
+        {
+          "closure_rule": "Closed when at least two independent positions are captured, or when absence is documented.",
+          "description": "Record independent practitioner and analyst positions on where human-in-the-loop checkpoints remain necessary, including dissenting views.",
+          "evidence_role": "independent_corroboration",
+          "obligation_id": "ob.hitl.independent-positions",
+          "question_id": "human-in-the-loop-checkpoints",
+          "weight": 3
+        },
+        {
+          "closure_rule": "Closed when one verifiable implementation account is captured with source, or when absence is reported within budget.",
+          "description": "Find at least one verifiable implementation account describing how an engineering organization gates or constrains agent shipping in practice.",
+          "evidence_role": "implementation_evidence",
+          "obligation_id": "ob.implementation.example",
+          "question_id": "agent-shipping-outcomes",
+          "weight": 3
+        }
+      ],
+      "questions": [
+        {
+          "question_id": "agent-shipping-outcomes",
+          "required": true,
+          "text": "What independent evidence exists on outcomes of autonomous or agent-driven shipping in enterprise or comparable settings, including reported incidents and evaluations?"
+        },
+        {
+          "question_id": "agent-shipping-failure-modes",
+          "required": true,
+          "text": "What failure modes and risks are documented when agent-authored or agent-approved changes reach production without human review?"
+        },
+        {
+          "question_id": "guardrails-and-controls",
+          "required": true,
+          "text": "What guardrail patterns and governance controls do official frameworks and independent sources recommend for agent-driven shipping, such as approval gates, progressive delivery, evaluation gates, and rollback?"
+        },
+        {
+          "question_id": "compliance-change-management",
+          "required": true,
+          "text": "What change-management and compliance requirements do official standards and control catalogs describe for automated or autonomous deployments in enterprises?"
+        },
+        {
+          "question_id": "human-in-the-loop-checkpoints",
+          "required": true,
+          "text": "Where do independent practitioner and analyst sources say human-in-the-loop checkpoints remain necessary in agent-driven delivery pipelines?"
+        }
+      ],
+      "schema_version": "research-mission/1",
+      "scope": {
+        "exclude": [
+          "Granting permission or authorizing agents to ship; the mission produces evidence for a decision-maker, not authorization.",
+          "Internal audit or assessment of the requester's own systems, agents, or pipelines; no access or authority exists for this.",
+          "Organization-specific legal advice or jurisdiction-specific regulatory determinations; flag these for qualified counsel instead.",
+          "Drafting the shipping policy itself or designing the requester's pipeline architecture.",
+          "Vendor marketing claims treated as safety evidence without independent corroboration."
+        ],
+        "include": [
+          "Independent and official evidence on autonomous or agent-driven software delivery in enterprise or comparable settings: capability claims, reliability data, case studies, and post-incident analyses.",
+          "Documented failure modes and risk evidence for agent-authored or agent-approved changes reaching production without human review.",
+          "Authoritative governance and guardrail frameworks for autonomous delivery: human approval gates, progressive/canary deployment, automated evaluation gates, rollback and blast-radius controls.",
+          "Enterprise change-management and compliance norms applicable to automated deployments (e.g., SOC 2 change management, ISO/IEC 27001, ITIL change enablement), as generally described by official or independent sources.",
+          "Vendor-neutral analyses and independent practitioner reporting on where human-in-the-loop checkpoints are retained in agent-driven delivery pipelines."
+        ]
+      },
+      "source_policy": {
+        "allowed_authority": [
+          "primary",
+          "official",
+          "independent"
+        ],
+        "derivative_sources_count_as_independent": false,
+        "inaccessible_sources_can_close_obligations": false,
+        "minimum_independent_publishers": 2
+      },
+      "stop_when": [
+        "Weight-5 obligations are closed, or their absence is documented with dated search effort.",
+        "Contradictions between sources are preserved and reported rather than silently resolved.",
+        "The budget (4 searches, 10 sources, 6 model calls, 300 seconds) is exhausted; report partial coverage explicitly.",
+        "A blocking clarification fires and the mission pauses pending the requester's answer."
+      ]
+    },
+    "rationale": "The request is a governance decision ('can we let agents ship?') that external evidence can legitimately inform, so abstention is unwarranted and research is appropriate. Rather than guessing what 'ship' means, the mission scopes the full delivery path (merge, deploy, release) inclusively and embeds a blocking clarification that fires only if the ship boundary turns out to change which obligations can close — resolving the ambiguity without guessing a narrow meaning. The mission is explicitly framed as decision support, not permission: it grants no authority to ship, treats sources as evidence rather than instruction, and preserves contradictions instead of resolving them by assumption."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:04:25.951996+00:00",
+  "status": "completed",
+  "trial_id": "mission-ambiguous-ship-intake-r2"
+}

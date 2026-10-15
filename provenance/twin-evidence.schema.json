@@ -13,6 +13,17 @@
       "type": "object", "additionalProperties": false, "required": ["sha", "event", "ref"],
       "properties": {"sha": {"type": "string", "pattern": "^[a-f0-9]{40}$"}, "event": {"type": "string", "minLength": 1}, "ref": {"type": "string", "minLength": 1}}
     },
+    "event_diff": {
+      "type": "object", "additionalProperties": false,
+      "required": ["event", "base_sha", "head_sha", "comparison_base_sha", "checked_out_sha"],
+      "properties": {
+        "event": {"type": "string", "minLength": 1},
+        "base_sha": {"type": "string", "pattern": "^(unavailable|[a-f0-9]{40})$"},
+        "head_sha": {"type": "string", "pattern": "^(unavailable|[a-f0-9]{40})$"},
+        "comparison_base_sha": {"type": "string", "pattern": "^(unavailable|[a-f0-9]{40})$"},
+        "checked_out_sha": {"type": "string", "pattern": "^(unavailable|[a-f0-9]{40})$"}
+      }
+    },
     "selection": {
        "type": "object", "additionalProperties": false, "required": ["inputs", "twin", "runtime", "tests", "excluded_tests", "checks"],
       "properties": {

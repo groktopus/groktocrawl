@@ -11,6 +11,18 @@ jobs:
   fast-tests:
     name: Fast Tests
     runs-on: ubuntu-latest
+    env:
+      DURABLE_RESEARCH_REDIS_URL: redis://127.0.0.1:6379/15
+    services:
+      valkey:
+        image: valkey/valkey:8-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "valkey-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
     steps:
       - uses: actions/checkout@v7
         with:
@@ -34,11 +46,51 @@ jobs:
           --cov-report=json:coverage/fast.json
           --cov-report=term-missing
 
+      - name: Exercise optional future LangGraph runtime
+        run: >-
+          PYTHONPATH=agent-svc
+          uv run --no-project --with langgraph==0.6.11 --with pytest
+          --with langgraph-checkpoint-sqlite --with redis --with pytest-asyncio
+          --with pydantic pytest -q -o addopts=''
+          tests/unit/test_adaptive_runtime.py tests/unit/test_specialist_runtime.py
+          tests/unit/test_guidance_runtime.py tests/unit/test_fork_runtime.py
+          tests/unit/test_capability_runtime.py
+
+      - name: Smoke future-runtime measurements
+        run: >-
+          PYTHONPATH=agent-svc
+          uv run --no-project --with langgraph==0.6.11 --with pydantic
+          python scripts/measure_future_runtime.py --repetitions 1
+          --output /tmp/future-runtime-measurements
+
+      - name: Smoke durable-guidance measurements
+        run: >-
+          PYTHONPATH=agent-svc
+          uv run --no-project --with langgraph==0.6.11
+          --with langgraph-checkpoint-sqlite --with redis --with pydantic
+          python scripts/measure_guidance_runtime.py --repetitions 1
+          --output /tmp/guidance-runtime-measurements
+
+      - name: Smoke checkpoint-fork measurements
+        run: >-
+          PYTHONPATH=agent-svc
+          uv run --no-project --with langgraph==0.6.11
+          --with langgraph-checkpoint-sqlite --with pydantic
+          python scripts/measure_fork_runtime.py --repetitions 1
+          --output /tmp/fork-runtime-measurements
+
+      - name: Smoke capability-substitution measurements
+        run: >-
+          PYTHONPATH=agent-svc uv run --no-project --with langgraph==0.6.11
+          --with langgraph-checkpoint-sqlite --with pydantic
+          python scripts/measure_capability_runtime.py --repetitions 1
+          --output /tmp/capability-runtime-measurements
+
       - name: Run mcp-svc unit tests
         run: >-
           cd mcp-svc &&
           uv run --with pytest --with pytest-asyncio --with pytest-cov
-          python -m pytest tests/test_mcp_server.py tests/test_client.py tests/test_session_store.py
+          python -m pytest tests/test_mcp_server.py tests/test_client.py tests/test_session_store.py tests/test_evidence.py tests/test_followup.py
           -q -p no:cacheprovider -o "addopts=" -o "testpaths=tests"
 
       - name: Check changed-line coverage

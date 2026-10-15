@@ -1,0 +1,37 @@
+{
+  "schema_version": "groktocrawl-x.vector-scale-summary.v1",
+  "workflow_run_id": 34279376598,
+  "verdict": "pass_with_gaps",
+  "providers": {
+    "qdrant": {
+      "ok": true,
+      "mixed_operations": 240,
+      "failed_operations": 0
+    },
+    "pgvector": {
+      "ok": true,
+      "mixed_operations": 240,
+      "failed_operations": 0
+    }
+  },
+  "boundary": "isolated component benchmark",
+  "production_capacity_claim": false,
+  "storage_selection": null,
+  "postgres_write_mode": "executemany_in_one_transaction",
+  "known_limitations": [
+    "synthetic 3-dimensional vectors",
+    "maximum corpus size of 1000 records",
+    "single hosted round",
+    "PostgreSQL executemany remains repeated statements while Qdrant receives one native batch",
+    "resource data is a single post-run snapshot",
+    "no sustained-load or soak interval"
+  ],
+  "remaining_gates": [
+    "PostgreSQL-native wire-level bulk comparison",
+    "repeated cold and warm rounds",
+    "representative dimension and larger-scale load",
+    "resource time series and sustained-load evidence",
+    "provider-native migration and rollback",
+    "reversible cutover and deletion continuity"
+  ]
+}

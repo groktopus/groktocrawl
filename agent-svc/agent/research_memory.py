@@ -115,29 +115,33 @@ def compute_fingerprint(
     schema: dict | None = None,
     model: str | None = None,
     search_type: str = "deep",
+    max_credits: int | None = None,
     include_images: bool = False,
     include_source_content: bool = False,
     citation_style: str = "inline",
     strict_constrain_to_urls: bool = False,
     force_fresh: bool = False,
+    evidence_budget_chars: int = 32_000,
 ) -> str:
     """Return a canonical SHA-256 fingerprint of response-affecting fields.
 
     Only request fields that change source selection, synthesis shape, or
     response semantics participate.  Dispatch/accounting fields (``mode``,
-    ``stream``, ``webhook``, ``max_credits``) are intentionally excluded.
+    ``stream``, and ``webhook``) are intentionally excluded.
     """
     normalized_prompt = " ".join((prompt or "").split())
     sorted_urls = sorted(urls) if urls else []
     canonical_schema = _canonical_json(schema) if schema else None
     canonical_model = "" if model in (None, "", "default") else model
     canonical = {
-        "evidence_selection": "lexical_passages_v1",
+        "evidence_selection_version": "exact-lexical-passages/2",
+        "evidence_budget_chars": evidence_budget_chars,
         "prompt": normalized_prompt,
         "urls": sorted_urls,
         "schema": canonical_schema,
         "model": canonical_model,
         "search_type": search_type or "deep",
+        "max_credits": max_credits,
         "include_images": bool(include_images),
         "include_source_content": bool(include_source_content),
         "citation_style": citation_style or "inline",

@@ -1,0 +1,44 @@
+{
+  "schema_version": "claim-verification-experiment-freeze/1",
+  "status": "frozen_before_measurement",
+  "source_revision": "1daac3b172b566f9a0fe01c364c5ef094a020744",
+  "model_route": "general",
+  "endpoint_origin": "http://inference.example.internal:4000/",
+  "verifier_route": "local-litellm",
+  "verifier_prompt_version": "w12.3-verifier/1",
+  "case_count": 12,
+  "repetitions": 3,
+  "allocated_trials": 36,
+  "concurrency": 5,
+  "maximum_authorized_concurrency": 10,
+  "reasoning_effort": "minimal",
+  "maximum_completion_tokens": 12000,
+  "request_timeout_seconds": 300,
+  "transport_attempt_limit": 2,
+  "invalid_completion_attempt_limit": 2,
+  "maximum_request_count": 144,
+  "failure_guardrail": 0.1,
+  "preflight": {
+    "source": "w12.3-preflight-0f06d3b",
+    "inside_measured_tree": false,
+    "completed": 1,
+    "failed": 0,
+    "latency_ms": 1711.667,
+    "verdict": "supported",
+    "publish_recommendation": true
+  },
+  "excluded_route_preflight": {
+    "route": "hermes gpt-5.6-luna-900k via openai-codex",
+    "reason": "full agent shell added about 37000 irrelevant input tokens to a two-field smoke response",
+    "measured_calls": 0
+  },
+  "files": {
+    "agent-svc/agent/experimental/claim_verification_experiment.py": "4aa03cdeb0355778d70e102c274d913f13818537f9d5f2dbc25107f79f3aadd1",
+    "scripts/run_w12_claim_verification.py": "9c26443368d7055b387e0eca7edc227338b563ff1c957a5efb4050d642077887",
+    "scripts/analyze_w12_claim_verification.py": "a1790ad4f6e2e0855bd04f93a1c81ee158a340febceacff72d9e57e2b47ff515",
+    "docs/experiments/claim-verification/w12.3-cases.json": "e8b7ce2f25f83c1cd0e9bb64d586d023cce07693a2adeac4cbf69273ae42fd18",
+    "docs/experiments/claim-verification/w12.3-work-order.json": "92d2d8932888e77096a057de2797f183e7dcd41595203c0b41dc6d1be80fc4b0",
+    "docs/experiments/claim-verification/w12.3-protocol.md": "8994f4a6e393d993858cbc1328c326052f0eda7f4169cefee78898a1f3209a8e",
+    "docs/experiments/claim-verification/w12.3-research-log.md": "ecf5829f951d3e1969bbf4a23461edb168838e0d1224bc18b458bb1f807962b2"
+  }
+}

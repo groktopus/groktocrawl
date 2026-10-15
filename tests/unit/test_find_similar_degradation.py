@@ -177,5 +177,17 @@ async def test_qdrant_success_returns_results():
     results = await _run(semantic=semantic)
 
     assert results == [
-        {"url": "https://a.com", "title": "A", "description": "content A"}
+        {
+            "url": "https://a.com",
+            "title": "A",
+            "description": "content A",
+            "score": None,
+            "confidence": "unknown",
+            "metadata_complete": True,
+            "provenance": {
+                "source": "local_vector_index",
+                "indexed_at": None,
+                "index_freshness": "unavailable",
+            },
+        }
     ]

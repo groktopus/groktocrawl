@@ -1,0 +1,52 @@
+{
+  "case_id": "mission-unanswerable-cost",
+  "completed_at": "2026-09-19T06:02:42.877989+00:00",
+  "position": 4,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "67c8edae7ea7862e6f0b1b6a4368281a6c61392c1aae9f081cb9c2509d379900",
+    "finish_reason": "stop",
+    "latency_ms": 105185.103,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "e2dfa4d447c67476e7eb739e503b4a3a2a362bdbe23754045ef73b1a74b8766c",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 6294,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 7654
+      },
+      "cost": 0.0034563,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.003147,
+        "upstream_inference_cost": 0.0034563,
+        "upstream_inference_prompt_cost": 0.0003093
+      },
+      "is_byok": false,
+      "prompt_tokens": 2062,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 8356
+    }
+  },
+  "repetition": 1,
+  "result": {
+    "action": "clarify",
+    "clarifying_question": "To which specific agent pilot does 'the agent pilot' refer (program or project name, owning business unit, and evaluation window), and — if already fixed — how is 'total delivery cost' defined (which cost categories are included) and against what baseline is the 20% reduction measured?",
+    "mission": null,
+    "rationale": "The request is empirical and researchable in principle, so abstention is not warranted. However, it cannot be normalized into a mission without guessing: (1) 'the agent pilot' is a definite reference to a specific pilot that the supplied context does not identify; (2) 'total delivery cost' is an undefined metric whose category inclusion (labor, tooling/licenses, infrastructure, vendor fees, rework) can flip the verdict; (3) the 20% threshold needs a comparison baseline (pre-pilot run-rate, matched control, or reported figure) that is unspecified. Each ambiguity is decision-changing for a yes/no threshold answer, and none can be resolved from the supplied domain string alone — resolving them by assumption would invent scope. This single consolidated blocking clarification requests the minimal parameters needed to fix the research boundary; once the pilot is identified, any residual definitional gaps can be handled as in-mission clarification rules or abstain conditions (e.g., if no accessible primary or official documentation of the pilot's cost accounting exists) rather than estimates."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:00:57.687471+00:00",
+  "status": "completed",
+  "trial_id": "mission-unanswerable-cost-intake-r1"
+}

@@ -1,0 +1,15 @@
+{
+  "auditor": {
+    "identity": "storage-fixture",
+    "kind": "fixture_expectation",
+    "version": "1"
+  },
+  "policy_version": "storage-fixture/1",
+  "renderer_version": "fixture-render/1",
+  "schema_version": "fixture-publication-context/1",
+  "verifier": {
+    "identity": "storage-fixture",
+    "kind": "fixture_expectation",
+    "version": "1"
+  }
+}

@@ -18,6 +18,7 @@ from urllib.parse import parse_qs, urlparse
 
 import httpx
 
+from ..source_http import source_httpx_client
 from ._helpers import scrape_page
 from .base import AdapterContext, AdapterError, AdapterResult, SiteAdapter, adapter
 
@@ -78,7 +79,7 @@ async def _fetch_job_api(board: str, job_id: str) -> dict | None:
     """
     url = f"{API_BASE}/v1/boards/{board}/jobs/{job_id}?content=true"
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
+        async with source_httpx_client(timeout=15) as client:
             resp = await client.get(
                 url,
                 headers={

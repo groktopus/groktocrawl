@@ -1,0 +1,38 @@
+{
+  "protocol": "memory-soak-v1",
+  "blocks_completed": 0,
+  "browser_cycles": 0,
+  "scrapes": 0,
+  "status": "stopped",
+  "samples": [
+    {
+      "elapsed_seconds": 0.03,
+      "phase": "baseline",
+      "block": 0,
+      "services": {
+        "browser": {
+          "used_mib": 724.023,
+          "rss_mib": 1062.242,
+          "anon_mib": 423.43,
+          "file_mib": 259.098,
+          "pressure_percent": 48.268,
+          "active_sessions": 0,
+          "healthy": true,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.121,
+          "rss_mib": 1661.668,
+          "anon_mib": 694.18,
+          "file_mib": 539.973,
+          "pressure_percent": 52.245,
+          "active_sessions": null,
+          "healthy": true,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    }
+  ]
+}

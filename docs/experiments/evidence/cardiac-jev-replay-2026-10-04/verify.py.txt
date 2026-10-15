@@ -1,0 +1,62 @@
+"""Independent offline audit of the frozen cardiac study; no provider calls."""
+import argparse,hashlib,importlib.machinery,importlib.util,json,math,pathlib
+
+def main():
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('root',type=pathlib.Path);args=parser.parse_args();root=args.root
+    def load(name):return json.loads((root/name).read_text())
+    def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+    corpus=load('corpus.json');cards=corpus['candidates'];assert len(cards)==44
+    assert sha(root/'corpus.json')=='1d472ef33f4a251711090aee3744bc4f75d3c44b90e88a13ab3797a72947f10c'
+    assert [c['id'] for c in cards]==[f'c{i}' for i in range(44)]
+    by_id={c['id']:c for c in cards};requests=load('requests.json');assert len(requests)==28
+    loader=importlib.machinery.SourceFileLoader('runner',str(root/'runner.py.txt'));spec=importlib.util.spec_from_loader('runner',loader);runner=importlib.util.module_from_spec(spec);loader.exec_module(runner)
+    analysis=load('analysis.json');assert not analysis['failures_and_unavailable']
+    assert len(analysis['request_records'])==28
+    assert len(list((root/'receipts').glob('*.json')))==28
+    strict_rejections=[];total_input=0;total_output=0
+    request_by_id={r['id']:r for r in requests};assert len(request_by_id)==28
+    for r in requests:
+        body=r['body'];assert body['state']['query']==corpus['query']
+        shown=body['state']['candidates'];ids=[c['id'] for c in shown]
+        assert len(ids)==len(set(ids))
+        assert all(c==by_id[c['id']] for c in shown),'card text changed'
+        assert ids==r['candidate_ids']
+        expected=set(by_id) if r['pool']=='all44' else {f'c{i}' for i in range(40)} if r['pool']=='first40' else set(ids)
+        assert set(ids)==expected
+        if r['pool']=='singleton':assert len(ids)==1 and r['wording']=='W1'
+        blob=runner.encoded(body);assert hashlib.sha256(blob).hexdigest()==r['request_sha256'] and len(blob)==r['request_bytes']
+        if r['kind']=='repeat':assert r['request_sha256']==request_by_id[r['id'].removesuffix('-repeat')]['request_sha256']
+        receipt=load('receipts/'+r['id']+'.json')
+        assert receipt['status']=='valid' and receipt['model']=='jev-1.13.0'
+        assert receipt['request_sha256']==r['request_sha256'] and not runner.validate(receipt,body)
+        for id,a in receipt['answers'].items():
+            if a['type']=='score' and abs(sum(int(k)*v for k,v in a['probabilities'].items())-a['score'])>.1:
+                strict_rejections.append({'request_id':r['id'],'question_id':id})
+        total_input+=receipt['usage']['input_tokens'];total_output+=receipt['usage']['output_tokens']
+    assert strict_rejections==[{'request_id':'W0-first40-original','question_id':'c21'}]
+    assert (total_input,total_output)==(305576,24660)
+    def ndcg(ids,grades):
+        gain=lambda order:sum((2**grades[int(id[1:])]-1)/math.log2(i+2) for i,id in enumerate(order[:10]))
+        ideal=sorted(by_id,key=lambda id:(-grades[int(id[1:])],int(id[1:])))
+        return gain(ids)/gain(ideal)
+    for arm in analysis['arms']:
+        if not arm['available'] or arm['pool']=='singleton':continue
+        for label,key in [('root','grades'),('peer','grades_peer')]:
+            order=arm[label]['order'];assert sorted(order,key=lambda id:int(id[1:]))==list(by_id)
+            grades=corpus[key]
+            assert abs(arm[label]['ndcg10']-ndcg(order,grades))<1e-12
+            assert arm[label]['useful10']==sum(grades[int(id[1:])]>=2 for id in order[:10])
+    for audit in load('qualification-audit.json'):
+        name=audit['id']+'.json';original=root/'original-validation'/name;derived=root/'receipts'/name
+        assert sha(original)==audit['original_sha256'] and sha(derived)==audit['derived_sha256']
+        a=json.loads(original.read_text());b=json.loads(derived.read_text());assert a['answers']==b['answers'] and a['usage']==b['usage']
+    diagnostics=analysis['request_shape_comparison']['fetch_probability_comparison']
+    assert diagnostics['paired_candidates']==12 and set(diagnostics['choice_flip_candidate_ids'])=={'c20','c21','c25','c27'}
+    assert abs(diagnostics['mean_absolute_probability_error']-.18416666666666667)<1e-12
+    manifest_path=root/'integrity.json'
+    if manifest_path.exists():
+        manifest=load('integrity.json')
+        actual={str(p.relative_to(root)):sha(p) for p in root.rglob('*') if p.is_file() and p.name!='integrity.json' and '__pycache__' not in p.parts}
+        assert actual==manifest['sha256'],'integrity mismatch'
+    print(json.dumps({'status':'passed','requests':28,'qualified_responses':28,'strict_qualifying_responses':27,'preserved_initial_rejection':strict_rejections,'new_searches':0,'new_page_fetches':0,'input_tokens':total_input,'output_tokens':total_output,'note':'Zero searches/fetches reflects the frozen-only runner; labels are not independently verified.'},indent=2))
+if __name__=='__main__':main()

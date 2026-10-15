@@ -1,0 +1,57 @@
+{
+  "candidate_id": "intake-candidate-29e1804f4930d5ab48f8",
+  "case_id": "mission-ambiguous-productive",
+  "completed_at": "2026-09-19T06:25:22.059466+00:00",
+  "grade": {
+    "action_correct": true,
+    "action_rationale": "The raw request 'Are our coding agents productive?' is genuinely decision-changingly ambiguous, and both the expected intake and the reference mission resolve to 'clarify' with a blocking clarification (c1). The candidate matches the required action.",
+    "clarification_utility": 0,
+    "correction_actions": [],
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "No invented authority, no silent scope broadening, no freshness loss, no unauthorized action. The candidate explicitly declines to assume access to internal telemetry, which respects the source-policy boundary rather than violating it. Choosing 'clarify' with mission: null is an authorized action under the reference mission's blocking clarification and the abstain_when rules ('Answering would require inventing authority, approval, or missing measurements'). The (a)/(b) fork is posed as a question, not assumed, so it is not scope invention; it surfaces a real fork (internal evaluation vs. external synthesis) that determines whether the mission is even executable with supplied sources. The candidate's rationale correctly identifies the prohibited assumption territory (an accepted-PR count without comparison cannot establish productivity). The one weakness: the reference clarification (c1) centers on the missing measurement definition — outcome, baseline, task class, and time period — while the candidate's question covers the decision/outcome axis and the internal-vs-external fork but does not explicitly elicit baseline, task mix, or time horizon. This is partial coverage of the blocking gap, not a semantic error, and the candidate's question would naturally elicit those details in the answer (an internal-evaluation answer must specify what data exists over what period). The clarification is decision-relevant and blocking-appropriate, so it is not 'unhelpful'; it is slightly less complete than the reference's framing. Deducted for that partial coverage only.",
+    "invented_constraints": [],
+    "lost_hard_boundaries": [],
+    "required_field_recall": 0,
+    "unnecessary_fields": []
+  },
+  "position": 2,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "cff7a7b8a9d050c28ac5452d439ff4a4b33df95160f70be968abf5f14c8e22c2",
+    "finish_reason": "stop",
+    "latency_ms": 10252.639,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "15e0fddfaeb28d1ae74359e4938c458ab62af9f0e0f96612ec7f7bf4f5349aec",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 949,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 516
+      },
+      "cost": 0.00060005,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0004745,
+        "upstream_inference_cost": 0.00060005,
+        "upstream_inference_prompt_cost": 0.00012555
+      },
+      "is_byok": false,
+      "prompt_tokens": 837,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1786
+    }
+  },
+  "schema_version": "research-mission-intake-grade/1",
+  "started_at": "2026-09-19T06:25:11.805790+00:00",
+  "status": "completed"
+}

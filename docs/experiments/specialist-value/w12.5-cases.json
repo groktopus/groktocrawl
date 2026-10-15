@@ -1,0 +1,1347 @@
+{
+  "schema_version": "specialist-value-corpus/1",
+  "cases": [
+    {
+      "case_id": "simple-1",
+      "stratum": "simple",
+      "separable": false,
+      "question": "Produce trustworthy research for the pinned simple case simple-1.",
+      "obligation_ids": [
+        "simple-1-scope"
+      ],
+      "control_artifact": {
+        "admitted_evidence": [
+          {
+            "evidence_id": "simple-1-generalist-simple-1-scope",
+            "source_id": "source-simple-1-generalist-simple-1-scope",
+            "canonical_source_id": "canonical-simple-1-generalist-simple-1-scope",
+            "publisher_id": "publisher-simple-1-generalist",
+            "obligation_id": "simple-1-scope",
+            "stance": "supports",
+            "span": "Pinned supports evidence for simple-1-scope in simple-1.",
+            "derivative": false
+          }
+        ],
+        "covered_obligation_ids": [
+          "simple-1-scope"
+        ],
+        "conflicting_obligation_ids": [],
+        "rejected_evidence": {},
+        "handoff_failures": [],
+        "total_calls": 2
+      },
+      "specialist_handoffs": [],
+      "call_budget": 3,
+      "seeded_contradiction_obligation_id": null
+    },
+    {
+      "case_id": "simple-2",
+      "stratum": "simple",
+      "separable": false,
+      "question": "Produce trustworthy research for the pinned simple case simple-2.",
+      "obligation_ids": [
+        "simple-2-scope"
+      ],
+      "control_artifact": {
+        "admitted_evidence": [
+          {
+            "evidence_id": "simple-2-generalist-simple-2-scope",
+            "source_id": "source-simple-2-generalist-simple-2-scope",
+            "canonical_source_id": "canonical-simple-2-generalist-simple-2-scope",
+            "publisher_id": "publisher-simple-2-generalist",
+            "obligation_id": "simple-2-scope",
+            "stance": "supports",
+            "span": "Pinned supports evidence for simple-2-scope in simple-2.",
+            "derivative": false
+          }
+        ],
+        "covered_obligation_ids": [
+          "simple-2-scope"
+        ],
+        "conflicting_obligation_ids": [],
+        "rejected_evidence": {},
+        "handoff_failures": [],
+        "total_calls": 2
+      },
+      "specialist_handoffs": [],
+      "call_budget": 3,
+      "seeded_contradiction_obligation_id": null
+    },
+    {
+      "case_id": "nonseparable-1",
+      "stratum": "nonseparable",
+      "separable": false,
+      "question": "Produce trustworthy research for the pinned nonseparable case nonseparable-1.",
+      "obligation_ids": [
+        "nonseparable-1-scope"
+      ],
+      "control_artifact": {
+        "admitted_evidence": [
+          {
+            "evidence_id": "nonseparable-1-generalist-nonseparable-1-scope",
+            "source_id": "source-nonseparable-1-generalist-nonseparable-1-scope",
+            "canonical_source_id": "canonical-nonseparable-1-generalist-nonseparable-1-scope",
+            "publisher_id": "publisher-nonseparable-1-generalist",
+            "obligation_id": "nonseparable-1-scope",
+            "stance": "supports",
+            "span": "Pinned supports evidence for nonseparable-1-scope in nonseparable-1.",
+            "derivative": false
+          }
+        ],
+        "covered_obligation_ids": [
+          "nonseparable-1-scope"
+        ],
+        "conflicting_obligation_ids": [],
+        "rejected_evidence": {},
+        "handoff_failures": [],
+        "total_calls": 2
+      },
+      "specialist_handoffs": [],
+      "call_budget": 3,
+      "seeded_contradiction_obligation_id": null
+    },
+    {
+      "case_id": "compound-1",
+      "stratum": "compound",
+      "separable": true,
+      "question": "Produce trustworthy research for the pinned compound case compound-1.",
+      "obligation_ids": [
+        "compound-1-scope",
+        "compound-1-authority",
+        "compound-1-risk"
+      ],
+      "control_artifact": {
+        "admitted_evidence": [
+          {
+            "evidence_id": "compound-1-generalist-compound-1-scope",
+            "source_id": "source-compound-1-generalist-compound-1-scope",
+            "canonical_source_id": "canonical-compound-1-generalist-compound-1-scope",
+            "publisher_id": "publisher-compound-1-generalist",
+            "obligation_id": "compound-1-scope",
+            "stance": "supports",
+            "span": "Pinned supports evidence for compound-1-scope in compound-1.",
+            "derivative": false
+          }
+        ],
+        "covered_obligation_ids": [
+          "compound-1-scope"
+        ],
+        "conflicting_obligation_ids": [],
+        "rejected_evidence": {},
+        "handoff_failures": [],
+        "total_calls": 2
+      },
+      "specialist_handoffs": [
+        {
+          "schema_version": "specialist-evidence-handoff/1",
+          "assignment": {
+            "specialist_id": "compound-1-discovery",
+            "question": "Investigate compound-1-scope, compound-1-authority for compound-1.",
+            "obligation_ids": [
+              "compound-1-scope",
+              "compound-1-authority"
+            ],
+            "max_sources": 4
+          },
+          "attempted_source_ids": [
+            "source-compound-1-discovery-compound-1-scope",
+            "source-compound-1-authority-compound-1-authority"
+          ],
+          "acquired_source_ids": [
+            "source-compound-1-discovery-compound-1-scope",
+            "source-compound-1-authority-compound-1-authority"
+          ],
+          "rejected_sources": {},
+          "evidence": [
+            {
+              "evidence_id": "compound-1-discovery-compound-1-scope",
+              "source_id": "source-compound-1-discovery-compound-1-scope",
+              "canonical_source_id": "canonical-compound-1-discovery-compound-1-scope",
+              "publisher_id": "publisher-compound-1-discovery",
+              "obligation_id": "compound-1-scope",
+              "stance": "supports",
+              "span": "Pinned supports evidence for compound-1-scope in compound-1.",
+              "derivative": false
+            },
+            {
+              "evidence_id": "compound-1-authority-compound-1-authority",
+              "source_id": "source-compound-1-authority-compound-1-authority",
+              "canonical_source_id": "canonical-compound-1-authority-compound-1-authority",
+              "publisher_id": "publisher-compound-1-authority",
+              "obligation_id": "compound-1-authority",
+              "stance": "supports",
+              "span": "Pinned supports evidence for compound-1-authority in compound-1.",
+              "derivative": false
+            }
+          ],
+          "supported_claims": [
+            "Supported compound-1-scope",
+            "Supported compound-1-authority"
+          ],
+          "challenged_claims": [],
+          "unresolved_obligation_ids": [],
+          "source_independence_note": "Canonical and publisher identities are explicit.",
+          "freshness_note": "Evidence is pinned to the case boundary.",
+          "limitations": [
+            "Synthetic evidence fixture."
+          ],
+          "completion_state": "completed",
+          "calls_used": 1
+        },
+        {
+          "schema_version": "specialist-evidence-handoff/1",
+          "assignment": {
+            "specialist_id": "compound-1-risk",
+            "question": "Investigate compound-1-scope, compound-1-risk for compound-1.",
+            "obligation_ids": [
+              "compound-1-scope",
+              "compound-1-risk"
+            ],
+            "max_sources": 4
+          },
+          "attempted_source_ids": [
+            "source-compound-1-risk-compound-1-risk"
+          ],
+          "acquired_source_ids": [
+            "source-compound-1-risk-compound-1-risk"
+          ],
+          "rejected_sources": {},
+          "evidence": [
+            {
+              "evidence_id": "compound-1-risk-compound-1-risk",
+              "source_id": "source-compound-1-risk-compound-1-risk",
+              "canonical_source_id": "canonical-compound-1-risk-compound-1-risk",
+              "publisher_id": "publisher-compound-1-risk",
+              "obligation_id": "compound-1-risk",
+              "stance": "supports",
+              "span": "Pinned supports evidence for compound-1-risk in compound-1.",
+              "derivative": false
+            }
+          ],
+          "supported_claims": [
+            "Supported compound-1-risk"
+          ],
+          "challenged_claims": [],
+          "unresolved_obligation_ids": [],
+          "source_independence_note": "Canonical and publisher identities are explicit.",
+          "freshness_note": "Evidence is pinned to the case boundary.",
+          "limitations": [
+            "Synthetic evidence fixture."
+          ],
+          "completion_state": "completed",
+          "calls_used": 1
+        }
+      ],
+      "call_budget": 3,
+      "seeded_contradiction_obligation_id": null
+    },
+    {
+      "case_id": "compound-2",
+      "stratum": "compound",
+      "separable": true,
+      "question": "Produce trustworthy research for the pinned compound case compound-2.",
+      "obligation_ids": [
+        "compound-2-scope",
+        "compound-2-authority",
+        "compound-2-risk"
+      ],
+      "control_artifact": {
+        "admitted_evidence": [
+          {
+            "evidence_id": "compound-2-generalist-compound-2-scope",
+            "source_id": "source-compound-2-generalist-compound-2-scope",
+            "canonical_source_id": "canonical-compound-2-generalist-compound-2-scope",
+            "publisher_id": "publisher-compound-2-generalist",
+            "obligation_id": "compound-2-scope",
+            "stance": "supports",
+            "span": "Pinned supports evidence for compound-2-scope in compound-2.",
+            "derivative": false
+          }
+        ],
+        "covered_obligation_ids": [
+          "compound-2-scope"
+        ],
+        "conflicting_obligation_ids": [],
+        "rejected_evidence": {},
+        "handoff_failures": [],
+        "total_calls": 2
+      },
+      "specialist_handoffs": [
+        {
+          "schema_version": "specialist-evidence-handoff/1",
+          "assignment": {
+            "specialist_id": "compound-2-discovery",
+            "question": "Investigate compound-2-scope, compound-2-authority for compound-2.",
+            "obligation_ids": [
+              "compound-2-scope",
+              "compound-2-authority"
+            ],
+            "max_sources": 4
+          },
+          "attempted_source_ids": [
+            "source-compound-2-discovery-compound-2-scope",
+            "source-compound-2-authority-compound-2-authority"
+          ],
+          "acquired_source_ids": [
+            "source-compound-2-discovery-compound-2-scope",
+            "source-compound-2-authority-compound-2-authority"
+          ],
+          "rejected_sources": {},
+          "evidence": [
+            {
+              "evidence_id": "compound-2-discovery-compound-2-scope",
+              "source_id": "source-compound-2-discovery-compound-2-scope",
+              "canonical_source_id": "canonical-compound-2-discovery-compound-2-scope",
+              "publisher_id": "publisher-compound-2-discovery",
+              "obligation_id": "compound-2-scope",
+              "stance": "supports",
+              "span": "Pinned supports evidence for compound-2-scope in compound-2.",
+              "derivative": false
+            },
+            {
+              "evidence_id": "compound-2-authority-compound-2-authority",
+              "source_id": "source-compound-2-authority-compound-2-authority",
+              "canonical_source_id": "canonical-compound-2-authority-compound-2-authority",
+              "publisher_id": "publisher-compound-2-authority",
+              "obligation_id": "compound-2-authority",
+              "stance": "supports",
+              "span": "Pinned supports evidence for compound-2-authority in compound-2.",
+              "derivative": false
+            }
+          ],
+          "supported_claims": [
+            "Supported compound-2-scope",
+            "Supported compound-2-authority"
+          ],
+          "challenged_claims": [],
+          "unresolved_obligation_ids": [],
+          "source_independence_note": "Canonical and publisher identities are explicit.",
+          "freshness_note": "Evidence is pinned to the case boundary.",
+          "limitations": [
+            "Synthetic evidence fixture."
+          ],
+          "completion_state": "completed",
+          "calls_used": 1
+        },
+        {
+          "schema_version": "specialist-evidence-handoff/1",
+          "assignment": {
+            "specialist_id": "compound-2-risk",
+            "question": "Investigate compound-2-scope, compound-2-risk for compound-2.",
+            "obligation_ids": [
+              "compound-2-scope",
+              "compound-2-risk"
+            ],
+            "max_sources": 4
+          },
+          "attempted_source_ids": [
+            "source-compound-2-risk-compound-2-risk"
+          ],
+          "acquired_source_ids": [
+            "source-compound-2-risk-compound-2-risk"
+          ],
+          "rejected_sources": {},
+          "evidence": [
+            {
+              "evidence_id": "compound-2-risk-compound-2-risk",
+              "source_id": "source-compound-2-risk-compound-2-risk",
+              "canonical_source_id": "canonical-compound-2-risk-compound-2-risk",
+              "publisher_id": "publisher-compound-2-risk",
+              "obligation_id": "compound-2-risk",
+              "stance": "supports",
+              "span": "Pinned supports evidence for compound-2-risk in compound-2.",
+              "derivative": false
+            }
+          ],
+          "supported_claims": [
+            "Supported compound-2-risk"
+          ],
+          "challenged_claims": [],
+          "unresolved_obligation_ids": [],
+          "source_independence_note": "Canonical and publisher identities are explicit.",
+          "freshness_note": "Evidence is pinned to the case boundary.",
+          "limitations": [
+            "Synthetic evidence fixture."
+          ],
+          "completion_state": "completed",
+          "calls_used": 1
+        }
+      ],
+      "call_budget": 3,
+      "seeded_contradiction_obligation_id": null
+    },
+    {
+      "case_id": "conflict-1",
+      "stratum": "contradiction",
+      "separable": true,
+      "question": "Produce trustworthy research for the pinned contradiction case conflict-1.",
+      "obligation_ids": [
+        "conflict-1-scope",
+        "conflict-1-authority",
+        "conflict-1-risk"
+      ],
+      "control_artifact": {
+        "admitted_evidence": [
+          {
+            "evidence_id": "conflict-1-generalist-conflict-1-scope",
+            "source_id": "source-conflict-1-generalist-conflict-1-scope",
+            "canonical_source_id": "canonical-conflict-1-generalist-conflict-1-scope",
+            "publisher_id": "publisher-conflict-1-generalist",
+            "obligation_id": "conflict-1-scope",
+            "stance": "supports",
+            "span": "Pinned supports evidence for conflict-1-scope in conflict-1.",
+            "derivative": false
+          }
+        ],
+        "covered_obligation_ids": [
+          "conflict-1-scope"
+        ],
+        "conflicting_obligation_ids": [],
+        "rejected_evidence": {},
+        "handoff_failures": [],
+        "total_calls": 2
+      },
+      "specialist_handoffs": [
+        {
+          "schema_version": "specialist-evidence-handoff/1",
+          "assignment": {
+            "specialist_id": "conflict-1-discovery",
+            "question": "Investigate conflict-1-scope, conflict-1-authority for conflict-1.",
+            "obligation_ids": [
+              "conflict-1-scope",
+              "conflict-1-authority"
+            ],
+            "max_sources": 4
+          },
+          "attempted_source_ids": [
+            "source-conflict-1-discovery-conflict-1-scope",
+            "source-conflict-1-authority-conflict-1-authority"
+          ],
+          "acquired_source_ids": [
+            "source-conflict-1-discovery-conflict-1-scope",
+            "source-conflict-1-authority-conflict-1-authority"
+          ],
+          "rejected_sources": {},
+          "evidence": [
+            {
+              "evidence_id": "conflict-1-discovery-conflict-1-scope",
+              "source_id": "source-conflict-1-discovery-conflict-1-scope",
+              "canonical_source_id": "canonical-conflict-1-discovery-conflict-1-scope",
+              "publisher_id": "publisher-conflict-1-discovery",
+              "obligation_id": "conflict-1-scope",
+              "stance": "supports",
+              "span": "Pinned supports evidence for conflict-1-scope in conflict-1.",
+              "derivative": false
+            },
+            {
+              "evidence_id": "conflict-1-authority-conflict-1-authority",
+              "source_id": "source-conflict-1-authority-conflict-1-authority",
+              "canonical_source_id": "canonical-conflict-1-authority-conflict-1-authority",
+              "publisher_id": "publisher-conflict-1-authority",
+              "obligation_id": "conflict-1-authority",
+              "stance": "supports",
+              "span": "Pinned supports evidence for conflict-1-authority in conflict-1.",
+              "derivative": false
+            }
+          ],
+          "supported_claims": [
+            "Supported conflict-1-scope",
+            "Supported conflict-1-authority"
+          ],
+          "challenged_claims": [],
+          "unresolved_obligation_ids": [],
+          "source_independence_note": "Canonical and publisher identities are explicit.",
+          "freshness_note": "Evidence is pinned to the case boundary.",
+          "limitations": [
+            "Synthetic evidence fixture."
+          ],
+          "completion_state": "completed",
+          "calls_used": 1
+        },
+        {
+          "schema_version": "specialist-evidence-handoff/1",
+          "assignment": {
+            "specialist_id": "conflict-1-risk",
+            "question": "Investigate conflict-1-scope, conflict-1-risk for conflict-1.",
+            "obligation_ids": [
+              "conflict-1-scope",
+              "conflict-1-risk"
+            ],
+            "max_sources": 4
+          },
+          "attempted_source_ids": [
+            "source-conflict-1-risk-conflict-1-risk",
+            "source-conflict-1-counter-conflict-1-scope"
+          ],
+          "acquired_source_ids": [
+            "source-conflict-1-risk-conflict-1-risk",
+            "source-conflict-1-counter-conflict-1-scope"
+          ],
+          "rejected_sources": {},
+          "evidence": [
+            {
+              "evidence_id": "conflict-1-risk-conflict-1-risk",
+              "source_id": "source-conflict-1-risk-conflict-1-risk",
+              "canonical_source_id": "canonical-conflict-1-risk-conflict-1-risk",
+              "publisher_id": "publisher-conflict-1-risk",
+              "obligation_id": "conflict-1-risk",
+              "stance": "supports",
+              "span": "Pinned supports evidence for conflict-1-risk in conflict-1.",
+              "derivative": false
+            },
+            {
+              "evidence_id": "conflict-1-counter-conflict-1-scope",
+              "source_id": "source-conflict-1-counter-conflict-1-scope",
+              "canonical_source_id": "canonical-conflict-1-counter-conflict-1-scope",
+              "publisher_id": "publisher-conflict-1-counter",
+              "obligation_id": "conflict-1-scope",
+              "stance": "challenges",
+              "span": "Pinned challenges evidence for conflict-1-scope in conflict-1.",
+              "derivative": false
+            }
+          ],
+          "supported_claims": [
+            "Supported conflict-1-risk"
+          ],
+          "challenged_claims": [
+            "Challenged conflict-1-scope"
+          ],
+          "unresolved_obligation_ids": [],
+          "source_independence_note": "Canonical and publisher identities are explicit.",
+          "freshness_note": "Evidence is pinned to the case boundary.",
+          "limitations": [
+            "Synthetic evidence fixture."
+          ],
+          "completion_state": "completed",
+          "calls_used": 1
+        }
+      ],
+      "call_budget": 3,
+      "seeded_contradiction_obligation_id": "conflict-1-scope"
+    },
+    {
+      "case_id": "conflict-2",
+      "stratum": "contradiction",
+      "separable": true,
+      "question": "Produce trustworthy research for the pinned contradiction case conflict-2.",
+      "obligation_ids": [
+        "conflict-2-scope",
+        "conflict-2-authority",
+        "conflict-2-risk"
+      ],
+      "control_artifact": {
+        "admitted_evidence": [
+          {
+            "evidence_id": "conflict-2-generalist-conflict-2-scope",
+            "source_id": "source-conflict-2-generalist-conflict-2-scope",
+            "canonical_source_id": "canonical-conflict-2-generalist-conflict-2-scope",
+            "publisher_id": "publisher-conflict-2-generalist",
+            "obligation_id": "conflict-2-scope",
+            "stance": "supports",
+            "span": "Pinned supports evidence for conflict-2-scope in conflict-2.",
+            "derivative": false
+          }
+        ],
+        "covered_obligation_ids": [
+          "conflict-2-scope"
+        ],
+        "conflicting_obligation_ids": [],
+        "rejected_evidence": {},
+        "handoff_failures": [],
+        "total_calls": 2
+      },
+      "specialist_handoffs": [
+        {
+          "schema_version": "specialist-evidence-handoff/1",
+          "assignment": {
+            "specialist_id": "conflict-2-discovery",
+            "question": "Investigate conflict-2-scope, conflict-2-authority for conflict-2.",
+            "obligation_ids": [
+              "conflict-2-scope",
+              "conflict-2-authority"
+            ],
+            "max_sources": 4
+          },
+          "attempted_source_ids": [
+            "source-conflict-2-discovery-conflict-2-scope",
+            "source-conflict-2-authority-conflict-2-authority"
+          ],
+          "acquired_source_ids": [
+            "source-conflict-2-discovery-conflict-2-scope",
+            "source-conflict-2-authority-conflict-2-authority"
+          ],
+          "rejected_sources": {},
+          "evidence": [
+            {
+              "evidence_id": "conflict-2-discovery-conflict-2-scope",
+              "source_id": "source-conflict-2-discovery-conflict-2-scope",
+              "canonical_source_id": "canonical-conflict-2-discovery-conflict-2-scope",
+              "publisher_id": "publisher-conflict-2-discovery",
+              "obligation_id": "conflict-2-scope",
+              "stance": "supports",
+              "span": "Pinned supports evidence for conflict-2-scope in conflict-2.",
+              "derivative": false
+            },
+            {
+              "evidence_id": "conflict-2-authority-conflict-2-authority",
+              "source_id": "source-conflict-2-authority-conflict-2-authority",
+              "canonical_source_id": "canonical-conflict-2-authority-conflict-2-authority",
+              "publisher_id": "publisher-conflict-2-authority",
+              "obligation_id": "conflict-2-authority",
+              "stance": "supports",
+              "span": "Pinned supports evidence for conflict-2-authority in conflict-2.",
+              "derivative": false
+            }
+          ],
+          "supported_claims": [
+            "Supported conflict-2-scope",
+            "Supported conflict-2-authority"
+          ],
+          "challenged_claims": [],
+          "unresolved_obligation_ids": [],
+          "source_independence_note": "Canonical and publisher identities are explicit.",
+          "freshness_note": "Evidence is pinned to the case boundary.",
+          "limitations": [
+            "Synthetic evidence fixture."
+          ],
+          "completion_state": "completed",
+          "calls_used": 1
+        },
+        {
+          "schema_version": "specialist-evidence-handoff/1",
+          "assignment": {
+            "specialist_id": "conflict-2-risk",
+            "question": "Investigate conflict-2-scope, conflict-2-risk for conflict-2.",
+            "obligation_ids": [
+              "conflict-2-scope",
+              "conflict-2-risk"
+            ],
+            "max_sources": 4
+          },
+          "attempted_source_ids": [
+            "source-conflict-2-risk-conflict-2-risk",
+            "source-conflict-2-counter-conflict-2-scope"
+          ],
+          "acquired_source_ids": [
+            "source-conflict-2-risk-conflict-2-risk",
+            "source-conflict-2-counter-conflict-2-scope"
+          ],
+          "rejected_sources": {},
+          "evidence": [
+            {
+              "evidence_id": "conflict-2-risk-conflict-2-risk",
+              "source_id": "source-conflict-2-risk-conflict-2-risk",
+              "canonical_source_id": "canonical-conflict-2-risk-conflict-2-risk",
+              "publisher_id": "publisher-conflict-2-risk",
+              "obligation_id": "conflict-2-risk",
+              "stance": "supports",
+              "span": "Pinned supports evidence for conflict-2-risk in conflict-2.",
+              "derivative": false
+            },
+            {
+              "evidence_id": "conflict-2-counter-conflict-2-scope",
+              "source_id": "source-conflict-2-counter-conflict-2-scope",
+              "canonical_source_id": "canonical-conflict-2-counter-conflict-2-scope",
+              "publisher_id": "publisher-conflict-2-counter",
+              "obligation_id": "conflict-2-scope",
+              "stance": "challenges",
+              "span": "Pinned challenges evidence for conflict-2-scope in conflict-2.",
+              "derivative": false
+            }
+          ],
+          "supported_claims": [
+            "Supported conflict-2-risk"
+          ],
+          "challenged_claims": [
+            "Challenged conflict-2-scope"
+          ],
+          "unresolved_obligation_ids": [],
+          "source_independence_note": "Canonical and publisher identities are explicit.",
+          "freshness_note": "Evidence is pinned to the case boundary.",
+          "limitations": [
+            "Synthetic evidence fixture."
+          ],
+          "completion_state": "completed",
+          "calls_used": 1
+        }
+      ],
+      "call_budget": 3,
+      "seeded_contradiction_obligation_id": "conflict-2-scope"
+    },
+    {
+      "case_id": "temporal-1",
+      "stratum": "temporal",
+      "separable": true,
+      "question": "Produce trustworthy research for the pinned temporal case temporal-1.",
+      "obligation_ids": [
+        "temporal-1-scope",
+        "temporal-1-authority",
+        "temporal-1-risk"
+      ],
+      "control_artifact": {
+        "admitted_evidence": [
+          {
+            "evidence_id": "temporal-1-generalist-temporal-1-scope",
+            "source_id": "source-temporal-1-generalist-temporal-1-scope",
+            "canonical_source_id": "canonical-temporal-1-generalist-temporal-1-scope",
+            "publisher_id": "publisher-temporal-1-generalist",
+            "obligation_id": "temporal-1-scope",
+            "stance": "supports",
+            "span": "Pinned supports evidence for temporal-1-scope in temporal-1.",
+            "derivative": false
+          }
+        ],
+        "covered_obligation_ids": [
+          "temporal-1-scope"
+        ],
+        "conflicting_obligation_ids": [],
+        "rejected_evidence": {},
+        "handoff_failures": [],
+        "total_calls": 2
+      },
+      "specialist_handoffs": [
+        {
+          "schema_version": "specialist-evidence-handoff/1",
+          "assignment": {
+            "specialist_id": "temporal-1-discovery",
+            "question": "Investigate temporal-1-scope, temporal-1-authority for temporal-1.",
+            "obligation_ids": [
+              "temporal-1-scope",
+              "temporal-1-authority"
+            ],
+            "max_sources": 4
+          },
+          "attempted_source_ids": [
+            "source-temporal-1-discovery-temporal-1-scope",
+            "source-temporal-1-authority-temporal-1-authority"
+          ],
+          "acquired_source_ids": [
+            "source-temporal-1-discovery-temporal-1-scope",
+            "source-temporal-1-authority-temporal-1-authority"
+          ],
+          "rejected_sources": {},
+          "evidence": [
+            {
+              "evidence_id": "temporal-1-discovery-temporal-1-scope",
+              "source_id": "source-temporal-1-discovery-temporal-1-scope",
+              "canonical_source_id": "canonical-temporal-1-discovery-temporal-1-scope",
+              "publisher_id": "publisher-temporal-1-discovery",
+              "obligation_id": "temporal-1-scope",
+              "stance": "supports",
+              "span": "Pinned supports evidence for temporal-1-scope in temporal-1.",
+              "derivative": false
+            },
+            {
+              "evidence_id": "temporal-1-authority-temporal-1-authority",
+              "source_id": "source-temporal-1-authority-temporal-1-authority",
+              "canonical_source_id": "canonical-temporal-1-authority-temporal-1-authority",
+              "publisher_id": "publisher-temporal-1-authority",
+              "obligation_id": "temporal-1-authority",
+              "stance": "supports",
+              "span": "Pinned supports evidence for temporal-1-authority in temporal-1.",
+              "derivative": false
+            }
+          ],
+          "supported_claims": [
+            "Supported temporal-1-scope",
+            "Supported temporal-1-authority"
+          ],
+          "challenged_claims": [],
+          "unresolved_obligation_ids": [],
+          "source_independence_note": "Canonical and publisher identities are explicit.",
+          "freshness_note": "Evidence is pinned to the case boundary.",
+          "limitations": [
+            "Synthetic evidence fixture."
+          ],
+          "completion_state": "completed",
+          "calls_used": 1
+        },
+        {
+          "schema_version": "specialist-evidence-handoff/1",
+          "assignment": {
+            "specialist_id": "temporal-1-risk",
+            "question": "Investigate temporal-1-scope, temporal-1-risk for temporal-1.",
+            "obligation_ids": [
+              "temporal-1-scope",
+              "temporal-1-risk"
+            ],
+            "max_sources": 4
+          },
+          "attempted_source_ids": [
+            "source-temporal-1-risk-temporal-1-risk"
+          ],
+          "acquired_source_ids": [
+            "source-temporal-1-risk-temporal-1-risk"
+          ],
+          "rejected_sources": {},
+          "evidence": [
+            {
+              "evidence_id": "temporal-1-risk-temporal-1-risk",
+              "source_id": "source-temporal-1-risk-temporal-1-risk",
+              "canonical_source_id": "canonical-temporal-1-risk-temporal-1-risk",
+              "publisher_id": "publisher-temporal-1-risk",
+              "obligation_id": "temporal-1-risk",
+              "stance": "supports",
+              "span": "Pinned supports evidence for temporal-1-risk in temporal-1.",
+              "derivative": false
+            }
+          ],
+          "supported_claims": [
+            "Supported temporal-1-risk"
+          ],
+          "challenged_claims": [],
+          "unresolved_obligation_ids": [],
+          "source_independence_note": "Canonical and publisher identities are explicit.",
+          "freshness_note": "Evidence is pinned to the case boundary.",
+          "limitations": [
+            "Synthetic evidence fixture."
+          ],
+          "completion_state": "completed",
+          "calls_used": 1
+        }
+      ],
+      "call_budget": 3,
+      "seeded_contradiction_obligation_id": null
+    },
+    {
+      "case_id": "temporal-2",
+      "stratum": "temporal",
+      "separable": true,
+      "question": "Produce trustworthy research for the pinned temporal case temporal-2.",
+      "obligation_ids": [
+        "temporal-2-scope",
+        "temporal-2-authority",
+        "temporal-2-risk"
+      ],
+      "control_artifact": {
+        "admitted_evidence": [
+          {
+            "evidence_id": "temporal-2-generalist-temporal-2-scope",
+            "source_id": "source-temporal-2-generalist-temporal-2-scope",
+            "canonical_source_id": "canonical-temporal-2-generalist-temporal-2-scope",
+            "publisher_id": "publisher-temporal-2-generalist",
+            "obligation_id": "temporal-2-scope",
+            "stance": "supports",
+            "span": "Pinned supports evidence for temporal-2-scope in temporal-2.",
+            "derivative": false
+          }
+        ],
+        "covered_obligation_ids": [
+          "temporal-2-scope"
+        ],
+        "conflicting_obligation_ids": [],
+        "rejected_evidence": {},
+        "handoff_failures": [],
+        "total_calls": 2
+      },
+      "specialist_handoffs": [
+        {
+          "schema_version": "specialist-evidence-handoff/1",
+          "assignment": {
+            "specialist_id": "temporal-2-discovery",
+            "question": "Investigate temporal-2-scope, temporal-2-authority for temporal-2.",
+            "obligation_ids": [
+              "temporal-2-scope",
+              "temporal-2-authority"
+            ],
+            "max_sources": 4
+          },
+          "attempted_source_ids": [
+            "source-temporal-2-discovery-temporal-2-scope",
+            "source-temporal-2-authority-temporal-2-authority"
+          ],
+          "acquired_source_ids": [
+            "source-temporal-2-discovery-temporal-2-scope",
+            "source-temporal-2-authority-temporal-2-authority"
+          ],
+          "rejected_sources": {},
+          "evidence": [
+            {
+              "evidence_id": "temporal-2-discovery-temporal-2-scope",
+              "source_id": "source-temporal-2-discovery-temporal-2-scope",
+              "canonical_source_id": "canonical-temporal-2-discovery-temporal-2-scope",
+              "publisher_id": "publisher-temporal-2-discovery",
+              "obligation_id": "temporal-2-scope",
+              "stance": "supports",
+              "span": "Pinned supports evidence for temporal-2-scope in temporal-2.",
+              "derivative": false
+            },
+            {
+              "evidence_id": "temporal-2-authority-temporal-2-authority",
+              "source_id": "source-temporal-2-authority-temporal-2-authority",
+              "canonical_source_id": "canonical-temporal-2-authority-temporal-2-authority",
+              "publisher_id": "publisher-temporal-2-authority",
+              "obligation_id": "temporal-2-authority",
+              "stance": "supports",
+              "span": "Pinned supports evidence for temporal-2-authority in temporal-2.",
+              "derivative": false
+            }
+          ],
+          "supported_claims": [
+            "Supported temporal-2-scope",
+            "Supported temporal-2-authority"
+          ],
+          "challenged_claims": [],
+          "unresolved_obligation_ids": [],
+          "source_independence_note": "Canonical and publisher identities are explicit.",
+          "freshness_note": "Evidence is pinned to the case boundary.",
+          "limitations": [
+            "Synthetic evidence fixture."
+          ],
+          "completion_state": "completed",
+          "calls_used": 1
+        },
+        {
+          "schema_version": "specialist-evidence-handoff/1",
+          "assignment": {
+            "specialist_id": "temporal-2-risk",
+            "question": "Investigate temporal-2-scope, temporal-2-risk for temporal-2.",
+            "obligation_ids": [
+              "temporal-2-scope",
+              "temporal-2-risk"
+            ],
+            "max_sources": 4
+          },
+          "attempted_source_ids": [
+            "source-temporal-2-risk-temporal-2-risk"
+          ],
+          "acquired_source_ids": [
+            "source-temporal-2-risk-temporal-2-risk"
+          ],
+          "rejected_sources": {},
+          "evidence": [
+            {
+              "evidence_id": "temporal-2-risk-temporal-2-risk",
+              "source_id": "source-temporal-2-risk-temporal-2-risk",
+              "canonical_source_id": "canonical-temporal-2-risk-temporal-2-risk",
+              "publisher_id": "publisher-temporal-2-risk",
+              "obligation_id": "temporal-2-risk",
+              "stance": "supports",
+              "span": "Pinned supports evidence for temporal-2-risk in temporal-2.",
+              "derivative": false
+            }
+          ],
+          "supported_claims": [
+            "Supported temporal-2-risk"
+          ],
+          "challenged_claims": [],
+          "unresolved_obligation_ids": [],
+          "source_independence_note": "Canonical and publisher identities are explicit.",
+          "freshness_note": "Evidence is pinned to the case boundary.",
+          "limitations": [
+            "Synthetic evidence fixture."
+          ],
+          "completion_state": "completed",
+          "calls_used": 1
+        }
+      ],
+      "call_budget": 3,
+      "seeded_contradiction_obligation_id": null
+    },
+    {
+      "case_id": "identity-1",
+      "stratum": "source_identity",
+      "separable": true,
+      "question": "Produce trustworthy research for the pinned source_identity case identity-1.",
+      "obligation_ids": [
+        "identity-1-scope",
+        "identity-1-authority",
+        "identity-1-risk"
+      ],
+      "control_artifact": {
+        "admitted_evidence": [
+          {
+            "evidence_id": "identity-1-generalist-identity-1-scope",
+            "source_id": "source-identity-1-generalist-identity-1-scope",
+            "canonical_source_id": "canonical-identity-1-generalist-identity-1-scope",
+            "publisher_id": "publisher-identity-1-generalist",
+            "obligation_id": "identity-1-scope",
+            "stance": "supports",
+            "span": "Pinned supports evidence for identity-1-scope in identity-1.",
+            "derivative": false
+          }
+        ],
+        "covered_obligation_ids": [
+          "identity-1-scope"
+        ],
+        "conflicting_obligation_ids": [],
+        "rejected_evidence": {},
+        "handoff_failures": [],
+        "total_calls": 2
+      },
+      "specialist_handoffs": [
+        {
+          "schema_version": "specialist-evidence-handoff/1",
+          "assignment": {
+            "specialist_id": "identity-1-discovery",
+            "question": "Investigate identity-1-scope, identity-1-authority for identity-1.",
+            "obligation_ids": [
+              "identity-1-scope",
+              "identity-1-authority"
+            ],
+            "max_sources": 4
+          },
+          "attempted_source_ids": [
+            "source-identity-1-discovery-identity-1-scope",
+            "source-identity-1-authority-identity-1-authority"
+          ],
+          "acquired_source_ids": [
+            "source-identity-1-discovery-identity-1-scope",
+            "source-identity-1-authority-identity-1-authority"
+          ],
+          "rejected_sources": {},
+          "evidence": [
+            {
+              "evidence_id": "identity-1-discovery-identity-1-scope",
+              "source_id": "source-identity-1-discovery-identity-1-scope",
+              "canonical_source_id": "canonical-identity-1-discovery-identity-1-scope",
+              "publisher_id": "publisher-identity-1-discovery",
+              "obligation_id": "identity-1-scope",
+              "stance": "supports",
+              "span": "Pinned supports evidence for identity-1-scope in identity-1.",
+              "derivative": false
+            },
+            {
+              "evidence_id": "identity-1-authority-identity-1-authority",
+              "source_id": "source-identity-1-authority-identity-1-authority",
+              "canonical_source_id": "canonical-identity-1-authority-identity-1-authority",
+              "publisher_id": "publisher-identity-1-authority",
+              "obligation_id": "identity-1-authority",
+              "stance": "supports",
+              "span": "Pinned supports evidence for identity-1-authority in identity-1.",
+              "derivative": false
+            }
+          ],
+          "supported_claims": [
+            "Supported identity-1-scope",
+            "Supported identity-1-authority"
+          ],
+          "challenged_claims": [],
+          "unresolved_obligation_ids": [],
+          "source_independence_note": "Canonical and publisher identities are explicit.",
+          "freshness_note": "Evidence is pinned to the case boundary.",
+          "limitations": [
+            "Synthetic evidence fixture."
+          ],
+          "completion_state": "completed",
+          "calls_used": 1
+        },
+        {
+          "schema_version": "specialist-evidence-handoff/1",
+          "assignment": {
+            "specialist_id": "identity-1-risk",
+            "question": "Investigate identity-1-scope, identity-1-risk for identity-1.",
+            "obligation_ids": [
+              "identity-1-scope",
+              "identity-1-risk"
+            ],
+            "max_sources": 4
+          },
+          "attempted_source_ids": [
+            "source-identity-1-risk-identity-1-risk"
+          ],
+          "acquired_source_ids": [
+            "source-identity-1-risk-identity-1-risk"
+          ],
+          "rejected_sources": {},
+          "evidence": [
+            {
+              "evidence_id": "identity-1-risk-identity-1-risk",
+              "source_id": "source-identity-1-risk-identity-1-risk",
+              "canonical_source_id": "canonical-identity-1-risk-identity-1-risk",
+              "publisher_id": "publisher-identity-1-risk",
+              "obligation_id": "identity-1-risk",
+              "stance": "supports",
+              "span": "Pinned supports evidence for identity-1-risk in identity-1.",
+              "derivative": false
+            }
+          ],
+          "supported_claims": [
+            "Supported identity-1-risk"
+          ],
+          "challenged_claims": [],
+          "unresolved_obligation_ids": [],
+          "source_independence_note": "Canonical and publisher identities are explicit.",
+          "freshness_note": "Evidence is pinned to the case boundary.",
+          "limitations": [
+            "Synthetic evidence fixture."
+          ],
+          "completion_state": "completed",
+          "calls_used": 1
+        }
+      ],
+      "call_budget": 3,
+      "seeded_contradiction_obligation_id": null
+    },
+    {
+      "case_id": "roles-1",
+      "stratum": "distinct_roles",
+      "separable": true,
+      "question": "Produce trustworthy research for the pinned distinct_roles case roles-1.",
+      "obligation_ids": [
+        "roles-1-scope",
+        "roles-1-authority",
+        "roles-1-risk"
+      ],
+      "control_artifact": {
+        "admitted_evidence": [
+          {
+            "evidence_id": "roles-1-generalist-roles-1-scope",
+            "source_id": "source-roles-1-generalist-roles-1-scope",
+            "canonical_source_id": "canonical-roles-1-generalist-roles-1-scope",
+            "publisher_id": "publisher-roles-1-generalist",
+            "obligation_id": "roles-1-scope",
+            "stance": "supports",
+            "span": "Pinned supports evidence for roles-1-scope in roles-1.",
+            "derivative": false
+          }
+        ],
+        "covered_obligation_ids": [
+          "roles-1-scope"
+        ],
+        "conflicting_obligation_ids": [],
+        "rejected_evidence": {},
+        "handoff_failures": [],
+        "total_calls": 2
+      },
+      "specialist_handoffs": [
+        {
+          "schema_version": "specialist-evidence-handoff/1",
+          "assignment": {
+            "specialist_id": "roles-1-discovery",
+            "question": "Investigate roles-1-scope, roles-1-authority for roles-1.",
+            "obligation_ids": [
+              "roles-1-scope",
+              "roles-1-authority"
+            ],
+            "max_sources": 4
+          },
+          "attempted_source_ids": [
+            "source-roles-1-discovery-roles-1-scope",
+            "source-roles-1-authority-roles-1-authority"
+          ],
+          "acquired_source_ids": [
+            "source-roles-1-discovery-roles-1-scope",
+            "source-roles-1-authority-roles-1-authority"
+          ],
+          "rejected_sources": {},
+          "evidence": [
+            {
+              "evidence_id": "roles-1-discovery-roles-1-scope",
+              "source_id": "source-roles-1-discovery-roles-1-scope",
+              "canonical_source_id": "canonical-roles-1-discovery-roles-1-scope",
+              "publisher_id": "publisher-roles-1-discovery",
+              "obligation_id": "roles-1-scope",
+              "stance": "supports",
+              "span": "Pinned supports evidence for roles-1-scope in roles-1.",
+              "derivative": false
+            },
+            {
+              "evidence_id": "roles-1-authority-roles-1-authority",
+              "source_id": "source-roles-1-authority-roles-1-authority",
+              "canonical_source_id": "canonical-roles-1-authority-roles-1-authority",
+              "publisher_id": "publisher-roles-1-authority",
+              "obligation_id": "roles-1-authority",
+              "stance": "supports",
+              "span": "Pinned supports evidence for roles-1-authority in roles-1.",
+              "derivative": false
+            }
+          ],
+          "supported_claims": [
+            "Supported roles-1-scope",
+            "Supported roles-1-authority"
+          ],
+          "challenged_claims": [],
+          "unresolved_obligation_ids": [],
+          "source_independence_note": "Canonical and publisher identities are explicit.",
+          "freshness_note": "Evidence is pinned to the case boundary.",
+          "limitations": [
+            "Synthetic evidence fixture."
+          ],
+          "completion_state": "completed",
+          "calls_used": 1
+        },
+        {
+          "schema_version": "specialist-evidence-handoff/1",
+          "assignment": {
+            "specialist_id": "roles-1-risk",
+            "question": "Investigate roles-1-scope, roles-1-risk for roles-1.",
+            "obligation_ids": [
+              "roles-1-scope",
+              "roles-1-risk"
+            ],
+            "max_sources": 4
+          },
+          "attempted_source_ids": [
+            "source-roles-1-risk-roles-1-risk"
+          ],
+          "acquired_source_ids": [
+            "source-roles-1-risk-roles-1-risk"
+          ],
+          "rejected_sources": {},
+          "evidence": [
+            {
+              "evidence_id": "roles-1-risk-roles-1-risk",
+              "source_id": "source-roles-1-risk-roles-1-risk",
+              "canonical_source_id": "canonical-roles-1-risk-roles-1-risk",
+              "publisher_id": "publisher-roles-1-risk",
+              "obligation_id": "roles-1-risk",
+              "stance": "supports",
+              "span": "Pinned supports evidence for roles-1-risk in roles-1.",
+              "derivative": false
+            }
+          ],
+          "supported_claims": [
+            "Supported roles-1-risk"
+          ],
+          "challenged_claims": [],
+          "unresolved_obligation_ids": [],
+          "source_independence_note": "Canonical and publisher identities are explicit.",
+          "freshness_note": "Evidence is pinned to the case boundary.",
+          "limitations": [
+            "Synthetic evidence fixture."
+          ],
+          "completion_state": "completed",
+          "calls_used": 1
+        }
+      ],
+      "call_budget": 3,
+      "seeded_contradiction_obligation_id": null
+    },
+    {
+      "case_id": "roles-2",
+      "stratum": "distinct_roles",
+      "separable": true,
+      "question": "Produce trustworthy research for the pinned distinct_roles case roles-2.",
+      "obligation_ids": [
+        "roles-2-scope",
+        "roles-2-authority",
+        "roles-2-risk"
+      ],
+      "control_artifact": {
+        "admitted_evidence": [
+          {
+            "evidence_id": "roles-2-generalist-roles-2-scope",
+            "source_id": "source-roles-2-generalist-roles-2-scope",
+            "canonical_source_id": "canonical-roles-2-generalist-roles-2-scope",
+            "publisher_id": "publisher-roles-2-generalist",
+            "obligation_id": "roles-2-scope",
+            "stance": "supports",
+            "span": "Pinned supports evidence for roles-2-scope in roles-2.",
+            "derivative": false
+          }
+        ],
+        "covered_obligation_ids": [
+          "roles-2-scope"
+        ],
+        "conflicting_obligation_ids": [],
+        "rejected_evidence": {},
+        "handoff_failures": [],
+        "total_calls": 2
+      },
+      "specialist_handoffs": [
+        {
+          "schema_version": "specialist-evidence-handoff/1",
+          "assignment": {
+            "specialist_id": "roles-2-discovery",
+            "question": "Investigate roles-2-scope, roles-2-authority for roles-2.",
+            "obligation_ids": [
+              "roles-2-scope",
+              "roles-2-authority"
+            ],
+            "max_sources": 4
+          },
+          "attempted_source_ids": [
+            "source-roles-2-discovery-roles-2-scope",
+            "source-roles-2-authority-roles-2-authority"
+          ],
+          "acquired_source_ids": [
+            "source-roles-2-discovery-roles-2-scope",
+            "source-roles-2-authority-roles-2-authority"
+          ],
+          "rejected_sources": {},
+          "evidence": [
+            {
+              "evidence_id": "roles-2-discovery-roles-2-scope",
+              "source_id": "source-roles-2-discovery-roles-2-scope",
+              "canonical_source_id": "canonical-roles-2-discovery-roles-2-scope",
+              "publisher_id": "publisher-roles-2-discovery",
+              "obligation_id": "roles-2-scope",
+              "stance": "supports",
+              "span": "Pinned supports evidence for roles-2-scope in roles-2.",
+              "derivative": false
+            },
+            {
+              "evidence_id": "roles-2-authority-roles-2-authority",
+              "source_id": "source-roles-2-authority-roles-2-authority",
+              "canonical_source_id": "canonical-roles-2-authority-roles-2-authority",
+              "publisher_id": "publisher-roles-2-authority",
+              "obligation_id": "roles-2-authority",
+              "stance": "supports",
+              "span": "Pinned supports evidence for roles-2-authority in roles-2.",
+              "derivative": false
+            }
+          ],
+          "supported_claims": [
+            "Supported roles-2-scope",
+            "Supported roles-2-authority"
+          ],
+          "challenged_claims": [],
+          "unresolved_obligation_ids": [],
+          "source_independence_note": "Canonical and publisher identities are explicit.",
+          "freshness_note": "Evidence is pinned to the case boundary.",
+          "limitations": [
+            "Synthetic evidence fixture."
+          ],
+          "completion_state": "completed",
+          "calls_used": 1
+        },
+        {
+          "schema_version": "specialist-evidence-handoff/1",
+          "assignment": {
+            "specialist_id": "roles-2-risk",
+            "question": "Investigate roles-2-scope, roles-2-risk for roles-2.",
+            "obligation_ids": [
+              "roles-2-scope",
+              "roles-2-risk"
+            ],
+            "max_sources": 4
+          },
+          "attempted_source_ids": [
+            "source-roles-2-risk-roles-2-risk"
+          ],
+          "acquired_source_ids": [
+            "source-roles-2-risk-roles-2-risk"
+          ],
+          "rejected_sources": {},
+          "evidence": [
+            {
+              "evidence_id": "roles-2-risk-roles-2-risk",
+              "source_id": "source-roles-2-risk-roles-2-risk",
+              "canonical_source_id": "canonical-roles-2-risk-roles-2-risk",
+              "publisher_id": "publisher-roles-2-risk",
+              "obligation_id": "roles-2-risk",
+              "stance": "supports",
+              "span": "Pinned supports evidence for roles-2-risk in roles-2.",
+              "derivative": false
+            }
+          ],
+          "supported_claims": [
+            "Supported roles-2-risk"
+          ],
+          "challenged_claims": [],
+          "unresolved_obligation_ids": [],
+          "source_independence_note": "Canonical and publisher identities are explicit.",
+          "freshness_note": "Evidence is pinned to the case boundary.",
+          "limitations": [
+            "Synthetic evidence fixture."
+          ],
+          "completion_state": "completed",
+          "calls_used": 1
+        }
+      ],
+      "call_budget": 3,
+      "seeded_contradiction_obligation_id": null
+    }
+  ]
+}

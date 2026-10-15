@@ -1,0 +1,2564 @@
+{
+  "protocol": "memory-soak-v1",
+  "blocks_completed": 6,
+  "browser_cycles": 60,
+  "scrapes": 60,
+  "status": "completed",
+  "samples": [
+    {
+      "elapsed_seconds": 0.02,
+      "phase": "baseline",
+      "block": 0,
+      "services": {
+        "browser": {
+          "used_mib": 74.496,
+          "rss_mib": 81.375,
+          "anon_mib": 51.527,
+          "file_mib": 18.102,
+          "pressure_percent": 4.966,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1305.898,
+          "rss_mib": 1661.379,
+          "anon_mib": 694.168,
+          "file_mib": 539.973,
+          "pressure_percent": 52.236,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 1.54,
+      "phase": "work",
+      "block": 1,
+      "services": {
+        "browser": {
+          "used_mib": 147.543,
+          "rss_mib": 84.941,
+          "anon_mib": 55.273,
+          "file_mib": 86.816,
+          "pressure_percent": 9.836,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.277,
+          "rss_mib": 1661.641,
+          "anon_mib": 694.164,
+          "file_mib": 539.973,
+          "pressure_percent": 52.251,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 2.45,
+      "phase": "work",
+      "block": 1,
+      "services": {
+        "browser": {
+          "used_mib": 148.578,
+          "rss_mib": 85.715,
+          "anon_mib": 55.891,
+          "file_mib": 86.816,
+          "pressure_percent": 9.905,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.59,
+          "rss_mib": 1661.57,
+          "anon_mib": 694.172,
+          "file_mib": 539.973,
+          "pressure_percent": 52.264,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 3.56,
+      "phase": "work",
+      "block": 1,
+      "services": {
+        "browser": {
+          "used_mib": 148.789,
+          "rss_mib": 86.16,
+          "anon_mib": 56.25,
+          "file_mib": 86.816,
+          "pressure_percent": 9.919,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.0,
+          "rss_mib": 1661.664,
+          "anon_mib": 694.172,
+          "file_mib": 539.973,
+          "pressure_percent": 52.24,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 4.53,
+      "phase": "work",
+      "block": 1,
+      "services": {
+        "browser": {
+          "used_mib": 149.145,
+          "rss_mib": 86.32,
+          "anon_mib": 56.57,
+          "file_mib": 86.816,
+          "pressure_percent": 9.943,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.281,
+          "rss_mib": 1661.664,
+          "anon_mib": 694.172,
+          "file_mib": 539.973,
+          "pressure_percent": 52.251,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 5.63,
+      "phase": "work",
+      "block": 1,
+      "services": {
+        "browser": {
+          "used_mib": 149.293,
+          "rss_mib": 86.809,
+          "anon_mib": 56.898,
+          "file_mib": 86.816,
+          "pressure_percent": 9.953,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.309,
+          "rss_mib": 1661.492,
+          "anon_mib": 694.16,
+          "file_mib": 539.973,
+          "pressure_percent": 52.252,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 6.53,
+      "phase": "work",
+      "block": 1,
+      "services": {
+        "browser": {
+          "used_mib": 149.531,
+          "rss_mib": 87.137,
+          "anon_mib": 57.242,
+          "file_mib": 86.816,
+          "pressure_percent": 9.969,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.125,
+          "rss_mib": 1661.562,
+          "anon_mib": 694.164,
+          "file_mib": 539.973,
+          "pressure_percent": 52.245,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 7.47,
+      "phase": "work",
+      "block": 1,
+      "services": {
+        "browser": {
+          "used_mib": 149.688,
+          "rss_mib": 87.453,
+          "anon_mib": 57.574,
+          "file_mib": 86.816,
+          "pressure_percent": 9.979,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.281,
+          "rss_mib": 1661.641,
+          "anon_mib": 694.168,
+          "file_mib": 539.973,
+          "pressure_percent": 52.251,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 8.57,
+      "phase": "work",
+      "block": 1,
+      "services": {
+        "browser": {
+          "used_mib": 150.711,
+          "rss_mib": 87.828,
+          "anon_mib": 57.969,
+          "file_mib": 86.816,
+          "pressure_percent": 10.047,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.543,
+          "rss_mib": 1661.645,
+          "anon_mib": 694.172,
+          "file_mib": 539.973,
+          "pressure_percent": 52.262,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 9.59,
+      "phase": "work",
+      "block": 1,
+      "services": {
+        "browser": {
+          "used_mib": 150.551,
+          "rss_mib": 88.184,
+          "anon_mib": 58.293,
+          "file_mib": 86.816,
+          "pressure_percent": 10.037,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.328,
+          "rss_mib": 1661.387,
+          "anon_mib": 694.168,
+          "file_mib": 539.973,
+          "pressure_percent": 52.253,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 10.61,
+      "phase": "work",
+      "block": 1,
+      "services": {
+        "browser": {
+          "used_mib": 151.48,
+          "rss_mib": 88.523,
+          "anon_mib": 58.633,
+          "file_mib": 86.816,
+          "pressure_percent": 10.099,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.289,
+          "rss_mib": 1661.434,
+          "anon_mib": 693.688,
+          "file_mib": 539.973,
+          "pressure_percent": 52.252,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 26.05,
+      "phase": "settled",
+      "block": 1,
+      "services": {
+        "browser": {
+          "used_mib": 151.254,
+          "rss_mib": 88.266,
+          "anon_mib": 58.652,
+          "file_mib": 86.816,
+          "pressure_percent": 10.084,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.832,
+          "rss_mib": 1661.625,
+          "anon_mib": 694.16,
+          "file_mib": 539.973,
+          "pressure_percent": 52.273,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 27.47,
+      "phase": "work",
+      "block": 2,
+      "services": {
+        "browser": {
+          "used_mib": 151.293,
+          "rss_mib": 88.531,
+          "anon_mib": 58.914,
+          "file_mib": 86.816,
+          "pressure_percent": 10.086,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.352,
+          "rss_mib": 1661.535,
+          "anon_mib": 694.172,
+          "file_mib": 539.973,
+          "pressure_percent": 52.254,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 28.57,
+      "phase": "work",
+      "block": 2,
+      "services": {
+        "browser": {
+          "used_mib": 151.164,
+          "rss_mib": 88.809,
+          "anon_mib": 58.918,
+          "file_mib": 86.816,
+          "pressure_percent": 10.078,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.703,
+          "rss_mib": 1661.492,
+          "anon_mib": 694.16,
+          "file_mib": 539.973,
+          "pressure_percent": 52.268,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 29.65,
+      "phase": "work",
+      "block": 2,
+      "services": {
+        "browser": {
+          "used_mib": 150.965,
+          "rss_mib": 88.824,
+          "anon_mib": 58.914,
+          "file_mib": 86.816,
+          "pressure_percent": 10.064,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.512,
+          "rss_mib": 1661.641,
+          "anon_mib": 694.168,
+          "file_mib": 539.973,
+          "pressure_percent": 52.26,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 30.71,
+      "phase": "work",
+      "block": 2,
+      "services": {
+        "browser": {
+          "used_mib": 151.906,
+          "rss_mib": 88.828,
+          "anon_mib": 58.918,
+          "file_mib": 86.816,
+          "pressure_percent": 10.127,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.855,
+          "rss_mib": 1661.383,
+          "anon_mib": 694.164,
+          "file_mib": 539.973,
+          "pressure_percent": 52.274,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 31.68,
+      "phase": "work",
+      "block": 2,
+      "services": {
+        "browser": {
+          "used_mib": 151.09,
+          "rss_mib": 88.738,
+          "anon_mib": 58.922,
+          "file_mib": 86.816,
+          "pressure_percent": 10.073,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1307.09,
+          "rss_mib": 1661.562,
+          "anon_mib": 694.23,
+          "file_mib": 539.973,
+          "pressure_percent": 52.284,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 32.66,
+      "phase": "work",
+      "block": 2,
+      "services": {
+        "browser": {
+          "used_mib": 151.215,
+          "rss_mib": 88.551,
+          "anon_mib": 58.926,
+          "file_mib": 86.816,
+          "pressure_percent": 10.081,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.516,
+          "rss_mib": 1661.562,
+          "anon_mib": 694.23,
+          "file_mib": 539.973,
+          "pressure_percent": 52.261,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 33.6,
+      "phase": "work",
+      "block": 2,
+      "services": {
+        "browser": {
+          "used_mib": 151.527,
+          "rss_mib": 88.902,
+          "anon_mib": 59.086,
+          "file_mib": 86.816,
+          "pressure_percent": 10.102,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.434,
+          "rss_mib": 1661.637,
+          "anon_mib": 694.16,
+          "file_mib": 539.973,
+          "pressure_percent": 52.257,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 34.55,
+      "phase": "work",
+      "block": 2,
+      "services": {
+        "browser": {
+          "used_mib": 151.414,
+          "rss_mib": 89.141,
+          "anon_mib": 59.23,
+          "file_mib": 86.816,
+          "pressure_percent": 10.094,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.742,
+          "rss_mib": 1661.328,
+          "anon_mib": 694.16,
+          "file_mib": 539.973,
+          "pressure_percent": 52.27,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 35.63,
+      "phase": "work",
+      "block": 2,
+      "services": {
+        "browser": {
+          "used_mib": 155.379,
+          "rss_mib": 99.211,
+          "anon_mib": 62.621,
+          "file_mib": 86.816,
+          "pressure_percent": 10.359,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 13,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.191,
+          "rss_mib": 1661.41,
+          "anon_mib": 694.168,
+          "file_mib": 539.973,
+          "pressure_percent": 52.248,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 36.58,
+      "phase": "work",
+      "block": 2,
+      "services": {
+        "browser": {
+          "used_mib": 151.895,
+          "rss_mib": 89.137,
+          "anon_mib": 59.238,
+          "file_mib": 86.82,
+          "pressure_percent": 10.126,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.555,
+          "rss_mib": 1661.613,
+          "anon_mib": 694.164,
+          "file_mib": 539.973,
+          "pressure_percent": 52.262,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 51.97,
+      "phase": "settled",
+      "block": 2,
+      "services": {
+        "browser": {
+          "used_mib": 151.656,
+          "rss_mib": 88.988,
+          "anon_mib": 59.238,
+          "file_mib": 86.82,
+          "pressure_percent": 10.11,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.633,
+          "rss_mib": 1661.566,
+          "anon_mib": 694.168,
+          "file_mib": 539.973,
+          "pressure_percent": 52.265,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 53.11,
+      "phase": "work",
+      "block": 3,
+      "services": {
+        "browser": {
+          "used_mib": 152.715,
+          "rss_mib": 89.156,
+          "anon_mib": 59.262,
+          "file_mib": 86.82,
+          "pressure_percent": 10.181,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.328,
+          "rss_mib": 1661.594,
+          "anon_mib": 694.098,
+          "file_mib": 539.973,
+          "pressure_percent": 52.253,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 54.18,
+      "phase": "work",
+      "block": 3,
+      "services": {
+        "browser": {
+          "used_mib": 152.23,
+          "rss_mib": 89.078,
+          "anon_mib": 59.41,
+          "file_mib": 86.82,
+          "pressure_percent": 10.149,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1307.152,
+          "rss_mib": 1661.414,
+          "anon_mib": 694.172,
+          "file_mib": 539.973,
+          "pressure_percent": 52.286,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 55.08,
+      "phase": "work",
+      "block": 3,
+      "services": {
+        "browser": {
+          "used_mib": 152.195,
+          "rss_mib": 89.508,
+          "anon_mib": 59.617,
+          "file_mib": 86.82,
+          "pressure_percent": 10.146,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.105,
+          "rss_mib": 1661.379,
+          "anon_mib": 694.168,
+          "file_mib": 539.973,
+          "pressure_percent": 52.244,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 56.13,
+      "phase": "work",
+      "block": 3,
+      "services": {
+        "browser": {
+          "used_mib": 152.176,
+          "rss_mib": 89.293,
+          "anon_mib": 59.625,
+          "file_mib": 86.82,
+          "pressure_percent": 10.145,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.402,
+          "rss_mib": 1661.641,
+          "anon_mib": 694.168,
+          "file_mib": 539.973,
+          "pressure_percent": 52.256,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 57.28,
+      "phase": "work",
+      "block": 3,
+      "services": {
+        "browser": {
+          "used_mib": 152.301,
+          "rss_mib": 89.262,
+          "anon_mib": 59.629,
+          "file_mib": 86.82,
+          "pressure_percent": 10.153,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.48,
+          "rss_mib": 1661.461,
+          "anon_mib": 694.16,
+          "file_mib": 539.973,
+          "pressure_percent": 52.259,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 58.22,
+      "phase": "work",
+      "block": 3,
+      "services": {
+        "browser": {
+          "used_mib": 152.395,
+          "rss_mib": 89.297,
+          "anon_mib": 59.629,
+          "file_mib": 86.82,
+          "pressure_percent": 10.16,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.102,
+          "rss_mib": 1661.379,
+          "anon_mib": 694.168,
+          "file_mib": 539.973,
+          "pressure_percent": 52.244,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 59.18,
+      "phase": "work",
+      "block": 3,
+      "services": {
+        "browser": {
+          "used_mib": 152.59,
+          "rss_mib": 89.215,
+          "anon_mib": 59.633,
+          "file_mib": 86.82,
+          "pressure_percent": 10.173,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.355,
+          "rss_mib": 1661.625,
+          "anon_mib": 694.16,
+          "file_mib": 539.973,
+          "pressure_percent": 52.254,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 60.25,
+      "phase": "work",
+      "block": 3,
+      "services": {
+        "browser": {
+          "used_mib": 152.109,
+          "rss_mib": 89.387,
+          "anon_mib": 59.637,
+          "file_mib": 86.82,
+          "pressure_percent": 10.141,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.289,
+          "rss_mib": 1661.414,
+          "anon_mib": 694.172,
+          "file_mib": 539.973,
+          "pressure_percent": 52.252,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 61.25,
+      "phase": "work",
+      "block": 3,
+      "services": {
+        "browser": {
+          "used_mib": 151.984,
+          "rss_mib": 89.254,
+          "anon_mib": 59.637,
+          "file_mib": 86.82,
+          "pressure_percent": 10.132,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.566,
+          "rss_mib": 1661.645,
+          "anon_mib": 694.172,
+          "file_mib": 539.973,
+          "pressure_percent": 52.263,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 62.24,
+      "phase": "work",
+      "block": 3,
+      "services": {
+        "browser": {
+          "used_mib": 152.18,
+          "rss_mib": 89.523,
+          "anon_mib": 59.641,
+          "file_mib": 86.82,
+          "pressure_percent": 10.145,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.785,
+          "rss_mib": 1661.363,
+          "anon_mib": 694.164,
+          "file_mib": 539.973,
+          "pressure_percent": 52.271,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 77.64,
+      "phase": "settled",
+      "block": 3,
+      "services": {
+        "browser": {
+          "used_mib": 152.152,
+          "rss_mib": 89.535,
+          "anon_mib": 59.641,
+          "file_mib": 86.82,
+          "pressure_percent": 10.143,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.949,
+          "rss_mib": 1661.668,
+          "anon_mib": 694.164,
+          "file_mib": 539.973,
+          "pressure_percent": 52.278,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 78.86,
+      "phase": "work",
+      "block": 4,
+      "services": {
+        "browser": {
+          "used_mib": 152.402,
+          "rss_mib": 89.27,
+          "anon_mib": 59.652,
+          "file_mib": 86.82,
+          "pressure_percent": 10.16,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.059,
+          "rss_mib": 1661.621,
+          "anon_mib": 694.156,
+          "file_mib": 539.973,
+          "pressure_percent": 52.242,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 79.96,
+      "phase": "work",
+      "block": 4,
+      "services": {
+        "browser": {
+          "used_mib": 152.391,
+          "rss_mib": 89.547,
+          "anon_mib": 59.652,
+          "file_mib": 86.82,
+          "pressure_percent": 10.159,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.43,
+          "rss_mib": 1661.652,
+          "anon_mib": 694.164,
+          "file_mib": 539.973,
+          "pressure_percent": 52.257,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 80.96,
+      "phase": "work",
+      "block": 4,
+      "services": {
+        "browser": {
+          "used_mib": 152.273,
+          "rss_mib": 89.562,
+          "anon_mib": 59.664,
+          "file_mib": 86.82,
+          "pressure_percent": 10.152,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.055,
+          "rss_mib": 1661.625,
+          "anon_mib": 694.16,
+          "file_mib": 539.973,
+          "pressure_percent": 52.242,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 81.88,
+      "phase": "work",
+      "block": 4,
+      "services": {
+        "browser": {
+          "used_mib": 152.27,
+          "rss_mib": 89.652,
+          "anon_mib": 59.742,
+          "file_mib": 86.82,
+          "pressure_percent": 10.151,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.812,
+          "rss_mib": 1661.656,
+          "anon_mib": 694.168,
+          "file_mib": 539.973,
+          "pressure_percent": 52.273,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 82.84,
+      "phase": "work",
+      "block": 4,
+      "services": {
+        "browser": {
+          "used_mib": 152.469,
+          "rss_mib": 89.555,
+          "anon_mib": 59.938,
+          "file_mib": 86.82,
+          "pressure_percent": 10.165,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.195,
+          "rss_mib": 1661.512,
+          "anon_mib": 694.168,
+          "file_mib": 539.973,
+          "pressure_percent": 52.248,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 83.83,
+      "phase": "work",
+      "block": 4,
+      "services": {
+        "browser": {
+          "used_mib": 152.66,
+          "rss_mib": 89.836,
+          "anon_mib": 59.945,
+          "file_mib": 86.82,
+          "pressure_percent": 10.177,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.254,
+          "rss_mib": 1661.492,
+          "anon_mib": 694.16,
+          "file_mib": 539.973,
+          "pressure_percent": 52.25,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 84.86,
+      "phase": "work",
+      "block": 4,
+      "services": {
+        "browser": {
+          "used_mib": 152.711,
+          "rss_mib": 89.844,
+          "anon_mib": 59.945,
+          "file_mib": 86.82,
+          "pressure_percent": 10.181,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.328,
+          "rss_mib": 1661.566,
+          "anon_mib": 694.168,
+          "file_mib": 539.973,
+          "pressure_percent": 52.253,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 85.91,
+      "phase": "work",
+      "block": 4,
+      "services": {
+        "browser": {
+          "used_mib": 152.898,
+          "rss_mib": 89.859,
+          "anon_mib": 59.965,
+          "file_mib": 86.82,
+          "pressure_percent": 10.193,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1305.73,
+          "rss_mib": 1661.336,
+          "anon_mib": 694.164,
+          "file_mib": 539.973,
+          "pressure_percent": 52.229,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 86.96,
+      "phase": "work",
+      "block": 4,
+      "services": {
+        "browser": {
+          "used_mib": 153.301,
+          "rss_mib": 89.863,
+          "anon_mib": 59.965,
+          "file_mib": 86.824,
+          "pressure_percent": 10.22,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.977,
+          "rss_mib": 1661.648,
+          "anon_mib": 694.16,
+          "file_mib": 539.973,
+          "pressure_percent": 52.279,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 87.85,
+      "phase": "work",
+      "block": 4,
+      "services": {
+        "browser": {
+          "used_mib": 152.602,
+          "rss_mib": 89.594,
+          "anon_mib": 59.965,
+          "file_mib": 86.824,
+          "pressure_percent": 10.173,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.242,
+          "rss_mib": 1661.359,
+          "anon_mib": 694.164,
+          "file_mib": 539.973,
+          "pressure_percent": 52.25,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 103.26,
+      "phase": "settled",
+      "block": 4,
+      "services": {
+        "browser": {
+          "used_mib": 153.27,
+          "rss_mib": 89.871,
+          "anon_mib": 59.961,
+          "file_mib": 86.824,
+          "pressure_percent": 10.218,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1305.734,
+          "rss_mib": 1661.383,
+          "anon_mib": 694.164,
+          "file_mib": 539.973,
+          "pressure_percent": 52.229,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 104.31,
+      "phase": "work",
+      "block": 5,
+      "services": {
+        "browser": {
+          "used_mib": 152.742,
+          "rss_mib": 89.867,
+          "anon_mib": 59.957,
+          "file_mib": 86.824,
+          "pressure_percent": 10.183,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.227,
+          "rss_mib": 1661.656,
+          "anon_mib": 694.164,
+          "file_mib": 539.973,
+          "pressure_percent": 52.249,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 105.16,
+      "phase": "work",
+      "block": 5,
+      "services": {
+        "browser": {
+          "used_mib": 153.43,
+          "rss_mib": 89.883,
+          "anon_mib": 59.973,
+          "file_mib": 86.824,
+          "pressure_percent": 10.229,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.34,
+          "rss_mib": 1661.57,
+          "anon_mib": 694.102,
+          "file_mib": 539.973,
+          "pressure_percent": 52.254,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 106.16,
+      "phase": "work",
+      "block": 5,
+      "services": {
+        "browser": {
+          "used_mib": 152.707,
+          "rss_mib": 89.609,
+          "anon_mib": 59.977,
+          "file_mib": 86.824,
+          "pressure_percent": 10.18,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.609,
+          "rss_mib": 1661.73,
+          "anon_mib": 694.234,
+          "file_mib": 539.973,
+          "pressure_percent": 52.264,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 107.16,
+      "phase": "work",
+      "block": 5,
+      "services": {
+        "browser": {
+          "used_mib": 153.086,
+          "rss_mib": 89.609,
+          "anon_mib": 59.977,
+          "file_mib": 86.824,
+          "pressure_percent": 10.206,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.457,
+          "rss_mib": 1661.703,
+          "anon_mib": 694.23,
+          "file_mib": 539.973,
+          "pressure_percent": 52.258,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 108.14,
+      "phase": "work",
+      "block": 5,
+      "services": {
+        "browser": {
+          "used_mib": 153.328,
+          "rss_mib": 89.625,
+          "anon_mib": 59.992,
+          "file_mib": 86.824,
+          "pressure_percent": 10.222,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.395,
+          "rss_mib": 1661.707,
+          "anon_mib": 694.23,
+          "file_mib": 539.973,
+          "pressure_percent": 52.256,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 109.08,
+      "phase": "work",
+      "block": 5,
+      "services": {
+        "browser": {
+          "used_mib": 152.953,
+          "rss_mib": 89.887,
+          "anon_mib": 60.07,
+          "file_mib": 86.824,
+          "pressure_percent": 10.197,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.238,
+          "rss_mib": 1661.629,
+          "anon_mib": 694.238,
+          "file_mib": 539.973,
+          "pressure_percent": 52.25,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 110.05,
+      "phase": "work",
+      "block": 5,
+      "services": {
+        "browser": {
+          "used_mib": 153.539,
+          "rss_mib": 89.91,
+          "anon_mib": 60.277,
+          "file_mib": 86.824,
+          "pressure_percent": 10.236,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.246,
+          "rss_mib": 1661.656,
+          "anon_mib": 694.164,
+          "file_mib": 539.973,
+          "pressure_percent": 52.25,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 111.06,
+      "phase": "work",
+      "block": 5,
+      "services": {
+        "browser": {
+          "used_mib": 152.953,
+          "rss_mib": 90.199,
+          "anon_mib": 60.285,
+          "file_mib": 86.824,
+          "pressure_percent": 10.197,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.375,
+          "rss_mib": 1661.551,
+          "anon_mib": 694.168,
+          "file_mib": 539.973,
+          "pressure_percent": 52.255,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 111.97,
+      "phase": "work",
+      "block": 5,
+      "services": {
+        "browser": {
+          "used_mib": 153.184,
+          "rss_mib": 90.203,
+          "anon_mib": 60.289,
+          "file_mib": 86.824,
+          "pressure_percent": 10.212,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.227,
+          "rss_mib": 1661.633,
+          "anon_mib": 694.164,
+          "file_mib": 539.973,
+          "pressure_percent": 52.249,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 112.96,
+      "phase": "work",
+      "block": 5,
+      "services": {
+        "browser": {
+          "used_mib": 153.492,
+          "rss_mib": 90.191,
+          "anon_mib": 60.293,
+          "file_mib": 86.824,
+          "pressure_percent": 10.233,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.543,
+          "rss_mib": 1661.359,
+          "anon_mib": 694.164,
+          "file_mib": 539.973,
+          "pressure_percent": 52.262,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 128.34,
+      "phase": "settled",
+      "block": 5,
+      "services": {
+        "browser": {
+          "used_mib": 153.117,
+          "rss_mib": 89.906,
+          "anon_mib": 60.289,
+          "file_mib": 86.824,
+          "pressure_percent": 10.208,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1305.789,
+          "rss_mib": 1661.641,
+          "anon_mib": 694.168,
+          "file_mib": 539.973,
+          "pressure_percent": 52.232,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 129.67,
+      "phase": "work",
+      "block": 6,
+      "services": {
+        "browser": {
+          "used_mib": 153.168,
+          "rss_mib": 90.039,
+          "anon_mib": 60.289,
+          "file_mib": 86.824,
+          "pressure_percent": 10.211,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.488,
+          "rss_mib": 1661.57,
+          "anon_mib": 694.172,
+          "file_mib": 539.973,
+          "pressure_percent": 52.26,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 130.76,
+      "phase": "work",
+      "block": 6,
+      "services": {
+        "browser": {
+          "used_mib": 153.66,
+          "rss_mib": 90.188,
+          "anon_mib": 60.293,
+          "file_mib": 86.824,
+          "pressure_percent": 10.244,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.32,
+          "rss_mib": 1661.559,
+          "anon_mib": 694.168,
+          "file_mib": 539.973,
+          "pressure_percent": 52.253,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 131.8,
+      "phase": "work",
+      "block": 6,
+      "services": {
+        "browser": {
+          "used_mib": 153.016,
+          "rss_mib": 90.207,
+          "anon_mib": 60.297,
+          "file_mib": 86.824,
+          "pressure_percent": 10.201,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.395,
+          "rss_mib": 1661.645,
+          "anon_mib": 694.172,
+          "file_mib": 539.973,
+          "pressure_percent": 52.256,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 132.78,
+      "phase": "work",
+      "block": 6,
+      "services": {
+        "browser": {
+          "used_mib": 153.254,
+          "rss_mib": 90.211,
+          "anon_mib": 60.297,
+          "file_mib": 86.824,
+          "pressure_percent": 10.217,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.59,
+          "rss_mib": 1661.414,
+          "anon_mib": 694.172,
+          "file_mib": 539.973,
+          "pressure_percent": 52.264,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 133.93,
+      "phase": "work",
+      "block": 6,
+      "services": {
+        "browser": {
+          "used_mib": 153.352,
+          "rss_mib": 90.207,
+          "anon_mib": 60.297,
+          "file_mib": 86.824,
+          "pressure_percent": 10.223,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.262,
+          "rss_mib": 1661.613,
+          "anon_mib": 694.16,
+          "file_mib": 539.973,
+          "pressure_percent": 52.25,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 134.93,
+      "phase": "work",
+      "block": 6,
+      "services": {
+        "browser": {
+          "used_mib": 153.426,
+          "rss_mib": 90.113,
+          "anon_mib": 60.297,
+          "file_mib": 86.824,
+          "pressure_percent": 10.228,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.773,
+          "rss_mib": 1661.305,
+          "anon_mib": 694.16,
+          "file_mib": 539.973,
+          "pressure_percent": 52.271,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 135.84,
+      "phase": "work",
+      "block": 6,
+      "services": {
+        "browser": {
+          "used_mib": 153.504,
+          "rss_mib": 90.043,
+          "anon_mib": 60.293,
+          "file_mib": 86.824,
+          "pressure_percent": 10.234,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.199,
+          "rss_mib": 1661.652,
+          "anon_mib": 694.164,
+          "file_mib": 539.973,
+          "pressure_percent": 52.248,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 136.85,
+      "phase": "work",
+      "block": 6,
+      "services": {
+        "browser": {
+          "used_mib": 153.859,
+          "rss_mib": 90.156,
+          "anon_mib": 60.406,
+          "file_mib": 86.824,
+          "pressure_percent": 10.257,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.27,
+          "rss_mib": 1661.43,
+          "anon_mib": 694.234,
+          "file_mib": 539.973,
+          "pressure_percent": 52.251,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 137.86,
+      "phase": "work",
+      "block": 6,
+      "services": {
+        "browser": {
+          "used_mib": 153.945,
+          "rss_mib": 90.43,
+          "anon_mib": 60.68,
+          "file_mib": 86.824,
+          "pressure_percent": 10.263,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.012,
+          "rss_mib": 1661.559,
+          "anon_mib": 694.164,
+          "file_mib": 539.973,
+          "pressure_percent": 52.24,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 138.86,
+      "phase": "work",
+      "block": 6,
+      "services": {
+        "browser": {
+          "used_mib": 154.207,
+          "rss_mib": 90.57,
+          "anon_mib": 60.68,
+          "file_mib": 86.824,
+          "pressure_percent": 10.28,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.836,
+          "rss_mib": 1661.625,
+          "anon_mib": 694.16,
+          "file_mib": 539.973,
+          "pressure_percent": 52.273,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 154.27,
+      "phase": "settled",
+      "block": 6,
+      "services": {
+        "browser": {
+          "used_mib": 153.473,
+          "rss_mib": 90.574,
+          "anon_mib": 60.68,
+          "file_mib": 86.824,
+          "pressure_percent": 10.232,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.25,
+          "rss_mib": 1661.559,
+          "anon_mib": 694.164,
+          "file_mib": 539.973,
+          "pressure_percent": 52.25,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 185.0,
+      "phase": "idle",
+      "block": 1,
+      "services": {
+        "browser": {
+          "used_mib": 153.617,
+          "rss_mib": 90.5,
+          "anon_mib": 60.676,
+          "file_mib": 86.824,
+          "pressure_percent": 10.241,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1305.996,
+          "rss_mib": 1661.559,
+          "anon_mib": 694.094,
+          "file_mib": 539.973,
+          "pressure_percent": 52.24,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 215.56,
+      "phase": "idle",
+      "block": 2,
+      "services": {
+        "browser": {
+          "used_mib": 153.715,
+          "rss_mib": 90.598,
+          "anon_mib": 60.688,
+          "file_mib": 86.824,
+          "pressure_percent": 10.248,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.18,
+          "rss_mib": 1661.656,
+          "anon_mib": 694.164,
+          "file_mib": 539.973,
+          "pressure_percent": 52.247,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 246.22,
+      "phase": "idle",
+      "block": 3,
+      "services": {
+        "browser": {
+          "used_mib": 154.312,
+          "rss_mib": 90.551,
+          "anon_mib": 60.695,
+          "file_mib": 86.824,
+          "pressure_percent": 10.287,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.879,
+          "rss_mib": 1661.582,
+          "anon_mib": 694.172,
+          "file_mib": 539.973,
+          "pressure_percent": 52.275,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 276.93,
+      "phase": "idle",
+      "block": 4,
+      "services": {
+        "browser": {
+          "used_mib": 153.996,
+          "rss_mib": 90.582,
+          "anon_mib": 60.688,
+          "file_mib": 86.824,
+          "pressure_percent": 10.266,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.723,
+          "rss_mib": 1661.391,
+          "anon_mib": 694.172,
+          "file_mib": 539.973,
+          "pressure_percent": 52.269,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 307.66,
+      "phase": "idle",
+      "block": 5,
+      "services": {
+        "browser": {
+          "used_mib": 153.945,
+          "rss_mib": 90.441,
+          "anon_mib": 60.691,
+          "file_mib": 86.824,
+          "pressure_percent": 10.263,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 7,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1305.875,
+          "rss_mib": 1661.637,
+          "anon_mib": 694.168,
+          "file_mib": 539.973,
+          "pressure_percent": 52.235,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 338.32,
+      "phase": "idle",
+      "block": 6,
+      "services": {
+        "browser": {
+          "used_mib": 164.551,
+          "rss_mib": 113.012,
+          "anon_mib": 70.957,
+          "file_mib": 86.824,
+          "pressure_percent": 10.97,
+          "active_sessions": 0,
+          "healthy": true,
+          "pids_current": 8,
+          "pids_limit": 256,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        },
+        "scraper": {
+          "used_mib": 1306.504,
+          "rss_mib": 1661.395,
+          "anon_mib": 694.152,
+          "file_mib": 539.973,
+          "pressure_percent": 52.26,
+          "active_sessions": null,
+          "healthy": true,
+          "pids_current": 200,
+          "pids_limit": 512,
+          "zombie_processes": 0,
+          "oom_delta": 0,
+          "oom_kill_delta": 0
+        }
+      }
+    }
+  ]
+}

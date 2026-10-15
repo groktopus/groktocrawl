@@ -1,0 +1,52 @@
+{
+  "case_id": "mission-straightforward-delivery",
+  "completed_at": "2026-09-19T06:05:20.334872+00:00",
+  "position": 7,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "c2aac7e07ef2b566de3d29b39282baf939f060e513abcc942dab0e2df8691989",
+    "finish_reason": "stop",
+    "latency_ms": 34227.495,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "36cc78e608d3f04a901440294c541bb3a91df77f42a47db3e8791faa5ebf11a2",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 429,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 218
+      },
+      "cost": 0.0005235,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0002145,
+        "upstream_inference_cost": 0.0005235,
+        "upstream_inference_prompt_cost": 0.000309
+      },
+      "is_byok": false,
+      "prompt_tokens": 2060,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 2489
+    }
+  },
+  "repetition": 2,
+  "result": {
+    "action": "clarify",
+    "clarifying_question": "Which specific policy document governs this question — please supply the policy text or its title, version, and effective date — and which build agent and production environment are in scope?",
+    "mission": null,
+    "rationale": "The request asks whether the build agent may deploy to production 'under the supplied policy,' but no policy text, title, version, or effective date was actually provided in the request. The policy is the primary authority for this determination; without it, any research mission would have no authoritative source to interpret, and guessing which policy applies would risk producing a permission-like finding the requester never authorized. This is a decision-changing ambiguity that cannot be resolved without the requester identifying the governing document and the agent/environment in scope. Clarification is required before a research-mission/1 object can be issued; the mission itself would remain a research boundary, never the permission answer, and any determinations would come only from the supplied policy as evidence."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:04:46.101578+00:00",
+  "status": "completed",
+  "trial_id": "mission-straightforward-delivery-intake-r2"
+}

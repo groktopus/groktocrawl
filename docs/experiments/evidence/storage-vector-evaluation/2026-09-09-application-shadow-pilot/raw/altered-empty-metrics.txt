@@ -1,0 +1,5 @@
+# HELP groktocrawl_pgvector_shadow_comparisons_total Pgvector search comparisons by outcome
+# TYPE groktocrawl_pgvector_shadow_comparisons_total counter
+groktocrawl_pgvector_shadow_comparisons_total{outcome="mismatch"} 3.0
+groktocrawl_pgvector_shadow_comparisons_total{outcome="match"} 32.0
+groktocrawl_pgvector_shadow_comparisons_total{outcome="failure"} 1.0

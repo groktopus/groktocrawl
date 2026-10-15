@@ -1,0 +1,89 @@
+name: Vector Store Migration Evaluation
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Optional stable identifier for the isolated migration run
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  evaluate:
+    name: Rehearse vector migration and rollback
+    runs-on: ubuntu-latest
+    env:
+      COMPOSE_PROJECT_NAME: groktocrawl-x-vector-migration-${{ github.run_id }}
+      VECTOR_EVAL_POSTGRES_PASSWORD: vector-migration-${{ github.run_id }}-${{ github.run_attempt }}
+      VECTOR_EVAL_RUN_ID: ${{ inputs.run_id || format('migration-{0}', github.run_id) }}
+    steps:
+      - name: Check out fork
+        uses: actions/checkout@v5
+
+      - name: Validate isolated Compose file
+        run: docker compose -f compose.vector-evaluation.yml --profile vector-eval config --quiet
+
+      - name: Start isolated vector services
+        run: docker compose -f compose.vector-evaluation.yml --profile vector-eval up -d --wait vector-eval-qdrant vector-eval-postgres
+
+      - name: Create private evaluation runner
+        run: |
+          mkdir -p vector-migration-out
+          qdrant_container=$(docker compose -f compose.vector-evaluation.yml --profile vector-eval ps -q vector-eval-qdrant)
+          eval_network=$(docker inspect "$qdrant_container" --format '{{range $name, $_ := .NetworkSettings.Networks}}{{$name}}{{end}}')
+          echo "::add-mask::$VECTOR_EVAL_POSTGRES_PASSWORD"
+          runner=$(docker run -d --network bridge \
+            -e VECTOR_EVAL_POSTGRES_PASSWORD \
+            -e VECTOR_EVAL_RUN_ID \
+            -v "$GITHUB_WORKSPACE:/workspace:ro" \
+            -v "$GITHUB_WORKSPACE/vector-migration-out:/out" \
+            -w /workspace python:3.12-slim sleep 1200)
+          docker network connect "$eval_network" "$runner"
+          echo "RUNNER_ID=$runner" >> "$GITHUB_ENV"
+
+      - name: Run provider migration and rollback rehearsals
+        run: |
+          docker exec "$RUNNER_ID" sh -ceu '
+            python -m pip install --disable-pip-version-check --no-cache-dir \
+              "psycopg[binary]==3.3.5" "qdrant-client>=1.13.0,<1.20.0"
+            for provider in qdrant pgvector; do
+              python scripts/run_vector_store_migration_evaluation.py \
+                --provider "$provider" \
+                --qdrant-url http://vector-eval-qdrant:6333 \
+                --postgres-dsn "postgresql://vector_eval:${VECTOR_EVAL_POSTGRES_PASSWORD}@vector-eval-postgres:5432/vector_eval" \
+                --run-id "${VECTOR_EVAL_RUN_ID}-${provider}" \
+                --allow-isolated-database \
+                --output "/out/${provider}.json"
+            done
+          '
+
+      - name: Enforce migration and rollback gates
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for provider in ("qdrant", "pgvector"):
+              result = json.loads(Path(f"vector-migration-out/{provider}.json").read_text())
+              assert result["production_change"] is False
+              assert result["qdrant_removal"] is False
+              assert result["ok"] is True, result
+              assert all(result["candidate"]["gates"].values()), result
+          print("migration and rollback gates passed")
+          PY
+
+      - name: Upload migration evidence
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: vector-store-migration-evaluation-${{ github.run_id }}
+          path: vector-migration-out/
+          if-no-files-found: warn
+
+      - name: Stop isolated vector services
+        if: always()
+        run: |
+          docker rm -f "$RUNNER_ID" >/dev/null 2>&1 || true
+          docker compose -f compose.vector-evaluation.yml --profile vector-eval down --volumes --remove-orphans --timeout 30

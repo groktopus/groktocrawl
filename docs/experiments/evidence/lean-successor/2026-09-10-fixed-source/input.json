@@ -1,0 +1,13 @@
+{
+  "objective": "According to the retained experiment note, what happened and what remains unproven?",
+  "questions": [
+    {"question_id": "q-result", "text": "What happened?"},
+    {"question_id": "q-limit", "text": "What remains unproven?"}
+  ],
+  "sources": [
+    {
+      "snapshot_id": "synthetic-note-v1",
+      "text": "On 2026-09-10, the bounded fixture completed one construction step and produced an answer with exact passage citations. The fixture did not test live search, production traffic, restart recovery, or comparative answer quality. No production adoption decision was made."
+    }
+  ]
+}

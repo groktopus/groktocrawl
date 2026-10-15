@@ -1,0 +1,28 @@
+{
+  "timestamp_utc": "2026-10-01T04:40:23.424061+00:00",
+  "browser_image_revision": "68ece0cfb50684a5637185048d0db15049bb9d56",
+  "browser_source_verified": true,
+  "browser_init": true,
+  "browser_health": {
+    "status": "ok",
+    "active_sessions": 0,
+    "process_capacity": {
+      "state": "ok",
+      "reason": "process_budget_available",
+      "current_tasks": 7,
+      "task_limit": 256,
+      "available_tasks": 249,
+      "minimum_task_headroom": 16,
+      "scope": "container_cgroup"
+    }
+  },
+  "browser_lifecycle": "passed",
+  "healthy_services": 11,
+  "semantic_cpu_quota": 14,
+  "agent_model_unchanged": true,
+  "previous_agent_revision": "bb5f2a3eb00df73eadb7163c6ed88504ee5cc843",
+  "runtime": {
+    "model": "free",
+    "revision": "68ece0cfb50684a5637185048d0db15049bb9d56"
+  }
+}

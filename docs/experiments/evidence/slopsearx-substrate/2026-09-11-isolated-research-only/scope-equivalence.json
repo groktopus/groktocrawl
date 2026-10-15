@@ -1,0 +1,33 @@
+{
+  "dispatches": 0,
+  "http_control": {
+    "categories": [
+      "general"
+    ],
+    "engines": [
+      "brave",
+      "duckduckgo",
+      "google",
+      "hackernews",
+      "reddit",
+      "stackexchange",
+      "wikipedia"
+    ]
+  },
+  "note": "Both arms must use the frozen explicit engine list during measurement.",
+  "probe_query_sha256": "ab1938ea1909c71312bb9b3c248b2ac30e3f9884bfca070bcc649a57ec2ec3b0",
+  "research_arm": {
+    "initial_plan_engines": [
+      "brave",
+      "duckduckgo",
+      "google",
+      "hackernews",
+      "reddit",
+      "stackexchange",
+      "wikipedia"
+    ]
+  },
+  "schema_version": "enterprise-evaluation/w11-scope-equivalence/1",
+  "scope_equal": true,
+  "selected_engine_count": 7
+}

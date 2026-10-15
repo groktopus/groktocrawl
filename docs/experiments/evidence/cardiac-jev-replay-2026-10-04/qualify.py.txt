@@ -1,0 +1,28 @@
+"""Reproduce the validation amendment offline; never dispatches requests."""
+import argparse,hashlib,importlib.machinery,importlib.util,json,pathlib
+
+def main():
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('root',type=pathlib.Path)
+    parser.add_argument('--write-derived',action='store_true')
+    args=parser.parse_args();root=args.root
+    path=root/'runner.py.txt'
+    loader=importlib.machinery.SourceFileLoader('runner',str(path))
+    spec=importlib.util.spec_from_loader('runner',loader);module=importlib.util.module_from_spec(spec);loader.exec_module(module)
+    requests={r['id']:r for r in json.loads((root/'requests.json').read_text())};report=[]
+    for source in sorted((root/'original-validation').glob('*.json')):
+        raw=json.loads(source.read_text());request=requests[raw['id']]
+        errors=module.validate(raw,request['body'])
+        assert not errors,errors
+        derived=json.loads(json.dumps(raw))
+        derived['original_validation']={'status':raw['status'],'validation_errors':raw['validation_errors']}
+        derived.update(validation_protocol='v2-rounding-feasibility',validation_errors=errors,status='valid')
+        target=root/'receipts'/source.name
+        if args.write_derived:
+            target.write_text(json.dumps(derived,indent=2)+'\n')
+        else:
+            assert json.loads(target.read_text())==derived,'derived receipt mismatch'
+        assert derived['answers']==raw['answers'] and derived['usage']==raw['usage']
+        report.append({'id':raw['id'],'original_status':raw['status'],'original_validation_errors':raw['validation_errors'],'derived_status':derived['status'],'no_new_dispatch':True,'original_sha256':hashlib.sha256(source.read_bytes()).hexdigest(),'derived_sha256':hashlib.sha256(target.read_bytes()).hexdigest()})
+    print(json.dumps(report,indent=2))
+if __name__=='__main__':main()

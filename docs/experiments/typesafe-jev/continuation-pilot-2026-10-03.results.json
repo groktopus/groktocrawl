@@ -1,0 +1,148 @@
+{
+  "aggregate_usage": {
+    "input_tokens": 25222,
+    "median_latency_ms": {
+      "stage1": 197.2,
+      "stage3": 188.4,
+      "stage4": 220.1
+    },
+    "output_tokens": 423
+  },
+  "case_packet_sha256": "6bdff861da0dfb8f20b7d11983034520d7a37bda6e8d0ad7037da40d314d023c",
+  "cases": [
+    {
+      "case_id": "pilot-01",
+      "request_sha256": {
+        "stage1": "21b2ff7b4e569244d79c31c33ecf091a86f468e160b53f91f64e9cfb7c8a2c51",
+        "stage3": "6ec3bbf6b5cb7a9c73d8bf7bb2a7d43386d24ea332886cff7c7278df05f1c9a6"
+      },
+      "response_sha256": {
+        "stage1": "bdf8268ad58f47ddc857e6b519f89f02fca0c8856aa4968ffac29473f56817c8",
+        "stage3": "357d6dba3650a52a744bb36b91c13edd1301e7537515bbae294d84a0ec5c7fe9"
+      },
+      "stage1_yes_probability": 0.93,
+      "stage3_yes_probability": 0.02,
+      "stage4": "not_called_stage3_argmax_no"
+    },
+    {
+      "case_id": "pilot-02",
+      "request_sha256": {
+        "stage1": "49210a4d1ca3f1b67d39e48dbcb5af9421ba74ae3ade3d8aa2eea81ec57235e8",
+        "stage3": "1d2fe9ba951de84f1abb45b75266e74e69b2d3263daf74315640e6304e00810b"
+      },
+      "response_sha256": {
+        "stage1": "16fce7b83349a3e4191833a73418f325c476e89267672560786fa0fddcb8caca",
+        "stage3": "f03d3415d674c2b00fb1e3e01f85e01f2a2d2518e9ba00f8e290530a2373b6c8"
+      },
+      "stage1_yes_probability": 0.94,
+      "stage3_yes_probability": 0.02,
+      "stage4": "not_called_stage3_argmax_no"
+    },
+    {
+      "case_id": "pilot-03",
+      "request_sha256": {
+        "stage1": "ce8fc48cd1a4090472ecfb0a6ac8c28ae076b9cf5d809b060fce7826741f35cf",
+        "stage3": "182c1b6aeb18fa2dfba47912e3acfd4bfc4d81b35d699a55f876c645b59dba16",
+        "stage4": "66225cc575c3bbff7c6658b4c64d2e01e312493f0586ea6c6e3bcfb3b844de39"
+      },
+      "response_sha256": {
+        "stage1": "3875698dfb7f05ce389053b645f048e82f50ea0b39e44d0f15d01591086422ac",
+        "stage3": "2fb498ba692452a08dbf638c22051e58b0b2def2ea9013cb3cf65c0fa53a8a8b",
+        "stage4": "5755d1a798b1826306dd831dd66b2ffe262dba30d31bb563c2d4fb1c9b0c5dc4"
+      },
+      "stage1_yes_probability": 0.08,
+      "stage3_yes_probability": 0.97,
+      "stage4_yes_probability": 0.84
+    },
+    {
+      "case_id": "pilot-04",
+      "request_sha256": {
+        "stage1": "a20cb15916456b56e37e89440563baee927531506b309201b86a132e41447943",
+        "stage3": "9983f699fe32f9ee6698b9e17d4c8523a86a5b68e19241a4fffd97fd0d4ee015",
+        "stage4": "fb3af03a62d37c99cfe1cbad036ffbec704759813035e527e583043a51d8448a"
+      },
+      "response_sha256": {
+        "stage1": "824bfff9a6374192272ffdc66b3125e84b227e7d99ec80ff93885dfcc1ff2246",
+        "stage3": "3141dc810233df86f5e707b4db4d0374b665c8b6b65f49d24af0f79ffe4c8b23",
+        "stage4": "6692b299591cd7278bc4d517f399253b24b8ddcda2a460a8fa7b9d1baa2ad317"
+      },
+      "stage1_yes_probability": 0.06,
+      "stage3_yes_probability": 0.97,
+      "stage4_yes_probability": 0.84
+    },
+    {
+      "case_id": "pilot-05",
+      "request_sha256": {
+        "stage1": "8de0e44a944f443da6fa6d840edce5cccfb80bbfc47f870d5f1b2e5e312213af",
+        "stage3": "92e597c316708f1911b4ea721d8efc6b7d301c5ec8514676c3b45be782dfba9c"
+      },
+      "response_sha256": {
+        "stage1": "2fa4be8f1a464d7a9e5b1cc8d9a0319ae2b9690282f70158ce72bdeca3889116",
+        "stage3": "cb13f9ee25aed1d30f2a88c4be78c3a31329976fa4c83d57996c26b25fa617b6"
+      },
+      "stage1_yes_probability": 0.92,
+      "stage3_yes_probability": 0.02,
+      "stage4": "not_called_stage3_argmax_no"
+    },
+    {
+      "case_id": "pilot-06",
+      "request_sha256": {
+        "stage1": "2ebab2819a4290c6d5d75566b5569a6b2024143ca7f35aa1d8aa9964dabd146c",
+        "stage3": "3232ce974e0e447dff6669fd676f809fb28cf21c9274688b60d0f2e965dff25c"
+      },
+      "response_sha256": {
+        "stage1": "a7f150cc4fab6f974ff28fb3f3594f52647891a7872548f09da59b87095dc5a3",
+        "stage3": "738b529f4f5e0d27a418d1f7e71c1f1f6c2fa32f470dbba8325191e1a2884e98"
+      },
+      "stage1_yes_probability": 0.92,
+      "stage3_yes_probability": 0.02,
+      "stage4": "not_called_stage3_argmax_no"
+    },
+    {
+      "case_id": "pilot-07",
+      "request_sha256": {
+        "stage1": "b39a6cd28ddd7f3c332bb7b4a31de5446eb8ed57b4cebed36f33d4a244642602",
+        "stage3": "292593cd96346b113129faafaa57598f08a2c5cdbe9930bfa912c146692fe971"
+      },
+      "response_sha256": {
+        "stage1": "b2155978b27c705671fdfb8e4d1dcdfe87ec8ec962ecc98954ee9cb3a2048b25",
+        "stage3": "4f3c99d0d6f46c2b0ae3812d1c0173414b04cf1feb63d73ebf29bacb6aedbed4"
+      },
+      "stage1_yes_probability": 0.85,
+      "stage3_yes_probability": 0.03,
+      "stage4": "not_called_stage3_argmax_no"
+    },
+    {
+      "case_id": "pilot-08",
+      "request_sha256": {
+        "stage1": "cbf4073a79f657813ac5ed1586b5fd3bca58ab11119a0f3a6c75a26846311fbf",
+        "stage3": "8aad298eea0f372a43be21045b764b0895e8906137b84eee31737c6baff38b05",
+        "stage4": "2c6c6cab86683beea2d9140f709b818858cc9598599fc7987862ebc756eb8aee"
+      },
+      "response_sha256": {
+        "stage1": "b4d87d3ddcaf9b778205a9003138e04b93d2d49cf0f3e3f82188ca1584c97a86",
+        "stage3": "760c801c591eace3184dfa6a09db44426f5faec76a7e61a42ade0c858b1ae9db",
+        "stage4": "3dd835aa47e42bab001d20c1a875fdc089e6d6b1a6ff1aa0319cff7d9ccd0cdd"
+      },
+      "stage1_yes_probability": 0.06,
+      "stage3_yes_probability": 0.97,
+      "stage4_yes_probability": 0.42
+    }
+  ],
+  "contradiction_positive_cases": 0,
+  "limitations": [
+    "All reference assessments and research-agent hypotheses are assistant-authored best-effort labels, not independent gold.",
+    "No contradiction-positive case is included.",
+    "No actual search or deterministic follow-up evidence replay occurred in this pilot.",
+    "Probabilities are descriptive yes-probabilities, not calibrated confidence or selected action thresholds.",
+    "The binary argmax only gates the dependent addressability question; no search was dispatched."
+  ],
+  "probability_semantics": "answers[id].noul is the yes-probability for that exact proposition; >0.5 is binary argmax yes; 0.5 ties abstain.",
+  "requested_model": "jev-1.13.0",
+  "requests_attempted": 19,
+  "requests_unevaluated": 0,
+  "requests_validated": 19,
+  "returned_model": "jev-1.13.0",
+  "searches_dispatched": 0,
+  "study_id": "jev-continuation-v2-pilot-2026-10-03"
+}

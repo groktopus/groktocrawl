@@ -1,0 +1,19 @@
+{
+  "conformance_failures": 0,
+  "measurements": {
+    "imperative": {
+      "checkpoint_bytes": 173.0,
+      "journal_bytes": 719.0,
+      "pause_ms": 0.4648125,
+      "resume_ms": 0.221521
+    },
+    "langgraph": {
+      "checkpoint_bytes": 28672.0,
+      "journal_bytes": 719.0,
+      "pause_ms": 2.2735005,
+      "resume_ms": 1.3626455
+    }
+  },
+  "records": 60,
+  "schema_version": 1
+}

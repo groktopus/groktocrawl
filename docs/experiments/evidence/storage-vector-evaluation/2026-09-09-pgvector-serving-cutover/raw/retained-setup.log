@@ -1,0 +1,123 @@
+test_source_store_db.py
+test_commit_delete_interleaving (__main__.SourceStorageTests.test_commit_delete_interleaving) ... ok
+test_concurrent_root_quota (__main__.SourceStorageTests.test_concurrent_root_quota) ... ok
+test_concurrent_scope_quota_across_roots (__main__.SourceStorageTests.test_concurrent_scope_quota_across_roots) ... ok
+test_delete_preserves_shared_blob_and_receipt (__main__.SourceStorageTests.test_delete_preserves_shared_blob_and_receipt) ... ok
+test_descriptor_reference_corruption_detected (__main__.SourceStorageTests.test_descriptor_reference_corruption_detected) ... ok
+test_exact_reopen_and_receipt (__main__.SourceStorageTests.test_exact_reopen_and_receipt) ... ok
+test_expiry_denies_reads_and_writes (__main__.SourceStorageTests.test_expiry_denies_reads_and_writes) ... ok
+test_lost_commit_ack_reconciles_without_second_snapshot (__main__.SourceStorageTests.test_lost_commit_ack_reconciles_without_second_snapshot) ... ok
+test_reinstall_refuses_existing_namespace (__main__.SourceStorageTests.test_reinstall_refuses_existing_namespace) ... ok
+test_reservation_limit_cancel_and_retry (__main__.SourceStorageTests.test_reservation_limit_cancel_and_retry) ... ok
+test_wrong_scope_root_and_generation (__main__.SourceStorageTests.test_wrong_scope_root_and_generation) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 1.413s
+
+OK
+test_revision_store_db.py
+test_commit_reopen_and_replay (__main__.RevisionStorageTests.test_commit_reopen_and_replay) ... ok
+test_competing_parent_and_immutable_entities (__main__.RevisionStorageTests.test_competing_parent_and_immutable_entities) ... ok
+test_delete_clears_revisions_and_blocks_late_writer (__main__.RevisionStorageTests.test_delete_clears_revisions_and_blocks_late_writer) ... ok
+test_lost_ack_receipt_and_reservation_limit (__main__.RevisionStorageTests.test_lost_ack_receipt_and_reservation_limit) ... ok
+test_migration_refuses_reapplication (__main__.RevisionStorageTests.test_migration_refuses_reapplication) ... ok
+test_removed_identity_cannot_be_reassigned (__main__.RevisionStorageTests.test_removed_identity_cannot_be_reassigned) ... ok
+test_wrong_source_root_bytes_and_ledger (__main__.RevisionStorageTests.test_wrong_source_root_bytes_and_ledger) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.904s
+
+OK
+test_publication_store_db.py
+test_commit_delete_race_and_expired_publication (__main__.PublicationStorageTests.test_commit_delete_race_and_expired_publication) ... ok
+test_commit_reopen_replay_receipt_and_wrong_context (__main__.PublicationStorageTests.test_commit_reopen_replay_receipt_and_wrong_context) ... ok
+test_deletion_purges_outputs_and_denies_late_commit (__main__.PublicationStorageTests.test_deletion_purges_outputs_and_denies_late_commit) ... ok
+test_expiry_blocks_outputs_but_preserves_receipt (__main__.PublicationStorageTests.test_expiry_blocks_outputs_but_preserves_receipt) ... ok
+test_integrity_checks_outputs_and_ledger (__main__.PublicationStorageTests.test_integrity_checks_outputs_and_ledger) ... ok
+test_lost_ack_and_atomic_receipt (__main__.PublicationStorageTests.test_lost_ack_and_atomic_receipt) ... ok
+test_retention_reservations_and_migration_refusal (__main__.PublicationStorageTests.test_retention_reservations_and_migration_refusal) ... ok
+test_stale_revision_and_failed_audit_do_not_publish (__main__.PublicationStorageTests.test_stale_revision_and_failed_audit_do_not_publish) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 2.091s
+
+OK
+test_rerender_store_db.py
+test_changed_research_rejected_even_with_new_valid_audits (__main__.HistoricalRerenderTests.test_changed_research_rejected_even_with_new_valid_audits) ... ok
+test_commit_delete_race_and_expired_publication (__main__.HistoricalRerenderTests.test_commit_delete_race_and_expired_publication) ... ok
+test_commit_reopen_replay_receipt_and_wrong_context (__main__.HistoricalRerenderTests.test_commit_reopen_replay_receipt_and_wrong_context) ... ok
+test_delete_between_rerender_reservation_and_commit (__main__.HistoricalRerenderTests.test_delete_between_rerender_reservation_and_commit) ... ok
+test_deletion_purges_outputs_and_denies_late_commit (__main__.HistoricalRerenderTests.test_deletion_purges_outputs_and_denies_late_commit) ... ok
+test_expiry_blocks_outputs_but_preserves_receipt (__main__.HistoricalRerenderTests.test_expiry_blocks_outputs_but_preserves_receipt) ... ok
+test_historical_rerender_preserves_original_and_current_pointer (__main__.HistoricalRerenderTests.test_historical_rerender_preserves_original_and_current_pointer) ... ok
+test_integrity_checks_outputs_and_ledger (__main__.HistoricalRerenderTests.test_integrity_checks_outputs_and_ledger) ... ok
+test_lost_ack_and_atomic_receipt (__main__.HistoricalRerenderTests.test_lost_ack_and_atomic_receipt) ... ok
+test_rerender_migration_refuses_reapplication (__main__.HistoricalRerenderTests.test_rerender_migration_refuses_reapplication) ... ok
+test_rerender_wrong_original_context_scope_and_policy (__main__.HistoricalRerenderTests.test_rerender_wrong_original_context_scope_and_policy) ... ok
+test_retention_reservations_and_migration_refusal (__main__.HistoricalRerenderTests.test_retention_reservations_and_migration_refusal) ... ok
+test_stale_revision_and_failed_audit_do_not_publish (__main__.HistoricalRerenderTests.test_stale_revision_and_failed_audit_do_not_publish) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 3.632s
+
+OK
+test_import_store_db.py
+test_before_commit_rollback_and_lost_ack (__main__.ImportStorageTests.test_before_commit_rollback_and_lost_ack) ... ok
+test_byte_budget_rejection_does_not_mutate_root (__main__.ImportStorageTests.test_byte_budget_rejection_does_not_mutate_root) ... ok
+test_corrupt_reference_rejected_before_export (__main__.ImportStorageTests.test_corrupt_reference_rejected_before_export) ... ok
+test_current_origin_retention_clamps_without_renewal (__main__.ImportStorageTests.test_current_origin_retention_clamps_without_renewal) ... ok
+test_exact_offline_export_does_not_renew_or_charge (__main__.ImportStorageTests.test_exact_offline_export_does_not_renew_or_charge) ... ok
+test_import_commit_delete_race (__main__.ImportStorageTests.test_import_commit_delete_race) ... ok
+test_import_grant_delete_race (__main__.ImportStorageTests.test_import_grant_delete_race) ... ok
+test_import_roundtrip_receipt_and_native_write_rejection (__main__.ImportStorageTests.test_import_roundtrip_receipt_and_native_write_rejection) ... ok
+test_opposing_scope_imports (__main__.ImportStorageTests.test_opposing_scope_imports) ... ok
+test_origin_deletion_purges_copies_and_pending_grants (__main__.ImportStorageTests.test_origin_deletion_purges_copies_and_pending_grants) ... ok
+test_origin_expiry_denies_grant_commit_and_reopen (__main__.ImportStorageTests.test_origin_expiry_denies_grant_commit_and_reopen) ... ok
+test_pending_expiry_cancel_and_completed_grant_expiry (__main__.ImportStorageTests.test_pending_expiry_cancel_and_completed_grant_expiry) ... ok
+test_recipient_delete_preserves_origin_and_peer (__main__.ImportStorageTests.test_recipient_delete_preserves_origin_and_peer) ... ok
+test_recipient_quota_race (__main__.ImportStorageTests.test_recipient_quota_race) ... ok
+test_scope_context_expiry_and_deletion (__main__.ImportStorageTests.test_scope_context_expiry_and_deletion) ... ok
+test_selected_ancestry_and_historical_rerender (__main__.ImportStorageTests.test_selected_ancestry_and_historical_rerender) ... ok
+test_stale_generation_and_import_migration_refusal (__main__.ImportStorageTests.test_stale_generation_and_import_migration_refusal) ... ok
+test_twenty_grant_fanout_bound_and_cancelled_metadata (__main__.ImportStorageTests.test_twenty_grant_fanout_bound_and_cancelled_metadata) ... ok
+test_wrong_bundle_context_and_absent_origin (__main__.ImportStorageTests.test_wrong_bundle_context_and_absent_origin) ... ok
+
+----------------------------------------------------------------------
+Ran 19 tests in 8.683s
+
+OK
+test_expiry_store_db.py
+test_before_commit_failure_and_lost_ack_are_reconcilable (__main__.ExpiryStorageTests.test_before_commit_failure_and_lost_ack_are_reconcilable) ... ok
+test_before_commit_rollback_and_lost_ack (__main__.ExpiryStorageTests.test_before_commit_rollback_and_lost_ack) ... ok
+test_byte_budget_rejection_does_not_mutate_root (__main__.ExpiryStorageTests.test_byte_budget_rejection_does_not_mutate_root) ... ok
+test_candidate_limit_and_expired_staging_reservations (__main__.ExpiryStorageTests.test_candidate_limit_and_expired_staging_reservations) ... ok
+test_collection_serializes_with_import_commit_and_deletion (__main__.ExpiryStorageTests.test_collection_serializes_with_import_commit_and_deletion) ... ok
+test_corrupt_reference_rejected_before_export (__main__.ExpiryStorageTests.test_corrupt_reference_rejected_before_export) ... ok
+test_current_origin_retention_clamps_without_renewal (__main__.ExpiryStorageTests.test_current_origin_retention_clamps_without_renewal) ... ok
+test_exact_offline_export_does_not_renew_or_charge (__main__.ExpiryStorageTests.test_exact_offline_export_does_not_renew_or_charge) ... ok
+test_expired_origin_collects_copies_and_preserves_receipts (__main__.ExpiryStorageTests.test_expired_origin_collects_copies_and_preserves_receipts) ... ok
+test_expired_recipient_preserves_origin_and_peer (__main__.ExpiryStorageTests.test_expired_recipient_preserves_origin_and_peer) ... ok
+test_import_commit_delete_race (__main__.ExpiryStorageTests.test_import_commit_delete_race) ... ok
+test_import_grant_delete_race (__main__.ExpiryStorageTests.test_import_grant_delete_race) ... ok
+test_import_roundtrip_receipt_and_native_write_rejection (__main__.ExpiryStorageTests.test_import_roundtrip_receipt_and_native_write_rejection) ... ok
+test_later_candidate_failure_preserves_prior_commit (__main__.ExpiryStorageTests.test_later_candidate_failure_preserves_prior_commit) ... ok
+test_opposing_scope_imports (__main__.ExpiryStorageTests.test_opposing_scope_imports) ... ok
+test_origin_deletion_purges_copies_and_pending_grants (__main__.ExpiryStorageTests.test_origin_deletion_purges_copies_and_pending_grants) ... ok
+test_origin_expiry_denies_grant_commit_and_reopen (__main__.ExpiryStorageTests.test_origin_expiry_denies_grant_commit_and_reopen) ... ok
+test_pending_expiry_cancel_and_completed_grant_expiry (__main__.ExpiryStorageTests.test_pending_expiry_cancel_and_completed_grant_expiry) ... ok
+test_recipient_delete_preserves_origin_and_peer (__main__.ExpiryStorageTests.test_recipient_delete_preserves_origin_and_peer) ... ok
+test_recipient_quota_race (__main__.ExpiryStorageTests.test_recipient_quota_race) ... ok
+test_schema_six_candidate_index_is_available (__main__.ExpiryStorageTests.test_schema_six_candidate_index_is_available) ... ok
+test_scope_context_expiry_and_deletion (__main__.ExpiryStorageTests.test_scope_context_expiry_and_deletion) ... ok
+test_selected_ancestry_and_historical_rerender (__main__.ExpiryStorageTests.test_selected_ancestry_and_historical_rerender) ... ok
+test_shared_blob_and_live_staging_survive_collection (__main__.ExpiryStorageTests.test_shared_blob_and_live_staging_survive_collection) ... ok
+test_stale_candidate_hint_preserves_real_writer_renewal (__main__.ExpiryStorageTests.test_stale_candidate_hint_preserves_real_writer_renewal) ... ok
+test_stale_generation_and_import_migration_refusal (__main__.ExpiryStorageTests.test_stale_generation_and_import_migration_refusal) ... ok
+test_twenty_grant_fanout_bound_and_cancelled_metadata (__main__.ExpiryStorageTests.test_twenty_grant_fanout_bound_and_cancelled_metadata) ... ok
+test_writer_holding_lock_renews_before_collector_ownership (__main__.ExpiryStorageTests.test_writer_holding_lock_renews_before_collector_ownership) ... ok
+test_wrong_bundle_context_and_absent_origin (__main__.ExpiryStorageTests.test_wrong_bundle_context_and_absent_origin) ... ok
+
+----------------------------------------------------------------------
+Ran 29 tests in 13.155s
+
+OK

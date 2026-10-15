@@ -1,0 +1,690 @@
+{
+  "cases": [
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w8-lt-001",
+      "challenge_type": "long-tail",
+      "claims": [
+        {
+          "claim_id": "known_useful_01",
+          "closure_rule": "Primary repository describing SWE-agent, its interface, installation, and issue-to-patch workflow.",
+          "importance": 2
+        }
+      ],
+      "expected_ambiguity": "SWE-agent can refer to the project, its paper, or generic software-engineering agents; prefer the repository when the query asks how it works.",
+      "query": "How does SWE-agent expose an agent-computer interface for editing files, searching repositories, and running tests on GitHub issues?",
+      "reference_targets": [
+        {
+          "claim_id": "known_useful_01",
+          "url": "https://github.com/SWE-agent/SWE-agent"
+        }
+      ],
+      "stratum": "w8_anchor"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w8-lt-002",
+      "challenge_type": "long-tail",
+      "claims": [
+        {
+          "claim_id": "known_useful_01",
+          "closure_rule": "Authoritative benchmark landing page for SWE-bench and its task/evaluation framing.",
+          "importance": 2
+        },
+        {
+          "claim_id": "known_useful_02",
+          "closure_rule": "Primary paper for SWE-Bench Pro and its long-horizon, contamination-resistant evaluation rationale.",
+          "importance": 2
+        }
+      ],
+      "expected_ambiguity": "“Verified” may mean the SWE-bench Verified subset, while “Pro” may mean the newer research benchmark; do not conflate benchmark names or scores.",
+      "query": "What is the difference between SWE-bench Verified and SWE-bench Pro for evaluating long-horizon software-engineering agents?",
+      "reference_targets": [
+        {
+          "claim_id": "known_useful_01",
+          "url": "https://www.swebench.com/"
+        },
+        {
+          "claim_id": "known_useful_02",
+          "url": "https://arxiv.org/abs/2509.16941"
+        }
+      ],
+      "stratum": "w8_anchor"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w8-lt-003",
+      "challenge_type": "long-tail",
+      "claims": [
+        {
+          "claim_id": "known_useful_01",
+          "closure_rule": "Canonical Git documentation for multiple working trees and their isolation semantics.",
+          "importance": 2
+        }
+      ],
+      "expected_ambiguity": "“Worktree” can mean Git worktree, a broader sandbox, or an agent workspace; retrieve Git documentation for the Git-specific question.",
+      "query": "How can a coding agent use isolated Git worktrees so parallel software-factory tasks do not overwrite one another?",
+      "reference_targets": [
+        {
+          "claim_id": "known_useful_01",
+          "url": "https://git-scm.com/docs/git-worktree"
+        }
+      ],
+      "stratum": "w8_anchor"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w8-lt-004",
+      "challenge_type": "long-tail",
+      "claims": [
+        {
+          "claim_id": "known_useful_01",
+          "closure_rule": "Authoritative engineering essay focused on harnesses, confidence, and controls around coding agents.",
+          "importance": 2
+        },
+        {
+          "claim_id": "known_useful_02",
+          "closure_rule": "Context on human-agent software-engineering loops and where human oversight remains necessary.",
+          "importance": 2
+        }
+      ],
+      "expected_ambiguity": "“Harness” may mean an agent runtime, test harness, or evaluation harness; the query means the runtime/control layer around coding agents.",
+      "query": "What controls does a software-factory harness need before allowing an agent to make repository changes with less supervision?",
+      "reference_targets": [
+        {
+          "claim_id": "known_useful_01",
+          "url": "https://martinfowler.com/articles/harness-engineering.html"
+        },
+        {
+          "claim_id": "known_useful_02",
+          "url": "https://martinfowler.com/articles/exploring-gen-ai/humans-and-agents.html"
+        }
+      ],
+      "stratum": "w8_anchor"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w8-lt-005",
+      "challenge_type": "long-tail",
+      "claims": [
+        {
+          "claim_id": "known_useful_01",
+          "closure_rule": "Primary SDK repository documenting the agent server, tools, workspaces, events, and typed clients.",
+          "importance": 2
+        },
+        {
+          "claim_id": "known_useful_02",
+          "closure_rule": "Primary OpenHands product repository and entry point for the self-hosted development platform.",
+          "importance": 2
+        }
+      ],
+      "expected_ambiguity": "OpenHands has renamed and split repositories over time; use the current organization repositories and distinguish the SDK from the product.",
+      "query": "How does OpenHands separate its software-agent SDK, agent server, tools, workspaces, and client access?",
+      "reference_targets": [
+        {
+          "claim_id": "known_useful_01",
+          "url": "https://github.com/OpenHands/software-agent-sdk"
+        },
+        {
+          "claim_id": "known_useful_02",
+          "url": "https://github.com/OpenHands/OpenHands"
+        }
+      ],
+      "stratum": "w8_anchor"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w8-lt-006",
+      "challenge_type": "long-tail",
+      "claims": [
+        {
+          "claim_id": "known_useful_01",
+          "closure_rule": "Primary research paper proposing benchmark mutation for realistic interactive software-engineering-agent evaluation.",
+          "importance": 2
+        },
+        {
+          "claim_id": "known_useful_02",
+          "closure_rule": "Authoritative baseline benchmark site needed to understand what is being mutated.",
+          "importance": 2
+        }
+      ],
+      "expected_ambiguity": "“Mutation” can mean code mutation testing or benchmark-instance mutation; the intended meaning is benchmark mutation, not ordinary unit-test mutation.",
+      "query": "Which failure modes are exposed when evaluating an interactive coding agent with mutated SWE-bench tasks rather than the original benchmark?",
+      "reference_targets": [
+        {
+          "claim_id": "known_useful_01",
+          "url": "https://arxiv.org/abs/2510.08996"
+        },
+        {
+          "claim_id": "known_useful_02",
+          "url": "https://www.swebench.com/"
+        }
+      ],
+      "stratum": "w8_anchor"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w8-ra-001",
+      "challenge_type": "recent/as-of-sensitive",
+      "claims": [
+        {
+          "claim_id": "known_useful_01",
+          "closure_rule": "Official current-status announcement for Codex availability and surfaces.",
+          "importance": 2
+        },
+        {
+          "claim_id": "known_useful_02",
+          "closure_rule": "Official product announcement describing the Codex app and its software-work lifecycle.",
+          "importance": 2
+        }
+      ],
+      "expected_ambiguity": "Codex may mean the cloud agent, the Codex app, an API model, or the older code-generation model; answer must be date-bounded and surface-specific.",
+      "query": "As of 2026-09-11, what is OpenAI Codex and where can developers use it?",
+      "reference_targets": [
+        {
+          "claim_id": "known_useful_01",
+          "url": "https://openai.com/index/codex-now-generally-available/"
+        },
+        {
+          "claim_id": "known_useful_02",
+          "url": "https://openai.com/index/introducing-the-codex-app/"
+        }
+      ],
+      "stratum": "w8_anchor"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w8-ra-002",
+      "challenge_type": "recent/as-of-sensitive",
+      "claims": [
+        {
+          "claim_id": "known_useful_01",
+          "closure_rule": "Official GitHub documentation for cloud-agent capabilities and workflow.",
+          "importance": 2
+        },
+        {
+          "claim_id": "known_useful_02",
+          "closure_rule": "Official usage documentation for starting and tracking cloud-agent sessions.",
+          "importance": 2
+        }
+      ],
+      "expected_ambiguity": "GitHub has several Copilot agent surfaces; “cloud agent” is narrower than agent mode in an IDE or GitHub Actions automation.",
+      "query": "As of 2026-09-11, how does GitHub Copilot cloud agent research a repository, change code on a branch, and iterate toward a pull request?",
+      "reference_targets": [
+        {
+          "claim_id": "known_useful_01",
+          "url": "https://docs.github.com/en/copilot/concepts/agents/cloud-agent/about-cloud-agent"
+        },
+        {
+          "claim_id": "known_useful_02",
+          "url": "https://docs.github.com/en/copilot/how-tos/use-copilot-agents/cloud-agent"
+        }
+      ],
+      "stratum": "w8_anchor"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w8-ra-003",
+      "challenge_type": "recent/as-of-sensitive",
+      "claims": [
+        {
+          "claim_id": "known_useful_01",
+          "closure_rule": "Official current overview of Claude Code’s agentic coding behavior and supported surfaces.",
+          "importance": 2
+        },
+        {
+          "claim_id": "known_useful_02",
+          "closure_rule": "Official release notes needed for date-sensitive feature history.",
+          "importance": 2
+        }
+      ],
+      "expected_ambiguity": "Claude Code is a product, not the general Claude API; release notes and overview can differ as the product changes.",
+      "query": "As of 2026-09-11, what does the Claude Code overview say the tool can do in a repository and terminal?",
+      "reference_targets": [
+        {
+          "claim_id": "known_useful_01",
+          "url": "https://docs.anthropic.com/en/docs/claude-code/overview"
+        },
+        {
+          "claim_id": "known_useful_02",
+          "url": "https://docs.anthropic.com/en/release-notes/claude-code"
+        }
+      ],
+      "stratum": "w8_anchor"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w8-ra-004",
+      "challenge_type": "recent/as-of-sensitive",
+      "claims": [
+        {
+          "claim_id": "known_useful_01",
+          "closure_rule": "Primary dated announcement containing the September 2025 availability update.",
+          "importance": 2
+        }
+      ],
+      "expected_ambiguity": "The query is historical and as-of-sensitive; do not replace the dated announcement with a later model page or current availability claim.",
+      "query": "What did OpenAI’s September 2025 Codex upgrade announcement say about GPT-5-Codex availability and developer access?",
+      "reference_targets": [
+        {
+          "claim_id": "known_useful_01",
+          "url": "https://openai.com/index/introducing-upgrades-to-codex/"
+        }
+      ],
+      "stratum": "w8_anchor"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w8-ra-005",
+      "challenge_type": "recent/as-of-sensitive",
+      "claims": [
+        {
+          "claim_id": "known_useful_01",
+          "closure_rule": "Official Factory enterprise documentation for Droid runtime deployment and governance patterns.",
+          "importance": 2
+        },
+        {
+          "claim_id": "known_useful_02",
+          "closure_rule": "Official current Droid CLI quickstart establishing the product identity and workflow.",
+          "importance": 2
+        }
+      ],
+      "expected_ambiguity": "“Droid” is a Factory product here, not Android, a generic robot, or another coding-agent product with a similar name.",
+      "query": "As of 2026-09-11, what deployment modes does Factory describe for its Droid runtime, including cloud, hybrid, and air-gapped patterns?",
+      "reference_targets": [
+        {
+          "claim_id": "known_useful_01",
+          "url": "https://docs.factory.ai/enterprise"
+        },
+        {
+          "claim_id": "known_useful_02",
+          "url": "https://docs.factory.ai/cli/getting-started/quickstart"
+        }
+      ],
+      "stratum": "w8_anchor"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w8-ra-006",
+      "challenge_type": "recent/as-of-sensitive",
+      "claims": [
+        {
+          "claim_id": "known_useful_01",
+          "closure_rule": "Primary paper defining SWE-Skills-Bench and its requirement-driven evaluation question.",
+          "importance": 2
+        }
+      ],
+      "expected_ambiguity": "The paper is recent and may have versions; retain the as-of date and do not infer adoption or leaderboard status from the abstract alone.",
+      "query": "As of 2026-09-11, what is SWE-Skills-Bench intended to measure about agent skills in real-world software engineering?",
+      "reference_targets": [
+        {
+          "claim_id": "known_useful_01",
+          "url": "https://arxiv.org/abs/2603.15401"
+        }
+      ],
+      "stratum": "w8_anchor"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w8-ae-001",
+      "challenge_type": "ambiguous-entity",
+      "claims": [
+        {
+          "claim_id": "known_useful_01",
+          "closure_rule": "Authoritative Factory documentation identifying Droid as the development agent and showing configuration entry points.",
+          "importance": 2
+        },
+        {
+          "claim_id": "known_useful_02",
+          "closure_rule": "Official Factory reference for missions, custom droids, subagents, and AGENTS.md behavior.",
+          "importance": 2
+        }
+      ],
+      "expected_ambiguity": "Droid could mean Factory’s coding agent, Android tooling, a generic robot, or another vendor product; disambiguate toward Factory only when software-factory context is explicit.",
+      "query": "What is Droid in an agentic software factory, and how is it configured?",
+      "reference_targets": [
+        {
+          "claim_id": "known_useful_01",
+          "url": "https://docs.factory.ai/cli/getting-started/quickstart"
+        },
+        {
+          "claim_id": "known_useful_02",
+          "url": "https://docs.factory.ai/missions/reference"
+        }
+      ],
+      "stratum": "w8_anchor"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w8-ae-002",
+      "challenge_type": "ambiguous-entity",
+      "claims": [
+        {
+          "claim_id": "known_useful_01",
+          "closure_rule": "Official introduction of the Codex coding agent, useful for distinguishing the current product meaning.",
+          "importance": 2
+        },
+        {
+          "claim_id": "known_useful_02",
+          "closure_rule": "Official later status announcement showing the evolving product surface.",
+          "importance": 2
+        }
+      ],
+      "expected_ambiguity": "Codex can refer to OpenAI’s current agent/product, an API model family, or older code-generation research; preserve the sense and date.",
+      "query": "What is Codex in software engineering, and which primary source distinguishes the current agent from older code-generation meanings?",
+      "reference_targets": [
+        {
+          "claim_id": "known_useful_01",
+          "url": "https://openai.com/index/introducing-codex/"
+        },
+        {
+          "claim_id": "known_useful_02",
+          "url": "https://openai.com/index/codex-now-generally-available/"
+        }
+      ],
+      "stratum": "w8_anchor"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w8-ae-003",
+      "challenge_type": "ambiguous-entity",
+      "claims": [
+        {
+          "claim_id": "known_useful_01",
+          "closure_rule": "Primary product repository describing OpenHands as a development platform/control center.",
+          "importance": 2
+        },
+        {
+          "claim_id": "known_useful_02",
+          "closure_rule": "Primary SDK repository defining the SDK and agent-server boundary.",
+          "importance": 2
+        }
+      ],
+      "expected_ambiguity": "“OpenHands” names an organization, product, and ecosystem; the query intentionally requires entity and repository disambiguation.",
+      "query": "What is OpenHands: an autonomous coding agent, an SDK, or a developer control center?",
+      "reference_targets": [
+        {
+          "claim_id": "known_useful_01",
+          "url": "https://github.com/OpenHands/OpenHands"
+        },
+        {
+          "claim_id": "known_useful_02",
+          "url": "https://github.com/OpenHands/software-agent-sdk"
+        }
+      ],
+      "stratum": "w8_anchor"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w8-ae-004",
+      "challenge_type": "ambiguous-entity",
+      "claims": [
+        {
+          "claim_id": "known_useful_01",
+          "closure_rule": "Primary implementation repository for the named agent.",
+          "importance": 2
+        },
+        {
+          "claim_id": "known_useful_02",
+          "closure_rule": "Primary paper associated with SWE-agent and its agent-computer-interface approach.",
+          "importance": 2
+        }
+      ],
+      "expected_ambiguity": "The phrase may mean the named project or the broader class of software-engineering agents; identify the project before generalizing.",
+      "query": "What does “SWE-agent” refer to when someone asks for an agent that fixes GitHub issues?",
+      "reference_targets": [
+        {
+          "claim_id": "known_useful_01",
+          "url": "https://github.com/SWE-agent/SWE-agent"
+        },
+        {
+          "claim_id": "known_useful_02",
+          "url": "https://arxiv.org/abs/2405.15793"
+        }
+      ],
+      "stratum": "w8_anchor"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w8-ae-005",
+      "challenge_type": "ambiguous-entity",
+      "claims": [
+        {
+          "claim_id": "known_useful_01",
+          "closure_rule": "Authoritative definition and framing of the term agentic programming.",
+          "importance": 2
+        },
+        {
+          "claim_id": "known_useful_02",
+          "closure_rule": "Related authoritative discussion of supervised-agent coding and developer steering.",
+          "importance": 2
+        }
+      ],
+      "expected_ambiguity": "The terms are not product names and may be used loosely; preserve Fowler’s definitions rather than assuming vendor-specific semantics.",
+      "query": "What is “coding agent” versus “agentic programming” in Martin Fowler’s terminology?",
+      "reference_targets": [
+        {
+          "claim_id": "known_useful_01",
+          "url": "https://martinfowler.com/bliki/AgenticProgramming.html"
+        },
+        {
+          "claim_id": "known_useful_02",
+          "url": "https://martinfowler.com/articles/exploring-gen-ai/13-role-of-developer-skills.html"
+        }
+      ],
+      "stratum": "w8_anchor"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w8-ae-006",
+      "challenge_type": "ambiguous-entity",
+      "claims": [
+        {
+          "claim_id": "known_useful_01",
+          "closure_rule": "Primary repository for one prominent software-agent Ralph loop interpretation.",
+          "importance": 2
+        }
+      ],
+      "expected_ambiguity": "Ralph is heavily overloaded; retrieve the loop repository only when the query includes agentic/software-factory context and retain unresolved competing senses.",
+      "query": "What is “Ralph” in software-factory discussions: a named tool, a loop pattern, or a person/project?",
+      "reference_targets": [
+        {
+          "claim_id": "known_useful_01",
+          "url": "https://github.com/ghuntley/how-to-ralph-wiggum"
+        }
+      ],
+      "stratum": "w8_anchor"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w8-ts-001",
+      "challenge_type": "terminology-shift",
+      "claims": [
+        {
+          "claim_id": "known_useful_01",
+          "closure_rule": "Authoritative terminology and workflow contrast between prompting an LLM and supervising an agent.",
+          "importance": 2
+        },
+        {
+          "claim_id": "known_useful_02",
+          "closure_rule": "Current product documentation exemplifying the newer agentic-coding usage.",
+          "importance": 2
+        }
+      ],
+      "expected_ambiguity": "Terminology varies by vendor and date; do not treat “assistant” and “agent” as universally standardized technical categories.",
+      "query": "What did “AI coding assistant” mean before the newer “coding agent” terminology, and what changed in the human workflow?",
+      "reference_targets": [
+        {
+          "claim_id": "known_useful_01",
+          "url": "https://martinfowler.com/bliki/AgenticProgramming.html"
+        },
+        {
+          "claim_id": "known_useful_02",
+          "url": "https://docs.anthropic.com/en/docs/claude-code/overview"
+        }
+      ],
+      "stratum": "w8_anchor"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w8-ts-002",
+      "challenge_type": "terminology-shift",
+      "claims": [
+        {
+          "claim_id": "known_useful_01",
+          "closure_rule": "Primary benchmark paper framing long-horizon professional software-engineering tasks.",
+          "importance": 2
+        },
+        {
+          "claim_id": "known_useful_02",
+          "closure_rule": "Primary benchmark paper explicitly addressing long-horizon software evolution scenarios.",
+          "importance": 2
+        }
+      ],
+      "expected_ambiguity": "“Agentic software engineering” is an evolving umbrella term; benchmark scope is evidence of a shift, not proof that the industry has converged on one definition.",
+      "query": "How has “agentic software engineering” shifted from single-task code generation toward long-horizon software evolution?",
+      "reference_targets": [
+        {
+          "claim_id": "known_useful_01",
+          "url": "https://arxiv.org/abs/2509.16941"
+        },
+        {
+          "claim_id": "known_useful_02",
+          "url": "https://arxiv.org/html/2512.18470v5"
+        }
+      ],
+      "stratum": "w8_anchor"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w8-ts-003",
+      "challenge_type": "terminology-shift",
+      "claims": [
+        {
+          "claim_id": "known_useful_01",
+          "closure_rule": "Primary authoritative source for the newer harness-engineering framing around coding agents.",
+          "importance": 2
+        },
+        {
+          "claim_id": "known_useful_02",
+          "closure_rule": "Broader context on agentic coding, tools, and software-supply-chain concerns.",
+          "importance": 2
+        }
+      ],
+      "expected_ambiguity": "The phrase may be used idiosyncratically; distinguish Fowler’s framing from generic test harnesses and model prompt design.",
+      "query": "What does “harness engineering” add to older terms such as test harness, agent framework, and prompt engineering?",
+      "reference_targets": [
+        {
+          "claim_id": "known_useful_01",
+          "url": "https://martinfowler.com/articles/harness-engineering.html"
+        },
+        {
+          "claim_id": "known_useful_02",
+          "url": "https://martinfowler.com/articles/exploring-gen-ai.html"
+        }
+      ],
+      "stratum": "w8_anchor"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w8-ts-004",
+      "challenge_type": "terminology-shift",
+      "claims": [
+        {
+          "claim_id": "known_useful_01",
+          "closure_rule": "Primary Factory documentation using software-factory language for governed Droid control and plugins.",
+          "importance": 2
+        },
+        {
+          "claim_id": "known_useful_02",
+          "closure_rule": "Authoritative example of a coding-agent workflow centered on repository tasks and pull requests.",
+          "importance": 2
+        }
+      ],
+      "expected_ambiguity": "“Software factory” can mean a vendor product category, a delivery operating model, or a literal build system; preserve the source’s sense.",
+      "query": "How is “software factory” being used differently from “AI coding tool” when describing repeatable agent delivery?",
+      "reference_targets": [
+        {
+          "claim_id": "known_useful_01",
+          "url": "https://docs.factory.ai/software-factory/droid-control"
+        },
+        {
+          "claim_id": "known_useful_02",
+          "url": "https://docs.github.com/en/copilot/concepts/agents/cloud-agent/about-cloud-agent"
+        }
+      ],
+      "stratum": "w8_anchor"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w8-ts-005",
+      "challenge_type": "terminology-shift",
+      "claims": [
+        {
+          "claim_id": "known_useful_01",
+          "closure_rule": "Official reference showing custom droids, subagents, project conventions, and worker configuration.",
+          "importance": 2
+        },
+        {
+          "claim_id": "known_useful_02",
+          "closure_rule": "Primary SDK source showing agents, tools, events, workspaces, and server/client concepts.",
+          "importance": 2
+        }
+      ],
+      "expected_ambiguity": "Vendors use “skill,” “tool,” “plugin,” and “capability” inconsistently; report each source’s terminology rather than imposing one ontology.",
+      "query": "What is the terminology difference between “agent skills” and “tools” in modern coding-agent systems?",
+      "reference_targets": [
+        {
+          "claim_id": "known_useful_01",
+          "url": "https://docs.factory.ai/missions/reference"
+        },
+        {
+          "claim_id": "known_useful_02",
+          "url": "https://github.com/OpenHands/software-agent-sdk"
+        }
+      ],
+      "stratum": "w8_anchor"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w8-ts-006",
+      "challenge_type": "terminology-shift",
+      "claims": [
+        {
+          "claim_id": "known_useful_01",
+          "closure_rule": "Primary source for contamination-resistant, long-horizon evaluation and trajectory-level analysis.",
+          "importance": 2
+        },
+        {
+          "claim_id": "known_useful_02",
+          "closure_rule": "Primary source for requirement-driven measurement of marginal skill utility.",
+          "importance": 2
+        },
+        {
+          "claim_id": "known_useful_03",
+          "closure_rule": "Primary source for mutation-based realism in interactive-agent evaluation.",
+          "importance": 2
+        }
+      ],
+      "expected_ambiguity": "“Benchmark” may refer to a dataset, protocol, leaderboard, or evaluation harness; keep those layers separate.",
+      "query": "How has “benchmarking coding agents” expanded beyond pass/fail issue fixes toward trajectory, contamination, and requirement-driven evaluation?",
+      "reference_targets": [
+        {
+          "claim_id": "known_useful_01",
+          "url": "https://arxiv.org/abs/2509.16941"
+        },
+        {
+          "claim_id": "known_useful_02",
+          "url": "https://arxiv.org/abs/2603.15401"
+        },
+        {
+          "claim_id": "known_useful_03",
+          "url": "https://arxiv.org/abs/2510.08996"
+        }
+      ],
+      "stratum": "w8_anchor"
+    }
+  ],
+  "schema_version": "enterprise-evaluation/w10-anchor-cases/1",
+  "source_corpus_sha256": "1dbe9ec940ffcf3cece28c9a2eb9755a6d227a651c697cc075a8e7c4b555cbbd"
+}

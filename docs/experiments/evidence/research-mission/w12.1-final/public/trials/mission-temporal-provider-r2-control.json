@@ -1,0 +1,100 @@
+{
+  "arm": "control",
+  "case_id": "mission-temporal-provider",
+  "completed_at": "2026-09-19T05:50:06.983423+00:00",
+  "position": 1,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "0f774a7041fc45d86b5e211e8556b2702b65f97a6aaf6faaf9090348b54d8ad9",
+    "finish_reason": "stop",
+    "latency_ms": 27850.625,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "06032b487f9066050bb72e2667601b8dae8855d13e29fdb40a6553949ec7fbe6",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 565,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 11
+      },
+      "cost": 0.0003782,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0002825,
+        "upstream_inference_cost": 0.0003782,
+        "upstream_inference_prompt_cost": 9.57e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 638,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1203
+    }
+  },
+  "repetition": 2,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Provider-switch decision: Not approved (evidence insufficient as of 2026-09-19T00:00:00Z) pending required gate evidence — record does NOT satisfy the provider-change gate as supplied. Unresolved until gates are closed; treat as **rejected on the current packet**, with the alternative reading (deferred pending evidence) noted below rather than erased, since the supplied record permits neither reading to be closed with certainty.",
+    "candidate_id": "candidate-38c98c0ff6bc982d16e4",
+    "citations": [
+      "platform-policy",
+      "platform-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "platform-policy"
+        ],
+        "text": "Every production model change requires a frozen task suite, provenance checks, and declared resource limits.",
+        "uncertainty": "no material uncertainty as to the requirement's existence; scope definitions are not elaborated in the supplied pack."
+      },
+      {
+        "source_ids": [
+          "platform-policy"
+        ],
+        "text": "Provider adapters must preserve tool-result identities and cancellation semantics.",
+        "uncertainty": "no material uncertainty; the supplied policy does not define conformance tests for these."
+      },
+      {
+        "source_ids": [
+          "platform-context"
+        ],
+        "text": "The vendor supplies no comparison workload, no version pins, no error distribution, and no review methodology in support of its 'enterprise ready and faster' claim.",
+        "uncertainty": "no material uncertainty per the supplied record; absence is recorded, not inferred."
+      },
+      {
+        "source_ids": [
+          "platform-policy"
+        ],
+        "text": "On the current packet, at least four gate obligations are unresolved: frozen task suite conformance, provenance checks, declared resource limits, and version pinning (plus adapter identity/cancellation conformance, untested).",
+        "uncertainty": "uncertainty: this list reflects omissions in the supplied vendor note; whether additional unlisted materials exist elsewhere cannot be established from the supplied pack."
+      },
+      {
+        "source_ids": [
+          "platform-context",
+          "platform-policy"
+        ],
+        "text": "The vendor's unquantified 'faster' claim cannot be verified against the declared resource limits and error-distribution requirements.",
+        "uncertainty": "uncertainty: no performance data is supplied; no independent verification is available in this pack."
+      },
+      {
+        "source_ids": [
+          "platform-policy"
+        ],
+        "text": "Because provider and model versions change, any approval is time-bound and would require re-evaluation on version change.",
+        "uncertainty": "no material uncertainty; freshness is as_of 2026-09-19."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:49:39.132133+00:00",
+  "status": "completed",
+  "trial_id": "mission-temporal-provider-r2-control"
+}

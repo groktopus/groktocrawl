@@ -1,0 +1,49 @@
+{
+  "freeze_sha256": "67781243e22b7b753fb059a61a452216a80cc0aeac0ff168a8177218af1156d5",
+  "files": [
+    {
+      "path": "README.md",
+      "original_sha256": "c45934b7809d91c1c72a868bc2603eb8bb953b067f63553b107e25357f136a87",
+      "original_bytes": 2050,
+      "published_sha256": "4ce0a3836c36fbadc5c04aa781a7ec7c218d8e64a81ab47bcf0612b4b208b36b",
+      "published_bytes": 2135
+    },
+    {
+      "path": "pages/cosign-link/after.md",
+      "original_sha256": "d7d9f949783cb02c0fe780fe3a68c87e43cd2aebc8639f0822b20ce57949670f",
+      "original_bytes": 34433,
+      "published_sha256": "01376260ce8b74339756afd1339c7df1b9396d4f116619d893355f940a61a63f",
+      "published_bytes": 34402
+    },
+    {
+      "path": "pages/cosign-link/before.md",
+      "original_sha256": "b7adc8494040172cdd057fc1cc73126fab0ae2421b4014cbdf4da0ba8176d017",
+      "original_bytes": 34433,
+      "published_sha256": "f7f04d686ecf504ec4f0d85506195ee1d06d3a27eb0ac3ce24f4f2692898da6a",
+      "published_bytes": 34402
+    },
+    {
+      "path": "pages/cosign-offline/after.md",
+      "original_sha256": "47424f39f84dc04f3fadff93ff0c6970c4817f4e97c0fbb54bdb9911e93df691",
+      "original_bytes": 33007,
+      "published_sha256": "058079ca95aefc5964500bfca125e35ead5d05c77fc3014d63759d5d8e35c417",
+      "published_bytes": 32976
+    },
+    {
+      "path": "pages/cosign-offline/before.md",
+      "original_sha256": "c7d082cbd62451b5d23914762c325f846872e2bb08ea5c08991175a3312a805e",
+      "original_bytes": 32450,
+      "published_sha256": "a074702ca65e2cc3914b95fa05ce09037d79b42886fc494d3b614a8df042601b",
+      "published_bytes": 32419
+    },
+    {
+      "path": "source-snapshots.json",
+      "original_sha256": "b611db2452eb935d8c4224640da8d505272f7b682ef237af53eaf3a86658576a",
+      "original_bytes": 23767,
+      "published_sha256": "2d4944f2e669c9ed1a2bde2761344c439f2a2a1024523636d49b8bfc544e6b17",
+      "published_bytes": 30151
+    }
+  ],
+  "redactions_sha256": "ec6ee495da83df5efc3202462d8c277ca8bb4bc99695280cea276ac3eee12d10",
+  "publication_sha256": "d26c6371e04f60759a2f939d5cd4e8b78e5b80e504b595af748653b27295ece3"
+}

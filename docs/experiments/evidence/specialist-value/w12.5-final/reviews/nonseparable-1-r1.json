@@ -1,0 +1,102 @@
+{
+  "case_id": "nonseparable-1",
+  "control_artifact": {
+    "admitted_evidence": [
+      {
+        "canonical_source_id": "canonical-nonseparable-1-generalist-nonseparable-1-scope",
+        "derivative": false,
+        "evidence_id": "nonseparable-1-generalist-nonseparable-1-scope",
+        "obligation_id": "nonseparable-1-scope",
+        "publisher_id": "publisher-nonseparable-1-generalist",
+        "source_id": "source-nonseparable-1-generalist-nonseparable-1-scope",
+        "span": "Pinned supports evidence for nonseparable-1-scope in nonseparable-1.",
+        "stance": "supports"
+      }
+    ],
+    "conflicting_obligation_ids": [],
+    "covered_obligation_ids": [
+      "nonseparable-1-scope"
+    ],
+    "handoff_failures": [],
+    "rejected_evidence": {},
+    "total_calls": 2
+  },
+  "control_calls": 2,
+  "preferred": "tie",
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "0eb5af08acfb67adbd6522b1c9e20220bc56908a4e35817bed9762e6c8d055e5",
+    "finish_reason": "stop",
+    "latency_ms": 4195.961,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "248ecb8a8a23b7f1fd965071d2af641c7c02b9654cf4df0c003dcfdace96350a",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 114,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 6
+      },
+      "cost": 6.3225e-05,
+      "cost_details": {
+        "upstream_inference_completions_cost": 2.85e-05,
+        "upstream_inference_cost": 6.3225e-05,
+        "upstream_inference_prompt_cost": 3.4725e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 463,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 577
+    }
+  },
+  "repetition": 1,
+  "schema_version": "specialist-value-review/1",
+  "scores": {
+    "control": {
+      "reason": "Identical coverage: full obligation coverage with exact source-bound, non-derivative evidence; no conflicts or failures to preserve, none omitted.",
+      "trustworthiness": 1,
+      "usefulness": 1
+    },
+    "treatment": {
+      "reason": "Covers the sole obligation with exact source-bound, non-derivative evidence; no conflicts or failures to preserve, none omitted.",
+      "trustworthiness": 1,
+      "usefulness": 1
+    }
+  },
+  "separable": false,
+  "status": "completed",
+  "stratum": "nonseparable",
+  "treatment_artifact": {
+    "admitted_evidence": [
+      {
+        "canonical_source_id": "canonical-nonseparable-1-generalist-nonseparable-1-scope",
+        "derivative": false,
+        "evidence_id": "nonseparable-1-generalist-nonseparable-1-scope",
+        "obligation_id": "nonseparable-1-scope",
+        "publisher_id": "publisher-nonseparable-1-generalist",
+        "source_id": "source-nonseparable-1-generalist-nonseparable-1-scope",
+        "span": "Pinned supports evidence for nonseparable-1-scope in nonseparable-1.",
+        "stance": "supports"
+      }
+    ],
+    "conflicting_obligation_ids": [],
+    "covered_obligation_ids": [
+      "nonseparable-1-scope"
+    ],
+    "handoff_failures": [],
+    "rejected_evidence": {},
+    "total_calls": 2
+  },
+  "treatment_calls": 2,
+  "trial_id": "nonseparable-1-r1"
+}

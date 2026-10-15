@@ -1,0 +1,78 @@
+{
+  "arm": "treatment",
+  "case_id": "mission-straightforward-delivery",
+  "completed_at": "2026-09-19T05:56:00.316886+00:00",
+  "position": 2,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "9ca610d97e53555e1d8f6282660b8868ccbf3de02306f0a7222f251bb37d35f5",
+    "finish_reason": "stop",
+    "latency_ms": 25755.638,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "458e862aa763faa537e99d98dcdc64685354d02cac2dcfb290ed7fc57d116329",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 351,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 5
+      },
+      "cost": 0.00019695,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.00012285,
+        "upstream_inference_cost": 0.00019695,
+        "upstream_inference_prompt_cost": 7.41e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 741,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1092
+    }
+  },
+  "repetition": 3,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "**Decision: The build agent may open a pull request once tests pass; it may not deploy to production on its own authority.** Per the governing policy, production deployment requires approval by the service owner and a recorded rollback plan [delivery-policy]. The sandbox experiment that permitted automatic deployment applied only to disposable test environments and did not authorize production deployment [delivery-context].",
+    "candidate_id": "candidate-9c2983d55475b7d906aa",
+    "citations": [
+      "delivery-policy",
+      "delivery-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "delivery-policy"
+        ],
+        "text": "The agent may open a pull request after tests pass.",
+        "uncertainty": "No material uncertainty; stated directly by the policy."
+      },
+      {
+        "source_ids": [
+          "delivery-policy"
+        ],
+        "text": "Production deployment requires service-owner approval and a recorded rollback plan; the agent lacks standalone production deployment authority.",
+        "uncertainty": "No material uncertainty; stated directly by the policy."
+      },
+      {
+        "source_ids": [
+          "delivery-context"
+        ],
+        "text": "The sandbox experiment's automatic deployment was limited to disposable test environments and did not authorize production deployment.",
+        "uncertainty": "Context record only; it clarifies scope but is not itself a grant of production authority."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:55:34.559622+00:00",
+  "status": "completed",
+  "trial_id": "mission-straightforward-delivery-r3-treatment"
+}

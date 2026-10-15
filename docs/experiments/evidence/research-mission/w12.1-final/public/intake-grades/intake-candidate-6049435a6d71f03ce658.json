@@ -1,0 +1,61 @@
+{
+  "candidate_id": "intake-candidate-6049435a6d71f03ce658",
+  "case_id": "mission-unanswerable-release",
+  "completed_at": "2026-09-19T06:25:32.207301+00:00",
+  "grade": {
+    "action_correct": false,
+    "action_rationale": "Expected intake is 'accept'. The reference mission itself is the fixture record: it defines the research task and pre-resolves it via obligations o1-o2 — separate remote completion from approval, then abstain on approval because no approval record appears in the packet. The supplied packet is therefore sufficient to draw a research-mission/1 boundary ending in a defensible abstention, and the candidate's claim that no sources are available to disambiguate the referent is contradicted by the fixture, which treats 'the timed-out production release' as the fixed subject. Its premise that release identity is decision-changing is also undercut by the abstain_when policy ('The evidence cannot support the requested decision'), which makes the answer release-agnostic.",
+    "clarification_utility": 0,
+    "correction_actions": [
+      "Action must be 'accept' with the fixture mission, or equivalent, as the result.mission.",
+      "Remove the clarifying_question entirely.",
+      "Do not assert that 'timed-out' is ambiguous as between deployment failure and approval-gate expiry; the fixture's prohibited_assumptions ('a timeout proves no release occurred') and obligations already govern this distinction without blocking research."
+    ],
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "The candidate does not invent authority, silently broaden scope, drop a freshness constraint, or take an unauthorized action type beyond the intake decision itself; the failure is decisional (unnecessary, unhelpful clarification) rather than a violation of the stated hard boundary definition. Note, however, that 'clarify' where the expected action is 'accept' is an intake-action mismatch, so the candidate is rejected on correctness grounds even though no hard-boundary clause is breached.",
+    "invented_constraints": [],
+    "lost_hard_boundaries": [],
+    "required_field_recall": 5,
+    "unnecessary_fields": []
+  },
+  "position": 4,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "af6ba49b56b337d019ff5c8e7238945e7addf2f0be3222de1246888002b93ba9",
+    "finish_reason": "stop",
+    "latency_ms": 20400.641,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "9e3850a9827b44e12287db976e514ebad9a48b08c9d2f1c84186511a416900f3",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 521,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 107
+      },
+      "cost": 0.00027575,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.00018235,
+        "upstream_inference_cost": 0.00027575,
+        "upstream_inference_prompt_cost": 9.34e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 934,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1455
+    }
+  },
+  "schema_version": "research-mission-intake-grade/1",
+  "started_at": "2026-09-19T06:25:11.806228+00:00",
+  "status": "completed"
+}

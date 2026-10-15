@@ -10,15 +10,13 @@ artifact is never persisted into the replayable event state.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 from urllib.parse import urlsplit, urlunsplit
 
 from common.url import extract_domain
 
-# Documents are truncated to this many characters of Markdown when they are
-# turned into LLM context blocks, mirroring the historical per-source limit.
-DOCUMENT_MAX_CHARS = 8000
+from ..search_metadata import search_metadata
 
 
 @dataclass
@@ -39,26 +37,46 @@ class SourceArtifact:
     # content was reused from the Valkey scrape cache.
     retrieval: str = "web"  # "web" / "vector" / "both"
     score: float | None = None
+    material_contribution_score: float | None = None
     cache_age_ms: int | None = None
     # Request options are retained so later stages can validate reuse against
     # the same extraction contract.
     fetch_options: dict[str, Any] | None = None
     contents_options: dict[str, Any] | None = None
     extras: dict[str, Any] | None = None
+    discovery_metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_document(self, max_chars: int = DOCUMENT_MAX_CHARS) -> str:
+    def to_document(self, max_chars: int | None = None) -> str:
         """Render the source into a ``Source: url (domain: ...)`` context block."""
         domain = extract_domain(self.url)
         markdown = self.markdown or ""
-        return f"Source: {self.url} (domain: {domain})\n\n{markdown[:max_chars]}"
+        if max_chars is not None:
+            from .evidence import build_evidence
+
+            selection = build_evidence(
+                [{"id": self.url, "url": self.url, "markdown": markdown}],
+                self.relevance,
+                max_chars,
+            )
+            return selection["context"]
+        header = f"Source: {self.url} (domain: {domain})"
+        if self.material_contribution_score is not None:
+            header += (
+                f"\nmaterial_contribution_score: {self.material_contribution_score:.2f}"
+            )
+        return f"{header}\n\n{markdown}"
 
     def to_source_detail(self) -> dict:
         """Project the artifact into the historical ``source_details`` dict shape."""
-        return {
+        detail = {
             "url": self.url,
             "source": self.source,
             "char_count": self.char_count,
+            **search_metadata(self.discovery_metadata),
         }
+        if self.material_contribution_score is not None:
+            detail["material_contribution_score"] = self.material_contribution_score
+        return detail
 
     def compatible_with(
         self,
@@ -154,6 +172,10 @@ class SourceRegistry:
         previous = self._entries.get(key)
         if previous is not None:
             old = previous.artifact
+            artifact.discovery_metadata = {
+                **search_metadata(old.discovery_metadata),
+                **search_metadata(artifact.discovery_metadata),
+            }
             if not artifact.title:
                 artifact.title = old.title
             if not artifact.relevance:

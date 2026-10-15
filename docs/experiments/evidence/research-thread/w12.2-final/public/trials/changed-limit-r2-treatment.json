@@ -1,0 +1,70 @@
+{
+  "answer": {
+    "answer": "What changed: Atlas Runner 1.1 raised the supported concurrency limit from 8 to 16 concurrent jobs [atlas-release-2]. What is current: Per the latest supplied release notes, Atlas Runner 1.1 supports up to 16 concurrent jobs [atlas-release-2]. What remains historically valid: Atlas Runner 1.0 supported up to 8 concurrent jobs, as documented in its release notes [atlas-release-1]; this remains true as a statement about version 1.0 even though it is superseded by 1.1's higher limit. Unresolved: No supplied snapshot covers versions after 1.1, so later changes to the limit cannot be confirmed or denied; the sources also do not clarify whether these figures are hard caps or configurable values, nor do they address other editions or deployment modes.",
+    "change_events": [
+      "Atlas Runner 1.1 raised the supported concurrency limit from 8 to 16 concurrent jobs [atlas-release-2]."
+    ],
+    "citations": [
+      "atlas-release-1",
+      "atlas-release-2"
+    ],
+    "current_truths": [
+      "Atlas Runner 1.1 supports up to 16 concurrent jobs, per its release notes [atlas-release-2]."
+    ],
+    "historical_truths": [
+      "Atlas Runner 1.0 supported up to 8 concurrent jobs, per its release notes [atlas-release-1].",
+      "The Atlas Runner 1.0 release notes documented support for up to 8 concurrent jobs [atlas-release-1]."
+    ],
+    "unresolved": [
+      "No supplied snapshot covers any Atlas Runner version after 1.1, so whether the concurrency limit changed again in later releases is unknown.",
+      "The sources do not state whether the 16-concurrent-job limit is a hard cap or configurable.",
+      "No information is available on concurrency behavior for other editions, tiers, or deployment modes of Atlas Runner."
+    ]
+  },
+  "arm": "treatment",
+  "case_id": "changed-limit",
+  "completed_at": "2026-09-19T07:50:32.697446+00:00",
+  "position": 35,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "685fb7bf2c667395f1cd02b0d9146585f82a882eeb494ec53cbed22d26653b7e",
+    "finish_reason": "stop",
+    "latency_ms": 12075.879,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "548e0d7e21c12740e917d3e55ad1b98be3bf13cc4e5153973760be0188204b2b",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 448,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 53
+      },
+      "cost": 0.00036575,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000224,
+        "upstream_inference_cost": 0.00036575,
+        "upstream_inference_prompt_cost": 0.00014175
+      },
+      "is_byok": false,
+      "prompt_tokens": 945,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1393
+    }
+  },
+  "repetition": 2,
+  "schema_version": "research-thread-trial/1",
+  "started_at": "2026-09-19T07:50:20.621001+00:00",
+  "status": "completed",
+  "stratum": "changed",
+  "trial_id": "changed-limit-r2-treatment"
+}

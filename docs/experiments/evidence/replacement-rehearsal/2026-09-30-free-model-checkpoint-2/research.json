@@ -1,0 +1,164 @@
+{
+  "cli": {
+    "artifact_set_match": true,
+    "research_state": "completed",
+    "search_result_count": 3,
+    "summary_digest_match": true
+  },
+  "compose": {
+    "image_count": 11,
+    "services": [
+      {
+        "health": "healthy",
+        "service": "agent",
+        "state": "running"
+      },
+      {
+        "health": "healthy",
+        "service": "browser",
+        "state": "running"
+      },
+      {
+        "health": "healthy",
+        "service": "mcp",
+        "state": "running"
+      },
+      {
+        "health": "healthy",
+        "service": "parse",
+        "state": "running"
+      },
+      {
+        "health": "healthy",
+        "service": "portal",
+        "state": "running"
+      },
+      {
+        "health": "healthy",
+        "service": "postgres",
+        "state": "running"
+      },
+      {
+        "health": "healthy",
+        "service": "qdrant-rollback",
+        "state": "running"
+      },
+      {
+        "health": "healthy",
+        "service": "scraper",
+        "state": "running"
+      },
+      {
+        "health": "healthy",
+        "service": "semantic",
+        "state": "running"
+      },
+      {
+        "health": "healthy",
+        "service": "slopsearx",
+        "state": "running"
+      },
+      {
+        "health": "healthy",
+        "service": "valkey",
+        "state": "running"
+      }
+    ],
+    "version": "5.5.1"
+  },
+  "git_revision": "46a528228b1365189cdd38d0bcdb12109a8dc763",
+  "mcp": {
+    "artifact_set_match": true,
+    "research_capabilities": true,
+    "research_state": "completed",
+    "summary_digest_match": true
+  },
+  "model_provider": {
+    "structured": {
+      "http_class": "2xx",
+      "latency_ms": 6320.9,
+      "status": "ready"
+    },
+    "text": {
+      "http_class": "2xx",
+      "latency_ms": 5690.0,
+      "status": "ready"
+    }
+  },
+  "postgres": {
+    "pgvector_version": "0.8.6",
+    "research_schema_version": 14
+  },
+  "publication_sanitization": "w9-public-packet/1",
+  "research": {
+    "artifact_sha256": {
+      "analysis": "9a981d48ecad80e606588bccaa37d2da1b1b352cbea9370c67a5560321160113",
+      "dossier": "515f04f874de36bf2c939a6c3b1738d75e58dcff93cafa470a26079829d08245",
+      "summary": "fab8d81ed9f509675bd915115bbe7ccd66b0f745e608f5962e76fb4e4311fa91"
+    },
+    "manifest_sha256": "188de2f5e0a0f9dde9e980097da7bc92ecdcb16adb675dcc154e6d08b971b6dd",
+    "research_id": "53a9eee8-aefd-4fce-8d47-1736b1e83f05",
+    "run_id": "4c2f6f32-1683-42b2-9999-c01721a683a7",
+    "sse_events": [
+      "accepted",
+      "progress",
+      "done"
+    ],
+    "state": "completed"
+  },
+  "runtime": {
+    "model": "free",
+    "revision": "46a528228b1365189cdd38d0bcdb12109a8dc763"
+  },
+  "schema_version": "experimental-candidate-verification/1",
+  "search": {
+    "result_count": 3
+  },
+  "semantic": {
+    "models": "loaded",
+    "pgvector": "ready",
+    "qdrant": "rollback_ready",
+    "status": "ok",
+    "vector_store": "pgvector"
+  },
+  "service_health": {
+    "checks": {
+      "browser": {
+        "detail": "Browser responded HTTP 404",
+        "latency_ms": 16.3,
+        "status": "ok"
+      },
+      "portal": {
+        "detail": "Portal responded HTTP 200",
+        "latency_ms": 12.8,
+        "status": "ok"
+      },
+      "scraper": {
+        "detail": "Scraper responded HTTP 404",
+        "latency_ms": 21.2,
+        "status": "ok"
+      },
+      "searxng": {
+        "detail": "SearXNG health ok",
+        "latency_ms": 25.4,
+        "status": "ok"
+      },
+      "valkey": {
+        "detail": "Valkey PING ok",
+        "latency_ms": 1.7,
+        "status": "ok"
+      }
+    },
+    "runtime": {
+      "model": "free",
+      "revision": "46a528228b1365189cdd38d0bcdb12109a8dc763"
+    },
+    "status": "ok"
+  },
+  "source": {
+    "compose_sha256": "e8e620d0f6eec0e3e29811786224451128a7e77e2e53fd76e53d2b58dbaa8a9a",
+    "uv_lock_sha256": "4c383538479287eedaf4ffde5f2044f29972897a256e07f9b57fa3d1bc42648a"
+  },
+  "source_receipt_sha256": "08c8dd05a095dc62f8cf75a369675b7cfb51a65cd34b0b6f971bbb9ca82902b3",
+  "verified_at_unix": 1790797255
+}

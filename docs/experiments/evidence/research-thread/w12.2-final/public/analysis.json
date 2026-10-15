@@ -1,0 +1,277 @@
+{
+  "complete_observed_grade_count": 52,
+  "decision": "reject_or_revise",
+  "effect_points_by_repetition": {
+    "1": -18.333,
+    "2": -3.333,
+    "3": -5.333
+  },
+  "effects": [
+    {
+      "case_id": "changed-limit",
+      "control_score": 78,
+      "effect_points": 0,
+      "repetition": 1,
+      "treatment_score": 78
+    },
+    {
+      "case_id": "changed-limit",
+      "control_score": 93,
+      "effect_points": -4,
+      "repetition": 2,
+      "treatment_score": 89
+    },
+    {
+      "case_id": "changed-limit",
+      "control_score": 88,
+      "effect_points": -3,
+      "repetition": 3,
+      "treatment_score": 85
+    },
+    {
+      "case_id": "historical-support",
+      "control_score": 83,
+      "effect_points": 6,
+      "repetition": 1,
+      "treatment_score": 89
+    },
+    {
+      "case_id": "historical-support",
+      "control_score": 94,
+      "effect_points": 3,
+      "repetition": 2,
+      "treatment_score": 97
+    },
+    {
+      "case_id": "historical-support",
+      "control_score": 88,
+      "effect_points": -10,
+      "repetition": 3,
+      "treatment_score": 78
+    },
+    {
+      "case_id": "later-resolution",
+      "control_score": 91,
+      "effect_points": 9,
+      "repetition": 1,
+      "treatment_score": 100
+    },
+    {
+      "case_id": "later-resolution",
+      "control_score": 79,
+      "effect_points": 10,
+      "repetition": 2,
+      "treatment_score": 89
+    },
+    {
+      "case_id": "later-resolution",
+      "control_score": 89,
+      "effect_points": -11,
+      "repetition": 3,
+      "treatment_score": 78
+    },
+    {
+      "case_id": "live-contradiction",
+      "control_score": 73,
+      "effect_points": -73,
+      "repetition": 1,
+      "treatment_score": 0
+    },
+    {
+      "case_id": "live-contradiction",
+      "control_score": 82,
+      "effect_points": -18,
+      "repetition": 2,
+      "treatment_score": 64
+    },
+    {
+      "case_id": "live-contradiction",
+      "control_score": 71,
+      "effect_points": -18,
+      "repetition": 3,
+      "treatment_score": 53
+    },
+    {
+      "case_id": "near-match-products",
+      "control_score": 89,
+      "effect_points": 1,
+      "repetition": 1,
+      "treatment_score": 90
+    },
+    {
+      "case_id": "near-match-products",
+      "control_score": 93,
+      "effect_points": -6,
+      "repetition": 2,
+      "treatment_score": 87
+    },
+    {
+      "case_id": "near-match-products",
+      "control_score": 89,
+      "effect_points": 3,
+      "repetition": 3,
+      "treatment_score": 92
+    },
+    {
+      "case_id": "renamed-feature",
+      "control_score": 79,
+      "effect_points": -1,
+      "repetition": 1,
+      "treatment_score": 78
+    },
+    {
+      "case_id": "renamed-feature",
+      "control_score": 100,
+      "effect_points": -20,
+      "repetition": 2,
+      "treatment_score": 80
+    },
+    {
+      "case_id": "renamed-feature",
+      "control_score": 89,
+      "effect_points": -10,
+      "repetition": 3,
+      "treatment_score": 79
+    },
+    {
+      "case_id": "rotated-link",
+      "control_score": 98,
+      "effect_points": -7,
+      "repetition": 1,
+      "treatment_score": 91
+    },
+    {
+      "case_id": "rotated-link",
+      "control_score": 88,
+      "effect_points": 0,
+      "repetition": 2,
+      "treatment_score": 88
+    },
+    {
+      "case_id": "rotated-link",
+      "control_score": 98,
+      "effect_points": -8,
+      "repetition": 3,
+      "treatment_score": 90
+    },
+    {
+      "case_id": "stable-anchor",
+      "control_score": 78,
+      "effect_points": 0,
+      "repetition": 1,
+      "treatment_score": 78
+    },
+    {
+      "case_id": "stable-anchor",
+      "control_score": 94,
+      "effect_points": -1,
+      "repetition": 2,
+      "treatment_score": 93
+    },
+    {
+      "case_id": "stable-anchor",
+      "control_score": 79,
+      "effect_points": -2,
+      "repetition": 3,
+      "treatment_score": 77
+    },
+    {
+      "case_id": "syndicated-copy",
+      "control_score": 100,
+      "effect_points": -100,
+      "repetition": 1,
+      "treatment_score": 0
+    },
+    {
+      "case_id": "syndicated-copy",
+      "control_score": 80,
+      "effect_points": 6,
+      "repetition": 2,
+      "treatment_score": 86
+    },
+    {
+      "case_id": "syndicated-copy",
+      "control_score": 76,
+      "effect_points": 11,
+      "repetition": 3,
+      "treatment_score": 87
+    }
+  ],
+  "efficiency_gate_pass": false,
+  "grade_failure_rate": 0.037037,
+  "hard_failure_count": 2,
+  "hard_failures": [
+    {
+      "case_id": "live-contradiction",
+      "grade": {
+        "change_accuracy": 85,
+        "current_accuracy": 60,
+        "false_merge": false,
+        "historical_preservation": 70,
+        "lost_history": false,
+        "rationale": "The candidate correctly captures the change event (incident DQ-17 duplicate deliveries contradicting the documented claim) and preserves the documented exactly-once claim as historical. However, it also asserts as current that 'the documentation still describes exactly-once delivery' and lists the documented claim as a current truth, whereas the reference treats the documentation's exactly-once description as superseded/historical \u2014 a stale-current leak. The unresolved list omits the core contested point (whether the unconditional exactly-once guarantee holds) and instead invents peripheral questions (doc update status, guarantee scope, root cause, frequency). Four unsupported claims: references to a 'prior thread'/'prior_root' context not present in the sources, the assertion the documentation 'predates' the incident, the claim the prior thread flagged missing operational evidence, and the assertion the documentation 'still' describes exactly-once delivery as current. No false merge or lost history.",
+        "stale_current_leak": true,
+        "unresolved_accuracy": 40,
+        "unsupported_claims": 4,
+        "usefulness": 65
+      },
+      "repetition": 2
+    },
+    {
+      "case_id": "live-contradiction",
+      "grade": {
+        "change_accuracy": 95,
+        "current_accuracy": 0,
+        "false_merge": false,
+        "historical_preservation": 50,
+        "lost_history": false,
+        "rationale": "The candidate correctly captures the sole change event (incident DQ-17 duplicate deliveries contradicting the documentation) and cites both primary snapshots, preserving the documentation's exactly-once claim as historically valid without omission or rewrite \u2014 no false merge, no lost history, and every factual statement traces to the supplied sources. The core failure is categorization: the reference ledger records NO current truths (the exactly-once claim is historical; the unconditional guarantee is contested), yet the candidate asserts two current truths, restating the documentation's exactly-once description as current ('still describes') \u2014 stale-current leakage of superseded evidence \u2014 and filing the change event as a current truth. Hence current_accuracy is 0 and the 'not current' half of historical preservation fails. The unresolved list partially captures the contested guarantee ('current operational guarantee cannot be confirmed') but dilutes it with three invented peripheral questions (guarantee scope/conditions, root cause, isolated vs. ongoing) that earn no credit. The candidate avoids the prohibited single-source resolution, though its bottom line ('cannot be treated as reliably holding') leans toward resolving the contradiction rather than leaving it fully contested.",
+        "stale_current_leak": true,
+        "unresolved_accuracy": 50,
+        "unsupported_claims": 0,
+        "usefulness": 70
+      },
+      "repetition": 3
+    }
+  ],
+  "limitations": [
+    "Model grading is blinded but not human adjudication.",
+    "Latency covers model completion, not live retrieval, because the frozen source pack is pre-supplied.",
+    "The synthetic corpus establishes causal behavior, not production prevalence."
+  ],
+  "mean_effect_points": -9,
+  "mean_latency_ms_by_arm": {
+    "control": 20713.148,
+    "treatment": 25484.009
+  },
+  "mean_total_tokens_by_arm": {
+    "control": 1492.296,
+    "treatment": 2256.037
+  },
+  "missing_grade_assignments": [
+    {
+      "arm": "treatment",
+      "assigned_score": 0,
+      "case_id": "live-contradiction",
+      "repetition": 1
+    },
+    {
+      "arm": "treatment",
+      "assigned_score": 0,
+      "case_id": "syndicated-copy",
+      "repetition": 1
+    }
+  ],
+  "no_change_effect_points": [
+    0,
+    -1,
+    -2
+  ],
+  "no_change_noninferiority_pass": true,
+  "operational_gate_pass": true,
+  "paired_count": 27,
+  "repetitions_at_or_above_10_points": 0,
+  "schema_version": "research-thread-analysis/1",
+  "treatment_latency_reduction_percent": -23.033,
+  "trial_failure_rate": 0.0
+}

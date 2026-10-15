@@ -321,13 +321,18 @@ class RuntimeGateWorkflowContractTests(unittest.TestCase):
         self.assertIn("- service: scraper-svc", self.build_and_push)
 
     def test_runtime_services_match_build_and_push_matrix(self) -> None:
-        # Contract (#561): the classifier's RUNTIME_SERVICES must exactly mirror
-        # the docker.yml build-and-push image matrix. A service added to the
-        # compose/build matrix but not to RUNTIME_SERVICES would silently break
-        # service-local PR builds and runtime classification, so this guard keeps
-        # the two from drifting apart.
+        # Base service changes use the service-local lane; protected-image
+        # changes require the full required research-runtime validation.
         self.assertTrue(self.build_matrix_services)
-        self.assertEqual(set(MODULE.RUNTIME_SERVICES), self.build_matrix_services)
+        self.assertEqual(
+            set(MODULE.RUNTIME_SERVICES) | set(MODULE.PROTECTED_IMAGE_SERVICES),
+            self.build_matrix_services,
+        )
+        for service in MODULE.PROTECTED_IMAGE_SERVICES:
+            self.assertEqual(
+                MODULE.affected_services([f"{service}/Dockerfile"]), {"all"}
+            )
+            self.assertTrue(MODULE.requires_full_runtime([f"{service}/Dockerfile"]))
 
     def test_docs_only_pull_request_cannot_run_integration_tests(self) -> None:
         # The fork admission term uses a STRING comparison on format('{0}', ...)
@@ -904,7 +909,8 @@ class RuntimeGateWorkflowContractTests(unittest.TestCase):
             "- name: Fail when required runtime validation fails", self.runtime_gate
         )
         self.assertIn("needs.integration-tests.result != 'success'", self.runtime_gate)
-        self.assertEqual(self.runtime_gate.count("exit 1"), 3)
+        self.assertIn("needs.research-runtime.result != 'success'", self.runtime_gate)
+        self.assertEqual(self.runtime_gate.count("exit 1"), 4)
 
 
 class FastTestsWorkflowContractTests(unittest.TestCase):

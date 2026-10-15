@@ -1,0 +1,85 @@
+{
+  "arm": "control",
+  "case_id": "mission-temporal-exception",
+  "completed_at": "2026-09-19T05:44:13.865983+00:00",
+  "position": 1,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "2e4906b1b113d12afea8515132085e3af98b7517c72cd4a2ba6145886ef4f2f6",
+    "finish_reason": "stop",
+    "latency_ms": 16719.513,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "ea32ba67ebb9362ee45fd8c7389025a7a5b4c80c1aeb0576f65fbb0241a94c01",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 456,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 8
+      },
+      "cost": 0.0002231,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0001596,
+        "upstream_inference_cost": 0.0002231,
+        "upstream_inference_prompt_cost": 6.35e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 635,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1091
+    }
+  },
+  "repetition": 1,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "**Decision: The exception was not effective on 2026-09-19.** The signed exception applied only to low-risk documentation changes in the internal pilot and expired on 2026-06-30 (source_id: governance-context). As of the decision time of 2026-09-19, this is ~2.5 months past expiration, and the source bundle contains no renewal evidence (source_id: governance-context). The supplied packet does not establish any renewal, extension, or re-approval; the policy also requires high-risk changes to carry a named human approver, audit record, and accountable owner, and prohibits self-approval (source_id: governance-policy). Any exception needed after 2026-06-30 would require a new signed exception meeting the governance policy's scope, expiration, and ownership requirements.",
+    "candidate_id": "candidate-80044a02932fa99fd159",
+    "citations": [
+      "governance-policy",
+      "governance-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "governance-context"
+        ],
+        "text": "The signed exception covered low-risk documentation changes in the internal pilot until 2026-06-30.",
+        "uncertainty": "No material uncertainty; stated directly in the source."
+      },
+      {
+        "source_ids": [
+          "governance-context"
+        ],
+        "text": "No renewal of the exception is present in the source bundle.",
+        "uncertainty": "The packet cannot establish whether a renewal exists outside the supplied bundle; none is evidenced here."
+      },
+      {
+        "source_ids": [
+          "governance-context"
+        ],
+        "text": "The decision date 2026-09-19 falls after the 2026-06-30 expiration, so the exception was not effective at the as-of time.",
+        "uncertainty": "No material uncertainty given the supplied expiration date."
+      },
+      {
+        "source_ids": [
+          "governance-policy"
+        ],
+        "text": "Exceptions must identify scope, expiration, and accountable owner, and the agent cannot approve its own exception.",
+        "uncertainty": "No material uncertainty; policy fixture states this directly."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:43:57.145353+00:00",
+  "status": "completed",
+  "trial_id": "mission-temporal-exception-r1-control"
+}

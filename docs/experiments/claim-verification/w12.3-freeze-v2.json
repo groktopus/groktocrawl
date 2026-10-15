@@ -1,0 +1,50 @@
+{
+  "schema_version": "claim-verification-experiment-freeze/2",
+  "status": "frozen_before_measurement",
+  "source_revision": "17dee83085c0047558f8dd564aa1d2771ea48a09",
+  "supersedes": "w12.3-freeze.json",
+  "model_route": "general",
+  "endpoint_origin": "http://inference.example.internal:4000/",
+  "case_count": 12,
+  "repetitions": 3,
+  "allocated_trials": 36,
+  "concurrency": 5,
+  "reasoning_effort": "minimal",
+  "maximum_completion_tokens": 12000,
+  "request_timeout_seconds": 300,
+  "transport_attempt_limit": 2,
+  "invalid_completion_attempt_limit": 2,
+  "maximum_request_count": 144,
+  "failure_guardrail": 0.1,
+  "excluded_v1": {
+    "source": "w12.3-run-v1-ab91225",
+    "terminal_records": 24,
+    "completed": 20,
+    "failed": 4,
+    "file_count": 53,
+    "manifest_byte_count": 6138,
+    "canonical_manifest_sha256": "00d6b80a39e4fa56afd949446b89a0c93978b0e1fae1184a7fb242efbc1b07c9"
+  },
+  "preflight": {
+    "source": "w12.3-preflight-v2-6225685",
+    "scope": "one live contradiction and one stale-current case",
+    "inside_measured_tree": false,
+    "completed": 2,
+    "failed": 0
+  },
+  "bounded_corrections": [
+    "contradiction spans are an explicit subset of all cited evidence spans",
+    "uniqueness remains required within each evidence list",
+    "exact compact output example and field relationship added to the prompt"
+  ],
+  "files": {
+    "agent-svc/agent/experimental/claim_verification_experiment.py": "f64813d8625836533c026fdafda0f64da50dca3141778e570aa519c339e6a2c1",
+    "scripts/run_w12_claim_verification.py": "5c00967a5eb3a361afd4b911891b47ad6ae9d1b26c1375c7292eb2e4998ba35b",
+    "scripts/analyze_w12_claim_verification.py": "a1790ad4f6e2e0855bd04f93a1c81ee158a340febceacff72d9e57e2b47ff515",
+    "docs/experiments/claim-verification/w12.3-cases.json": "e8b7ce2f25f83c1cd0e9bb64d586d023cce07693a2adeac4cbf69273ae42fd18",
+    "docs/experiments/claim-verification/w12.3-work-order.json": "92d2d8932888e77096a057de2797f183e7dcd41595203c0b41dc6d1be80fc4b0",
+    "docs/experiments/claim-verification/w12.3-protocol.md": "23c4af022bcc3a781c99bb7e79d254b232ce97f4fbe95482739827dfcb4ffec0",
+    "docs/experiments/claim-verification/w12.3-research-log.md": "143a407a1a8eac86ed7f517610a588d493dce171f24941279d96ea0155d29064",
+    "docs/experiments/claim-verification/w12.3-freeze.json": "a109b5d9503c90d94df40a6cece2514682d10543fb4ca8d3c70d04944ea1145e"
+  }
+}

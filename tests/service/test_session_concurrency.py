@@ -2,7 +2,6 @@
 
 import asyncio
 import os
-import time
 
 import pytest
 
@@ -139,6 +138,7 @@ async def test_opt_in_search_steps_overlap_and_commit_unique_refs(monkeypatch):
     manager = SessionManager.__new__(SessionManager)
     manager.store = store
     started = []
+    both_started = asyncio.Event()
 
     class Search:
         def __init__(self, *_args, **_kwargs):
@@ -146,7 +146,12 @@ async def test_opt_in_search_steps_overlap_and_commit_unique_refs(monkeypatch):
 
         async def search(self, **kwargs):
             started.append(kwargs["query"])
-            await asyncio.sleep(0.05)
+            if len(started) == 2:
+                both_started.set()
+            # This is a synchronization assertion rather than a wall-clock
+            # benchmark: a serialized implementation leaves the first call
+            # waiting here and fails deterministically.
+            await asyncio.wait_for(both_started.wait(), timeout=1)
             return (
                 [
                     {
@@ -162,7 +167,6 @@ async def test_opt_in_search_steps_overlap_and_commit_unique_refs(monkeypatch):
             pass
 
     monkeypatch.setattr("agent.session.SearXNGClient", Search)
-    start = time.perf_counter()
     results = await asyncio.gather(
         manager.step(
             "session-1",
@@ -181,9 +185,6 @@ async def test_opt_in_search_steps_overlap_and_commit_unique_refs(monkeypatch):
             idempotency_key="two-request",
         ),
     )
-    elapsed = time.perf_counter() - start
-
-    assert elapsed < 0.09
     assert started == ["one", "two"]
     assert {result["step_index"] for result in results} == {1, 2}
     assert set(store.refs) == {"ref_1_1", "ref_2_1"}

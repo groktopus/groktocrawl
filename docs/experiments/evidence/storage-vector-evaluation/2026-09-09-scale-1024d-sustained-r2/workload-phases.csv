@@ -1,0 +1,13 @@
+timestamp,event,round,provider
+2026-09-09T02:26:47Z,start,1,qdrant
+2026-09-09T02:27:30Z,finish,1,qdrant
+2026-09-09T02:27:30Z,start,1,pgvector
+2026-09-09T02:29:08Z,finish,1,pgvector
+2026-09-09T02:29:08Z,start,2,qdrant
+2026-09-09T02:29:49Z,finish,2,qdrant
+2026-09-09T02:29:49Z,start,2,pgvector
+2026-09-09T02:30:22Z,finish,2,pgvector
+2026-09-09T02:30:22Z,start,3,qdrant
+2026-09-09T02:31:04Z,finish,3,qdrant
+2026-09-09T02:31:04Z,start,3,pgvector
+2026-09-09T02:32:05Z,finish,3,pgvector

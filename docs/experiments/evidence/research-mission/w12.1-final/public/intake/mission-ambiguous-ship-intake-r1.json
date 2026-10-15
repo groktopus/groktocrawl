@@ -1,0 +1,52 @@
+{
+  "case_id": "mission-ambiguous-ship",
+  "completed_at": "2026-09-19T06:03:23.261904+00:00",
+  "position": 11,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "74d59d5795f9cb5f353dcdb9cb2368cb044211dc97b0299347c861ab6fadf761",
+    "finish_reason": "stop",
+    "latency_ms": 79114.012,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "6a94eed06660ab2f0a7734815bddfffdaa2a08c5787efaa2b7f607593373d234",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 4893,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 4650
+      },
+      "cost": 0.0027546,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0024465,
+        "upstream_inference_cost": 0.0027546,
+        "upstream_inference_prompt_cost": 0.0003081
+      },
+      "is_byok": false,
+      "prompt_tokens": 2054,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 6947
+    }
+  },
+  "repetition": 1,
+  "result": {
+    "action": "clarify",
+    "clarifying_question": "What exactly would 'letting the agents ship' authorize — autonomous merge to the main branch, autonomous deployment to production, or autonomous release to end customers — and would it cover all changes or only a scoped set (e.g., internal tools or low-risk services)?",
+    "mission": null,
+    "rationale": "The request is researchable: evidence on agent reliability, failure modes, control mechanisms, and enterprise governance practice can inform a ship-autonomy decision, so abstaining is not warranted. However, 'ship' is a decision-changing ambiguity that cannot be resolved without guessing: autonomous merge, autonomous production deployment, and autonomous customer release are distinct risk regimes requiring different evidence (code-quality gates vs. deployment safety and rollback vs. release and compliance controls), and neither the request nor the domain indicates which is meant, nor whether the decision is a blanket policy change or a scoped pilot. Guessing would risk framing the wrong governance decision. One blocking clarification is therefore asked before any mission is issued; no mission, findings, or permissions are asserted, and the eventual mission will inform — not make — the ship/no-ship decision."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:02:04.141459+00:00",
+  "status": "completed",
+  "trial_id": "mission-ambiguous-ship-intake-r1"
+}

@@ -1,4 +1,8 @@
-# GroktoCrawl Roadmap
+# Inherited GroktoCrawl Roadmap
+
+> This file preserves upstream roadmap context at the fork point. For
+> `magnus919/groktocrawl-x`, follow the [experimental research architecture plan](experiments/research-architecture.md).
+> This experiment does not replace or redirect mainline GroktoCrawl.
 
 A lightweight, best-effort view of where GroktoCrawl is heading. It is **not a
 commitment** to ship any specific item by a date. Priorities shift as

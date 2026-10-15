@@ -1,0 +1,72 @@
+{
+  "answer": {
+    "answer": "No — the supplied sources do not show that Harbor Agent gained an offline mode. The only offline capability in evidence belongs to Harbor Agent Cloud, a distinct subject with its own identifier (harbor-agent-cloud): its guide states 'Harbor Agent Cloud added an offline export mode' [harbor-cloud-doc]. Harbor Agent itself (harbor-agent) is still documented as requiring a network connection, and no snapshot attributes an offline mode to it [harbor-agent-doc]. Because the two subjects are distinct and identity cannot be inferred from name similarity, the Cloud feature cannot be credited to Harbor Agent. What changed: Harbor Agent Cloud gained an offline export mode. What is current: Harbor Agent requires a network connection; Harbor Agent Cloud has an offline export mode. What remains historically valid: the earlier finding that Harbor Agent has no documented offline mode still stands, and its network-connection requirement is unchanged. What is unresolved: whether Harbor Agent itself will gain offline capability, whether any relationship exists between the two products, and whether the Cloud 'offline export mode' amounts to full offline operation, are all not addressed by the supplied snapshots.",
+    "change_events": [
+      "Harbor Agent Cloud added an offline export mode [harbor-cloud-doc]. This change event is documented for the distinct subject harbor-agent-cloud, not for Harbor Agent (harbor-agent)."
+    ],
+    "citations": [
+      "harbor-agent-doc",
+      "harbor-cloud-doc"
+    ],
+    "current_truths": [
+      "Harbor Agent requires a network connection [harbor-agent-doc].",
+      "Harbor Agent Cloud has an offline export mode, which its guide states was added [harbor-cloud-doc].",
+      "No supplied source states that Harbor Agent (subject harbor-agent) has an offline mode; the offline capability is documented only for the distinct subject Harbor Agent Cloud [harbor-agent-doc][harbor-cloud-doc]."
+    ],
+    "historical_truths": [
+      "The earlier-documented requirement that Harbor Agent maintain a network connection remains valid and is unchanged in the current snapshot [harbor-agent-doc].",
+      "The prior finding that Harbor Agent has no documented offline mode remains historically valid; the newly evidenced offline capability belongs to Harbor Agent Cloud, a separate subject, and cannot be attributed to Harbor Agent [harbor-agent-doc][harbor-cloud-doc]."
+    ],
+    "unresolved": [
+      "Whether Harbor Agent itself has gained or will gain any offline capability is not addressed by the supplied snapshots [harbor-agent-doc].",
+      "Any relationship between Harbor Agent and Harbor Agent Cloud (e.g., shared lineage or feature flow-down between the products) is not established by the supplied sources, and identity cannot be inferred from name similarity [harbor-agent-doc][harbor-cloud-doc].",
+      "The scope of Harbor Agent Cloud's offline export mode — e.g., whether it constitutes full offline operation or only offline export — is not detailed in the supplied snapshot [harbor-cloud-doc]."
+    ]
+  },
+  "arm": "treatment",
+  "case_id": "near-match-products",
+  "completed_at": "2026-09-19T07:50:12.677355+00:00",
+  "position": 22,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "a9042d2d67735e670a5b4b7042e8ae3cf60218dc70da87815f4856a6bf298b6c",
+    "finish_reason": "stop",
+    "latency_ms": 62141.527,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "ab96b7db4020ae4a072c8f4c8f9dd1ee7c3fa334b726a1a509270b65ebb72788",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 2733,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 2115
+      },
+      "cost": 0.0015,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0013665,
+        "upstream_inference_cost": 0.0015,
+        "upstream_inference_prompt_cost": 0.0001335
+      },
+      "is_byok": false,
+      "prompt_tokens": 890,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 3623
+    }
+  },
+  "repetition": 2,
+  "schema_version": "research-thread-trial/1",
+  "started_at": "2026-09-19T07:49:10.533709+00:00",
+  "status": "completed",
+  "stratum": "near_match",
+  "trial_id": "near-match-products-r2-treatment"
+}

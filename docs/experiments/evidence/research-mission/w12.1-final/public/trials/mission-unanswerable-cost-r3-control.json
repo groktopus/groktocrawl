@@ -1,0 +1,110 @@
+{
+  "arm": "control",
+  "case_id": "mission-unanswerable-cost",
+  "completed_at": "2026-09-19T05:55:16.803956+00:00",
+  "position": 2,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "a172f54c8113059bdd33f582b6dde7c8c0ef9f604004820c52301a2de6464567",
+    "finish_reason": "stop",
+    "latency_ms": 38264.786,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "a353a7804c7d0960b8f783b13b12cc3efc6e7e8e4bfd2d43c6e8f8e164d8f697",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 4087,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 3428
+      },
+      "cost": 0.0021443,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0020435,
+        "upstream_inference_cost": 0.0021443,
+        "upstream_inference_prompt_cost": 0.0001008
+      },
+      "is_byok": false,
+      "prompt_tokens": 672,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 4759
+    }
+  },
+  "repetition": 3,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Decision: No — the packet does not prove a ≥20% total-cost reduction, and the threshold claim must be abstained on. The supplied record contains no cost measurement of any kind, so no cost change — causal or otherwise — can be quantified, let alone one of at least 20%.",
+    "candidate_id": "candidate-0a7a2607e7884b330be9",
+    "citations": [
+      "measurement-policy",
+      "measurement-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "text": "The packet does not quantify any total-cost change and therefore does not establish a causal total-cost reduction of at least 20%.",
+        "uncertainty": "No material uncertainty: the context explicitly reports the absence of cost data, and the policy disqualifies the only available proxy (accepted-PR counts)."
+      },
+      {
+        "source_ids": [
+          "measurement-context"
+        ],
+        "text": "The pilot's sole quantitative datum is 40 accepted pull requests in one month, with no task mix, control group, reviewer hours, failure count, or provider costs.",
+        "uncertainty": "None; the absence of these measurements is stated directly in the source."
+      },
+      {
+        "source_ids": [
+          "measurement-policy"
+        ],
+        "text": "The measurement policy requires evaluation via matched tasks, quality gates, human review time, rework, elapsed lead time, and total cost, and requires counting failed or abandoned tasks.",
+        "uncertainty": "None."
+      },
+      {
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "text": "The measurement policy states that causal benefit must not be inferred from accepted-PR counts, which disqualifies the pilot's 40-PR figure as evidence of cost reduction; accepted-PR counts are also excluded as a cost proxy by the decision criteria themselves.",
+        "uncertainty": "None."
+      },
+      {
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "text": "Contradiction preserved: the pilot's headline metric (40 accepted PRs) is exactly the metric the measurement policy disallows for inferring benefit — the pilot implies a productivity signal while the policy's standard rules that inference out, and no supplied source resolves the tension.",
+        "uncertainty": "The contradiction stands as supplied; resolving it would require new measurements not present in the packet."
+      },
+      {
+        "source_ids": [
+          "measurement-context",
+          "measurement-policy"
+        ],
+        "text": "The matched-comparison obligation — a comparable baseline plus a total-cost numerator and denominator with failure accounting — is not satisfied anywhere in the packet and remains explicitly unresolved.",
+        "uncertainty": "Unresolved by design; no supplied source can close it, and inventing a baseline or cost figures is not permitted."
+      },
+      {
+        "source_ids": [
+          "measurement-context"
+        ],
+        "text": "The bounded-abstention obligation is satisfied: the ≥20% threshold is stated as not established, and the missing measurements are named (task mix, control group, reviewer hours, failure count, provider costs).",
+        "uncertainty": "None; abstention is the supported outcome."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:54:38.537910+00:00",
+  "status": "completed",
+  "trial_id": "mission-unanswerable-cost-r3-control"
+}

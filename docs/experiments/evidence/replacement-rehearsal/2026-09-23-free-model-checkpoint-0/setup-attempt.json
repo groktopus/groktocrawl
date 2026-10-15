@@ -1,0 +1,8 @@
+{
+  "attempt_started_at": "2026-09-23T00:10:42.692467Z",
+  "classification": "test_setup_source_revision_mismatch",
+  "failed_at": "2026-09-23T00:11:13.415878Z",
+  "observed": "The source checkout was newer than the deployed candidate revision; the cross-client verifier stopped at its revision guard.",
+  "pilot_credit": 0,
+  "service_failure": false
+}

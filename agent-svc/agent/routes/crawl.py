@@ -371,6 +371,7 @@ async def get_crawl_status(
         credits_used=credits_used,
         data=chunk_pages or (all_pages if offset == 0 else []),
         error=job.get("error"),
+        outcome_summary=data.get("outcome_summary"),
         next=next_url,
         created_at=created_at,
         completed_at=completed_at,

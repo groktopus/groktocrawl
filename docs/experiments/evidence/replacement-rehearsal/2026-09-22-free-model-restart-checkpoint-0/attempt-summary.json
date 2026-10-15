@@ -1,0 +1,19 @@
+{
+  "schema_version": "w9-checkpoint-attempt-summary/1",
+  "candidate_revision": "46a528228b1365189cdd38d0bcdb12109a8dc763",
+  "failed_attempt": {
+    "at": "2026-09-22T19:19:12.304485Z",
+    "failed_operation": "grounded_answer",
+    "http_status": 502,
+    "classification": "transient_model_gateway_restart",
+    "gateway_restarted_at": "2026-09-22T19:19:03.144057163Z",
+    "product_operations_credited": 0,
+    "raw_failure_receipt": "retained privately"
+  },
+  "retry": {
+    "completed_at": "2026-09-22T19:20:21.394803Z",
+    "outcome": "passed",
+    "successful_operations": 12,
+    "checkpoint_receipt": "checkpoint.json"
+  }
+}

@@ -7,15 +7,15 @@ revalidation system.
 import hashlib
 import json
 import logging
+import os
 import time
 from urllib.parse import urlparse
-
-import httpx
 
 from common.stage_metrics import inc_counter, observe_elapsed
 from common.url import normalize_url
 
 from .settings import load_settings
+from .source_http import source_httpx_client
 
 logger = logging.getLogger(__name__)
 
@@ -137,6 +137,15 @@ async def _get_cache_client():
     )
 
     try:
+        rpc_socket = os.environ.get("VALKEY_RPC_SOCKET")
+        if rpc_socket:
+            from .valkey_control import ValkeyControlClient
+
+            _cache_client = ValkeyControlClient(rpc_socket)
+            await _cache_client.ping()
+            logger.info("Connected to restricted Valkey control socket")
+            return _cache_client
+
         import redis.asyncio as aioredis
 
         _cache_client = aioredis.from_url(
@@ -470,7 +479,7 @@ async def _conditional_revalidate(
         headers["If-Modified-Since"] = last_modified
 
     try:
-        async with httpx.AsyncClient(
+        async with source_httpx_client(
             follow_redirects=True,
             timeout=15,
             headers=headers,

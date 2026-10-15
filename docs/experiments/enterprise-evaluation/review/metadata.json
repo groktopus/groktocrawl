@@ -1,0 +1,21 @@
+{
+  "estimated_cost_usd": 0.0,
+  "cost_status": "unknown",
+  "cost_source": "none",
+  "input_tokens": 23354,
+  "output_tokens": 2488,
+  "cache_read_tokens": 0,
+  "cache_write_tokens": 0,
+  "reasoning_tokens": 1552,
+  "total_tokens": 25842,
+  "api_calls": 1,
+  "model": "luna",
+  "provider": "custom",
+  "session_id": "20260905_071900_48d9e8",
+  "completed": true,
+  "failed": false,
+  "service_tier": null,
+  "prompt_sha256": "1b639b3b4a842306a2041d9efb6bdf3a29d373abc05e1eeff614bd798f2333e7",
+  "response_sha256": "35688e7b745d605d1d718ea949811e5f7b4e8e29befa1a34597181f43caeef27",
+  "interpretation": "One separate AI design review; model alias luna, custom provider. Cost status unknown; estimated 0.0 is not proof of free execution. No human review or blind outcome scoring."
+}

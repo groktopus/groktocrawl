@@ -1,0 +1,77 @@
+{
+  "arm": "recorded_continuation",
+  "attempts": [
+    {
+      "coverage": {
+        "attempted": 7,
+        "empty": 2,
+        "failed": 4,
+        "not_selected": 0,
+        "successful": 1,
+        "unavailable": 0
+      },
+      "query_sha256": "6d5eecfa67d790dfd52fe593de4ef65b1563cc61ee17b08a842ac826479b26d3",
+      "result_count": 19,
+      "result_url_sha256": [
+        "a652df14d80b1d24316eb2b042e49a900bff90d7dc2b1a464165bb67ff5c0899",
+        "e82beb69888991c319a97138cd993aaca4971c61f0884c3d15affcb327ab0b04",
+        "2253bdfec0d930ce657a23620f846a8304c9600d9a6dafde18fd33ce6ac5e02e",
+        "6c790a16de0afd2b5fe6beb9576b591d428632f9eec4ffcb9153132bc51741c7",
+        "b7ef67db239a4014fc0ccd7443be919725eeda17046a9231f463b7d5e3a6c96a",
+        "daba90e96065bf9ffab7202a4e246d420883170eff9cc83d3aaa88486b7bb1c7",
+        "11707b59b3ea0d79f0f5840c4338f711263d30ecacc887e4bb17b4f0739cc432",
+        "844ad619e070cccc0c90c777ed3933f6590493ef785dcc3e72997b26ca5741f3"
+      ],
+      "returned_results": 8,
+      "unresponsive_engine_count": 0
+    }
+  ],
+  "case_id": "w10-05-freshness-1",
+  "challenge_type": "stale_evidence",
+  "control_policy": "fixed",
+  "elapsed_ms": 36.587,
+  "engine_count": 7,
+  "engine_scope_sha256": "552d0a8e54100ffed23f23474d8aa8eabcb63c6ed43060cd3c3427d56869f6eb",
+  "position": 25,
+  "query_count": 1,
+  "query_plan_sha256": "975d5d2529ee05c22f1b827c5b18c2980c2b7a225e721fa49460a329474d9bcf",
+  "repetition": 1,
+  "schema_version": "enterprise-evaluation/w11-general-retrieval/1",
+  "status": "completed",
+  "w10_source_record_sha256": "bba23b7e97612bfe99560c3631feef91d4862e7772921e71508e49cdc3e1b55c",
+  "workflow": {
+    "budgets": {
+      "accounting": "Attempts and engine slots are reserved before dispatch; admitted leads each use one slot.",
+      "limits": {
+        "attempts": 1,
+        "engine_attempts": 7,
+        "engines_per_query": 7,
+        "queries": 1,
+        "results": 8
+      },
+      "remaining": {
+        "attempts": 0,
+        "engine_attempts": 0,
+        "queries": 0,
+        "results": 0
+      },
+      "used": {
+        "attempts": 1,
+        "engine_attempts": 7,
+        "queries": 1,
+        "results": 8
+      }
+    },
+    "caller_completed": false,
+    "coverage": {
+      "attempted": 7,
+      "empty": 2,
+      "failed": 4,
+      "not_selected": 0,
+      "successful": 1,
+      "unavailable": 0
+    },
+    "state": "succeeded",
+    "stop_reason": "result_budget_exhausted"
+  }
+}

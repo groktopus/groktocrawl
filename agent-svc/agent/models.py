@@ -4,8 +4,18 @@ from enum import Enum
 from typing import Any
 from urllib.parse import urlparse
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    SerializerFunctionWrapHandler,
+    field_validator,
+    model_serializer,
+    model_validator,
+)
 from pydantic.alias_generators import to_camel
+
+from .search_metadata import METADATA_FIELDS, media_metadata
 
 # ── Valid scrape format values ──────────────────────────────────
 VALID_SCRAPE_FORMATS: frozenset[str] = frozenset(
@@ -442,6 +452,7 @@ class ScrapeData(BaseModel):
     download: DownloadData | None = None
     quality: dict[str, Any] | None = None
     images: list[ImageData] | None = None
+    recovery: dict[str, Any] | None = None
 
 
 class ScrapeResponse(BaseModel):
@@ -455,6 +466,13 @@ class ScrapeResponse(BaseModel):
 
 
 class AgentRequest(BaseModel):
+    evidence_budget_chars: int = Field(
+        default=32_000,
+        strict=True,
+        ge=256,
+        le=128_000,
+        description="Aggregate verbatim source-character budget for synthesis; acquisition is unchanged",
+    )
     prompt: str = Field(
         ...,
         min_length=1,
@@ -520,8 +538,18 @@ class AgentRequest(BaseModel):
         default="deep",
         description="Research depth: 'deep' (multi-query, multi-pass, default) or 'focused' (single-query, single-pass)",
     )
-
     model_config = ConfigDict(populate_by_name=True)
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_retired_max_results_per_query(cls, value: Any) -> Any:
+        """Fail clearly instead of silently ignoring the retired field."""
+        if isinstance(value, dict) and "max_results_per_query" in value:
+            raise ValueError(
+                "max_results_per_query was retired; agent now considers all distinct "
+                "results returned by SlopSearX; omit max_results_per_query"
+            )
+        return value
 
     @field_validator("output_schema")
     @classmethod
@@ -795,6 +823,7 @@ class CrawlStatusResponse(BaseModel):
     credits_used: int | None = None
     data: list[dict[str, Any]] | None = None
     error: str | None = None
+    outcome_summary: dict[str, Any] | None = None
     next: str | None = Field(
         default=None,
         description=(
@@ -876,6 +905,45 @@ class BatchScrapeRequest(BaseModel):
 
 
 class SearchRequest(BaseModel):
+    date_from: str | None = None
+    date_to: str | None = None
+    time_range: str | None = None
+    engines: list[str] | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_unknown_date_controls(cls, value: Any) -> Any:
+        if isinstance(value, dict):
+            for key in value:
+                normalized = key.lower().replace("_", "").replace("-", "")
+                if (
+                    normalized.startswith(
+                        ("date", "publicationdate", "published", "timerange")
+                    )
+                    or normalized in {"startdate", "enddate", "fromdate", "todate"}
+                ) and key not in {"date_from", "date_to", "time_range"}:
+                    raise ValueError(f"Unknown date control: {key}")
+        return value
+
+    @model_validator(mode="after")
+    def validate_date_scope(self) -> "SearchRequest":
+        from .date_filters import validate_dates
+
+        if validate_dates(self.date_from, self.date_to, self.time_range, self.engines):
+            if (
+                self.search_type != "fast"
+                or self.retrieval_mode != "keyword"
+                or self.stream
+                or self.contents is not None
+                or self.output_schema is not None
+                or self.sources not in (None, [], ["web"])
+                or self.categories not in (None, [], ["science"], ["research"])
+            ):
+                raise ValueError(
+                    "Date bounds require non-streaming fast keyword scholarly search without enrichment"
+                )
+        return self
+
     query: str
     limit: int = Field(default=5, ge=1, le=1000)
     page: int = Field(default=1, ge=1, le=1000)
@@ -896,6 +964,43 @@ class SearchResult(BaseModel):
     url: str
     title: str
     description: str = ""
+    # Optional additive source metadata; absent keys retain the legacy shape.
+    engine: str | None = None
+    engines: list[str] | None = None
+    doi: str | None = None
+    authors: list[str] | None = None
+    journal: str | None = None
+    publisher: str | None = None
+    editor: str | None = None
+    pages: str | None = None
+    number: str | None = None
+    comments: str | None = None
+    type: str | None = None
+    pdf_url: str | None = None
+    html_url: str | None = None
+    publishedDate: str | None = None
+    issn: list[str] | None = None
+    isbn: list[str] | None = None
+    tags: list[str] | None = None
+    volume: str | int | None = None
+    media: dict[str, Any] | None = None
+
+    @field_validator("media", mode="before")
+    @classmethod
+    def validate_media(cls, value: Any) -> dict[str, Any] | None:
+        return media_metadata({"media": value}) or None
+
+    @model_serializer(mode="wrap")
+    def serialize_source_metadata(
+        self, handler: SerializerFunctionWrapHandler
+    ) -> dict[str, Any]:
+        data = handler(self)
+        return {
+            key: value
+            for key, value in data.items()
+            if key not in METADATA_FIELDS or value is not None
+        }
+
     # ── Content extraction fields (populated when contents in SearchRequest) ──
     highlights: str | None = None  # LLM-extracted relevant passages
     summary: str | None = None  # LLM-generated summary
@@ -915,12 +1020,32 @@ class ImageSearchResult(BaseModel):
     image_height: int | None = None
     url: str = ""
     position: int = 0
+    engine: str | None = None
+    engines: list[str] | None = None
+    media: dict[str, Any] | None = None
+
+    @field_validator("media", mode="before")
+    @classmethod
+    def validate_media(cls, value: Any) -> dict[str, Any] | None:
+        return media_metadata({"media": value}) or None
+
+    @model_serializer(mode="wrap")
+    def serialize_source_metadata(
+        self, handler: SerializerFunctionWrapHandler
+    ) -> dict[str, Any]:
+        return {
+            key: value
+            for key, value in handler(self).items()
+            if key not in METADATA_FIELDS or value is not None
+        }
 
 
 class SearchResponse(BaseModel):
     coverage: dict[str, Any] | None = None
     continuation: dict[str, Any] | None = None
+    date_filter: dict[str, Any] | None = None
     success: bool = True
+    evidence_coverage: dict[str, Any] | None = None
     data: dict = Field(default_factory=lambda: {"web": [], "images": [], "news": []})
     output: dict[str, Any] | None = None  # Present only when output_schema provided
     query_variations: list[str] | None = None  # Present for deep search type
@@ -1161,6 +1286,24 @@ class Source(BaseModel):
     url: str
     title: str = ""
     relevance: str = ""
+    engine: str | None = None
+    engines: list[str] | None = None
+    media: dict[str, Any] | None = None
+
+    @field_validator("media", mode="before")
+    @classmethod
+    def validate_media(cls, value: Any) -> dict[str, Any] | None:
+        return media_metadata({"media": value}) or None
+
+    @model_serializer(mode="wrap")
+    def serialize_source_metadata(
+        self, handler: SerializerFunctionWrapHandler
+    ) -> dict[str, Any]:
+        return {
+            key: value
+            for key, value in handler(self).items()
+            if key not in METADATA_FIELDS or value is not None
+        }
 
 
 class Citation(BaseModel):
@@ -1171,11 +1314,16 @@ class Citation(BaseModel):
 
 
 class AnswerRequest(BaseModel):
+    include_source_content: bool = Field(
+        default=False,
+        description="Include the already scraped full source Markdown for artifact export",
+    )
     evidence_budget_chars: int = Field(
-        default=32000,
+        default=32_000,
+        strict=True,
         ge=256,
-        le=128000,
-        description="Maximum source characters selected for synthesis; complete sources remain retained separately",
+        le=128_000,
+        description="Aggregate verbatim source-character budget, separate from retained-byte admission",
     )
     query: str = Field(..., max_length=10000, description="Natural language question")
     search_type: str = Field(default="auto", description="Hint for search depth")
@@ -1229,13 +1377,23 @@ class AnswerRequest(BaseModel):
 
 
 class AnswerResponse(BaseModel):
-    evidence_coverage: dict[str, Any] | None = None
+    source_contents: dict[str, str] | None = None
+    evidence_coverage: dict[str, Any] = Field(default_factory=dict)
     success: bool = True
     answer: str = ""
     sources: list[Source] = Field(default_factory=list)
     citations: list[Citation] = Field(default_factory=list)
     search_type: str = "auto"
     latency_ms: int = 0
+
+    @model_serializer(mode="wrap")
+    def serialize_source_export(
+        self, handler: SerializerFunctionWrapHandler
+    ) -> dict[str, Any]:
+        data = handler(self)
+        if self.source_contents is None:
+            data.pop("source_contents", None)
+        return data
 
 
 # ── Citations Resolve ──────────────────────────────────────────
@@ -1438,7 +1596,7 @@ class SessionExportResponse(BaseModel):
     session_id: str = ""
     artifact: str = ""
     steps: list[dict[str, Any]] = Field(default_factory=list)
-    refs: dict[str, dict[str, str]] = Field(default_factory=dict)
+    refs: dict[str, dict[str, Any]] = Field(default_factory=dict)
     artifact_length: int = 0
 
 

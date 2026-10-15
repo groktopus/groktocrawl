@@ -1,0 +1,38 @@
+name: groktocrawl-x-protected-flare-ci
+
+services:
+  candidate-capture-egress:
+    networks:
+      candidate_flare_fixture:
+        ipv4_address: 93.184.216.38
+
+  candidate-flare-test-origin:
+    build:
+      context: .
+      dockerfile: flare-test-origin/Dockerfile
+    image: groktocrawl-x-flare-test-origin:${CANDIDATE_IMAGE_TAG:-dev}
+    profiles: [protected-flare]
+    networks:
+      candidate_flare_fixture:
+        ipv4_address: 93.184.216.34
+        aliases: [flare-origin.test]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1/', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    mem_limit: 64m
+    cpus: 0.25
+    pids_limit: 32
+
+networks:
+  candidate_flare_fixture:
+    internal: true
+    ipam:
+      config:
+        - subnet: 93.184.216.32/29

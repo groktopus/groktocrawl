@@ -9,6 +9,8 @@ researched, the system should return the cached research artifact rather than re
 the full search → scrape → LLM pipeline. This saves credits, reduces latency, and provides
 persistent research archives across sessions.
 
+- Research-substrate scope: Existing semantic-cache behavior remains unchanged. The opt-in research-substrate scope follows [ADR-0069](0069-adopt-bounded-research-substrate.md); the former experiment decision records are preserved in the [provenance archive](experimental/groktocrawl-x/README.md).
+
 ## Context and Problem Statement
 
 Every `POST /v2/agent` call executes the full research pipeline: search, scrape, LLM synthesis.

@@ -59,6 +59,8 @@ class VectorSearchResult(BaseModel):
     url: str
     title: str
     score: float
+    description: str = ""
+    indexed_at: str | None = None
 
 
 class VectorSearchResponse(BaseModel):

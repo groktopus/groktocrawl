@@ -210,3 +210,8 @@ The graph's node labels are code identifiers and doc headings, not natural langu
 - **`--context import` for dependency questions** (edges filtered to imports only; e.g. `graphify query "dedup manager" --context import` returns ~19 focused nodes instead of 400+). `--context call` works for call chains. Requires graphify >= 0.6.7 — older versions silently ignore the flag.
 - **`--dfs` traces a chain; `--budget N` raises the output cap** (default 2000 tokens). Neither fixes bad seeds — fix seeds first via vocabulary.
 - **After answering a graph question, run `graphify save-result --question "<verbatim question>" --answer "<answer>" --nodes <labels cited>`** so the Q&A becomes a node on the next `graphify update` (feedback loop, no API cost).
+
+
+## Experimental research substrate
+
+The research architecture in `agent-svc/agent/experimental/` is adopted for the standard deployment under [ADR-0069](docs/adr/0069-adopt-bounded-research-substrate.md). Existing APIs, jobs, sessions, and research-memory behavior remain compatible; legacy inline jobs keep their ADR-0047 durability contract. Do not infer deployment readiness from an accepted experiment ADR or the presence of code or environment variables. Before changing this area, read ADR-0069 and the historical [GroktoCrawl X ADR archive](docs/adr/experimental/groktocrawl-x/README.md); archived acceptance is scoped to the former experiment. Keep migrations additive, explicit, versioned, and reversible. Feature flags are rollout controls and may be enabled in the standard deployment after the documented migration and verification checks pass.

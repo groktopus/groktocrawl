@@ -1,0 +1,52 @@
+{
+  "case_id": "mission-ambiguous-ship",
+  "completed_at": "2026-09-19T06:06:28.187231+00:00",
+  "position": 1,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "432269bbe513dc846fbe24ec2f2d298235bd1920f8829255004eb5377e6f613e",
+    "finish_reason": "stop",
+    "latency_ms": 43747.187,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "c4008cb6aff3f8721030621f3062c7d35504711b42b705cd1a56bdad76538313",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 3931,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 3670
+      },
+      "cost": 0.0022736,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0019655,
+        "upstream_inference_cost": 0.0022736,
+        "upstream_inference_prompt_cost": 0.0003081
+      },
+      "is_byok": false,
+      "prompt_tokens": 2054,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 5985
+    }
+  },
+  "repetition": 3,
+  "result": {
+    "action": "clarify",
+    "clarifying_question": "When you say 'let the agents ship,' which boundary do you mean — agents autonomously merging code to the main branch, autonomously deploying to production, or autonomously releasing to end customers — and is the target environment internal-only or customer-facing?",
+    "mission": null,
+    "rationale": "The request is permission-shaped ('can we let...'), so the eventual mission must frame the decision as 'whether and under what conditions to permit agent shipping' — a decision research informs but never grants, consistent with mission_is_not_permission. Research itself is appropriate here, so abstention is not warranted. However, 'ship' is a decision-changing ambiguity that cannot be resolved without guessing: autonomous merge, autonomous production deploy, and autonomous customer release each require materially different evidence (agent code quality and review-gate adequacy vs. deployment safety, rollback, and incident response vs. release management, contractual, and regulatory compliance), and whether the target is internal-only or customer-facing changes the compliance and blast-radius frame entirely. Per the one-blocking-clarification rule, the research-mission boundary is withheld until the caller fixes the shipping boundary and target environment; no scope, authority, current-state controls, or findings about the organization are assumed in the meantime."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:05:44.430959+00:00",
+  "status": "completed",
+  "trial_id": "mission-ambiguous-ship-intake-r3"
+}

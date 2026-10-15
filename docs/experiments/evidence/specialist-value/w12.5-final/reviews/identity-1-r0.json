@@ -1,0 +1,124 @@
+{
+  "case_id": "identity-1",
+  "control_artifact": {
+    "admitted_evidence": [
+      {
+        "canonical_source_id": "canonical-identity-1-generalist-identity-1-scope",
+        "derivative": false,
+        "evidence_id": "identity-1-generalist-identity-1-scope",
+        "obligation_id": "identity-1-scope",
+        "publisher_id": "publisher-identity-1-generalist",
+        "source_id": "source-identity-1-generalist-identity-1-scope",
+        "span": "Pinned supports evidence for identity-1-scope in identity-1.",
+        "stance": "supports"
+      }
+    ],
+    "conflicting_obligation_ids": [],
+    "covered_obligation_ids": [
+      "identity-1-scope"
+    ],
+    "handoff_failures": [],
+    "rejected_evidence": {},
+    "total_calls": 2
+  },
+  "control_calls": 2,
+  "preferred": "treatment",
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "2327e06df5a6d2d0b6f5779b2ae8aad247b66a6b40822edb3de79ed62f929444",
+    "finish_reason": "stop",
+    "latency_ms": 12319.327,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "1f444c26c5e7119808a1c171ba7c01a837e45389ea4cc641c8d1be608fcbe534",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 223,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0.00021125,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0001115,
+        "upstream_inference_cost": 0.00021125,
+        "upstream_inference_prompt_cost": 9.975e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 665,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 888
+    }
+  },
+  "repetition": 0,
+  "schema_version": "specialist-value-review/1",
+  "scores": {
+    "control": {
+      "reason": "Artifact A covers only 1 of 3 obligations (identity-1-scope), missing identity-1-authority and identity-1-risk. Its single evidence item is source-bound, non-derivative, and correctly mapped to the obligation, so trustworthiness is high but usefulness is low due to incomplete coverage. No conflicts or failures are reported, which is consistent with the minimal scope.",
+      "trustworthiness": 5,
+      "usefulness": 0
+    },
+    "treatment": {
+      "reason": "Artifact B covers all 3 obligations (identity-1-scope, identity-1-authority, identity-1-risk) with one evidence item each. All evidence is source-bound, non-derivative, and correctly mapped to its obligation, so trustworthiness is high. No conflicts or failures are reported; with no conflicting evidence in the supplied sources, absence of preserved conflict is not a defect. Usefulness is high due to complete obligation coverage.",
+      "trustworthiness": 5,
+      "usefulness": 3
+    }
+  },
+  "separable": true,
+  "status": "completed",
+  "stratum": "source_identity",
+  "treatment_artifact": {
+    "admitted_evidence": [
+      {
+        "canonical_source_id": "canonical-identity-1-discovery-identity-1-scope",
+        "derivative": false,
+        "evidence_id": "identity-1-discovery-identity-1-scope",
+        "obligation_id": "identity-1-scope",
+        "publisher_id": "publisher-identity-1-discovery",
+        "source_id": "source-identity-1-discovery-identity-1-scope",
+        "span": "Pinned supports evidence for identity-1-scope in identity-1.",
+        "stance": "supports"
+      },
+      {
+        "canonical_source_id": "canonical-identity-1-authority-identity-1-authority",
+        "derivative": false,
+        "evidence_id": "identity-1-authority-identity-1-authority",
+        "obligation_id": "identity-1-authority",
+        "publisher_id": "publisher-identity-1-authority",
+        "source_id": "source-identity-1-authority-identity-1-authority",
+        "span": "Pinned supports evidence for identity-1-authority in identity-1.",
+        "stance": "supports"
+      },
+      {
+        "canonical_source_id": "canonical-identity-1-risk-identity-1-risk",
+        "derivative": false,
+        "evidence_id": "identity-1-risk-identity-1-risk",
+        "obligation_id": "identity-1-risk",
+        "publisher_id": "publisher-identity-1-risk",
+        "source_id": "source-identity-1-risk-identity-1-risk",
+        "span": "Pinned supports evidence for identity-1-risk in identity-1.",
+        "stance": "supports"
+      }
+    ],
+    "conflicting_obligation_ids": [],
+    "covered_obligation_ids": [
+      "identity-1-authority",
+      "identity-1-risk",
+      "identity-1-scope"
+    ],
+    "handoff_failures": [],
+    "rejected_evidence": {},
+    "total_calls": 2
+  },
+  "treatment_calls": 3,
+  "trial_id": "identity-1-r0"
+}

@@ -1,0 +1,57 @@
+{
+  "answer": {
+    "answer": "According to its own press release (snapshot birch-press), BirchDB says it passed the Cedar security audit. This is a self-reported claim from a primary BirchDB source; the supplied snapshots provide no independent verification and no details about the auditor, audit scope, or audit date.",
+    "change_events": [],
+    "citations": [
+      "birch-press"
+    ],
+    "current_truths": [
+      "BirchDB's press release (snapshot birch-press, primary source) states that BirchDB passed the Cedar security audit."
+    ],
+    "historical_truths": [],
+    "unresolved": [
+      "The audit claim is self-reported in BirchDB's own press release; the supplied snapshots contain no independent verification of the Cedar security audit result.",
+      "The snapshots do not identify the auditor, the audit scope, the methodology, or the date of the Cedar security audit.",
+      "No audit report, certificate, or third-party attestation is included in the supplied snapshots."
+    ]
+  },
+  "case_id": "syndicated-copy",
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "0eca8d60c9ea783676752cb15a447403ccdaacb185af6bcf301f41f49e39e7a2",
+    "finish_reason": "stop",
+    "latency_ms": 20300.639,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "a0198406c18e81c0a8b59030da468166a4104bf9f3573b8750ddfe414900e530",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 797,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 585
+      },
+      "cost": 0.00046285,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0003985,
+        "upstream_inference_cost": 0.00046285,
+        "upstream_inference_prompt_cost": 6.435e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 429,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1226
+    }
+  },
+  "schema_version": "research-thread-initial/1",
+  "status": "completed"
+}

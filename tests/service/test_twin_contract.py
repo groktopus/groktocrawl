@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -16,6 +17,10 @@ ROOT = Path(__file__).parents[2]
 def _isolate_twin_environment(monkeypatch):
     for name in (
         "TWIN_BASE_SHA",
+        "TWIN_EVENT_HEAD_SHA",
+        "TWIN_EVENT_KIND",
+        "GITHUB_EVENT_NAME",
+        "TWIN_SEARCH_BACKEND",
         "TWIN_BUILT_FROM_CHECKOUT",
         "TWIN_CALIBRATION_ARTIFACT",
         "TWIN_CHECKS",
@@ -41,6 +46,51 @@ def _load(name: str, path: Path):
     return module
 
 
+def _git(repo: Path, *args: str) -> str:
+    return subprocess.check_output(
+        ["git", *args], cwd=repo, text=True, stderr=subprocess.DEVNULL
+    ).strip()
+
+
+def _advanced_base_and_pr_merge(tmp_path: Path) -> tuple[Path, str, str, str]:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _git(repo, "init", "--quiet")
+    _git(repo, "config", "user.name", "Twin contract test")
+    _git(repo, "config", "user.email", "twin-contract@example.invalid")
+    (repo / "shared.md").write_text("base version\n")
+    _git(repo, "add", "shared.md")
+    _git(repo, "commit", "--quiet", "-m", "base")
+    base = _git(repo, "rev-parse", "HEAD")
+
+    _git(repo, "checkout", "--quiet", "-b", "advanced-base")
+    (repo / "shared.md").write_text("advanced base version\n")
+    _git(repo, "commit", "--quiet", "-am", "advance base")
+    event_base = _git(repo, "rev-parse", "HEAD")
+
+    _git(repo, "checkout", "--quiet", "-b", "pr-head", base)
+    (repo / "shared.md").write_text("pull request version\n")
+    (repo / "pr-only.txt").write_text("pull request addition\n")
+    _git(repo, "add", "shared.md", "pr-only.txt")
+    _git(repo, "commit", "--quiet", "-m", "PR changes")
+    event_head = _git(repo, "rev-parse", "HEAD")
+
+    _git(repo, "checkout", "--quiet", "advanced-base")
+    merge = subprocess.run(
+        ["git", "merge", "--no-commit", "pr-head"],
+        cwd=repo,
+        text=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    assert merge.returncode != 0  # The shared-file conflict is intentional.
+    (repo / "shared.md").write_text("advanced base version\n")
+    _git(repo, "add", "shared.md", "pr-only.txt")
+    _git(repo, "commit", "--quiet", "-m", "synthetic PR merge")
+    return repo, event_base, event_head, _git(repo, "rev-parse", "HEAD")
+
+
 def test_twin_selection_is_conservative_and_docs_only_is_negative():
     classifier = _load("classifier", ROOT / "scripts/classify_ci_changes.py")
     assert classifier.requires_twin_contracts(["llm-svc/llm_svc/app.py"])
@@ -49,6 +99,18 @@ def test_twin_selection_is_conservative_and_docs_only_is_negative():
     assert classifier.requires_twin_contracts(["unknown/new-policy.toml"])
     assert classifier.requires_twin_contracts([])
     assert not classifier.requires_twin_contracts(["docs/ci.md"])
+
+
+def test_twin_evidence_schema_records_event_and_checked_out_revisions():
+    schema = json.loads((ROOT / "provenance/twin-evidence.schema.json").read_text())
+    assert "event_diff" not in schema["required"]
+    assert schema["properties"]["event_diff"]["required"] == [
+        "event",
+        "base_sha",
+        "head_sha",
+        "comparison_base_sha",
+        "checked_out_sha",
+    ]
 
 
 def test_provenance_manifest_matches_versioned_schema(tmp_path):
@@ -61,6 +123,113 @@ def test_provenance_manifest_matches_versioned_schema(tmp_path):
     assert manifest["selection"]["tests"]
     assert manifest["versions"]["llm_schema"] == "v1"
     assert "prompt" not in json.dumps(manifest)
+
+
+def test_historical_twin_evidence_v1_without_event_diff_still_validates(tmp_path):
+    provenance = _load("historical_provenance", ROOT / "scripts/twin_provenance.py")
+    manifest = provenance.build_manifest(tmp_path, ["llm-svc/llm_svc/app.py"])
+    manifest.pop("event_diff")
+    schema = json.loads((ROOT / "provenance/twin-evidence.schema.json").read_text())
+    validate(manifest, schema)
+
+
+def test_pull_request_diff_uses_event_identity_when_base_advances(
+    tmp_path, monkeypatch
+):
+    provenance = _load("event_diff_provenance", ROOT / "scripts/twin_provenance.py")
+    repo, event_base, event_head, checked_out = _advanced_base_and_pr_merge(tmp_path)
+    monkeypatch.setattr(provenance, "ROOT", repo)
+    monkeypatch.setenv("TWIN_EVENT_KIND", "pull_request")
+    monkeypatch.setenv("TWIN_BASE_SHA", event_base)
+    monkeypatch.setenv("TWIN_EVENT_HEAD_SHA", event_head)
+
+    expected = ["pr-only.txt", "shared.md"]
+    assert provenance._actual_changed_paths("hosted") == expected
+    assert _git(repo, "diff", "--name-only", event_base, checked_out) == "pr-only.txt"
+
+    _, identity = provenance._event_diff_identity("hosted")
+    assert identity == {
+        "event": "pull_request",
+        "base_sha": event_base,
+        "head_sha": event_head,
+        "comparison_base_sha": _git(repo, "merge-base", event_base, event_head),
+        "checked_out_sha": checked_out,
+    }
+
+
+@pytest.mark.parametrize("event_head", ["", "not-a-commit-sha"])
+def test_pull_request_diff_fails_closed_for_missing_or_invalid_head(
+    tmp_path, monkeypatch, event_head
+):
+    provenance = _load("invalid_event_diff_provenance", ROOT / "scripts/twin_provenance.py")
+    repo, event_base, _, _ = _advanced_base_and_pr_merge(tmp_path)
+    monkeypatch.setattr(provenance, "ROOT", repo)
+    monkeypatch.setenv("TWIN_EVENT_KIND", "pull_request")
+    monkeypatch.setenv("TWIN_BASE_SHA", event_base)
+    monkeypatch.setenv("TWIN_EVENT_HEAD_SHA", event_head)
+    assert provenance._actual_changed_paths("hosted") is None
+
+
+def test_pull_request_context_without_explicit_event_kind_or_head_fails_closed(
+    tmp_path, monkeypatch
+):
+    provenance = _load("github_pr_context_provenance", ROOT / "scripts/twin_provenance.py")
+    repo, event_base, _, _ = _advanced_base_and_pr_merge(tmp_path)
+    monkeypatch.setattr(provenance, "ROOT", repo)
+    monkeypatch.setenv("GITHUB_EVENT_NAME", "pull_request")
+    monkeypatch.setenv("TWIN_BASE_SHA", event_base)
+    assert provenance._actual_changed_paths("hosted") is None
+    _, identity = provenance._event_diff_identity("hosted")
+    assert identity["event"] == "pull_request"
+    assert identity["head_sha"] == "unavailable"
+
+
+def test_pull_request_diff_fails_closed_for_non_ancestor_head(tmp_path, monkeypatch):
+    provenance = _load("nonancestor_event_diff_provenance", ROOT / "scripts/twin_provenance.py")
+    repo, event_base, _, checked_out = _advanced_base_and_pr_merge(tmp_path)
+    tree = _git(repo, "rev-parse", f"{checked_out}^{{tree}}")
+    unrelated_head = subprocess.check_output(
+        ["git", "commit-tree", tree, "-m", "unrelated source"],
+        cwd=repo,
+        text=True,
+        stderr=subprocess.DEVNULL,
+    ).strip()
+    monkeypatch.setattr(provenance, "ROOT", repo)
+    monkeypatch.setenv("TWIN_EVENT_KIND", "pull_request")
+    monkeypatch.setenv("TWIN_BASE_SHA", event_base)
+    monkeypatch.setenv("TWIN_EVENT_HEAD_SHA", unrelated_head)
+    assert provenance._actual_changed_paths("hosted") is None
+
+
+@pytest.mark.parametrize("root_event", [False, True])
+def test_push_diff_uses_before_and_event_head_including_root_commit(
+    tmp_path, monkeypatch, root_event
+):
+    provenance = _load("push_event_diff_provenance", ROOT / "scripts/twin_provenance.py")
+    repo = tmp_path / "push-repo"
+    repo.mkdir()
+    _git(repo, "init", "--quiet")
+    _git(repo, "config", "user.name", "Twin contract test")
+    _git(repo, "config", "user.email", "twin-contract@example.invalid")
+    (repo / "one.txt").write_text("one\n")
+    _git(repo, "add", "one.txt")
+    _git(repo, "commit", "--quiet", "-m", "first")
+    first = _git(repo, "rev-parse", "HEAD")
+    if root_event:
+        before = "0" * 40
+        expected = ["one.txt"]
+    else:
+        before = first
+        (repo / "two.txt").write_text("two\n")
+        _git(repo, "add", "two.txt")
+        _git(repo, "commit", "--quiet", "-m", "second")
+        expected = ["two.txt"]
+    head = _git(repo, "rev-parse", "HEAD")
+    monkeypatch.setattr(provenance, "ROOT", repo)
+    monkeypatch.setenv("TWIN_EVENT_KIND", "push")
+    monkeypatch.setenv("TWIN_BASE_SHA", before)
+    monkeypatch.setenv("TWIN_EVENT_HEAD_SHA", head)
+    assert provenance._actual_changed_paths("hosted") == expected
 
 
 def test_invalid_provenance_paths_write_strict_failure_manifest(tmp_path, monkeypatch):
@@ -160,11 +329,24 @@ def test_compose_unavailable_images_are_failure_not_acceptance(tmp_path, monkeyp
     assert manifest["outcome"]["failure_source"] == "infrastructure"
 
 
-def test_compose_exact_images_validate_as_success(tmp_path, monkeypatch):
+@pytest.mark.parametrize(
+    "search_backend,valid_source",
+    [("live", True), ("fixture", True), ("fixture", False)],
+)
+def test_compose_exact_images_validate_as_success(
+    tmp_path, monkeypatch, search_backend, valid_source
+):
     provenance = _load(
         "compose_success_provenance", ROOT / "scripts/twin_provenance.py"
     )
     checkout_sha = provenance._git("rev-parse", "HEAD")
+    monkeypatch.setenv("TWIN_SEARCH_BACKEND", search_backend)
+    source_images = provenance.REQUIRED_CHECKOUT_IMAGES.copy()
+    digest_images = provenance.REQUIRED_REPO_DIGEST_IMAGES.copy()
+    if search_backend == "fixture":
+        digest_images.remove("slopsearx")
+        if valid_source:
+            source_images.add("slopsearx")
     monkeypatch.setenv("TWIN_EXECUTION_MODE", "compose")
     monkeypatch.setenv("TWIN_BASE_SHA", provenance._git("rev-parse", "HEAD"))
     monkeypatch.setenv("TWIN_REQUIRE_IMAGES", "1")
@@ -207,15 +389,11 @@ def test_compose_exact_images_validate_as_success(tmp_path, monkeypatch):
                 "id": "sha256:" + "1" * 64,
                 "repo_digest": (
                     f"example/{name}@sha256:" + "2" * 64
-                    if name in provenance.REQUIRED_REPO_DIGEST_IMAGES
+                    if name in digest_images
                     else None
                 ),
-                "source_sha": (
-                    checkout_sha
-                    if name in provenance.REQUIRED_CHECKOUT_IMAGES
-                    else None
-                ),
-                "built_from_checkout": name in provenance.REQUIRED_CHECKOUT_IMAGES,
+                "source_sha": (checkout_sha if name in source_images else None),
+                "built_from_checkout": name in source_images,
             }
             for name in provenance.REQUIRED_COMPOSE_IMAGES
         ],
@@ -224,7 +402,7 @@ def test_compose_exact_images_validate_as_success(tmp_path, monkeypatch):
         "sys.argv",
         ["twin_provenance", "--output", str(tmp_path), "--changed-paths-json", "[]"],
     )
-    assert provenance.main() == 0
+    assert provenance.main() == (0 if valid_source else 1)
     manifest = json.loads((tmp_path / "twin-evidence.json").read_text())
     validate(
         manifest,
@@ -232,7 +410,9 @@ def test_compose_exact_images_validate_as_success(tmp_path, monkeypatch):
     )
     assert manifest["execution_mode"] == "compose"
     assert len(manifest["images"]) == len(provenance.REQUIRED_COMPOSE_IMAGES)
-    assert manifest["outcome"]["result"] == "success"
+    assert manifest["outcome"]["result"] == ("success" if valid_source else "failure")
+    if not valid_source:
+        assert "slopsearx" in manifest["outcome"]["failure_detail"]
 
 
 def test_live_calibration_projects_into_strict_aggregate_manifest(

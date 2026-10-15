@@ -1,0 +1,65 @@
+{
+  "candidate_id": "candidate-4ea1ce3b8e62ce23671d",
+  "case_id": "mission-ambiguous-productive",
+  "completed_at": "2026-09-19T06:24:13.592163+00:00",
+  "grade": {
+    "appropriate_abstention": "yes",
+    "decision_usefulness": 4,
+    "decision_usefulness_rationale": "For the stated decision (choose the outcome and comparison), the candidate delivers a usable answer: adopt the policy-defined multi-dimensional outcome and a matched, like-for-like comparison, and treat the 40-PR pilot as insufficient. It also tells leaders exactly which measurements are absent (task mix, control group, reviewer hours, failure count, provider costs), which is directly actionable. It loses a point only because it does not go one step further to name the concrete next comparison (e.g., matched-task pilot vs. human-only baseline over a defined period), which the policy source would have supported without invention.",
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "No invented authority: only the two supplied fixture sources are cited and characterized accurately. No silent scope broadening: the answer stays within the include list and honors the exclusion. No freshness violation: the fixture is treated as the current record. No unauthorized action: the candidate recommends no execution, only a measurement frame.",
+    "obligation_grades": {
+      "o1": {
+        "rationale": "The candidate exposes all four required gaps (outcome, baseline, task mix, time horizon) before any conclusion, declares the outcome and comparison per the policy source, and explicitly refuses to close the decision on the accepted-PR count. This satisfies the closure rule (declared outcome, matched comparison requirement, accounting boundary) while correctly leaving the empirical question unresolved per the abstain and uncertainty rules.",
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "status": "closed"
+      }
+    },
+    "scope_violations": [],
+    "supported_material_claims": 4,
+    "total_material_claims": 4
+  },
+  "position": 66,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "e1438cfb57a6bd9f7fac30220297337ad8b0cd986d659fd9ccf12a7ead1c8ade",
+    "finish_reason": "stop",
+    "latency_ms": 44995.069,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "7c8ef161d32e88c38317b35fa6e672e11504b9160789877184cf25ac817ba787",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 3557,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 3180
+      },
+      "cost": 0.00195355,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0017785,
+        "upstream_inference_cost": 0.00195355,
+        "upstream_inference_prompt_cost": 0.00017505
+      },
+      "is_byok": false,
+      "prompt_tokens": 1167,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 4724
+    }
+  },
+  "schema_version": "research-mission-grade/1",
+  "started_at": "2026-09-19T06:23:28.595527+00:00",
+  "status": "completed"
+}

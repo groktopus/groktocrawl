@@ -1,0 +1,2865 @@
+{
+  "schema_version": "obligation-replay-run/1",
+  "created_at": "2026-09-19T10:53:38.999505+00:00",
+  "corpus_sha256": "ffaa536c61f7f3bc99bd80134eb441d978304124d6f9714f44d18fb895aa6785",
+  "seed": 20260919,
+  "repetitions": 3,
+  "records": [
+    {
+      "sequence": 1,
+      "case_id": "conflict-2",
+      "stratum": "contradiction",
+      "policy": "fixed",
+      "repetition": 0,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "conflict-2-q0"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 2,
+      "case_id": "easy-1",
+      "stratum": "easy_stop",
+      "policy": "w10_diagnostic",
+      "repetition": 2,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "easy-1-q0",
+          "easy-1-q1"
+        ],
+        "admitted_candidate_ids": [
+          "easy-1-initial"
+        ],
+        "closed_obligation_ids": [
+          "easy-1-obligation"
+        ],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 3,
+      "case_id": "low-rank-1",
+      "stratum": "low_rank",
+      "policy": "w10_diagnostic",
+      "repetition": 1,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "low-rank-1-q0",
+          "low-rank-1-q1"
+        ],
+        "admitted_candidate_ids": [
+          "low-rank-1-generic"
+        ],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "budget"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 4,
+      "case_id": "independent-1",
+      "stratum": "source_duplication",
+      "policy": "fixed",
+      "repetition": 0,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "independent-1-q0"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 5,
+      "case_id": "independent-2",
+      "stratum": "source_duplication",
+      "policy": "w10_diagnostic",
+      "repetition": 1,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "independent-2-q0",
+          "independent-2-q1"
+        ],
+        "admitted_candidate_ids": [
+          "independent-2-generic"
+        ],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "budget"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 6,
+      "case_id": "unknown-1",
+      "stratum": "unanswerable",
+      "policy": "obligation",
+      "repetition": 2,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "unknown-1-q0",
+          "unknown-1-q2"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "no_material_gain"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 7,
+      "case_id": "conflict-1",
+      "stratum": "contradiction",
+      "policy": "fixed",
+      "repetition": 1,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "conflict-1-q0"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 8,
+      "case_id": "conflict-1",
+      "stratum": "contradiction",
+      "policy": "fixed",
+      "repetition": 2,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "conflict-1-q0"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 9,
+      "case_id": "easy-1",
+      "stratum": "easy_stop",
+      "policy": "obligation",
+      "repetition": 2,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "easy-1-q0"
+        ],
+        "admitted_candidate_ids": [
+          "easy-1-initial"
+        ],
+        "closed_obligation_ids": [
+          "easy-1-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 10,
+      "case_id": "conflict-2",
+      "stratum": "contradiction",
+      "policy": "fixed",
+      "repetition": 2,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "conflict-2-q0"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 11,
+      "case_id": "independent-2",
+      "stratum": "source_duplication",
+      "policy": "w10_diagnostic",
+      "repetition": 2,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "independent-2-q0",
+          "independent-2-q1"
+        ],
+        "admitted_candidate_ids": [
+          "independent-2-generic"
+        ],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "budget"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 12,
+      "case_id": "fresh-1",
+      "stratum": "stale",
+      "policy": "w10_diagnostic",
+      "repetition": 0,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "fresh-1-q0",
+          "fresh-1-q1"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "budget"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 13,
+      "case_id": "independent-2",
+      "stratum": "source_duplication",
+      "policy": "obligation",
+      "repetition": 0,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "independent-2-q0",
+          "independent-2-q2"
+        ],
+        "admitted_candidate_ids": [
+          "independent-2-answer"
+        ],
+        "closed_obligation_ids": [
+          "independent-2-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 14,
+      "case_id": "independent-2",
+      "stratum": "source_duplication",
+      "policy": "obligation",
+      "repetition": 1,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "independent-2-q0",
+          "independent-2-q2"
+        ],
+        "admitted_candidate_ids": [
+          "independent-2-answer"
+        ],
+        "closed_obligation_ids": [
+          "independent-2-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 15,
+      "case_id": "conflict-1",
+      "stratum": "contradiction",
+      "policy": "w10_diagnostic",
+      "repetition": 0,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "conflict-1-q0",
+          "conflict-1-q1"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "budget"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 16,
+      "case_id": "primary-1",
+      "stratum": "missing_primary",
+      "policy": "obligation",
+      "repetition": 2,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "primary-1-q0",
+          "primary-1-q2"
+        ],
+        "admitted_candidate_ids": [
+          "primary-1-answer"
+        ],
+        "closed_obligation_ids": [
+          "primary-1-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 17,
+      "case_id": "easy-2",
+      "stratum": "easy_stop",
+      "policy": "w10_diagnostic",
+      "repetition": 2,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "easy-2-q0",
+          "easy-2-q1"
+        ],
+        "admitted_candidate_ids": [
+          "easy-2-initial"
+        ],
+        "closed_obligation_ids": [
+          "easy-2-obligation"
+        ],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 18,
+      "case_id": "fresh-1",
+      "stratum": "stale",
+      "policy": "fixed",
+      "repetition": 1,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "fresh-1-q0"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 19,
+      "case_id": "conflict-2",
+      "stratum": "contradiction",
+      "policy": "w10_diagnostic",
+      "repetition": 1,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "conflict-2-q0",
+          "conflict-2-q1"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "budget"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 20,
+      "case_id": "conflict-1",
+      "stratum": "contradiction",
+      "policy": "w10_diagnostic",
+      "repetition": 1,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "conflict-1-q0",
+          "conflict-1-q1"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "budget"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 21,
+      "case_id": "primary-2",
+      "stratum": "missing_primary",
+      "policy": "fixed",
+      "repetition": 1,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "primary-2-q0"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 22,
+      "case_id": "independent-2",
+      "stratum": "source_duplication",
+      "policy": "w10_diagnostic",
+      "repetition": 0,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "independent-2-q0",
+          "independent-2-q1"
+        ],
+        "admitted_candidate_ids": [
+          "independent-2-generic"
+        ],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "budget"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 23,
+      "case_id": "entity-1",
+      "stratum": "entity_identity",
+      "policy": "obligation",
+      "repetition": 1,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "entity-1-q0",
+          "entity-1-q2"
+        ],
+        "admitted_candidate_ids": [
+          "entity-1-answer"
+        ],
+        "closed_obligation_ids": [
+          "entity-1-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 24,
+      "case_id": "easy-1",
+      "stratum": "easy_stop",
+      "policy": "w10_diagnostic",
+      "repetition": 1,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "easy-1-q0",
+          "easy-1-q1"
+        ],
+        "admitted_candidate_ids": [
+          "easy-1-initial"
+        ],
+        "closed_obligation_ids": [
+          "easy-1-obligation"
+        ],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 25,
+      "case_id": "conflict-2",
+      "stratum": "contradiction",
+      "policy": "w10_diagnostic",
+      "repetition": 0,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "conflict-2-q0",
+          "conflict-2-q1"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "budget"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 26,
+      "case_id": "primary-1",
+      "stratum": "missing_primary",
+      "policy": "fixed",
+      "repetition": 1,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "primary-1-q0"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 27,
+      "case_id": "conflict-2",
+      "stratum": "contradiction",
+      "policy": "obligation",
+      "repetition": 1,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "conflict-2-q0",
+          "conflict-2-q2"
+        ],
+        "admitted_candidate_ids": [
+          "conflict-2-answer"
+        ],
+        "closed_obligation_ids": [
+          "conflict-2-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 28,
+      "case_id": "fresh-1",
+      "stratum": "stale",
+      "policy": "obligation",
+      "repetition": 1,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "fresh-1-q0",
+          "fresh-1-q2"
+        ],
+        "admitted_candidate_ids": [
+          "fresh-1-answer"
+        ],
+        "closed_obligation_ids": [
+          "fresh-1-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 29,
+      "case_id": "independent-2",
+      "stratum": "source_duplication",
+      "policy": "fixed",
+      "repetition": 0,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "independent-2-q0"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 30,
+      "case_id": "unknown-1",
+      "stratum": "unanswerable",
+      "policy": "fixed",
+      "repetition": 2,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "unknown-1-q0"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 31,
+      "case_id": "easy-1",
+      "stratum": "easy_stop",
+      "policy": "obligation",
+      "repetition": 1,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "easy-1-q0"
+        ],
+        "admitted_candidate_ids": [
+          "easy-1-initial"
+        ],
+        "closed_obligation_ids": [
+          "easy-1-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 32,
+      "case_id": "easy-2",
+      "stratum": "easy_stop",
+      "policy": "obligation",
+      "repetition": 2,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "easy-2-q0"
+        ],
+        "admitted_candidate_ids": [
+          "easy-2-initial"
+        ],
+        "closed_obligation_ids": [
+          "easy-2-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 33,
+      "case_id": "fresh-1",
+      "stratum": "stale",
+      "policy": "fixed",
+      "repetition": 2,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "fresh-1-q0"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 34,
+      "case_id": "entity-1",
+      "stratum": "entity_identity",
+      "policy": "w10_diagnostic",
+      "repetition": 1,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "entity-1-q0",
+          "entity-1-q1"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "budget"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 35,
+      "case_id": "low-rank-1",
+      "stratum": "low_rank",
+      "policy": "fixed",
+      "repetition": 0,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "low-rank-1-q0"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 36,
+      "case_id": "conflict-1",
+      "stratum": "contradiction",
+      "policy": "w10_diagnostic",
+      "repetition": 2,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "conflict-1-q0",
+          "conflict-1-q1"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "budget"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 37,
+      "case_id": "conflict-2",
+      "stratum": "contradiction",
+      "policy": "w10_diagnostic",
+      "repetition": 2,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "conflict-2-q0",
+          "conflict-2-q1"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "budget"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 38,
+      "case_id": "low-rank-1",
+      "stratum": "low_rank",
+      "policy": "fixed",
+      "repetition": 2,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "low-rank-1-q0"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 39,
+      "case_id": "entity-1",
+      "stratum": "entity_identity",
+      "policy": "w10_diagnostic",
+      "repetition": 0,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "entity-1-q0",
+          "entity-1-q1"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "budget"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 40,
+      "case_id": "independent-1",
+      "stratum": "source_duplication",
+      "policy": "w10_diagnostic",
+      "repetition": 2,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "independent-1-q0",
+          "independent-1-q1"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "budget"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 41,
+      "case_id": "independent-2",
+      "stratum": "source_duplication",
+      "policy": "fixed",
+      "repetition": 2,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "independent-2-q0"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 42,
+      "case_id": "conflict-1",
+      "stratum": "contradiction",
+      "policy": "obligation",
+      "repetition": 1,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "conflict-1-q0",
+          "conflict-1-q2"
+        ],
+        "admitted_candidate_ids": [
+          "conflict-1-answer"
+        ],
+        "closed_obligation_ids": [
+          "conflict-1-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 43,
+      "case_id": "fresh-1",
+      "stratum": "stale",
+      "policy": "obligation",
+      "repetition": 2,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "fresh-1-q0",
+          "fresh-1-q2"
+        ],
+        "admitted_candidate_ids": [
+          "fresh-1-answer"
+        ],
+        "closed_obligation_ids": [
+          "fresh-1-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 44,
+      "case_id": "easy-2",
+      "stratum": "easy_stop",
+      "policy": "fixed",
+      "repetition": 1,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "easy-2-q0"
+        ],
+        "admitted_candidate_ids": [
+          "easy-2-initial"
+        ],
+        "closed_obligation_ids": [
+          "easy-2-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 45,
+      "case_id": "primary-2",
+      "stratum": "missing_primary",
+      "policy": "w10_diagnostic",
+      "repetition": 2,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "primary-2-q0",
+          "primary-2-q1"
+        ],
+        "admitted_candidate_ids": [
+          "primary-2-generic"
+        ],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "budget"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 46,
+      "case_id": "primary-1",
+      "stratum": "missing_primary",
+      "policy": "fixed",
+      "repetition": 0,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "primary-1-q0"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 47,
+      "case_id": "fresh-1",
+      "stratum": "stale",
+      "policy": "obligation",
+      "repetition": 0,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "fresh-1-q0",
+          "fresh-1-q2"
+        ],
+        "admitted_candidate_ids": [
+          "fresh-1-answer"
+        ],
+        "closed_obligation_ids": [
+          "fresh-1-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 48,
+      "case_id": "low-rank-1",
+      "stratum": "low_rank",
+      "policy": "obligation",
+      "repetition": 2,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "low-rank-1-q0",
+          "low-rank-1-q2"
+        ],
+        "admitted_candidate_ids": [
+          "low-rank-1-answer"
+        ],
+        "closed_obligation_ids": [
+          "low-rank-1-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 49,
+      "case_id": "low-rank-1",
+      "stratum": "low_rank",
+      "policy": "obligation",
+      "repetition": 0,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "low-rank-1-q0",
+          "low-rank-1-q2"
+        ],
+        "admitted_candidate_ids": [
+          "low-rank-1-answer"
+        ],
+        "closed_obligation_ids": [
+          "low-rank-1-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 50,
+      "case_id": "easy-1",
+      "stratum": "easy_stop",
+      "policy": "fixed",
+      "repetition": 1,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "easy-1-q0"
+        ],
+        "admitted_candidate_ids": [
+          "easy-1-initial"
+        ],
+        "closed_obligation_ids": [
+          "easy-1-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 51,
+      "case_id": "independent-1",
+      "stratum": "source_duplication",
+      "policy": "obligation",
+      "repetition": 1,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "independent-1-q0",
+          "independent-1-q2"
+        ],
+        "admitted_candidate_ids": [
+          "independent-1-answer"
+        ],
+        "closed_obligation_ids": [
+          "independent-1-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 52,
+      "case_id": "independent-1",
+      "stratum": "source_duplication",
+      "policy": "fixed",
+      "repetition": 2,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "independent-1-q0"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 53,
+      "case_id": "entity-1",
+      "stratum": "entity_identity",
+      "policy": "fixed",
+      "repetition": 2,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "entity-1-q0"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 54,
+      "case_id": "entity-1",
+      "stratum": "entity_identity",
+      "policy": "fixed",
+      "repetition": 0,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "entity-1-q0"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 55,
+      "case_id": "primary-2",
+      "stratum": "missing_primary",
+      "policy": "obligation",
+      "repetition": 1,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "primary-2-q0",
+          "primary-2-q2"
+        ],
+        "admitted_candidate_ids": [
+          "primary-2-answer"
+        ],
+        "closed_obligation_ids": [
+          "primary-2-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 56,
+      "case_id": "low-rank-1",
+      "stratum": "low_rank",
+      "policy": "fixed",
+      "repetition": 1,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "low-rank-1-q0"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 57,
+      "case_id": "easy-1",
+      "stratum": "easy_stop",
+      "policy": "fixed",
+      "repetition": 2,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "easy-1-q0"
+        ],
+        "admitted_candidate_ids": [
+          "easy-1-initial"
+        ],
+        "closed_obligation_ids": [
+          "easy-1-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 58,
+      "case_id": "conflict-1",
+      "stratum": "contradiction",
+      "policy": "obligation",
+      "repetition": 0,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "conflict-1-q0",
+          "conflict-1-q2"
+        ],
+        "admitted_candidate_ids": [
+          "conflict-1-answer"
+        ],
+        "closed_obligation_ids": [
+          "conflict-1-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 59,
+      "case_id": "low-rank-1",
+      "stratum": "low_rank",
+      "policy": "w10_diagnostic",
+      "repetition": 0,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "low-rank-1-q0",
+          "low-rank-1-q1"
+        ],
+        "admitted_candidate_ids": [
+          "low-rank-1-generic"
+        ],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "budget"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 60,
+      "case_id": "primary-2",
+      "stratum": "missing_primary",
+      "policy": "w10_diagnostic",
+      "repetition": 1,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "primary-2-q0",
+          "primary-2-q1"
+        ],
+        "admitted_candidate_ids": [
+          "primary-2-generic"
+        ],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "budget"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 61,
+      "case_id": "easy-2",
+      "stratum": "easy_stop",
+      "policy": "obligation",
+      "repetition": 0,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "easy-2-q0"
+        ],
+        "admitted_candidate_ids": [
+          "easy-2-initial"
+        ],
+        "closed_obligation_ids": [
+          "easy-2-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 62,
+      "case_id": "independent-1",
+      "stratum": "source_duplication",
+      "policy": "w10_diagnostic",
+      "repetition": 1,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "independent-1-q0",
+          "independent-1-q1"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "budget"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 63,
+      "case_id": "primary-2",
+      "stratum": "missing_primary",
+      "policy": "fixed",
+      "repetition": 0,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "primary-2-q0"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 64,
+      "case_id": "unknown-1",
+      "stratum": "unanswerable",
+      "policy": "fixed",
+      "repetition": 0,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "unknown-1-q0"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 65,
+      "case_id": "conflict-2",
+      "stratum": "contradiction",
+      "policy": "obligation",
+      "repetition": 0,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "conflict-2-q0",
+          "conflict-2-q2"
+        ],
+        "admitted_candidate_ids": [
+          "conflict-2-answer"
+        ],
+        "closed_obligation_ids": [
+          "conflict-2-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 66,
+      "case_id": "easy-1",
+      "stratum": "easy_stop",
+      "policy": "w10_diagnostic",
+      "repetition": 0,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "easy-1-q0",
+          "easy-1-q1"
+        ],
+        "admitted_candidate_ids": [
+          "easy-1-initial"
+        ],
+        "closed_obligation_ids": [
+          "easy-1-obligation"
+        ],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 67,
+      "case_id": "entity-1",
+      "stratum": "entity_identity",
+      "policy": "obligation",
+      "repetition": 2,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "entity-1-q0",
+          "entity-1-q2"
+        ],
+        "admitted_candidate_ids": [
+          "entity-1-answer"
+        ],
+        "closed_obligation_ids": [
+          "entity-1-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 68,
+      "case_id": "primary-2",
+      "stratum": "missing_primary",
+      "policy": "w10_diagnostic",
+      "repetition": 0,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "primary-2-q0",
+          "primary-2-q1"
+        ],
+        "admitted_candidate_ids": [
+          "primary-2-generic"
+        ],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "budget"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 69,
+      "case_id": "unknown-1",
+      "stratum": "unanswerable",
+      "policy": "fixed",
+      "repetition": 1,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "unknown-1-q0"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 70,
+      "case_id": "unknown-1",
+      "stratum": "unanswerable",
+      "policy": "w10_diagnostic",
+      "repetition": 2,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "unknown-1-q0",
+          "unknown-1-q1"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "budget"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 71,
+      "case_id": "conflict-2",
+      "stratum": "contradiction",
+      "policy": "fixed",
+      "repetition": 1,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "conflict-2-q0"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 72,
+      "case_id": "easy-2",
+      "stratum": "easy_stop",
+      "policy": "obligation",
+      "repetition": 1,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "easy-2-q0"
+        ],
+        "admitted_candidate_ids": [
+          "easy-2-initial"
+        ],
+        "closed_obligation_ids": [
+          "easy-2-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 73,
+      "case_id": "independent-1",
+      "stratum": "source_duplication",
+      "policy": "w10_diagnostic",
+      "repetition": 0,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "independent-1-q0",
+          "independent-1-q1"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "budget"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 74,
+      "case_id": "conflict-1",
+      "stratum": "contradiction",
+      "policy": "fixed",
+      "repetition": 0,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "conflict-1-q0"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 75,
+      "case_id": "primary-1",
+      "stratum": "missing_primary",
+      "policy": "fixed",
+      "repetition": 2,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "primary-1-q0"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 76,
+      "case_id": "unknown-1",
+      "stratum": "unanswerable",
+      "policy": "w10_diagnostic",
+      "repetition": 1,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "unknown-1-q0",
+          "unknown-1-q1"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "budget"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 77,
+      "case_id": "unknown-1",
+      "stratum": "unanswerable",
+      "policy": "w10_diagnostic",
+      "repetition": 0,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "unknown-1-q0",
+          "unknown-1-q1"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "budget"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 78,
+      "case_id": "fresh-1",
+      "stratum": "stale",
+      "policy": "w10_diagnostic",
+      "repetition": 2,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "fresh-1-q0",
+          "fresh-1-q1"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "budget"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 79,
+      "case_id": "independent-1",
+      "stratum": "source_duplication",
+      "policy": "obligation",
+      "repetition": 2,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "independent-1-q0",
+          "independent-1-q2"
+        ],
+        "admitted_candidate_ids": [
+          "independent-1-answer"
+        ],
+        "closed_obligation_ids": [
+          "independent-1-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 80,
+      "case_id": "entity-1",
+      "stratum": "entity_identity",
+      "policy": "obligation",
+      "repetition": 0,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "entity-1-q0",
+          "entity-1-q2"
+        ],
+        "admitted_candidate_ids": [
+          "entity-1-answer"
+        ],
+        "closed_obligation_ids": [
+          "entity-1-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 81,
+      "case_id": "primary-1",
+      "stratum": "missing_primary",
+      "policy": "w10_diagnostic",
+      "repetition": 2,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "primary-1-q0",
+          "primary-1-q1"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "budget"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 82,
+      "case_id": "entity-1",
+      "stratum": "entity_identity",
+      "policy": "fixed",
+      "repetition": 1,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "entity-1-q0"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 83,
+      "case_id": "easy-2",
+      "stratum": "easy_stop",
+      "policy": "w10_diagnostic",
+      "repetition": 0,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "easy-2-q0",
+          "easy-2-q1"
+        ],
+        "admitted_candidate_ids": [
+          "easy-2-initial"
+        ],
+        "closed_obligation_ids": [
+          "easy-2-obligation"
+        ],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 84,
+      "case_id": "easy-1",
+      "stratum": "easy_stop",
+      "policy": "fixed",
+      "repetition": 0,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "easy-1-q0"
+        ],
+        "admitted_candidate_ids": [
+          "easy-1-initial"
+        ],
+        "closed_obligation_ids": [
+          "easy-1-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 85,
+      "case_id": "fresh-1",
+      "stratum": "stale",
+      "policy": "w10_diagnostic",
+      "repetition": 1,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "fresh-1-q0",
+          "fresh-1-q1"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "budget"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 86,
+      "case_id": "easy-2",
+      "stratum": "easy_stop",
+      "policy": "fixed",
+      "repetition": 0,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "easy-2-q0"
+        ],
+        "admitted_candidate_ids": [
+          "easy-2-initial"
+        ],
+        "closed_obligation_ids": [
+          "easy-2-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 87,
+      "case_id": "easy-2",
+      "stratum": "easy_stop",
+      "policy": "fixed",
+      "repetition": 2,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "easy-2-q0"
+        ],
+        "admitted_candidate_ids": [
+          "easy-2-initial"
+        ],
+        "closed_obligation_ids": [
+          "easy-2-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 88,
+      "case_id": "easy-2",
+      "stratum": "easy_stop",
+      "policy": "w10_diagnostic",
+      "repetition": 1,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "easy-2-q0",
+          "easy-2-q1"
+        ],
+        "admitted_candidate_ids": [
+          "easy-2-initial"
+        ],
+        "closed_obligation_ids": [
+          "easy-2-obligation"
+        ],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 89,
+      "case_id": "easy-1",
+      "stratum": "easy_stop",
+      "policy": "obligation",
+      "repetition": 0,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "easy-1-q0"
+        ],
+        "admitted_candidate_ids": [
+          "easy-1-initial"
+        ],
+        "closed_obligation_ids": [
+          "easy-1-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 90,
+      "case_id": "low-rank-1",
+      "stratum": "low_rank",
+      "policy": "obligation",
+      "repetition": 1,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "low-rank-1-q0",
+          "low-rank-1-q2"
+        ],
+        "admitted_candidate_ids": [
+          "low-rank-1-answer"
+        ],
+        "closed_obligation_ids": [
+          "low-rank-1-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 91,
+      "case_id": "primary-2",
+      "stratum": "missing_primary",
+      "policy": "obligation",
+      "repetition": 0,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "primary-2-q0",
+          "primary-2-q2"
+        ],
+        "admitted_candidate_ids": [
+          "primary-2-answer"
+        ],
+        "closed_obligation_ids": [
+          "primary-2-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 92,
+      "case_id": "independent-2",
+      "stratum": "source_duplication",
+      "policy": "fixed",
+      "repetition": 1,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "independent-2-q0"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 93,
+      "case_id": "primary-1",
+      "stratum": "missing_primary",
+      "policy": "obligation",
+      "repetition": 0,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "primary-1-q0",
+          "primary-1-q2"
+        ],
+        "admitted_candidate_ids": [
+          "primary-1-answer"
+        ],
+        "closed_obligation_ids": [
+          "primary-1-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 94,
+      "case_id": "primary-1",
+      "stratum": "missing_primary",
+      "policy": "w10_diagnostic",
+      "repetition": 0,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "primary-1-q0",
+          "primary-1-q1"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "budget"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 95,
+      "case_id": "unknown-1",
+      "stratum": "unanswerable",
+      "policy": "obligation",
+      "repetition": 0,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "unknown-1-q0",
+          "unknown-1-q2"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "no_material_gain"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 96,
+      "case_id": "unknown-1",
+      "stratum": "unanswerable",
+      "policy": "obligation",
+      "repetition": 1,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "unknown-1-q0",
+          "unknown-1-q2"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "no_material_gain"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 97,
+      "case_id": "independent-2",
+      "stratum": "source_duplication",
+      "policy": "obligation",
+      "repetition": 2,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "independent-2-q0",
+          "independent-2-q2"
+        ],
+        "admitted_candidate_ids": [
+          "independent-2-answer"
+        ],
+        "closed_obligation_ids": [
+          "independent-2-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 98,
+      "case_id": "independent-1",
+      "stratum": "source_duplication",
+      "policy": "fixed",
+      "repetition": 1,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "independent-1-q0"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 99,
+      "case_id": "primary-1",
+      "stratum": "missing_primary",
+      "policy": "w10_diagnostic",
+      "repetition": 1,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "primary-1-q0",
+          "primary-1-q1"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "budget"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 100,
+      "case_id": "conflict-2",
+      "stratum": "contradiction",
+      "policy": "obligation",
+      "repetition": 2,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "conflict-2-q0",
+          "conflict-2-q2"
+        ],
+        "admitted_candidate_ids": [
+          "conflict-2-answer"
+        ],
+        "closed_obligation_ids": [
+          "conflict-2-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 101,
+      "case_id": "conflict-1",
+      "stratum": "contradiction",
+      "policy": "obligation",
+      "repetition": 2,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "conflict-1-q0",
+          "conflict-1-q2"
+        ],
+        "admitted_candidate_ids": [
+          "conflict-1-answer"
+        ],
+        "closed_obligation_ids": [
+          "conflict-1-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 102,
+      "case_id": "primary-2",
+      "stratum": "missing_primary",
+      "policy": "obligation",
+      "repetition": 2,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "primary-2-q0",
+          "primary-2-q2"
+        ],
+        "admitted_candidate_ids": [
+          "primary-2-answer"
+        ],
+        "closed_obligation_ids": [
+          "primary-2-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 103,
+      "case_id": "entity-1",
+      "stratum": "entity_identity",
+      "policy": "w10_diagnostic",
+      "repetition": 2,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "entity-1-q0",
+          "entity-1-q1"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "budget"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 104,
+      "case_id": "independent-1",
+      "stratum": "source_duplication",
+      "policy": "obligation",
+      "repetition": 0,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "independent-1-q0",
+          "independent-1-q2"
+        ],
+        "admitted_candidate_ids": [
+          "independent-1-answer"
+        ],
+        "closed_obligation_ids": [
+          "independent-1-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 105,
+      "case_id": "primary-1",
+      "stratum": "missing_primary",
+      "policy": "obligation",
+      "repetition": 1,
+      "outcome": {
+        "policy": "obligation",
+        "executed_query_ids": [
+          "primary-1-q0",
+          "primary-1-q2"
+        ],
+        "admitted_candidate_ids": [
+          "primary-1-answer"
+        ],
+        "closed_obligation_ids": [
+          "primary-1-obligation"
+        ],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "all_obligations_closed"
+      },
+      "scores": {
+        "weighted_closure": 1.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 0
+      }
+    },
+    {
+      "sequence": 106,
+      "case_id": "low-rank-1",
+      "stratum": "low_rank",
+      "policy": "w10_diagnostic",
+      "repetition": 2,
+      "outcome": {
+        "policy": "w10_diagnostic",
+        "executed_query_ids": [
+          "low-rank-1-q0",
+          "low-rank-1-q1"
+        ],
+        "admitted_candidate_ids": [
+          "low-rank-1-generic"
+        ],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 1,
+        "stop_reason": "budget"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 2,
+        "post_gain_queries": 1,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 107,
+      "case_id": "fresh-1",
+      "stratum": "stale",
+      "policy": "fixed",
+      "repetition": 0,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "fresh-1-q0"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 1
+      }
+    },
+    {
+      "sequence": 108,
+      "case_id": "primary-2",
+      "stratum": "missing_primary",
+      "policy": "fixed",
+      "repetition": 2,
+      "outcome": {
+        "policy": "fixed",
+        "executed_query_ids": [
+          "primary-2-q0"
+        ],
+        "admitted_candidate_ids": [],
+        "closed_obligation_ids": [],
+        "continuation_after_last_gain": 0,
+        "stop_reason": "fixed_complete"
+      },
+      "scores": {
+        "weighted_closure": 0.0,
+        "admitted_precision": 1.0,
+        "queries": 1,
+        "post_gain_queries": 0,
+        "unsupported_high_importance": 1
+      }
+    }
+  ]
+}

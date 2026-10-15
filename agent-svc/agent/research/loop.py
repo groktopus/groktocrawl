@@ -19,7 +19,9 @@ from ..exceptions import (
 from ..llm import LLMClient
 from ..models import CitationStyle
 from ..scraper_client import ScraperClient
+from ..search_metadata import search_metadata
 from ..searxng_client import SearXNGClient
+from ..settings import load_settings
 from .citations import _apply_citation_style, _build_answer_user_prompt
 from .discovery import (
     _build_answer_context,
@@ -30,8 +32,15 @@ from .discovery import (
     _scrape_urls,
 )
 from .events import ResearchEvent
-from .evidence import DEFAULT_EVIDENCE_CHARS, build_evidence
+from .evidence import (
+    DEFAULT_EVIDENCE_CHARS,
+    build_evidence,
+    build_evidence_async,
+    run_evidence_builder_async,
+    validate_evidence_budget,
+)
 from .gaps import _detect_gaps
+from .jev_filter import JevContributionFilter
 from .plan import _generate_research_plan
 from .prompts import ANSWER_SYSTEM_PROMPT, EXTRACT_SYSTEM_PROMPT, SYSTEM_PROMPT
 from .sources import (
@@ -43,6 +52,13 @@ from .sources import (
 from .utils import _validate_json_if_schema
 
 logger = logging.getLogger(__name__)
+
+_JEV_SCORE_INSTRUCTIONS = (
+    "\nWhen a source has material_contribution_score, treat it only as Jev's "
+    "estimate that the page may contribute a useful facet to this query. "
+    "It is not confidence in factual correctness, authority, safety, or "
+    "support for a particular claim. Make those judgments from the passage."
+)
 
 
 def _deep_source_target(query_count: int) -> int:
@@ -73,6 +89,7 @@ async def _discover_with_progress(factory, initial_pending=None):
                         "url": result["url"],
                         "title": result.get("title", ""),
                         "relevance": result.get("description", ""),
+                        **search_metadata(result),
                     }
                     for result in results
                     if result.get("url")
@@ -147,6 +164,7 @@ async def _run_research_events(
 ) -> AsyncGenerator[ResearchEvent, None]:
     """Execute the canonical research loop and emit progress and terminal events."""
     start = time.monotonic()
+    validate_evidence_budget(evidence_budget_chars)
     if llm_model is None:
         raise ValueError("llm_model is required — set via LLM_MODEL env var")
     searxng = SearXNGClient(searxng_url, max_searches=max_searches_per_request)
@@ -157,6 +175,15 @@ async def _run_research_events(
         else llm_model
     )
     llm = LLMClient(llm_base_url, llm_api_key, effective_model)
+    settings = load_settings()
+    jev_filter = (
+        JevContributionFilter(
+            settings.typesafe_api_key,
+            min_score=settings.typesafe_jev_min_score,
+        )
+        if settings.typesafe_api_key
+        else None
+    )
     scrape_opts: dict | None = (
         {"formats": ["markdown", "images"]} if include_images else None
     )
@@ -183,6 +210,7 @@ async def _run_research_events(
         all_source_details: list[dict] = []
         credits_used = 0
         combined_context = ""
+        evidence_coverage: dict[str, Any] = {}
         gap_topics: list[str] = []
         answer = ""
         coverage: dict[str, Any] = {
@@ -313,19 +341,6 @@ async def _run_research_events(
                 raise RuntimeError("Discovery ended without a result")
 
             context = discovered["context"]
-            retained = source_registry.artifacts()
-            if retained:
-                selected = await asyncio.to_thread(
-                    build_evidence,
-                    [
-                        {"id": a.url, "url": a.url, "markdown": a.markdown}
-                        for a in retained
-                    ],
-                    prompt,
-                    evidence_budget_chars,
-                )
-                context = selected["context"]
-                coverage["evidence"] = selected["coverage"]
             source_details = discovered["source_details"]
             novel_artifacts = discovered.get("new_artifacts", [])
             pass_coverage = discovered.get("coverage", {})
@@ -351,12 +366,63 @@ async def _run_research_events(
                 )
             )
             coverage["pass_count"] = pass_count
+            no_source_result = "I was unable to find or scrape any relevant web pages."
+            if jev_filter is not None:
+                await jev_filter.assess_all(prompt, novel_artifacts)
+                retained = [
+                    artifact
+                    for artifact in discovered["artifacts"]
+                    if jev_filter.retain(artifact)
+                ]
+                logger.info(
+                    "Jev contribution filter retained %d/%d acquired research sources",
+                    len(retained),
+                    len(discovered["artifacts"]),
+                )
+                context = "\n\n---\n\n".join(
+                    artifact.to_document() for artifact in retained
+                )
+                source_details = [artifact.to_source_detail() for artifact in retained]
+                if discovered["artifacts"] and not retained:
+                    no_source_result = (
+                        "I found pages, but none appeared to materially contribute "
+                        "to this research question."
+                    )
+            selected_artifacts = (
+                retained if jev_filter is not None else discovered.get("artifacts", [])
+            )
+            evidence_sources = [
+                {
+                    "id": artifact.url,
+                    "url": artifact.url,
+                    "markdown": artifact.markdown or "",
+                    "material_contribution_score": artifact.material_contribution_score,
+                }
+                for artifact in selected_artifacts
+            ]
+            if not evidence_sources and context:
+                evidence_sources = [{"id": "legacy-context", "markdown": context}]
+            selected = await build_evidence_async(
+                evidence_sources, prompt, evidence_budget_chars
+            )
+            context = selected["context"]
+            evidence_coverage = selected["coverage"]
+            coverage["evidence"] = evidence_coverage
+            for detail in source_details:
+                detail["evidence_coverage"] = next(
+                    (
+                        item
+                        for item in evidence_coverage["sources"]
+                        if item["id"] == detail.get("url")
+                    ),
+                    None,
+                )
             previous_context = combined_context
             if not context and not combined_context:
                 yield {"type": "sources", "sources": []}
                 no_source_done: ResearchEvent = {
                     "type": "done",
-                    "result": "I was unable to find or scrape any relevant web pages.",
+                    "result": no_source_result,
                     "sources": [],
                     "source_details": [],
                     "latency_ms": int((time.monotonic() - start) * 1000),
@@ -381,7 +447,7 @@ async def _run_research_events(
                 yield {"type": "sources", "sources": []}
                 no_source_done = {
                     "type": "done",
-                    "result": "I was unable to find or scrape any relevant web pages.",
+                    "result": no_source_result,
                     "sources": [],
                     "source_details": [],
                     "latency_ms": int((time.monotonic() - start) * 1000),
@@ -392,9 +458,8 @@ async def _run_research_events(
                 yield no_source_done
                 return
 
-            # Coverage depends only on evidence, so decide follow-up work
-            # before the one final synthesis in every response mode.
-            if pass_count == 1:
+            # Only multi-pass deep research plans a follow-up before final synthesis.
+            if pass_count == 1 and max_passes > 1:
                 # Count novel successful acquisitions; reuse remains free.
                 budget_spent = max_credits is not None and credits_used >= max_credits
                 gap_topics = (
@@ -409,10 +474,15 @@ async def _run_research_events(
                 max_passes = 2  # Enable second pass
 
         yield {"type": "status", "state": "synthesizing"}
+        synthesis_prompt = (
+            SYSTEM_PROMPT + _JEV_SCORE_INSTRUCTIONS
+            if jev_filter is not None
+            else SYSTEM_PROMPT
+        )
         if schema or not stream_tokens:
             try:
                 answer = await llm.generate(
-                    system_prompt=SYSTEM_PROMPT,
+                    system_prompt=synthesis_prompt,
                     user_prompt=prompt,
                     context=combined_context,
                     schema=schema,
@@ -461,7 +531,7 @@ async def _run_research_events(
             }
             answer = ""
             async for event in llm.generate_stream(
-                system_prompt=SYSTEM_PROMPT,
+                system_prompt=synthesis_prompt,
                 user_prompt=prompt,
                 context=combined_context,
                 stage="synthesis",
@@ -483,6 +553,7 @@ async def _run_research_events(
             "result": answer,
             "sources": source_list,
             "source_details": all_source_details,
+            "evidence_coverage": evidence_coverage,
             "latency_ms": int((time.monotonic() - start) * 1000),
         }
         if include_source_content:
@@ -501,6 +572,8 @@ async def _run_research_events(
         done_event["coverage"] = coverage
         yield done_event
     finally:
+        if jev_filter is not None:
+            await jev_filter.close()
         observe_elapsed(
             "groktocrawl_research_total_seconds",
             "Total research pipeline latency by search type",
@@ -565,6 +638,11 @@ async def run_research(
                     "result": result,
                     "sources": event["sources"],
                     "source_details": event["source_details"],
+                    **(
+                        {"evidence_coverage": event["evidence_coverage"]}
+                        if "evidence_coverage" in event
+                        else {}
+                    ),
                 }
                 if "source_contents" in event:
                     result_payload["source_contents"] = event["source_contents"]
@@ -626,6 +704,7 @@ async def run_extract(
     llm_base_url: str = "https://api.openai.com/v1",
     llm_api_key: str = "",
     llm_model: str | None = None,
+    evidence_budget_chars: int = DEFAULT_EVIDENCE_CHARS,
 ) -> dict:
     """Extract structured data from given URLs. No search step."""
     if llm_model is None:
@@ -635,8 +714,16 @@ async def run_extract(
 
     try:
         artifacts = await _scrape_urls(urls, scraper)
-        documents, source_details = artifacts_to_documents_and_details(artifacts)
-        context = "\n\n---\n\n".join(documents) if documents else ""
+        _documents, source_details = artifacts_to_documents_and_details(artifacts)
+        selected = await build_evidence_async(
+            [
+                {"id": a.url, "url": a.url, "markdown": a.markdown or ""}
+                for a in artifacts
+            ],
+            prompt or "Extract the requested information",
+            evidence_budget_chars,
+        )
+        context = selected["context"]
 
         if not context:
             return {
@@ -660,6 +747,7 @@ async def run_extract(
             "result": answer,
             "sources": [s["url"] for s in source_details],
             "source_details": source_details,
+            "evidence_coverage": selected["coverage"],
         }
     finally:
         await scraper.close()
@@ -682,6 +770,7 @@ async def run_answer(
     output_schema: dict | None = None,
     citation_style: Any = None,
     evidence_budget_chars: int = DEFAULT_EVIDENCE_CHARS,
+    include_source_content: bool = False,
 ) -> dict:
     """Run a grounded Q&A pipeline: search → scrape → LLM → citations.
 
@@ -689,6 +778,7 @@ async def run_answer(
     search_type, latency_ms.
     """
     start = time.monotonic()
+    validate_evidence_budget(evidence_budget_chars)
 
     cs = (
         citation_style
@@ -729,11 +819,14 @@ async def run_answer(
             elapsed = int((time.monotonic() - start) * 1000)
             return {
                 "answer": "I was unable to find or scrape any relevant web pages to answer your question.",
+                "evidence_coverage": build_evidence([], query, evidence_budget_chars)[
+                    "coverage"
+                ],
                 "sources": [],
                 "citations": [],
                 "search_type": search_type,
-                "evidence_coverage": discovered.get("evidence_coverage"),
                 "latency_ms": elapsed,
+                **({"source_contents": {}} if include_source_content else {}),
             }
 
         # Call LLM — adjust user prompt based on citation style and schema
@@ -781,7 +874,12 @@ async def run_answer(
             "citations": citations,
             "search_type": search_type,
             "latency_ms": elapsed,
-            "evidence_coverage": discovered["evidence_coverage"],
+            "evidence_coverage": discovered.get("evidence_coverage", {}),
+            **(
+                {"source_contents": discovered.get("source_contents", {})}
+                if include_source_content
+                else {}
+            ),
         }
     finally:
         await searxng.close()
@@ -805,6 +903,7 @@ async def run_answer_stream(
     output_schema: dict | None = None,
     citation_style: Any = None,
     evidence_budget_chars: int = DEFAULT_EVIDENCE_CHARS,
+    include_source_content: bool = False,
 ) -> AsyncGenerator[dict[str, Any], None]:
     """Streaming version of run_answer. Yields SSE-suitable dicts.
 
@@ -815,6 +914,7 @@ async def run_answer_stream(
       {"type": "error", "content": "..."} — error
     """
     start = time.monotonic()
+    validate_evidence_budget(evidence_budget_chars)
     timing = StreamTiming("answer")
 
     cs = (
@@ -866,6 +966,7 @@ async def run_answer_stream(
                 "url": r["url"],
                 "title": r.get("title", ""),
                 "relevance": r.get("description", ""),
+                **search_metadata(r),
             }
             for r in search_results
             if r.get("url")
@@ -879,7 +980,7 @@ async def run_answer_stream(
         )
 
         # Step 3: Build context + citation source map from artifacts
-        built = await asyncio.to_thread(
+        built = await run_evidence_builder_async(
             _build_answer_context,
             search_results,
             artifacts,
@@ -897,6 +998,7 @@ async def run_answer_stream(
                 "evidence_coverage": built["evidence_coverage"],
                 "citations": [],
                 "latency_ms": int((time.monotonic() - start) * 1000),
+                **({"source_contents": {}} if include_source_content else {}),
             }
             return
 
@@ -978,6 +1080,11 @@ async def run_answer_stream(
             "type": "done",
             "answer": full_answer,
             "evidence_coverage": built["evidence_coverage"],
+            **(
+                {"source_contents": built["source_contents"]}
+                if include_source_content
+                else {}
+            ),
             "citations": citations,
             "latency_ms": elapsed,
         }

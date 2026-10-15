@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-fee35e41ce89ddcd7adc",
+  "case_id": "renamed-feature",
+  "completed_at": "2026-09-19T09:15:35.057891+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 100,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "The candidate directly answers the question: policy checks were renamed release guards, not removed, matching the reference change event and both primary sources (northstar-policy-new states the rename and unchanged purpose; northstar-policy-old confirms the Northstar 3 term). Current truth is correct (Northstar 4 uses 'release guards'), and the Northstar 3 'policy checks' terminology is preserved explicitly as historical, so there is no stale-current leak and no lost history. The candidate's same-lineage observation is supported by the supplied metadata (shared lineage_id and subject_id) and does not merge distinct subjects or capabilities, so false_merge is false. Every factual claim is grounded in the cited snapshots, hence unsupported_claims is 0. The sole defect is an invented unresolved item speculating about behavior/implementation changes beyond the name; the reference ledger lists no unresolved items, so unresolved_accuracy is 0 and usefulness is slightly reduced.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 0,
+    "unsupported_claims": 0,
+    "usefulness": 95
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "51ad1863d5fc268d75c3244eb2a41d855aa4216a95f4149718d04afc57917d3e",
+    "finish_reason": "stop",
+    "latency_ms": 26346.807,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "7aab1c5f8d7ad431c28905f127db44aa52119937b470aa524a73b363385e277f",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 3051,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 2779
+      },
+      "cost": 0.00167295,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0015255,
+        "upstream_inference_cost": 0.00167295,
+        "upstream_inference_prompt_cost": 0.00014745
+      },
+      "is_byok": false,
+      "prompt_tokens": 983,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 4034
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:15:08.709618+00:00",
+  "status": "completed",
+  "trial_id": "renamed-feature-r1-control"
+}

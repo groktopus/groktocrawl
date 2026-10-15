@@ -1,0 +1,34 @@
+{
+  "schema_version": "enterprise-calibration-manifest/1",
+  "status": "human_confirmation_recorded",
+  "selected_case_ids": [
+    "delivery-01",
+    "delivery-07",
+    "security-01",
+    "security-06",
+    "governance-01",
+    "governance-04",
+    "reliability-01",
+    "reliability-04",
+    "measurement-01",
+    "measurement-05",
+    "platform-01",
+    "platform-07"
+  ],
+  "cases": 12,
+  "required_subquestions": 18,
+  "topics": 6,
+  "human_labels_collected": 12,
+  "human_label_record": "human-confirmation.json",
+  "human_label_method": "Magnus confirmed the assistant pre-review in chat; this is not a blinded independent judge study",
+  "hermes_outcome_labels_collected": 0,
+  "actual_arm_outputs": 0,
+  "candidate_origin": "Codex-authored probes",
+  "held_out_eligible_cases": 0,
+  "source_corpus_sha256": "d3d1821b54783fa831247ea66f362c4a0abacb733c1532ccdb4267be8a7076af",
+  "files": {
+    "worksheet.json": "8890fbe2945e309d610f1b4a37ff9c3564ac68b2cb8405556a1363fd3741ce99",
+    "worksheet.md": "7344125df614f16ee4dd67cf5074219c99823602e31de909189e873f3b9d5593"
+  },
+  "label_update_rule": "Preserve this unlabeled input version. Record human labels separately against case/source/candidate hashes; do not overwrite candidate answers or attribute inferred labels to Magnus."
+}

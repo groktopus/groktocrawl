@@ -1,0 +1,67 @@
+{
+  "answer": {
+    "answer": "Northstar did not remove policy checks; they were renamed. The Northstar 4 migration guide states that Northstar 4 renames 'policy checks' to 'release guards' and that their purpose is unchanged [northstar-policy-new]. The Northstar 3 guide confirms the prior terminology: 'Northstar 3 calls pre-deployment controls policy checks' [northstar-policy-old]. So the controls persist under a new name; nothing in the supplied sources indicates removal.",
+    "change_events": [
+      "Northstar 4 renames 'policy checks' to 'release guards'; their purpose is unchanged [northstar-policy-new]."
+    ],
+    "citations": [
+      "northstar-policy-old",
+      "northstar-policy-new"
+    ],
+    "current_truths": [
+      "In Northstar 4, pre-deployment controls are called 'release guards'; the prior 'policy checks' term was renamed, not removed [northstar-policy-new]."
+    ],
+    "historical_truths": [
+      "In Northstar 3, pre-deployment controls were called 'policy checks' [northstar-policy-old]."
+    ],
+    "unresolved": [
+      "The sources state the purpose is unchanged but do not detail any behavioral or configuration differences beyond the rename [northstar-policy-new]."
+    ]
+  },
+  "arm": "treatment",
+  "case_id": "renamed-feature",
+  "completed_at": "2026-09-19T07:50:56.941125+00:00",
+  "position": 43,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "151cd530ee2089e0ab8556e4b5dd671d9770a3263e046fe5b33ab168573cd8b6",
+    "finish_reason": "stop",
+    "latency_ms": 8779.868,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "d648b038136bd0f4a4073e44c1f8076df2ee3a387fbc85bf66f9b80b8cce6a6b",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 239,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 1
+      },
+      "cost": 0.00011111,
+      "cost_details": {
+        "upstream_inference_completions_cost": 8.365e-05,
+        "upstream_inference_cost": 0.00011111,
+        "upstream_inference_prompt_cost": 2.746e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 1145,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 1088,
+        "video_tokens": 0
+      },
+      "total_tokens": 1384
+    }
+  },
+  "repetition": 3,
+  "schema_version": "research-thread-trial/1",
+  "started_at": "2026-09-19T07:50:48.160593+00:00",
+  "status": "completed",
+  "stratum": "terminology",
+  "trial_id": "renamed-feature-r3-treatment"
+}

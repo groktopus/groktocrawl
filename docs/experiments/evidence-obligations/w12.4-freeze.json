@@ -1,0 +1,20 @@
+{
+  "schema_version": "experiment-freeze/1",
+  "experiment": "W12.4",
+  "frozen_at": "2026-09-19T00:00:00Z",
+  "seed": 20260919,
+  "repetitions": 3,
+  "max_queries_per_case": 3,
+  "inputs": {
+    "docs/experiments/evidence-obligations/w12.4-cases.json": "ffaa536c61f7f3bc99bd80134eb441d978304124d6f9714f44d18fb895aa6785",
+    "agent-svc/agent/experimental/evidence_obligation_experiment.py": "9d4d2c02ee774a6cb2a54dc8e41a96836891e14cbb02dd93964c7ed394639b53",
+    "scripts/run_w12_obligation_replay.py": "bd9fa98503c80110281681cb406367489007e2dc1ac64f150ecff57a28eaa8ab",
+    "scripts/analyze_w12_obligation_replay.py": "47d04d132f6466233b5d2d145926a43432b794565c75e02c47b7227492eae8ec"
+  },
+  "decision_gate": {
+    "minimum_passing_repetitions": 2,
+    "minimum_challenge_closure_delta": 0.10,
+    "precision_tolerance": 0.05,
+    "maximum_post_gain_query_rate": 0.10
+  }
+}

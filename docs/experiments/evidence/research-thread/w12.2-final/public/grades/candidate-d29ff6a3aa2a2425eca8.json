@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-d29ff6a3aa2a2425eca8",
+  "case_id": "near-match-products",
+  "completed_at": "2026-09-19T09:14:09.592848+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 95,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 90,
+    "lost_history": false,
+    "rationale": "The candidate correctly answers 'No': Harbor Agent shows no documented change, matching the reference's empty change ledger and the current truth that it is still only documented as requiring a network connection [harbor-agent-doc]. It explicitly refuses the prohibited capability transfer, attributing the offline export mode solely to Harbor Agent Cloud under its distinct subject_id and lineage [harbor-cloud-doc], so no false merge occurs and no superseded or foreign evidence is stated as current. All current truths are directly supported by the two primary sources, and the continuity framing of the network requirement preserves history without rewriting it. Minor deductions: the change list includes the Cloud-side change (accurate but outside the questioned subject), and the unresolved list appends peripheral items (snapshot timestamps, whether Cloud's export mode is a 'general' offline mode) beyond the reference's single unresolved point about the absence of any Harbor Agent offline source. No unsupported factual claims were counted.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 80,
+    "unsupported_claims": 0,
+    "usefulness": 95
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "e66acbcbdbafdb48737a38dc3df9a32cd80435bf3764ec2be0a791491a21a39c",
+    "finish_reason": "stop",
+    "latency_ms": 34766.623,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "7c4047c0a34b5030e9f076c3ba238408ca79b6e5d7a4959bd85d88e597d2dd91",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 3166,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 2905
+      },
+      "cost": 0.00177665,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.001583,
+        "upstream_inference_cost": 0.00177665,
+        "upstream_inference_prompt_cost": 0.00019365
+      },
+      "is_byok": false,
+      "prompt_tokens": 1291,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 4457
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:13:34.823487+00:00",
+  "status": "completed",
+  "trial_id": "near-match-products-r3-treatment"
+}

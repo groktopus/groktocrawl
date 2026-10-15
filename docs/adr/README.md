@@ -2,6 +2,10 @@
 
 This directory contains Architecture Decision Records (ADRs) for GroktoCrawl.
 
+## Scope and provenance
+
+This index records decisions for the mainline GroktoCrawl codebase. [ADR-0069](0069-adopt-bounded-research-substrate.md) adopts the bounded research substrate in the standard deployment, with feature flags used during verified migration rather than as a permanent opt-in boundary. It supersedes ADR-0026's Qdrant serving choice only for deployments that complete the pgvector backfill and cutover; Qdrant remains available for rollback. ADR-0047's legacy inline-job contract is unchanged. The original GroktoCrawl X records are preserved in the [provenance archive](experimental/groktocrawl-x/README.md); their historical status does not automatically change other mainline decisions.
+
 ## What is an ADR?
 
 An Architecture Decision Record captures an important architectural decision made along with its context and consequences. ADRs are immutable — existing records are never edited. If a decision changes, a new ADR is created and the old one is marked as superseded.
@@ -19,7 +23,7 @@ An Architecture Decision Record captures an important architectural decision mad
 
 **Status legend:** accepted ADRs describe decisions used by the current implementation. Proposed ADRs are design work, not promises of current behavior. Superseded ADRs are historical context only; use their successor when documenting current behavior.
 
-**Current accepted decisions:** ADR-0001–0007, 0009–0012, 0014–0022, 0026, 0029–0035, 0038, 0039, 0043, 0044, 0045, 0046, 0047, 0048, 0049, 0050, 0051, 0052, 0053, 0054, 0055, 0056, 0057, and 0059–0067.
+**Current accepted decisions:** ADR-0001–0007, 0009–0012, 0014–0022, 0026 (as superseded for migrated deployments), 0029–0035, 0038, 0039, 0043–0057, 0059–0067, and 0069.
 
 **Proposed work:** ADR-0023–0025, 0027, 0028, 0036, 0037, and 0040–0042.
 
@@ -50,7 +54,7 @@ An Architecture Decision Record captures an important architectural decision mad
 | 0023 | [Search Type Spectrum — Fast and Rich](0023-search-type-spectrum-fast-and-rich.md) | proposed |
 | 0024 | [Artifact Pyramid CLI Output](0024-artifact-pyramid-cli-output.md) | proposed |
 | 0025 | [Semantic Search Pipeline — Embedding-Based Retrieval](0025-semantic-search-pipeline.md) | proposed |
-| 0026 | [Phase 2 Semantic Search — Persistent Vector Index](0026-phase2-vector-index.md) | accepted |
+| 0026 | [Phase 2 Semantic Search — Persistent Vector Index](0026-phase2-vector-index.md) | accepted; superseded by ADR-0069 for migrated deployments |
 | 0027 | [Smarter Index Retention — Domain TTLs, Frequency Weighting, Access Boosting](0027-smarter-index-retention.md) | proposed |
 | 0028 | [Embedding Model Migration Path for Index Rebuilds](0028-embedding-model-migration-path.md) | proposed |
 | 0029 | [Service-Level Metrics for semantic-svc](0029-service-level-metrics-for-semantic-svc.md) | accepted |
@@ -92,4 +96,5 @@ An Architecture Decision Record captures an important architectural decision mad
 | 0066 | [Opt In to Independent Session Steps](0066-opt-in-to-independent-session-steps.md) | accepted |
 | 0067 | [Select the LLM Token Budget Parameter Explicitly](0067-explicit-llm-token-budget-parameter.md) | accepted |
 | 0068 | [Select bounded evidence from complete sources](0068-bounded-full-source-evidence.md) | proposed |
-See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full ADR workflow: when to write an ADR, how to number it, and how to get it reviewed in a PR.
+| 0069 | [Adopt a Bounded Research Substrate](0069-adopt-bounded-research-substrate.md) | accepted; rollout-gated adoption in standard deployment |
+See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full ADR workflow: when to write an ADR, how to number it, and how to get it reviewed in a PR. Experimental records are linked from the provenance archive, not included in the mainline sequence.

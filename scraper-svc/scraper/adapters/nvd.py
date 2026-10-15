@@ -18,6 +18,7 @@ import time
 
 import httpx
 
+from ..source_http import source_httpx_client
 from .base import AdapterContext, AdapterError, AdapterResult, SiteAdapter, adapter
 
 logger = logging.getLogger(__name__)
@@ -125,7 +126,7 @@ async def _fetch_nvd_api(cve_id: str, api_key: str) -> dict | None:
     }
 
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
+        async with source_httpx_client(timeout=15) as client:
             resp = await client.get(NVD_API_BASE, params=params, headers=headers)
             if resp.status_code == 200:
                 data = resp.json()
@@ -404,7 +405,7 @@ async def _fetch_via_readability(url: str) -> tuple[str, dict] | None:
     Returns ``(markdown, metadata)`` or ``None``.
     """
     try:
-        async with httpx.AsyncClient(
+        async with source_httpx_client(
             timeout=15,
             follow_redirects=True,
             headers={"User-Agent": "Mozilla/5.0 (compatible; GroktoCrawl/0.7.0)"},

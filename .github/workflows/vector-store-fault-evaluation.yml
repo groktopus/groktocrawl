@@ -1,0 +1,91 @@
+name: Vector Store Fault Evaluation
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Optional stable identifier for this isolated fault replay
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  evaluate:
+    name: Replay failure contracts against isolated providers
+    runs-on: ubuntu-latest
+    env:
+      COMPOSE_PROJECT_NAME: groktocrawl-x-vector-fault-${{ github.run_id }}
+      VECTOR_EVAL_POSTGRES_PASSWORD: vector-fault-${{ github.run_id }}-${{ github.run_attempt }}
+      VECTOR_EVAL_RUN_ID: ${{ inputs.run_id || format('fault-{0}', github.run_id) }}
+    steps:
+      - name: Check out fork
+        uses: actions/checkout@v5
+
+      - name: Validate isolated Compose file
+        run: docker compose -f compose.vector-evaluation.yml --profile vector-eval config --quiet
+
+      - name: Start isolated vector services
+        run: docker compose -f compose.vector-evaluation.yml --profile vector-eval up -d --wait vector-eval-qdrant vector-eval-postgres
+
+      - name: Create private evaluation runner
+        run: |
+          mkdir -p vector-fault-out
+          qdrant_container=$(docker compose -f compose.vector-evaluation.yml --profile vector-eval ps -q vector-eval-qdrant)
+          eval_network=$(docker inspect "$qdrant_container" --format '{{range $name, $_ := .NetworkSettings.Networks}}{{$name}}{{end}}')
+          echo "::add-mask::$VECTOR_EVAL_POSTGRES_PASSWORD"
+          runner=$(docker run -d --network bridge \
+            -e VECTOR_EVAL_POSTGRES_PASSWORD \
+            -e VECTOR_EVAL_RUN_ID \
+            -v "$GITHUB_WORKSPACE:/workspace:ro" \
+            -v "$GITHUB_WORKSPACE/vector-fault-out:/out" \
+            -w /workspace python:3.12-slim sleep 1800)
+          echo "$runner" > runner-id
+          docker network connect "$eval_network" "$runner"
+          echo "RUNNER_ID=$runner" >> "$GITHUB_ENV"
+
+      - name: Replay contracts against Qdrant and pgvector
+        run: |
+          docker exec "$RUNNER_ID" sh -ceu '
+            python -m pip install --disable-pip-version-check --no-cache-dir \
+              "psycopg[binary]==3.3.5" "qdrant-client>=1.13.0,<1.20.0"
+            for provider in qdrant pgvector; do
+              python scripts/run_vector_store_provider_fault_evaluation.py \
+                --provider "$provider" \
+                --qdrant-url http://vector-eval-qdrant:6333 \
+                --postgres-dsn "postgresql://vector_eval:${VECTOR_EVAL_POSTGRES_PASSWORD}@vector-eval-postgres:5432/vector_eval" \
+                --run-id "$VECTOR_EVAL_RUN_ID" \
+                --allow-isolated-database \
+                --output "/out/${provider}.json"
+            done
+          '
+
+      - name: Enforce provider fault gates
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for provider in ("qdrant", "pgvector"):
+              result = json.loads(Path(f"vector-fault-out/{provider}.json").read_text())
+              assert result["provider_backed"] is True
+              assert result["production_change"] is False
+              assert result["qdrant_removal"] is False
+              assert result["all_gates_passed"] is True, result
+              assert all(item["gate"] for item in result["scenarios"]), result
+          print("provider fault gates passed")
+          PY
+
+      - name: Upload provider fault evidence
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: vector-store-fault-evaluation-${{ github.run_id }}
+          path: vector-fault-out/
+          if-no-files-found: warn
+
+      - name: Stop isolated vector services
+        if: always()
+        run: |
+          docker rm -f "$RUNNER_ID" >/dev/null 2>&1 || true
+          docker compose -f compose.vector-evaluation.yml --profile vector-eval down --volumes --remove-orphans --timeout 30

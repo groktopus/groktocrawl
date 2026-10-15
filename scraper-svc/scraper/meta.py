@@ -7,8 +7,9 @@ No Playwright, no readability, no markdown conversion.
 
 import logging
 
-import httpx
 from bs4 import BeautifulSoup
+
+from .source_http import source_httpx_client
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,9 @@ async def fetch_meta_tags(url: str, timeout: int = 15) -> dict:
     }
 
     try:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=timeout) as client:
+        async with source_httpx_client(
+            follow_redirects=True, timeout=timeout
+        ) as client:
             resp = await client.get(url)
             if resp.status_code != 200:
                 logger.warning("Meta fetch returned %d for %s", resp.status_code, url)

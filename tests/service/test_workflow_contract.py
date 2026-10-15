@@ -5,6 +5,7 @@ import re
 import subprocess
 import sys
 import textwrap
+import tomllib
 from pathlib import Path
 
 import yaml
@@ -39,7 +40,10 @@ def test_runtime_gate_depends_on_hosted_twin_without_renaming_required_check():
     workflow = (Path(__file__).parents[2] / ".github/workflows/docker.yml").read_text()
     runtime = workflow.split("  runtime-gate:\n", 1)[1]
     assert "name: Runtime Gate" in runtime
-    assert "needs: [changes, twin-contracts, integration-tests]" in runtime
+    assert (
+        "needs: [changes, twin-contracts, integration-tests, research-runtime]"
+        in runtime
+    )
     assert "Fail when required twin validation fails" in runtime
 
 
@@ -119,6 +123,37 @@ def test_published_service_images_target_amd64_and_arm64():
     assert build_step["with"]["platforms"] == "linux/amd64,linux/arm64"
 
 
+def test_runtime_container_tests_use_hash_locked_fast_test_requirements():
+    root = Path(__file__).parents[2]
+    workflow = yaml.safe_load((root / ".github/workflows/runtime.yml").read_text())
+    runtime = workflow["jobs"]["integration-tests"]
+    steps = {step.get("name"): step.get("run", "") for step in runtime["steps"]}
+    export_command = (
+        "uv export --locked --only-group fast-tests --no-dev --no-emit-project "
+        "--no-emit-workspace --no-header --format requirements.txt "
+        "--output-file runtime-test-requirements.txt"
+    )
+    for name in ("Install critical test dependencies", "Run integration tests"):
+        command = steps[name]
+        assert export_command in command
+        assert (
+            'docker cp runtime-test-requirements.txt "$svc:/tmp/runtime-test-requirements.txt"'
+            in command
+        )
+        assert (
+            "pip install --require-hashes -r /tmp/runtime-test-requirements.txt"
+            in command
+        )
+        assert "pip install pytest " not in command
+
+    groups = tomllib.loads((root / "pyproject.toml").read_text())["dependency-groups"]
+    fast_tests = groups["fast-tests"]
+    assert any(item.startswith("curl_cffi") for item in fast_tests)
+    assert any(item.startswith("pytest-timeout>=2") for item in fast_tests)
+    lock = (root / "uv.lock").read_text()
+    assert 'name = "pytest-timeout"' in lock
+
+
 def test_answer_evals_workflow_is_advisory_and_not_pr_gated():
     root = Path(__file__).parents[2]
     workflow = (root / ".github/workflows/answer-evals.yml").read_text()
@@ -150,7 +185,10 @@ def test_answer_evals_workflow_is_advisory_and_not_pr_gated():
     assert "answer-evals.yml" not in docker
     runtime_gate = docker.split("name: Runtime Gate", 1)[1]
     assert "answer-evals" not in runtime_gate
-    assert "needs: [changes, twin-contracts, integration-tests]" in runtime_gate
+    assert (
+        "needs: [changes, twin-contracts, integration-tests, research-runtime]"
+        in runtime_gate
+    )
 
 
 def test_compose_run_id_and_failure_provenance_are_unambiguous():
@@ -158,6 +196,15 @@ def test_compose_run_id_and_failure_provenance_are_unambiguous():
     compose = (root / "docker-compose.yml").read_text()
     workflow = (root / ".github/workflows/docker.yml").read_text()
     docker = yaml.safe_load(workflow)
+    runtime_workflow = (root / ".github/workflows/runtime.yml").read_text()
+    for source in (workflow, runtime_workflow):
+        assert source.count("TWIN_EVENT_KIND: ${{ github.event_name }}") == 2
+        assert (
+            source.count(
+                "TWIN_EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}"
+            )
+            == 2
+        )
     assert "${LLM_BASE_URL:-http://llm-svc:8011/v1?run_id=${" not in compose
     assert "LLM_BASE_URL=${LLM_BASE_URL:-http://llm-svc:8011/v1}" in compose
     assert "TWIN_RUN_ID=${TWIN_RUN_ID:-local}" in compose
@@ -174,6 +221,11 @@ def test_compose_run_id_and_failure_provenance_are_unambiguous():
     assert "uv run --no-sync python scripts/twin_provenance.py" in compose_evidence
     assert (
         "TWIN_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}"
+        in compose_evidence
+    )
+    assert "TWIN_EVENT_KIND: ${{ github.event_name }}" in compose_evidence
+    assert (
+        "TWIN_EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}"
         in compose_evidence
     )
     assert (
@@ -296,3 +348,38 @@ def test_droid_action_sanitizer_removes_debug_uploads_and_fails_closed(tmp_path)
     assert "Collect .factory debug files" not in result
     assert "Upload debug artifacts" not in result
     assert "actions/upload-artifact" not in result
+
+
+def test_research_runtime_is_required_by_the_mainline_gate():
+    root = Path(__file__).parents[2]
+    docker = yaml.safe_load((root / ".github/workflows/docker.yml").read_text())
+    runtime = yaml.safe_load((root / ".github/workflows/runtime.yml").read_text())
+    assert (
+        docker["jobs"]["research-runtime"]["uses"] == "./.github/workflows/runtime.yml"
+    )
+    assert "research-runtime" in docker["jobs"]["runtime-gate"]["needs"]
+    assert runtime["jobs"]["runtime-gate"]["name"] == "Research Runtime Gate"
+    assert set(runtime["jobs"]["runtime-gate"]["needs"]) >= {
+        "research-storage",
+        "protected-browser-profile",
+        "protected-flare-profile",
+        "protected-capture-composition",
+    }
+
+
+def test_published_agent_health_revision_is_baked_into_image():
+    root = Path(__file__).parents[2]
+    workflow = yaml.safe_load((root / ".github/workflows/docker.yml").read_text())
+    build = next(
+        step
+        for step in workflow["jobs"]["build-and-push"]["steps"]
+        if step.get("uses") == "docker/build-push-action@v6"
+    )
+    assert "GROKTOCRAWL_REVISION=${{ github.sha }}" in build["with"]["build-args"]
+    dockerfile = (root / "agent-svc/Dockerfile").read_text()
+    assert "ENV GROKTOCRAWL_REVISION=${GROKTOCRAWL_REVISION}" in dockerfile
+    compose = yaml.safe_load((root / "docker-compose.yml").read_text())
+    assert not any(
+        value.startswith("GROKTOCRAWL_REVISION=")
+        for value in compose["services"]["agent-svc"]["environment"]
+    )

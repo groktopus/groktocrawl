@@ -6,6 +6,8 @@
 
 Technical Story: GroktoCrawl needs a lightweight grounded Q&A endpoint that fills the gap between raw search results (`/v2/search`) and the deep autonomous research agent (`/v2/agent`). This is the most common primitive for AI agent tool use — ask a question, get a cited answer in one round-trip.
 
+- Research-substrate scope: The existing `/v2/answer` contract remains unchanged. Its opt-in research-substrate scope follows [ADR-0069](0069-adopt-bounded-research-substrate.md); the former experiment decision records are preserved in the [provenance archive](experimental/groktocrawl-x/README.md).
+
 ## Context and Problem Statement
 
 GroktoCrawl has two modes for answering questions:
@@ -227,7 +229,7 @@ flowchart TB
     subgraph agent["agent-svc — GroktoCrawl API"]
         direction TB
         API["FastAPI Router\nPOST endpoints"]
-        
+
         subgraph processing["Processing Modes"]
             AGENT["Research Agent\nsearch→scrape→think→answer\nmulti-step, 5-15s"]
             ANSWER["Answer Pipeline\nsearch→scrape→LLM→cite\nsingle-turn, 1-3s"]
@@ -269,7 +271,7 @@ flowchart LR
         CONTEXT["Context Builder\nnumber sources + excerpts"]
         LLM_CLIENT["LLMClient.generate()\nLLMClient.generate_stream()\nllm.py"]
         CITE["Citation Parser\nregex [N] extraction"]
-        
+
         ROUTE --> SEARCH
         SEARCH --> SCRAPE
         SCRAPE --> CONTEXT
@@ -296,7 +298,7 @@ flowchart LR
         EVT_SRC["event: sources\\nscraped sources with content"]
         EVT_TOK["event: token\\nper-token content"]
         EVT_DONE["event: done\\nfull answer + citations"]
-        
+
         SSE --> EVT_PEND
         SSE --> EVT_SRC
         SSE --> EVT_TOK

@@ -36,7 +36,7 @@
     "provisioning_command": "uv sync --locked --no-dev --group fast-tests",
     "proxy_env_workaround": "http_proxy=https_proxy=all_proxy=http://127.0.0.1:0 with NO_PROXY=* \u2014 bypasses the macOS CPython getproxies_macosx_sysconf segfault in urllib.request.getproxies() triggered by httpx.AsyncClient init (dummy proxies make getproxies_environment() non-empty; NO_PROXY lets uv still reach PyPI for the pinned install); hermetic (tests monkeypatch the HTTP client, no real proxy use)",
     "qa_outcome_path": "/var/folders/gn/gpr8z9bn72z5kqm_fmjndj180000gn/T/qa-mutmut-2026-08-21.json",
-    "root_dir": "/Volumes/tank01/magnus/git/groktocrawl",
+    "root_dir": "/path/to/groktocrawl",
     "seed": "mutmut 3.7.0 exposes no --seed flag. Determinism is pinned by the fixed tool version (mutmut==3.7.0) and the deterministic mutant input order (source lines of agent/searxng_client.py in file order).",
     "timeout": {
       "bounded_by": "runner subprocess timeout on the mutmut run call",

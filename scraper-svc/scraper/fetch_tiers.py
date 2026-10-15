@@ -16,13 +16,14 @@ import asyncio
 import logging
 import time
 from contextlib import AsyncExitStack
+from urllib.parse import urlparse
 
 import httpx
 
 from common.admission import AdmissionController
 from common.metrics import METRICS
 from common.stage_metrics import inc_counter, observe_elapsed
-from common.url import extract_domain
+from common.url import extract_domain, is_private_host, is_private_host_literal
 
 from .barrier import (
     _classify_barrier,
@@ -35,6 +36,13 @@ from .fetch_quality import html_to_markdown
 from .playwright_retry import retry_transient
 from .proxy import _get_playwright_proxy
 from .settings import load_settings
+from .source_http import (
+    SourceDestinationPolicyUnavailableError,
+    capture_gateway_hostname_is_public,
+    protected_source_mode,
+    trusted_control_base_url,
+    trusted_control_httpx_client,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +86,7 @@ def _observe_extraction(started: float) -> None:
     )
 
 
-def _is_private_url(url: str) -> tuple[bool, str]:
+async def _is_private_url(url: str) -> tuple[bool, str]:
     """Check if a URL targets a private/internal IP or hostname.
 
     Returns (is_private, reason) tuple. Shared logic with browser-svc.
@@ -87,9 +95,23 @@ def _is_private_url(url: str) -> tuple[bool, str]:
     for the actual check, then maps the boolean result back to the
     ``(bool, str)`` tuple format.
     """
-    from common.url import is_private_host as _shared_is_private
+    parsed = urlparse(url)
+    hostname = parsed.hostname or ""
+    literal_policy = is_private_host_literal(hostname)
+    if literal_policy is not None:
+        return (True, "Private or internal URL") if literal_policy else (False, "")
 
-    return (True, "Private or internal URL") if _shared_is_private(url) else (False, "")
+    if protected_source_mode():
+        try:
+            is_public = await capture_gateway_hostname_is_public(hostname)
+        except SourceDestinationPolicyUnavailableError:
+            # A missing/unavailable oracle never converts an unknown hostname
+            # into an allowed destination.
+            logger.warning("Capture gateway destination policy is unavailable")
+            raise
+        return (False, "") if is_public else (True, "Private or internal URL")
+
+    return (True, "Private or internal URL") if is_private_host(url) else (False, "")
 
 
 async def _playwright_fetch_with_proxy(
@@ -586,6 +608,12 @@ async def fetch_via_playwright(url: str) -> dict | None:
     This requires playwright and chromium to be installed.
     Falls back gracefully if playwright is not available.
     """
+    # In protected capture mode, never run page JavaScript in the scraper
+    # process: it shares application/control connectivity. Delegate the same
+    # navigation through the isolated browser renderer instead.
+    if protected_source_mode():
+        return await _fetch_via_browser_svc(url)
+
     try:
         pw_proxy = _get_playwright_proxy()
 
@@ -646,9 +674,10 @@ async def fetch_via_flaresolverr(url: str) -> dict | None:
     docker-compose.yml). Gracefully falls back if unavailable.
     """
     try:
-        async with httpx.AsyncClient(timeout=60) as client:
+        flare_url = trusted_control_base_url(FLARE_SOLVERR_URL, "flare")
+        async with trusted_control_httpx_client(service="flare", timeout=60) as client:
             resp = await client.post(
-                f"{FLARE_SOLVERR_URL}",
+                flare_url,
                 json={
                     "cmd": "request.get",
                     "url": url,
@@ -706,11 +735,13 @@ async def _fetch_via_browser_svc(url: str) -> dict | None:
 
     Browser-svc is available at http://browser-svc:8012.
     """
-    browser_svc_url = _settings.browser_svc_url
+    browser_svc_url = trusted_control_base_url(_settings.browser_svc_url, "browser")
     session_id = None
     try:
         # Create a browser session
-        async with httpx.AsyncClient(timeout=30) as client:
+        async with trusted_control_httpx_client(
+            service="browser", timeout=30
+        ) as client:
             create_resp = await client.post(
                 f"{browser_svc_url}/browsers",
                 json={"ttl": 60},  # Short TTL, we only need one page load
@@ -838,7 +869,9 @@ async def _fetch_via_browser_svc(url: str) -> dict | None:
         # Clean up the browser session
         if session_id:
             try:
-                async with httpx.AsyncClient(timeout=5) as c:
+                async with trusted_control_httpx_client(
+                    service="browser", timeout=5
+                ) as c:
                     await c.delete(f"{browser_svc_url}/browsers/{session_id}")
             except Exception:
                 pass
@@ -851,7 +884,9 @@ async def _get_browser_page_content(
 ) -> str | None:
     """Get the full page HTML from a browser-svc session via executeScript."""
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
+        async with trusted_control_httpx_client(
+            service="browser", timeout=15
+        ) as client:
             resp = await client.post(
                 f"{browser_svc_url}/browsers/{session_id}/execute",
                 json={

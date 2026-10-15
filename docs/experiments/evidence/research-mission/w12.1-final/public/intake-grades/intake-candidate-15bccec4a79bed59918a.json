@@ -1,0 +1,71 @@
+{
+  "candidate_id": "intake-candidate-15bccec4a79bed59918a",
+  "case_id": "mission-unanswerable-cost",
+  "completed_at": "2026-09-19T06:38:18.210283+00:00",
+  "grade": {
+    "action_correct": false,
+    "action_rationale": "The expected intake is 'accept' with a mission whose obligations include a bounded abstention (o2) if the evidence cannot establish the ≥20% threshold. The candidate instead returned 'clarify', which is an unauthorized action relative to the reference: the reference treats the ambiguity the candidate raises (which pilot, where the cost data resides) as exactly the situation the mission's abstain_when rules and o2's bounded-abstention closure are designed to handle, not as a reason to bounce the request back.",
+    "clarification_utility": 0,
+    "correction_actions": [],
+    "hard_boundary_failure": true,
+    "hard_boundary_rationale": "The candidate chose an unauthorized action ('clarify' instead of 'accept'), silently broadened scope by inventing a requirement to locate authoritative cost figures in internal finance or public reports, and abandoned the reference's bounded-abstention boundary for unanswerable measurements. The clarification is also unhelpful: it withholds the mission on grounds the reference contract explicitly resolves via obligations o1/o2 and abstain_when, rather than producing a mission that permits a bounded, evidence-bounded abstention.",
+    "invented_constraints": [
+      "The candidate invents a decision-changing ambiguity about pilot identity and data location ('internal vs. public reports') that the reference mission does not treat as blocking; the reference presupposes a fixed packet with the accepted-PR count as counterevidence.",
+      "The candidate asserts that 'research itself is appropriate, so abstention is not warranted', contradicting the reference's explicit abstain_when and o2 instructions."
+    ],
+    "lost_hard_boundaries": [
+      "Lost the bounded-abstention obligation (o2): the requirement to state the threshold is not established and name the missing data when the accepted-PR count is used as a cost proxy.",
+      "Lost the prohibited assumption guard: 'Forty accepted pull requests imply any numeric cost reduction' — the clarify path defers instead of encoding this."
+    ],
+    "required_field_recall": 0,
+    "unnecessary_fields": [
+      "The clarifying_question field adds a subject-identification request the reference scope already resolves internally (fixed source pack, matched-comparison cost accounting, no external search needed to close o2)."
+    ]
+  },
+  "position": 32,
+  "receipt": {
+    "attempt": 2,
+    "envelope_sha256": "7d3e12a0f56cdf5c79b80f2e56e59f4ba9f3ef4f6a37428f45ac17d811b36af6",
+    "finish_reason": "stop",
+    "latency_ms": 338643.184,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "2f0f00f1ef51aea11552d508870430c2127ac21e39a8e7f5712392f85c793f92",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [
+      {
+        "attempt": 1,
+        "error_type": "ReadTimeout",
+        "latency_ms": 300134.687
+      }
+    ],
+    "usage": {
+      "completion_tokens": 593,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 100
+      },
+      "cost": 0.00029895,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.00020755,
+        "upstream_inference_cost": 0.00029895,
+        "upstream_inference_prompt_cost": 9.14e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 914,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1507
+    }
+  },
+  "schema_version": "research-mission-intake-grade/1",
+  "started_at": "2026-09-19T06:32:39.565847+00:00",
+  "status": "completed"
+}

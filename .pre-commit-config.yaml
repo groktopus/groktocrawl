@@ -26,12 +26,12 @@ repos:
       - id: check-yaml
         name: check yaml
         description: "Check YAML files for syntax errors"
-        exclude: ^(docker-compose\.scaleout\.yml|tests/fixtures/compose\.scaleout\.yml)$
+        exclude: ^(docker-compose(?:\.[a-z-]+)?\.yml|compose\.[a-z-]+\.yml|tests/fixtures/compose\.[a-z-]+\.yml)$
       - id: check-yaml
         name: check Compose YAML tags
-        # Compose's !reset is valid YAML but not a standard SafeLoader tag.
+        # Compose's !reset and !override are valid non-standard YAML tags.
         # Syntax-only validation here; the scale-out CI lane runs Compose itself.
-        files: ^(docker-compose\.scaleout\.yml|tests/fixtures/compose\.scaleout\.yml)$
+        files: ^(docker-compose(?:\.[a-z-]+)?\.yml|compose\.[a-z-]+\.yml|tests/fixtures/compose\.[a-z-]+\.yml)$
         args: [--unsafe]
       - id: check-toml
         name: check toml

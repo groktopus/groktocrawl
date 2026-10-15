@@ -1,0 +1,71 @@
+{
+  "answer": {
+    "answer": "Current authentication mode: Beginning in 2026, Elm API requires OAuth 2.1 and no longer accepts API keys (elm-auth-2026). Previously valid: In 2025, Elm API required API keys (elm-auth-2025); that requirement is now historical, superseded by the 2026 change. Both snapshots carry the same subject_id (elm-api) and lineage_id (elm-auth), so they describe the same subject over time rather than distinct subjects; identity is established by matching identifiers, not name similarity. As a conservative reading, 'current' is bounded by the latest supplied evidence: the 2026 snapshot is the most recent source provided, so OAuth 2.1 is confirmed as the required mode only through that snapshot, and any changes after 2026 cannot be assessed.",
+    "change_events": [
+      "Beginning in 2026, Elm API changed its required authentication mode from API keys to OAuth 2.1, and API keys are no longer accepted (elm-auth-2026; prior state documented in elm-auth-2025)."
+    ],
+    "citations": [
+      "elm-auth-2025",
+      "elm-auth-2026"
+    ],
+    "current_truths": [
+      "As of the latest supplied snapshot (2026), Elm API requires OAuth 2.1 (elm-auth-2026).",
+      "As of 2026, Elm API no longer accepts API keys (elm-auth-2026)."
+    ],
+    "historical_truths": [
+      "In 2025, Elm API required API keys (elm-auth-2025). This was the valid authentication mode before the 2026 change and is now superseded by the OAuth 2.1 requirement (elm-auth-2026)."
+    ],
+    "unresolved": [
+      "The precise effective date within 2026 is not specified; the snapshot states only 'beginning in 2026' (elm-auth-2026).",
+      "No information is supplied about transition or grace periods for existing API keys during the switch to OAuth 2.1 (elm-auth-2026).",
+      "OAuth 2.1 implementation details (flows, scopes, token issuance, lifetimes, endpoints) are not provided in any snapshot (elm-auth-2026).",
+      "No snapshot dated after 2026 is supplied, so 'current' is confirmed only through the 2026 snapshot; any subsequent changes cannot be assessed from the supplied evidence (elm-auth-2026)."
+    ]
+  },
+  "arm": "treatment",
+  "case_id": "historical-support",
+  "completed_at": "2026-09-19T07:50:42.637430+00:00",
+  "position": 36,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "589347fd5996ecd6bbb3e07782b9d100732fdcc90fa99ff5f8257fdb86ff7b13",
+    "finish_reason": "stop",
+    "latency_ms": 13782.662,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "e8a6cc2c2c11ef2c5b1808d37bf3864d33bac727875a1951b4393b4f35fbc4e4",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 1655,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 1187
+      },
+      "cost": 0.00258303,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0024825,
+        "upstream_inference_cost": 0.00258303,
+        "upstream_inference_prompt_cost": 0.00010053
+      },
+      "is_byok": false,
+      "prompt_tokens": 889,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 832,
+        "video_tokens": 0
+      },
+      "total_tokens": 2544
+    }
+  },
+  "repetition": 3,
+  "schema_version": "research-thread-trial/1",
+  "started_at": "2026-09-19T07:50:28.852917+00:00",
+  "status": "completed",
+  "stratum": "historical",
+  "trial_id": "historical-support-r3-treatment"
+}

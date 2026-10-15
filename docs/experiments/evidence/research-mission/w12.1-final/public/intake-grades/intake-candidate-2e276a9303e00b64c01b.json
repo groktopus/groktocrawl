@@ -1,0 +1,78 @@
+{
+  "candidate_id": "intake-candidate-2e276a9303e00b64c01b",
+  "case_id": "mission-compound-governance",
+  "completed_at": "2026-09-19T06:32:39.565494+00:00",
+  "grade": {
+    "action_correct": false,
+    "action_rationale": "The reference mission expects an accept action and a fully specified research mission. The candidate instead chooses clarify, citing a missing packet and ambiguity about source scope. The reference mission treats the request as sufficient to accept and already defines the source policy, scope, and evidence limitations. The clarification is therefore unhelpful and misaligned.",
+    "clarification_utility": 0,
+    "correction_actions": [
+      "Change action from clarify to accept.",
+      "Produce a normalized research mission matching the reference mission's decision, scope, questions, obligations, source policy, freshness, contradiction policy, stop/abstain conditions, and prohibited assumptions.",
+      "Do not ask for the packet or source-scope guidance; the reference mission already defines the source policy and evidence limitations.",
+      "Preserve hard boundaries: as-of 2026-09-19, exception expiry 2026-06-30, no self-approval, and no automatic renewal."
+    ],
+    "hard_boundary_failure": true,
+    "hard_boundary_rationale": "The candidate loses the as-of freshness constraint, the exception expiry, the no-self-approval rule, and the prohibition on assuming automatic renewal. It also invents a scope question about external/secondary sources that the reference source policy already governs.",
+    "invented_constraints": [
+      "Asks whether to draw on external/secondary sources, potentially broadening beyond the fixed source pack and reference source policy."
+    ],
+    "lost_hard_boundaries": [
+      "As-of freshness constraint: 2026-09-19T00:00:00Z",
+      "Exception expiry: 2026-06-30",
+      "No self-approval rule",
+      "Prohibition on assuming automatic exception renewal"
+    ],
+    "required_field_recall": 0,
+    "unnecessary_fields": [
+      "clarifying_question",
+      "mission: null"
+    ]
+  },
+  "position": 3,
+  "receipt": {
+    "attempt": 2,
+    "envelope_sha256": "bc32f335c7bb12c573488e838549a173eb9de511e85deb0f9ad6b073444ceb48",
+    "finish_reason": "stop",
+    "latency_ms": 447756.976,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "64f0b62d25b97ca29f38aff7e30f7e50f254e74cfc49d1294b79c7a16668732b",
+    "returned_model": "deepseek/deepseek-v4.1-flash",
+    "tool_calls": false,
+    "transport_failures": [
+      {
+        "attempt": 1,
+        "error_type": "ReadTimeout",
+        "latency_ms": 300205.981
+      }
+    ],
+    "usage": {
+      "completion_tokens": 4881,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 4443
+      },
+      "cost": 0.00618,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0058572,
+        "upstream_inference_cost": 0.00618,
+        "upstream_inference_prompt_cost": 0.0003228
+      },
+      "is_byok": false,
+      "prompt_tokens": 1076,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 5957
+    }
+  },
+  "schema_version": "research-mission-intake-grade/1",
+  "started_at": "2026-09-19T06:25:11.806596+00:00",
+  "status": "completed"
+}

@@ -1,0 +1,86 @@
+{
+  "arm": "treatment",
+  "case_id": "mission-ambiguous-productive",
+  "completed_at": "2026-09-19T05:56:12.575324+00:00",
+  "position": 2,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "b3f0c52ae4f6d92b2f5c5435b550ebc056532e976cb8394ea989739d1546ddd2",
+    "finish_reason": "stop",
+    "latency_ms": 28918.405,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "7eefe1acd5d5e54ad2734c71c060d06103bc33daff31b0838accf6a62463f807",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 575,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 6
+      },
+      "cost": 0.00021969,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.00020125,
+        "upstream_inference_cost": 0.00021969,
+        "upstream_inference_prompt_cost": 1.844e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 850,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 832,
+        "video_tokens": 0
+      },
+      "total_tokens": 1425
+    }
+  },
+  "repetition": 3,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Recommended outcome and comparison for judging agent productivity (q1 / o1 = unresolved on closure, per fixture limits; decision framework is supported by policy only as a measurement policy, not by measurements — see limits below for why o1 cannot be closed as *supported* by the pilot data alone.) Use the measurement policy's declared evaluation set as the outcome, and a matched-task comparison as the baseline. Do not use accepted-PR counts as a causal productivity measure; the policy explicitly forbids inferring causal benefit from accepted-PR counts, and the pilot note supplies no comparison data.",
+    "candidate_id": "candidate-8295da6b9f5ecd61fc6b",
+    "citations": [
+      "measurement-policy",
+      "measurement-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "measurement-policy"
+        ],
+        "text": "Agent-assisted delivery should be evaluated using matched tasks, quality gates, human review time, rework, elapsed lead time, and total cost as the declared outcome set.",
+        "uncertainty": "No material uncertainty: this is the explicit policy definition."
+      },
+      {
+        "source_ids": [
+          "measurement-policy"
+        ],
+        "text": "Failed or abandoned tasks must be counted; productivity cannot be inferred causally from accepted-PR counts.",
+        "uncertainty": "No material uncertainty: policy-stated accounting boundary."
+      },
+      {
+        "source_ids": [
+          "measurement-context"
+        ],
+        "text": "The only available data point is 40 accepted pull requests in one month, with no task mix, control group, reviewer hours, failure count, or provider costs reported.",
+        "uncertainty": "No material uncertainty about what the pilot note contains; material uncertainty remains about actual productivity because these elements are absent."
+      },
+      {
+        "source_ids": [
+          "measurement-context",
+          "measurement-policy"
+        ],
+        "text": "The 40-PR figure cannot support a conclusion that agent assistance improved productivity.",
+        "uncertainty": "Unresolved by design: no baseline or comparison exists in the supplied sources."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:55:43.655811+00:00",
+  "status": "completed",
+  "trial_id": "mission-ambiguous-productive-r3-treatment"
+}

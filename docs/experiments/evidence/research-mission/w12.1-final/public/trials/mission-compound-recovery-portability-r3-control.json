@@ -1,0 +1,104 @@
+{
+  "arm": "control",
+  "case_id": "mission-compound-recovery-portability",
+  "completed_at": "2026-09-19T05:54:35.308207+00:00",
+  "position": 1,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "78e63a39571be1c6a9de7b3a8219a64fa6ddb5663d6798096c3694f5117a555e",
+    "finish_reason": "stop",
+    "latency_ms": 26568.491,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "a70449e3886b9f01dcb664aeebde948cb578cd75e04a07b1b38a8cf74632636d",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 6211,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 6908
+      },
+      "cost": 0.00323135,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0031055,
+        "upstream_inference_cost": 0.00323135,
+        "upstream_inference_prompt_cost": 0.00012585
+      },
+      "is_byok": false,
+      "prompt_tokens": 839,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 7050
+    }
+  },
+  "repetition": 3,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Recommendation: Reject the switch as presented — do not approve on the current record (Aster fixture record, as supplied)The only support offered for the provider switch is a vendor brochure asserting the model is **enterprise ready** and **faster** while supplying **no comparison workload, no version pins, no error distribution, and no review methodology**. Those claims are rejected as sufficient approval evidence. This rejects the *approval case*, not the candidate model itself — the supplied record cannot establish its actual performance in either direction.### 1. How ambiguous external writes must recoverPer the failure-recovery policy:- **Record operation identity before the external write.**- **After an ambiguous completion, reconcile remote state before retrying.**- **A local checkpoint alone does not prove the external write failed.**The controlled test in the record illustrates why: a worker timed out after submitting a release request, and the remote service later reported the original request as completed. The local timeout did not establish failure. The record does not state whether a duplicate submission occurred or how reconciliation was executed — that remains unstated.### 2. What provider portability must preserveEvery production model change requires:- the **same frozen task suite**,- **provenance checks**,- **declared resource limits**,and provider adapters must preserve **tool-result identities** and **cancellation semantics**.### 3. Why the brochure fails this barThe brochure names none of the comparison fields a policy-compliant evaluation would produce. None of the conditions above can be checked against it.### Unresolved limits- The record contains **no frozen-suite results, provenance records, resource-limit declarations, or adapter validation** of tool-result identity or cancellation semantics for any candidate provider; whether any provider could satisfy the portability conditions is unestablished.- The brochure's claims are **unverified, not disproven**; no independent verification exists in the record.- The reliability test is a **single controlled test**; it does not establish how often ambiguous writes occur, nor the downstream handling after the remote service's later report.### Tensions preserved- **Local vs. remote signals:** the worker's timeout conflicted with the remote service's later report that the original request completed. Policy resolves this by requiring remote reconciliation and treating the local checkpoint as non-probative of failure.- **Assertion vs. evidence:** the brochure's readiness and speed assertions stand against the complete absence of the comparison fields the policy requires.### Path to reconsideration (derived from the policy's own conditions)A resubmission would need a reproducible comparison on the same frozen task suite, with provenance checks, declared resource limits, and demonstrated adapter preservation of tool-result identity and cancellation semantics.",
+    "candidate_id": "candidate-6c1811f741e7c9b32885",
+    "citations": [
+      "reliability-policy",
+      "reliability-context",
+      "platform-policy",
+      "platform-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "reliability-policy"
+        ],
+        "text": "A worker must record operation identity before an external write and, after an ambiguous completion, reconcile remote state before retrying; a local checkpoint alone does not prove the external write failed.",
+        "uncertainty": "No material uncertainty about the stated requirement; the record does not include implementation or enforcement details."
+      },
+      {
+        "source_ids": [
+          "reliability-context",
+          "reliability-policy"
+        ],
+        "text": "In a controlled test, a worker timed out after submitting a release request and the remote service later reported the original request as completed, illustrating that a local timeout does not establish write failure.",
+        "uncertainty": "Single controlled test; the record does not state whether a duplicate submission occurred or how reconciliation was performed."
+      },
+      {
+        "source_ids": [
+          "platform-policy"
+        ],
+        "text": "Every production model change requires the same frozen task suite, provenance checks, and declared resource limits, and provider adapters must preserve tool-result identities and cancellation semantics.",
+        "uncertainty": "The policy states the requirements; the record contains no evidence that any adapter or model change has been validated against them."
+      },
+      {
+        "source_ids": [
+          "platform-context"
+        ],
+        "text": "The vendor brochure asserts the model is enterprise ready and faster but supplies no comparison workload, version pins, error distribution, or review methodology.",
+        "uncertainty": "The claims are unverifiable from the supplied record; the missing fields are documented, but the record cannot establish the model's actual performance in either direction."
+      },
+      {
+        "source_ids": [
+          "platform-policy",
+          "platform-context"
+        ],
+        "text": "The provider switch cannot be approved on the current record because its only support is brochure claims that fail the portability policy's required evaluation conditions; the enterprise-ready and faster claims are rejected as sufficient approval evidence.",
+        "uncertainty": "This rejects the approval case as presented, not the candidate model itself; actual performance remains unestablished pending a reproducible comparison."
+      },
+      {
+        "source_ids": [
+          "reliability-context",
+          "reliability-policy"
+        ],
+        "text": "The controlled test produced conflicting local and remote signals (worker timeout vs. remote report of completion), which the recovery policy resolves by requiring remote reconciliation and treating local checkpoints as non-probative of failure.",
+        "uncertainty": "The conflict is an ambiguity the policy is designed to resolve; the record does not quantify how often such ambiguity occurs."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:54:08.738464+00:00",
+  "status": "completed",
+  "trial_id": "mission-compound-recovery-portability-r3-control"
+}

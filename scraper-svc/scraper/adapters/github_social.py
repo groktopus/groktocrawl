@@ -30,8 +30,11 @@ import logging
 import os
 import re
 
-import httpx
+# Keep this module alias as the established adapter test patch seam. Production
+# requests still go through source_httpx_client().
+import httpx  # noqa: F401
 
+from ..source_http import source_httpx_client
 from .base import AdapterContext, AdapterError, AdapterResult, SiteAdapter, adapter
 
 logger = logging.getLogger(__name__)
@@ -158,7 +161,7 @@ async def _graphql(query: str, variables: dict) -> dict | None:
     if not token:
         return None
     try:
-        async with httpx.AsyncClient(timeout=30) as client:
+        async with source_httpx_client(timeout=30) as client:
             resp = await client.post(
                 GRAPHQL_URL,
                 json={"query": query, "variables": variables},
@@ -196,7 +199,7 @@ async def _html_scrape(url: str) -> dict | None:
     contains the full content.
     """
     try:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
+        async with source_httpx_client(follow_redirects=True, timeout=15) as client:
             resp = await client.get(
                 url,
                 headers={
@@ -249,7 +252,7 @@ async def _html_scrape(url: str) -> dict | None:
 async def _rest_get(path: str, params: dict | None = None) -> dict | list | None:
     """Make a REST GET request to the GitHub API."""
     try:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
+        async with source_httpx_client(follow_redirects=True, timeout=15) as client:
             resp = await client.get(
                 f"{REST_API}{path}",
                 headers=_rest_headers(),
@@ -266,7 +269,7 @@ async def _rest_get(path: str, params: dict | None = None) -> dict | list | None
 async def _rest_get_text(path: str) -> str | None:
     """Make a REST GET that returns raw text (not JSON)."""
     try:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
+        async with source_httpx_client(follow_redirects=True, timeout=15) as client:
             resp = await client.get(
                 f"{REST_API}{path}",
                 headers={**_rest_headers(), "Accept": "application/vnd.github.v3.raw"},

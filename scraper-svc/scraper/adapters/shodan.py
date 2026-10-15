@@ -13,8 +13,7 @@ from __future__ import annotations
 import logging
 import re
 
-import httpx
-
+from ..source_http import source_httpx_client
 from ._helpers import scrape_page
 from .base import AdapterContext, AdapterError, AdapterResult, SiteAdapter, adapter
 
@@ -39,7 +38,7 @@ async def _fetch_api(ip: str, api_key: str) -> dict | None:
     if not api_key:
         return None
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
+        async with source_httpx_client(timeout=10) as client:
             resp = await client.get(
                 f"https://api.shodan.io/shodan/host/{ip}",
                 params={"key": api_key, "minify": True},

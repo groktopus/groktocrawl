@@ -1,0 +1,124 @@
+{
+  "case_id": "compound-1",
+  "control_artifact": {
+    "admitted_evidence": [
+      {
+        "canonical_source_id": "canonical-compound-1-generalist-compound-1-scope",
+        "derivative": false,
+        "evidence_id": "compound-1-generalist-compound-1-scope",
+        "obligation_id": "compound-1-scope",
+        "publisher_id": "publisher-compound-1-generalist",
+        "source_id": "source-compound-1-generalist-compound-1-scope",
+        "span": "Pinned supports evidence for compound-1-scope in compound-1.",
+        "stance": "supports"
+      }
+    ],
+    "conflicting_obligation_ids": [],
+    "covered_obligation_ids": [
+      "compound-1-scope"
+    ],
+    "handoff_failures": [],
+    "rejected_evidence": {},
+    "total_calls": 2
+  },
+  "control_calls": 2,
+  "preferred": "treatment",
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "d71d2e0af59f65b21d0f1478804f52bbb19984c6dc2500789bdf3dc1335e595b",
+    "finish_reason": "stop",
+    "latency_ms": 230271.565,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "87d55a554902187575768b052964fa720f60addf861508ab8d8c003e0eb5dc02",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 3503,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 3795
+      },
+      "cost": 0.001852,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0017515,
+        "upstream_inference_cost": 0.001852,
+        "upstream_inference_prompt_cost": 0.0001005
+      },
+      "is_byok": false,
+      "prompt_tokens": 670,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 4173
+    }
+  },
+  "repetition": 1,
+  "schema_version": "specialist-value-review/1",
+  "scores": {
+    "control": {
+      "reason": "placeholder",
+      "trustworthiness": 0,
+      "usefulness": 0
+    },
+    "treatment": {
+      "reason": "placeholder",
+      "trustworthiness": 1,
+      "usefulness": 1
+    }
+  },
+  "separable": true,
+  "status": "completed",
+  "stratum": "compound",
+  "treatment_artifact": {
+    "admitted_evidence": [
+      {
+        "canonical_source_id": "canonical-compound-1-discovery-compound-1-scope",
+        "derivative": false,
+        "evidence_id": "compound-1-discovery-compound-1-scope",
+        "obligation_id": "compound-1-scope",
+        "publisher_id": "publisher-compound-1-discovery",
+        "source_id": "source-compound-1-discovery-compound-1-scope",
+        "span": "Pinned supports evidence for compound-1-scope in compound-1.",
+        "stance": "supports"
+      },
+      {
+        "canonical_source_id": "canonical-compound-1-authority-compound-1-authority",
+        "derivative": false,
+        "evidence_id": "compound-1-authority-compound-1-authority",
+        "obligation_id": "compound-1-authority",
+        "publisher_id": "publisher-compound-1-authority",
+        "source_id": "source-compound-1-authority-compound-1-authority",
+        "span": "Pinned supports evidence for compound-1-authority in compound-1.",
+        "stance": "supports"
+      },
+      {
+        "canonical_source_id": "canonical-compound-1-risk-compound-1-risk",
+        "derivative": false,
+        "evidence_id": "compound-1-risk-compound-1-risk",
+        "obligation_id": "compound-1-risk",
+        "publisher_id": "publisher-compound-1-risk",
+        "source_id": "source-compound-1-risk-compound-1-risk",
+        "span": "Pinned supports evidence for compound-1-risk in compound-1.",
+        "stance": "supports"
+      }
+    ],
+    "conflicting_obligation_ids": [],
+    "covered_obligation_ids": [
+      "compound-1-authority",
+      "compound-1-risk",
+      "compound-1-scope"
+    ],
+    "handoff_failures": [],
+    "rejected_evidence": {},
+    "total_calls": 2
+  },
+  "treatment_calls": 3,
+  "trial_id": "compound-1-r1"
+}

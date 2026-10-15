@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-76b1336f3b7b274ed2b0",
+  "case_id": "syndicated-copy",
+  "completed_at": "2026-09-19T09:13:25.798270+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 50,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 50,
+    "lost_history": false,
+    "rationale": "The candidate correctly answers 'No': the Industry Wire item is verbatim syndication sharing lineage birch-announcement, so it is not independent confirmation, and the audit pass remains an unverified BirchDB claim. Current truth and unresolved status are accurate. Minor deductions: the candidate omitted the change event that a derivative copy became available, and instead filed the syndication fact under historical_truths, where it does not belong (it is a change event, not a superseded truth). No false merge, no stale-current leak, no lost history, no unsupported claims.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 100,
+    "unsupported_claims": 0,
+    "usefulness": 100
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "80b9c0b6b89f5c03cca3c1b162c4a59ce0f1829ae268e80c16869ab356fd4254",
+    "finish_reason": "stop",
+    "latency_ms": 8000.629,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "321554a26f3748499b35e184149382acca20d5792a810e223d31ac094915657c",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 227,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 39
+      },
+      "cost": 0.000118475,
+      "cost_details": {
+        "upstream_inference_completions_cost": 5.675e-05,
+        "upstream_inference_cost": 0.000118475,
+        "upstream_inference_prompt_cost": 6.1725e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 823,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1050
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:13:17.796507+00:00",
+  "status": "completed",
+  "trial_id": "syndicated-copy-r2-control"
+}

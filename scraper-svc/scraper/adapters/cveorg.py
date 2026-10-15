@@ -17,6 +17,7 @@ import re
 
 import httpx
 
+from ..source_http import source_httpx_client
 from .base import AdapterContext, AdapterError, AdapterResult, SiteAdapter, adapter
 
 logger = logging.getLogger(__name__)
@@ -74,7 +75,7 @@ async def _fetch_cve_api(cve_id: str) -> dict | None:
     }
 
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
+        async with source_httpx_client(timeout=15) as client:
             resp = await client.get(url, headers=headers)
             if resp.status_code == 200:
                 return resp.json()
@@ -267,7 +268,7 @@ async def _fetch_via_readability(url: str) -> tuple[str, dict] | None:
     Returns ``(markdown, metadata)`` or ``None``.
     """
     try:
-        async with httpx.AsyncClient(
+        async with source_httpx_client(
             timeout=15,
             follow_redirects=True,
             headers={"User-Agent": "Mozilla/5.0 (compatible; GroktoCrawl/0.7.0)"},

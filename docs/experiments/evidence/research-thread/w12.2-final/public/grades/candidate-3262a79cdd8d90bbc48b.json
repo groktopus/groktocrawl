@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-3262a79cdd8d90bbc48b",
+  "case_id": "later-resolution",
+  "completed_at": "2026-09-19T09:13:34.822896+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 100,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "The candidate correctly identifies the change (retention period now published as 30 days), preserves the earlier unspecified state as historical, and cites both snapshots. Current and historical truths match the reference exactly. The unresolved list invents peripheral questions (scope beyond build logs, enforcement date) not present in the reference, so unresolved_accuracy is halved; no factual errors or failure flags.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 50,
+    "unsupported_claims": 0,
+    "usefulness": 95
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "58695b6a3791b623a8b839436bed7fdc62c567324d002cc544fe73799c787a12",
+    "finish_reason": "stop",
+    "latency_ms": 11732.996,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "9535a67760477ccda91e8e302ec42e71f34d5b271a1f73231f98610da3b9805f",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 172,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 22
+      },
+      "cost": 0.000105025,
+      "cost_details": {
+        "upstream_inference_completions_cost": 4.3e-05,
+        "upstream_inference_cost": 0.000105025,
+        "upstream_inference_prompt_cost": 6.2025e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 827,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 999
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:13:23.088801+00:00",
+  "status": "completed",
+  "trial_id": "later-resolution-r3-control"
+}

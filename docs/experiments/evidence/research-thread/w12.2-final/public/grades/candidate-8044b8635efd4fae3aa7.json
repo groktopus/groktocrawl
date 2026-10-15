@@ -1,0 +1,65 @@
+{
+  "candidate_id": "candidate-8044b8635efd4fae3aa7",
+  "case_id": "renamed-feature",
+  "completed_at": "2026-09-19T09:24:11.142236+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 100,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "The candidate correctly identifies the rename from policy checks to release guards, preserves the Northstar 3 terminology as historical, and states the Northstar 4 current truth with unchanged purpose, all directly supported by the two primary sources. No false merge, no stale-current leak, no lost history, and no unsupported claims. The only deduction is on unresolved_accuracy: the reference lists nothing unresolved, and the candidate invents a peripheral open question about whether individual checks were dropped, which is not grounded in the reference ledger.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 50,
+    "unsupported_claims": 0,
+    "usefulness": 95
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 2,
+    "envelope_sha256": "e411727f0018e817917081b7369b9f8c83435b71ec3abc23db0528255d76c53b",
+    "finish_reason": "stop",
+    "latency_ms": 313231.585,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "29b26c2357fba4496ca839f3bf1900ebdd50b5eed6f9293cf01e7e56e49051b5",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [
+      {
+        "attempt": 1,
+        "error_type": "ReadTimeout",
+        "latency_ms": 300119.29
+      }
+    ],
+    "usage": {
+      "completion_tokens": 176,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0.00022885,
+      "cost_details": {
+        "upstream_inference_completions_cost": 8.8e-05,
+        "upstream_inference_cost": 0.00022885,
+        "upstream_inference_prompt_cost": 0.00014085
+      },
+      "is_byok": false,
+      "prompt_tokens": 939,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1115
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:18:57.910226+00:00",
+  "status": "completed",
+  "trial_id": "renamed-feature-r3-control"
+}

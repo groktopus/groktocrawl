@@ -1,0 +1,7 @@
+{
+  "receipt_sha256": "cdd02a6fd35142602d91e7a3d5eeba61c6d5caf9555c3afdc944a196bbbc01b1",
+  "samples": 73,
+  "schema_allowlist_passed": true,
+  "private_string_fields_in_resource_samples": 0,
+  "all_resource_guards_passed": true
+}

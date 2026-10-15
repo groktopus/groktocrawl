@@ -1,0 +1,94 @@
+{
+  "format": "jev-change-reference-labels/1",
+  "labels": [
+    {
+      "ambiguity_tag": null,
+      "blind_review_status": "pending parent review",
+      "case_id": "k8s-status-v121-to-v122",
+      "label_provenance": "best-effort assistant assessment before any Jev outcome; not independent gold",
+      "rationale": "The feature-state annotations move both conditions from v1.20 alpha to v1.22 beta, a direct version-specific support-status change.",
+      "reference_label": "material"
+    },
+    {
+      "ambiguity_tag": null,
+      "blind_review_status": "pending parent review",
+      "case_id": "k8s-address-types-and-conditions",
+      "label_provenance": "best-effort assistant assessment before any Jev outcome; not independent gold",
+      "rationale": "The revision removes FQDN from supported address types and substantially revises condition behavior and compatibility text.",
+      "reference_label": "material"
+    },
+    {
+      "ambiguity_tag": "ambiguous",
+      "blind_review_status": "pending parent review",
+      "case_id": "k8s-nonpod-endpoint-qualification",
+      "label_provenance": "best-effort assistant assessment before any Jev outcome; not independent gold",
+      "rationale": "The new “usually, but not always” qualifier changes the stated endpoint scope, but whether that edge case affects these clusters is unknown from the frozen intent. The label is intentionally ambiguous and excluded from binary scoring.",
+      "reference_label": "uncertain"
+    },
+    {
+      "ambiguity_tag": null,
+      "blind_review_status": "pending parent review",
+      "case_id": "k8s-private-registry-formatting",
+      "label_provenance": "best-effort assistant assessment before any Jev outcome; not independent gold",
+      "rationale": "The diff changes trailing whitespace only and adds no substantive wording or procedural step.",
+      "reference_label": "immaterial"
+    },
+    {
+      "ambiguity_tag": null,
+      "blind_review_status": "pending parent review",
+      "case_id": "python-sysmonitoring-lifecycle",
+      "label_provenance": "best-effort assistant assessment before any Jev outcome; not independent gold",
+      "rationale": "The revision documents clear_tool_id as added in Python 3.14 and changes free_tool_id to call it, including prior behavior.",
+      "reference_label": "material"
+    },
+    {
+      "ambiguity_tag": null,
+      "blind_review_status": "pending parent review",
+      "case_id": "python-cmdline-leading-whitespace",
+      "label_provenance": "best-effort assistant assessment before any Jev outcome; not independent gold",
+      "rationale": "The revision removes the prior claim that leading whitespace is significant, a direct correction to the monitored behavior.",
+      "reference_label": "material"
+    },
+    {
+      "ambiguity_tag": null,
+      "blind_review_status": "pending parent review",
+      "case_id": "cosign-airgap-trust-root",
+      "label_provenance": "best-effort assistant assessment before any Jev outcome; not independent gold",
+      "rationale": "The revision adds a warning that most workflows request keys from TUF, and that air-gapped users must retrieve and keep the trusted root current when bypassing TUF.",
+      "reference_label": "material"
+    },
+    {
+      "ambiguity_tag": null,
+      "blind_review_status": "pending parent review",
+      "case_id": "cosign-community-invite-intent",
+      "label_provenance": "best-effort assistant assessment before any Jev outcome; not independent gold",
+      "rationale": "The exact same README line changes the Slack invite URL, directly relevant to maintaining contributor onboarding.",
+      "reference_label": "material"
+    },
+    {
+      "ambiguity_tag": null,
+      "blind_review_status": "pending parent review",
+      "case_id": "cosign-community-invite-crypto-intent",
+      "label_provenance": "best-effort assistant assessment before any Jev outcome; not independent gold",
+      "rationale": "The same invite-only README diff does not affect signature verification behavior or cryptographic assumptions.",
+      "reference_label": "immaterial"
+    },
+    {
+      "ambiguity_tag": null,
+      "blind_review_status": "pending parent review",
+      "case_id": "k8s-nav-weight-content-intent",
+      "label_provenance": "best-effort assistant assessment before any Jev outcome; not independent gold",
+      "rationale": "Only the documentation weight metadata changes from 45 to 60; the page body and technical content are byte-identical.",
+      "reference_label": "immaterial"
+    },
+    {
+      "ambiguity_tag": null,
+      "blind_review_status": "pending parent review",
+      "case_id": "k8s-nav-weight-navigation-intent",
+      "label_provenance": "best-effort assistant assessment before any Jev outcome; not independent gold",
+      "rationale": "The same weight-only revision directly changes the navigation metadata covered by this intent.",
+      "reference_label": "material"
+    }
+  ],
+  "note": "Best-effort assistant labels, not independent gold. Review before unblinding."
+}

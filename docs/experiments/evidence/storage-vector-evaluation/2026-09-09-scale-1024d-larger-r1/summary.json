@@ -1,0 +1,44 @@
+{
+  "schema_version": "groktocrawl-x.vector-scale-repeated-summary.v1",
+  "workflow_run_id": 34295676281,
+  "verdict": "pass_with_gaps",
+  "rounds": 3,
+  "dimension": 1024,
+  "batch_size": 1000,
+  "providers": {
+    "qdrant": {
+      "ok_rounds": 3,
+      "mixed_operations": 720,
+      "failed_operations": 0,
+      "bulk_upsert_median_ms": {"1000": 873.75761, "5000": 4332.971573, "10000": 8916.873324},
+      "filtered_search_p50_median_ms": {"1000": 3.846437, "5000": 7.159129, "10000": 12.025456},
+      "filtered_search_p95_median_ms": {"1000": 4.150812, "5000": 14.301762, "10000": 48.013563},
+      "mixed_throughput_median_ops_s": {"1000": 347.116267, "5000": 185.705584, "10000": 136.276307}
+    },
+    "pgvector": {
+      "ok_rounds": 3,
+      "mixed_operations": 720,
+      "failed_operations": 0,
+      "bulk_upsert_median_ms": {"1000": 970.777211, "5000": 5069.828813, "10000": 10102.585146},
+      "filtered_search_p50_median_ms": {"1000": 3.614303, "5000": 10.222127, "10000": 18.095744},
+      "filtered_search_p95_median_ms": {"1000": 3.669121, "5000": 10.258588, "10000": 18.147239},
+      "mixed_throughput_median_ops_s": {"1000": 410.036902, "5000": 109.711828, "10000": 58.008122}
+    }
+  },
+  "boundary": "isolated repeated component benchmark",
+  "production_capacity_claim": false,
+  "storage_selection": null,
+  "known_limitations": [
+    "deterministic synthetic vectors rather than model-produced embeddings",
+    "maximum corpus size of 10000 records",
+    "80 mixed operations per provider and size per round",
+    "resource data is a single post-run snapshot",
+    "no sustained-load or soak interval"
+  ],
+  "remaining_gates": [
+    "sustained request mix and resource time series",
+    "provider-native model and dimension migration and rollback",
+    "reversible cutover and deletion continuity",
+    "operational surface assessment"
+  ]
+}

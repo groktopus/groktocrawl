@@ -1,0 +1,72 @@
+{
+  "arm": "treatment",
+  "case_id": "mission-ambiguous-productive",
+  "completed_at": "2026-09-19T05:49:01.397087+00:00",
+  "position": 1,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "b9c79dc2239157f8928fad234c2c13ca9634b8ec72882712b930ea853fcda883",
+    "finish_reason": "stop",
+    "latency_ms": 19275.555,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "3780011c3b26ab6361140edce62a196c6394ccaaa6c13ffd4cc649378808595d",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 497,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 5
+      },
+      "cost": 0.00019239,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.00017395,
+        "upstream_inference_cost": 0.00019239,
+        "upstream_inference_prompt_cost": 1.844e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 850,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 832,
+        "video_tokens": 0
+      },
+      "total_tokens": 1347
+    }
+  },
+  "repetition": 2,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Which productivity outcome and comparison should drive the decision (q1 / o1: **unresolved** with declared design only, not a verdict on productivity itself), because per the supplied policy the outcome must be evaluated with **matched tasks under quality gates**, tracking **human review time, rework, elapsed lead time, and total cost**, with **failed or abandoned tasks counted**. The policy explicitly forbids inferring causal benefit from accepted-PR counts (measurement-policy). No productivity verdict can be drawn: the only performance datum is a pilot note reporting 40 accepted PRs in one month, which omits task mix, a control group, reviewer hours, failure counts, and provider costs (measurement-context). The comparison is therefore defined but not yet populated with data.",
+    "candidate_id": "candidate-6738ba146e46eee0f428",
+    "citations": [
+      "measurement-policy",
+      "measurement-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "measurement-policy"
+        ],
+        "text": "The outcome set is defined by the policy: matched tasks with quality gates, human review time, rework, elapsed lead time, total cost, and counted failed or abandoned tasks; accepted-PR counts must not be used to infer causal benefit.",
+        "uncertainty": "No material uncertainty; policy is the stated accounting boundary."
+      },
+      {
+        "source_ids": [
+          "measurement-context",
+          "measurement-policy"
+        ],
+        "text": "The available pilot evidence (40 accepted PRs in one month) lacks task mix, control group, reviewer hours, failure count, and provider costs, so it cannot support a productivity or causal judgment.",
+        "uncertainty": "The supplied evidence cannot establish the missing baseline, task mix, or time horizon beyond the one-month note; unresolved."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:48:42.120706+00:00",
+  "status": "completed",
+  "trial_id": "mission-ambiguous-productive-r2-treatment"
+}

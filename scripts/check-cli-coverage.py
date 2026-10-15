@@ -52,6 +52,7 @@ EXEMPT = frozenset(
 # Value: the dispatch dict key in groktocrawl
 PATH_TO_CLI_COMMAND: dict[str, str] = {
     "agent": "agent",
+    "followup": "followup",
     "answer": "answer",
     "batch": "batch-scrape",
     "browser": "browser",
@@ -66,6 +67,7 @@ PATH_TO_CLI_COMMAND: dict[str, str] = {
     "parse": "parse",
     "scrape": "scrape",
     "search": "search",
+    "session": "document",
 }
 
 
@@ -118,6 +120,8 @@ def extract_cli_commands() -> set[str]:
 
 def path_to_command(path: str) -> str | None:
     """Map an API path to its expected CLI command name."""
+    if path == "/v2/session/{session_id}/evidence/{ref_id}":
+        return "evidence"
     # Strip leading /v2/ and take the first segment
     if not path.startswith("/v2/"):
         return None

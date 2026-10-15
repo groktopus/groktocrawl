@@ -1,0 +1,20 @@
+{
+  "audit": {
+    "capture_attempts": 1,
+    "receipt_submissions": 2,
+    "result_reads": 1,
+    "search_dispatches": 1
+  },
+  "capture_status": "succeeded",
+  "case_id": "w11-live-after-receipt-b",
+  "engine_scope_sha256": "80033284a5ef281b24bfac11e3a0582f7e386083fd6d5ffeb6f821ef92d6c5a0",
+  "hard_gate_passed": true,
+  "manifest_linked": true,
+  "observations_verified": false,
+  "query_sha256": "ec72420df5dfbdce4111f715c96338df3b7cb75f58e478d2449c9720e560de8c",
+  "receipt_identity_stable": true,
+  "receipt_replayed": true,
+  "result_id_sha256": "dbcf191940163e4f0f5d17e379f3df1c62f9f4cca5cdd088e6117b138aa60978",
+  "retained_receipt_count": 1,
+  "schema_version": "enterprise-evaluation/w11-provenance-recovery/1"
+}

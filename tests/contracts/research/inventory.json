@@ -1,0 +1,76 @@
+{
+  "canonical_rule": "JCS; SHA-256(schema_version UTF-8 + zero byte + canonical bytes)",
+  "expected": {
+    "legacy_digest": "2eac88eda945823777af37f6b8ad865d52a1cfae949f5d3a966437e14088d9ae",
+    "publication_digest": "c1a96de6385ad4a3422aba6414d18db6fa9d734edd13137a519817d430bea9f9",
+    "revision_digest": "4f24abc501035930729d7bc52770691d9ee626bddbd2c51efba2d43e5e2eeeab"
+  },
+  "formats": {
+    "retained-research-publication-prototype/1": {
+      "checks": [
+        "exact pinned research and revision digest",
+        "three audited layers",
+        "publication identity and context",
+        "eligible claims and checked render digests"
+      ],
+      "context": [
+        "validated pinned revision",
+        "publication UUID",
+        "PublicationContext"
+      ],
+      "fields": [
+        "schema_version",
+        "revision_id",
+        "revision_digest",
+        "research",
+        "publication"
+      ],
+      "model_fields": {
+        "publication": "publication-model.schema.json",
+        "research": "research-model.schema.json"
+      },
+      "reader": "agent.experimental.research_publication.admit_research_publication"
+    },
+    "retained-research-revision-prototype/1": {
+      "checks": [
+        "complete objective",
+        "UTC chronology",
+        "immutable identities and predecessor declarations",
+        "source/evidence reference closure",
+        "fixture verifier input digests"
+      ],
+      "context": [
+        "scope_id",
+        "research_id",
+        "revision_id",
+        "parent_revision_id",
+        "prior retained prefix"
+      ],
+      "fields": [
+        "schema_version",
+        "revision"
+      ],
+      "model_fields": {
+        "revision": "revision-model.schema.json"
+      },
+      "reader": "agent.experimental.research_revision.admit_research_revision"
+    }
+  },
+  "inner_hash_rule": "Original fixture serialization; not JCS. See VerificationInput.input_digest and RenderInput.input_digest.",
+  "inventory_version": "research-contract-inventory/1",
+  "limits": {
+    "canonical_bytes": 1048576,
+    "history_revisions": 20
+  },
+  "pins": {
+    "context.json": "377217787132d8f330aa0028325b505b802bf66112c343ef147e26f0a3a63195",
+    "legacy-structure.json": "3bc74553dd388f760ad84f8f900acd24b1f52989b43ca8dfb122f48be0061a50",
+    "publication-model.schema.json": "a852ef3179dde1b51d7d337816015d4ba0f609140a67b5085172dc0f54022433",
+    "publication.json": "1ad3b6caf56c1d1c3eaf8f0f94acf35d261277672e53a4d5e27890d663b003ad",
+    "research-model.schema.json": "817332a26016098d04479315e3dcad683ce4b2c085c888d97c98351a62871357",
+    "revision-model.schema.json": "d5d3de9f916136a4649054eab6a991c5677ac552c28f80253c6db7345b54ebb0",
+    "revision.json": "87baa2c2a01af7166162f4923f32c285c346257c50ccf08c04b5a501b5c9f5dc",
+    "successor.json": "94da43d739a53808b471dd98145abfeba289dbfb874e4e9b18f2037860c501fd"
+  },
+  "scope": "existing fixture formats only; not knowledge-ir/1"
+}

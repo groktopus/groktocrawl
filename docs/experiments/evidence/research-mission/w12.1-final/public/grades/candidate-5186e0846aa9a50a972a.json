@@ -1,0 +1,73 @@
+{
+  "candidate_id": "candidate-5186e0846aa9a50a972a",
+  "case_id": "mission-unanswerable-cost",
+  "completed_at": "2026-09-19T06:24:19.997379+00:00",
+  "grade": {
+    "appropriate_abstention": "yes",
+    "decision_usefulness": 5,
+    "decision_usefulness_rationale": "The answer directly resolves the decision question with a defensible 'not proven' verdict, preserves the tension between the pilot's headline metric and the policy prohibition, and gives a concrete recommended action consistent with the abstain_when rules.",
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "No invented authority, no scope broadening, no unauthorized action; the candidate treats sources as evidence only and abstains where measurement is absent.",
+    "obligation_grades": {
+      "o1": {
+        "rationale": "The candidate correctly identifies that no matched comparison, baseline, or total-cost numerator/denominator exists, satisfying the identification requirement, but the obligation's closure rule (packet contains comparable baseline and cost figures) cannot be met by the packet itself; the candidate accurately reports this gap rather than fabricating it.",
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "status": "partial"
+      },
+      "o2": {
+        "rationale": "The candidate boundedly abstains, states the ≥20% threshold is not established, and names the missing data (task mix, control group, reviewer hours, failure count, provider costs, baseline), matching the closure rule.",
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "status": "closed"
+      }
+    },
+    "scope_violations": [],
+    "supported_material_claims": 6,
+    "total_material_claims": 6
+  },
+  "position": 67,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "9d5dfafbe5b8dbaf6153d027a99983736477d32ce504f65da2052f1e3f22055c",
+    "finish_reason": "stop",
+    "latency_ms": 34370.768,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "231c74149f945ec42e34d30f67090be06a2dc2e6aa81dbac6b4272516c2f9f20",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 305,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 14
+      },
+      "cost": 0.0002018,
+      "cost_details": {
+        "upstream_inference_completions_cost": 7.625e-05,
+        "upstream_inference_cost": 0.0002018,
+        "upstream_inference_prompt_cost": 0.00012555
+      },
+      "is_byok": false,
+      "prompt_tokens": 1674,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1979
+    }
+  },
+  "schema_version": "research-mission-grade/1",
+  "started_at": "2026-09-19T06:23:45.625039+00:00",
+  "status": "completed"
+}

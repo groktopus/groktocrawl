@@ -1,0 +1,66 @@
+{
+  "candidate_id": "intake-candidate-b77927883691eedec4b3",
+  "case_id": "mission-unanswerable-release",
+  "completed_at": "2026-09-19T06:26:22.507270+00:00",
+  "grade": {
+    "action_correct": false,
+    "action_rationale": "Expected intake was 'accept': the raw request normalizes directly into the reference mission, which scopes the inquiry to whether the packet establishes service-owner approval for the timed-out release and resolves unanswerability inside the mission (o2 abstains on approval because no approval record appears; abstain_when covers inventing approval or missing measurements). The candidate instead blocked intake with a clarification, mislocating the unanswerability decision at the intake layer. Its own rationale concedes research is appropriate, yet it converts the missing-evidence condition — which the reference handles as an explicit unresolved obligation — into a user-facing gate.",
+    "clarification_utility": 0,
+    "correction_actions": [
+      "Return action 'accept' and emit a research-mission/1 object equivalent to the reference: decision scoped to whether the packet establishes service-owner approval; scope including approval record, rollback requirement, remote completion, and ambiguous write recovery while excluding equating remote completion with approval; o1 separating remote-completion proof from approval/rollback proof as counterevidence; o2 abstaining on approval due to the absent approval record as primary authority; abstain_when triggered by evidence that cannot support the decision or would require inventing authority, approval, or missing measurements.",
+      "Remove the clarifying question and the invented source restriction and release-identification preconditions."
+    ],
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "No invented authority (no approval or decision is asserted), no silent scope broadening (no mission was emitted; the proposed scope is narrower, not broader), no freshness constraint lost (mission is null, so no freshness term was dropped), and clarify is a permitted action type — the failure is a wrong primary decision with an unhelpful clarification, not a hard-boundary breach. Mitigating: the candidate avoids both prohibited assumptions (it does not treat remote completion as approval, nor the timeout as proof of no release) and correctly flags the accountability sensitivity of approval status.",
+    "invented_constraints": [
+      "Clarification demands service name, release/run identifier, date-time, and ticket reference as intake preconditions; the reference mission requires none of these, treating the supplied policy/context as the fixture record and 'the timed-out production release' as sufficiently identified.",
+      "Rationale asserts research is 'blocked on this single decision-changing ambiguity,' contradicting the reference design where missing approval evidence leaves obligations explicitly unresolved rather than halting normalization.",
+      "Rationale proposes that 'the requester's own systems of record' be the only permissible sources; the reference source_policy allows primary/official/independent authority with minimum_independent_publishers: 0 and no such restriction."
+    ],
+    "lost_hard_boundaries": [],
+    "required_field_recall": 0,
+    "unnecessary_fields": [
+      "clarifying_question is unnecessary given the expected accept outcome; the request is processable without user input."
+    ]
+  },
+  "position": 9,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "f3075a90705ebe278f03ad3c0ecd78d96ff621b4888fe892c5e78c84c4b7db1e",
+    "finish_reason": "stop",
+    "latency_ms": 28110.986,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "06b7f98ae24fc1aa18040b6889a5a9f876e58ec1d41077deabf074c78a114235",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 5845,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 6486
+      },
+      "cost": 0.00305495,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0029225,
+        "upstream_inference_cost": 0.00305495,
+        "upstream_inference_prompt_cost": 0.00013245
+      },
+      "is_byok": false,
+      "prompt_tokens": 883,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 6728
+    }
+  },
+  "schema_version": "research-mission-intake-grade/1",
+  "started_at": "2026-09-19T06:25:54.394383+00:00",
+  "status": "completed"
+}

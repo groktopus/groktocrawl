@@ -1,0 +1,93 @@
+{
+  "case_id": "derivative-customers",
+  "completed_at": "2026-09-19T10:10:47.219506+00:00",
+  "completion_attempt": 1,
+  "position": 9,
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "72e5ebe33cf03dc7721a660b5a970721f4fc7b89010173b66956a808c03bfc7f",
+    "finish_reason": "stop",
+    "latency_ms": 14016.454,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "40e2d052e265677c0ce2e3a3801067af15b6ac3c70949ee23bdf876b54f100d7",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 838,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 928
+      },
+      "cost": 0.00045521,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000419,
+        "upstream_inference_cost": 0.00045521,
+        "upstream_inference_prompt_cost": 3.621e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 395,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 192,
+        "video_tokens": 0
+      },
+      "total_tokens": 1233
+    }
+  },
+  "repetition": 1,
+  "schema_version": "claim-verification-trial/1",
+  "started_at": "2026-09-19T10:10:33.202292+00:00",
+  "status": "completed",
+  "trial_id": "derivative-customers-r1",
+  "verification": {
+    "checked_input": {
+      "case_id": "derivative-customers",
+      "claim": "Three Fortune 100 companies use the product.",
+      "claim_id": "claim-derivative-customers",
+      "evidence": [
+        {
+          "contains_instructions": false,
+          "source_id": "source-syndicated-claim",
+          "source_kind": "derivative",
+          "span_id": "syndicated-claim",
+          "temporal_status": "current",
+          "text": "Three Fortune 100 companies use the product."
+        },
+        {
+          "contains_instructions": false,
+          "source_id": "source-syndicated-copy",
+          "source_kind": "derivative",
+          "span_id": "syndicated-copy",
+          "temporal_status": "current",
+          "text": "Three Fortune 100 companies use the product."
+        }
+      ],
+      "evidence_obligation": "Independent or first-party evidence of customer adoption.",
+      "risk": "low",
+      "schema_version": "claim-verification-input/1"
+    },
+    "checked_input_digest": "a6c11ab908c2145c7a6a2c661395835f97ea51f3a4543a80af9a3083e4275901",
+    "confidence": 95,
+    "contradiction_span_ids": [],
+    "evidence_span_ids": [
+      "syndicated-claim",
+      "syndicated-copy"
+    ],
+    "publish_recommendation": false,
+    "reason": "Both available spans are derivative (a syndicated claim and its verbatim copy) with no independent or first-party confirmation of customer adoption; the evidence obligation requires independent or first-party evidence, so the claim rests on derivative-only sourcing and is insufficient.",
+    "schema_version": "independent-claim-verification/1",
+    "verdict": "insufficient",
+    "verification_id": "verification-derivative-customers-r1",
+    "verifier": {
+      "model": "general",
+      "prompt_version": "w12.3-verifier/1",
+      "route": "local-litellm"
+    }
+  }
+}

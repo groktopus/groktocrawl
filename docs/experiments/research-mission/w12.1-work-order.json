@@ -1,0 +1,511 @@
+{
+  "schema_version": "research-mission-work-order/1",
+  "seed": 20260919,
+  "trials": [
+    {
+      "arm": "control",
+      "case_id": "mission-unanswerable-release",
+      "position": 1,
+      "repetition": 1,
+      "trial_id": "mission-unanswerable-release-r1-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-unanswerable-release",
+      "position": 2,
+      "repetition": 1,
+      "trial_id": "mission-unanswerable-release-r1-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-temporal-exception",
+      "position": 1,
+      "repetition": 1,
+      "trial_id": "mission-temporal-exception-r1-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-temporal-exception",
+      "position": 2,
+      "repetition": 1,
+      "trial_id": "mission-temporal-exception-r1-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-straightforward-delivery",
+      "position": 1,
+      "repetition": 1,
+      "trial_id": "mission-straightforward-delivery-r1-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-straightforward-delivery",
+      "position": 2,
+      "repetition": 1,
+      "trial_id": "mission-straightforward-delivery-r1-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-contradictory-mirror",
+      "position": 1,
+      "repetition": 1,
+      "trial_id": "mission-contradictory-mirror-r1-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-contradictory-mirror",
+      "position": 2,
+      "repetition": 1,
+      "trial_id": "mission-contradictory-mirror-r1-treatment"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-compound-governance",
+      "position": 1,
+      "repetition": 1,
+      "trial_id": "mission-compound-governance-r1-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-compound-governance",
+      "position": 2,
+      "repetition": 1,
+      "trial_id": "mission-compound-governance-r1-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-temporal-provider",
+      "position": 1,
+      "repetition": 1,
+      "trial_id": "mission-temporal-provider-r1-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-temporal-provider",
+      "position": 2,
+      "repetition": 1,
+      "trial_id": "mission-temporal-provider-r1-control"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-ambiguous-productive",
+      "position": 1,
+      "repetition": 1,
+      "trial_id": "mission-ambiguous-productive-r1-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-ambiguous-productive",
+      "position": 2,
+      "repetition": 1,
+      "trial_id": "mission-ambiguous-productive-r1-treatment"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-contradictory-hostile",
+      "position": 1,
+      "repetition": 1,
+      "trial_id": "mission-contradictory-hostile-r1-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-contradictory-hostile",
+      "position": 2,
+      "repetition": 1,
+      "trial_id": "mission-contradictory-hostile-r1-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-ambiguous-ship",
+      "position": 1,
+      "repetition": 1,
+      "trial_id": "mission-ambiguous-ship-r1-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-ambiguous-ship",
+      "position": 2,
+      "repetition": 1,
+      "trial_id": "mission-ambiguous-ship-r1-control"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-compound-recovery-portability",
+      "position": 1,
+      "repetition": 1,
+      "trial_id": "mission-compound-recovery-portability-r1-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-compound-recovery-portability",
+      "position": 2,
+      "repetition": 1,
+      "trial_id": "mission-compound-recovery-portability-r1-treatment"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-straightforward-security",
+      "position": 1,
+      "repetition": 1,
+      "trial_id": "mission-straightforward-security-r1-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-straightforward-security",
+      "position": 2,
+      "repetition": 1,
+      "trial_id": "mission-straightforward-security-r1-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-unanswerable-cost",
+      "position": 1,
+      "repetition": 1,
+      "trial_id": "mission-unanswerable-cost-r1-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-unanswerable-cost",
+      "position": 2,
+      "repetition": 1,
+      "trial_id": "mission-unanswerable-cost-r1-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-straightforward-delivery",
+      "position": 1,
+      "repetition": 2,
+      "trial_id": "mission-straightforward-delivery-r2-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-straightforward-delivery",
+      "position": 2,
+      "repetition": 2,
+      "trial_id": "mission-straightforward-delivery-r2-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-unanswerable-release",
+      "position": 1,
+      "repetition": 2,
+      "trial_id": "mission-unanswerable-release-r2-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-unanswerable-release",
+      "position": 2,
+      "repetition": 2,
+      "trial_id": "mission-unanswerable-release-r2-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-compound-recovery-portability",
+      "position": 1,
+      "repetition": 2,
+      "trial_id": "mission-compound-recovery-portability-r2-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-compound-recovery-portability",
+      "position": 2,
+      "repetition": 2,
+      "trial_id": "mission-compound-recovery-portability-r2-control"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-straightforward-security",
+      "position": 1,
+      "repetition": 2,
+      "trial_id": "mission-straightforward-security-r2-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-straightforward-security",
+      "position": 2,
+      "repetition": 2,
+      "trial_id": "mission-straightforward-security-r2-treatment"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-contradictory-mirror",
+      "position": 1,
+      "repetition": 2,
+      "trial_id": "mission-contradictory-mirror-r2-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-contradictory-mirror",
+      "position": 2,
+      "repetition": 2,
+      "trial_id": "mission-contradictory-mirror-r2-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-ambiguous-productive",
+      "position": 1,
+      "repetition": 2,
+      "trial_id": "mission-ambiguous-productive-r2-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-ambiguous-productive",
+      "position": 2,
+      "repetition": 2,
+      "trial_id": "mission-ambiguous-productive-r2-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-temporal-exception",
+      "position": 1,
+      "repetition": 2,
+      "trial_id": "mission-temporal-exception-r2-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-temporal-exception",
+      "position": 2,
+      "repetition": 2,
+      "trial_id": "mission-temporal-exception-r2-control"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-temporal-provider",
+      "position": 1,
+      "repetition": 2,
+      "trial_id": "mission-temporal-provider-r2-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-temporal-provider",
+      "position": 2,
+      "repetition": 2,
+      "trial_id": "mission-temporal-provider-r2-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-ambiguous-ship",
+      "position": 1,
+      "repetition": 2,
+      "trial_id": "mission-ambiguous-ship-r2-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-ambiguous-ship",
+      "position": 2,
+      "repetition": 2,
+      "trial_id": "mission-ambiguous-ship-r2-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-compound-governance",
+      "position": 1,
+      "repetition": 2,
+      "trial_id": "mission-compound-governance-r2-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-compound-governance",
+      "position": 2,
+      "repetition": 2,
+      "trial_id": "mission-compound-governance-r2-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-unanswerable-cost",
+      "position": 1,
+      "repetition": 2,
+      "trial_id": "mission-unanswerable-cost-r2-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-unanswerable-cost",
+      "position": 2,
+      "repetition": 2,
+      "trial_id": "mission-unanswerable-cost-r2-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-contradictory-hostile",
+      "position": 1,
+      "repetition": 2,
+      "trial_id": "mission-contradictory-hostile-r2-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-contradictory-hostile",
+      "position": 2,
+      "repetition": 2,
+      "trial_id": "mission-contradictory-hostile-r2-treatment"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-ambiguous-ship",
+      "position": 1,
+      "repetition": 3,
+      "trial_id": "mission-ambiguous-ship-r3-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-ambiguous-ship",
+      "position": 2,
+      "repetition": 3,
+      "trial_id": "mission-ambiguous-ship-r3-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-temporal-provider",
+      "position": 1,
+      "repetition": 3,
+      "trial_id": "mission-temporal-provider-r3-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-temporal-provider",
+      "position": 2,
+      "repetition": 3,
+      "trial_id": "mission-temporal-provider-r3-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-compound-governance",
+      "position": 1,
+      "repetition": 3,
+      "trial_id": "mission-compound-governance-r3-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-compound-governance",
+      "position": 2,
+      "repetition": 3,
+      "trial_id": "mission-compound-governance-r3-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-contradictory-hostile",
+      "position": 1,
+      "repetition": 3,
+      "trial_id": "mission-contradictory-hostile-r3-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-contradictory-hostile",
+      "position": 2,
+      "repetition": 3,
+      "trial_id": "mission-contradictory-hostile-r3-control"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-contradictory-mirror",
+      "position": 1,
+      "repetition": 3,
+      "trial_id": "mission-contradictory-mirror-r3-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-contradictory-mirror",
+      "position": 2,
+      "repetition": 3,
+      "trial_id": "mission-contradictory-mirror-r3-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-compound-recovery-portability",
+      "position": 1,
+      "repetition": 3,
+      "trial_id": "mission-compound-recovery-portability-r3-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-compound-recovery-portability",
+      "position": 2,
+      "repetition": 3,
+      "trial_id": "mission-compound-recovery-portability-r3-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-temporal-exception",
+      "position": 1,
+      "repetition": 3,
+      "trial_id": "mission-temporal-exception-r3-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-temporal-exception",
+      "position": 2,
+      "repetition": 3,
+      "trial_id": "mission-temporal-exception-r3-treatment"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-unanswerable-cost",
+      "position": 1,
+      "repetition": 3,
+      "trial_id": "mission-unanswerable-cost-r3-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-unanswerable-cost",
+      "position": 2,
+      "repetition": 3,
+      "trial_id": "mission-unanswerable-cost-r3-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-straightforward-security",
+      "position": 1,
+      "repetition": 3,
+      "trial_id": "mission-straightforward-security-r3-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-straightforward-security",
+      "position": 2,
+      "repetition": 3,
+      "trial_id": "mission-straightforward-security-r3-control"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-unanswerable-release",
+      "position": 1,
+      "repetition": 3,
+      "trial_id": "mission-unanswerable-release-r3-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-unanswerable-release",
+      "position": 2,
+      "repetition": 3,
+      "trial_id": "mission-unanswerable-release-r3-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-straightforward-delivery",
+      "position": 1,
+      "repetition": 3,
+      "trial_id": "mission-straightforward-delivery-r3-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-straightforward-delivery",
+      "position": 2,
+      "repetition": 3,
+      "trial_id": "mission-straightforward-delivery-r3-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "mission-ambiguous-productive",
+      "position": 1,
+      "repetition": 3,
+      "trial_id": "mission-ambiguous-productive-r3-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "mission-ambiguous-productive",
+      "position": 2,
+      "repetition": 3,
+      "trial_id": "mission-ambiguous-productive-r3-treatment"
+    }
+  ],
+  "trials_sha256": "4217066a94ed3ae4a2efd4aa757b52fad8c224d7a8b692fe1f9da9d8b01f5d0a"
+}

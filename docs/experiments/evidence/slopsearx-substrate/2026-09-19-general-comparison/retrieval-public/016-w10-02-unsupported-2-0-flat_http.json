@@ -1,0 +1,35 @@
+{
+  "arm": "flat_http",
+  "attempts": [
+    {
+      "coverage": null,
+      "query_sha256": "c16f632c06fba4810b4fa77345f93d2ab8c1adcfb3143b7e91db2fabb02cd362",
+      "result_count": 20,
+      "result_url_sha256": [
+        "523c395adfd36f469c8cb12f65daec5b04d1d0f565fc0c80419dec0741de2173",
+        "4ed2cf0b6217f87b8840449a4c742d60ecd4ab8e71f335f433205c5c0411bc31",
+        "16761443ad1ade899b9c62eec3ae2ec3832882ad6724ee35245ea4c4de10cc53",
+        "e3e09d6c4079ecc6f483c879e66ef5eb9aa75f8291e8fe33624a0e6fbe3d8bad",
+        "ce075d2a83dd3815cb8f9b03039cf0604ef8bfb659bc6f5f90b79577552c65ca",
+        "2e2cad47ef486f77d316b4bc1e34bbb1a1b9a84d3a2a4cd89988985cd6dba4d6",
+        "96dcb0cef4ae12af3b57542a93c599a4ca5c9bdf89f06f932022201c11463e14",
+        "afccfb3a35eeb2633b79d6b6547de7a092204629b394f1f1c9d0ec13e387c4c6"
+      ],
+      "returned_results": 8,
+      "unresponsive_engine_count": 3
+    }
+  ],
+  "case_id": "w10-02-unsupported-2",
+  "challenge_type": "unsupported_claim",
+  "control_policy": "fixed",
+  "elapsed_ms": 1110.255,
+  "engine_count": 7,
+  "engine_scope_sha256": "552d0a8e54100ffed23f23474d8aa8eabcb63c6ed43060cd3c3427d56869f6eb",
+  "position": 16,
+  "query_count": 1,
+  "query_plan_sha256": "efcc7ea7a3b76215f0811f975ee222a21cdc47ca7b09ed9e439808e0e5809005",
+  "repetition": 0,
+  "schema_version": "enterprise-evaluation/w11-general-retrieval/1",
+  "status": "completed",
+  "w10_source_record_sha256": "aa86f75cb30d5c9dbc5a3703e548a1579b827ec6432a0992b0d233cd25f45f2b"
+}

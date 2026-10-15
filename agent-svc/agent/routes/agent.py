@@ -48,8 +48,10 @@ async def _serialize_answer_stream(
                 "answer": event["answer"],
                 "citations": event["citations"],
                 "latency_ms": event["latency_ms"],
-                "evidence_coverage": event.get("evidence_coverage"),
+                "evidence_coverage": event.get("evidence_coverage", {}),
             }
+            if "source_contents" in event:
+                payload["source_contents"] = event["source_contents"]
         elif event["type"] == "error":
             payload = {"type": "error", "content": event["content"]}
             for key in ("classification", "retry_after_seconds"):
@@ -81,6 +83,8 @@ def fingerprint_from_agent_request(body: AgentRequest) -> str:
         citation_style=citation_style,
         strict_constrain_to_urls=body.strict_constrain_to_urls,
         force_fresh=body.force_fresh,
+        max_credits=body.max_credits,
+        evidence_budget_chars=body.evidence_budget_chars,
     )
 
 
@@ -195,6 +199,7 @@ async def _handle_agent_streaming(
                     search_type=body.search_type,
                     user_id=_derive_user_id(request),
                     fingerprint=fingerprint,
+                    evidence_budget_chars=body.evidence_budget_chars,
                 )
 
             refresh_awaitable = memory.start_refresh(fingerprint, _refresh_factory)
@@ -211,6 +216,9 @@ async def _handle_agent_streaming(
                 has_schema=has_schema,
                 age_hours=age_hours,
                 refresh_awaitable=refresh_awaitable,
+                evidence_coverage=entry.get("metadata", {}).get(
+                    "evidence_coverage", {}
+                ),
             ),
             media_type="text/event-stream",
             headers=headers,
@@ -218,8 +226,8 @@ async def _handle_agent_streaming(
 
     # ── Streaming path (cache miss or force_fresh) ────────────────
     if body.stream:
-        # Pre-flight LLM health check — fail fast before opening the stream
-        from ..llm import LLMClient
+        # One bounded readiness probe before opening the stream
+        from ..llm import LLMClient, LLMReadiness
 
         health_logger = logging.getLogger(__name__)
         effective_model = (
@@ -232,16 +240,23 @@ async def _handle_agent_streaming(
             api_key=request.app.state.llm_api_key,
             model=effective_model,
         )
-        if not await llm_check.check_health():
-            health_logger.error("LLM backend unreachable. Agent disabled.")
+        try:
+            readiness = await llm_check.probe_readiness()
+        finally:
             await llm_check.close()
+        if readiness not in (LLMReadiness.READY, LLMReadiness.TIMED_OUT):
             from fastapi import HTTPException
 
             raise HTTPException(
                 status_code=503,
-                detail="LLM backend is not available. Cannot process agent request.",
+                detail="LLM readiness probe failed. Cannot process agent request.",
+                headers={"X-LLM-Readiness": readiness.value},
             )
-        await llm_check.close()
+        headers["X-LLM-Readiness"] = readiness.value
+        if readiness == LLMReadiness.TIMED_OUT:
+            health_logger.warning(
+                "LLM readiness probe timed out; attempting bounded generation"
+            )
 
         from ..research.streaming import stream_research_live
 
@@ -265,6 +280,7 @@ async def _handle_agent_streaming(
                 research_memory=request.app.state.research_memory,
                 user_id=_derive_user_id(request),
                 fingerprint=fingerprint,
+                evidence_budget_chars=body.evidence_budget_chars,
             ),
             media_type="text/event-stream",
             headers=headers,
@@ -372,6 +388,7 @@ async def create_agent(request: Request, body: AgentRequest, response: Response)
             max_credits=body.max_credits,
             fingerprint=fingerprint,
             task_tracker=request.app.state.task_tracker,
+            evidence_budget_chars=body.evidence_budget_chars,
         ),
         job_id=job_id,
     )
@@ -463,7 +480,6 @@ async def answer(request: Request, body: AnswerRequest, response: Response) -> A
 
             events = run_answer_stream(
                 query=body.query,
-                evidence_budget_chars=body.evidence_budget_chars,
                 num_sources=body.num_sources,
                 search_type=body.search_type,
                 retrieval_mode=body.retrieval_mode,
@@ -477,6 +493,8 @@ async def answer(request: Request, body: AnswerRequest, response: Response) -> A
                 max_searches_per_request=max_searches,
                 output_schema=effective_schema,
                 citation_style=body.citation_style,
+                evidence_budget_chars=body.evidence_budget_chars,
+                include_source_content=body.include_source_content,
             )
             async for chunk in _serialize_answer_stream(events):
                 yield chunk
@@ -496,7 +514,6 @@ async def answer(request: Request, body: AnswerRequest, response: Response) -> A
 
     result = await run_answer(
         query=body.query,
-        evidence_budget_chars=body.evidence_budget_chars,
         num_sources=body.num_sources,
         search_type=body.search_type,
         retrieval_mode=body.retrieval_mode,
@@ -510,6 +527,8 @@ async def answer(request: Request, body: AnswerRequest, response: Response) -> A
         max_searches_per_request=max_searches,
         output_schema=effective_schema,
         citation_style=body.citation_style,
+        evidence_budget_chars=body.evidence_budget_chars,
+        include_source_content=body.include_source_content,
     )
     response.headers["X-Search-Budget"] = f"{max_searches}/{max_searches}"
     response.headers["X-Search-Rate-Remaining"] = (
@@ -517,10 +536,13 @@ async def answer(request: Request, body: AnswerRequest, response: Response) -> A
     )
     return AnswerResponse(
         success=True,
-        evidence_coverage=result.get("evidence_coverage"),
         answer=result["answer"],
         sources=[Source(**s) for s in result["sources"]],
         citations=[Citation(**c) for c in result["citations"]],
         search_type=result["search_type"],
         latency_ms=result["latency_ms"],
+        evidence_coverage=result.get("evidence_coverage", {}),
+        source_contents=result.get("source_contents")
+        if body.include_source_content
+        else None,
     )

@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-491a07dd961eefa4b971",
+  "case_id": "renamed-feature",
+  "completed_at": "2026-09-19T09:24:26.801012+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 100,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "The candidate correctly identifies the change: policy checks were renamed to release guards (per northstar-policy-new), matching the reference change event. Current truth is accurate: Northstar 4 uses 'release guards,' and the answer explicitly avoids stating removal. Historical truth is preserved as historical: Northstar 3 called pre-deployment controls 'policy checks' (northstar-policy-old), correctly framed as prior terminology. Both primary sources are cited with direct quotes, making the answer auditable. No false merge (rename of one capability, not a merge of distinct capabilities), no stale-current leak (Northstar 3 terminology is kept historical), no lost history. All factual claims are supported by the two sources. The only flaw is the invented unresolved item ('behavioral or configuration differences beyond the rename'), which is a peripheral question not present in the reference, whose unresolved list is empty; per the rules this invented periphery is not rewarded, driving unresolved_accuracy to 0 and slightly reducing usefulness.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 0,
+    "unsupported_claims": 0,
+    "usefulness": 95
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "a9b42b1df97349fb63a6ff2d755c6a0c3c53c38ce7c4b5b053e1d78d43fe6464",
+    "finish_reason": "stop",
+    "latency_ms": 15658.193,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "0707fca516a1d1b0bc8b309167a83c156fd91d63a337f8843e4781865d545872",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 1514,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 1227
+      },
+      "cost": 0.00088885,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000757,
+        "upstream_inference_cost": 0.00088885,
+        "upstream_inference_prompt_cost": 0.00013185
+      },
+      "is_byok": false,
+      "prompt_tokens": 879,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 2393
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:24:11.142390+00:00",
+  "status": "completed",
+  "trial_id": "renamed-feature-r3-treatment"
+}

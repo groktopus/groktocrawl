@@ -1,0 +1,102 @@
+{
+  "case_id": "simple-2",
+  "control_artifact": {
+    "admitted_evidence": [
+      {
+        "canonical_source_id": "canonical-simple-2-generalist-simple-2-scope",
+        "derivative": false,
+        "evidence_id": "simple-2-generalist-simple-2-scope",
+        "obligation_id": "simple-2-scope",
+        "publisher_id": "publisher-simple-2-generalist",
+        "source_id": "source-simple-2-generalist-simple-2-scope",
+        "span": "Pinned supports evidence for simple-2-scope in simple-2.",
+        "stance": "supports"
+      }
+    ],
+    "conflicting_obligation_ids": [],
+    "covered_obligation_ids": [
+      "simple-2-scope"
+    ],
+    "handoff_failures": [],
+    "rejected_evidence": {},
+    "total_calls": 2
+  },
+  "control_calls": 2,
+  "preferred": "tie",
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "ac3d6e447a30191e5d8ca9076948a28c1c711268d0bbb5ae9917b6a712573dcb",
+    "finish_reason": "stop",
+    "latency_ms": 2905.049,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "73f00ce0ac0aded78725c39fe5ea882ce2f2cf52794b414c225c6cee9baa1433",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 94,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0.000187044,
+      "cost_details": {
+        "upstream_inference_completions_cost": 5.64e-05,
+        "upstream_inference_cost": 0.000187044,
+        "upstream_inference_prompt_cost": 0.000130644
+      },
+      "is_byok": false,
+      "prompt_tokens": 777,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 64,
+        "video_tokens": 0
+      },
+      "total_tokens": 871
+    }
+  },
+  "repetition": 0,
+  "schema_version": "specialist-value-review/1",
+  "scores": {
+    "control": {
+      "reason": "Covers the sole obligation simple-2-scope with pinned, non-derivative, source-bound supporting evidence; no conflicts or failures to report.",
+      "trustworthiness": 100,
+      "usefulness": 100
+    },
+    "treatment": {
+      "reason": "Identical to A: full obligation coverage with the same pinned, non-derivative supporting evidence and no conflicts or failures.",
+      "trustworthiness": 100,
+      "usefulness": 100
+    }
+  },
+  "separable": false,
+  "status": "completed",
+  "stratum": "simple",
+  "treatment_artifact": {
+    "admitted_evidence": [
+      {
+        "canonical_source_id": "canonical-simple-2-generalist-simple-2-scope",
+        "derivative": false,
+        "evidence_id": "simple-2-generalist-simple-2-scope",
+        "obligation_id": "simple-2-scope",
+        "publisher_id": "publisher-simple-2-generalist",
+        "source_id": "source-simple-2-generalist-simple-2-scope",
+        "span": "Pinned supports evidence for simple-2-scope in simple-2.",
+        "stance": "supports"
+      }
+    ],
+    "conflicting_obligation_ids": [],
+    "covered_obligation_ids": [
+      "simple-2-scope"
+    ],
+    "handoff_failures": [],
+    "rejected_evidence": {},
+    "total_calls": 2
+  },
+  "treatment_calls": 2,
+  "trial_id": "simple-2-r0"
+}

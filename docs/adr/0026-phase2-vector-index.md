@@ -1,6 +1,6 @@
 # Phase 2 Semantic Search — Persistent Vector Index
 
-* Status: proposed
+* Status: accepted; Qdrant serving is superseded by ADR-0069 only for deployments that complete the verified pgvector migration. Qdrant remains the rollback-write target.
 * Deciders: magnus, jasper
 * Date: 2026-06-09
 

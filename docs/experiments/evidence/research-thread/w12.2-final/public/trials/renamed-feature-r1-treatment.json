@@ -1,0 +1,69 @@
+{
+  "answer": {
+    "answer": "Northstar did not remove policy checks; they were renamed. The Northstar 3 guide documents that Northstar 3 called pre-deployment controls 'policy checks' [northstar-policy-old]. The Northstar 4 migration guide then states that Northstar 4 renames policy checks to 'release guards' and that their purpose is unchanged [northstar-policy-new]. Taken together, this is a terminology change only: the controls persist in Northstar 4 under a new name. What remains unresolved on the supplied sources is whether anything beyond the name changed (e.g., behavior or configuration), since the migration guide speaks only to the rename and unchanged purpose.",
+    "change_events": [
+      "Northstar 4 renames 'policy checks' to 'release guards'; their purpose is unchanged [northstar-policy-new]."
+    ],
+    "citations": [
+      "northstar-policy-old",
+      "northstar-policy-new"
+    ],
+    "current_truths": [
+      "In Northstar 4, pre-deployment controls are called 'release guards' [northstar-policy-new].",
+      "The purpose of these controls is unchanged by the rename [northstar-policy-new]."
+    ],
+    "historical_truths": [
+      "Northstar 3 called pre-deployment controls 'policy checks' [northstar-policy-old]."
+    ],
+    "unresolved": [
+      "Whether any implementation, behavior, or configuration of the controls changed beyond the terminology rename is not documented in the supplied sources.",
+      "Whether other Northstar 3 policy-check-related documentation or configuration procedures carry over to Northstar 4 under the new name is not addressed."
+    ]
+  },
+  "arm": "treatment",
+  "case_id": "renamed-feature",
+  "completed_at": "2026-09-19T07:49:10.533151+00:00",
+  "position": 17,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "c048678c5bb08cbfc1d3d1b1db098775340468136410639d89650321b15f6c04",
+    "finish_reason": "stop",
+    "latency_ms": 17010.144,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "7a919d219e3705f1b42df97d93c51e552afe4ad07315f16de08e520fdf24482f",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 343,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 1
+      },
+      "cost": 0.00023455,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.00012005,
+        "upstream_inference_cost": 0.00023455,
+        "upstream_inference_prompt_cost": 0.0001145
+      },
+      "is_byok": false,
+      "prompt_tokens": 1145,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1488
+    }
+  },
+  "repetition": 1,
+  "schema_version": "research-thread-trial/1",
+  "started_at": "2026-09-19T07:48:53.521746+00:00",
+  "status": "completed",
+  "stratum": "terminology",
+  "trial_id": "renamed-feature-r1-treatment"
+}

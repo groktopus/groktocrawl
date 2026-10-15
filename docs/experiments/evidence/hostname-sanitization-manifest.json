@@ -1,0 +1,122 @@
+{
+  "record_type": "historical_evidence_sanitization_manifest",
+  "source_commit": "9c7744b66f205080a44bfd89808494dbe80eb5a4",
+  "transformation": "The deployment-specific hostname literal was replaced with the reserved research-provider.example placeholder. No result fields or measurements were intentionally changed.",
+  "interpretation": "source_sha256 hashes the exact file bytes at source_commit. sanitized_copy_sha256 hashes the current repository copy. They are expected to differ. Hashes embedded in frozen records continue to identify their original frozen inputs and must not be interpreted as hashes of these sanitized copies.",
+  "files": [
+    {
+      "path": "docs/experiments/evidence/research-mission/w12.1-final/public/adjudication-manifest.json",
+      "source_sha256": "48d0ffe9ecdec3bf25f2a13de11a4b75c3c9a9934ce43a3658e07d30e2acba61",
+      "sanitized_copy_sha256": "c28a2c0ce80036687ffccc01e9ec7a7a8ca0f26422d5cdf50a8eafbd528558fa",
+      "format": "json"
+    },
+    {
+      "path": "docs/experiments/evidence/research-mission/w12.1-final/public/grade-manifest.json",
+      "source_sha256": "5cc51f9238ee16a8c085aabb65fc4b01f90b356c9a4234fc7b4c351c5fc97bcb",
+      "sanitized_copy_sha256": "189e8d9b7a575cc63f77e94f260e899ea3e54468e9133604303ba8c042ac5ffa",
+      "format": "json"
+    },
+    {
+      "path": "docs/experiments/evidence/research-mission/w12.1-final/public/intake-grade-manifest.json",
+      "source_sha256": "40277bf755c1d1ab6f299a4030b9d2c275a4e289a7248629e2e689631b153395",
+      "sanitized_copy_sha256": "602d07a4fa41c8d06435455d5d5afe10e981a4f6d8c6ed4afeea8522e48ee68b",
+      "format": "json"
+    },
+    {
+      "path": "docs/experiments/evidence/research-mission/w12.1-final/public/intake-manifest.json",
+      "source_sha256": "22bc202111dfcce3ee3549d988fa9e668462cb980f497bd4d83d8a275842626b",
+      "sanitized_copy_sha256": "b2ebd53c396ac170b9b7f6bcef423ce2875c03855e5d805d5009c1f91c32c234",
+      "format": "json"
+    },
+    {
+      "path": "docs/experiments/evidence/research-mission/w12.1-final/public/run-manifest.json",
+      "source_sha256": "e74803e5dda894446a1e7815745eb6d5fecd5009ebab75f63c7a61440e971e92",
+      "sanitized_copy_sha256": "84d20e7fdace1925a01fdd3e9e7e26c3b97e336cfb58c7c965ae381e63bc5694",
+      "format": "json"
+    },
+    {
+      "path": "docs/experiments/research-mission/w12.1-freeze-v10.json",
+      "source_sha256": "72b96ecf0347420874047a8be20a1ad840008d4d8ad04f5fd764b3a02a99966f",
+      "sanitized_copy_sha256": "2b50ba50be44382459b5c9dbaf0ce5e1dd21311dba754210a51f000a04a65873",
+      "format": "json"
+    },
+    {
+      "path": "docs/experiments/research-mission/w12.1-freeze-v11.json",
+      "source_sha256": "35302fee78c017572b0f1a84cd10c9ee7740771d645484d4058f722b28646390",
+      "sanitized_copy_sha256": "3394017b7ea176d527346d3042883074c45ce2150e5b16f69d32a665d0c1f786",
+      "format": "json"
+    },
+    {
+      "path": "docs/experiments/research-mission/w12.1-freeze-v2.json",
+      "source_sha256": "a7e42785768aa4c46a3bfbf9b8fe4af045681b59fa972c08184d0c7bdc84f477",
+      "sanitized_copy_sha256": "676b5adf230e8976f6b13d5686d041c660bc9c1edc610722d84f1dc294358dd4",
+      "format": "json"
+    },
+    {
+      "path": "docs/experiments/research-mission/w12.1-freeze-v3.json",
+      "source_sha256": "0d214513104ceacd11f6394d6868d72d3ab9ec489bd5298fdc9c6a76cbb85824",
+      "sanitized_copy_sha256": "49f56d8c9804e302aab36ab9749dba409f89e91acad119eda07977c740bb4544",
+      "format": "json"
+    },
+    {
+      "path": "docs/experiments/research-mission/w12.1-freeze-v4.json",
+      "source_sha256": "e7fb59bc9fca83a22bbfa6c18e93c652e50abbb59204eb3f751b1995d2e76e6b",
+      "sanitized_copy_sha256": "56ab55132625958f044099063705049e66576df4236e4f2cad9549999cec19ef",
+      "format": "json"
+    },
+    {
+      "path": "docs/experiments/research-mission/w12.1-freeze-v5.json",
+      "source_sha256": "9815c4a665b4ab64c39636681d3fe9a3a7f1a640021e1fb75a4cb9e01ad066f9",
+      "sanitized_copy_sha256": "d9ee01e602b2ba551fe4f5ed9eee3eb07246b4b37b69c362333241df9d8eaa48",
+      "format": "json"
+    },
+    {
+      "path": "docs/experiments/research-mission/w12.1-freeze-v6.json",
+      "source_sha256": "2cbc2dd951b928bf4183d775063c45a94376e3e729a63fd4ba9b27195cd13391",
+      "sanitized_copy_sha256": "c86f8079034a9ffd9083b56472d8915e97ecb9f7ddbeb9c3ba83133ee821520f",
+      "format": "json"
+    },
+    {
+      "path": "docs/experiments/research-mission/w12.1-freeze-v7.json",
+      "source_sha256": "4760f86df9ec14e4497a39bcb2997852ad16b00a5a8f293912d6039c8bb2d44e",
+      "sanitized_copy_sha256": "76280f54de8527f4142acff08a688a62b203942cf108d4d04e2f7be7994a4afa",
+      "format": "json"
+    },
+    {
+      "path": "docs/experiments/research-mission/w12.1-freeze-v8.json",
+      "source_sha256": "54b649cd5a0a15dd66065aebdbf9d35c298d1b0c66a65683c1c36e96bcd5ac75",
+      "sanitized_copy_sha256": "dcc3e1e4e437e7ef906aa3f0130a046722a64109cc9285a3e66f555654268b12",
+      "format": "json"
+    },
+    {
+      "path": "docs/experiments/research-mission/w12.1-freeze-v9.json",
+      "source_sha256": "77a17638f79a61dce368c8b67defa5219ed906d04a4222f9e23963b7371e0c9d",
+      "sanitized_copy_sha256": "7061a266f04c87b7a430edd5b1468bd110b83300ea11030496fdef1b3208a510",
+      "format": "json"
+    },
+    {
+      "path": "docs/experiments/research-mission/w12.1-freeze.json",
+      "source_sha256": "365552eb86559f8c1f53eb3b1d29fa6495aa457fb5be31a9e37b5dd4263e3193",
+      "sanitized_copy_sha256": "7c3076b4713157dc0e368757613e116bb77ec5ede9b0e542cae73b363d051970",
+      "format": "json"
+    },
+    {
+      "path": "docs/experiments/research-model-review.md",
+      "source_sha256": "7ff7ecc25e03aa2bd238d65453a08bcd860ec89b7e574040e29652e6d26dd08e",
+      "sanitized_copy_sha256": "e0555b9359e3e73ab9fe4aa1537f21f3c31bc8db79c6882227f49851bff1ac65",
+      "format": "markdown"
+    },
+    {
+      "path": "docs/experiments/research-thread/w12.2-freeze-v2.json",
+      "source_sha256": "7e3410dd42e4d27afcf34374428c892409ffde8e4a77f9012b820919aab120e8",
+      "sanitized_copy_sha256": "dc484053ecd03fa59ec3b8454a0fe16e3a8426f6a48b431de024c1475e14123d",
+      "format": "json"
+    },
+    {
+      "path": "docs/experiments/research-thread/w12.2-freeze.json",
+      "source_sha256": "4207b924b4427cee855bbc1adebf4c6ef45be60c0cf90788bee2d5dee2d104c4",
+      "sanitized_copy_sha256": "ac5b84b4ed6d7fcee37b2fdf92f68b4592fb41ca2efdffbfea82f9c50b902087",
+      "format": "json"
+    }
+  ]
+}

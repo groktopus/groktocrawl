@@ -1,0 +1,16 @@
+{
+  "attempt_count": 1,
+  "derived_from_source": true,
+  "engine_count": 1,
+  "followup_query_sha256": "a1dfc6334ceeb68181ef9ba2ef246fd9c121b2c4241bb4f8b34a61e7f615d198",
+  "hard_gate_passed": true,
+  "manifest_disclaims_verification": true,
+  "manifest_item_count": 19,
+  "manifest_source_preserved": true,
+  "query_sha256": "fdd68b8f547fc556b492b3ed68cbafd762148db0aad518dac0cfcd569e1655b2",
+  "same_job_on_replay": true,
+  "schema_version": "enterprise-evaluation/w11-composition-live/1",
+  "source_kind": "snapshot",
+  "source_preserved": true,
+  "terminal_state": "succeeded"
+}

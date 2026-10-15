@@ -1,6 +1,5 @@
 """Gap detection for research coverage analysis."""
 
-import asyncio
 import json
 import logging
 import time
@@ -8,7 +7,7 @@ import time
 from common.stage_metrics import observe_elapsed
 
 from ..llm import LLMClient
-from .evidence import build_evidence
+from .evidence import build_evidence_async
 
 logger = logging.getLogger(__name__)
 
@@ -37,8 +36,7 @@ async def _detect_gaps(
         query_context = (
             f'Original research query: "{original_query}"\n\n' if original_query else ""
         )
-        selected = await asyncio.to_thread(
-            build_evidence,
+        selected = await build_evidence_async(
             [{"id": "research-context", "markdown": combined_context}],
             original_query,
             12000,

@@ -1,0 +1,61 @@
+{
+  "format": "jev-publication-redactions/1",
+  "freeze_sha256": "67781243e22b7b753fb059a61a452216a80cc0aeac0ff168a8177218af1156d5",
+  "note": "After the preregistered model calls, unrelated private-key blocks present in public upstream documentation were replaced by an explicit marker. The original full-source hashes and commit-pinned URLs remain in source-snapshots.json. Replacement preserves line count and line-number identity; judged excerpts do not overlap redacted spans. Key material is intentionally not reproduced.",
+  "redactions": [
+    {
+      "path": "pages/cosign-link/before.md",
+      "source_pair_id": "cosign-link",
+      "side": "before",
+      "block_type": "ENCRYPTED SIGSTORE PRIVATE KEY",
+      "original_line_start": 482,
+      "original_line_end": 484,
+      "line_count_preserved": true,
+      "line_mapping": "identity: original and published line numbers are identical",
+      "marker": "[REDACTED: unrelated upstream key block; source line retained]",
+      "original_sha256": "b7adc8494040172cdd057fc1cc73126fab0ae2421b4014cbdf4da0ba8176d017",
+      "published_sha256": "f7f04d686ecf504ec4f0d85506195ee1d06d3a27eb0ac3ce24f4f2692898da6a"
+    },
+    {
+      "path": "pages/cosign-link/after.md",
+      "source_pair_id": "cosign-link",
+      "side": "after",
+      "block_type": "ENCRYPTED SIGSTORE PRIVATE KEY",
+      "original_line_start": 482,
+      "original_line_end": 484,
+      "line_count_preserved": true,
+      "line_mapping": "identity: original and published line numbers are identical",
+      "marker": "[REDACTED: unrelated upstream key block; source line retained]",
+      "original_sha256": "d7d9f949783cb02c0fe780fe3a68c87e43cd2aebc8639f0822b20ce57949670f",
+      "published_sha256": "01376260ce8b74339756afd1339c7df1b9396d4f116619d893355f940a61a63f"
+    },
+    {
+      "path": "pages/cosign-offline/before.md",
+      "source_pair_id": "cosign-offline",
+      "side": "before",
+      "block_type": "ENCRYPTED SIGSTORE PRIVATE KEY",
+      "original_line_start": 454,
+      "original_line_end": 456,
+      "line_count_preserved": true,
+      "line_mapping": "identity: original and published line numbers are identical",
+      "marker": "[REDACTED: unrelated upstream key block; source line retained]",
+      "original_sha256": "c7d082cbd62451b5d23914762c325f846872e2bb08ea5c08991175a3312a805e",
+      "published_sha256": "a074702ca65e2cc3914b95fa05ce09037d79b42886fc494d3b614a8df042601b"
+    },
+    {
+      "path": "pages/cosign-offline/after.md",
+      "source_pair_id": "cosign-offline",
+      "side": "after",
+      "block_type": "ENCRYPTED SIGSTORE PRIVATE KEY",
+      "original_line_start": 462,
+      "original_line_end": 464,
+      "line_count_preserved": true,
+      "line_mapping": "identity: original and published line numbers are identical",
+      "marker": "[REDACTED: unrelated upstream key block; source line retained]",
+      "original_sha256": "47424f39f84dc04f3fadff93ff0c6970c4817f4e97c0fbb54bdb9911e93df691",
+      "published_sha256": "058079ca95aefc5964500bfca125e35ead5d05c77fc3014d63759d5d8e35c417"
+    }
+  ],
+  "original_input_freeze_commit": "5a656ac53fa50c1d52819a9f059f911b0e6e38f0",
+  "provenance_note": "The original pre-call freeze commit is identified for audit; its complete request bodies and source hashes are preserved by the original freeze digest, but the unredacted page payloads are removed from the published branch history. Jev received only the exact bounded excerpts, which are preserved unchanged."
+}

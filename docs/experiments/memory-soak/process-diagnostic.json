@@ -1,0 +1,15 @@
+{
+  "phase": "pre-repair-read-only",
+  "service": "browser",
+  "active_sessions": 0,
+  "health_status": "ok",
+  "session_create_http_status": 502,
+  "backend_failure_class": "BlockingIOError",
+  "backend_errno": 11,
+  "cgroup_tasks": 257,
+  "cgroup_task_limit": 256,
+  "task_limit_events": 52114,
+  "zombie_browser_processes": 134,
+  "zombies_parented_by_pid1": 134,
+  "workload_credit": 0
+}

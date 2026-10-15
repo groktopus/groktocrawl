@@ -1,0 +1,159 @@
+{
+  "captured_at": "2026-09-11T22:41:21.485331+00:00",
+  "configuration_sha256": "0a7c97daff58569ae92ae61ad8888ad186264f7cc1cfba7e9617b1a2860caabf",
+  "mcp": {
+    "disabled_grant_probes": {
+      "dependency_dossier": {
+        "error_code": "tool_disabled",
+        "reported_grant": null,
+        "tool": "slopsearx_start_dependency_dossier"
+      },
+      "jobs": {
+        "error_code": "tool_disabled",
+        "reported_grant": null,
+        "tool": "slopsearx_search_jobs"
+      },
+      "research": {
+        "error_code": "tool_disabled",
+        "reported_grant": null,
+        "tool": "slopsearx_start_research"
+      },
+      "saved_search_events": {
+        "error_code": "tool_disabled",
+        "reported_grant": null,
+        "tool": "slopsearx_read_saved_search_events"
+      },
+      "saved_searches": {
+        "error_code": "tool_disabled",
+        "reported_grant": null,
+        "tool": "slopsearx_get_saved_search"
+      },
+      "science": {
+        "error_code": "tool_disabled",
+        "reported_grant": null,
+        "tool": "slopsearx_search_science"
+      },
+      "security": {
+        "error_code": "tool_disabled",
+        "reported_grant": null,
+        "tool": "slopsearx_search_security"
+      },
+      "staged_search": {
+        "error_code": "tool_disabled",
+        "reported_grant": "MCP_GRANT_STAGED_SEARCH",
+        "tool": "slopsearx_preview_staged_search"
+      }
+    },
+    "tool_count": 35,
+    "tool_names": [
+      "slopsearx_ack_saved_search_events",
+      "slopsearx_cancel_job",
+      "slopsearx_create_saved_search",
+      "slopsearx_delete_saved_search",
+      "slopsearx_explain_search_scope",
+      "slopsearx_export_research_manifest",
+      "slopsearx_extend_research",
+      "slopsearx_get_artifact_lineage",
+      "slopsearx_get_dependency_dossier",
+      "slopsearx_get_job",
+      "slopsearx_get_saved_search",
+      "slopsearx_get_service_status",
+      "slopsearx_get_staged_search",
+      "slopsearx_list_capabilities",
+      "slopsearx_pause_saved_search",
+      "slopsearx_preview_staged_search",
+      "slopsearx_read_entities",
+      "slopsearx_read_result",
+      "slopsearx_read_results",
+      "slopsearx_read_retrieval_receipts",
+      "slopsearx_read_saved_search_events",
+      "slopsearx_read_saved_search_reports",
+      "slopsearx_retry_research",
+      "slopsearx_retry_staged_search",
+      "slopsearx_search",
+      "slopsearx_search_jobs",
+      "slopsearx_search_science",
+      "slopsearx_search_security",
+      "slopsearx_search_staged",
+      "slopsearx_search_targeted",
+      "slopsearx_start_dependency_dossier",
+      "slopsearx_start_research",
+      "slopsearx_submit_retrieval_receipt",
+      "slopsearx_update_research",
+      "slopsearx_update_saved_search"
+    ],
+    "tool_names_sha256": "385e8641d6d579ebce2901863340e7b8dbbcf620c57a210ed4301a459777eb73"
+  },
+  "schema_version": "enterprise-evaluation/w11-preflight/1",
+  "slopsearx": {
+    "active_engines": 50,
+    "contract_version": "1.0",
+    "grants": {
+      "disabled": [
+        "dependency_dossier",
+        "jobs",
+        "research",
+        "saved_search_events",
+        "saved_searches",
+        "science",
+        "security",
+        "staged_search"
+      ],
+      "enabled": [
+        "retrieval_receipts"
+      ],
+      "targeted_sensitive_allowed": false
+    },
+    "image_digest": "sha256:4cd9c04ae4ef2f154a104cd95cf2219d603e461c9449f4392ce562b0541dd2d3",
+    "job_store_available": true,
+    "policy_bounds": {
+      "job_default_deadline_seconds": 600,
+      "job_lease_ttl_seconds": 60,
+      "job_max_concurrent_jobs": 1,
+      "job_max_engines_per_query": 10,
+      "job_max_queries": 20,
+      "job_max_results": 500,
+      "job_poll_interval_seconds": 1.0,
+      "max_query_length": 500,
+      "max_results": 50,
+      "snapshot_ttl_seconds": 3600
+    },
+    "research_execution": {
+      "lease_ttl_seconds": 60,
+      "max_concurrent_jobs": 1,
+      "mode": "durable_leased",
+      "note": "research jobs are claimed under an exclusive Valkey lease and reclaimed by another replica on lease expiry",
+      "poll_interval_seconds": 1.0
+    },
+    "snapshots_available": true,
+    "source_revision": "edeba9ef9311adf19ce3f1b6060257ef1b54c2f9",
+    "valkey": {
+      "connected": true,
+      "fail_closed": false
+    },
+    "version": "0.5.0",
+    "workflow_health": {
+      "dependency_dossier": {
+        "available": true,
+        "status": "available"
+      },
+      "research": {
+        "available": true,
+        "status": "available"
+      },
+      "retrieval_receipt": {
+        "available": true,
+        "status": "available"
+      },
+      "saved_search": {
+        "available": true,
+        "status": "available"
+      },
+      "staged_search": {
+        "available": true,
+        "status": "available"
+      }
+    }
+  },
+  "target_label": "isolated-provenance-only"
+}

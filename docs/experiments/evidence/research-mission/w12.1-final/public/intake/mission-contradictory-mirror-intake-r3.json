@@ -1,0 +1,52 @@
+{
+  "case_id": "mission-contradictory-mirror",
+  "completed_at": "2026-09-19T06:08:01.978425+00:00",
+  "position": 7,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "2f6e3d8f958527c9d30013df2a4140545845b3c6f7f558fbff919201602ee7e8",
+    "finish_reason": "stop",
+    "latency_ms": 38202.872,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "10bc89c087e778d895314f8b46b88c6308b61017778640d058e222fe4df7c2b8",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 243,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 123
+      },
+      "cost": 0.00029155,
+      "cost_details": {
+        "upstream_inference_completions_cost": 8.505e-05,
+        "upstream_inference_cost": 0.00029155,
+        "upstream_inference_prompt_cost": 0.0002065
+      },
+      "is_byok": false,
+      "prompt_tokens": 2065,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 2308
+    }
+  },
+  "repetition": 3,
+  "result": {
+    "action": "abstain",
+    "clarifying_question": null,
+    "mission": null,
+    "rationale": "No supplied sources exist to research, and the question is analytical, not evidentiary: verbatim repetition is by definition derivative, not independent. A mirror that copies a delivery policy verbatim shares provenance with the original, so it cannot constitute independent corroboration of production deployment authority regardless of what further searching might show. Inventing a research mission would imply evidence could change this conclusion, and would risk manufacturing authority where none exists; the conservative analyst abstains."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:07:23.770152+00:00",
+  "status": "completed",
+  "trial_id": "mission-contradictory-mirror-intake-r3"
+}

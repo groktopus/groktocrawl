@@ -105,7 +105,7 @@ async def test_session_query_reads_full_refs_and_rejects_foreign_ref(monkeypatch
     )
     assert "470.25" in llm.generate.call_args.kwargs["context"]
     assert result["evidence_coverage"]["sources"][0]["id"] == "ref_1"
-    with pytest.raises(ValueError, match="from this session"):
+    with pytest.raises(ValueError, match="reference not found in session"):
         await manager._step_query(
             "one",
             {"question": "Amber", "ref_ids": ["foreign"]},
@@ -239,16 +239,16 @@ async def test_large_source_selection_allows_concurrent_progress(
     import asyncio
     import threading
 
-    from agent.research import contents
+    from agent.research import contents, evidence
 
     release = threading.Event()
-    original = contents.select_passages
+    original = evidence.select_passages
 
-    def slow_selection(*args):
+    def slow_selection(*args, **kwargs):
         assert release.wait(timeout=1), "Source selection stalled the event loop"
-        return original(*args)
+        return original(*args, **kwargs)
 
-    monkeypatch.setattr(contents, "select_passages", slow_selection)
+    monkeypatch.setattr(evidence, "select_passages", slow_selection)
     llm = SimpleNamespace(generate=AsyncMock(return_value="470.25 uF"))
     task = asyncio.create_task(
         getattr(contents, helper_name)(late_document(), "capacitor", 100, llm)

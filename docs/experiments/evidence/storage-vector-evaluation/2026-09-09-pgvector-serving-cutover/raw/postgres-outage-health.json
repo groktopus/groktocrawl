@@ -1,0 +1,1 @@
+{"body": {"models": "loaded", "pgvector": "unavailable", "qdrant": "rollback_ready", "status": "starting", "vector_store": "pgvector"}, "digest": "b4c3c24b05d7be057bb095ddd8a8196ee73fd84069c982a2c909bfdfc964a725", "elapsed_ms": 7.151, "status": 200}

@@ -1,0 +1,197 @@
+{
+  "case_id": "mission-contradictory-mirror",
+  "completed_at": "2026-09-19T06:05:10.317489+00:00",
+  "position": 7,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "9fbdc9fdf41ed43a933766fcd0faa10bd9c9e979d628739b9b2e45f9a126939f",
+    "finish_reason": "stop",
+    "latency_ms": 214599.694,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "d43ad81aa25e2059eed380da749b22f304fad7dc3ab9afabcac1121b6ac061d8",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 14115,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 14935
+      },
+      "cost": 0.00736725,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0070575,
+        "upstream_inference_cost": 0.00736725,
+        "upstream_inference_prompt_cost": 0.00030975
+      },
+      "is_byok": false,
+      "prompt_tokens": 2065,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 16180
+    }
+  },
+  "repetition": 1,
+  "result": {
+    "action": "ready",
+    "clarifying_question": null,
+    "mission": {
+      "abstain_when": [
+        "No primary evidence of the mirror's existence, mechanism, or custody is accessible — report inability to research rather than reasoning from the request's premise alone.",
+        "The requester seeks a grant, denial, or approval of production deployment authority rather than an evidence determination — that is a governance decision outside research scope.",
+        "Sources irreconcilably contradict the mirror's provenance within budget — preserve and report the contradiction instead of concluding."
+      ],
+      "acceptable_uncertainty": "The derivation relationship must be evidenced directly; if provenance evidence is missing or conflicting, report 'unresolved — independence undetermined' rather than defaulting to either independent or derivative. Conceptual reasoning about independence may be offered as analysis, but every enterprise-specific fact (mirror, policy, authority, standard) must come from gathered sources; the request's premise is a claim to verify, not a given.",
+      "audience": "Enterprise governance, risk, and audit reviewers, release/change-management leads, and platform owners in the agentic software factory evaluating deployment-authority evidence.",
+      "budget": {
+        "max_elapsed_seconds": 300,
+        "max_model_calls": 6,
+        "max_searches": 4,
+        "max_sources": 10
+      },
+      "clarifications": [
+        {
+          "blocking": false,
+          "clarification_id": "cl.decision.use",
+          "question": "Which decision should this corroboration determination feed — audit evidence acceptance, a deployment-authority grant review, or a control-design assessment?",
+          "trigger": "After evidence gathering, the downstream decision context remains unclear or the authority claim is ambiguous despite the policy evidence."
+        }
+      ],
+      "contradiction_policy": "preserve_and_report",
+      "decision": "Whether a mirror that repeats the delivery policy verbatim may be counted as independent corroboration of production deployment authority in the enterprise agentic software factory — determined by establishing (a) the mirror's provenance and custody relative to the delivery policy's authoritative origin, (b) the exact deployment-authority claim at issue, and (c) any written enterprise standard for what counts as independent corroboration. The mission yields an evidence determination only; it neither grants nor denies deployment authority and does not itself accept or reject the mirror as evidence.",
+      "freshness": {
+        "as_of": null,
+        "mode": "current",
+        "rationale": "Mirror synchronization state, policy versions, and deployment-authority designations change over time; the determination must reflect the current configuration and custody, not historical snapshots."
+      },
+      "mission_id": "mirror-verbatim-corroboration-deployment-authority",
+      "obligations": [
+        {
+          "closure_rule": "Close only on direct primary evidence of existence, verbatim repetition, mechanism, and owner; if unverifiable, report the request's premise as unevidenced and leave open.",
+          "description": "Verify the mirror's existence and verbatim repetition of the delivery policy, and document its mechanism and owner from primary records (configs, repository history, system inventory).",
+          "evidence_role": "implementation_evidence",
+          "obligation_id": "ob.mirror.verify",
+          "question_id": "q.mirror.verify",
+          "weight": 5
+        },
+        {
+          "closure_rule": "Close when origin, version, and approval chain are evidenced from primary or official sources; if no authoritative origin is found, report the absence rather than assuming one.",
+          "description": "Establish the delivery policy's authoritative origin, current governing version, and approval chain for production deployment authority.",
+          "evidence_role": "primary_authority",
+          "obligation_id": "ob.policy.origin",
+          "question_id": "q.policy.origin",
+          "weight": 5
+        },
+        {
+          "closure_rule": "Close only with direct provenance evidence from at least two independent publishers; absent or conflicting provenance evidence is reported as unresolved, never inferred.",
+          "description": "Determine the derivation relationship between mirror and policy using synchronization configuration, change or commit history, and custody records.",
+          "evidence_role": "implementation_evidence",
+          "obligation_id": "ob.provenance.link",
+          "question_id": "q.provenance.link",
+          "weight": 5
+        },
+        {
+          "closure_rule": "Close when the claim is evidenced from the policy or requester materials; if it remains ambiguous after evidence review, escalate as a clarification rather than guessing.",
+          "description": "Pin down the exact production deployment authority claim the mirror is offered to corroborate and its holder under the policy.",
+          "evidence_role": "context",
+          "obligation_id": "ob.authority.claim",
+          "question_id": "q.authority.claim",
+          "weight": 4
+        },
+        {
+          "closure_rule": "Close when a written standard is evidenced or a bounded search of governance sources documents that none exists; report absence explicitly.",
+          "description": "Locate any written enterprise standard defining independent corroboration for deployment-authority evidence.",
+          "evidence_role": "primary_authority",
+          "obligation_id": "ob.standard.independence",
+          "question_id": "q.standard.independence",
+          "weight": 3
+        },
+        {
+          "closure_rule": "Close when such evidence is found and reported, or when a bounded search documents none was found; finding none is a reported result, not a default conclusion.",
+          "description": "Actively seek disconfirming evidence that the mirror has independent provenance (separate authorship, approval, or divergent history).",
+          "evidence_role": "counterevidence",
+          "obligation_id": "ob.counter.independence",
+          "question_id": "q.counter.independence",
+          "weight": 4
+        }
+      ],
+      "questions": [
+        {
+          "question_id": "q.mirror.verify",
+          "required": true,
+          "text": "Does the mirror exist as described — currently repeating the delivery policy verbatim — and what exactly is it (artifact, location, owner, and how it is produced or synchronized)?"
+        },
+        {
+          "question_id": "q.policy.origin",
+          "required": true,
+          "text": "What is the authoritative origin of the delivery policy — which document and version governs production deployment, and what approval chain and custody stand behind it?"
+        },
+        {
+          "question_id": "q.provenance.link",
+          "required": true,
+          "text": "Does the mirror's content derive from the delivery policy's origin (same source, copied or synced), or is it maintained under a separate authority with its own approval and change history?"
+        },
+        {
+          "question_id": "q.authority.claim",
+          "required": true,
+          "text": "What specific production deployment authority is the mirror offered to corroborate — the policy's designation of who or what may deploy to production, or a separate grant of authority?"
+        },
+        {
+          "question_id": "q.standard.independence",
+          "required": true,
+          "text": "What does the enterprise's applicable written standard require for corroboration to count as independent (e.g., separate provenance, separate custodian, separate control), if any such standard exists?"
+        },
+        {
+          "question_id": "q.counter.independence",
+          "required": true,
+          "text": "What evidence, if any, shows the mirror is independently maintained rather than derivative — separate authorship, separate approval, or a divergent change history?"
+        }
+      ],
+      "schema_version": "research-mission/1",
+      "scope": {
+        "exclude": [
+          "Any grant, revocation, or approval of production deployment authority — research determines evidence quality, not authority.",
+          "Acceptance or rejection of the mirror as audit evidence; that determination belongs to the decision owner, informed by this research.",
+          "Changes to the delivery policy, the mirror, or any synchronization configuration.",
+          "Broader security, compliance, or software-factory posture beyond the mirror-policy-authority evidence question.",
+          "Assertions about the mirror's or policy's content beyond what gathered primary evidence shows; the request's premise is treated as a claim to verify, not a fact."
+        ],
+        "include": [
+          "Verification that the mirror exists and currently repeats the delivery policy verbatim, and identification of the mirror: artifact, location, owner, and production or synchronization mechanism.",
+          "The delivery policy's authoritative origin: which document and version governs production deployment, and the approval chain and custody behind it.",
+          "The provenance relationship between mirror and policy: whether the mirror is copied or synced from the policy's origin, or maintained under a separate authority with its own approval and change history.",
+          "The specific production deployment authority claim the mirror is offered to corroborate, and who or what holds that authority under the policy.",
+          "Any written enterprise standard, policy, or control defining when corroboration counts as independent (separate provenance, separate custodian, separate control), if one exists."
+        ]
+      },
+      "source_policy": {
+        "allowed_authority": [
+          "primary",
+          "official",
+          "independent"
+        ],
+        "derivative_sources_count_as_independent": false,
+        "inaccessible_sources_can_close_obligations": false,
+        "minimum_independent_publishers": 2
+      },
+      "stop_when": [
+        "The mirror's derivation relationship to the delivery policy's origin is evidenced — derivative or independently maintained — by direct provenance evidence from at least two independent publishers.",
+        "The delivery policy's authoritative origin and the deployment-authority claim it designates are evidenced, or their absence is documented.",
+        "A written enterprise independence or corroboration standard is found, or a bounded governance-source search documents that none exists.",
+        "The budget is exhausted; report the determination with all unresolved obligations and contradictions preserved."
+      ]
+    },
+    "rationale": "The request poses an evidentiary question — whether a verbatim mirror can independently corroborate production deployment authority — not a request for authority, permission, or a deployment action, so normalization into a research mission (rather than abstention) fits. No blocking clarification is required: the decision is stated by the question itself, and the mirror's concrete identity, the policy's origin, and the applicable independence standard are research targets the mission is built to resolve, not prerequisites to guess. The mission presupposes no answer: the concern that a verbatim copy is merely derivative is encoded as the hypothesis under test (a provenance question plus a counterevidence obligation), and the source policy operationalizes the standard (derivative sources never count as independent; two independent publishers required) without asserting any finding. Because no sources were supplied, the mission treats the request's premise ('a mirror repeats the policy verbatim') as a claim to verify, includes an abstain condition if no primary evidence is accessible, and demands direct provenance evidence before any conclusion. The mission is a research boundary only: it confers no deployment authority, accepts no evidence, and decides nothing; a single non-blocking clarification is reserved for a genuinely residual decision-context ambiguity after evidence review."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:01:35.711507+00:00",
+  "status": "completed",
+  "trial_id": "mission-contradictory-mirror-intake-r1"
+}

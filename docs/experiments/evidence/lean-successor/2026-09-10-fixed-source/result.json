@@ -1,0 +1,11 @@
+{
+  "status": "complete_development_probe",
+  "provider_calls": 1,
+  "reported_input_tokens": 802,
+  "reported_output_tokens": 315,
+  "construction_prompt_digest": "edd96c85a722adb7113244e143218590785a51531e7319ea17ac2ca4ba5a00f9",
+  "review_prompt_digest": "c4da4e7e4b99d62b74b3481731b7873e544f8803b96eb92e492651c8fe8b7f44",
+  "resolved_models": [
+    "local"
+  ]
+}

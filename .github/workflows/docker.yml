@@ -173,6 +173,8 @@ jobs:
           TWIN_FAILURE_SOURCE: ${{ steps.twin_tests.outcome == 'success' && 'none' || 'twin' }}
           TWIN_CHANGED_PATHS_JSON: ${{ needs.changes.outputs.changed_paths_json }}
           TWIN_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          TWIN_EVENT_KIND: ${{ github.event_name }}
+          TWIN_EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           TWIN_EXECUTION_MODE: hosted
         run: |
           uv run --no-sync python scripts/twin_provenance.py --output twin-out --changed-paths-json "$TWIN_CHANGED_PATHS_JSON"
@@ -223,6 +225,18 @@ jobs:
             context: mcp-svc
             dockerfile: mcp-svc/Dockerfile
             image: ghcr.io/groktopus/groktocrawl-mcp
+          - service: capture-egress-svc
+            context: .
+            dockerfile: capture-egress-svc/Dockerfile
+            image: ghcr.io/groktopus/groktocrawl-capture-egress
+          - service: flare-control
+            context: .
+            dockerfile: flare-control/Dockerfile
+            image: ghcr.io/groktopus/groktocrawl-flare-control
+          - service: flare-protected
+            context: .
+            dockerfile: flare-protected/Dockerfile
+            image: ghcr.io/groktopus/groktocrawl-protected-flare
       max-parallel: 2
 
     permissions:
@@ -251,6 +265,7 @@ jobs:
         with:
           images: ${{ matrix.image }}
           tags: |
+            type=sha,format=long
             type=raw,value=latest,enable=${{ github.ref_name == 'main' }}
             type=raw,value=unstable,enable=${{ github.ref_name == 'main' }}
             type=raw,value=stable,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
@@ -268,6 +283,8 @@ jobs:
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
+          build-args: |
+            GROKTOCRAWL_REVISION=${{ github.sha }}
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name == 'push' }}
           tags: ${{ steps.meta.outputs.tags }}
@@ -367,6 +384,7 @@ jobs:
         run: |
           cp .env.sample .env
           echo "TWIN_RUN_ID=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> .env
+          echo "DURABLE_RESEARCH_REDIS_URL=redis://valkey:6379/15" >> .env
           echo "LLM_BASE_URL=http://llm-svc:8011/v1?run_id=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> .env
           echo "LLM_MODEL=fixture-model" >> .env
           echo "CAPTCHA_VISION_BASE_URL=http://llm-svc:8011/v1" >> .env
@@ -982,6 +1000,8 @@ jobs:
           TWIN_TEST_OUTCOME: ${{ job.status }}
           TWIN_CHANGED_PATHS_JSON: ${{ needs.changes.outputs.changed_paths_json }}
           TWIN_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          TWIN_EVENT_KIND: ${{ github.event_name }}
+          TWIN_EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           TWIN_EXECUTION_MODE: compose
           TWIN_REQUIRE_IMAGES: "1"
           TWIN_RECORD_IMAGES: "1"
@@ -1091,9 +1111,14 @@ jobs:
         if: always()
         run: docker compose down --remove-orphans --timeout 30
 
+  research-runtime:
+    uses: ./.github/workflows/runtime.yml
+    permissions:
+      contents: read
+
   runtime-gate:
     name: Runtime Gate
-    needs: [changes, twin-contracts, integration-tests]
+    needs: [changes, twin-contracts, integration-tests, research-runtime]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -1151,3 +1176,7 @@ jobs:
         run: |
           echo "Required hosted twin contracts did not complete successfully."
           exit 1
+
+      - name: Require research storage and capture validation
+        if: needs.research-runtime.result != 'success'
+        run: exit 1

@@ -10,6 +10,7 @@ import logging
 import math
 import time
 from collections.abc import AsyncGenerator
+from enum import StrEnum
 from typing import Any
 
 import httpx
@@ -35,10 +36,17 @@ def _token_budget_params(*, health: bool = False) -> dict[str, int]:
     settings = load_settings()
     if health:
         budget = settings.llm_health_token_budget
-    elif settings.llm_token_parameter == "max_completion_tokens":
-        budget = settings.llm_max_completion_tokens
     else:
-        budget = settings.llm_max_tokens
+        budget_field = f"llm_{settings.llm_token_parameter}"
+        budget = getattr(settings, budget_field)
+        # The explicit budget for the selected field wins over the legacy X
+        # alias. The alias follows the selected provider field and never adds
+        # a second, unsupported token parameter to the same request.
+        if (
+            budget_field not in settings.model_fields_set
+            and settings.llm_max_output_tokens is not None
+        ):
+            budget = settings.llm_max_output_tokens
     return {settings.llm_token_parameter: budget}
 
 
@@ -75,6 +83,16 @@ def _parse_retry_after(value: str | None) -> float | None:
     if not math.isfinite(seconds) or seconds < 0:
         return None
     return max(1.0, min(seconds, _MAX_RETRY_AFTER_SECONDS))
+
+
+class LLMReadiness(StrEnum):
+    """A bounded probe outcome, not a guarantee about the next generation."""
+
+    READY = "ready"
+    TIMED_OUT = "timed_out"
+    UNAVAILABLE = "unavailable"
+    RATE_LIMITED = "rate_limited"
+    REJECTED = "rejected"
 
 
 class LLMClient:
@@ -209,6 +227,7 @@ class LLMClient:
 
         full_content = ""
         saw_done = False
+        saw_length_stop = False
         outcome = "success"
         started = time.monotonic()
         try:
@@ -260,6 +279,8 @@ class LLMClient:
                             choices = chunk.get("choices", [{}])
                             if not choices:
                                 continue
+                            if choices[0].get("finish_reason") == "length":
+                                saw_length_stop = True
                             delta = choices[0].get("delta", {})
                             token = delta.get("content", "")
                             if token:
@@ -286,6 +307,14 @@ class LLMClient:
                     "type": "error",
                     "classification": "truncated",
                     "content": "LLM provider stream ended before [DONE]",
+                }
+                return
+            if saw_length_stop:
+                outcome = "truncated"
+                yield {
+                    "type": "error",
+                    "classification": "truncated",
+                    "content": "LLM provider stopped at its output limit",
                 }
                 return
             yield {"type": "done", "full_content": full_content}
@@ -457,12 +486,12 @@ class LLMClient:
             )
             self._admission.release("llm", weight=llm_weight)
 
-    async def check_health(self) -> bool:
-        """Check if the LLM backend is reachable and responding.
+    async def probe_readiness(self) -> LLMReadiness:
+        """Probe once for at most five seconds; timeout leaves readiness unknown.
 
-        Sends a minimal request using the configured budget field with a
-        short 5s timeout. Returns True if the backend responds with
-        HTTP 200, False otherwise. Never raises exceptions.
+        Cancellation propagates. A probe never retries or logs provider bodies,
+        credentials, or endpoint details. Actual generation retains its own
+        admission, timeout, and publication checks.
         """
         body = {
             "model": self.model,
@@ -474,23 +503,31 @@ class LLMClient:
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
         try:
-            async with httpx.AsyncClient(timeout=5) as client:
-                resp = await client.post(
-                    self._completion_url(),
-                    headers=headers,
-                    json=body,
-                )
-                if resp.status_code == 200:
-                    return True
-                logger.error(
-                    "LLM health check failed: HTTP %d — %s",
-                    resp.status_code,
-                    resp.text[:500],
-                )
-                return False
-        except Exception as e:
-            logger.error("LLM health check failed: %s", e)
-            return False
+            async with asyncio.timeout(5):
+                async with httpx.AsyncClient(timeout=5) as client:
+                    resp = await client.post(
+                        self._completion_url(), headers=headers, json=body
+                    )
+            if resp.status_code == 200:
+                outcome = LLMReadiness.READY
+            elif resp.status_code == 429:
+                outcome = LLMReadiness.RATE_LIMITED
+            elif resp.status_code >= 500:
+                outcome = LLMReadiness.UNAVAILABLE
+            else:
+                outcome = LLMReadiness.REJECTED
+        except httpx.ConnectTimeout:
+            outcome = LLMReadiness.UNAVAILABLE
+        except (TimeoutError, httpx.TimeoutException):
+            outcome = LLMReadiness.TIMED_OUT
+        except Exception:
+            outcome = LLMReadiness.UNAVAILABLE
+        logger.info("LLM readiness probe outcome=%s", outcome.value)
+        return outcome
+
+    async def check_health(self) -> bool:
+        """Preserve the conservative boolean probe for existing consumers."""
+        return await self.probe_readiness() == LLMReadiness.READY
 
     async def close(self) -> None:
         await self._client.aclose()

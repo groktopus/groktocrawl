@@ -7,6 +7,8 @@ running agent-svc is required.
 from __future__ import annotations
 
 import asyncio
+import base64
+import json
 from typing import Any
 
 import httpx
@@ -130,11 +132,11 @@ class TestFromEnv:
         assert client._default_timeout == 120.0
 
     def test_groktocrawl_url(self, monkeypatch):
-        monkeypatch.setenv("GROKTOCRAWL_URL", "http://saru:8080")
+        monkeypatch.setenv("GROKTOCRAWL_URL", "http://deployment.example.internal:8080")
         monkeypatch.delenv("GROKTOCRAWL_API_URL", raising=False)
         monkeypatch.delenv("GROKTOCRAWL_API_KEY", raising=False)
         client = GroktocrawlClient.from_env()
-        assert client._base_url == "http://saru:8080"
+        assert client._base_url == "http://deployment.example.internal:8080"
 
     def test_fallback_to_groktocrawl_api_url(self, monkeypatch):
         monkeypatch.delenv("GROKTOCRAWL_URL", raising=False)
@@ -201,6 +203,25 @@ class TestErrorPropagation:
         assert "error" in result
         assert result["status_code"] == 502
         assert "502" in result["error"]
+
+    def test_http_error_preserves_machine_readable_error_code(self):
+        client = _make_matched_client(
+            {
+                ("POST", "/v2/scrape"): _error_handler(
+                    502,
+                    {
+                        "success": False,
+                        "error": "Barrier or challenge content detected",
+                        "error_code": "BARRIER_DETECTED",
+                    },
+                )
+            }
+        )
+
+        result = asyncio.run(client.scrape("https://example.com/challenge"))
+
+        assert result["status_code"] == 502
+        assert result["error_code"] == "BARRIER_DETECTED"
 
     def test_http_401_auth_failure(self):
         """VAL-MCP-H03: Invalid API key propagates as 401 error."""
@@ -806,6 +827,102 @@ class TestAllTools:
 class TestExpandedSurface:
     """Verify the expanded client surface hits the right endpoints."""
 
+    def test_experimental_research_create_sends_idempotency_key(self):
+        captured: dict[str, Any] = {}
+
+        def _handler(request: httpx.Request) -> httpx.Response:
+            captured["path"] = request.url.path
+            captured["key"] = request.headers.get("idempotency-key")
+            return httpx.Response(
+                202,
+                json={"run_id": "run-1", "state": "accepted"},
+                request=request,
+            )
+
+        client = GroktocrawlClient(base_url="http://test:8080", api_key=None)
+        client._client = httpx.AsyncClient(
+            base_url=client._base_url,
+            headers=client._headers(),
+            transport=httpx.MockTransport(_handler),
+        )
+
+        result = asyncio.run(
+            client.experimental_research_create("objective", "stable-key")
+        )
+
+        assert result["run_id"] == "run-1"
+        assert captured == {
+            "path": "/experimental/research/v1/runs",
+            "key": "stable-key",
+        }
+
+    def test_experimental_research_artifact_returns_exact_bytes(self):
+        client = GroktocrawlClient(base_url="http://test:8080", api_key=None)
+
+        def _handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(
+                200,
+                content=b"# exact artifact",
+                headers={"content-type": "text/markdown"},
+                request=request,
+            )
+
+        client._client = httpx.AsyncClient(
+            base_url=client._base_url,
+            headers=client._headers(),
+            transport=httpx.MockTransport(_handler),
+        )
+        result = asyncio.run(client.experimental_research_artifact("a-1"))
+
+        assert result["artifact_id"] == "a-1"
+        assert result["content_type"] == "text/markdown"
+        assert result["content_base64"]
+
+    def test_experimental_research_attach_posts_expected_revision(self):
+        captured: dict[str, Any] = {}
+
+        def _handler(request: httpx.Request) -> httpx.Response:
+            captured["path"] = request.url.path
+            captured["body"] = json.loads(request.content)
+            return httpx.Response(
+                200, json={"session_id": "s-1", "revision": 1}, request=request
+            )
+
+        client = GroktocrawlClient(base_url="http://test:8080", api_key=None)
+        client._client = httpx.AsyncClient(
+            base_url=client._base_url,
+            headers=client._headers(),
+            transport=httpx.MockTransport(_handler),
+        )
+        result = asyncio.run(client.experimental_research_attach("s-1", "run-1", 0))
+
+        assert result["revision"] == 1
+        assert captured == {
+            "path": "/experimental/research/v1/sessions/s-1/attachments",
+            "body": {"run_id": "run-1", "expected_revision": 0},
+        }
+
+    def test_experimental_research_capabilities_uses_unversioned_route(self):
+        client = _make_matched_client(
+            {
+                (
+                    "GET",
+                    "/experimental/research/v1/capabilities",
+                ): _json_handler(
+                    {
+                        "protocol_version": "research/1",
+                        "implementation_stage": "contract_and_golden_traces",
+                        "recovery_mode": "not_advertised",
+                        "operations": {},
+                    }
+                )
+            }
+        )
+
+        result = asyncio.run(client.experimental_research_capabilities())
+
+        assert result["protocol_version"] == "research/1"
+
     def test_create_agent_creates_without_polling(self):
         call_count = 0
 
@@ -870,6 +987,7 @@ class TestExpandedSurface:
         assert body["include_images"] is True
         assert body["force_fresh"] is True
         assert body["search_type"] == "focused"
+        assert "max_results_per_query" not in body
 
     def test_cancel_agent_verb(self):
         client = _make_matched_client(
@@ -1520,12 +1638,16 @@ class TestRecoveryAfterOutage:
 
 class TestURLConstruction:
     def test_trailing_slash_stripped(self):
-        client = GroktocrawlClient(base_url="http://saru:8080/", api_key=None)
-        assert client._base_url == "http://saru:8080"
+        client = GroktocrawlClient(
+            base_url="http://deployment.example.internal:8080/", api_key=None
+        )
+        assert client._base_url == "http://deployment.example.internal:8080"
 
     def test_subpath_in_base_url(self):
-        client = GroktocrawlClient(base_url="http://saru:8080/api", api_key=None)
-        assert client._base_url == "http://saru:8080/api"
+        client = GroktocrawlClient(
+            base_url="http://deployment.example.internal:8080/api", api_key=None
+        )
+        assert client._base_url == "http://deployment.example.internal:8080/api"
 
 
 class TestLifecycle:
@@ -1539,3 +1661,320 @@ class TestLifecycle:
 
         was_open = asyncio.run(run())
         assert was_open is True
+
+
+def test_search_preserves_bounded_media_payload():
+    media = {"media_type": "image", "url": "https://example.org/full.jpg", "width": 640}
+    row = {
+        "url": "https://example.org/page",
+        "media": media,
+        "engines": ["brave", "images"],
+    }
+    client = _make_matched_client(
+        {
+            ("POST", "/v2/search"): _json_handler(
+                {"success": True, "data": {"web": [row]}}
+            )
+        }
+    )
+    result = asyncio.run(client.search("fixture"))
+    assert result["data"]["web"][0] == row
+
+
+@pytest.mark.asyncio
+async def test_document_client_bytes_and_scoped_metadata_workflow():
+    calls = []
+
+    def handler(request):
+        calls.append(request)
+        return httpx.Response(
+            200, json={"ref_id": "doc_fixture", "markdown": "Private source"}
+        )
+
+    client = GroktocrawlClient(base_url="http://fixture", api_key="fixture-key")
+    client._client = httpx.AsyncClient(
+        base_url="http://fixture",
+        headers=client._headers(),
+        transport=httpx.MockTransport(handler),
+    )
+    try:
+        await client.document_attach(
+            "session",
+            "report.pdf",
+            base64.b64encode(b"private file bytes").decode(),
+            media_type="application/pdf",
+        )
+        assert calls[-1].headers["Authorization"] == "Bearer fixture-key"
+        assert b'filename="report.pdf"' in calls[-1].content
+        assert b"private file bytes" in calls[-1].content
+        await client.document_list("session")
+        assert calls[-1].method == "GET"
+        await client.document_read("session", "doc_fixture", 4, 16)
+        assert calls[-1].url.params == httpx.QueryParams({"start": 4, "end": 16})
+        await client.session_query(
+            "session",
+            "Compare documents and web",
+            ["doc_fixture", "ref_1_2"],
+            evidence_budget_chars=32000,
+            model="fixture",
+        )
+        assert json.loads(calls[-1].content)["params"] == {
+            "question": "Compare documents and web",
+            "ref_ids": ["doc_fixture", "ref_1_2"],
+            "evidence_budget_chars": 32000,
+            "model": "fixture",
+        }
+        await client.document_detach("session", "doc_fixture")
+        assert calls[-1].method == "DELETE"
+        await client.session_delete("session")
+        assert calls[-1].url.path == "/v2/session/session"
+    finally:
+        await client.close()
+
+
+@pytest.mark.asyncio
+async def test_invalid_document_bytes_do_not_send_network_requests():
+    client = GroktocrawlClient(base_url="http://fixture")
+    calls = []
+    client._client = httpx.AsyncClient(
+        base_url="http://fixture",
+        transport=httpx.MockTransport(lambda request: calls.append(request)),
+    )
+    try:
+        with pytest.raises(ValueError):
+            await client.document_attach("session", "report.txt", "%%%")
+        with pytest.raises(ValueError, match="exactly one"):
+            await client.document_attach("session", "report.txt", "dGV4dA==", "upload")
+        assert calls == []
+    finally:
+        await client.close()
+
+
+@pytest.mark.asyncio
+async def test_staged_attachment_does_not_read_remote_url_or_local_path():
+    calls = []
+
+    def handler(request):
+        calls.append(request)
+        return httpx.Response(200, json={"ref_id": "doc_fixture"})
+
+    client = GroktocrawlClient(base_url="http://fixture")
+    client._client = httpx.AsyncClient(
+        base_url="http://fixture", transport=httpx.MockTransport(handler)
+    )
+    try:
+        await client.document_attach("session", "unused", upload_id="scoped-upload")
+        assert calls[0].url.host == "fixture"
+        assert calls[0].content == b"upload_id=scoped-upload"
+        assert len(calls) == 1
+    finally:
+        await client.close()
+
+
+def test_workspace_client_lists_selects_and_resumes_exact_revision():
+    captured = []
+
+    def handler(request):
+        captured.append(
+            (
+                request.method,
+                request.url.path,
+                json.loads(request.content) if request.content else None,
+            )
+        )
+        return httpx.Response(
+            200,
+            json={"revision": "observed", "markdown": "exact evidence"},
+            request=request,
+        )
+
+    client = GroktocrawlClient(base_url="http://test:8080", api_key=None)
+    client._client = httpx.AsyncClient(
+        base_url=client._base_url, transport=httpx.MockTransport(handler)
+    )
+
+    async def exercise():
+        await client.experimental_research_workspace()
+        await client.experimental_research_workspace("root-1")
+        await client.experimental_research_resume(
+            "root-1", "render", expected_revision="observed"
+        )
+
+    asyncio.run(exercise())
+    assert captured == [
+        ("GET", "/experimental/research/v1/workspace", None),
+        ("GET", "/experimental/research/v1/workspace/root-1", None),
+        (
+            "POST",
+            "/experimental/research/v1/workspace/root-1/actions",
+            {"action": "render", "expected_revision": "observed"},
+        ),
+    ]
+
+
+@pytest.mark.asyncio
+async def test_search_preserves_bounded_date_contract():
+    captured = []
+
+    def handler(request):
+        captured.append(json.loads(request.content))
+        return httpx.Response(
+            200,
+            json={
+                "success": True,
+                "data": {"web": []},
+                "date_filter": _bounded_proof(),
+            },
+        )
+
+    client = _make_matched_client({("POST", "/v2/search"): handler})
+    try:
+        result = await client.search(
+            "paper", date_from="2026-01-01", date_to="2026-01-31", engines=["openalex"]
+        )
+        assert captured[0]["date_from"] == "2026-01-01"
+        assert captured[0]["date_to"] == "2026-01-31"
+        assert captured[0]["engines"] == ["openalex"]
+        assert result["date_filter"]["status"] == "enforced"
+    finally:
+        await client.close()
+
+
+def _bounded_proof():
+    bounds = {"date_from": "2026-01-01", "date_to": "2026-01-31"}
+    return {
+        "requested": {**bounds, "time_range": None},
+        "applied": bounds,
+        "status": "enforced",
+        "engines": ["openalex"],
+        "enforced_by": ["upstream:openalex"],
+        "reason": "audited",
+        "warnings": [],
+    }
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        {"success": True, "error": None, "data": {"web": []}},
+        {"success": True, "error": "legacy", "data": {"web": []}},
+        {
+            "success": True,
+            "error": "failure",
+            "date_filter": _bounded_proof(),
+            "data": {"web": []},
+        },
+        {"success": True, "data": {"web": []}},
+        {
+            "success": True,
+            "date_filter": _bounded_proof() | {"applied": {}},
+            "data": {"web": []},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_proof(),
+            "data": {"web": [{"publishedDate": "2025-01-01"}]},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_proof(),
+            "data": {"web": [{"publishedDate": None}]},
+        },
+        {"success": False, "date_filter": _bounded_proof(), "data": {"web": []}},
+        {
+            "success": True,
+            "date_filter": _bounded_proof() | {"status": "partially_enforced"},
+            "data": {"web": []},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_proof() | {"requested": {}},
+            "data": {"web": []},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_proof() | {"engines": ["brave"]},
+            "data": {"web": []},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_proof() | {"warnings": "bad"},
+            "data": {"web": []},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_proof() | {"reason": None},
+            "data": {"web": []},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_proof(),
+            "data": {"web": [{"publishedDate": "2026-02-30"}]},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_proof(),
+            "data": {"web": [{"publishedDate": "2026-01-01", "engine": "brave"}]},
+        },
+    ],
+)
+def test_bounded_mcp_rejects_old_or_mismatched_agent(response):
+    client = _make_matched_client({("POST", "/v2/search"): _json_handler(response)})
+    result = asyncio.run(
+        client.search(
+            "paper", date_from="2026-01-01", date_to="2026-01-31", engines=["openalex"]
+        )
+    )
+    assert "error" in result
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"date_from": "bad"},
+        {"date_to": "2025-01-01"},
+        {"engines": ["arxiv"]},
+        {"search_type": "deep"},
+        {"retrieval_mode": "vector"},
+        {"time_range": "week"},
+    ],
+)
+def test_bounded_mcp_validates_before_dispatch(changes):
+    client = _make_matched_client({})
+    result = asyncio.run(
+        client.search(
+            "paper",
+            **(
+                {
+                    "date_from": "2026-01-01",
+                    "date_to": "2026-01-31",
+                    "engines": ["openalex"],
+                }
+                | changes
+            ),
+        )
+    )
+    assert result["status_code"] == 422
+
+
+@pytest.mark.parametrize(
+    "bounds",
+    [
+        {"date_from": "2026-01-01", "date_to": None},
+        {"date_from": None, "date_to": "2026-01-01"},
+        {"date_from": "2026-01-01", "date_to": "2026-01-01"},
+    ],
+)
+def test_bounded_mcp_accepts_inclusive_one_sided_results(bounds):
+    proof = _bounded_proof() | {
+        "requested": {**bounds, "time_range": None},
+        "applied": bounds,
+    }
+    response = {
+        "success": True,
+        "data": {"web": [{"publishedDate": "2026-01-01", "engine": "openalex"}]},
+        "date_filter": proof,
+    }
+    client = _make_matched_client({("POST", "/v2/search"): _json_handler(response)})
+    result = asyncio.run(client.search("paper", engines=["openalex"], **bounds))
+    assert result == response

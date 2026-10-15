@@ -15,8 +15,10 @@ from __future__ import annotations
 import logging
 import re
 
-import httpx
-
+from ..source_http import (
+    trusted_control_base_url,
+    trusted_control_httpx_client,
+)
 from ._helpers import scrape_page
 from .base import AdapterContext, AdapterError, AdapterResult, SiteAdapter, adapter
 
@@ -36,10 +38,12 @@ async def _fetch_via_browser(url: str, ctx: AdapterContext) -> str | None:
     Creates a temporary browser session, navigates to the URL,
     extracts article/main content, and tears down the session.
     """
-    browser_svc_url = ctx.config.get("BROWSER_SVC_URL", "http://browser-svc:8012")
+    browser_svc_url = trusted_control_base_url(
+        ctx.config.get("BROWSER_SVC_URL", "http://browser-svc:8012"), "browser"
+    )
     session_id = None
     try:
-        async with httpx.AsyncClient(timeout=45) as client:
+        async with trusted_control_httpx_client(service="browser", timeout=45) as client:
             # Create a short-lived browser session
             create_resp = await client.post(
                 f"{browser_svc_url}/browsers",
@@ -92,7 +96,7 @@ async def _fetch_via_browser(url: str, ctx: AdapterContext) -> str | None:
     finally:
         if session_id:
             try:
-                async with httpx.AsyncClient(timeout=5) as c:
+                async with trusted_control_httpx_client(service="browser", timeout=5) as c:
                     await c.delete(f"{browser_svc_url}/browsers/{session_id}")
             except Exception as e:
                 logger.debug("Shopify browser session cleanup failed: %s", e)

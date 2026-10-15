@@ -1,0 +1,52 @@
+{
+  "case_id": "mission-compound-recovery-portability",
+  "completed_at": "2026-09-19T06:07:30.567898+00:00",
+  "position": 10,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "f3af40841c223d64348dad6843e571a94d4571744783847e80b35445cac3bee9",
+    "finish_reason": "stop",
+    "latency_ms": 130224.227,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "a6c246340aebc47fb18ff523c98b5253f4e38d23f69adf60394dc589225319c4",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 1327,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 1021
+      },
+      "cost": 0.0009737,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0006635,
+        "upstream_inference_cost": 0.0009737,
+        "upstream_inference_prompt_cost": 0.0003102
+      },
+      "is_byok": false,
+      "prompt_tokens": 2068,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 3395
+    }
+  },
+  "repetition": 2,
+  "result": {
+    "action": "clarify",
+    "clarifying_question": "Which write path does 'ambiguous release write' refer to in your release pipeline (e.g., release-record commit, artifact publish, provider-output handoff), and can you identify the normative internal source — spec, runbook, or code — that defines its current recovery guarantees (atomicity, idempotency, retry/dedup, ordering) that the new model-provider adapter must preserve?",
+    "mission": null,
+    "rationale": "The request demands normative conclusions ('must recover', 'must preserve') about a specific internal mechanism — the 'ambiguous release write' and the adapter contract — in an enterprise software factory. Those obligations hinge on the system's existing write contract, which is internal and not identifiable from the request. No sources were supplied, and no public source can establish what a private pipeline's recovery semantics are; proceeding would force me to guess which write path is meant and would invent scope and authority the caller never granted. Resolving the referent and locating the authoritative internal/primary source is decision-changing: it determines whether the mission can use primary/official sources at all, or must abstain because research cannot legitimately close obligations about internal behavior. One blocking clarification resolves this without guessing; once answered, a research-mission/1 boundary can be issued scoping external work to general durable-write and adapter-pattern evidence only, with internal contract claims closed solely against the caller-designated normative source."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:05:20.335080+00:00",
+  "status": "completed",
+  "trial_id": "mission-compound-recovery-portability-intake-r2"
+}

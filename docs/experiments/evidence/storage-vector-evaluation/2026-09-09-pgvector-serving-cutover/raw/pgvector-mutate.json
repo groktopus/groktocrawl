@@ -1,0 +1,94 @@
+{
+  "after": [
+    {
+      "score": 0.98205,
+      "title": "Cutover sample 0",
+      "url": "https://pilot.invalid/cutover/f458cbb1d43eb5f0"
+    },
+    {
+      "score": 0.96773,
+      "title": "Cutover sample 5",
+      "url": "https://pilot.invalid/cutover/08aeafb67c6e8d4b"
+    },
+    {
+      "score": 0.96612,
+      "title": "Cutover sample 3",
+      "url": "https://pilot.invalid/cutover/75836ccfd6baa9f9"
+    },
+    {
+      "score": 0.96372,
+      "title": "Cutover sample 4",
+      "url": "https://pilot.invalid/cutover/0b371eacd50589cd"
+    },
+    {
+      "score": 0.95163,
+      "title": "Cutover sample 1",
+      "url": "https://pilot.invalid/cutover/5b70893b896cb66a"
+    },
+    {
+      "score": 0.94466,
+      "title": "Lag sample 212",
+      "url": "https://pilot.invalid/sustained/fd52ec53d2a4a5ad"
+    },
+    {
+      "score": 0.94269,
+      "title": "Lag sample 77",
+      "url": "https://pilot.invalid/sustained/fcee018649a94b0e"
+    },
+    {
+      "score": 0.94165,
+      "title": "Lag sample 111",
+      "url": "https://pilot.invalid/sustained/fff7e7ae6bcfe24c"
+    },
+    {
+      "score": 0.94063,
+      "title": "Lag sample 103",
+      "url": "https://pilot.invalid/sustained/cb8fe1e051fd410a"
+    },
+    {
+      "score": 0.94028,
+      "title": "Lag sample 170",
+      "url": "https://pilot.invalid/sustained/ef1d21c8ace96c1f"
+    }
+  ],
+  "created": {
+    "body": {
+      "status": "indexed",
+      "url_hash": 4210479098903946645
+    },
+    "digest": "719be4fbb9626fdb8fc7e47d13e36204d33113990dad3ad8f572147fb2915905",
+    "elapsed_ms": 100.3,
+    "status": 201
+  },
+  "deleted": {
+    "body": {
+      "status": "deleted"
+    },
+    "digest": "4df20f95e824b2af44a61642d88daaf041a392f1d38e2716b32ee0648f60b1bc",
+    "elapsed_ms": 9.851,
+    "status": 200
+  },
+  "found": [
+    {
+      "score": 1.0,
+      "title": "Fresh cutover write",
+      "url": "https://pilot.invalid/cutover/f458cbb1d43eb5f0/fresh"
+    },
+    {
+      "score": 0.98205,
+      "title": "Cutover sample 0",
+      "url": "https://pilot.invalid/cutover/f458cbb1d43eb5f0"
+    },
+    {
+      "score": 0.96773,
+      "title": "Cutover sample 5",
+      "url": "https://pilot.invalid/cutover/08aeafb67c6e8d4b"
+    }
+  ],
+  "fresh": {
+    "content": "Synthetic enterprise agent factory cutover evidence f458cbb1d43eb5f0 with durable orchestration, governance, and retained artifacts. fresh write",
+    "title": "Fresh cutover write",
+    "url": "https://pilot.invalid/cutover/f458cbb1d43eb5f0/fresh"
+  },
+  "phase": "mutate"
+}

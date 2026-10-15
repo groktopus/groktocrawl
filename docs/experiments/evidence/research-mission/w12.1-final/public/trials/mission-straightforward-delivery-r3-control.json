@@ -1,0 +1,84 @@
+{
+  "arm": "control",
+  "case_id": "mission-straightforward-delivery",
+  "completed_at": "2026-09-19T06:00:49.523723+00:00",
+  "position": 1,
+  "receipt": {
+    "attempt": 2,
+    "envelope_sha256": "7a7531263fc28c1b10a5a8096a5d8fcd998f63a6a3a013e4faf76507df6844f2",
+    "finish_reason": "stop",
+    "latency_ms": 323629.3,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "d0364b36ffa46e896d0589b9e3e31479b53606782e572f9318b1e7b4b575caa9",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [
+      {
+        "attempt": 1,
+        "error_type": "ReadTimeout",
+        "latency_ms": 300130.252
+      }
+    ],
+    "usage": {
+      "completion_tokens": 388,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 5
+      },
+      "cost": 0.0001927,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0001358,
+        "upstream_inference_cost": 0.0001927,
+        "upstream_inference_prompt_cost": 5.69e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 569,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 957
+    }
+  },
+  "repetition": 3,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Decision-support answer: build-agent release authority (per supplied fixture policy and context only, none real-world applicability given the fictional fixture label; careful audit note: this decision-support response is based on the supplied test fixture sources explicitly marked as fictional and not an actual policy record; treat as illustrative only; illustrative content follows to satisfy the exercise; non-binding illustrative determination; illustrative summary begins here) Per the supplied fixture record: a build agent may open a pull request once tests pass (delivery-policy), but may not deploy to production; production deployment requires service-owner approval plus a recorded rollback plan (delivery-policy). The sandbox experiment's automatic deployment to disposable test environments did not authorize production deployment (delivery-context). Limits: the supplied sources do not state who owns test-environment deployment going forward, and no independent non-fixture authority is present in the pack.",
+    "candidate_id": "candidate-416dc01584570205310d",
+    "citations": [
+      "delivery-policy",
+      "delivery-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "delivery-policy"
+        ],
+        "text": "A build agent may open a pull request after tests pass.",
+        "uncertainty": "No material uncertainty within the fixture; the source is explicitly labeled a fictional fixture and is not evidence of real-world policy."
+      },
+      {
+        "source_ids": [
+          "delivery-policy"
+        ],
+        "text": "Production deployment requires approval by the service owner and a recorded rollback plan; it is not an agent-authorized action.",
+        "uncertainty": "No material uncertainty within the fixture."
+      },
+      {
+        "source_ids": [
+          "delivery-context"
+        ],
+        "text": "An automatic-deployment sandbox experiment applied only to disposable test environments and did not authorize production deployment.",
+        "uncertainty": "The context does not establish standing authorization for test-environment deployment beyond that experiment."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:55:25.893374+00:00",
+  "status": "completed",
+  "trial_id": "mission-straightforward-delivery-r3-control"
+}

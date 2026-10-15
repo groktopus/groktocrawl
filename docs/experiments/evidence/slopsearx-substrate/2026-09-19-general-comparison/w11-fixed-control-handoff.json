@@ -1,0 +1,16 @@
+{
+  "accounting_sha256": "f7566190dc420ab87de12f26519a19ce8e25fcf53eb5b45e4d29dcc2cd4ae235",
+  "cases_sha256": "6761705e14ea1b535a8debdd0e54c6be14d8a42608c6f3606e6e445290aa21d6",
+  "completed": 36,
+  "failed": 0,
+  "failed_attempts": 0,
+  "policies": [
+    "fixed"
+  ],
+  "query_source": "committed_frozen_case_query",
+  "records": 36,
+  "repetitions": 3,
+  "result_limit": 8,
+  "schema_version": "enterprise-evaluation/w11-fixed-control-handoff/1",
+  "selection_sha256": "76e41947210917d7ea55de797c7bef90d25663d57a8ad36b50d358cb91300671"
+}

@@ -1,0 +1,68 @@
+{
+  "answer": {
+    "answer": "No change in Iris Build's artifact checksum algorithm is evidenced by the supplied sources. Both snapshots — iris-checksum-old and iris-checksum-new — state identically that 'Iris Build records SHA-256 checksums for artifacts.' Both snapshots carry the same subject_id (iris-build) and lineage_id (iris-checksum), so they describe the same subject lineage rather than similarly named but distinct entities. Accordingly: (1) what changed — no change event is documented in the supplied snapshots; (2) what is current — per iris-checksum-new, Iris Build records SHA-256 checksums for artifacts; (3) what remains historically valid — per iris-checksum-old, SHA-256 was also the recorded checksum algorithm in the earlier snapshot, so the historical record is consistent with the current one; (4) what is unresolved — the snapshots include no dates, version numbers, or explicit continuity statements, so it cannot be confirmed from this evidence alone that the algorithm remained unchanged at every point between the two snapshots, nor that SHA-256 remains in use beyond the latest snapshot. The conservative conclusion is: no change is evidenced, and SHA-256 is the checksum algorithm attested in both the earlier and current snapshots.",
+    "change_events": [],
+    "citations": [
+      "iris-checksum-old",
+      "iris-checksum-new"
+    ],
+    "current_truths": [
+      "Iris Build records SHA-256 checksums for artifacts, per the current guide snapshot (iris-checksum-new)."
+    ],
+    "historical_truths": [
+      "Iris Build recorded SHA-256 checksums for artifacts, per the earlier guide snapshot (iris-checksum-old)."
+    ],
+    "unresolved": [
+      "The snapshots contain no dates or version identifiers, so the temporal ordering of iris-checksum-old and iris-checksum-new is inferred from snapshot naming rather than stated in the source text.",
+      "Whether the checksum algorithm changed at any point between the two snapshots cannot be verified from the supplied evidence; absence of a documented change is not proof that no change occurred.",
+      "Whether SHA-256 has remained in use after the latest snapshot (iris-checksum-new) is not established by the supplied sources.",
+      "Whether any alternative or additional checksum algorithms were ever used alongside SHA-256 is not addressed in either snapshot."
+    ]
+  },
+  "arm": "control",
+  "case_id": "stable-anchor",
+  "completed_at": "2026-09-19T07:48:53.521603+00:00",
+  "position": 12,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "f1d17a5f0dd61abaa07ae7931fdd62f68282b89683fd5ae264ae2f51900ca553",
+    "finish_reason": "stop",
+    "latency_ms": 27338.991,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "834b8970eec6d25b9ad7fc75d280490633ecae91d2b1802f8ceaac915493bb22",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 1205,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 904
+      },
+      "cost": 0.0006781,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0006025,
+        "upstream_inference_cost": 0.0006781,
+        "upstream_inference_prompt_cost": 7.56e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 504,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1709
+    }
+  },
+  "repetition": 1,
+  "schema_version": "research-thread-trial/1",
+  "started_at": "2026-09-19T07:48:26.182209+00:00",
+  "status": "completed",
+  "stratum": "no_change",
+  "trial_id": "stable-anchor-r1-control"
+}

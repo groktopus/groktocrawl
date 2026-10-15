@@ -1,0 +1,9 @@
+{
+  "base_url_origin": "https://research-provider.example/",
+  "concurrency": 5,
+  "model_route": "general",
+  "schema_version": "research-mission-run-manifest/1",
+  "source_revision": "a2a743b44bb2c2420d523703ff15afb6e84c97c5",
+  "started_at": "2026-09-19T05:43:57.143879+00:00",
+  "work_order_sha256": "4217066a94ed3ae4a2efd4aa757b52fad8c224d7a8b692fe1f9da9d8b01f5d0a"
+}

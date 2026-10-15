@@ -1,0 +1,103 @@
+{
+  "arm": "treatment",
+  "case_id": "mission-compound-recovery-portability",
+  "completed_at": "2026-09-19T05:54:48.197475+00:00",
+  "position": 2,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "8f982ab2df089aa75d908e785ddf3de2c65dab0e38a2d9a12a98afa059e73038",
+    "finish_reason": "stop",
+    "latency_ms": 26617.938,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "a5742ff94fb614b9003a297dc8883fc1e17de51f200145c8ba702acedd492ae0",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 7154,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 7428
+      },
+      "cost": 0.00375025,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.003577,
+        "upstream_inference_cost": 0.00375025,
+        "upstream_inference_prompt_cost": 0.00017325
+      },
+      "is_byok": false,
+      "prompt_tokens": 1155,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 8309
+    }
+  },
+  "repetition": 3,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Decision: **Reject the model-provider switch on the supplied record** (do not approve today, on this evidence pack, for the release workflow; revisit only if the vendor supplies evidence meeting the portability policy below.)**Audience:** Enterprise engineering, security, and platform leaders. **Basis:** the four supplied fixture sources only (`reliability-policy`, `reliability-context`, `platform-policy`, `platform-context`).---### Q1 — How must ambiguous writes recover?Per the failure-recovery policy [reliability-policy]:1. **Record operation identity before the external write.**2. **After an ambiguous completion, reconcile remote state before retrying.**3. **A local checkpoint alone does not prove the external write failed.**The controlled test record illustrates why [reliability-context]: a worker timed out after submitting a release request, and the remote service later reported the original request as completed. A timeout is therefore not evidence the write failed; retrying without remote reconciliation risks a duplicate release.---### Q2 — What must provider portability preserve?Every production model change requires [platform-policy]:- the **same frozen task suite**,- **provenance checks**,- **declared resource limits**;and provider adapters must preserve:- **tool-result identities**, and- **cancellation semantics**.---### Vendor evidence assessmentThe vendor brochure claims the model is **enterprise ready** and **faster**, but supplies **no comparison workload, version pins, error distribution, or review methodology** [platform-context]. These are vendor claims without a reproducible comparison and fall outside the decision scope; they cannot serve as approval evidence.**Preserved tension (not resolved by this record):** the brochure asserts readiness and speed while the portability policy demands a frozen-suite comparison, provenance, and resource limits the brochure does not provide. The record neither confirms nor refutes the vendor's performance claims — they remain unverified, not disproven.---### Decision rationale- The approval case fails on the supplied record: no evidence demonstrates the frozen task suite, provenance checks, declared resource limits, or adapter preservation of tool-result identities and cancellation semantics required for **any** production model change [platform-policy].- The only vendor-supplied evidence is the brochure, whose claims lack the named comparison fields and are excluded from scope [platform-context].- The switch is therefore **rejected for approval on the current record**. This rejects the approval case; it is **not** a finding that the vendor's model is deficient.---### Limits and unresolved items- The record cannot establish the vendor model's actual performance, error distribution, or adapter behavior; approval may be revisited only if evidence satisfying the portability policy is supplied.- The reliability evidence is a single controlled test; it does not establish how often ambiguous completions occur in production, nor the full reconciliation procedure.- The record does not specify how compliance with the portability conditions is measured or certified.- All supplied sources are labeled a fictional Aster enterprise fixture; conclusions apply to this fixture record and are not evidence about any real vendor or system.",
+    "candidate_id": "candidate-278936bb7bc2e8f51c9d",
+    "citations": [
+      "reliability-policy",
+      "reliability-context",
+      "platform-policy",
+      "platform-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "reliability-policy"
+        ],
+        "text": "A worker must record operation identity before an external write, must reconcile remote state after an ambiguous completion before retrying, and cannot treat a local checkpoint alone as proof the external write failed.",
+        "uncertainty": "No material uncertainty as a policy statement; the record does not specify implementation or verification mechanics for the recovery sequence."
+      },
+      {
+        "source_ids": [
+          "reliability-context"
+        ],
+        "text": "In a controlled test, a worker timed out after submitting a release request and the remote service later reported the original request as completed, showing that a timeout does not establish the external write failed.",
+        "uncertainty": "Based on a single controlled test; the record does not establish production frequency of ambiguous completions or the full reconciliation procedure."
+      },
+      {
+        "source_ids": [
+          "platform-policy"
+        ],
+        "text": "Every production model change requires the same frozen task suite, provenance checks, and declared resource limits, and provider adapters must preserve tool-result identities and cancellation semantics.",
+        "uncertainty": "No material uncertainty as a policy statement; the record does not define how compliance with these conditions is measured or certified."
+      },
+      {
+        "source_ids": [
+          "platform-context"
+        ],
+        "text": "The vendor brochure claims its model is enterprise ready and faster but supplies no comparison workload, version pins, error distribution, or review methodology.",
+        "uncertainty": "The absence of the named fields is documented in the record; the record cannot establish whether the vendor holds such evidence elsewhere, and the performance claims themselves are neither confirmed nor refuted."
+      },
+      {
+        "source_ids": [
+          "platform-policy",
+          "platform-context"
+        ],
+        "text": "On the supplied record the model-provider switch should be rejected for approval: the brochure's claims are vendor claims without a reproducible comparison (outside decision scope), and no supplied evidence demonstrates the frozen suite, provenance, resource limits, tool-result identity, or cancellation-semantics conditions required for any production model change.",
+        "uncertainty": "This rejects the approval case on the current record only; it is not a finding that the vendor's model is deficient, and approval could be revisited if evidence satisfying the portability policy is supplied."
+      },
+      {
+        "source_ids": [
+          "platform-context",
+          "platform-policy"
+        ],
+        "text": "The brochure's enterprise-ready and faster assertions stand in unverified tension with the portability policy's evidentiary requirements; the supplied record contains no source that confirms or refutes the performance claims, so the tension is preserved rather than resolved.",
+        "uncertainty": "The record cannot establish the truth or falsity of the vendor's claims; no source contradiction in the supplied pack is resolvable from the evidence given."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:54:21.576546+00:00",
+  "status": "completed",
+  "trial_id": "mission-compound-recovery-portability-r3-treatment"
+}

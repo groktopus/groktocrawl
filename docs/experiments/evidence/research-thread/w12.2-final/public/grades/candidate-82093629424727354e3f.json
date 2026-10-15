@@ -1,0 +1,101 @@
+{
+  "candidate_id": "candidate-82093629424727354e3f",
+  "case_id": "stable-anchor",
+  "completed_at": "2026-09-19T09:17:28.743553+00:00",
+  "completion_attempt": 2,
+  "grade": {
+    "change_accuracy": 100,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "Both primary snapshots state identically that Iris Build records SHA-256 checksums, so the correct answer is 'no change,' matching the reference's empty change_events and prohibited merge warning. The candidate reports no change events (100), states the current truth (SHA-256 per iris-checksum-new) accurately (100), and preserves the earlier guide's SHA-256 as historical rather than current (100), with no false merge (same subject_id/lineage_id correctly recognized), no stale-current leakage, and no lost history. However, the reference lists no unresolved items; the candidate invented four peripheral unresolved questions (temporal ordering from snapshot naming, undetected changes between snapshots, post-snapshot usage, alternative algorithms), which the field rules say not to reward, so unresolved_accuracy is 0. The core answer remains direct, cited, and auditable, so usefulness is high but slightly diluted by the speculative hedging (90). No unsupported factual claims were made; the invented items are framed as questions, not assertions.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 0,
+    "unsupported_claims": 0,
+    "usefulness": 90
+  },
+  "prior_invalid_completions": [
+    {
+      "attempt": 1,
+      "error": "model completion is not a final grade",
+      "error_type": "ValueError",
+      "receipt": {
+        "attempt": 1,
+        "envelope_sha256": "4efa3e180e722d3cc8159db0652f4d238e32ae65a6cf4f7a18da44a5938646b3",
+        "finish_reason": "length",
+        "latency_ms": 177230.998,
+        "refusal": false,
+        "requested_model": "general",
+        "response_sha256": null,
+        "returned_model": "general",
+        "tool_calls": false,
+        "transport_failures": [],
+        "usage": {
+          "completion_tokens": 16000,
+          "completion_tokens_details": {
+            "audio_tokens": 0,
+            "image_tokens": 0,
+            "reasoning_tokens": 16000
+          },
+          "cost": 0.00816155,
+          "cost_details": {
+            "upstream_inference_completions_cost": 0.008,
+            "upstream_inference_cost": 0.00816155,
+            "upstream_inference_prompt_cost": 0.00016155
+          },
+          "is_byok": false,
+          "prompt_tokens": 1077,
+          "prompt_tokens_details": {
+            "audio_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_write_tokens": 0,
+            "cached_tokens": 0,
+            "video_tokens": 0
+          },
+          "total_tokens": 17077
+        }
+      }
+    }
+  ],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "1793282f8d46163b84a972074509e484f2c6c68b0bf79c70bae6bb3dbe99af6b",
+    "finish_reason": "stop",
+    "latency_ms": 21915.092,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "ce24b3de40af75f3d21d9bfb15b70f84ee6fef1a73c1ab7e070295281f65195e",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 2060,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 1779
+      },
+      "cost": 0.00119155,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.00103,
+        "upstream_inference_cost": 0.00119155,
+        "upstream_inference_prompt_cost": 0.00016155
+      },
+      "is_byok": false,
+      "prompt_tokens": 1077,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 3137
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:14:09.593390+00:00",
+  "status": "completed",
+  "trial_id": "stable-anchor-r1-control"
+}

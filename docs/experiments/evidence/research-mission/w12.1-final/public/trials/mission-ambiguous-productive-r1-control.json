@@ -1,0 +1,86 @@
+{
+  "arm": "control",
+  "case_id": "mission-ambiguous-productive",
+  "completed_at": "2026-09-19T05:45:09.669705+00:00",
+  "position": 1,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "698adc3f311529cf9e299e19bd210d9b650b5a690928544b80840e8c7403c9c8",
+    "finish_reason": "stop",
+    "latency_ms": 24134.132,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "f13c73ebcb3f5db3bd7f7dbba7612567185b65dca0817ed166b3c6a08477d634",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 608,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 11
+      },
+      "cost": 0.0002795,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0002128,
+        "upstream_inference_cost": 0.0002795,
+        "upstream_inference_prompt_cost": 6.67e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 667,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1275
+    }
+  },
+  "repetition": 1,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Recommendation: Declared outcome + matched comparison, not accepted-PR counts **Bottom line:** The only decision-grade way to judge agent productivity is a **matched-task comparison** against a defined baseline, scored on quality, human review time, rework, elapsed lead time, total cost, and failed/abandoned work. **The supplied evidence cannot support a productivity conclusion today.** ### Why the accepted-PR figure is not a valid outcome The pilot reports **40 accepted pull requests in one month**, but provides **no task mix, control group, reviewer hours, failure count, or provider costs** [measurement-context]. The measurement policy explicitly instructs that causal benefit must **not** be inferred from accepted-PR counts [measurement-policy]. These two records are consistent: the policy defines the required protocol, and the context confirms the pilot does not meet it. ### Required accounting boundary Before any conclusion, declare: 1. **Outcome:** quality-gated delivery (accepted *and* surviving review), not raw acceptance. 2. **Comparison:** matched tasks against a human (or pre-agent) baseline with the same task class. 3. **Accounting boundary:** human review time, rework, failed/abandoned tasks, elapsed lead time, and total provider cost [measurement-policy]. ### Unresolved limits (explicitly open) - **Missing baseline** — no control group exists in the pilot note. - **Missing task mix** — acceptance counts may be dominated by easy tasks. - **Missing failure count** — abandoned work is unmeasured. - **Missing cost and review-time data** — total cost of delivery is unknown. - **Time horizon** — one month cannot establish sustained productivity. Per the abstention rule, no productivity verdict is drawn; the pilot as recorded cannot support the decision.",
+    "candidate_id": "candidate-3e1e28ebec86a0a122c5",
+    "citations": [
+      "measurement-policy",
+      "measurement-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "measurement-policy"
+        ],
+        "text": "Judging agent-assisted delivery requires matched tasks, quality gates, human review time, rework, elapsed lead time, total cost, and counting failed/abandoned tasks.",
+        "uncertainty": "No material uncertainty; the policy states this directly."
+      },
+      {
+        "source_ids": [
+          "measurement-policy"
+        ],
+        "text": "Causal benefit must not be inferred from accepted-PR counts.",
+        "uncertainty": "No material uncertainty."
+      },
+      {
+        "source_ids": [
+          "measurement-context"
+        ],
+        "text": "The pilot note reports 40 accepted pull requests in one month with no task mix, control group, reviewer hours, failure count, or provider costs.",
+        "uncertainty": "No material uncertainty about what the note contains; the note itself is the limit."
+      },
+      {
+        "source_ids": [
+          "measurement-context",
+          "measurement-policy"
+        ],
+        "text": "No baseline, task mix, failure count, cost, or review-time data exists in the supplied record, so no productivity conclusion can be drawn.",
+        "uncertainty": "This is an explicit unresolved limit of the supplied evidence; a productivity outcome and matched comparison remain undefined."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:44:45.534207+00:00",
+  "status": "completed",
+  "trial_id": "mission-ambiguous-productive-r1-control"
+}

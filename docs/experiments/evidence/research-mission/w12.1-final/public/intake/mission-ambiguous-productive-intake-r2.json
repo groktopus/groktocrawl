@@ -1,0 +1,52 @@
+{
+  "case_id": "mission-ambiguous-productive",
+  "completed_at": "2026-09-19T06:05:44.430556+00:00",
+  "position": 12,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "c931b25d4c03a5043a9046631e4a72645a06f7ad77dd20b1f3151666d52474e3",
+    "finish_reason": "stop",
+    "latency_ms": 10939.56,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "c8e6700281c308ee021e9d42aa4ef0ad10e642be64821b77b8153ccde23f8e34",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 259,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 90
+      },
+      "cost": 0.00029595,
+      "cost_details": {
+        "upstream_inference_completions_cost": 9.065e-05,
+        "upstream_inference_cost": 0.00029595,
+        "upstream_inference_prompt_cost": 0.0002053
+      },
+      "is_byok": false,
+      "prompt_tokens": 2053,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 2312
+    }
+  },
+  "repetition": 2,
+  "result": {
+    "action": "clarify",
+    "clarifying_question": "Is this question about (a) evaluating your own enterprise's coding agents using internal telemetry/data you will supply, or (b) an external research synthesis of how agentic coding-agent productivity is defined and measured in the industry — and if (b), what decision (e.g., adoption, investment, or measurement-program design) should the findings inform?",
+    "mission": null,
+    "rationale": "'Are our coding agents productive?' is decision-changingly ambiguous: 'productive' has no defined metric, and as an analyst I can only use supplied/external sources — I cannot access internal telemetry. Whether the requester expects an internal evaluation (which I cannot perform without supplied data) versus an external synthesis of measurement approaches determines the entire mission scope, so guessing would risk inventing scope or authority."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:05:33.485126+00:00",
+  "status": "completed",
+  "trial_id": "mission-ambiguous-productive-intake-r2"
+}

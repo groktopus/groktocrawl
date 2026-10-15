@@ -1,0 +1,383 @@
+{
+  "schema_version": "scoped-runtime-fixture-results/1",
+  "scope": "local_fixture_no_external_effects",
+  "date": "2026-09-05",
+  "case_count": 4,
+  "passed": 4,
+  "complete_catalog_event_protocol": false,
+  "comparison_run": false,
+  "input_files_sha256": {
+    "agent-svc/agent/experimental/pipeline.py": "d7413fcf8cbf7041a2a28fb535d7482e51c3da0e3421f1e068ccb1c87be403e8",
+    "tests/unit/test_enterprise_runtime_cases.py": "2f436a5fe9579b3f5c0de1bdc81c8736ed6653313886f5244341f88c5f5f40b6"
+  },
+  "traces": [
+    {
+      "case_id": "cancellation-control",
+      "scope": "local_fixture_no_external_effects",
+      "events": [
+        {
+          "event": "dispatch",
+          "monotonic_timestamp": 2618908.421835708
+        },
+        {
+          "event": "callback_returned",
+          "monotonic_timestamp": 2618908.421896666
+        },
+        {
+          "event": "terminal",
+          "monotonic_timestamp": 2618908.435409875
+        }
+      ],
+      "accounting": {
+        "run_id": "catalog-cancellation",
+        "policy_version": "fixture/1",
+        "revision": 9,
+        "state": "completed",
+        "limit": {
+          "searches": 0,
+          "sources": 1,
+          "tokens": 0,
+          "cost_microusd": 0
+        },
+        "max_operations": 4,
+        "spent": {
+          "searches": 0,
+          "sources": 1,
+          "tokens": 0,
+          "cost_microusd": 0
+        },
+        "reserved": {
+          "searches": 0,
+          "sources": 0,
+          "tokens": 0,
+          "cost_microusd": 0
+        },
+        "operations": [
+          {
+            "operation_id": "step-0",
+            "input_digest": "6530e6d42d81c394ec1b93cb03e4f7b61ca16a1a74447a7c4421e46c3c77b319",
+            "reserved": {
+              "searches": 0,
+              "sources": 1,
+              "tokens": 0,
+              "cost_microusd": 0
+            },
+            "state": "completed",
+            "output_id": "result-0",
+            "actual": {
+              "searches": 0,
+              "sources": 1,
+              "tokens": 0,
+              "cost_microusd": 0
+            }
+          },
+          {
+            "operation_id": "step-1",
+            "input_digest": "1f539a6b53b5f55757525929032e4a6cfa53f9c2b86f468c5d3998b3f93d31f9",
+            "reserved": {
+              "searches": 0,
+              "sources": 0,
+              "tokens": 0,
+              "cost_microusd": 0
+            },
+            "state": "completed",
+            "output_id": "result-1",
+            "actual": {
+              "searches": 0,
+              "sources": 0,
+              "tokens": 0,
+              "cost_microusd": 0
+            }
+          },
+          {
+            "operation_id": "step-2",
+            "input_digest": "925e9524d586ad5da81c15084d99f0ebfabb0641859cc00a7a3c56d350c205b3",
+            "reserved": {
+              "searches": 0,
+              "sources": 0,
+              "tokens": 0,
+              "cost_microusd": 0
+            },
+            "state": "completed",
+            "output_id": "result-2",
+            "actual": {
+              "searches": 0,
+              "sources": 0,
+              "tokens": 0,
+              "cost_microusd": 0
+            }
+          },
+          {
+            "operation_id": "step-3",
+            "input_digest": "ec7c7bfff52daeae42293056688dc156b9890725230a4c6211cd5955e799ec9f",
+            "reserved": {
+              "searches": 0,
+              "sources": 0,
+              "tokens": 0,
+              "cost_microusd": 0
+            },
+            "state": "completed",
+            "output_id": "result-3",
+            "actual": {
+              "searches": 0,
+              "sources": 0,
+              "tokens": 0,
+              "cost_microusd": 0
+            }
+          }
+        ]
+      },
+      "publication_present": true
+    },
+    {
+      "case_id": "cancellation-adverse",
+      "scope": "local_fixture_no_external_effects",
+      "events": [
+        {
+          "event": "dispatch",
+          "monotonic_timestamp": 2618908.440537708
+        },
+        {
+          "event": "cancel",
+          "monotonic_timestamp": 2618908.4405595
+        },
+        {
+          "event": "callback_cancelled",
+          "monotonic_timestamp": 2618908.440630625
+        },
+        {
+          "event": "callback_returned",
+          "monotonic_timestamp": 2618908.440630875
+        },
+        {
+          "event": "terminal",
+          "monotonic_timestamp": 2618908.440724083
+        }
+      ],
+      "accounting": {
+        "run_id": "catalog-cancellation",
+        "policy_version": "fixture/1",
+        "revision": 2,
+        "state": "cancelled",
+        "limit": {
+          "searches": 0,
+          "sources": 1,
+          "tokens": 0,
+          "cost_microusd": 0
+        },
+        "max_operations": 4,
+        "spent": {
+          "searches": 0,
+          "sources": 0,
+          "tokens": 0,
+          "cost_microusd": 0
+        },
+        "reserved": {
+          "searches": 0,
+          "sources": 1,
+          "tokens": 0,
+          "cost_microusd": 0
+        },
+        "operations": [
+          {
+            "operation_id": "step-0",
+            "input_digest": "6530e6d42d81c394ec1b93cb03e4f7b61ca16a1a74447a7c4421e46c3c77b319",
+            "reserved": {
+              "searches": 0,
+              "sources": 1,
+              "tokens": 0,
+              "cost_microusd": 0
+            },
+            "state": "pending",
+            "output_id": null,
+            "actual": null
+          }
+        ]
+      },
+      "publication_present": false
+    },
+    {
+      "case_id": "provenance-control",
+      "scope": "local_fixture_no_external_effects",
+      "events": [
+        {
+          "event": "dispatch",
+          "monotonic_timestamp": 2618908.443204958,
+          "snapshot_id": "s1"
+        },
+        {
+          "event": "callback_returned",
+          "monotonic_timestamp": 2618908.443205291,
+          "expected_digest": "7ff49ff4bb6afd386396e909817baeaab8190d47b67e989e77cfd1768b048600",
+          "returned_normalized_digest": "7ff49ff4bb6afd386396e909817baeaab8190d47b67e989e77cfd1768b048600"
+        },
+        {
+          "event": "terminal",
+          "monotonic_timestamp": 2618908.454942833
+        }
+      ],
+      "accounting": {
+        "run_id": "catalog-provenance",
+        "policy_version": "fixture/1",
+        "revision": 9,
+        "state": "completed",
+        "limit": {
+          "searches": 0,
+          "sources": 1,
+          "tokens": 0,
+          "cost_microusd": 0
+        },
+        "max_operations": 4,
+        "spent": {
+          "searches": 0,
+          "sources": 1,
+          "tokens": 0,
+          "cost_microusd": 0
+        },
+        "reserved": {
+          "searches": 0,
+          "sources": 0,
+          "tokens": 0,
+          "cost_microusd": 0
+        },
+        "operations": [
+          {
+            "operation_id": "step-0",
+            "input_digest": "aa70d85e86328c5ff1b67641727b933de679f4573461e26ab0bbe2a80f3f674a",
+            "reserved": {
+              "searches": 0,
+              "sources": 1,
+              "tokens": 0,
+              "cost_microusd": 0
+            },
+            "state": "completed",
+            "output_id": "result-0",
+            "actual": {
+              "searches": 0,
+              "sources": 1,
+              "tokens": 0,
+              "cost_microusd": 0
+            }
+          },
+          {
+            "operation_id": "step-1",
+            "input_digest": "63517db45b946194734408cb88a15e11875b4b0eb057d26d1faff2e967480597",
+            "reserved": {
+              "searches": 0,
+              "sources": 0,
+              "tokens": 0,
+              "cost_microusd": 0
+            },
+            "state": "completed",
+            "output_id": "result-1",
+            "actual": {
+              "searches": 0,
+              "sources": 0,
+              "tokens": 0,
+              "cost_microusd": 0
+            }
+          },
+          {
+            "operation_id": "step-2",
+            "input_digest": "1446b733c598cbb2d1f267dac816c3b51f871fc885429a457803b2568adfb9bc",
+            "reserved": {
+              "searches": 0,
+              "sources": 0,
+              "tokens": 0,
+              "cost_microusd": 0
+            },
+            "state": "completed",
+            "output_id": "result-2",
+            "actual": {
+              "searches": 0,
+              "sources": 0,
+              "tokens": 0,
+              "cost_microusd": 0
+            }
+          },
+          {
+            "operation_id": "step-3",
+            "input_digest": "ec47b3792f0b275b4f996478c49550bfcd6e0b3b11071e247e14d88777f81a84",
+            "reserved": {
+              "searches": 0,
+              "sources": 0,
+              "tokens": 0,
+              "cost_microusd": 0
+            },
+            "state": "completed",
+            "output_id": "result-3",
+            "actual": {
+              "searches": 0,
+              "sources": 0,
+              "tokens": 0,
+              "cost_microusd": 0
+            }
+          }
+        ]
+      },
+      "publication_present": true
+    },
+    {
+      "case_id": "provenance-adverse",
+      "scope": "local_fixture_no_external_effects",
+      "events": [
+        {
+          "event": "dispatch",
+          "monotonic_timestamp": 2618908.462883208,
+          "snapshot_id": "s1"
+        },
+        {
+          "event": "callback_returned",
+          "monotonic_timestamp": 2618908.462883625,
+          "expected_digest": "7ff49ff4bb6afd386396e909817baeaab8190d47b67e989e77cfd1768b048600",
+          "returned_normalized_digest": "3956f825217c3c7fb88fb70300f5b579e0df05ef33a7cd49f5e382878d2b5933"
+        },
+        {
+          "event": "terminal",
+          "monotonic_timestamp": 2618908.462946791
+        }
+      ],
+      "accounting": {
+        "run_id": "catalog-provenance",
+        "policy_version": "fixture/1",
+        "revision": 2,
+        "state": "failed",
+        "limit": {
+          "searches": 0,
+          "sources": 1,
+          "tokens": 0,
+          "cost_microusd": 0
+        },
+        "max_operations": 4,
+        "spent": {
+          "searches": 0,
+          "sources": 0,
+          "tokens": 0,
+          "cost_microusd": 0
+        },
+        "reserved": {
+          "searches": 0,
+          "sources": 1,
+          "tokens": 0,
+          "cost_microusd": 0
+        },
+        "operations": [
+          {
+            "operation_id": "step-0",
+            "input_digest": "aa70d85e86328c5ff1b67641727b933de679f4573461e26ab0bbe2a80f3f674a",
+            "reserved": {
+              "searches": 0,
+              "sources": 1,
+              "tokens": 0,
+              "cost_microusd": 0
+            },
+            "state": "pending",
+            "output_id": null,
+            "actual": null
+          }
+        ]
+      },
+      "publication_present": false
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-395f4fec3f30a3f3d693",
+  "case_id": "live-contradiction",
+  "completed_at": "2026-09-19T09:25:47.896978+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 90,
+    "current_accuracy": 40,
+    "false_merge": false,
+    "historical_preservation": 90,
+    "lost_history": false,
+    "rationale": "Candidate correctly captures the change (DQ-17 duplicate deliveries contradicting the documented exactly-once claim) and preserves the documentation claim as historical. However, it lists the documentation's exactly-once description as a current truth, which is stale-current leakage since the incident report supersedes/contradicts it and the reference leaves current_truths empty. The unresolved section correctly identifies the contested guarantee but pads with invented peripheral questions (timestamps, root cause, revision status) not grounded in the reference. The claim that the documentation has 'no exceptions or caveats' and the framing of the incident as demonstrating the guarantee 'was violated' are lightly unsupported inferences. Overall useful and auditable, but the current-state framing is wrong.",
+    "stale_current_leak": true,
+    "unresolved_accuracy": 60,
+    "unsupported_claims": 2,
+    "usefulness": 75
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "5c1134191531c803f973c7c25422d5fe1ababf3054012ba100bf6ad5a073f617",
+    "finish_reason": "stop",
+    "latency_ms": 28133.353,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "655839132aaa5c1f6c2f5443d25ff1634de491c080738a0f74a163353d15cbf0",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 328,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 106
+      },
+      "cost": 0.000171925,
+      "cost_details": {
+        "upstream_inference_completions_cost": 8.2e-05,
+        "upstream_inference_cost": 0.000171925,
+        "upstream_inference_prompt_cost": 8.9925e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 1199,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1527
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:25:19.763160+00:00",
+  "status": "completed",
+  "trial_id": "live-contradiction-r3-control"
+}

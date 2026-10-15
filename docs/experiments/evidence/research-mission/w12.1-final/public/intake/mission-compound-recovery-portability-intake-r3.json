@@ -1,0 +1,52 @@
+{
+  "case_id": "mission-compound-recovery-portability",
+  "completed_at": "2026-09-19T06:08:33.682101+00:00",
+  "position": 11,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "34585f6687581b70dee439769c47aee2add3fba4317fdf8576d0a4441bc8f8a9",
+    "finish_reason": "stop",
+    "latency_ms": 31696.664,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "2fa9197c171f1409a83eaacf3c0ce1310a07b5773c2145d7efdfcdd288709419",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 498,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 313
+      },
+      "cost": 0.0005592,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000249,
+        "upstream_inference_cost": 0.0005592,
+        "upstream_inference_prompt_cost": 0.0003102
+      },
+      "is_byok": false,
+      "prompt_tokens": 2068,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 2566
+    }
+  },
+  "repetition": 3,
+  "result": {
+    "action": "clarify",
+    "clarifying_question": "Which internal artifacts define the current release-write semantics and the existing adapter's contract (e.g., design docs, runbooks, ADRs, incident reviews for the ambiguous/duplicate release write path), so the recovery and preservation obligations are scoped to documented behavior rather than guessed generic patterns?",
+    "mission": null,
+    "rationale": "The request asks how an ambiguous release write 'must recover' and what a new adapter 'must preserve' — normative claims about a specific enterprise system's invariants. No sources were supplied, and generic external research cannot establish internal write-semantics or adapter-contract requirements without guessing. The identity of the governing artifacts is decision-changing (it determines whether the mission is researchable at all under the supplied-sources constraint and what scope/questions it contains), so one blocking clarification is issued before normalization into a mission."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:08:01.978894+00:00",
+  "status": "completed",
+  "trial_id": "mission-compound-recovery-portability-intake-r3"
+}

@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-216a1eb92dd84adb30ca",
+  "case_id": "changed-limit",
+  "completed_at": "2026-09-19T09:23:49.358493+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 100,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "The candidate correctly captures the change (8 to 16 concurrent jobs in 1.1), the current truth (1.1 supports 16), and preserves the historical 8-job limit as version-1.0-specific, with proper citations and no false merges or stale-current leakage. However, the reference lists no unresolved items; the candidate invents peripheral unresolved questions (configurability, release dates, post-1.1 releases), so unresolved_accuracy is halved and usefulness slightly reduced.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 50,
+    "unsupported_claims": 0,
+    "usefulness": 90
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "eebb4cd8dfb608c1552a362de238e282d88859c9a68cb9324796028e610a3d75",
+    "finish_reason": "stop",
+    "latency_ms": 20176.89,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "fb56a86a342de42fa575046215183a807944fe4d39695fc565820e1c8216c613",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 202,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 27
+      },
+      "cost": 0.000135475,
+      "cost_details": {
+        "upstream_inference_completions_cost": 5.05e-05,
+        "upstream_inference_cost": 0.000135475,
+        "upstream_inference_prompt_cost": 8.4975e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 1133,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1335
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:23:29.181171+00:00",
+  "status": "completed",
+  "trial_id": "changed-limit-r3-control"
+}

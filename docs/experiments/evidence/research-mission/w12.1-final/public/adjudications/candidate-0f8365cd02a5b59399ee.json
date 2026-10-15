@@ -1,0 +1,76 @@
+{
+  "candidate_id": "candidate-0f8365cd02a5b59399ee",
+  "case_id": "mission-unanswerable-cost",
+  "completed_at": "2026-09-19T06:49:14.160552+00:00",
+  "grade": {
+    "appropriate_abstention": "yes",
+    "decision_usefulness": 5,
+    "decision_usefulness_rationale": "The answer directly resolves the decision question with the only defensible verdict available from the pack: the >=20% total-cost reduction is not established. It ties the verdict to the policy's own measurement requirements, enumerates the exact missing data needed for closure, preserves the contradiction between the pilot note's headline metric and the policy that disallows that metric, and blocks the prohibited inference that 40 accepted PRs imply a numeric cost reduction without overclaiming in the opposite direction. This is the maximum decision value obtainable from the two supplied sources.",
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "Every claim traces to measurement-policy and/or measurement-context; no authority, approval, or measurement is invented. The candidate honors the scope exclusion by refusing to use accepted-PR counts as a cost proxy, treats the supplied fixture as the current record per the freshness mode, takes no actions beyond the pack, and labels the data as fictional consistent with the sources themselves.",
+    "obligation_grades": {
+      "o1": {
+        "rationale": "The candidate correctly reports the implementation-evidence obligation as unresolved: the packet contains no comparable baseline and no total-cost numerator or denominator. The context source confirms the pilot note lacks task mix, control group, reviewer hours, failure count, and provider costs, and the policy source requires exactly the matched-task, review-time, rework, failure, and total-cost accounting that is absent. The candidate does not fabricate closure and names the specific measurements that would be required.",
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "status": "closed"
+      },
+      "o2": {
+        "rationale": "The candidate satisfies the counterevidence closure rule exactly: it states the 20% threshold is not established and names the missing data (task mix, control group, reviewer hours, failure count, provider costs, baseline, cost accounting). It grounds the abstention in the policy's explicit prohibition on inferring causal benefit from accepted-PR counts rather than in opinion.",
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "status": "closed"
+      }
+    },
+    "scope_violations": [],
+    "supported_material_claims": 7,
+    "total_material_claims": 7
+  },
+  "position": 18,
+  "reasons": [
+    "high_weight_obligation_not_closed"
+  ],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "813d4cf6a29f1370bf77f33afac226f4bc188b4078657c728a85ec0f52e13ae2",
+    "finish_reason": "stop",
+    "latency_ms": 54061.874,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "36f57fcefe2b2cc4cf5e0122024b8869a77ccb29651220eab39924e321e18f57",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 5014,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 5527
+      },
+      "cost": 0.0027371,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.002507,
+        "upstream_inference_cost": 0.0027371,
+        "upstream_inference_prompt_cost": 0.0002301
+      },
+      "is_byok": false,
+      "prompt_tokens": 1534,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 6548
+    }
+  },
+  "schema_version": "research-mission-adjudication/1",
+  "started_at": "2026-09-19T06:48:20.096664+00:00",
+  "status": "completed"
+}

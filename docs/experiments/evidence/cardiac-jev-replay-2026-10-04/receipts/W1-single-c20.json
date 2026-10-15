@@ -1,0 +1,48 @@
+{
+  "id": "W1-single-c20",
+  "pool": "singleton",
+  "order": "original",
+  "wording": "W1",
+  "kind": "singleton",
+  "candidate_ids": [
+    "c20"
+  ],
+  "request_bytes": 1988,
+  "request_sha256": "e3ee15919da0a86c1caa7a54498bf2abcf91ccc4b8218f7e3fa5a0da2af51166",
+  "status": "valid",
+  "started_at": "2026-10-04T03:25:05.928136+00:00",
+  "model": "jev-1.13.0",
+  "answers": {
+    "c20_evidence": {
+      "type": "score",
+      "score": 1.07,
+      "confidence": 0.93,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.95,
+        "2": 0.04,
+        "3": 0.01
+      }
+    },
+    "c20_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.65,
+      "probabilities": {
+        "fetch": 0.76,
+        "maybe": 0.2,
+        "skip": 0.04
+      }
+    }
+  },
+  "validation_errors": [],
+  "validation_protocol": "v2-rounding-feasibility",
+  "usage": {
+    "input_tokens": 729,
+    "output_tokens": 59
+  },
+  "provider_ms": 196.46436301991343,
+  "total_ms": 524.541,
+  "error": null,
+  "http_status": null
+}

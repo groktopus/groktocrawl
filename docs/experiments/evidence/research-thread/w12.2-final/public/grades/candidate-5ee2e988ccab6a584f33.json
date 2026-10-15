@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-5ee2e988ccab6a584f33",
+  "case_id": "rotated-link",
+  "completed_at": "2026-09-19T09:17:03.339605+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 95,
+    "current_accuracy": 90,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "The candidate cleanly separates the retained G-12 snapshot ('versions before 4.2 affected') as historical from the current unavailability notice, so no false merge, stale-current leak, or lost history occurs, and the single change event matches the reference. The ledger's core unresolved item — that the current advisory status cannot be established from the unavailable page — is only implicitly covered; the candidate instead foregrounds peripheral invented unknowns (reason for removal, product identity, 4.2+ status), which the rules do not reward. Its one current truth (the URL is currently unavailable) is source-supported even though the ledger carries no current truths. Every factual claim traces to the two snapshots, so there are no unsupported claims.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 65,
+    "unsupported_claims": 0,
+    "usefulness": 90
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "aab85e3f008439bbae9f9b7550ec8d81d45c24965cb0605af445412585622be0",
+    "finish_reason": "stop",
+    "latency_ms": 129426.515,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "050f0db19ce2cad3a2ee56532501fdfbaf9aeaf41fe1242f4c10bb59b2db16ac",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 7646,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 8825
+      },
+      "cost": 0.0039655,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.003823,
+        "upstream_inference_cost": 0.0039655,
+        "upstream_inference_prompt_cost": 0.0001425
+      },
+      "is_byok": false,
+      "prompt_tokens": 950,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 8596
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:14:53.910493+00:00",
+  "status": "completed",
+  "trial_id": "rotated-link-r2-treatment"
+}

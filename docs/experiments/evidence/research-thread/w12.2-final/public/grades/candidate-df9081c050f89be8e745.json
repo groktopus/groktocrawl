@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-df9081c050f89be8e745",
+  "case_id": "renamed-feature",
+  "completed_at": "2026-09-19T09:17:44.911872+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 100,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "The candidate correctly identifies the rename from 'policy checks' (Northstar 3) to 'release guards' (Northstar 4), preserves the historical term as historical, and states the current term as current, all directly supported by the two primary sources. No false merge, stale-current leak, or lost history. However, the reference lists no unresolved items; the candidate invented two peripheral unresolved questions (behavior/configuration changes and documentation carryover), which the field rules say not to reward, so unresolved_accuracy is 0. Usefulness remains high but slightly reduced by the invented open questions.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 0,
+    "unsupported_claims": 0,
+    "usefulness": 90
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "52c9715bc72080f15bb37a2dedb480f716d746f168a590f58b2770ea3934a8df",
+    "finish_reason": "stop",
+    "latency_ms": 16166.199,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "5cce6c01fa9193bfc0ed40a26b67dd06a8a0d177f0ed0848c8602fcb60818143",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 402,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 209
+      },
+      "cost": 0.00034305,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000201,
+        "upstream_inference_cost": 0.00034305,
+        "upstream_inference_prompt_cost": 0.00014205
+      },
+      "is_byok": false,
+      "prompt_tokens": 947,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1349
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:17:28.744584+00:00",
+  "status": "completed",
+  "trial_id": "renamed-feature-r1-treatment"
+}

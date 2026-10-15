@@ -1,0 +1,52 @@
+{
+  "case_id": "mission-compound-recovery-portability",
+  "completed_at": "2026-09-19T06:01:56.608874+00:00",
+  "position": 1,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "59814f80641b336684065a9ba28c13c595366baa5d6eb8055e2adf850be6e21a",
+    "finish_reason": "stop",
+    "latency_ms": 58911.726,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "57efec7118b753898117c55ad3523f1ed058160b9e81a1be16aaa55679c5521f",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 832,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 541
+      },
+      "cost": 0.0007262,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000416,
+        "upstream_inference_cost": 0.0007262,
+        "upstream_inference_prompt_cost": 0.0003102
+      },
+      "is_byok": false,
+      "prompt_tokens": 2068,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 2900
+    }
+  },
+  "repetition": 1,
+  "result": {
+    "action": "clarify",
+    "clarifying_question": "Which specific model-provider switch is this (current provider and target), and what system's 'release write' is meant — i.e., does an internal spec/design doc define the release-write path and adapter contract that research should treat as primary sources, or should the mission research generic write-recovery patterns (idempotency, partial-failure recovery, adapter interface preservation) applicable to any provider switch?",
+    "mission": null,
+    "rationale": "The request is a decision-support mission for an enterprise provider-switch decision, not research-inappropriate content, so abstention would under-serve it. However, two ambiguities are decision-changing and cannot be resolved without guessing: (1) the identity of the current and target model providers, which determines what the adapter must preserve and which vendor documentation is relevant; and (2) the referent of 'ambiguous release write' — if this is an internal subsystem whose recovery semantics are defined in internal specs, no amount of external search can answer 'how it must recover' and the mission's source policy and obligations would be built on the wrong foundation; if it is a general pattern, the mission must target public engineering literature on transactional/idempotent write recovery. Because no source text defining this term or the providers was supplied, answering without clarification would require inventing scope, facts, and authority, which the contract forbids."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:00:57.681781+00:00",
+  "status": "completed",
+  "trial_id": "mission-compound-recovery-portability-intake-r1"
+}

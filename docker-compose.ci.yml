@@ -1,0 +1,47 @@
+# CI only: build application images locally and replace live search with its fixture.
+services:
+  llm-svc:
+    image: groktocrawl-x-ci/llm-svc:checkout
+  test-site:
+    image: groktocrawl-x-ci/test-site:checkout
+  slopsearx-fixture:
+    image: groktocrawl-x-ci/slopsearx-fixture:checkout
+  tier3-fixture:
+    image: groktocrawl-x-ci/tier3-fixture:checkout
+  scraper-svc:
+    image: groktocrawl-x-ci/scraper-svc:checkout
+  browser-svc:
+    image: groktocrawl-x-ci/browser-svc:checkout
+  semantic-svc:
+    image: groktocrawl-x-ci/semantic-svc:checkout
+  agent-svc:
+    image: groktocrawl-x-ci/agent-svc:checkout
+  agent-svc-fixture:
+    image: groktocrawl-x-ci/agent-svc-fixture:checkout
+  portal-svc:
+    image: groktocrawl-x-ci/portal-svc:checkout
+  parse-svc:
+    image: groktocrawl-x-ci/parse-svc:checkout
+  mcp-svc:
+    image: groktocrawl-x-ci/mcp-svc:checkout
+  slopsearx:
+    image: groktocrawl-x-ci/slopsearx:checkout
+    build:
+      context: .
+      dockerfile: slopsearx-fixture/Dockerfile
+    environment:
+      FIXTURE_SITE_BASE_URL: http://test-site:8000
+      TWIN_RUN_ID: ${TWIN_RUN_ID:-local}
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - import json, urllib.request; response = urllib.request.urlopen('http://127.0.0.1:8080/health',
+        timeout=3); assert json.load(response)['status'] == 'ok'
+      interval: 5s
+      timeout: 3s
+      retries: 10
+volumes:
+  hf-cache:
+    external: false

@@ -1,0 +1,25 @@
+{
+  "name": "failed-audit",
+  "events": [
+    {
+      "protocol_version": "research/1",
+      "run_id": "run-price-002",
+      "sequence": 1,
+      "event": "accepted",
+      "state": "accepted"
+    },
+    {
+      "protocol_version": "research/1",
+      "run_id": "run-price-002",
+      "sequence": 2,
+      "event": "error",
+      "state": "failed",
+      "error": {
+        "code": "render_audit_failed",
+        "retryable": false
+      }
+    }
+  ],
+  "replay_after": null,
+  "replay_sequences": [1, 2]
+}

@@ -10,10 +10,11 @@ dependencies = [
     "sentence-transformers>=3.0.0",
     "numpy>=1.26.0",
     "qdrant-client>=1.13.0,<1.20.0",
+    "psycopg[binary]==3.3.5",
 ]
 
 [tool.setuptools]
-py-modules = ["app", "auth", "inference", "metrics", "models", "retention", "router_index", "router_migration", "router_search"]
+py-modules = ["app", "auth", "inference", "metrics", "models", "retention", "router_index", "router_migration", "router_search", "shadow_backfill", "shadow_pgvector"]
 
 [tool.deptry.per_rule_ignores]
 # Uvicorn is the container entry point.

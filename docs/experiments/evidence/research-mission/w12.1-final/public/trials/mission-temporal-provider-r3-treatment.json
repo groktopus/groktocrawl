@@ -1,0 +1,86 @@
+{
+  "arm": "treatment",
+  "case_id": "mission-temporal-provider",
+  "completed_at": "2026-09-19T05:53:18.542857+00:00",
+  "position": 1,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "4fe544c42b3dc2ff5d47d9831cae6f8f3914b0078232fe3d02c7a8c4a780eb7f",
+    "finish_reason": "stop",
+    "latency_ms": 16983.279,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "c81bae1272c96cd9307315e891f06e442ef4db2a7435551678afe0453bbf8109",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 613,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 11
+      },
+      "cost": 0.00023351,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.00021455,
+        "upstream_inference_cost": 0.00023351,
+        "upstream_inference_prompt_cost": 1.896e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 804,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 768,
+        "video_tokens": 0
+      },
+      "total_tokens": 1417
+    }
+  },
+  "repetition": 3,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Provider-Switch Decision: NOT APPROVED (unresolved — evidence insufficient, as of 2026-09-19T00:00:00Z per supplied pack only; no search performed beyond the fixture pack per source_policy scope cues — note: budget allows searches, but no independent third-party evidence exists in the supplied pack to corroborate the vendor's claim. The evidence can only support **rejection/unresolved** — the packet does not satisfy the gate. #### What the gate requires [platform-policy] Every production model change requires: 1. the same **frozen task suite**; 2. **provenance checks**; 3. **declared resource limits**; and provider adapters must preserve **tool-result identities** and **cancellation semantics**. #### What the vendor note provides [platform-context] The vendor brochure claims enterprise readiness and speed, but supplies: - **No comparison workload** — fails the frozen task-suite requirement. - **No version pins** — provenance cannot be established. - **No error distribution** — no basis to compare reliability against the incumbent. - **No review methodology** — no reproducible provenance for the performance claim. - No evidence of declared resource limits, tool-result identity preservation, or cancellation semantics for its adapters. #### Decision The vendor evidence gap means the packet **does not satisfy the provider-change gate**. There is no contradiction between sources: the policy states requirements; the vendor note simply omits them. The vendor's ",
+    "candidate_id": "candidate-69cdcf254c57cef09a81",
+    "citations": [
+      "platform-policy",
+      "platform-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "platform-policy"
+        ],
+        "text": "Every production model change requires a frozen task suite, provenance checks, and declared resource limits.",
+        "uncertainty": "No material uncertainty as stated in the fixture pack."
+      },
+      {
+        "source_ids": [
+          "platform-policy"
+        ],
+        "text": "Provider adapters must preserve tool-result identities and cancellation semantics.",
+        "uncertainty": "No material uncertainty."
+      },
+      {
+        "source_ids": [
+          "platform-context"
+        ],
+        "text": "The vendor brochure supplies no comparison workload, version pins, error distribution, or review methodology.",
+        "uncertainty": "Based solely on the supplied note; we cannot verify whether the vendor possesses but did not publish these artifacts."
+      },
+      {
+        "source_ids": [
+          "platform-policy",
+          "platform-context"
+        ],
+        "text": "The vendor note omits every element required by the provider-change gate (frozen suite, provenance, resource limits, identity/cancellation checks).",
+        "uncertainty": "Only the two supplied sources were available; independent corroboration of vendor claims was out of the supplied pack."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:53:01.559080+00:00",
+  "status": "completed",
+  "trial_id": "mission-temporal-provider-r3-treatment"
+}

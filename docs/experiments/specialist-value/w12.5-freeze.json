@@ -1,0 +1,16 @@
+{
+  "schema_version": "experiment-freeze/1",
+  "experiment": "W12.5",
+  "frozen_at": "2026-09-19T00:00:00Z",
+  "model": "general",
+  "review_route": "local-litellm",
+  "seed": 20260919,
+  "repetitions": 3,
+  "max_concurrency": 10,
+  "inputs": {
+    "docs/experiments/specialist-value/w12.5-cases.json": "8556f51ed3985e84b74c85bcf295c8d621b80a0553b46982e6a891a655a126ea",
+    "agent-svc/agent/experimental/specialist_value_experiment.py": "c76c6262873b2dfe12f50bf96a279f72598af4545139b16efa9430814584ea6e",
+    "scripts/run_w12_specialist_value.py": "1acfebd874d00d8488eb8de4bb30ce7519f1781cb4a859a78dde0aa81d6af3d5",
+    "scripts/analyze_w12_specialist_value.py": "870a2a9eebe5462082ab744b12cd6d1bb9667b0b8dde69c885eb48207286a642"
+  }
+}

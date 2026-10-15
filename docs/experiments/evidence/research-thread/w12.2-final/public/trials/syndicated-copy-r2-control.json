@@ -1,0 +1,65 @@
+{
+  "answer": {
+    "answer": "No. The only source is BirchDB's own press release (birch-press), and the Industry Wire item (birch-news-copy) is verbatim syndication of that same statement, so it shares lineage (birch-announcement) and is not independent confirmation. The audit pass remains an unverified claim.",
+    "change_events": [],
+    "citations": [
+      "birch-press",
+      "birch-news-copy"
+    ],
+    "current_truths": [
+      "BirchDB claims it passed the Cedar security audit (birch-press)."
+    ],
+    "historical_truths": [
+      "Industry Wire syndicated BirchDB's statement verbatim that it passed the Cedar security audit (birch-news-copy); it is a derivative of the same primary source, not an independent confirmation."
+    ],
+    "unresolved": [
+      "No independent (non-BirchDB-derived) source in the supplied snapshots confirms the audit result."
+    ]
+  },
+  "arm": "control",
+  "case_id": "syndicated-copy",
+  "completed_at": "2026-09-19T07:49:07.591226+00:00",
+  "position": 18,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "1e8ce270da0f60530e06760104b2a4ee659782abc18ba789f0ca32adb0b878ab",
+    "finish_reason": "stop",
+    "latency_ms": 7256.016,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "c19ff9136156b9471bd99e5fff3cf6a6665934fcc2b81fd7ae33b6f913f1caf8",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 204,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 1
+      },
+      "cost": 8.214e-05,
+      "cost_details": {
+        "upstream_inference_completions_cost": 7.14e-05,
+        "upstream_inference_cost": 8.214e-05,
+        "upstream_inference_prompt_cost": 1.074e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 517,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 512,
+        "video_tokens": 0
+      },
+      "total_tokens": 721
+    }
+  },
+  "repetition": 2,
+  "schema_version": "research-thread-trial/1",
+  "started_at": "2026-09-19T07:49:00.333772+00:00",
+  "status": "completed",
+  "stratum": "derivative",
+  "trial_id": "syndicated-copy-r2-control"
+}

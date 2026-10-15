@@ -1,0 +1,63 @@
+{
+  "candidate_id": "intake-candidate-1c0100f57a9943f5b00f",
+  "case_id": "mission-temporal-exception",
+  "completed_at": "2026-09-19T06:25:35.378195+00:00",
+  "grade": {
+    "action_correct": true,
+    "action_rationale": "The supplied mission already identifies and resolves the subject: the recorded exception with a 2026-06-30 expiry, evaluated as of 2026-09-19 against the pilot change decision. The clarification request is unhelpful because it treats as ambiguous facts the mission itself fixes (which exception, which change, which as-of date). The candidate invents an ambiguity and blocks acceptance, which is the correct prescribed action per expected_intake.",
+    "clarification_utility": 2,
+    "correction_actions": [
+      "Replace the clarify result with accept; the reference mission's decision, scope, and as_of fields already pin down the exception, the change, and the comparison date, so no clarification is needed before building the mission."
+    ],
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "The candidate does not invent authority, broaden scope, lose a freshness constraint, or take an unauthorized action; clarify is a permitted action. The failure is one of unnecessary obstruction rather than a boundary breach.",
+    "invented_constraints": [
+      "A false premise that neither the exception nor the pilot change is identifiable, contradicting the mission's decision and obligation o1, which name the expiry (2026-06-30), the as-of date (2026-09-19), and the absence-of-renewal comparison."
+    ],
+    "lost_hard_boundaries": [],
+    "required_field_recall": 1,
+    "unnecessary_fields": [
+      "The clarifying question asks for document identifiers and change-request details that the mission's scope and closure_rule already supply or render unnecessary (the answer must state the expiry comparison and not infer renewal, so identifying which change request is involved is not decision-changing)."
+    ]
+  },
+  "position": 6,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "cd4bfa580b99a8337434b737a97bcac9acd0a5b1d37d2edc34b13d064a1219ee",
+    "finish_reason": "stop",
+    "latency_ms": 13316.969,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "6e9466f56aa2fa3090dfb7fbe4cf84c19e414d8b141065827b24402dbd7b4fe1",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 422,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 59
+      },
+      "cost": 0.00033535,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000211,
+        "upstream_inference_cost": 0.00033535,
+        "upstream_inference_prompt_cost": 0.00012435
+      },
+      "is_byok": false,
+      "prompt_tokens": 829,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1251
+    }
+  },
+  "schema_version": "research-mission-intake-grade/1",
+  "started_at": "2026-09-19T06:25:22.059888+00:00",
+  "status": "completed"
+}

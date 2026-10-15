@@ -1,0 +1,21 @@
+{
+  "runtime": {
+    "model": "free",
+    "revision": "bb5f2a3eb00df73eadb7163c6ed88504ee5cc843"
+  },
+  "status": "passed",
+  "http_status": 200,
+  "readiness": "ready",
+  "event_counts": {
+    "status": 4,
+    "research_plan": 1,
+    "research_pass": 2,
+    "sources_pending": 6,
+    "source_scraped": 2,
+    "sources": 1,
+    "token": 46,
+    "done": 1
+  },
+  "done_source_count": 2,
+  "elapsed_seconds": 73.46
+}

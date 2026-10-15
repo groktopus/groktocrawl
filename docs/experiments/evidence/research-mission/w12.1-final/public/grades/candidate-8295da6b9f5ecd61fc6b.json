@@ -1,0 +1,65 @@
+{
+  "candidate_id": "candidate-8295da6b9f5ecd61fc6b",
+  "case_id": "mission-ambiguous-productive",
+  "completed_at": "2026-09-19T06:24:40.812747+00:00",
+  "grade": {
+    "appropriate_abstention": "yes",
+    "decision_usefulness": 3,
+    "decision_usefulness_rationale": "Useful to decision-makers: it names the outcome set and matched-task comparison and correctly rejects the 40-PR figure as causal evidence. Not fully useful because no measurement exists; the decision remains open, which the candidate flags transparently.",
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "No invented authority: candidate cites only the two supplied sources, does not treat the policy text as permission or measurements, and does not claim the pilot note supports productivity. The prohibited assumption (40 PRs prove causal benefit) is explicitly rejected in the third and fourth claims, consistent with the contradiction policy and acceptable uncertainty mode. Freshness mode is 'current' against the fixture record; both sources are accounted for. No silent scope broadening beyond the mission's include list; failed work and cost are within scope. One minor note: the framing sentence is prose-heavy but grading ignores style per instruction. The candidate's claim that o1 is 'unresolved on closure' is consistent with the source policy (inaccessible/absent measurements cannot close obligations) and abstain_when conditions. Abstention from declaring the agents productive or unproductive is the correct disposition given the evidence cannot support the requested decision with measurements.",
+    "obligation_grades": {
+      "o1": {
+        "rationale": "The candidate declares the policy's outcome set (matched tasks, quality gates, review time, rework, lead time, cost, failed work) and the matched-task comparison, satisfying the implementation_evidence role at the policy level. However, the obligation's closure rule requires a declared outcome, matched comparison, AND accounting boundary backed by actual measurements. The supplied context source explicitly lacks baseline, task mix, reviewer hours, failure count, and cost data, so closure as 'supported' is not achievable. The candidate correctly marks o1 unresolved on closure. A concrete recommended outcome/comparison grounded in actual fixtures is stated as a framework, not a measured result.",
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "status": "partial"
+      }
+    },
+    "scope_violations": [],
+    "supported_material_claims": 4,
+    "total_material_claims": 4
+  },
+  "position": 70,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "aa5e41e47f8b19b331c674957984b44c7e236d81476126df1b72aee0683b5fe1",
+    "finish_reason": "stop",
+    "latency_ms": 27219.723,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "b04e5a3002901dc9c4555e62a41d6052a6220cc31f98be391a5cffab0493962b",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 489,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 18
+      },
+      "cost": 0.00029065,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.00017115,
+        "upstream_inference_cost": 0.00029065,
+        "upstream_inference_prompt_cost": 0.0001195
+      },
+      "is_byok": false,
+      "prompt_tokens": 1195,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1684
+    }
+  },
+  "schema_version": "research-mission-grade/1",
+  "started_at": "2026-09-19T06:24:13.592486+00:00",
+  "status": "completed"
+}

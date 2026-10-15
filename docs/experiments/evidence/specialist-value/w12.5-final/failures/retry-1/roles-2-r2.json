@@ -1,0 +1,8 @@
+{
+  "case_id": "roles-2",
+  "error": "'A'",
+  "error_type": "KeyError",
+  "repetition": 2,
+  "status": "failed",
+  "trial_id": "roles-2-r2"
+}

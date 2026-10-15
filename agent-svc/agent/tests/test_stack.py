@@ -2474,7 +2474,7 @@ def test_crawl_cli_no_poll_returns_job_id():
         capture_output=True,
         text=True,
         timeout=30,
-        cwd="/Volumes/tank01/magnus/git/groktocrawl",
+        cwd="/path/to/groktocrawl",
     )
     # Exit code should be 0
     assert result.returncode == 0, (
@@ -2513,7 +2513,7 @@ def test_crawl_cli_json_output():
         capture_output=True,
         text=True,
         timeout=30,
-        cwd="/Volumes/tank01/magnus/git/groktocrawl",
+        cwd="/path/to/groktocrawl",
     )
     assert result.returncode == 0
     stdout = result.stdout.strip()
@@ -6080,7 +6080,7 @@ def test_memory_survives_agent_svc_restart():
     Store an artifact, restart agent-svc, verify the artifact is still
     retrievable and queries hit the same cache entry.
 
-    This test requires SSH access to saru to restart the container.
+    This test requires SSH access to deployment.example.internal to restart the container.
     If SSH is not available, the test is skipped.
     """
     pytest.importorskip("subprocess")
@@ -6108,8 +6108,8 @@ def test_memory_survives_agent_svc_restart():
         result = subprocess.run(
             [
                 "ssh",
-                "saru",
-                "cd /home/magnus/groktocrawl && docker compose restart agent-svc",
+                "deployment.example.internal",
+                "cd /home/operator/groktocrawl && docker compose restart agent-svc",
             ],
             capture_output=True,
             text=True,

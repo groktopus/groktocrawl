@@ -57,3 +57,23 @@ Commands that start asynchronous work print a job identifier unless polling is e
 `groktocrawl search "capacitor measurements" --limit 20 --page 1 --offset 20 --json` continues within the selected upstream page. JSON exposes coverage and a request-shaped continuation; text mode prints captured/returned counts and the next page/offset for captured results. Omit --stream for continuation. Upstream ordering may change between calls; pagination support and additional upstream results remain unknown. Page/offset currently require fast keyword search without images.
 
 MCP search exposes page/offset and MCP answer exposes evidence_budget_chars with the same API contracts. Session query/deepen can set evidence_budget_chars; query can restrict ref_ids to refs in its own session. Full session evidence remains available through resolve until session TTL/deletion. Agent completion reports its default selection budget; existing include_source_content exports full acquired Markdown.
+
+## Private documents
+
+Use `groktocrawl document create-session|attach|list|show|query|detach` for scoped
+parsed-file evidence. See [Private Document Evidence](private-documents.md) for
+byte/span bounds, selected document/web refs, ownership and session lifetimes.
+
+The opt-in experimental `research workspace [RUN_ID]` lists or selects retained roots;
+`research resume RUN_ID OPERATION --expected-revision DIGEST` performs a named
+revision-guarded operation. The protocol may be disabled by feature flags; see the
+[API guide](api.md#experimental-research-protocol). See [research workspace](research-workspace.md) for
+render/export/evidence, explicit session document context and follow-up preview.
+
+For audited scholarly publication windows, use
+`groktocrawl search "retrieval evaluation" --engines openalex --date-from 2026-01-01 --date-to 2026-01-31 --json`.
+Bounds are inclusive and may be one-sided. Only non-streaming fast keyword search
+is supported; relative `--time-range`, mixed engines and enriched modes are
+rejected. JSON output preserves the backend `date_filter` enforcement receipt.
+The MCP `search` tool exposes the same `date_from`, `date_to`, `time_range` and
+`engines` arguments and applies the same API validation.

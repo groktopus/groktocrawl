@@ -1,0 +1,6 @@
+{
+  "bytes": 3527,
+  "path": "vector-backup-out/postgres.dump",
+  "provider": "postgresql",
+  "sha256": "8ad1cd408805ba6e9c2220c9d04911b14b11f0dcefc1e16b50cc3939b96a4b67"
+}

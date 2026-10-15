@@ -1,0 +1,57 @@
+{
+  "candidate_id": "intake-candidate-b22c4cf39ea24746458f",
+  "case_id": "mission-ambiguous-productive",
+  "completed_at": "2026-09-19T06:26:45.454157+00:00",
+  "grade": {
+    "action_correct": true,
+    "action_rationale": "The candidate chose 'clarify' as expected, and its clarifying question covers the key ambiguities in the reference mission: the productivity outcome/metric, baseline/comparison, task class (which agents), time window, and the downstream decision. It does not invent scope, authority, or measurements, and it correctly treats the ambiguity as blocking before issuing a mission.",
+    "clarification_utility": 95,
+    "correction_actions": [],
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "No invented authority, no silent scope broadening, no freshness constraint lost, and the clarify action is authorized by the expected intake. The question stays within the reference mission's scope of defining outcome, comparison, and accounting boundary.",
+    "invented_constraints": [],
+    "lost_hard_boundaries": [],
+    "required_field_recall": 95,
+    "unnecessary_fields": []
+  },
+  "position": 13,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "82a4434397181beeb69e1c7f601042078f43edd2567fd0aec0006f762e9ef056",
+    "finish_reason": "stop",
+    "latency_ms": 4105.22,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "6733b7171e1bb540e2702137e4a5ad724d6d4037659ccfd407a8fe9ef4f0dc28",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 210,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 21
+      },
+      "cost": 0.000348624,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000126,
+        "upstream_inference_cost": 0.000348624,
+        "upstream_inference_prompt_cost": 0.000222624
+      },
+      "is_byok": false,
+      "prompt_tokens": 1288,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 64,
+        "video_tokens": 0
+      },
+      "total_tokens": 1498
+    }
+  },
+  "schema_version": "research-mission-intake-grade/1",
+  "started_at": "2026-09-19T06:26:41.348122+00:00",
+  "status": "completed"
+}

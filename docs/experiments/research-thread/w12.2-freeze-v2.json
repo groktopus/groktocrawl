@@ -1,0 +1,37 @@
+{
+  "schema_version": "research-thread-experiment-freeze/2",
+  "status": "frozen_before_regrade",
+  "source_revision": "90a351a7960c53edd1ab0f5a30adf6e9afc8839e",
+  "supersedes": "w12.2-freeze.json",
+  "model_route": "general",
+  "endpoint_origin": "https://research-provider.example/",
+  "concurrency": 5,
+  "maximum_authorized_concurrency": 10,
+  "regrade_call_count": 54,
+  "measured_call_ceiling": 54,
+  "reasoning_effort": "minimal",
+  "maximum_completion_tokens": 20000,
+  "transport_attempt_limit": 3,
+  "failure_guardrail": 0.1,
+  "inherited_v1_evidence": {
+    "source": "w12.2-run-v1-3ee907f",
+    "file_count": 235,
+    "manifest_byte_count": 26281,
+    "canonical_manifest_sha256": "cd657e3f50c323b76952bb9133939c3d7705e67aa0e5be4b6ca7c216c75fd876",
+    "copy_policy": "exact read-only copy before removing copied v1 grades from the v2 grading workspace"
+  },
+  "bounded_corrections": [
+    "explicit integer 0-to-100 scoring anchors in the blind grader prompt",
+    "exact required-field instruction in the blind grader prompt",
+    "conservative 0 treatment or 100 control assignment for a missing grade",
+    "all 27 allocated pairs retained in analysis"
+  ],
+  "files": {
+    "scripts/grade_w12_thread_experiment.py": "582e4a1ebed0855d807741bc6606bab8cbd0d03e789e8b318c0877cfe2ccb086",
+    "scripts/analyze_w12_thread_experiment.py": "ce708428bf102e71cba410786f843d7959ff9bcb1c9b44e63a1c3822947032da",
+    "docs/experiments/research-thread/w12.2-protocol.md": "220b706297d0096eec054f9b1688e0fdbcbe2d01ce05ce9b473f67d01358544d",
+    "docs/experiments/research-thread/w12.2-freeze.json": "4207b924b4427cee855bbc1adebf4c6ef45be60c0cf90788bee2d5dee2d104c4",
+    "docs/experiments/research-thread/w12.2-cases.json": "af33310c49599a90b72792726d2f91b9e82a850a52d61afa5bb3f183b5649ece",
+    "docs/experiments/research-thread/w12.2-work-order.json": "e4df62cd79b29a77fd52c0e3c2b89b99976cdfdf79ee5843eaeeac5092855c07"
+  }
+}

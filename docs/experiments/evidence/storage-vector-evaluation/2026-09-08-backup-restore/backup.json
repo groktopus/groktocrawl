@@ -1,0 +1,41 @@
+{
+  "created_at": "2026-09-08T14:28:17.619920+00:00",
+  "manifest": {
+    "corpus_sha256": "5817c09ae7b94803b760a3003b967a5a223264dc265f5caf9b773d0da33462b7",
+    "dimension": 3,
+    "distance": "cosine",
+    "duplicate_replay_count": 2,
+    "embedding_model": "fixture-vector-3d-v1",
+    "query_count": 4,
+    "random_seed": 0,
+    "record_count": 6,
+    "schema_version": "vector-store-evaluation/3",
+    "scopes": [
+      "alpha",
+      "beta"
+    ],
+    "workloads": [
+      "bulk_upsert",
+      "duplicate_replay",
+      "filtered_search",
+      "delete"
+    ]
+  },
+  "phase": "backup",
+  "postgres_backup": {
+    "managed_by": "pg_dump",
+    "path": "/out/postgres.dump"
+  },
+  "production_change": false,
+  "qdrant_backup": {
+    "bytes": 64512,
+    "duration_ms": 26.67,
+    "path": "/out/groktocrawl_x_backup_backup_34238404432.snapshot",
+    "provider": "qdrant",
+    "sha256": "499f529ba72df3b17a9cb4f25e5901e86bf8f9d66368949974a1357198d413e0",
+    "snapshot_name": "groktocrawl_x_backup_backup_34238404432-3081932921274263-2026-09-08-14-28-17.snapshot"
+  },
+  "qdrant_removal": false,
+  "run_id": "backup-34238404432",
+  "schema_version": "vector-store-backup-evaluation/1"
+}

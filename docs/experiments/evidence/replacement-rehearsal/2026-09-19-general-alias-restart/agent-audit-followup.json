@@ -1,0 +1,28 @@
+{
+  "alias_correction": {
+    "after": "general",
+    "before": "local",
+    "classification": "deployment_configuration_drift"
+  },
+  "audit": {
+    "blocked": 2,
+    "case_count": 105,
+    "failed": 13,
+    "partial": 7,
+    "passed": 83,
+    "run_id": "groktocrawl-x-20260919T192835Z"
+  },
+  "observed_at": "2026-09-19T21:51:10Z",
+  "post_correction_smoke": {
+    "focused_agent": "passed",
+    "grounded_answer": "passed",
+    "rich_search": "passed",
+    "structured_extraction": "passed"
+  },
+  "remaining_findings": [
+    "web_similarity_relevance_and_metadata",
+    "completed_zero_page_crawl",
+    "cli_mcp_barrier_error_projection"
+  ],
+  "schema_version": "w9-agent-audit-followup/1"
+}

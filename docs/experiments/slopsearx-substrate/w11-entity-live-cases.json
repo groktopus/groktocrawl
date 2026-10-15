@@ -1,0 +1,14 @@
+[
+  {
+    "case_id": "w11-entity-live-cve",
+    "query": "CVE-2024-3094",
+    "engines": ["nvd", "cve"],
+    "max_results": 20
+  },
+  {
+    "case_id": "w11-entity-live-package",
+    "query": "requests",
+    "engines": ["pypi"],
+    "max_results": 20
+  }
+]

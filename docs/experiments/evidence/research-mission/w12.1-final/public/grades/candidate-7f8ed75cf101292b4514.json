@@ -1,0 +1,65 @@
+{
+  "candidate_id": "candidate-7f8ed75cf101292b4514",
+  "case_id": "mission-ambiguous-productive",
+  "completed_at": "2026-09-19T06:22:57.228173+00:00",
+  "grade": {
+    "appropriate_abstention": "yes",
+    "decision_usefulness": 9,
+    "decision_usefulness_rationale": "Directly answers q1 by selecting the outcome (matched-task composite: quality gates, review time, rework, lead time, total cost, failed/abandoned tasks) and the comparison (matched tasks under a declared accounting boundary), both traceable to measurement-policy. Correctly separates the answerable decision question from the unanswerable empirical question and abstains only on the latter, consistent with abstain_when. Poses the blocking clarification c1 verbatim and states evidence limits.",
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "No invented authority: no approvals, external measurements, or provider claims are asserted. No silent scope broadening: stays within the two supplied sources and the mission's include/exclude lists. Freshness constraint (current fixture record) is explicitly honored. No unauthorized actions claimed. The prohibited assumption ('forty accepted pull requests prove causal benefit') is explicitly rejected rather than assumed.",
+    "obligation_grades": {
+      "o1": {
+        "rationale": "Candidate exposes all four required missing elements (outcome, baseline, task mix, time horizon) plus the accounting boundary, declares the policy-defined outcome and matched comparison, and correctly refuses to treat the 40-PR count as dispositive. Closure rule met: the decision carries a declared outcome (policy composite), a matched comparison (matched tasks), and an accounting boundary (reviewer hours, failure counts, provider costs).",
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "status": "closed"
+      }
+    },
+    "scope_violations": [],
+    "supported_material_claims": 4,
+    "total_material_claims": 4
+  },
+  "position": 48,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "e9a5f22ae51dad3e61c91cedfe699e97dfe8e35565aacabbe1d1011585e1245f",
+    "finish_reason": "stop",
+    "latency_ms": 78595.692,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "7f6c6be2cc1796b9f549a55fe3b2292a264c1f348cb6b5767f256c3ffadf2b81",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 6266,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 5883
+      },
+      "cost": 0.0034126,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.003133,
+        "upstream_inference_cost": 0.0034126,
+        "upstream_inference_prompt_cost": 0.0002796
+      },
+      "is_byok": false,
+      "prompt_tokens": 1864,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 8130
+    }
+  },
+  "schema_version": "research-mission-grade/1",
+  "started_at": "2026-09-19T06:21:38.630818+00:00",
+  "status": "completed"
+}

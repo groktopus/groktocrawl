@@ -1,0 +1,66 @@
+{
+  "answer": {
+    "answer": "No. The supplied snapshots do not provide independent confirmation that BirchDB passed the Cedar security audit. Snapshot birch-press is BirchDB's own press release stating it passed the audit, and snapshot birch-news-copy (Industry Wire) is explicitly syndicated verbatim from BirchDB, making it a derivative restatement of the same self-reported claim rather than independent corroboration. Both sources trace to a single origin (BirchDB's announcement), so the audit result remains unverified by any third party in the supplied material. Details such as the auditor, scope, methodology, and audit date are also absent from the snapshots.",
+    "change_events": [],
+    "citations": [
+      "birch-press",
+      "birch-news-copy"
+    ],
+    "current_truths": [
+      "The only supplied sources are BirchDB's own press release (snapshot birch-press, primary) and Industry Wire (snapshot birch-news-copy), which is syndicated verbatim from BirchDB and therefore derivative of the same claim.",
+      "Both snapshots state that BirchDB says it passed the Cedar security audit; neither is an independent confirmation."
+    ],
+    "historical_truths": [],
+    "unresolved": [
+      "No independent confirmation of the Cedar security audit result exists in the supplied snapshots: birch-news-copy is explicitly syndicated verbatim from BirchDB, so it does not corroborate birch-press independently.",
+      "The snapshots do not identify the auditor, audit scope, methodology, or audit date.",
+      "No audit report, certificate, or third-party attestation is included in the supplied snapshots."
+    ]
+  },
+  "arm": "treatment",
+  "case_id": "syndicated-copy",
+  "completed_at": "2026-09-19T07:50:59.992390+00:00",
+  "position": 40,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "3e9d8a8392852f27ef34a3b9c0001b849c76004ea01bf55414acc59a5d11b349",
+    "finish_reason": "stop",
+    "latency_ms": 19904.417,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "a3b716a2acbdcbb5602fa2584de341725a5b5495b00b20b348bd83be114f1650",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 306,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0.0002853,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000153,
+        "upstream_inference_cost": 0.0002853,
+        "upstream_inference_prompt_cost": 0.0001323
+      },
+      "is_byok": false,
+      "prompt_tokens": 882,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1188
+    }
+  },
+  "repetition": 3,
+  "schema_version": "research-thread-trial/1",
+  "started_at": "2026-09-19T07:50:40.085604+00:00",
+  "status": "completed",
+  "stratum": "derivative",
+  "trial_id": "syndicated-copy-r3-treatment"
+}

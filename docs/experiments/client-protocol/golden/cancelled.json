@@ -1,0 +1,29 @@
+{
+  "name": "cancelled",
+  "events": [
+    {
+      "protocol_version": "research/1",
+      "run_id": "run-price-003",
+      "sequence": 1,
+      "event": "accepted",
+      "state": "accepted"
+    },
+    {
+      "protocol_version": "research/1",
+      "run_id": "run-price-003",
+      "sequence": 2,
+      "event": "progress",
+      "state": "cancel_requested",
+      "stage": "acquisition"
+    },
+    {
+      "protocol_version": "research/1",
+      "run_id": "run-price-003",
+      "sequence": 3,
+      "event": "cancelled",
+      "state": "cancelled"
+    }
+  ],
+  "replay_after": "run-price-003:2",
+  "replay_sequences": [3]
+}

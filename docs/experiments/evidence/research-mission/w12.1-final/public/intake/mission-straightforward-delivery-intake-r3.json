@@ -1,0 +1,52 @@
+{
+  "case_id": "mission-straightforward-delivery",
+  "completed_at": "2026-09-19T06:08:25.068175+00:00",
+  "position": 9,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "68965be72d84e7b1721f1abea748bdcbc4caad738407dad5a8bbf6bcf29914aa",
+    "finish_reason": "stop",
+    "latency_ms": 48193.212,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "d5021c3be8079052c5c2292a46823e4b5039673352b33584ac6093cd0e7e283f",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 708,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 478
+      },
+      "cost": 0.000663,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000354,
+        "upstream_inference_cost": 0.000663,
+        "upstream_inference_prompt_cost": 0.000309
+      },
+      "is_byok": false,
+      "prompt_tokens": 2060,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 2768
+    }
+  },
+  "repetition": 3,
+  "result": {
+    "action": "clarify",
+    "clarifying_question": "Which specific policy document (exact title and version) governs build-agent deployment authority in your software factory, and where can its authoritative text be accessed — and which build agent (system name and version) does the question apply to?",
+    "mission": null,
+    "rationale": "The request asks whether the supplied policy permits the build agent to deploy to production, but no policy text, policy identifier, or source material was actually supplied. Determining permission requires reading the governing policy as evidence; without knowing which document (and which agent it applies to) is authoritative, any research would have to invent authority and scope, which the contract forbids (mission_is_not_permission; do not invent authority, scope, facts, or source findings). Research itself is appropriate here — this is a governance determination, not an improper request — so the correct action is to resolve the decision-changing ambiguity with one blocking clarification rather than abstain or fabricate a mission against an unidentified source. A mission will be normalized once the governing policy document and target agent are identified."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:07:36.868749+00:00",
+  "status": "completed",
+  "trial_id": "mission-straightforward-delivery-intake-r3"
+}

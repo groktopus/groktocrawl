@@ -1,0 +1,1 @@
+{"case_id": "w10-01-unsupported-1", "error": "The read operation timed out", "error_type": "ReadTimeout", "policy": "gated", "repetition": 0, "schema_version": "enterprise-evaluation/w10-policy-trial/1", "status": "failed"}

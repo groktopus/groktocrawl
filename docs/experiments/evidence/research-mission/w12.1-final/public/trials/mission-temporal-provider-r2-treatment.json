@@ -1,0 +1,79 @@
+{
+  "arm": "treatment",
+  "case_id": "mission-temporal-provider",
+  "completed_at": "2026-09-19T05:50:22.373173+00:00",
+  "position": 2,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "db0523a99e2807c494fb44d1c07e58ee4e4396f7e4f7c7b95bda1fd6d168e8c6",
+    "finish_reason": "stop",
+    "latency_ms": 15388.107,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "a93dca1b55d20c36b9b90eafa94f2d188007867710114fdbf191c03f89a88a5b",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 433,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 27
+      },
+      "cost": 0.00023195,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.00015155,
+        "upstream_inference_cost": 0.00023195,
+        "upstream_inference_prompt_cost": 8.04e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 804,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1237
+    }
+  },
+  "repetition": 2,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "**Decision-support: provider switch approval (as of 2026-09-19)** — Using only the supplied sources, the current record is **insufficient to approve a provider switch**. Policy requires every production model change to demonstrate a frozen task suite, provenance checks, and declared resource limits, plus provider-adapter preservation of tool-result identities and cancellation semantics ([platform-policy]). The vendor note provides none of this: no comparison workload, version pins, error distribution, or review methodology — only an unverified ",
+    "candidate_id": "candidate-41b9fd0afbe7648ebfad",
+    "citations": [
+      "platform-policy",
+      "platform-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "platform-policy"
+        ],
+        "text": "Policy requires frozen task suite, provenance checks, and declared resource limits for every production model change, and adapters must preserve tool-result identities and cancellation semantics.",
+        "uncertainty": "No material uncertainty."
+      },
+      {
+        "source_ids": [
+          "platform-context"
+        ],
+        "text": "The vendor note supplies no comparison workload, version pins, error distribution, or review methodology.",
+        "uncertainty": "The source is a vendor brochure claim; no independent verification is available in the pack."
+      },
+      {
+        "source_ids": [
+          "platform-policy",
+          "platform-context"
+        ],
+        "text": "No gate requirement (frozen suite, provenance, resource limits, tool-result identity, cancellation semantics) is evidenced for the proposed provider.",
+        "uncertainty": "Absence of evidence in the supplied pack; evidence may exist outside the pack but cannot be assumed."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:50:06.983744+00:00",
+  "status": "completed",
+  "trial_id": "mission-temporal-provider-r2-treatment"
+}

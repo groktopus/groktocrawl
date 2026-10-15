@@ -518,7 +518,7 @@ class TestRetention:
 
 
 class TestHealth:
-    """GET /health endpoint."""
+    """Liveness and readiness endpoints."""
 
     def test_health_ok(self):
         skip_if_not_running()
@@ -538,6 +538,12 @@ class TestHealth:
         # Models should be loaded after startup
         if data["status"] == "ok":
             assert data["models"] == "loaded"
+
+    def test_ready_ok_for_serving_stack(self):
+        skip_if_not_running()
+        resp = httpx.get(f"{SEMANTIC}/ready", timeout=30)
+        assert resp.status_code == 200
+        assert resp.json()["status"] == "ok"
 
 
 class TestMetrics:

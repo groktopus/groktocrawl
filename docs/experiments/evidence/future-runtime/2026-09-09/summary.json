@@ -1,0 +1,203 @@
+{
+  "conformance_failures": 0,
+  "measurements": [
+    {
+      "elapsed_ms": {
+        "median": 0.0581875,
+        "p95": 0.07855029999999995
+      },
+      "runtime": "imperative",
+      "samples": 30,
+      "scenario": "adaptive_replanning",
+      "state_bytes": {
+        "maximum": 1059,
+        "median": 1059.0
+      },
+      "workload": "adequate_first_pass"
+    },
+    {
+      "elapsed_ms": {
+        "median": 1.217708,
+        "p95": 1.35350245
+      },
+      "runtime": "langgraph",
+      "samples": 30,
+      "scenario": "adaptive_replanning",
+      "state_bytes": {
+        "maximum": 1059,
+        "median": 1059.0
+      },
+      "workload": "adequate_first_pass"
+    },
+    {
+      "elapsed_ms": {
+        "median": 0.1428755,
+        "p95": 0.16868519999999992
+      },
+      "runtime": "imperative",
+      "samples": 30,
+      "scenario": "adaptive_replanning",
+      "state_bytes": {
+        "maximum": 2807,
+        "median": 2807.0
+      },
+      "workload": "contradiction_then_recovery"
+    },
+    {
+      "elapsed_ms": {
+        "median": 1.7622705,
+        "p95": 1.8393503
+      },
+      "runtime": "langgraph",
+      "samples": 30,
+      "scenario": "adaptive_replanning",
+      "state_bytes": {
+        "maximum": 2807,
+        "median": 2807.0
+      },
+      "workload": "contradiction_then_recovery"
+    },
+    {
+      "elapsed_ms": {
+        "median": 0.14277099999999998,
+        "p95": 0.153133
+      },
+      "runtime": "imperative",
+      "samples": 30,
+      "scenario": "adaptive_replanning",
+      "state_bytes": {
+        "maximum": 2688,
+        "median": 2688.0
+      },
+      "workload": "replan_limit"
+    },
+    {
+      "elapsed_ms": {
+        "median": 1.7613335,
+        "p95": 1.8608417
+      },
+      "runtime": "langgraph",
+      "samples": 30,
+      "scenario": "adaptive_replanning",
+      "state_bytes": {
+        "maximum": 2688,
+        "median": 2688.0
+      },
+      "workload": "replan_limit"
+    },
+    {
+      "elapsed_ms": {
+        "median": 0.100333,
+        "p95": 0.11742719999999998
+      },
+      "runtime": "imperative",
+      "samples": 30,
+      "scenario": "adaptive_replanning",
+      "state_bytes": {
+        "maximum": 1834,
+        "median": 1834.0
+      },
+      "workload": "weak_then_adequate"
+    },
+    {
+      "elapsed_ms": {
+        "median": 1.4912705,
+        "p95": 1.581525
+      },
+      "runtime": "langgraph",
+      "samples": 30,
+      "scenario": "adaptive_replanning",
+      "state_bytes": {
+        "maximum": 1834,
+        "median": 1834.0
+      },
+      "workload": "weak_then_adequate"
+    },
+    {
+      "elapsed_ms": {
+        "median": 0.128083,
+        "p95": 0.16026889999999996
+      },
+      "runtime": "imperative",
+      "samples": 30,
+      "scenario": "dynamic_specialists",
+      "state_bytes": {
+        "maximum": 851,
+        "median": 851.0
+      },
+      "workload": "1_specialists"
+    },
+    {
+      "elapsed_ms": {
+        "median": 1.4645205,
+        "p95": 1.5804290499999998
+      },
+      "runtime": "langgraph",
+      "samples": 30,
+      "scenario": "dynamic_specialists",
+      "state_bytes": {
+        "maximum": 851,
+        "median": 851.0
+      },
+      "workload": "1_specialists"
+    },
+    {
+      "elapsed_ms": {
+        "median": 0.2275,
+        "p95": 0.2421144
+      },
+      "runtime": "imperative",
+      "samples": 30,
+      "scenario": "dynamic_specialists",
+      "state_bytes": {
+        "maximum": 1669,
+        "median": 1669.0
+      },
+      "workload": "3_specialists"
+    },
+    {
+      "elapsed_ms": {
+        "median": 1.612625,
+        "p95": 1.7227099000000001
+      },
+      "runtime": "langgraph",
+      "samples": 30,
+      "scenario": "dynamic_specialists",
+      "state_bytes": {
+        "maximum": 1669,
+        "median": 1669.0
+      },
+      "workload": "3_specialists"
+    },
+    {
+      "elapsed_ms": {
+        "median": 0.3678335,
+        "p95": 0.3938894
+      },
+      "runtime": "imperative",
+      "samples": 30,
+      "scenario": "dynamic_specialists",
+      "state_bytes": {
+        "maximum": 2521,
+        "median": 2521.0
+      },
+      "workload": "5_specialists"
+    },
+    {
+      "elapsed_ms": {
+        "median": 1.895,
+        "p95": 2.2191140999999996
+      },
+      "runtime": "langgraph",
+      "samples": 30,
+      "scenario": "dynamic_specialists",
+      "state_bytes": {
+        "maximum": 2521,
+        "median": 2521.0
+      },
+      "workload": "5_specialists"
+    }
+  ],
+  "records": 420,
+  "schema_version": 1
+}

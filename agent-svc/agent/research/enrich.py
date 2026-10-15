@@ -8,6 +8,7 @@ from ..barrier_guard import is_barrier_flagged, log_refusal
 from ..llm import LLMClient
 from ..scraper_client import ScraperClient
 from ..searxng_client import SearXNGClient
+from .evidence import build_evidence_async
 from .prompts import ENRICH_SYSTEM_PROMPT
 
 logger = logging.getLogger(__name__)
@@ -117,13 +118,17 @@ async def run_enrich_pipeline(
                 field_descriptions = "\n".join(
                     f"- {name}: {field.description}" for name, field in fields.items()
                 )
+                selected = await build_evidence_async(
+                    [{"id": top_url, "url": top_url, "markdown": markdown}],
+                    query + "\n" + field_descriptions,
+                )
                 extract_prompt = (
                     "Extract the following fields from the text below.\n"
                     "Return ONLY a JSON object where keys are field names "
                     'and values are objects with "value" and "source_url".\n\n'
                     f"Source URL: {top_url}\n\n"
                     f"Fields to extract:\n{field_descriptions}\n\n"
-                    f"---TEXT---\n{markdown[:8000]}"
+                    f"---SELECTED EVIDENCE---\n{selected['context']}"
                 )
 
                 try:
@@ -153,7 +158,11 @@ async def run_enrich_pipeline(
                             "source": top_url,
                         }
 
-                return {"item": item, "enrichments": enrichments}
+                return {
+                    "item": item,
+                    "enrichments": enrichments,
+                    "evidence_coverage": selected["coverage"],
+                }
             finally:
                 await searxng.close()
                 await scraper.close()

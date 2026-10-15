@@ -1,0 +1,633 @@
+#!/usr/bin/env python3
+"""Analyze frozen cardiac Jev replay artifacts without network access.
+
+Usage:
+  python cardiac-replay-analyze.py evidence-directory
+  python cardiac-replay-analyze.py --self-test
+
+By default writes analysis.json beside corpus.json. Use --output to choose another
+destination. The generated analysis contains no local filesystem paths.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import math
+import re
+import statistics
+import sys
+import unittest
+from collections import defaultdict
+from pathlib import Path
+from typing import Any
+from urllib.parse import urlsplit
+
+ID_RE = re.compile(r"^c(\d+)(?:_(evidence|fetch))?$")
+MAX_W0 = 9.0
+MAX_W1 = 3.0
+
+
+def load_json(path: Path) -> Any:
+    with path.open(encoding="utf-8") as f:
+        return json.load(f)
+
+
+def candidates_from(corpus: dict[str, Any]) -> list[dict[str, Any]]:
+    rows = corpus.get("candidates")
+    if not isinstance(rows, list):
+        raise ValueError("corpus.candidates must be a list")
+    return rows
+
+
+def id_num(cid: str) -> int:
+    m = re.match(r"^c(\d+)$", cid)
+    if not m:
+        raise ValueError(f"unexpected candidate id: {cid}")
+    return int(m.group(1))
+
+
+def question_keys(req: dict[str, Any]) -> list[str]:
+    body = req.get("body", {})
+    if not isinstance(body, dict):
+        return []
+    questions = body.get("questions")
+    return list(questions) if isinstance(questions, dict) else []
+
+
+def candidate_ids_for(req: dict[str, Any]) -> list[str]:
+    explicit = req.get("candidate_ids")
+    if isinstance(explicit, list):
+        return sorted({str(x) for x in explicit}, key=id_num)
+    found: set[str] = set()
+    for key in question_keys(req):
+        m = ID_RE.match(str(key))
+        if m:
+            found.add("c" + m.group(1))
+    return sorted(found, key=id_num)
+
+
+def normalize_pool(value: Any) -> str:
+    pool = str(value)
+    return {"whole": "all44", "all": "all44", "all44": "all44",
+            "first40": "first40", "singleton": "singleton"}.get(pool, pool)
+
+
+def normalize_kind(pool: str, value: Any) -> str:
+    kind = str(value)
+    return "matrix" if pool != "singleton" and kind == "pilot" else kind
+
+
+def numeric(value: Any, low: float, high: float) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    x = float(value)
+    return x if math.isfinite(x) and low <= x <= high else None
+
+
+def answer_payload(value: Any) -> dict[str, Any]:
+    return value if isinstance(value, dict) else {}
+
+
+def extract_value(answer: Any, keys: tuple[str, ...]) -> Any:
+    if not isinstance(answer, dict):
+        return answer
+    for key in keys:
+        if key in answer:
+            return answer[key]
+    return None
+
+
+def fetch_probability(answer: Any) -> float | None:
+    a = answer_payload(answer)
+    for name in ("probabilities", "distribution", "scores"):
+        dist = a.get(name)
+        if isinstance(dist, dict):
+            value = numeric(dist.get("fetch"), 0, 1)
+            if value is not None:
+                return value
+    # Some serializers put the probability map directly on the answer.
+    return numeric(a.get("fetch_probability"), 0, 1)
+
+
+def receipt_for(evidence_dir: Path, req: dict[str, Any]) -> dict[str, Any] | None:
+    rid = str(req.get("id", ""))
+    path = evidence_dir / "receipts" / f"{rid}.json"
+    if not path.is_file():
+        return None
+    return load_json(path)
+
+
+def validate_and_collect(req: dict[str, Any], receipt: dict[str, Any] | None) -> dict[str, Any]:
+    wording = str(req.get("wording", ""))
+    expected_ids = candidate_ids_for(req)
+    result: dict[str, Any] = {"available": False, "scores": {}, "fetch_probabilities": {},
+                              "fetch_choices": {}, "reasons": []}
+    if receipt is None:
+        result["reasons"].append("missing_receipt")
+        return result
+    result["receipt_status"] = receipt.get("status")
+    result["model"] = receipt.get("model")
+    result["usage"] = receipt.get("usage") or {}
+    result["provider_ms"] = receipt.get("provider_ms")
+    result["total_ms"] = receipt.get("total_ms")
+    errors = receipt.get("validation_errors") or []
+    if errors:
+        result["reasons"].extend([str(x) for x in errors])
+    if receipt.get("status") != "valid":
+        result["reasons"].append("receipt_not_valid")
+    expected_model = (req.get("body") or {}).get("model") if isinstance(req.get("body"), dict) else None
+    if expected_model and receipt.get("model") != expected_model:
+        result["reasons"].append("model_mismatch")
+    answers = receipt.get("answers")
+    if not isinstance(answers, dict):
+        result["reasons"].append("answers_not_object")
+        return result
+    expected_question_ids = set(question_keys(req))
+    if set(answers) != expected_question_ids:
+        result["reasons"].append("answer_membership_mismatch")
+
+    for cid in expected_ids:
+        if wording == "W1":
+            ekey, fkey = cid + "_evidence", cid + "_fetch"
+            evidence = answers.get(ekey)
+            if not isinstance(evidence, dict) or evidence.get("type") != "score":
+                result["reasons"].append(f"invalid_evidence_type:{cid}")
+            ev = numeric(extract_value(evidence, ("score", "value", "answer")), 0, MAX_W1)
+            fetch = answers.get(fkey)
+            if not isinstance(fetch, dict) or fetch.get("type") != "choice":
+                result["reasons"].append(f"invalid_fetch_type:{cid}")
+            choice = extract_value(fetch, ("choice", "value", "answer"))
+            if ev is None:
+                result["reasons"].append(f"invalid_evidence:{cid}")
+            else:
+                result["scores"][cid] = ev
+            if choice not in ("skip", "maybe", "fetch"):
+                result["reasons"].append(f"invalid_fetch_choice:{cid}")
+            else:
+                result["fetch_choices"][cid] = choice
+            prob = fetch_probability(fetch)
+            if prob is not None:
+                result["fetch_probabilities"][cid] = prob
+        else:
+            answer = answers.get(cid)
+            if not isinstance(answer, dict) or answer.get("type") != "score":
+                result["reasons"].append(f"invalid_score_type:{cid}")
+            value = numeric(extract_value(answer, ("score", "value", "answer")), 0, MAX_W0)
+            if value is None:
+                result["reasons"].append(f"invalid_score:{cid}")
+            else:
+                result["scores"][cid] = value
+
+    if not expected_ids:
+        result["reasons"].append("no_candidate_ids_in_request")
+    result["available"] = not result["reasons"] and len(result["scores"]) == len(expected_ids)
+    return result
+
+
+def grades_for(corpus: dict[str, Any], label_key: str, ids: list[str]) -> dict[str, float]:
+    labels = corpus.get(label_key)
+    if not isinstance(labels, list):
+        return {}
+    return {"c" + str(i): float(g) for i, g in enumerate(labels)}
+
+
+def ndcg(order: list[str], grades: dict[str, float], k: int = 10) -> float | None:
+    if not grades:
+        return None
+    def dcg(ids: list[str]) -> float:
+        return sum((2 ** grades.get(cid, 0) - 1) / math.log2(rank + 2) for rank, cid in enumerate(ids[:k]))
+    ideal = sorted(grades, key=lambda cid: (-grades[cid], id_num(cid)))
+    denom = dcg(ideal)
+    return dcg(order) / denom if denom else None
+
+
+def rank_scores(scores: dict[str, float], ids: list[str], mode: str,
+                fetch_probs: dict[str, float] | None = None) -> list[str]:
+    allowed = set(ids)
+    if mode == "leadfirst":
+        probs = fetch_probs or {}
+        if any(cid not in probs for cid in allowed if cid in scores):
+            return []
+        return sorted((cid for cid in ids if cid in scores),
+                      key=lambda cid: (-probs.get(cid, 0), -scores.get(cid, -1), id_num(cid)))
+    return sorted((cid for cid in ids if cid in scores), key=lambda cid: (-scores[cid], id_num(cid)))
+
+
+def top_metrics(order: list[str], corpus: dict[str, Any], grades: dict[str, float]) -> dict[str, Any]:
+    candidates = candidates_from(corpus)
+    by_id = {str(c.get("id")): c for c in candidates}
+    top = order[:10]
+    facets = corpus.get("facets", [])
+    facet_map = {"c" + str(i): facets[i] for i in range(min(len(facets), len(candidates)))}
+    covered = sorted({f for cid in top if grades.get(cid, 0) >= 2 for f in facet_map.get(cid, [])})
+    host_counts: dict[str, int] = defaultdict(int)
+    for cid in top:
+        try:
+            host = (urlsplit(str(by_id.get(cid, {}).get("url", ""))).hostname or "").lower()
+        except ValueError:
+            host = ""
+        if host:
+            host_counts[host] += 1
+    return {
+        "order": order,
+        "top10": top,
+        "ndcg10": ndcg(order, grades),
+        "useful10": sum(grades.get(cid, 0) >= 2 for cid in top),
+        "facet_coverage": covered,
+        "empty_snippets_top10": [cid for cid in top if not str(by_id.get(cid, {}).get("snippet", "")).strip()],
+        "tail10": [cid for cid in top if id_num(cid) >= 40],
+        "tail_useful10": sum(id_num(cid) >= 40 and grades.get(cid, 0) >= 2 for cid in top),
+        "hostname_counts_top10": dict(sorted(host_counts.items(), key=lambda x: (-x[1], x[0]))),
+    }
+
+
+def normalized_score_shift(left: dict[str, float], right: dict[str, float], max_score: float) -> dict[str, Any]:
+    common = sorted(set(left) & set(right), key=id_num)
+    shifts = [(right[c] - left[c]) / max_score for c in common]
+    return {
+        "common_candidates": len(common),
+        "mean_signed_shift": statistics.mean(shifts) if shifts else None,
+        "mean_absolute_shift": statistics.mean(abs(x) for x in shifts) if shifts else None,
+    }
+
+
+def overlap10(a: list[str], b: list[str]) -> float | None:
+    if len(a) < 10 or len(b) < 10:
+        return None
+    return len(set(a[:10]) & set(b[:10])) / 10
+
+
+def summarize(evidence_dir: Path) -> dict[str, Any]:
+    corpus = load_json(evidence_dir / "corpus.json")
+    candidates = candidates_from(corpus)
+    all_ids = sorted((str(c["id"]) for c in candidates), key=id_num)
+    if len(all_ids) != 44 or all_ids != [f"c{i}" for i in range(44)]:
+        raise ValueError("expected frozen c0..c43 corpus (44 candidates)")
+    requests = load_json(evidence_dir / "requests.json")
+    if isinstance(requests, dict):
+        requests = requests.get("requests")
+    if not isinstance(requests, list):
+        raise ValueError("requests.json must be a list or contain a requests list")
+
+    records: list[dict[str, Any]] = []
+    grouped_parts: dict[tuple[str, str, str, str], list[dict[str, Any]]] = defaultdict(list)
+    receipt_rows: list[dict[str, Any]] = []
+    for req in requests:
+        if not isinstance(req, dict):
+            continue
+        receipt = receipt_for(evidence_dir, req)
+        parsed = validate_and_collect(req, receipt)
+        rid = str(req.get("id", ""))
+        pool = normalize_pool(req.get("pool", ""))
+        wording = str(req.get("wording", ""))
+        order_name = str(req.get("order", ""))
+        kind = normalize_kind(pool, req.get("kind", ""))
+        allowed_ids = ({f"c{i}" for i in range(40)} if pool == "first40" else
+                       set(all_ids) if pool == "all44" else set(candidate_ids_for(req)))
+        if not set(candidate_ids_for(req)) <= allowed_ids:
+            parsed["available"] = False
+            parsed["reasons"].append("request_candidate_outside_pool")
+        part = {"request_id": rid, "request": req, "parsed": parsed,
+                "candidate_ids": candidate_ids_for(req)}
+        key = (pool, order_name, wording, kind)
+        grouped_parts[key].append(part)
+        records.append({"id": rid, "pool": pool, "order": order_name,
+                        "wording": wording, "kind": kind,
+                        "available": parsed["available"], "reasons": parsed["reasons"],
+                        "candidate_count": len(part["candidate_ids"]),
+                        "usage": parsed.get("usage", {}),
+                        "provider_ms": parsed.get("provider_ms"),
+                        "total_ms": parsed.get("total_ms")})
+        if receipt is not None:
+            receipt_rows.append(receipt)
+
+    grades_root = grades_for(corpus, "grades", all_ids)
+    grades_peer = grades_for(corpus, "grades_peer", all_ids)
+    arm_rows: list[dict[str, Any]] = []
+    raw_arm_scores: dict[tuple[str, str, str, str, str], dict[str, float]] = {}
+    for (pool, order_name, wording, kind), parts in sorted(grouped_parts.items()):
+        combined_scores: dict[str, float] = {}
+        combined_fetch: dict[str, float] = {}
+        reasons: list[str] = []
+        available_parts = 0
+        for part in parts:
+            p = part["parsed"]
+            reasons.extend(p["reasons"])
+            if p["available"]:
+                available_parts += 1
+            combined_scores.update(p["scores"])
+            combined_fetch.update(p["fetch_probabilities"])
+        ids = ([f"c{i}" for i in range(40)] if pool == "first40" else
+               all_ids if pool == "all44" else
+               sorted({cid for part in parts for cid in part["candidate_ids"]}, key=id_num))
+        # Never present a partial full-set arm as a valid 44-card ranking.
+        mode_scores = {"evidence" if wording == "W1" else "score": combined_scores}
+        for mode, scores in mode_scores.items():
+            enough = set(scores) == set(ids)
+            if pool == "singleton":
+                arm_rows.append({"pool": pool, "order": order_name, "wording": wording,
+                                 "kind": kind, "mode": mode, "available": enough and not reasons,
+                                 "scored_candidates": len(scores), "expected_candidates": len(ids),
+                                 "scores_by_candidate": {cid: scores[cid] for cid in ids if cid in scores},
+                                 "reason": "single-card diagnostic; no top10 ranking"})
+                if enough and not reasons:
+                    raw_arm_scores[(pool, order_name, wording, kind, mode)] = scores
+                continue
+            if not enough:
+                arm_rows.append({"pool": pool, "order": order_name, "wording": wording,
+                                 "kind": kind, "mode": mode, "available": False,
+                                 "scored_candidates": len(scores), "expected_candidates": len(ids),
+                                 "reasons": sorted(set(reasons)) or ["partial_arm"]})
+                continue
+            ordering = rank_scores(scores, ids, mode)
+            if pool == "first40":
+                ordering += all_ids[40:]
+            grade_views = {}
+            for label_name, grades in (("root", grades_root), ("peer", grades_peer)):
+                grade_views[label_name] = top_metrics(ordering, corpus, grades)
+            row = {"pool": pool, "order": order_name, "wording": wording,
+                   "kind": kind, "mode": mode, "available": True,
+                   "scored_candidates": len(scores), "expected_candidates": len(ids),
+                   "score_range": [min(scores.values()), max(scores.values())],
+                   "fetch_probability_coverage": len(combined_fetch),
+                   "root": grade_views["root"], "peer": grade_views["peer"]}
+            arm_rows.append(row)
+            raw_arm_scores[(pool, order_name, wording, kind, mode)] = scores
+            if wording == "W1" and mode == "evidence" and len(combined_fetch) == len(ids):
+                lead_order = rank_scores(scores, ids, "leadfirst", combined_fetch)
+                if lead_order:
+                    if pool == "first40":
+                        lead_order += all_ids[40:]
+                    arm_rows.append({"pool": pool, "order": order_name, "wording": wording,
+                                     "kind": kind, "mode": "leadfirst", "available": True,
+                                     "scored_candidates": len(scores), "expected_candidates": len(ids),
+                                     "fetch_probability_coverage": len(combined_fetch),
+                                     "root": top_metrics(lead_order, corpus, grades_root),
+                                     "peer": top_metrics(lead_order, corpus, grades_peer)})
+
+    stability: list[dict[str, Any]] = []
+    # Compare only matched pool, wording, kind, and score mode. Full arms must be complete.
+    lookup = {(r["pool"], r["order"], r["wording"], r["kind"], r["mode"]): r
+              for r in arm_rows if r.get("available") and r.get("mode") in ("score", "evidence")}
+    for pool, wording, kind, mode in sorted({(k[0], k[2], k[3], k[4]) for k in raw_arm_scores}):
+        base = lookup.get((pool, "original", wording, kind, mode))
+        if not base:
+            continue
+        base_scores = raw_arm_scores[(pool, "original", wording, kind, mode)]
+        for order_name in ("reverse", "shuffle", "seeded-shuffle"):
+            other = lookup.get((pool, order_name, wording, kind, mode))
+            other_scores = raw_arm_scores.get((pool, order_name, wording, kind, mode))
+            if not other or other_scores is None:
+                continue
+            stability.append({"pool": pool, "wording": wording, "kind": kind,
+                              "mode": mode, "comparison": f"original_vs_{order_name}",
+                              "root_top10_overlap": overlap10(base["root"]["order"], other["root"]["order"]),
+                              "peer_top10_overlap": overlap10(base["peer"]["order"], other["peer"]["order"]),
+                              "normalized_score_shift": normalized_score_shift(base_scores, other_scores,
+                                                                                MAX_W1 if wording == "W1" else MAX_W0)})
+
+    repeats: list[dict[str, Any]] = []
+    duplicate_groups: dict[tuple[str, str, str], list[dict[str, Any]]] = defaultdict(list)
+    for req in requests:
+        if isinstance(req, dict):
+            duplicate_groups[(normalize_pool(req.get("pool", "")), str(req.get("order", "")),
+                              str(req.get("wording", "")))].append(req)
+    for key, reqs in sorted(duplicate_groups.items()):
+        repeated = [r for r in reqs if "repeat" in str(r.get("kind", "")).lower() or
+                    "repeat" in str(r.get("id", "")).lower()]
+        if not repeated:
+            continue
+        base_candidates = [r for r in reqs if r not in repeated]
+        for rep in repeated:
+            base_matches = [r for r in base_candidates if normalize_kind(key[0], r.get("kind", "")) != "singleton"]
+            base = base_matches[0] if base_matches else None
+            bp = validate_and_collect(base, receipt_for(evidence_dir, base)) if base else None
+            rp = validate_and_collect(rep, receipt_for(evidence_dir, rep))
+            complete = bool(bp and bp["available"] and rp["available"] and set(bp["scores"]) == set(rp["scores"]))
+            common = sorted(set(bp["scores"]) & set(rp["scores"]), key=id_num) if bp else []
+            score_delta = normalized_score_shift(bp["scores"], rp["scores"],
+                                                 MAX_W1 if key[2] == "W1" else MAX_W0) if bp else None
+            top_overlap = None
+            if complete and key[0] in ("all44", "first40"):
+                ids = all_ids if key[0] == "all44" else [f"c{i}" for i in range(40)]
+                b_order = rank_scores(bp["scores"], ids, "evidence" if key[2] == "W1" else "score")
+                r_order = rank_scores(rp["scores"], ids, "evidence" if key[2] == "W1" else "score")
+                if key[0] == "first40":
+                    b_order += all_ids[40:]
+                    r_order += all_ids[40:]
+                top_overlap = overlap10(b_order, r_order)
+            repeats.append({"pool": key[0], "order": key[1], "wording": key[2],
+                            "base_request_id": str(base.get("id", "")) if base else None,
+                            "repeat_request_id": str(rep.get("id", "")),
+                            "available": complete, "common_candidates": len(common),
+                            "exact_score_match": (all(bp["scores"][c] == rp["scores"][c] for c in common) if complete else None),
+                            "root_top10_overlap": top_overlap,
+                            "normalized_score_shift": score_delta,
+                            "unavailable_reasons": ([] if complete else sorted(set((bp or {}).get("reasons", []) + rp.get("reasons", []))) or ["missing_or_mismatched_base"])})
+
+    shape_comparison: dict[str, Any] = {"scope": "whole44/W1/original only",
+                                        "interpretation": "Exploratory request-shape diagnostic; not a paired quality trial."}
+    batch_key = next((k for k in raw_arm_scores if k[0] == "all44" and k[1] == "original" and
+                      k[2] == "W1" and k[3] == "matrix" and k[4] == "evidence"), None)
+    singleton_scores: dict[str, float] = {}
+    singleton_fetch: dict[str, float] = {}
+    singleton_choices: dict[str, str] = {}
+    singleton_ids: list[str] = []
+    for req in requests:
+        if not isinstance(req, dict) or normalize_pool(req.get("pool", "")) != "singleton" or req.get("wording") != "W1" or req.get("order") != "original":
+            continue
+        parsed = validate_and_collect(req, receipt_for(evidence_dir, req))
+        if parsed["available"]:
+            singleton_scores.update(parsed["scores"])
+            singleton_fetch.update(parsed["fetch_probabilities"])
+            singleton_choices.update(parsed["fetch_choices"])
+            singleton_ids.extend(candidate_ids_for(req))
+    if batch_key and singleton_scores:
+        batch_scores = raw_arm_scores[batch_key]
+        common = sorted(set(batch_scores) & set(singleton_scores), key=id_num)
+        batch_req = next((r for r in requests if isinstance(r, dict) and
+                          normalize_pool(r.get("pool", "")) == "all44" and
+                          r.get("order") == "original" and r.get("wording") == "W1" and
+                          normalize_kind("all44", r.get("kind")) == batch_key[3]), None)
+        batch_parsed = validate_and_collect(batch_req, receipt_for(evidence_dir, batch_req)) if batch_req else {}
+        singleton_parsed_by_id: dict[str, dict[str, Any]] = {}
+        for req in requests:
+            if not isinstance(req, dict) or normalize_pool(req.get("pool", "")) != "singleton" or req.get("wording") != "W1" or req.get("order") != "original":
+                continue
+            p = validate_and_collect(req, receipt_for(evidence_dir, req))
+            if p["available"]:
+                singleton_parsed_by_id.update({cid: p for cid in p["scores"]})
+        paired = []
+        for cid in common:
+            sp = singleton_parsed_by_id.get(cid, {})
+            paired.append({"candidate_id": cid, "all44_evidence_score": batch_scores[cid],
+                           "singleton_evidence_score": singleton_scores[cid],
+                           "evidence_score_delta": singleton_scores[cid] - batch_scores[cid],
+                           "all44_fetch_choice": batch_parsed.get("fetch_choices", {}).get(cid),
+                           "singleton_fetch_choice": singleton_choices.get(cid),
+                           "all44_fetch_probability": batch_parsed.get("fetch_probabilities", {}).get(cid),
+                           "singleton_fetch_probability": singleton_fetch.get(cid)})
+        shape_comparison.update({
+            "available": bool(common),
+            "singleton_request_count": len(singleton_ids), "singleton_candidate_count": len(set(singleton_ids)),
+            "singleton_request_ids": [str(r.get("id", "")) for r in requests if isinstance(r, dict) and normalize_pool(r.get("pool", "")) == "singleton" and r.get("wording") == "W1" and r.get("order") == "original"],
+            "all44_request_id": next((str(r.get("id")) for r in requests if isinstance(r, dict) and normalize_pool(r.get("pool", "")) == "all44" and r.get("wording") == "W1" and r.get("order") == "original" and normalize_kind("all44", r.get("kind")) == "matrix"), None),
+            "common_candidate_ids": common,
+            "paired_candidate_scores_and_fetch_choices": paired,
+            "normalized_score_shift_singleton_vs_all44": normalized_score_shift(batch_scores, singleton_scores, MAX_W1),
+            "fetch_probability_comparison": {
+                "paired_candidates": sum(1 for cid in common if cid in batch_parsed.get("fetch_probabilities", {}) and cid in singleton_fetch),
+                "mean_absolute_probability_error": statistics.mean(abs(batch_parsed["fetch_probabilities"][cid] - singleton_fetch[cid]) for cid in common if cid in batch_parsed.get("fetch_probabilities", {}) and cid in singleton_fetch) if any(cid in batch_parsed.get("fetch_probabilities", {}) and cid in singleton_fetch for cid in common) else None,
+                "maximum_absolute_probability_error": max((abs(batch_parsed["fetch_probabilities"][cid] - singleton_fetch[cid]) for cid in common if cid in batch_parsed.get("fetch_probabilities", {}) and cid in singleton_fetch), default=None),
+                "choice_flip_candidate_ids": [cid for cid in common if cid in batch_parsed.get("fetch_choices", {}) and cid in singleton_choices and batch_parsed["fetch_choices"][cid] != singleton_choices[cid]]},
+            "rank_metrics": None,
+            "note": "No top10 overlap is computed for this 12-card singleton subset."})
+    else:
+        shape_comparison.update({"available": False, "common_candidate_ids": [],
+                                 "reason": "A complete W1 all44-original arm or valid singleton scores are unavailable."})
+
+    latency_values = [numeric(r.get("total_ms"), 0, 1e12) for r in receipt_rows]
+    latency_values = [x for x in latency_values if x is not None]
+    provider_values = [numeric(r.get("provider_ms"), 0, 1e12) for r in receipt_rows]
+    provider_values = [x for x in provider_values if x is not None]
+    input_tokens = sum((r.get("usage") or {}).get("input_tokens", 0) for r in receipt_rows
+                       if isinstance((r.get("usage") or {}).get("input_tokens", 0), (int, float)))
+    output_tokens = sum((r.get("usage") or {}).get("output_tokens", 0) for r in receipt_rows
+                        if isinstance((r.get("usage") or {}).get("output_tokens", 0), (int, float)))
+
+    historical = {}
+    for filename in ("historical-first40.json", "historical-whole.json"):
+        p = evidence_dir / filename
+        if p.is_file():
+            historical[filename] = {"classification": "historical_unmatched_new_trials",
+                                    "content": load_json(p)}
+        else:
+            historical[filename] = {"classification": "historical_unmatched_new_trials", "available": False}
+
+    def histogram(values: list[Any]) -> dict[str, int]:
+        counts: dict[str, int] = defaultdict(int)
+        for value in values:
+            counts[str(value)] += 1
+        return dict(sorted(counts.items(), key=lambda x: x[0]))
+
+    root_labels = corpus.get("grades", [])
+    peer_labels = corpus.get("grades_peer", [])
+    disagreements = [f"c{i}" for i, (a, b) in enumerate(zip(root_labels, peer_labels)) if a != b]
+    hostname_counts: dict[str, int] = defaultdict(int)
+    for candidate in candidates:
+        try:
+            host = (urlsplit(str(candidate.get("url", ""))).hostname or "").lower()
+        except ValueError:
+            host = ""
+        if host:
+            hostname_counts[host] += 1
+
+    coverage = {
+        "requests_recorded": len(requests),
+        "receipt_files": len(receipt_rows),
+        "requests_with_receipts": sum(1 for r in records if r.get("id") and r.get("available") is not None and r["id"] in {str(x.get("id", "")) for x in requests if isinstance(x, dict)} and receipt_for(evidence_dir, {"id": r["id"]}) is not None),
+        "by_pool": dict(sorted({p: sum(1 for r in records if r["pool"] == p) for p in {r["pool"] for r in records}}.items())),
+        "by_wording": dict(sorted({w: sum(1 for r in records if r["wording"] == w) for w in {r["wording"] for r in records}}.items())),
+        "single_candidate_requests": sum(1 for r in records if r["pool"] == "singleton"),
+        "non_singleton_matrix_requests": sum(1 for r in records if r["pool"] != "singleton"),
+        "valid": sum(1 for r in records if r["available"]),
+        "unavailable": sum(1 for r in records if not r["available"]),
+    }
+    host_total = sum(hostname_counts.values())
+    host_sorted = sorted(hostname_counts.items(), key=lambda x: (-x[1], x[0]))
+
+    return {
+        "study": "frozen cardiac Jev replay",
+        "corpus_candidate_count": len(all_ids),
+        "candidate_membership": all_ids,
+        "analysis_scope": "New receipts are paired only when pool, order, wording, kind, and candidate membership match.",
+        "coverage": coverage,
+        "independent_label_summary": {
+            "origin": corpus.get("label_origin", "two independent assistant reference sets"),
+            "root_distribution": histogram(root_labels),
+            "peer_distribution": histogram(peer_labels),
+            "disagreement_count": len(disagreements),
+            "disagreement_candidate_ids": disagreements,
+            "gold_status": "neither label set is human gold"},
+        "source_hostnames_public_urls": dict(sorted(hostname_counts.items(), key=lambda x: (-x[1], x[0]))),
+        "source_concentration": {
+            "candidate_count_with_hostname": host_total,
+            "distinct_hostnames": len(hostname_counts),
+            "top_hostname": host_sorted[0][0] if host_sorted else None,
+            "top_hostname_count": host_sorted[0][1] if host_sorted else 0,
+            "top_hostname_share": host_sorted[0][1] / host_total if host_total else None,
+            "top_three_hostname_share": sum(n for _, n in host_sorted[:3]) / host_total if host_total else None},
+        "validation_history": [{
+            "request_id": source.stem,
+            "initial_attempt_status": load_json(source).get("status"),
+            "initial_validation_errors": load_json(source).get("validation_errors", []),
+            "current_attempt_status": load_json(evidence_dir / "receipts" / source.name).get("status"),
+            "validation_protocol": load_json(evidence_dir / "receipts" / source.name).get("validation_protocol"),
+            "amendment": "offline qualification of unchanged response; no new provider call"
+        } for source in sorted((evidence_dir / "original-validation").glob("*.json"))],
+        "arms": arm_rows,
+        "stability": stability,
+        "repeat_comparisons": repeats,
+        "request_shape_comparison": shape_comparison,
+        "request_records": records,
+        "failures_and_unavailable": [r for r in records if not r["available"]],
+        "usage_and_latency": {
+            "receipt_count": len(receipt_rows), "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+            "provider_ms": {"count": len(provider_values), "min": min(provider_values) if provider_values else None,
+                            "median": statistics.median(provider_values) if provider_values else None,
+                            "max": max(provider_values) if provider_values else None},
+            "total_ms": {"count": len(latency_values), "min": min(latency_values) if latency_values else None,
+                         "median": statistics.median(latency_values) if latency_values else None,
+                         "max": max(latency_values) if latency_values else None}},
+        "historical_unmatched": historical,
+        "limitations": ["Assistant reference labels are exploratory, not human gold.",
+                        "This frozen cardiac query cannot establish general tail benefit or medical evidence quality.",
+                        "Historical responses are not matched new trials and are not included in paired comparisons."]}
+
+
+class AnalyzerTests(unittest.TestCase):
+    def test_ndcg_and_tie_order(self) -> None:
+        grades = {"c0": 3.0, "c1": 0.0, "c2": 2.0}
+        self.assertAlmostEqual(ndcg(["c0", "c2", "c1"], grades), 1.0)
+        self.assertEqual(rank_scores({"c1": 1, "c0": 1}, ["c1", "c0"], "score"), ["c0", "c1"])
+
+    def test_first40_tail_is_appended_and_metrics_flag_it(self) -> None:
+        corpus = {"candidates": [{"id": f"c{i}", "snippet": "" if i == 43 else "x"} for i in range(44)],
+                  "facets": [[] for _ in range(44)]}
+        order = rank_scores({f"c{i}": float(i) for i in range(40)}, [f"c{i}" for i in range(40)], "score") + ["c40", "c41", "c42", "c43"]
+        m = top_metrics(order, corpus, {f"c{i}": float(i >= 40) * 2 for i in range(44)})
+        self.assertEqual(order[-4:], ["c40", "c41", "c42", "c43"])
+        self.assertEqual(m["tail10"], [])
+        self.assertEqual(overlap10(order, order), 1.0)
+
+    def test_bad_or_partial_receipt_never_valid(self) -> None:
+        req = {"id": "r", "wording": "W0", "body": {"questions": {"c0": {}, "c1": {}}}}
+        receipt = {"status": "valid", "validation_errors": [], "answers": {"c0": {"score": 8}}}
+        parsed = validate_and_collect(req, receipt)
+        self.assertFalse(parsed["available"])
+        self.assertIn("invalid_score:c1", parsed["reasons"])
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("evidence_dir", nargs="?", help="directory containing corpus.json, requests.json, and receipts/")
+    parser.add_argument("--output", help="output JSON path; defaults to analysis.json in evidence_dir")
+    parser.add_argument("--self-test", action="store_true", help="run local stdlib fixture tests")
+    args = parser.parse_args()
+    if args.self_test:
+        suite = unittest.defaultTestLoader.loadTestsFromTestCase(AnalyzerTests)
+        result = unittest.TextTestRunner(verbosity=2).run(suite)
+        return 0 if result.wasSuccessful() else 1
+    if not args.evidence_dir:
+        parser.error("evidence_dir is required unless --self-test is used")
+    evidence_dir = Path(args.evidence_dir)
+    output = Path(args.output) if args.output else evidence_dir / "analysis.json"
+    data = summarize(evidence_dir)
+    output.write_text(json.dumps(data, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(f"Wrote analysis JSON ({len(data['arms'])} arm rows, {len(data['failures_and_unavailable'])} unavailable requests).")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

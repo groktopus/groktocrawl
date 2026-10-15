@@ -1,0 +1,102 @@
+{
+  "case_id": "nonseparable-1",
+  "control_artifact": {
+    "admitted_evidence": [
+      {
+        "canonical_source_id": "canonical-nonseparable-1-generalist-nonseparable-1-scope",
+        "derivative": false,
+        "evidence_id": "nonseparable-1-generalist-nonseparable-1-scope",
+        "obligation_id": "nonseparable-1-scope",
+        "publisher_id": "publisher-nonseparable-1-generalist",
+        "source_id": "source-nonseparable-1-generalist-nonseparable-1-scope",
+        "span": "Pinned supports evidence for nonseparable-1-scope in nonseparable-1.",
+        "stance": "supports"
+      }
+    ],
+    "conflicting_obligation_ids": [],
+    "covered_obligation_ids": [
+      "nonseparable-1-scope"
+    ],
+    "handoff_failures": [],
+    "rejected_evidence": {},
+    "total_calls": 2
+  },
+  "control_calls": 2,
+  "preferred": "tie",
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "fb3eda78051b505d2a212914fd9225e3797dca3ae0e99120a38c776ef76d61b4",
+    "finish_reason": "stop",
+    "latency_ms": 18639.132,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "c9e705e67f59aa16247f4f085cdcf8a779bd0fc3b651416b1bcce0e822a713af",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 2958,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 2660
+      },
+      "cost": 0.00154845,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.001479,
+        "upstream_inference_cost": 0.00154845,
+        "upstream_inference_prompt_cost": 6.945e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 463,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 3421
+    }
+  },
+  "repetition": 0,
+  "schema_version": "specialist-value-review/1",
+  "scores": {
+    "control": {
+      "reason": "Covers the only supplied obligation (nonseparable-1-scope), so obligation coverage is complete. The single evidence item is exact and source-bound: non-derivative, tied to source_id, canonical_source_id, and publisher_id, with a verbatim span whose stance (supports) matches the obligation. No conflicts or failures exist in the supplied data, and the artifact neither invents nor omits any, so its empty conflict and failure state is accurate and visible. No reward given for brevity or length; scored solely on coverage and evidence binding.",
+      "trustworthiness": 1,
+      "usefulness": 1
+    },
+    "treatment": {
+      "reason": "Covers the only supplied obligation (nonseparable-1-scope), so obligation coverage is complete. The single evidence item is exact and source-bound: non-derivative, tied to source_id, canonical_source_id, and publisher_id, with a verbatim span whose stance (supports) matches the obligation. No conflicts or failures exist in the supplied data, and the artifact neither invents nor omits any, so its empty conflict and failure state is accurate and visible. No reward given for brevity or length; scored solely on coverage and evidence binding.",
+      "trustworthiness": 1,
+      "usefulness": 1
+    }
+  },
+  "separable": false,
+  "status": "completed",
+  "stratum": "nonseparable",
+  "treatment_artifact": {
+    "admitted_evidence": [
+      {
+        "canonical_source_id": "canonical-nonseparable-1-generalist-nonseparable-1-scope",
+        "derivative": false,
+        "evidence_id": "nonseparable-1-generalist-nonseparable-1-scope",
+        "obligation_id": "nonseparable-1-scope",
+        "publisher_id": "publisher-nonseparable-1-generalist",
+        "source_id": "source-nonseparable-1-generalist-nonseparable-1-scope",
+        "span": "Pinned supports evidence for nonseparable-1-scope in nonseparable-1.",
+        "stance": "supports"
+      }
+    ],
+    "conflicting_obligation_ids": [],
+    "covered_obligation_ids": [
+      "nonseparable-1-scope"
+    ],
+    "handoff_failures": [],
+    "rejected_evidence": {},
+    "total_calls": 2
+  },
+  "treatment_calls": 2,
+  "trial_id": "nonseparable-1-r0"
+}

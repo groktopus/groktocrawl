@@ -1,0 +1,86 @@
+{
+  "arm": "treatment",
+  "case_id": "mission-straightforward-delivery",
+  "completed_at": "2026-09-19T05:44:21.163471+00:00",
+  "position": 2,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "ca037ad993fc08d51746c635c9b7c2d6cb2b1d94967360e69dbbe94ac6f9f940",
+    "finish_reason": "stop",
+    "latency_ms": 14725.179,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "957e197dc438fb196926b2bd6b0ed115b00edf5b33de622bcc883621b52ad9a6",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 465,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 5
+      },
+      "cost": 0.00023685,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.00016275,
+        "upstream_inference_cost": 0.00023685,
+        "upstream_inference_prompt_cost": 7.41e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 741,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1206
+    }
+  },
+  "repetition": 1,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Release Actions Authorized for the Build Agent (Fixture Record — Aster Enterprise Fixture 1.0/1.1: Fictional — Synthetic doc for pipeline testing only. Not real company policy. Not legal advice. Verify actual sources before operational use.)",
+    "candidate_id": "candidate-be57678f42dbd2338787",
+    "citations": [
+      "delivery-policy",
+      "delivery-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "delivery-policy"
+        ],
+        "text": "The agent may open a pull request, but only after tests pass.",
+        "uncertainty": "No material uncertainty; the condition is explicit in the policy."
+      },
+      {
+        "source_ids": [
+          "delivery-policy"
+        ],
+        "text": "Production deployment is not authorized without two conditions: approval by the service owner and a recorded rollback plan.",
+        "uncertainty": "No material uncertainty; both conditions are stated in the governing policy."
+      },
+      {
+        "source_ids": [
+          "delivery-context"
+        ],
+        "text": "A sandbox experiment permitted automatic deployment only to disposable test environments and did not authorize production deployment, so it cannot be read as expanding the agent's production authority.",
+        "uncertainty": "No material uncertainty; the context source explicitly disclaims production authorization."
+      },
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-context"
+        ],
+        "text": "The supplied sources do not establish any authority for the agent to deploy to production on its own; whether a deployment with owner approval and a rollback plan can be executed by the agent or by a human is not specified.",
+        "uncertainty": "Unresolved: the policy states conditions for production deployment but does not specify who performs the deployment or the mechanics of approval recording."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:44:06.437603+00:00",
+  "status": "completed",
+  "trial_id": "mission-straightforward-delivery-r1-treatment"
+}

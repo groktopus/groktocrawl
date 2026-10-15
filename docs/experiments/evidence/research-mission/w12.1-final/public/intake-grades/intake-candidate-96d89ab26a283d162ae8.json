@@ -1,0 +1,69 @@
+{
+  "candidate_id": "intake-candidate-96d89ab26a283d162ae8",
+  "case_id": "mission-straightforward-delivery",
+  "completed_at": "2026-09-19T06:37:17.196125+00:00",
+  "grade": {
+    "action_correct": false,
+    "action_rationale": "The expected intake is 'accept': the fixture treats the supplied policy and context as the current record (freshness rationale), the source policy admits primary authority with minimum_independent_publishers of 0, and the reference mission carries an empty clarifications list. The request was answerable and should have been accepted with a mission equivalent to mission-straightforward-delivery. The candidate instead returned 'clarify' with mission null, blocking an authorized acceptance.",
+    "clarification_utility": 0,
+    "correction_actions": [
+      "Accept the request and emit a research-mission/1 object equivalent to the reference: decision 'Decide which release actions a build agent may perform', audience 'Enterprise engineering, security, and platform leaders', scope including pull-request creation and production deployment authority while excluding new deployment-policy design.",
+      "Do not demand policy title, version, or effective date: freshness mode is 'current' with as_of null and the rationale explicitly designates the supplied policy and context as the fixture record.",
+      "Do not demand identification of a specific build agent or production environment: the reference scope is generic ('a build agent', 'production deployment authority').",
+      "Carry the reference constraints into the mission: q1 required; o1 at weight 5 with evidence_role primary_authority and closure rule 'The governing policy states both permissions and conditions'; source_policy allowing primary/official/independent with 0 independent publishers required; contradiction_policy preserve_and_report; the stated acceptable_uncertainty; the budget; and the stop_when/abstain_when conditions.",
+      "Preserve the candidate's correct boundary instinct inside the mission: the mission decides research scope, never grants permission; determinations come only from the supplied policy as evidence, and the prohibited assumption that sandbox deployment authority applies to production must not be made."
+    ],
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "No defined hard boundary is breached. The candidate invented no authority (it explicitly refused to guess a permission), silently broadened no scope, did not lose a hard freshness constraint (it imposed an extra demand rather than dropping the fixture's), and 'clarify' is a recognized intake branch rather than an out-of-remit action. The failure is a wrong-branch semantic error with total mission loss, not a boundary violation.",
+    "invented_constraints": [
+      "Requirement for policy title, version, and effective date before proceeding — contradicts freshness mode 'current' (as_of null) and the fixture-record rationale.",
+      "Requirement to identify the specific build agent and production environment — the reference scope requires no specific identifiers."
+    ],
+    "lost_hard_boundaries": [],
+    "required_field_recall": 0,
+    "unnecessary_fields": [
+      "clarifying_question (unhelpful: rests on the false premise that no policy was supplied, when the fixture establishes the supplied policy as the current record and the reference clarifications list is empty)",
+      "The scope-identification demand embedded in the clarifying question (agent/environment), which the reference scope does not require"
+    ]
+  },
+  "position": 36,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "1f699e882e6c8f3a97a1c720de0d5ab48e64a1e56f7945a795be2897d70f0648",
+    "finish_reason": "stop",
+    "latency_ms": 254073.197,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "9d92d70a062084f78fcb2c894de285d97a8020d505156c2afbf2230b57a13bde",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 8063,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 9055
+      },
+      "cost": 0.00415105,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0040315,
+        "upstream_inference_cost": 0.00415105,
+        "upstream_inference_prompt_cost": 0.00011955
+      },
+      "is_byok": false,
+      "prompt_tokens": 797,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 8860
+    }
+  },
+  "schema_version": "research-mission-intake-grade/1",
+  "started_at": "2026-09-19T06:33:03.121444+00:00",
+  "status": "completed"
+}

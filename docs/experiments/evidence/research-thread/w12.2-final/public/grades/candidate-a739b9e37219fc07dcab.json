@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-a739b9e37219fc07dcab",
+  "case_id": "syndicated-copy",
+  "completed_at": "2026-09-19T09:15:04.075489+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 100,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "Candidate correctly answers 'No', identifies BirchDB's own claim as the only evidence, treats the syndicated Industry Wire copy as derivative rather than independent, and correctly leaves independent audit confirmation unresolved. Matches the reference ledger on all dimensions with no merges, stale leakage, or lost history.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 100,
+    "unsupported_claims": 0,
+    "usefulness": 100
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "3f51d830440726e7898ddad8c72989ed27410803cfc4b73abe1f64daccdd72fa",
+    "finish_reason": "stop",
+    "latency_ms": 14252.413,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "8b82d621149f68d695b4dd9e847add3547e82f57b3718c9cec2547e53d4faaf2",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 144,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 13
+      },
+      "cost": 9.69e-05,
+      "cost_details": {
+        "upstream_inference_completions_cost": 3.6e-05,
+        "upstream_inference_cost": 9.69e-05,
+        "upstream_inference_prompt_cost": 6.09e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 812,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 956
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:14:49.820578+00:00",
+  "status": "completed",
+  "trial_id": "syndicated-copy-r1-control"
+}

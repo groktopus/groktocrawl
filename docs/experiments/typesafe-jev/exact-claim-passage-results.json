@@ -1,0 +1,1424 @@
+{
+  "arms": {
+    "jev": {
+      "completed": 25,
+      "max_in_flight": 1,
+      "model": "jev-1.13.0",
+      "records": [
+        {
+          "arm": "jev",
+          "input_digest": "dc31258fef36cc1b0c45b1827a2504a6130f658814cfc5aba05a85fc18fda966",
+          "latency_ms": 162,
+          "pair_id": "cal-enc-current",
+          "probabilities": {
+            "contradicted": 0.01,
+            "related_insufficient": 0.87,
+            "supported": 0.0,
+            "unverifiable": 0.12
+          },
+          "split": "calibration",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 742,
+            "output_tokens": 60
+          },
+          "verdict": "related_insufficient"
+        },
+        {
+          "arm": "jev",
+          "input_digest": "d938e841254937f4ee6808f356c08afa422da2ef5418edad78712128cef97c92",
+          "latency_ms": 197,
+          "pair_id": "cal-enc-l1-forgery",
+          "probabilities": {
+            "contradicted": 0.12,
+            "related_insufficient": 0.88,
+            "supported": 0.0,
+            "unverifiable": 0.0
+          },
+          "split": "calibration",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 755,
+            "output_tokens": 60
+          },
+          "verdict": "related_insufficient"
+        },
+        {
+          "arm": "jev",
+          "input_digest": "c4af097a326eb7f8bf77e601da6d5a2eaeced89ec76bdab0c8b94d9b97ae2b83",
+          "latency_ms": 175,
+          "pair_id": "cal-enc-l1-signed",
+          "probabilities": {
+            "contradicted": 1.0,
+            "related_insufficient": 0.0,
+            "supported": 0.0,
+            "unverifiable": 0.0
+          },
+          "split": "calibration",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 745,
+            "output_tokens": 59
+          },
+          "verdict": "contradicted"
+        },
+        {
+          "arm": "jev",
+          "input_digest": "4e5cf3b398c2c824f6d50f3b57188f810630721e024370b7ecea10945ab2b913",
+          "latency_ms": 208,
+          "pair_id": "cal-enc-l1-support",
+          "probabilities": {
+            "contradicted": 0.0,
+            "related_insufficient": 0.06,
+            "supported": 0.92,
+            "unverifiable": 0.02
+          },
+          "split": "calibration",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 736,
+            "output_tokens": 56
+          },
+          "verdict": "supported"
+        },
+        {
+          "arm": "jev",
+          "input_digest": "8be09593c0eb4b9c496bbc940c96d5436325ed545d0c2ac66ff3d1012056bff8",
+          "latency_ms": 183,
+          "pair_id": "cal-hardening-current",
+          "probabilities": {
+            "contradicted": 0.01,
+            "related_insufficient": 0.93,
+            "supported": 0.02,
+            "unverifiable": 0.04
+          },
+          "split": "calibration",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 764,
+            "output_tokens": 60
+          },
+          "verdict": "related_insufficient"
+        },
+        {
+          "arm": "jev",
+          "input_digest": "aad23e7dba07fd211f5632f84bfc9ed18407b10ace81c1e849eca16cae4bc78c",
+          "latency_ms": 199,
+          "pair_id": "cal-hardening-l1-tamper",
+          "probabilities": {
+            "contradicted": 1.0,
+            "related_insufficient": 0.0,
+            "supported": 0.0,
+            "unverifiable": 0.0
+          },
+          "split": "calibration",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 733,
+            "output_tokens": 59
+          },
+          "verdict": "contradicted"
+        },
+        {
+          "arm": "jev",
+          "input_digest": "7544970b02b5042e070f68d630590ee7948b01b4ad965c5436712b0b9c3bfb39",
+          "latency_ms": 173,
+          "pair_id": "cal-hardening-l1",
+          "probabilities": {
+            "contradicted": 0.02,
+            "related_insufficient": 0.12,
+            "supported": 0.83,
+            "unverifiable": 0.03
+          },
+          "split": "calibration",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 735,
+            "output_tokens": 56
+          },
+          "verdict": "supported"
+        },
+        {
+          "arm": "jev",
+          "input_digest": "014e70f1430aa556017ebc23dcd0594781938bade2b1e97413b8e37f5d616963",
+          "latency_ms": 171,
+          "pair_id": "cal-hardening-source",
+          "probabilities": {
+            "contradicted": 1.0,
+            "related_insufficient": 0.0,
+            "supported": 0.0,
+            "unverifiable": 0.0
+          },
+          "split": "calibration",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 745,
+            "output_tokens": 59
+          },
+          "verdict": "contradicted"
+        },
+        {
+          "arm": "jev",
+          "input_digest": "273e3a01572dd0ab168673303f38e4ef48dbcb4770e61dfb7d2a76aff5108fe5",
+          "latency_ms": 198,
+          "pair_id": "cal-oster-l3-repro-required",
+          "probabilities": {
+            "contradicted": 1.0,
+            "related_insufficient": 0.0,
+            "supported": 0.0,
+            "unverifiable": 0.0
+          },
+          "split": "calibration",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 748,
+            "output_tokens": 59
+          },
+          "verdict": "contradicted"
+        },
+        {
+          "arm": "jev",
+          "input_digest": "82bd0469a3131bf3e4d7d5bd8d37b76a8bd71d94ffada96d5dc57b6496f95832",
+          "latency_ms": 192,
+          "pair_id": "cal-oster-l3-repro",
+          "probabilities": {
+            "contradicted": 0.0,
+            "related_insufficient": 0.03,
+            "supported": 0.96,
+            "unverifiable": 0.01
+          },
+          "split": "calibration",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 759,
+            "output_tokens": 56
+          },
+          "verdict": "supported"
+        },
+        {
+          "arm": "jev",
+          "input_digest": "df4e39abe6775ff24c038ad7bbbf8615f5bf1def1f72c70778efedb1e6a935de",
+          "latency_ms": 174,
+          "pair_id": "cal-oster-latest",
+          "probabilities": {
+            "contradicted": 0.07,
+            "related_insufficient": 0.88,
+            "supported": 0.0,
+            "unverifiable": 0.05
+          },
+          "split": "calibration",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 752,
+            "output_tokens": 60
+          },
+          "verdict": "related_insufficient"
+        },
+        {
+          "arm": "jev",
+          "input_digest": "ef122906f052791688417e559a4b755c9d9b61d460917a8c5416ae7d876a9b46",
+          "latency_ms": 207,
+          "pair_id": "cal-oster-signed",
+          "probabilities": {
+            "contradicted": 0.9,
+            "related_insufficient": 0.1,
+            "supported": 0.0,
+            "unverifiable": 0.0
+          },
+          "split": "calibration",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 747,
+            "output_tokens": 59
+          },
+          "verdict": "contradicted"
+        },
+        {
+          "arm": "jev",
+          "input_digest": "0057c5f9685410075fee9887390e9158c0f6ddfdec96ebbd9f21c47fcb234db8",
+          "latency_ms": 178,
+          "pair_id": "val-v01-independent-builder",
+          "probabilities": {
+            "contradicted": 1.0,
+            "related_insufficient": 0.0,
+            "supported": 0.0,
+            "unverifiable": 0.0
+          },
+          "split": "validation",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 713,
+            "output_tokens": 59
+          },
+          "verdict": "contradicted"
+        },
+        {
+          "arm": "jev",
+          "input_digest": "29d9857a2b3a19c72949cbbf6f93082594dca148d2c44e7bba3c24d1f43eaa50",
+          "latency_ms": 191,
+          "pair_id": "val-v01-mirror",
+          "probabilities": {
+            "contradicted": 0.09,
+            "related_insufficient": 0.78,
+            "supported": 0.0,
+            "unverifiable": 0.13
+          },
+          "split": "validation",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 928,
+            "output_tokens": 60
+          },
+          "verdict": "related_insufficient"
+        },
+        {
+          "arm": "jev",
+          "input_digest": "9ffa7f58d9d5868fbe3792d7dc52723a58a0a2e1c7a711d698c39b222cf3a4bc",
+          "latency_ms": 225,
+          "pair_id": "val-v01-model",
+          "probabilities": {
+            "contradicted": 0.0,
+            "related_insufficient": 0.01,
+            "supported": 0.99,
+            "unverifiable": 0.0
+          },
+          "split": "validation",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 887,
+            "output_tokens": 56
+          },
+          "verdict": "supported"
+        },
+        {
+          "arm": "jev",
+          "input_digest": "44570c927b19f4d0e89641f196c50ce742ebff26288e84b7cfa01d8a76c69c1f",
+          "latency_ms": 195,
+          "pair_id": "val-v01-reproducible",
+          "probabilities": {
+            "contradicted": 0.7,
+            "related_insufficient": 0.3,
+            "supported": 0.0,
+            "unverifiable": 0.0
+          },
+          "split": "validation",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 733,
+            "output_tokens": 59
+          },
+          "verdict": "contradicted"
+        },
+        {
+          "arm": "jev",
+          "input_digest": "87682966c994c49070354cb55284911bbdb75bbfad57bc2724d9b7115d3f3fd5",
+          "latency_ms": 171,
+          "pair_id": "val-v10-current",
+          "probabilities": {
+            "contradicted": 0.0,
+            "related_insufficient": 0.97,
+            "supported": 0.0,
+            "unverifiable": 0.03
+          },
+          "split": "validation",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 780,
+            "output_tokens": 60
+          },
+          "verdict": "related_insufficient"
+        },
+        {
+          "arm": "jev",
+          "input_digest": "325f0a4e14528ea3007ba5ec9f1d78efae2ad2e296074b6cfd71513ba034ad66",
+          "latency_ms": 163,
+          "pair_id": "val-v10-l1-protected",
+          "probabilities": {
+            "contradicted": 0.94,
+            "related_insufficient": 0.03,
+            "supported": 0.0,
+            "unverifiable": 0.03
+          },
+          "split": "validation",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 706,
+            "output_tokens": 59
+          },
+          "verdict": "contradicted"
+        },
+        {
+          "arm": "jev",
+          "input_digest": "7f3e4066d34796e6136a289f87e22989fbc0f87370bdeb04d1f4b0126d993d77",
+          "latency_ms": 179,
+          "pair_id": "val-v10-l1-tamper",
+          "probabilities": {
+            "contradicted": 0.97,
+            "related_insufficient": 0.03,
+            "supported": 0.0,
+            "unverifiable": 0.0
+          },
+          "split": "validation",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 725,
+            "output_tokens": 59
+          },
+          "verdict": "contradicted"
+        },
+        {
+          "arm": "jev",
+          "input_digest": "ffdba3dc8f66b1bc003aa9e715782775e5bf0583e45c026b2a897b5b08278072",
+          "latency_ms": 198,
+          "pair_id": "val-v10-l1",
+          "probabilities": {
+            "contradicted": 0.02,
+            "related_insufficient": 0.37,
+            "supported": 0.51,
+            "unverifiable": 0.1
+          },
+          "split": "validation",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 731,
+            "output_tokens": 56
+          },
+          "verdict": "supported"
+        },
+        {
+          "arm": "jev",
+          "input_digest": "3c4bf5b18255f8921f4de24e4d71c9556831ee221005ad6a0da9db0729d4626e",
+          "latency_ms": 166,
+          "pair_id": "val-v10-tracks",
+          "probabilities": {
+            "contradicted": 0.01,
+            "related_insufficient": 0.0,
+            "supported": 0.99,
+            "unverifiable": 0.0
+          },
+          "split": "validation",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 777,
+            "output_tokens": 56
+          },
+          "verdict": "supported"
+        },
+        {
+          "arm": "jev",
+          "input_digest": "809565d2062ba96d48b602dc30a063ca3d84a6137ef54ea78e4fb84171785c7a",
+          "latency_ms": 183,
+          "pair_id": "val-v11-current",
+          "probabilities": {
+            "contradicted": 0.0,
+            "related_insufficient": 0.83,
+            "supported": 0.05,
+            "unverifiable": 0.12
+          },
+          "split": "validation",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 710,
+            "output_tokens": 60
+          },
+          "verdict": "related_insufficient"
+        },
+        {
+          "arm": "jev",
+          "input_digest": "a696ca81f8b79bb13c9f7c3e53debd2339e2ab609b61bf67a72b81751ceb41b5",
+          "latency_ms": 181,
+          "pair_id": "val-v11-single-build",
+          "probabilities": {
+            "contradicted": 0.0,
+            "related_insufficient": 0.02,
+            "supported": 0.97,
+            "unverifiable": 0.01
+          },
+          "split": "validation",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 893,
+            "output_tokens": 56
+          },
+          "verdict": "supported"
+        },
+        {
+          "arm": "jev",
+          "input_digest": "fabc19e6e9d0b3632b51dcad03de0a07636f089112d4ecee3ebb5031643f0545",
+          "latency_ms": 175,
+          "pair_id": "val-v11-start-chain",
+          "probabilities": {
+            "contradicted": 0.14,
+            "related_insufficient": 0.82,
+            "supported": 0.03,
+            "unverifiable": 0.01
+          },
+          "split": "validation",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 732,
+            "output_tokens": 60
+          },
+          "verdict": "related_insufficient"
+        },
+        {
+          "arm": "jev",
+          "input_digest": "e8a219ddb3d6d5a622e31f9e36dc35a3783e6e6fffa69d11ebd000c95be4138a",
+          "latency_ms": 182,
+          "pair_id": "val-v11-transitive",
+          "probabilities": {
+            "contradicted": 1.0,
+            "related_insufficient": 0.0,
+            "supported": 0.0,
+            "unverifiable": 0.0
+          },
+          "split": "validation",
+          "status": "completed",
+          "usage": {
+            "input_tokens": 720,
+            "output_tokens": 59
+          },
+          "verdict": "contradicted"
+        }
+      ]
+    },
+    "semantic_verifier": {
+      "completed": 25,
+      "max_in_flight": 1,
+      "prompt_version": "w12.3-verifier/1 adapted to one exact span",
+      "records": [
+        {
+          "arm": "semantic_verifier",
+          "confidence_raw": 0.95,
+          "confidence_scale_usable": false,
+          "confidence_unit": "ambiguous_0_to_1_or_0_to_100",
+          "configured_model_alias": "free",
+          "finish_reason": "stop",
+          "input_digest": "ea4070e7b500996a60ea155cc852a8b2d1ade4564a23d9bed642dbd436adec84",
+          "latency_ms": 3768,
+          "pair_id": "cal-enc-current",
+          "returned_model": "free",
+          "split": "calibration",
+          "status": "completed",
+          "usage": {
+            "completion_tokens": 101,
+            "cost": 0,
+            "cost_details": {
+              "floor_applied": false,
+              "rate_source": "nas_model_override",
+              "source": "nas_model_override"
+            },
+            "prompt_tokens": 175,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 128,
+              "image_tokens": 0,
+              "text_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 276
+          },
+          "verdict": "related_insufficient"
+        },
+        {
+          "arm": "semantic_verifier",
+          "confidence_raw": 0.9,
+          "confidence_scale_usable": false,
+          "confidence_unit": "ambiguous_0_to_1_or_0_to_100",
+          "configured_model_alias": "free",
+          "finish_reason": "stop",
+          "input_digest": "31bca7519075ee61110b9f182928fbe2c532ad993e76708cea8c0295a710e0bc",
+          "latency_ms": 2514,
+          "pair_id": "cal-enc-l1-forgery",
+          "returned_model": "free",
+          "split": "calibration",
+          "status": "completed",
+          "usage": {
+            "completion_tokens": 65,
+            "cost": 0,
+            "cost_details": {
+              "floor_applied": false,
+              "rate_source": "nas_model_override",
+              "source": "nas_model_override"
+            },
+            "prompt_tokens": 189,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 128,
+              "image_tokens": 0,
+              "text_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 254
+          },
+          "verdict": "contradicted"
+        },
+        {
+          "arm": "semantic_verifier",
+          "confidence_raw": 1.0,
+          "confidence_scale_usable": false,
+          "confidence_unit": "ambiguous_0_to_1_or_0_to_100",
+          "configured_model_alias": "free",
+          "finish_reason": "stop",
+          "input_digest": "7df5b24a91f1811ff345720561e3cecf1ff046c6d5ebe12873a8c171c5d01b35",
+          "latency_ms": 2559,
+          "pair_id": "cal-enc-l1-signed",
+          "returned_model": "free",
+          "split": "calibration",
+          "status": "completed",
+          "usage": {
+            "completion_tokens": 61,
+            "cost": 0,
+            "cost_details": {
+              "floor_applied": false,
+              "rate_source": "nas_model_override",
+              "source": "nas_model_override"
+            },
+            "prompt_tokens": 172,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 128,
+              "image_tokens": 0,
+              "text_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 233
+          },
+          "verdict": "contradicted"
+        },
+        {
+          "arm": "semantic_verifier",
+          "confidence_raw": 0.98,
+          "confidence_scale_usable": false,
+          "confidence_unit": "ambiguous_0_to_1_or_0_to_100",
+          "configured_model_alias": "free",
+          "finish_reason": "stop",
+          "input_digest": "e4c4b8a8645a00afb10a69a1204bb9f669798a4e23d9487eaa3e40f5abdcc824",
+          "latency_ms": 3118,
+          "pair_id": "cal-enc-l1-support",
+          "returned_model": "free",
+          "split": "calibration",
+          "status": "completed",
+          "usage": {
+            "completion_tokens": 54,
+            "cost": 0,
+            "cost_details": {
+              "floor_applied": false,
+              "rate_source": "nas_model_override",
+              "source": "nas_model_override"
+            },
+            "prompt_tokens": 172,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 128,
+              "image_tokens": 0,
+              "text_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 226
+          },
+          "verdict": "supported"
+        },
+        {
+          "arm": "semantic_verifier",
+          "confidence_raw": 0.95,
+          "confidence_scale_usable": false,
+          "confidence_unit": "ambiguous_0_to_1_or_0_to_100",
+          "configured_model_alias": "free",
+          "finish_reason": "stop",
+          "input_digest": "10a7f61e8dab8b684d3ad8d5f88fed09e4c71d6c2c03f48f321ecd2f85bd8751",
+          "latency_ms": 3283,
+          "pair_id": "cal-hardening-current",
+          "returned_model": "free",
+          "split": "calibration",
+          "status": "completed",
+          "usage": {
+            "completion_tokens": 90,
+            "cost": 0,
+            "cost_details": {
+              "floor_applied": false,
+              "rate_source": "nas_model_override",
+              "source": "nas_model_override"
+            },
+            "prompt_tokens": 201,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 128,
+              "image_tokens": 0,
+              "text_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 291
+          },
+          "verdict": "related_insufficient"
+        },
+        {
+          "arm": "semantic_verifier",
+          "confidence_raw": 0.98,
+          "confidence_scale_usable": false,
+          "confidence_unit": "ambiguous_0_to_1_or_0_to_100",
+          "configured_model_alias": "free",
+          "finish_reason": "stop",
+          "input_digest": "93bf8e9550f0b683a5ba11cece5626bcdc1494c28987444e7edf0543805d343f",
+          "latency_ms": 3146,
+          "pair_id": "cal-hardening-l1-tamper",
+          "returned_model": "free",
+          "split": "calibration",
+          "status": "completed",
+          "usage": {
+            "completion_tokens": 64,
+            "cost": 0,
+            "cost_details": {
+              "floor_applied": false,
+              "rate_source": "nas_model_override",
+              "source": "nas_model_override"
+            },
+            "prompt_tokens": 175,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 128,
+              "image_tokens": 0,
+              "text_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 239
+          },
+          "verdict": "contradicted"
+        },
+        {
+          "arm": "semantic_verifier",
+          "confidence_raw": 0.95,
+          "confidence_scale_usable": false,
+          "confidence_unit": "ambiguous_0_to_1_or_0_to_100",
+          "configured_model_alias": "free",
+          "finish_reason": "stop",
+          "input_digest": "26a020f007c8d4cb8a52b4a30cc45793b254489b282c87881a92d18413f6a35c",
+          "latency_ms": 2616,
+          "pair_id": "cal-hardening-l1",
+          "returned_model": "free",
+          "split": "calibration",
+          "status": "completed",
+          "usage": {
+            "completion_tokens": 52,
+            "cost": 0,
+            "cost_details": {
+              "floor_applied": false,
+              "rate_source": "nas_model_override",
+              "source": "nas_model_override"
+            },
+            "prompt_tokens": 177,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 128,
+              "image_tokens": 0,
+              "text_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 229
+          },
+          "verdict": "supported"
+        },
+        {
+          "arm": "semantic_verifier",
+          "confidence_raw": 0.98,
+          "confidence_scale_usable": false,
+          "confidence_unit": "ambiguous_0_to_1_or_0_to_100",
+          "configured_model_alias": "free",
+          "finish_reason": "stop",
+          "input_digest": "c1c2ffa7608ddd697b2067f03258dcde968cce99f5ae81855a292d126ef86cc0",
+          "latency_ms": 2515,
+          "pair_id": "cal-hardening-source",
+          "returned_model": "free",
+          "split": "calibration",
+          "status": "completed",
+          "usage": {
+            "completion_tokens": 60,
+            "cost": 0,
+            "cost_details": {
+              "floor_applied": false,
+              "rate_source": "nas_model_override",
+              "source": "nas_model_override"
+            },
+            "prompt_tokens": 186,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 128,
+              "image_tokens": 0,
+              "text_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 246
+          },
+          "verdict": "contradicted"
+        },
+        {
+          "arm": "semantic_verifier",
+          "confidence_raw": 0.98,
+          "confidence_scale_usable": false,
+          "confidence_unit": "ambiguous_0_to_1_or_0_to_100",
+          "configured_model_alias": "free",
+          "finish_reason": "stop",
+          "input_digest": "405ff765ea35106c9f3e05ef571141831119f04bbb5341bc6ff47328d5a0ba50",
+          "latency_ms": 2640,
+          "pair_id": "cal-oster-l3-repro-required",
+          "returned_model": "free",
+          "split": "calibration",
+          "status": "completed",
+          "usage": {
+            "completion_tokens": 52,
+            "cost": 0,
+            "cost_details": {
+              "floor_applied": false,
+              "rate_source": "nas_model_override",
+              "source": "nas_model_override"
+            },
+            "prompt_tokens": 177,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 128,
+              "image_tokens": 0,
+              "text_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 229
+          },
+          "verdict": "contradicted"
+        },
+        {
+          "arm": "semantic_verifier",
+          "confidence_raw": 0.95,
+          "confidence_scale_usable": false,
+          "confidence_unit": "ambiguous_0_to_1_or_0_to_100",
+          "configured_model_alias": "free",
+          "finish_reason": "stop",
+          "input_digest": "4c4df3af9c26f463afd13e3804d09bc1906179e4a79bd03889083e432eed8ea4",
+          "latency_ms": 3873,
+          "pair_id": "cal-oster-l3-repro",
+          "returned_model": "free",
+          "split": "calibration",
+          "status": "completed",
+          "usage": {
+            "completion_tokens": 59,
+            "cost": 0,
+            "cost_details": {
+              "floor_applied": false,
+              "rate_source": "nas_model_override",
+              "source": "nas_model_override"
+            },
+            "prompt_tokens": 188,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 128,
+              "image_tokens": 0,
+              "text_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 247
+          },
+          "verdict": "supported"
+        },
+        {
+          "arm": "semantic_verifier",
+          "confidence_raw": 0.95,
+          "confidence_scale_usable": false,
+          "confidence_unit": "ambiguous_0_to_1_or_0_to_100",
+          "configured_model_alias": "free",
+          "finish_reason": "stop",
+          "input_digest": "f97d618313046aaf9cc111530b872cf46f4a5ce0141fec8eb6c6aa28d229f312",
+          "latency_ms": 3584,
+          "pair_id": "cal-oster-latest",
+          "returned_model": "free",
+          "split": "calibration",
+          "status": "completed",
+          "usage": {
+            "completion_tokens": 68,
+            "cost": 0,
+            "cost_details": {
+              "floor_applied": false,
+              "rate_source": "nas_model_override",
+              "source": "nas_model_override"
+            },
+            "prompt_tokens": 184,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 128,
+              "image_tokens": 0,
+              "text_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 252
+          },
+          "verdict": "related_insufficient"
+        },
+        {
+          "arm": "semantic_verifier",
+          "confidence_raw": 0.95,
+          "confidence_scale_usable": false,
+          "confidence_unit": "ambiguous_0_to_1_or_0_to_100",
+          "configured_model_alias": "free",
+          "finish_reason": "stop",
+          "input_digest": "8f0363610cf9d17f66fc2b4bcedfc12b704ca6e8bd91c2e52228d6d966d1bf95",
+          "latency_ms": 3481,
+          "pair_id": "cal-oster-signed",
+          "returned_model": "free",
+          "split": "calibration",
+          "status": "completed",
+          "usage": {
+            "completion_tokens": 64,
+            "cost": 0,
+            "cost_details": {
+              "floor_applied": false,
+              "rate_source": "nas_model_override",
+              "source": "nas_model_override"
+            },
+            "prompt_tokens": 180,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 128,
+              "image_tokens": 0,
+              "text_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 244
+          },
+          "verdict": "contradicted"
+        },
+        {
+          "arm": "semantic_verifier",
+          "confidence_raw": 0.98,
+          "confidence_scale_usable": false,
+          "confidence_unit": "ambiguous_0_to_1_or_0_to_100",
+          "configured_model_alias": "free",
+          "finish_reason": "stop",
+          "input_digest": "0dda67e11907feeb14292398ec1ac1945bd2b37bf9095e8caa04d6256da7b760",
+          "latency_ms": 2890,
+          "pair_id": "val-v01-independent-builder",
+          "returned_model": "free",
+          "split": "validation",
+          "status": "completed",
+          "usage": {
+            "completion_tokens": 76,
+            "cost": 0,
+            "cost_details": {
+              "floor_applied": false,
+              "rate_source": "nas_model_override",
+              "source": "nas_model_override"
+            },
+            "prompt_tokens": 177,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 128,
+              "image_tokens": 0,
+              "text_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 253
+          },
+          "verdict": "contradicted"
+        },
+        {
+          "arm": "semantic_verifier",
+          "confidence_raw": 0.95,
+          "confidence_scale_usable": false,
+          "confidence_unit": "ambiguous_0_to_1_or_0_to_100",
+          "configured_model_alias": "free",
+          "finish_reason": "stop",
+          "input_digest": "c317b442aaef9ca2747f8e1c8322c582d89c918b4029006982914cd30ecd7a24",
+          "latency_ms": 3195,
+          "pair_id": "val-v01-mirror",
+          "returned_model": "free",
+          "split": "validation",
+          "status": "completed",
+          "usage": {
+            "completion_tokens": 84,
+            "cost": 0,
+            "cost_details": {
+              "floor_applied": false,
+              "rate_source": "nas_model_override",
+              "source": "nas_model_override"
+            },
+            "prompt_tokens": 336,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 256,
+              "image_tokens": 0,
+              "text_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 420
+          },
+          "verdict": "related_insufficient"
+        },
+        {
+          "arm": "semantic_verifier",
+          "confidence_raw": 0.98,
+          "confidence_scale_usable": false,
+          "confidence_unit": "ambiguous_0_to_1_or_0_to_100",
+          "configured_model_alias": "free",
+          "finish_reason": "stop",
+          "input_digest": "ce8f08d30c2510e9cec1da263ba82b7ea749637cb7153c29f0c308f70c349709",
+          "latency_ms": 5863,
+          "pair_id": "val-v01-model",
+          "returned_model": "free",
+          "split": "validation",
+          "status": "completed",
+          "usage": {
+            "completion_tokens": 63,
+            "cost": 0,
+            "cost_details": {
+              "floor_applied": false,
+              "rate_source": "nas_model_override",
+              "source": "nas_model_override"
+            },
+            "prompt_tokens": 342,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 256,
+              "image_tokens": 0,
+              "text_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 405
+          },
+          "verdict": "supported"
+        },
+        {
+          "arm": "semantic_verifier",
+          "confidence_raw": 0.9,
+          "confidence_scale_usable": false,
+          "confidence_unit": "ambiguous_0_to_1_or_0_to_100",
+          "configured_model_alias": "free",
+          "finish_reason": "stop",
+          "input_digest": "17ccb87b74791c3a93295139d11bc81a31da162d4698cb6d7e8ce49fd9615206",
+          "latency_ms": 3150,
+          "pair_id": "val-v01-reproducible",
+          "returned_model": "free",
+          "split": "validation",
+          "status": "completed",
+          "usage": {
+            "completion_tokens": 72,
+            "cost": 0,
+            "cost_details": {
+              "floor_applied": false,
+              "rate_source": "nas_model_override",
+              "source": "nas_model_override"
+            },
+            "prompt_tokens": 193,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 128,
+              "image_tokens": 0,
+              "text_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 265
+          },
+          "verdict": "contradicted"
+        },
+        {
+          "arm": "semantic_verifier",
+          "confidence_raw": 0.95,
+          "confidence_scale_usable": false,
+          "confidence_unit": "ambiguous_0_to_1_or_0_to_100",
+          "configured_model_alias": "free",
+          "finish_reason": "stop",
+          "input_digest": "11f3ddf374f6a58c7516c58d16cf2fa9426daf1a49f163cc736faf812946d882",
+          "latency_ms": 6300,
+          "pair_id": "val-v10-current",
+          "returned_model": "free",
+          "split": "validation",
+          "status": "completed",
+          "usage": {
+            "completion_tokens": 95,
+            "cost": 0,
+            "cost_details": {
+              "floor_applied": false,
+              "rate_source": "nas_model_override",
+              "source": "nas_model_override"
+            },
+            "prompt_tokens": 239,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 128,
+              "image_tokens": 0,
+              "text_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 334
+          },
+          "verdict": "related_insufficient"
+        },
+        {
+          "arm": "semantic_verifier",
+          "confidence_raw": 0.95,
+          "confidence_scale_usable": false,
+          "confidence_unit": "ambiguous_0_to_1_or_0_to_100",
+          "configured_model_alias": "free",
+          "finish_reason": "stop",
+          "input_digest": "39f06eff79aebc572abcfe941b54746790020b8ca468561bf8db0ed9560867a8",
+          "latency_ms": 2930,
+          "pair_id": "val-v10-l1-protected",
+          "returned_model": "free",
+          "split": "validation",
+          "status": "completed",
+          "usage": {
+            "completion_tokens": 62,
+            "cost": 0,
+            "cost_details": {
+              "floor_applied": false,
+              "rate_source": "nas_model_override",
+              "source": "nas_model_override"
+            },
+            "prompt_tokens": 166,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 128,
+              "image_tokens": 0,
+              "text_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 228
+          },
+          "verdict": "contradicted"
+        },
+        {
+          "arm": "semantic_verifier",
+          "confidence_raw": 0.95,
+          "confidence_scale_usable": false,
+          "confidence_unit": "ambiguous_0_to_1_or_0_to_100",
+          "configured_model_alias": "free",
+          "finish_reason": "stop",
+          "input_digest": "0e86ab96608880b6e94a75cdb43f9b0c8e03349aaf9cc2b19bb96a3071d6d042",
+          "latency_ms": 3296,
+          "pair_id": "val-v10-l1-tamper",
+          "returned_model": "free",
+          "split": "validation",
+          "status": "completed",
+          "usage": {
+            "completion_tokens": 68,
+            "cost": 0,
+            "cost_details": {
+              "floor_applied": false,
+              "rate_source": "nas_model_override",
+              "source": "nas_model_override"
+            },
+            "prompt_tokens": 183,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 128,
+              "image_tokens": 0,
+              "text_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 251
+          },
+          "verdict": "contradicted"
+        },
+        {
+          "arm": "semantic_verifier",
+          "confidence_raw": 0.95,
+          "confidence_scale_usable": false,
+          "confidence_unit": "ambiguous_0_to_1_or_0_to_100",
+          "configured_model_alias": "free",
+          "finish_reason": "stop",
+          "input_digest": "b12832610a210633aa11d4edcf2fd7a1b2b3be0ec4228d690082e86f3815050e",
+          "latency_ms": 2693,
+          "pair_id": "val-v10-l1",
+          "returned_model": "free",
+          "split": "validation",
+          "status": "completed",
+          "usage": {
+            "completion_tokens": 67,
+            "cost": 0,
+            "cost_details": {
+              "floor_applied": false,
+              "rate_source": "nas_model_override",
+              "source": "nas_model_override"
+            },
+            "prompt_tokens": 191,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 128,
+              "image_tokens": 0,
+              "text_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 258
+          },
+          "verdict": "supported"
+        },
+        {
+          "arm": "semantic_verifier",
+          "confidence_raw": 0.98,
+          "confidence_scale_usable": false,
+          "confidence_unit": "ambiguous_0_to_1_or_0_to_100",
+          "configured_model_alias": "free",
+          "finish_reason": "stop",
+          "input_digest": "b8e90f569e3ec5ca2fd4e3c3dd8891c2d14b82e8a037e0c9fe17fc6ba908cf1d",
+          "latency_ms": 2494,
+          "pair_id": "val-v10-tracks",
+          "returned_model": "free",
+          "split": "validation",
+          "status": "completed",
+          "usage": {
+            "completion_tokens": 64,
+            "cost": 0,
+            "cost_details": {
+              "floor_applied": false,
+              "rate_source": "nas_model_override",
+              "source": "nas_model_override"
+            },
+            "prompt_tokens": 232,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 128,
+              "image_tokens": 0,
+              "text_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 296
+          },
+          "verdict": "supported"
+        },
+        {
+          "arm": "semantic_verifier",
+          "confidence_raw": 0.95,
+          "confidence_scale_usable": false,
+          "confidence_unit": "ambiguous_0_to_1_or_0_to_100",
+          "configured_model_alias": "free",
+          "finish_reason": "stop",
+          "input_digest": "9e9b28673c8e34c3cc5fd2e155678c1637daecc70de425671737c97921736b84",
+          "latency_ms": 3707,
+          "pair_id": "val-v11-current",
+          "returned_model": "free",
+          "split": "validation",
+          "status": "completed",
+          "usage": {
+            "completion_tokens": 77,
+            "cost": 0,
+            "cost_details": {
+              "floor_applied": false,
+              "rate_source": "nas_model_override",
+              "source": "nas_model_override"
+            },
+            "prompt_tokens": 171,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 128,
+              "image_tokens": 0,
+              "text_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 248
+          },
+          "verdict": "related_insufficient"
+        },
+        {
+          "arm": "semantic_verifier",
+          "confidence_raw": 0.98,
+          "confidence_scale_usable": false,
+          "confidence_unit": "ambiguous_0_to_1_or_0_to_100",
+          "configured_model_alias": "free",
+          "finish_reason": "stop",
+          "input_digest": "0ac24d0ad7199eb8f644946fed1d7a34d6c44b62d6d169b0bce64f74b2fc7663",
+          "latency_ms": 5240,
+          "pair_id": "val-v11-single-build",
+          "returned_model": "free",
+          "split": "validation",
+          "status": "completed",
+          "usage": {
+            "completion_tokens": 65,
+            "cost": 0,
+            "cost_details": {
+              "floor_applied": false,
+              "rate_source": "nas_model_override",
+              "source": "nas_model_override"
+            },
+            "prompt_tokens": 345,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 256,
+              "image_tokens": 0,
+              "text_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 410
+          },
+          "verdict": "supported"
+        },
+        {
+          "arm": "semantic_verifier",
+          "confidence_raw": 0.95,
+          "confidence_scale_usable": false,
+          "confidence_unit": "ambiguous_0_to_1_or_0_to_100",
+          "configured_model_alias": "free",
+          "finish_reason": "stop",
+          "input_digest": "caaee27fa2ce14875fbbf61e916120ff778380ebcb5b5c1ad275866911b960b0",
+          "latency_ms": 3059,
+          "pair_id": "val-v11-start-chain",
+          "returned_model": "free",
+          "split": "validation",
+          "status": "completed",
+          "usage": {
+            "completion_tokens": 85,
+            "cost": 0,
+            "cost_details": {
+              "floor_applied": false,
+              "rate_source": "nas_model_override",
+              "source": "nas_model_override"
+            },
+            "prompt_tokens": 193,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 128,
+              "image_tokens": 0,
+              "text_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 278
+          },
+          "verdict": "contradicted"
+        },
+        {
+          "arm": "semantic_verifier",
+          "confidence_raw": 0.99,
+          "confidence_scale_usable": false,
+          "confidence_unit": "ambiguous_0_to_1_or_0_to_100",
+          "configured_model_alias": "free",
+          "finish_reason": "stop",
+          "input_digest": "cdbf50660ab2c41f4c028665393c1ffb724cb74b4faa88b0afded474b2e5a511",
+          "latency_ms": 7964,
+          "pair_id": "val-v11-transitive",
+          "returned_model": "free",
+          "split": "validation",
+          "status": "completed",
+          "usage": {
+            "completion_tokens": 63,
+            "cost": 0,
+            "cost_details": {
+              "floor_applied": false,
+              "rate_source": "nas_model_override",
+              "source": "nas_model_override"
+            },
+            "prompt_tokens": 178,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 128,
+              "image_tokens": 0,
+              "text_tokens": 0,
+              "video_tokens": 0
+            },
+            "total_tokens": 241
+          },
+          "verdict": "contradicted"
+        }
+      ],
+      "returned_model": "free",
+      "route": "free proxy alias; not production local-litellm"
+    }
+  },
+  "attempt_history": {
+    "semantic_diagnostic": {
+      "calls": 1,
+      "included_in_metrics": false,
+      "note": "Same frozen first pair; valid JSON with verdict Supported and confidence 0.98. No raw completion retained."
+    },
+    "semantic_escalated_initial": {
+      "completed_by_initial_parser": 7,
+      "failed_schema_validation": 18,
+      "note": "Raw completions were not retained; one separate diagnostic call found title-case verdict and fractional-looking confidence. These failures are harness/parser failures, not semantic judgments.",
+      "pairs": 25
+    },
+    "semantic_normalized_replay": {
+      "completed": 25,
+      "max_in_flight": 1,
+      "note": "Same packet, exact prompt, and claim/passage inputs. Verdict case normalized; raw confidence preserved and marked unit-ambiguous.",
+      "pairs": 25
+    },
+    "semantic_sandbox_proxy_attempt": {
+      "pairs": 25,
+      "provider_calls_observed": 0,
+      "status": "proxy_transport for all; no outcomes"
+    }
+  },
+  "freeze_commit": "2c8a7b9",
+  "freeze_manifest": {
+    "calibration_count": 12,
+    "labels_sha256": "b478f92e46ea91c441a5904c3c744d5b8c1f2120e52cd7469533470167b215b8",
+    "model": "jev-1.13.0",
+    "packet_sha256": "2a2e2fba2f99230702beed7d1c6e886544cd9b9fc51f1f0a0df0506113d60d12",
+    "pair_count": 25,
+    "pair_input_digest": "0b48838b2cabf5726a0c996490672404c69581f6c8fd239875c35514ca1f5400",
+    "questions_digest": "681d53efe65dc6bef868043b7f602c047909458db5e1a74dfff1397fddf52015",
+    "schema_version": "exact-claim-passage-freeze/1",
+    "validation_count": 13
+  },
+  "label_disagreements": [
+    {
+      "blind_assistant_review": "likely contradicted because cited URL/lineage identifies the SLSA official page, not an independent GitHub mirror",
+      "frozen_label": "related_insufficient",
+      "pair_id": "val-v01-mirror",
+      "sensitivity_relabel": "contradicted",
+      "used_for_primary_metrics": true
+    }
+  ],
+  "reference_label_provenance": "assistant_proposed",
+  "schema_version": "exact-claim-passage-results/1",
+  "runtime_gate_audit": {
+    "deterministic_checks": "source URL, captured passage offsets, and capture digest integrity only",
+    "hard_negative_flags": "frozen case annotations used for analysis; not executed as a runtime block",
+    "runtime_hard_negative_gate_executed": false,
+    "runtime_fallback_behavior_tested": false,
+    "pre_correction_artifact_sha256": "f8baff0b613333b70a4ec264eec652b82cc227907d3567671dbb1916284c21a1"
+  }
+}

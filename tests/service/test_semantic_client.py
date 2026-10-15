@@ -12,6 +12,35 @@ class TestSemanticClient:
 
         return SemanticClient(base_url="http://semantic.test:8003")
 
+    def test_timeout_defaults_to_bounded_cold_start_budget(self, monkeypatch):
+        from agent.semantic_client import SemanticClient
+
+        monkeypatch.delenv("SEMANTIC_CLIENT_TIMEOUT_SECONDS", raising=False)
+        client = SemanticClient(base_url="http://semantic.test:8003")
+        assert client.timeout_seconds == 60.0
+
+    def test_timeout_can_be_tuned_by_operator(self, monkeypatch):
+        from agent.semantic_client import SemanticClient
+
+        monkeypatch.setenv("SEMANTIC_CLIENT_TIMEOUT_SECONDS", "75.5")
+        client = SemanticClient(base_url="http://semantic.test:8003")
+        assert client.timeout_seconds == 75.5
+
+    @pytest.mark.asyncio
+    async def test_http_client_uses_configured_timeout(self):
+        from agent.semantic_client import SemanticClient
+
+        client = SemanticClient(
+            base_url="http://semantic.test:8003", timeout_seconds=47
+        )
+        http_client = MagicMock()
+        with patch("httpx.AsyncClient", return_value=http_client) as constructor:
+            await client._ensure_client()
+        constructor.assert_called_once_with(
+            timeout=47,
+            headers={"User-Agent": "GroktoCrawl/0.6"},
+        )
+
     @pytest.mark.asyncio
     async def test_embed(self, client):
         """embed() POSTs to /embed and returns embeddings."""

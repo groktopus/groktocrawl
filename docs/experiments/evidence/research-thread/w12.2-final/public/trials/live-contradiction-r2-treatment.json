@@ -1,0 +1,73 @@
+{
+  "answer": {
+    "answer": "No — the supplied sources do not support a conclusion that Delta Queue guarantees exactly-once delivery in practice. The documentation describes exactly-once delivery (snapshot delta-doc), but an incident report shows that during incident DQ-17, some messages were delivered twice (snapshot delta-incident), which is a direct operational contradiction of the documented claim. What changed: the evidence base now includes operational incident evidence that was absent in the prior documentation-only thread, partially resolving the earlier open question of whether the documented guarantee holds in practice. What is current: the documentation still describes exactly-once delivery (delta-doc), and the incident report records duplicate deliveries during DQ-17 (delta-incident). What remains historically valid: the documented exactly-once claim (delta-doc) stands as the documented position, though it is now qualified by observed duplicate deliveries. What is unresolved: whether the documentation has been updated since DQ-17, whether the duplicates fell within the guarantee's intended scope or conditions, whether the root cause was fixed, and whether duplicates can still occur — none of these can be determined from the supplied snapshots.",
+    "change_events": [
+      "The evidence base expanded from documentation-only (prior thread) to include an incident report: snapshot delta-incident records that during incident DQ-17, some messages were delivered twice, which contradicts the documented exactly-once claim in practice.",
+      "The prior thread's unresolved item — whether the documented exactly-once guarantee holds in actual operation — is now partially addressed by operational evidence (delta-incident) showing at least one observed violation."
+    ],
+    "citations": [
+      "delta-doc",
+      "delta-incident"
+    ],
+    "current_truths": [
+      "Delta Queue's documentation describes exactly-once delivery (snapshot delta-doc).",
+      "During incident DQ-17, some Delta Queue messages were delivered twice (snapshot delta-incident)."
+    ],
+    "historical_truths": [
+      "Delta Queue's documentation described exactly-once delivery (snapshot delta-doc); this documented claim predates the incident evidence and remains the documented position.",
+      "The prior thread could only report the documented exactly-once claim and flagged that no operational evidence was available to verify it (context from prior_root; not itself evidence)."
+    ],
+    "unresolved": [
+      "The supplied snapshots do not indicate whether the documentation (delta-doc) has been updated since incident DQ-17, so the current documented guarantee cannot be confirmed as changed or unchanged.",
+      "The scope and conditions of the exactly-once guarantee are unspecified: it is not known whether the duplicate deliveries in DQ-17 (delta-incident) occurred within or outside the documented guarantee's intended scope (e.g., specific delivery modes, configurations, or failure conditions).",
+      "No root cause, remediation status, or post-incident fix for DQ-17 is provided, so it is unknown whether duplicate delivery can still occur today.",
+      "The snapshots do not establish how frequently duplicates occur or whether DQ-17 was an isolated exception to the documented guarantee."
+    ]
+  },
+  "arm": "treatment",
+  "case_id": "live-contradiction",
+  "completed_at": "2026-09-19T07:50:53.500918+00:00",
+  "position": 31,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "6d9e41a51c6b187126b383ff7568aac61c48559b04721dbdee16446ac9dfb1fe",
+    "finish_reason": "stop",
+    "latency_ms": 41553.758,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "89daae45c70eb2060c7f4ff57112ebab99a8aa78c1f7c16d6a8f86dce2ed0cf5",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 605,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0.0004285,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0003025,
+        "upstream_inference_cost": 0.0004285,
+        "upstream_inference_prompt_cost": 0.000126
+      },
+      "is_byok": false,
+      "prompt_tokens": 840,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1445
+    }
+  },
+  "repetition": 2,
+  "schema_version": "research-thread-trial/1",
+  "started_at": "2026-09-19T07:50:11.946760+00:00",
+  "status": "completed",
+  "stratum": "contradiction",
+  "trial_id": "live-contradiction-r2-treatment"
+}

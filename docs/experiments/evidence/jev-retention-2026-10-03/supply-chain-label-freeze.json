@@ -1,0 +1,970 @@
+{
+  "acquisition_ledger_sha256": "9b80549f55c9116e736b275d77b3260e08f65e75dfbac87352db4a00eb8c7dea",
+  "label_method": "single-reviewer, best-effort pre-Jev span audit; candidate contribution labels are not gold truth. Page versions, source authority, accuracy, and injection/safety remain distinct dimensions.",
+  "label_reviewed_at": "2026-10-03",
+  "labels_frozen_before_jev": true,
+  "late_passage_control": {
+    "facet": "verification",
+    "note": "The frozen source label identifies material verification semantics in the official draft page beyond the keyless prefix; projection-arm recall is measured separately.",
+    "source_id": "url-09",
+    "span": {
+      "end_char": 21016,
+      "start_char": 20890
+    },
+    "start_is_after_keyless_projection": true
+  },
+  "protocol_commit": "d46f852",
+  "protocol_sha256": "647fcd553ee2584da02696ee322066b5f6b46ad397173dec5ee8d7b5eae4b02d",
+  "research_question": "software supply chain provenance SLSA reproducible builds attestations verification",
+  "runner_commit": "9c29cd5",
+  "runner_sha256": "0b628ce45f91f1ecf7aee3b8d261a01be832c512ff70550b09685d762960d106",
+  "schema_version": "jev-retention-label-freeze/1",
+  "scrape_outcomes": {
+    "attempted": 20,
+    "distinct_urls": 20,
+    "failed_or_no_markdown": 0,
+    "returned_cards": 20,
+    "source_quality_note": "all pages returned nonempty Markdown; scraper quality score/checks are transport/content heuristics, not factual correctness",
+    "usable_markdown": 20
+  },
+  "scrape_quality_note": "All 20 responses reported success, nonempty Markdown, score 1.0, and pass for block_detected, boilerplate, completeness, and volume. These checks do not establish factual accuracy, authority, or query contribution.",
+  "search_score_semantics": "The returned card score is search-fusion metadata; it is not a Jev score or factual confidence.",
+  "snapshot": {
+    "cached": false,
+    "card_identifiers": {
+      "cards_with_values": 0,
+      "fields_checked": [
+        "doi",
+        "pmid",
+        "pmcid",
+        "arxiv_id",
+        "arxiv",
+        "version",
+        "publication_id",
+        "work_id",
+        "canonical_url"
+      ]
+    },
+    "deadline_exceeded": false,
+    "file_name": "supply-chain.json",
+    "jev_routing_explanation": null,
+    "partial": true,
+    "query_id": "ssx-4ba02ef6",
+    "runtime_revision": "not present in supplied response; do not infer reviewed source revision was deployed",
+    "sha256": "8c94ecf1e09a5e005fc7692b29bc0519233d64a7a5d057eb246428b025b14904"
+  },
+  "source_grouping_note": "No explicit work/version identifiers were returned in the cards. Source paths disclose some versions (v0.1, v1.0, v1.1 FAQ, draft); do not merge by title. Pages from the same SLSA project are related first-party documentation, not independent corroboration.",
+  "source_review_method": "One reviewer audited exact offset spans before Jev scoring; source contribution, trustworthiness, factual correctness, and injection/safety are distinct. 19 sources are candidate contributors; one current-status claim is uncertain and treated as a potential version challenge. Labels are not gold truth.",
+  "sources": [
+    {
+      "available_work_version_ids": {},
+      "contribution_label": "yes",
+      "id": "url-01",
+      "labels": [
+        {
+          "basis": "primary specification, explicitly versioned v0.1; use as historical schema evidence, not current semantics",
+          "facet": "slsa_definition_and_provenance",
+          "kind": "candidate_contribution",
+          "label": "yes",
+          "span": {
+            "end_char": 1076,
+            "start_char": 880
+          }
+        },
+        {
+          "basis": "primary specification, explicitly versioned v0.1; use as historical schema evidence, not current semantics",
+          "facet": "provenance_model",
+          "kind": "candidate_contribution",
+          "label": "yes",
+          "span": {
+            "end_char": 2012,
+            "start_char": 1076
+          }
+        }
+      ],
+      "page_chars": 17346,
+      "page_sha256": "cff0e37881762abf7782268bc7afd371cfd29cf3ad59f2a82974fb078de134f9",
+      "priority": "core candidate facet",
+      "safety_injection": "not assessed in this experiment",
+      "scrape_success": true,
+      "scraper_quality_checks": {
+        "block_detected": "pass",
+        "boilerplate": "pass",
+        "completeness": "pass",
+        "volume": "pass"
+      },
+      "scraper_quality_score": 1.0,
+      "search_card_sha256": "eccc0b35825538a6cc9ceab6f46d1fb4c01e4bb8311adceb9c9effc52f70e8fb",
+      "search_engines": [
+        "brave"
+      ],
+      "search_rank": 1,
+      "search_score": 1.0,
+      "search_score_type": "fusion score; not confidence",
+      "search_title": "SLSA \u2022 Provenance",
+      "source_type": "first-party standard/documentation",
+      "trust_and_correctness": "separate; not inferred from contribution label",
+      "url": "https://slsa.dev/spec/v0.1/provenance",
+      "work_or_version_identity": "not explicitly supplied by result metadata; see page-specific version note"
+    },
+    {
+      "available_work_version_ids": {},
+      "contribution_label": "yes",
+      "id": "url-02",
+      "labels": [
+        {
+          "basis": "secondary CI/CD explainer; conceptual distinction and practical workflow",
+          "facet": "provenance_definition",
+          "kind": "candidate_contribution",
+          "label": "yes",
+          "span": {
+            "end_char": 5817,
+            "start_char": 4417
+          }
+        },
+        {
+          "basis": "secondary CI/CD explainer; conceptual distinction and practical workflow",
+          "facet": "verification_vs_signing",
+          "kind": "candidate_contribution",
+          "label": "yes",
+          "span": {
+            "end_char": 15124,
+            "start_char": 14593
+          }
+        }
+      ],
+      "page_chars": 23752,
+      "page_sha256": "7f7803620a3b06924e9a5e0953b8a36f40dcf59168523e68ef4289e423d28e1a",
+      "priority": "context candidate",
+      "safety_injection": "not assessed in this experiment",
+      "scrape_success": true,
+      "scraper_quality_checks": {
+        "block_detected": "pass",
+        "boilerplate": "pass",
+        "completeness": "pass",
+        "volume": "pass"
+      },
+      "scraper_quality_score": 1.0,
+      "search_card_sha256": "cd51477b1239de04316bb23db0e8514729c86e00de39bf4ad734c47fabbfffcc",
+      "search_engines": [
+        "brave"
+      ],
+      "search_rank": 2,
+      "search_score": 1.0,
+      "search_score_type": "fusion score; not confidence",
+      "search_title": "SLSA Build Provenance and Signing in CI/CD Pipelines",
+      "source_type": "secondary publisher/vendor/consultancy",
+      "trust_and_correctness": "separate; not inferred from contribution label",
+      "url": "https://www.encryptionconsulting.com/slsa-build-provenance-and-signing-in-ci-cd-pipelines/",
+      "work_or_version_identity": "not explicitly supplied by result metadata; see page-specific version note"
+    },
+    {
+      "available_work_version_ids": {},
+      "contribution_label": "yes",
+      "id": "url-03",
+      "labels": [
+        {
+          "basis": "secondary explainer distinguishing signer authenticity from build-process evidence",
+          "facet": "verification_vs_signing",
+          "kind": "candidate_contribution",
+          "label": "yes",
+          "span": {
+            "end_char": 2453,
+            "start_char": 1762
+          }
+        }
+      ],
+      "page_chars": 25747,
+      "page_sha256": "1f8ecd99838c2f402c3f9309df53367986f632351580eab42168c3b6acd1b9ef",
+      "priority": "core candidate facet",
+      "safety_injection": "not assessed in this experiment",
+      "scrape_success": true,
+      "scraper_quality_checks": {
+        "block_detected": "pass",
+        "boilerplate": "pass",
+        "completeness": "pass",
+        "volume": "pass"
+      },
+      "scraper_quality_score": 1.0,
+      "search_card_sha256": "8cbe5fa42c2174f3cbe5df1423a55f537a698493eafb60e5eee7947ff42609ef",
+      "search_engines": [
+        "brave"
+      ],
+      "search_rank": 3,
+      "search_score": 1.0,
+      "search_score_type": "fusion score; not confidence",
+      "search_title": "Artifact Provenance and Attestations: From SLSA to in-toto | Secure Pipelines",
+      "source_type": "secondary publisher/vendor/consultancy",
+      "trust_and_correctness": "separate; not inferred from contribution label",
+      "url": "https://secure-pipelines.com/ci-cd-security/artifact-provenance-attestations-slsa-in-toto/",
+      "work_or_version_identity": "not explicitly supplied by result metadata; see page-specific version note"
+    },
+    {
+      "available_work_version_ids": {},
+      "contribution_label": "yes",
+      "id": "url-04",
+      "labels": [
+        {
+          "basis": "secondary analysis of provenance content and limits; verify legal/regulatory claims separately",
+          "facet": "provenance_contents",
+          "kind": "candidate_contribution",
+          "label": "yes",
+          "span": {
+            "end_char": 7282,
+            "start_char": 6146
+          }
+        },
+        {
+          "basis": "secondary analysis of provenance content and limits; verify legal/regulatory claims separately",
+          "facet": "trust_and_limits",
+          "kind": "candidate_contribution",
+          "label": "yes",
+          "span": {
+            "end_char": 8682,
+            "start_char": 7282
+          }
+        }
+      ],
+      "page_chars": 32808,
+      "page_sha256": "8c79f2fb8b70c62ab6729fe7424059c5287bb48dc39bf6282f170c3bdcfbf91d",
+      "priority": "context candidate",
+      "safety_injection": "not assessed in this experiment",
+      "scrape_success": true,
+      "scraper_quality_checks": {
+        "block_detected": "pass",
+        "boilerplate": "pass",
+        "completeness": "pass",
+        "volume": "pass"
+      },
+      "scraper_quality_score": 1.0,
+      "search_card_sha256": "4885b5848f7a2e2e14b8d666c4ec4f93a7234df7ac0b0a1483156d13b7469afd",
+      "search_engines": [
+        "brave"
+      ],
+      "search_rank": 4,
+      "search_score": 1.0,
+      "search_score_type": "fusion score; not confidence",
+      "search_title": "SLSA and Provenance: Your SBOM Says What's Inside, This Says Where It Came From - ostering.com",
+      "source_type": "secondary publisher/vendor/consultancy",
+      "trust_and_correctness": "separate; not inferred from contribution label",
+      "url": "https://www.ostering.com/slsa-and-provenance/",
+      "work_or_version_identity": "not explicitly supplied by result metadata; see page-specific version note"
+    },
+    {
+      "available_work_version_ids": {},
+      "contribution_label": "yes",
+      "id": "url-05",
+      "labels": [
+        {
+          "basis": "secondary page with a version-sensitive Level 4 and reproducibility claim; retain as claim to verify, not authority",
+          "facet": "reproducible_builds_and_levels",
+          "kind": "candidate_contribution",
+          "label": "yes",
+          "span": {
+            "end_char": 7098,
+            "start_char": 5824
+          }
+        }
+      ],
+      "page_chars": 31793,
+      "page_sha256": "a25a8f8529b2a0d50c203838fd508758f51e9e1a7c3fe1ea8a6aa5c299eef0e9",
+      "priority": "core candidate facet",
+      "safety_injection": "not assessed in this experiment",
+      "scrape_success": true,
+      "scraper_quality_checks": {
+        "block_detected": "pass",
+        "boilerplate": "pass",
+        "completeness": "pass",
+        "volume": "pass"
+      },
+      "scraper_quality_score": 1.0,
+      "search_card_sha256": "a0dad165c38311ff7a07f2cbaa0fa59c03ad93cdefc09319b86374e766efc0e6",
+      "search_engines": [
+        "brave"
+      ],
+      "search_rank": 5,
+      "search_score": 1.0,
+      "search_score_type": "fusion score; not confidence",
+      "search_title": "SLSA (Supply-chain Levels for Software Artifacts) What is it? Definition, Explanation | Kusari\u00ae",
+      "source_type": "secondary publisher/vendor/consultancy",
+      "trust_and_correctness": "separate; not inferred from contribution label",
+      "url": "https://www.kusari.dev/learning-center/slsa-supply-chain-levels-for-software-artifacts/",
+      "work_or_version_identity": "not explicitly supplied by result metadata; see page-specific version note"
+    },
+    {
+      "available_work_version_ids": {},
+      "contribution_label": "yes",
+      "id": "url-06",
+      "labels": [
+        {
+          "basis": "secondary command-oriented verification walkthrough; operational evidence, verify commands against primary docs",
+          "facet": "verification_procedure",
+          "kind": "candidate_contribution",
+          "label": "yes",
+          "span": {
+            "end_char": 12477,
+            "start_char": 12282
+          }
+        },
+        {
+          "basis": "secondary command-oriented verification walkthrough; operational evidence, verify commands against primary docs",
+          "facet": "attestation_verification",
+          "kind": "candidate_contribution",
+          "label": "yes",
+          "span": {
+            "end_char": 13657,
+            "start_char": 13291
+          }
+        }
+      ],
+      "page_chars": 21692,
+      "page_sha256": "c01b0fd3d7043867b13396b4e05a3b1d05a5cd2b59695bf40b7fb50ab1ca5424",
+      "priority": "core candidate facet",
+      "safety_injection": "not assessed in this experiment",
+      "scrape_success": true,
+      "scraper_quality_checks": {
+        "block_detected": "pass",
+        "boilerplate": "pass",
+        "completeness": "pass",
+        "volume": "pass"
+      },
+      "scraper_quality_score": 1.0,
+      "search_card_sha256": "0b1c6aba33fe8dc6835fa4f98efee834e224cd811006d7c588ddcfc52cbec1cc",
+      "search_engines": [
+        "brave"
+      ],
+      "search_rank": 6,
+      "search_score": 1.0,
+      "search_score_type": "fusion score; not confidence",
+      "search_title": "SLSA Build Provenance: Verifying Supply Chain Integrity from Source to Deployment",
+      "source_type": "secondary publisher/vendor/consultancy",
+      "trust_and_correctness": "separate; not inferred from contribution label",
+      "url": "https://www.systemshardening.com/articles/cicd/slsa-build-provenance/",
+      "work_or_version_identity": "not explicitly supplied by result metadata; see page-specific version note"
+    },
+    {
+      "available_work_version_ids": {},
+      "contribution_label": "yes",
+      "id": "url-07",
+      "labels": [
+        {
+          "basis": "first-party SLSA v1.1 FAQ; direct qualification of reproducible-build relationship",
+          "facet": "reproducible_builds_and_limits",
+          "kind": "candidate_contribution",
+          "label": "yes",
+          "span": {
+            "end_char": 2319,
+            "start_char": 919
+          }
+        }
+      ],
+      "page_chars": 9997,
+      "page_sha256": "e71d58bd856b74553103fc27e667536a73593816661e7cb89a76e2e6aba5b07e",
+      "priority": "core candidate facet",
+      "safety_injection": "not assessed in this experiment",
+      "scrape_success": true,
+      "scraper_quality_checks": {
+        "block_detected": "pass",
+        "boilerplate": "pass",
+        "completeness": "pass",
+        "volume": "pass"
+      },
+      "scraper_quality_score": 1.0,
+      "search_card_sha256": "8a0492c7bd24c5f86bb5cc27fc5032a4ba43739a98bda5a1e9bc87a5f5ec753a",
+      "search_engines": [
+        "brave"
+      ],
+      "search_rank": 7,
+      "search_score": 1.0,
+      "search_score_type": "fusion score; not confidence",
+      "search_title": "SLSA \u2022 Frequently asked questions",
+      "source_type": "first-party standard/documentation",
+      "trust_and_correctness": "separate; not inferred from contribution label",
+      "url": "https://slsa.dev/spec/v1.1/faq",
+      "work_or_version_identity": "not explicitly supplied by result metadata; see page-specific version note"
+    },
+    {
+      "available_work_version_ids": {},
+      "contribution_label": "yes",
+      "id": "url-08",
+      "labels": [
+        {
+          "basis": "secondary explainer; Level 4 description is version-sensitive and requires primary-source check",
+          "facet": "provenance_definition",
+          "kind": "candidate_contribution",
+          "label": "yes",
+          "span": {
+            "end_char": 3270,
+            "start_char": 2488
+          }
+        },
+        {
+          "basis": "secondary explainer; Level 4 description is version-sensitive and requires primary-source check",
+          "facet": "reproducible_builds_and_levels",
+          "kind": "candidate_contribution",
+          "label": "yes",
+          "span": {
+            "end_char": 5065,
+            "start_char": 4402
+          }
+        }
+      ],
+      "page_chars": 10684,
+      "page_sha256": "54d1396d218176f09455db3699f3ca4a4d310d5a73178fc7caf7c4a5663c0c15",
+      "priority": "context candidate",
+      "safety_injection": "not assessed in this experiment",
+      "scrape_success": true,
+      "scraper_quality_checks": {
+        "block_detected": "pass",
+        "boilerplate": "pass",
+        "completeness": "pass",
+        "volume": "pass"
+      },
+      "scraper_quality_score": 1.0,
+      "search_card_sha256": "8e1387019aa2105647d3162cb5ad88c3337174966ed594eb2a3a2daddc84370b",
+      "search_engines": [
+        "brave"
+      ],
+      "search_rank": 8,
+      "search_score": 1.0,
+      "search_score_type": "fusion score; not confidence",
+      "search_title": "Software Supply Chain Security Beyond SBOMs: Sigstore, SLSA, and Build Provenance | AquilaX",
+      "source_type": "secondary publisher/vendor/consultancy",
+      "trust_and_correctness": "separate; not inferred from contribution label",
+      "url": "https://aquilax.ai/blog/supply-chain-artifact-signing-slsa",
+      "work_or_version_identity": "not explicitly supplied by result metadata; see page-specific version note"
+    },
+    {
+      "available_work_version_ids": {},
+      "contribution_label": "yes",
+      "id": "url-09",
+      "labels": [
+        {
+          "basis": "first-party draft specification; explicitly draft/versioned schema and verification semantics",
+          "facet": "provenance_definition",
+          "kind": "candidate_contribution",
+          "label": "yes",
+          "span": {
+            "end_char": 1469,
+            "start_char": 1116
+          }
+        },
+        {
+          "basis": "first-party draft specification; explicitly draft/versioned schema and verification semantics",
+          "facet": "verification",
+          "kind": "candidate_contribution",
+          "label": "yes",
+          "span": {
+            "end_char": 21016,
+            "start_char": 20890
+          }
+        }
+      ],
+      "page_chars": 25684,
+      "page_sha256": "9c26a4dc42af365b533d12f2524dcba43519e8ae9a265a921de22fec509f032c",
+      "priority": "core candidate facet",
+      "safety_injection": "not assessed in this experiment",
+      "scrape_success": true,
+      "scraper_quality_checks": {
+        "block_detected": "pass",
+        "boilerplate": "pass",
+        "completeness": "pass",
+        "volume": "pass"
+      },
+      "scraper_quality_score": 1.0,
+      "search_card_sha256": "610a2c1ca641fffc9f9362ff0691fafba87d508134651a4e1eae06dde7f99039",
+      "search_engines": [
+        "brave"
+      ],
+      "search_rank": 9,
+      "search_score": 1.0,
+      "search_score_type": "fusion score; not confidence",
+      "search_title": "SLSA \u2022 Build: Provenance",
+      "source_type": "first-party standard/documentation",
+      "trust_and_correctness": "separate; not inferred from contribution label",
+      "url": "https://slsa.dev/spec/draft/build-provenance",
+      "work_or_version_identity": "not explicitly supplied by result metadata; see page-specific version note"
+    },
+    {
+      "available_work_version_ids": {},
+      "contribution_label": "yes",
+      "id": "url-10",
+      "labels": [
+        {
+          "basis": "first-party GitLab implementation documentation; practical signing and verification path",
+          "facet": "verification_procedure",
+          "kind": "candidate_contribution",
+          "label": "yes",
+          "span": {
+            "end_char": 2459,
+            "start_char": 2108
+          }
+        }
+      ],
+      "page_chars": 3183,
+      "page_sha256": "7e20ef71fc63331296dc62bd688efc6b3d7445248a92b51250707bbbb291d0d2",
+      "priority": "core candidate facet",
+      "safety_injection": "not assessed in this experiment",
+      "scrape_success": true,
+      "scraper_quality_checks": {
+        "block_detected": "pass",
+        "boilerplate": "pass",
+        "completeness": "pass",
+        "volume": "pass"
+      },
+      "scraper_quality_score": 1.0,
+      "search_card_sha256": "af22dd5021fbff652a1e8f19894485964fe9880986b1ae4c6b81b55b0a4e7c28",
+      "search_engines": [
+        "brave"
+      ],
+      "search_rank": 10,
+      "search_score": 1.0,
+      "search_score_type": "fusion score; not confidence",
+      "search_title": "Supply-chain Levels for Software Artifacts (SLSA) | GitLab Docs",
+      "source_type": "first-party product documentation",
+      "trust_and_correctness": "separate; not inferred from contribution label",
+      "url": "https://docs.gitlab.com/ci/pipeline_security/slsa/",
+      "work_or_version_identity": "not explicitly supplied by result metadata; see page-specific version note"
+    },
+    {
+      "available_work_version_ids": {},
+      "contribution_label": "yes",
+      "id": "url-11",
+      "labels": [
+        {
+          "basis": "first-party SLSA v1.0 level document; versioned reference for progression and guarantees",
+          "facet": "levels_and_tracks",
+          "kind": "candidate_contribution",
+          "label": "yes",
+          "span": {
+            "end_char": 1521,
+            "start_char": 475
+          }
+        },
+        {
+          "basis": "first-party SLSA v1.0 level document; versioned reference for progression and guarantees",
+          "facet": "build_level_guarantees",
+          "kind": "candidate_contribution",
+          "label": "yes",
+          "span": {
+            "end_char": 2742,
+            "start_char": 1521
+          }
+        }
+      ],
+      "page_chars": 6884,
+      "page_sha256": "a0f8f1479cd4d62d65c3620426ac4052cbde7b96320a99b42b5065e463626d5b",
+      "priority": "core candidate facet",
+      "safety_injection": "not assessed in this experiment",
+      "scrape_success": true,
+      "scraper_quality_checks": {
+        "block_detected": "pass",
+        "boilerplate": "pass",
+        "completeness": "pass",
+        "volume": "pass"
+      },
+      "scraper_quality_score": 1.0,
+      "search_card_sha256": "e628b5537cba55ae0bc56cc5491058bf470c88c972911cb47f36c4121c6aa71e",
+      "search_engines": [
+        "brave"
+      ],
+      "search_rank": 11,
+      "search_score": 1.0,
+      "search_score_type": "fusion score; not confidence",
+      "search_title": "SLSA \u2022 Security levels",
+      "source_type": "first-party standard/documentation",
+      "trust_and_correctness": "separate; not inferred from contribution label",
+      "url": "https://slsa.dev/spec/v1.0/levels",
+      "work_or_version_identity": "not explicitly supplied by result metadata; see page-specific version note"
+    },
+    {
+      "available_work_version_ids": {},
+      "contribution_label": "yes",
+      "id": "url-12",
+      "labels": [
+        {
+          "basis": "secondary implementation overview; level and hermeticity claims are version-sensitive",
+          "facet": "build_level_guarantees",
+          "kind": "candidate_contribution",
+          "label": "yes",
+          "span": {
+            "end_char": 4415,
+            "start_char": 3999
+          }
+        }
+      ],
+      "page_chars": 24451,
+      "page_sha256": "d80602ed8e23ced2fc59c7da6ba3255a141793154f8fc0bbb3225651855186a2",
+      "priority": "context candidate",
+      "safety_injection": "not assessed in this experiment",
+      "scrape_success": true,
+      "scraper_quality_checks": {
+        "block_detected": "pass",
+        "boilerplate": "pass",
+        "completeness": "pass",
+        "volume": "pass"
+      },
+      "scraper_quality_score": 1.0,
+      "search_card_sha256": "fb1b2addc2304a21bb9a801939616ceaa240d2d427f7b72822463ef11a08b44d",
+      "search_engines": [
+        "brave"
+      ],
+      "search_rank": 12,
+      "search_score": 1.0,
+      "search_score_type": "fusion score; not confidence",
+      "search_title": "Implementing SLSA Build Integrity Framework for Software Supply Chain Security - SoftwareSeni",
+      "source_type": "secondary publisher/vendor/consultancy",
+      "trust_and_correctness": "separate; not inferred from contribution label",
+      "url": "https://www.softwareseni.com/implementing-slsa-build-integrity-framework-for-software-supply-chain-security/",
+      "work_or_version_identity": "not explicitly supplied by result metadata; see page-specific version note"
+    },
+    {
+      "available_work_version_ids": {},
+      "contribution_label": "yes",
+      "id": "url-13",
+      "labels": [
+        {
+          "basis": "secondary source identifying limitations; verify against current primary specification",
+          "facet": "trust_and_limits",
+          "kind": "candidate_contribution",
+          "label": "yes",
+          "span": {
+            "end_char": 7353,
+            "start_char": 6210
+          }
+        }
+      ],
+      "page_chars": 11654,
+      "page_sha256": "51230725e10a6b6c87ab5c960296419c6e20a2176737f4b4052e3752cee281fb",
+      "priority": "core candidate facet",
+      "safety_injection": "not assessed in this experiment",
+      "scrape_success": true,
+      "scraper_quality_checks": {
+        "block_detected": "pass",
+        "boilerplate": "pass",
+        "completeness": "pass",
+        "volume": "pass"
+      },
+      "scraper_quality_score": 1.0,
+      "search_card_sha256": "3ecc619c264c2bbc962e4b7821a30e1321e13266e78e0dfadfc32aa1931d7df2",
+      "search_engines": [
+        "brave"
+      ],
+      "search_rank": 13,
+      "search_score": 1.0,
+      "search_score_type": "fusion score; not confidence",
+      "search_title": "What is The SLSA Framework? Supply-chain Levels for Software Artifacts | Wiz",
+      "source_type": "secondary publisher/vendor/consultancy",
+      "trust_and_correctness": "separate; not inferred from contribution label",
+      "url": "https://www.wiz.io/academy/application-security/slsa-framework",
+      "work_or_version_identity": "not explicitly supplied by result metadata; see page-specific version note"
+    },
+    {
+      "available_work_version_ids": {},
+      "contribution_label": "yes",
+      "id": "url-14",
+      "labels": [
+        {
+          "basis": "secondary overview and level summary; overlap with primary docs, not independent corroboration",
+          "facet": "slsa_definition_and_provenance",
+          "kind": "candidate_contribution",
+          "label": "yes",
+          "span": {
+            "end_char": 517,
+            "start_char": 437
+          }
+        },
+        {
+          "basis": "secondary overview and level summary; overlap with primary docs, not independent corroboration",
+          "facet": "build_level_guarantees",
+          "kind": "candidate_contribution",
+          "label": "yes",
+          "span": {
+            "end_char": 1233,
+            "start_char": 922
+          }
+        }
+      ],
+      "page_chars": 12954,
+      "page_sha256": "045d2347003ef6ce2dc7212312ed20eaf26842b18ca755e990a8f1b9974fc2bc",
+      "priority": "context candidate",
+      "safety_injection": "not assessed in this experiment",
+      "scrape_success": true,
+      "scraper_quality_checks": {
+        "block_detected": "pass",
+        "boilerplate": "pass",
+        "completeness": "pass",
+        "volume": "pass"
+      },
+      "scraper_quality_score": 1.0,
+      "search_card_sha256": "fa77d79a68c1e951bd20e572b0fb2664bf9f670c159cf749c2d463349675c11e",
+      "search_engines": [
+        "brave"
+      ],
+      "search_rank": 14,
+      "search_score": 1.0,
+      "search_score_type": "fusion score; not confidence",
+      "search_title": "What is the SLSA framework? A guide to SLSA levels and supply chain security | Cloudsmith",
+      "source_type": "secondary publisher/vendor/consultancy",
+      "trust_and_correctness": "separate; not inferred from contribution label",
+      "url": "https://cloudsmith.com/blog/slsa-a-route-to-tamper-proof-builds-and-secure-software-provenance",
+      "work_or_version_identity": "not explicitly supplied by result metadata; see page-specific version note"
+    },
+    {
+      "available_work_version_ids": {},
+      "contribution_label": "yes",
+      "id": "url-15",
+      "labels": [
+        {
+          "basis": "first-party Harness product docs describing an implementation path; product-specific",
+          "facet": "implementation_steps",
+          "kind": "candidate_contribution",
+          "label": "yes",
+          "span": {
+            "end_char": 4933,
+            "start_char": 4126
+          }
+        }
+      ],
+      "page_chars": 5570,
+      "page_sha256": "948b2dce1d2a4037d526c60ac52e536a9aba558e9dca4029ad29e77ca3cf0248",
+      "priority": "context candidate",
+      "safety_injection": "not assessed in this experiment",
+      "scrape_success": true,
+      "scraper_quality_checks": {
+        "block_detected": "pass",
+        "boilerplate": "pass",
+        "completeness": "pass",
+        "volume": "pass"
+      },
+      "scraper_quality_score": 1.0,
+      "search_card_sha256": "fada3db56029bac4a55ecd532b2898509fc576d3da3346d33439ba5747d0349f",
+      "search_engines": [
+        "brave"
+      ],
+      "search_rank": 15,
+      "search_score": 1.0,
+      "search_score_type": "fusion score; not confidence",
+      "search_title": "Overview | Harness Developer Hub",
+      "source_type": "first-party product documentation",
+      "trust_and_correctness": "separate; not inferred from contribution label",
+      "url": "https://developer.harness.io/docs/software-supply-chain-assurance/artifact-security/slsa/overview/",
+      "work_or_version_identity": "not explicitly supplied by result metadata; see page-specific version note"
+    },
+    {
+      "available_work_version_ids": {},
+      "contribution_label": "yes",
+      "id": "url-16",
+      "labels": [
+        {
+          "basis": "secondary implementation guide for provenance verification; verify product claims against primary docs",
+          "facet": "verification_procedure",
+          "kind": "candidate_contribution",
+          "label": "yes",
+          "span": {
+            "end_char": 11853,
+            "start_char": 11007
+          }
+        }
+      ],
+      "page_chars": 31585,
+      "page_sha256": "15e04952c4607ccda5187bce5c1eb394225504f30c190679fc2f1fc6b5ee43ba",
+      "priority": "core candidate facet",
+      "safety_injection": "not assessed in this experiment",
+      "scrape_success": true,
+      "scraper_quality_checks": {
+        "block_detected": "pass",
+        "boilerplate": "pass",
+        "completeness": "pass",
+        "volume": "pass"
+      },
+      "scraper_quality_score": 1.0,
+      "search_card_sha256": "134700c6887323871b1eee7116e605b7a9915d4d6453b9d152340f210e86cc24",
+      "search_engines": [
+        "brave"
+      ],
+      "search_rank": 16,
+      "search_score": 1.0,
+      "search_score_type": "fusion score; not confidence",
+      "search_title": "What is Build Provenance? Definition & Explanation for SLSA Compliance | Kusari",
+      "source_type": "secondary publisher/vendor/consultancy",
+      "trust_and_correctness": "separate; not inferred from contribution label",
+      "url": "https://www.kusari.dev/learning-center/build-provenance/",
+      "work_or_version_identity": "not explicitly supplied by result metadata; see page-specific version note"
+    },
+    {
+      "available_work_version_ids": {},
+      "contribution_label": "yes",
+      "id": "url-17",
+      "labels": [
+        {
+          "basis": "secondary levels overview; likely overlapping context, not independent corroboration",
+          "facet": "build_level_guarantees",
+          "kind": "candidate_contribution",
+          "label": "yes",
+          "span": {
+            "end_char": 4200,
+            "start_char": 2800
+          }
+        }
+      ],
+      "page_chars": 7664,
+      "page_sha256": "d0c453696e4e8c30658fedb2ee031a69002b27ce508c3758be676a2600b1bace",
+      "priority": "context candidate",
+      "safety_injection": "not assessed in this experiment",
+      "scrape_success": true,
+      "scraper_quality_checks": {
+        "block_detected": "pass",
+        "boilerplate": "pass",
+        "completeness": "pass",
+        "volume": "pass"
+      },
+      "scraper_quality_score": 1.0,
+      "search_card_sha256": "8417c42dee6ec94e5c6bc5748e45df337f39d71642c22399456b644ff454cbe7",
+      "search_engines": [
+        "brave"
+      ],
+      "search_rank": 17,
+      "search_score": 1.0,
+      "search_score_type": "fusion score; not confidence",
+      "search_title": "What is the SLSA Framework? | JFrog",
+      "source_type": "secondary publisher/vendor/consultancy",
+      "trust_and_correctness": "separate; not inferred from contribution label",
+      "url": "https://jfrog.com/learn/grc/slsa-framework/",
+      "work_or_version_identity": "not explicitly supplied by result metadata; see page-specific version note"
+    },
+    {
+      "available_work_version_ids": {},
+      "contribution_label": "uncertain",
+      "id": "url-18",
+      "labels": [
+        {
+          "basis": "secondary status-summary page includes a version claim that conflicts with the official versioned pages; label as unverified challenge, not authority",
+          "facet": "version_status_claim",
+          "kind": "candidate_contribution",
+          "label": "uncertain",
+          "span": {
+            "end_char": 2887,
+            "start_char": 1670
+          }
+        }
+      ],
+      "page_chars": 5995,
+      "page_sha256": "0c232e45473ca8d69a14faf5a04fc73501003f6da6976a30ea113ef1e633dc03",
+      "priority": "uncertain version claim",
+      "safety_injection": "not assessed in this experiment",
+      "scrape_success": true,
+      "scraper_quality_checks": {
+        "block_detected": "pass",
+        "boilerplate": "pass",
+        "completeness": "pass",
+        "volume": "pass"
+      },
+      "scraper_quality_score": 1.0,
+      "search_card_sha256": "5c03c4cea77bde8ce536e8d698b8d0bd6e1557cc0f26c46871fd46a4d5777463",
+      "search_engines": [
+        "brave"
+      ],
+      "search_rank": 18,
+      "search_score": 1.0,
+      "search_score_type": "fusion score; not confidence",
+      "search_title": "SLSA (Supply-chain Levels for Software Artifacts) | Ry Walker Research | Ry Walker",
+      "source_type": "secondary publisher/vendor/consultancy",
+      "trust_and_correctness": "separate; not inferred from contribution label",
+      "url": "https://rywalker.com/research/slsa",
+      "work_or_version_identity": "not explicitly supplied by result metadata; see page-specific version note"
+    },
+    {
+      "available_work_version_ids": {},
+      "contribution_label": "yes",
+      "id": "url-19",
+      "labels": [
+        {
+          "basis": "secondary explainer relating in-toto attestations to SLSA provenance",
+          "facet": "attestation_format",
+          "kind": "candidate_contribution",
+          "label": "yes",
+          "span": {
+            "end_char": 1826,
+            "start_char": 1407
+          }
+        },
+        {
+          "basis": "secondary explainer relating in-toto attestations to SLSA provenance",
+          "facet": "provenance_definition",
+          "kind": "candidate_contribution",
+          "label": "yes",
+          "span": {
+            "end_char": 2643,
+            "start_char": 1826
+          }
+        }
+      ],
+      "page_chars": 14325,
+      "page_sha256": "03dcc79e0c3b0f3976d93c6fd2d95a68be031eb2f1412a084ec3ebe57c62cba0",
+      "priority": "core candidate facet",
+      "safety_injection": "not assessed in this experiment",
+      "scrape_success": true,
+      "scraper_quality_checks": {
+        "block_detected": "pass",
+        "boilerplate": "pass",
+        "completeness": "pass",
+        "volume": "pass"
+      },
+      "scraper_quality_score": 1.0,
+      "search_card_sha256": "db8695d8bfc252617fbffde894e7505734b086c002e08410351bd590858ca9aa",
+      "search_engines": [
+        "brave"
+      ],
+      "search_rank": 19,
+      "search_score": 1.0,
+      "search_score_type": "fusion score; not confidence",
+      "search_title": "Deep Dive Into SLSA Provenance and Software Attestation",
+      "source_type": "secondary publisher/vendor/consultancy",
+      "trust_and_correctness": "separate; not inferred from contribution label",
+      "url": "https://www.legitsecurity.com/blog/slsa-provenance-blog-series-part-2-deeper-dive-into-slsa-provenance",
+      "work_or_version_identity": "not explicitly supplied by result metadata; see page-specific version note"
+    },
+    {
+      "available_work_version_ids": {},
+      "contribution_label": "yes",
+      "id": "url-20",
+      "labels": [
+        {
+          "basis": "first-party SLSA overview; primary framework purpose and assurance context",
+          "facet": "slsa_definition_and_assurance",
+          "kind": "candidate_contribution",
+          "label": "yes",
+          "span": {
+            "end_char": 464,
+            "start_char": 134
+          }
+        }
+      ],
+      "page_chars": 3837,
+      "page_sha256": "4e24f133938cef568d8552b7e5eb3bf2aa2992c464c3d9b501b32e51b0748b88",
+      "priority": "core candidate facet",
+      "safety_injection": "not assessed in this experiment",
+      "scrape_success": true,
+      "scraper_quality_checks": {
+        "block_detected": "pass",
+        "boilerplate": "pass",
+        "completeness": "pass",
+        "volume": "pass"
+      },
+      "scraper_quality_score": 1.0,
+      "search_card_sha256": "4ecdb29128140ea60b203dc411ba7c1bb152d14a5886cd4fa06536e981adc920",
+      "search_engines": [
+        "brave"
+      ],
+      "search_rank": 20,
+      "search_score": 1.0,
+      "search_score_type": "fusion score; not confidence",
+      "search_title": "SLSA \u2022 Supply-chain Levels for Software Artifacts",
+      "source_type": "first-party standard/documentation",
+      "trust_and_correctness": "separate; not inferred from contribution label",
+      "url": "https://slsa.dev/",
+      "work_or_version_identity": "not explicitly supplied by result metadata; see page-specific version note"
+    }
+  ]
+}

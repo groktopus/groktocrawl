@@ -1,0 +1,52 @@
+{
+  "case_id": "mission-ambiguous-productive",
+  "completed_at": "2026-09-19T06:02:04.140972+00:00",
+  "position": 9,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "6609ad5d4ee5318825a4a32083934ae9f4f66a65dc636ed108b2f36dcfaa0a46",
+    "finish_reason": "stop",
+    "latency_ms": 8999.448,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "07b18e07c5a6f75e9fd4f7bb083f64358082b74799ad4da34671a8df0bd5eec1",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 192,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 34
+      },
+      "cost": 0.0002725,
+      "cost_details": {
+        "upstream_inference_completions_cost": 6.72e-05,
+        "upstream_inference_cost": 0.0002725,
+        "upstream_inference_prompt_cost": 0.0002053
+      },
+      "is_byok": false,
+      "prompt_tokens": 2053,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 2245
+    }
+  },
+  "repetition": 1,
+  "result": {
+    "action": "clarify",
+    "clarifying_question": "What does 'productive' mean for this decision — which metric(s) (e.g., merged PRs/throughput, cycle time, code quality/rework rates, human review burden), which coding agents and time window are in scope, and what decision will this answer drive (e.g., renew/expand licenses, reassign teams)?",
+    "mission": null,
+    "rationale": "'Productive' for coding agents is a decision-changing ambiguity: throughput, quality, and reviewer-burden metrics can yield contradictory conclusions, and the relevant agents, time window, and downstream decision (license renewal vs. process change) cannot be resolved without guessing. One blocking clarification defines measurable criteria before a mission is issued."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:01:55.134947+00:00",
+  "status": "completed",
+  "trial_id": "mission-ambiguous-productive-intake-r1"
+}

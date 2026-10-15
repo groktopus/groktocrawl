@@ -7,6 +7,8 @@
 
 Technical Story: The groktocrawl CLI currently returns flat output — raw markdown (scrape), streaming prose (agent/answer), or flat JSON (search --json). There is no structured, progressive-disclosure output format suitable for consumption by downstream AI agents that need to navigate findings, dimensions, and source material independently.
 
+- Research-substrate scope: The existing CLI behavior remains unchanged. The opt-in research-substrate scope follows [ADR-0069](0069-adopt-bounded-research-substrate.md); the former experiment decision records are preserved in the [provenance archive](experimental/groktocrawl-x/README.md).
+
 ## Context and Problem Statement
 
 GroktoCrawl CLI output currently serves two modes:

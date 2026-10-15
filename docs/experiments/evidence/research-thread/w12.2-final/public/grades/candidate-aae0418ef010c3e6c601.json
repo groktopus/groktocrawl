@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-aae0418ef010c3e6c601",
+  "case_id": "changed-limit",
+  "completed_at": "2026-09-19T09:18:22.645837+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 100,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "Candidate correctly identifies the single change (8→16 in 1.1), cites both primary snapshots, preserves the 8-job figure as historical to version 1.0, and states 16 as current per the latest evidence. No false merge, stale-current leak, or lost history. Minor deduction on unresolved: the hard-cap-vs-configurable-default question is invented peripheral detail not grounded in the reference, though the 'no snapshots beyond 1.1' point is reasonable.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 75,
+    "unsupported_claims": 0,
+    "usefulness": 90
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "85f5531194c04b8ab7aed1157be549066d24cddda0e9fe23e54fb748071764ea",
+    "finish_reason": "stop",
+    "latency_ms": 37732.3,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "184c69415ddda31e1ae2ebe08ad9f8e3204cd529734a16025ed912dec33c1a66",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 230,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 58
+      },
+      "cost": 0.000145775,
+      "cost_details": {
+        "upstream_inference_completions_cost": 5.75e-05,
+        "upstream_inference_cost": 0.000145775,
+        "upstream_inference_prompt_cost": 8.8275e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 1177,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1407
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:17:44.912318+00:00",
+  "status": "completed",
+  "trial_id": "changed-limit-r2-control"
+}

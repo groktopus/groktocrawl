@@ -252,7 +252,7 @@ async def test_ledger_is_versioned_run_scoped_and_resettable():
     await direct.get("/search", params={"q": "private", "run_id": "run-a"})
     await direct.get("/search", params={"q": "other", "run_id": "run-b"})
     ledger = (await direct.get("/ledger", params={"run_id": "run-a"})).json()
-    assert ledger["fixture_version"] == "v2"
+    assert ledger["fixture_version"] == "v3"
     assert {entry["run_id"] for entry in ledger["entries"]} == {"run-a"}
     assert "private" not in json.dumps(ledger)
     assert (await direct.post("/ledger/reset", params={"run_id": "run-a"})).json() == {
@@ -350,3 +350,19 @@ async def test_research_discovery_propagates_retryable_fixture_rate_limit():
     finally:
         await searxng.close()
         await _stop_tcp_fixture(base_url, server_task, server)
+
+
+@pytest.mark.asyncio
+async def test_query_marker_selects_empty_results_without_changing_normal_queries(
+    search_client,
+):
+    client, _fixture = search_client
+    results, health = await client.search("[fixture:zero-results] unmatched", limit=5)
+    assert results == []
+    assert health.degraded is False
+    ordinary, _ = await client.search("unmatched", limit=5)
+    assert len(ordinary) == 5
+    override, _ = await client.search(
+        "[fixture:zero-results] unmatched", limit=3, scenario="healthy"
+    )
+    assert len(override) == 3

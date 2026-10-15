@@ -1,0 +1,101 @@
+{
+  "arm": "treatment",
+  "case_id": "mission-ambiguous-ship",
+  "completed_at": "2026-09-19T05:51:06.658914+00:00",
+  "position": 2,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "93b2e030288332dc67305a9708d35be9ba5256460ffbd21273407126846b0ce6",
+    "finish_reason": "stop",
+    "latency_ms": 44282.635,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "6a75a78803186d07a23871666eded49403f9dbfa4d1a08d4344aa5995356f43b",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 5165,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 4335
+      },
+      "cost": 0.0027031,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0025825,
+        "upstream_inference_cost": 0.0027031,
+        "upstream_inference_prompt_cost": 0.0001206
+      },
+      "is_byok": false,
+      "prompt_tokens": 804,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 5969
+    }
+  },
+  "repetition": 2,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Decision support: what does “ship” mean here?**Bottom line:** The supplied sources cannot establish which action the requester intends by “ship.” The three candidate meanings carry materially different approval requirements, and choosing among them is blocked on the clarification below; assuming an environment is out of scope for this analysis.| Meaning of “ship” | Stated authorization boundary | Sources ||---|---|---|| Open a pull request | Permitted once tests pass; no additional approval is stated for pull-request creation | delivery-policy || Deploy to disposable test environments | Automatic deployment was authorized by a sandbox experiment, scoped to disposable test environments only | delivery-context || Deploy to production | Requires service-owner approval **and** a recorded rollback plan; the sandbox experiment did not authorize production deployment | delivery-policy, delivery-context |**Blocking clarification required:** Do you mean opening pull requests, deploying a disposable test environment, or deploying production? The approval path differs materially across the three, so no single meaning can be selected from the evidence alone.**Contradiction check:** The two sources are consistent. The policy sets the production gate (service-owner approval plus a recorded rollback plan), and the context confirms the sandbox experiment’s automatic-deployment authorization never extended to production. No contradiction required preservation.**Unresolved limits:**- Which meaning of “ship” the requester intends is unresolved; the supplied evidence cannot establish intent, and the analysis scope excludes assuming an environment.- The context does not state whether the sandbox experiment’s authorization for disposable test deployments remains active or applies outside that experiment.- The policy states no approval gate for pull requests beyond passing tests and does not address merge or post-merge steps.- The evidence base is the supplied fixture policy and context only; no other authorities were provided, so no independent corroboration is available.",
+    "candidate_id": "candidate-9ff62932e6ebad631827",
+    "citations": [
+      "delivery-policy",
+      "delivery-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "delivery-policy"
+        ],
+        "text": "Opening a pull request is permitted once tests pass; the policy states no additional approval requirement for pull-request creation.",
+        "uncertainty": "The policy does not address merge or post-merge steps; no material uncertainty on the stated boundary itself."
+      },
+      {
+        "source_ids": [
+          "delivery-context"
+        ],
+        "text": "A sandbox experiment authorized automatic deployment to disposable test environments, and that authorization was scoped to disposable test environments only.",
+        "uncertainty": "The context does not state whether the sandbox experiment’s authorization remains active or applies outside the experiment’s scope."
+      },
+      {
+        "source_ids": [
+          "delivery-policy"
+        ],
+        "text": "Production deployment requires approval by the service owner and a recorded rollback plan.",
+        "uncertainty": "No material uncertainty; the policy states this requirement directly."
+      },
+      {
+        "source_ids": [
+          "delivery-context"
+        ],
+        "text": "The sandbox experiment’s automatic-deployment authorization did not authorize production deployment.",
+        "uncertainty": "No material uncertainty; the context states this scope limit explicitly."
+      },
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-context"
+        ],
+        "text": "The supplied sources do not establish which action or environment the requester intends by “ship”; the three candidate meanings carry materially different approval requirements, so the selection cannot be made without the blocking clarification.",
+        "uncertainty": "Requester intent is not determinable from the supplied evidence; assuming an environment is excluded by the analysis scope."
+      },
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-context"
+        ],
+        "text": "Contradiction check: the policy and context are consistent — the policy sets the production approval gate and the context confirms the sandbox authorization never covered production; no contradiction required preservation.",
+        "uncertainty": "No material uncertainty; both sources align on the production boundary."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:50:22.373931+00:00",
+  "status": "completed",
+  "trial_id": "mission-ambiguous-ship-r2-treatment"
+}

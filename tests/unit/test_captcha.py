@@ -479,8 +479,30 @@ async def test_force_browser_only_routes_turnstile_to_flaresolverr(monkeypatch):
         }
 
     monkeypatch.setattr(fetch, "fetch_via_playwright", recaptcha)
+    browser_calls = []
+
+    async def browser_svc(_url):
+        browser_calls.append(_url)
+        return {
+            "markdown": "recovered in independent browser " * 30,
+            "source": "browser-svc",
+            "url": _url,
+        }
+
+    monkeypatch.setattr(fetch, "_fetch_via_browser_svc", browser_svc)
     result = await fetch.smart_scrape("https://example.test", force_browser=True)
-    assert result["error_code"] == "CAPTCHA_UNRESOLVED"
+    assert result["source"] == "browser-svc"
+    assert browser_calls == ["https://example.test"]
+    assert result["recovery"]["outcome"] == "recovered"
+    assert result["recovery"]["attempts"] == [
+        {"strategy": "playwright", "outcome": "barrier"},
+        {
+            "strategy": "flaresolverr",
+            "outcome": "skipped",
+            "reason": "not_applicable_to_classified_barrier",
+        },
+        {"strategy": "browser-svc", "outcome": "success"},
+    ]
 
 
 @pytest.mark.asyncio
@@ -513,6 +535,9 @@ async def test_unresolved_turnstile_survives_failed_flaresolverr_without_cache(
     async def no_flaresolverr(_url):
         return None
 
+    async def no_browser_svc(_url):
+        return None
+
     async def no_cache(_url):
         return None
 
@@ -536,9 +561,16 @@ async def test_unresolved_turnstile_survives_failed_flaresolverr_without_cache(
     monkeypatch.setattr(fetch, "_head_probe", shielded)
     monkeypatch.setattr(fetch, "fetch_via_playwright", playwright)
     monkeypatch.setattr(fetch, "fetch_via_flaresolverr", no_flaresolverr)
+    monkeypatch.setattr(fetch, "_fetch_via_browser_svc", no_browser_svc)
     monkeypatch.setattr(fetch, "_set_cache", cache)
     result = await fetch.smart_scrape("https://example.test")
     assert result["error_code"] == "CAPTCHA_UNRESOLVED"
+    assert result["recovery"]["exhausted"] is True
+    assert [attempt["strategy"] for attempt in result["recovery"]["attempts"]] == [
+        "playwright",
+        "flaresolverr",
+        "browser-svc",
+    ]
     assert not writes
 
 
@@ -618,6 +650,11 @@ async def test_public_scrape_maps_unresolved_captcha_to_typed_error(monkeypatch)
             "error": "CAPTCHA challenge could not be resolved",
             "error_code": "CAPTCHA_UNRESOLVED",
             "barrier": {"provider": "recaptcha", "attempted_strategies": ["checkbox"]},
+            "recovery": {
+                "outcome": "unresolved",
+                "exhausted": True,
+                "attempts": [{"strategy": "playwright", "outcome": "barrier"}],
+            },
         }
 
     monkeypatch.setattr(app, "smart_scrape", unresolved)
@@ -625,6 +662,34 @@ async def test_public_scrape_maps_unresolved_captcha_to_typed_error(monkeypatch)
         await app.scrape(app.ScrapeRequest(url="https://example.test"))
     assert error.value.error_code == "CAPTCHA_UNRESOLVED"
     assert error.value.details["provider"] == "recaptcha"
+    assert error.value.details["recovery"]["exhausted"] is True
+
+
+@pytest.mark.asyncio
+async def test_public_scrape_preserves_exhausted_barrier_receipt(monkeypatch):
+    import scraper.app as app
+    from scraper.exceptions import BarrierDetectedError
+
+    async def unresolved(*_args, **_kwargs):
+        return {
+            "error": "Barrier detected",
+            "error_code": "BARRIER_DETECTED",
+            "barrier": {"type": "fastly", "provider": "fastly"},
+            "recovery": {
+                "outcome": "unresolved",
+                "exhausted": True,
+                "attempts": [
+                    {"strategy": "playwright", "outcome": "barrier"},
+                    {"strategy": "browser-svc", "outcome": "barrier"},
+                ],
+            },
+        }
+
+    monkeypatch.setattr(app, "smart_scrape", unresolved)
+    with pytest.raises(BarrierDetectedError) as error:
+        await app.scrape(app.ScrapeRequest(url="https://example.test"))
+    assert error.value.error_code == "BARRIER_DETECTED"
+    assert error.value.details["recovery"]["exhausted"] is True
 
 
 @pytest.mark.asyncio
@@ -695,7 +760,7 @@ async def test_adapter_identifier_dispatches_before_url_guard(monkeypatch):
 
         @staticmethod
         async def dispatch(url, _ctx):
-            assert url == "cve:CVE-1"
+            assert url == "cve:CVE-2024-1234"
             return AdapterResult()
 
     def unexpected_guard(_url):
@@ -704,7 +769,7 @@ async def test_adapter_identifier_dispatches_before_url_guard(monkeypatch):
     monkeypatch.setattr(fetch, "get_registry", lambda: Registry())
     monkeypatch.setattr(fetch, "_is_private_url", unexpected_guard)
 
-    result = await fetch.smart_scrape("cve:CVE-1")
+    result = await fetch.smart_scrape("cve:CVE-2024-1234")
 
     assert result["source"] == "nvd"
     assert result["markdown"] == "CVE content"
@@ -717,14 +782,143 @@ async def test_smart_scrape_blocks_private_url_before_any_fetch_tier(monkeypatch
     async def unexpected_fetch(*_args, **_kwargs):
         raise AssertionError("fetch tier must not run for a private destination")
 
+    async def private_guard(_url):
+        return True, "blocked"
+
     monkeypatch.setattr(fetch._settings, "scraper_private_url_allowlist", "")
-    monkeypatch.setattr(fetch, "_is_private_url", lambda _url: (True, "blocked"))
+    monkeypatch.setattr(fetch, "_is_private_url", private_guard)
     monkeypatch.setattr(fetch, "fetch_via_playwright", unexpected_fetch)
 
     result = await fetch.smart_scrape("http://127.0.0.1/private", force_browser=True)
 
     assert result["error_code"] == "PRIVATE_URL_BLOCKED"
     assert result["markdown"] == ""
+
+
+@pytest.mark.asyncio
+async def test_smart_scrape_blocks_private_url_before_adapter_dispatch(monkeypatch):
+    import scraper.fetch as fetch
+
+    dispatches = []
+
+    class Registry:
+        _entries = [object()]
+
+        async def dispatch(self, url, _ctx):
+            dispatches.append(url)
+            raise AssertionError("private destination must be denied before adapters")
+
+    async def private_guard(_url):
+        return True, "blocked"
+
+    monkeypatch.setattr(fetch, "get_registry", lambda: Registry())
+    monkeypatch.setattr(fetch._settings, "scraper_private_url_allowlist", "")
+    monkeypatch.setattr(fetch, "_is_private_url", private_guard)
+
+    result = await fetch.smart_scrape("http://127.0.0.1/private")
+
+    assert result["error_code"] == "PRIVATE_URL_BLOCKED"
+    assert dispatches == []
+
+
+@pytest.mark.asyncio
+async def test_policy_oracle_outage_fails_closed_before_adapter_dispatch(monkeypatch):
+    import scraper.fetch as fetch
+    from scraper.source_http import SourceDestinationPolicyUnavailableError
+
+    dispatches = []
+
+    class Registry:
+        _entries = [object()]
+
+        async def dispatch(self, url, _ctx):
+            dispatches.append(url)
+            raise AssertionError("unverified destination must be denied")
+
+    async def unavailable(_url):
+        raise SourceDestinationPolicyUnavailableError("test-outage")
+
+    monkeypatch.setattr(fetch, "get_registry", lambda: Registry())
+    monkeypatch.setattr(fetch._settings, "scraper_private_url_allowlist", "")
+    monkeypatch.setattr(fetch, "_is_private_url", unavailable)
+
+    result = await fetch.smart_scrape("https://example.test/article")
+
+    assert result["error_code"] == "SOURCE_DESTINATION_VALIDATION_UNAVAILABLE"
+    assert dispatches == []
+
+
+@pytest.mark.asyncio
+async def test_explicit_private_allowlist_still_allows_adapter_dispatch(monkeypatch):
+    import scraper.fetch as fetch
+
+    seen = []
+
+    class AdapterResult:
+        source = "fixture-adapter"
+
+        @staticmethod
+        def to_dict():
+            return {"markdown": "allowed", "source": "fixture-adapter"}
+
+    class Registry:
+        _entries = [object()]
+
+        async def dispatch(self, url, _ctx):
+            seen.append(url)
+            return AdapterResult()
+
+    monkeypatch.setattr(fetch, "get_registry", lambda: Registry())
+    monkeypatch.setattr(
+        fetch._settings, "scraper_private_url_allowlist", "private.test"
+    )
+    monkeypatch.setattr(
+        fetch,
+        "_is_private_url",
+        lambda _url: (_ for _ in ()).throw(
+            AssertionError("allowlist should bypass private check")
+        ),
+    )
+
+    result = await fetch.smart_scrape("http://private.test/article")
+
+    assert result["markdown"] == "allowed"
+    assert seen == ["http://private.test/article"]
+
+
+@pytest.mark.asyncio
+async def test_public_adapter_dispatch_is_unchanged_after_destination_check(
+    monkeypatch,
+):
+    import scraper.fetch as fetch
+
+    seen = []
+
+    class AdapterResult:
+        source = "fixture-adapter"
+
+        @staticmethod
+        def to_dict():
+            return {"markdown": "public adapter", "source": "fixture-adapter"}
+
+    class Registry:
+        _entries = [object()]
+
+        async def dispatch(self, url, _ctx):
+            seen.append(url)
+            return AdapterResult()
+
+    async def public_guard(_url):
+        return False, ""
+
+    monkeypatch.setattr(fetch, "get_registry", lambda: Registry())
+    monkeypatch.setattr(fetch._settings, "scraper_private_url_allowlist", "")
+    monkeypatch.setattr(fetch, "_is_private_url", public_guard)
+
+    result = await fetch.smart_scrape("https://public.example/article")
+
+    assert result["markdown"] == "public adapter"
+    assert seen == ["https://public.example/article"]
 
 
 def test_private_url_allowlist_matches_exact_hostname_only(monkeypatch):
@@ -764,6 +958,37 @@ async def test_agent_scrape_route_raises_typed_captcha_error():
 
     assert error.value.error_code == "CAPTCHA_UNRESOLVED"
     assert error.value.details["provider"] == "hcaptcha"
+
+
+@pytest.mark.asyncio
+async def test_agent_scrape_route_preserves_exhausted_barrier_receipt():
+    from agent.exceptions import BarrierDetectedError
+    from agent.models import ScrapeRequest
+    from agent.routes.scrape import scrape
+
+    recovery = {
+        "outcome": "unresolved",
+        "exhausted": True,
+        "attempts": [{"strategy": "browser-svc", "outcome": "barrier"}],
+    }
+
+    class Client:
+        async def scrape(self, *_args, **_kwargs):
+            return {
+                "success": False,
+                "error": "Barrier detected",
+                "error_code": "BARRIER_DETECTED",
+                "details": {"barrier": {"type": "fastly"}, "recovery": recovery},
+            }
+
+    request = types.SimpleNamespace(
+        app=types.SimpleNamespace(state=types.SimpleNamespace(scraper_client=Client()))
+    )
+    with pytest.raises(BarrierDetectedError) as error:
+        await scrape(request, ScrapeRequest(url="https://example.test"))
+
+    assert error.value.error_code == "BARRIER_DETECTED"
+    assert error.value.details["recovery"] == recovery
 
 
 @pytest.mark.asyncio

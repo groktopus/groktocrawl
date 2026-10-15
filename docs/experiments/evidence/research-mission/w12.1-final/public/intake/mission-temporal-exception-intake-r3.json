@@ -1,0 +1,52 @@
+{
+  "case_id": "mission-temporal-exception",
+  "completed_at": "2026-09-19T06:08:06.655068+00:00",
+  "position": 10,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "270b23b7ea23bb154177418f5eb83d83cdcdb5a606078cea59b4e40cabf8d205",
+    "finish_reason": "stop",
+    "latency_ms": 12282.45,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "d9647ddc6b4ade4dac04b457463da41ff20c0a7d1a3d9218d7458a08de0a9d5b",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 170,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0.000394,
+      "cost_details": {
+        "upstream_inference_completions_cost": 8.5e-05,
+        "upstream_inference_cost": 0.000394,
+        "upstream_inference_prompt_cost": 0.000309
+      },
+      "is_byok": false,
+      "prompt_tokens": 2060,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 2230
+    }
+  },
+  "repetition": 3,
+  "result": {
+    "action": "clarify",
+    "clarifying_question": "Which documented exception do you mean — the specific policy, contract clause, or change-management provision (e.g., its document name/ID and section) — and which pilot change (system, repository, or change request) should the authorization question be evaluated against?",
+    "mission": null,
+    "rationale": "The request asks whether 'the documented exception' authorizes 'the pilot change,' but no source text identifying either the exception or the change was supplied. Both references are decision-changing ambiguities: without knowing which exception document and which change are in scope, any research mission would have to guess at its own subject matter, risking a fabricated scope or invented authority. A single blocking clarification resolves this without guessing; research itself is not inappropriate, so abstention is not warranted."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:07:54.368399+00:00",
+  "status": "completed",
+  "trial_id": "mission-temporal-exception-intake-r3"
+}

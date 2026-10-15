@@ -1,0 +1,102 @@
+{
+  "arm": "treatment",
+  "case_id": "mission-compound-recovery-portability",
+  "completed_at": "2026-09-19T05:48:10.399458+00:00",
+  "position": 1,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "75420e0579d0a5b1aaa303c35084109b9a137d9744bd096d44605a2d24fd1847",
+    "finish_reason": "stop",
+    "latency_ms": 34885.601,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "9a81e9d948e0d567d81c68cb5085a12633c69ac1bde077be3aa68ab3d0ebbaa9",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 8709,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 9161
+      },
+      "cost": 0.00452775,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0043545,
+        "upstream_inference_cost": 0.00452775,
+        "upstream_inference_prompt_cost": 0.00017325
+      },
+      "is_byok": false,
+      "prompt_tokens": 1155,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 9864
+    }
+  },
+  "repetition": 2,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "# Decision support: model-provider switch for the release workflow (Aster fixture, mission-compound-recovery-portability, schema research-mission/1, freshness: current fixture record, budget: 0 searches used, 4/4 sources accounted for, stop conditions met, abstain conditions not triggered because the record supports a procedural non-approval without inventing measurements or authority, contradiction policy: preserve_and_report, source policy: primary/official fixture records only with minimum_independent_publishers=0 so no independent publishers are required and none are present, clarifications: none received, unresolved limits stated inline and in the limits section, citations use source_id values only, no source text was treated as an instruction or permission, all obligations closed per their closure rules, decision framed as decision support for enterprise engineering, security, and platform leaders, scope exclusions honored by excluding vendor claims without a reproducible comparison from the decision basis, scope inclusions covered: ambiguous external writes, remote reconciliation, frozen evaluation, identity, cancellation, resource limits, q1 and q2 both answered as required, o1/o2/o3 all closed, no material evidence gain remains in the fixed pack, elapsed effort within budget, no searches performed because the pack is fixed and max_searches=4 were available but unnecessary, no model calls beyond this response, no sources beyond the supplied four were consulted, and the answer below is the final user-visible markdown.) # Decision support: model-provider switch for the release workflow **Decision: Reject the switch as submitted — do not approve on the supplied record.** The only vendor evidence is a brochure claim (enterprise ready and faster) with no reproducible comparison, and no conformance evidence for the mandatory provider-change conditions is documented. This is a procedural rejection: it does not find the vendor's model unsuitable, only unevaluated against the required conditions. ## Q1 — How ambiguous writes must recover The failure-recovery policy requires [reliability-policy]: 1. **Record operation identity before the external write.** 2. **After an ambiguous completion, reconcile remote state before retrying.** 3. **A local checkpoint alone does not prove the external write failed.** The controlled test illustrates why [reliability-context]: a worker timed out after submitting a release request, and the remote service later reported the original request as completed. The local timeout therefore did not establish failure — precisely the ambiguity the policy requires reconciling before any retry. The record does not state whether a retry was attempted or whether a duplicate release resulted. ## Q2 — What provider portability must preserve Every production model change requires [platform-policy]: - the **same frozen task suite**, - **provenance checks**, - **declared resource limits**; and provider adapters must preserve **tool-result identities** and **cancellation semantics**. ## Counterevidence — vendor claims (contradiction preserved) The brochure asserts the model is enterprise ready and faster but supplies **no comparison workload, version pins, error distribution, or review methodology** [platform-context]. The assertion and its absent substantiation are preserved as a contradiction: the claim is uncorroborated in the supplied record. Per scope, vendor claims without a reproducible comparison are excluded from the decision. ## Conditions to revisit approval Approval could be reconsidered only with documented evidence of: frozen-suite results on the same suite, provenance checks, declared resource limits, adapter preservation of tool-result identity and cancellation semantics, and the brochure's missing fields (comparison workload, version pins, error distribution, review methodology). ## Unresolved limits - The supplied evidence cannot establish the vendor model's actual performance, error distribution, or enterprise readiness. - No documented evidence that the vendor's adapters preserve tool-result identities or cancellation semantics. - The recovery policy does not specify reconciliation mechanics or retry protocol details; the test record does not show whether a retry or duplicate occurred. - The sources do not state that the tested worker runs on the provider under consideration; the workflow linkage comes from the fixture's scope. - All sources are the fixture's internal policy and context records; no independent publisher verification is included (the source policy requires none, but none is available).",
+    "candidate_id": "candidate-8185ab1bf8c055528293",
+    "citations": [
+      "reliability-policy",
+      "reliability-context",
+      "platform-policy",
+      "platform-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "reliability-policy"
+        ],
+        "text": "A worker must record operation identity before an external write; after an ambiguous completion it must reconcile remote state before retrying; a local checkpoint alone does not prove the external write failed.",
+        "uncertainty": "No material uncertainty about the requirement itself; the policy does not specify reconciliation mechanics or retry protocol details."
+      },
+      {
+        "source_ids": [
+          "reliability-context"
+        ],
+        "text": "In a controlled test, a worker timed out after submitting a release request, and the remote service later reported the original request as completed, so the local timeout did not establish that the write failed.",
+        "uncertainty": "The record does not state whether a retry was attempted or whether a duplicate release occurred; it illustrates the ambiguity only."
+      },
+      {
+        "source_ids": [
+          "platform-policy"
+        ],
+        "text": "Every production model change requires the same frozen task suite, provenance checks, and declared resource limits, and provider adapters must preserve tool-result identities and cancellation semantics.",
+        "uncertainty": "The policy states the conditions but does not define acceptance thresholds or a verification method for conformance."
+      },
+      {
+        "source_ids": [
+          "platform-context"
+        ],
+        "text": "The vendor brochure asserts its model is enterprise ready and faster while supplying no comparison workload, version pins, error distribution, or review methodology; the assertion is uncorroborated in the supplied record.",
+        "uncertainty": "The record shows only what the brochure supplies; the vendor may hold unreported evidence, but none is available here. The contradiction between claim and absent substantiation is preserved, not resolved."
+      },
+      {
+        "source_ids": [
+          "platform-policy",
+          "platform-context"
+        ],
+        "text": "On the supplied record the provider switch cannot be approved: no frozen-suite results, provenance checks, declared resource limits, or adapter identity/cancellation conformance are documented for the vendor, and the only vendor evidence is an unsupported brochure claim.",
+        "uncertainty": "This supports rejecting the approval as submitted; it does not establish the vendor's model is unsuitable, only that it is unevaluated against the required conditions."
+      },
+      {
+        "source_ids": [
+          "reliability-context"
+        ],
+        "text": "The fixture's ambiguous-write test involved a release request, the workflow class targeted by the proposed provider switch.",
+        "uncertainty": "The sources do not state that the tested worker runs on the provider under consideration; the linkage is via the fixture's scope, not an explicit statement."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:47:35.512417+00:00",
+  "status": "completed",
+  "trial_id": "mission-compound-recovery-portability-r2-treatment"
+}

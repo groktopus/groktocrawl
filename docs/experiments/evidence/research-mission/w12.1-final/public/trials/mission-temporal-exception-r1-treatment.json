@@ -1,0 +1,13 @@
+{
+  "arm": "treatment",
+  "case_id": "mission-temporal-exception",
+  "error": "model response has no string content",
+  "error_type": "ValueError",
+  "failed_at": "2026-09-19T05:46:41.700021+00:00",
+  "position": 2,
+  "repetition": 1,
+  "schema_version": "research-mission-downstream-trial/1",
+  "started_at": "2026-09-19T05:43:57.145695+00:00",
+  "status": "failed",
+  "trial_id": "mission-temporal-exception-r1-treatment"
+}

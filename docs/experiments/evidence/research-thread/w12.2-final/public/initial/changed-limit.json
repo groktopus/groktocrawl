@@ -1,0 +1,59 @@
+{
+  "answer": {
+    "answer": "Based on the only supplied snapshot, Atlas Runner 1.0 supports up to 8 concurrent jobs, as stated in its release notes [atlas-release-1]. This figure is documented for version 1.0 specifically; no supplied source addresses later versions, so any change to the concurrency limit after 1.0 cannot be confirmed or denied from the available evidence.",
+    "change_events": [],
+    "citations": [
+      "atlas-release-1"
+    ],
+    "current_truths": [
+      "Atlas Runner 1.0 supports up to 8 concurrent jobs, per its release notes [atlas-release-1]."
+    ],
+    "historical_truths": [
+      "The Atlas Runner 1.0 release notes documented support for up to 8 concurrent jobs [atlas-release-1]."
+    ],
+    "unresolved": [
+      "No supplied snapshot covers any Atlas Runner version after 1.0, so whether the concurrency limit changed in later releases is unknown.",
+      "The sources do not state whether the 8-concurrent-job limit is a hard cap or configurable.",
+      "No information is available on concurrency behavior for other editions, tiers, or deployment modes of Atlas Runner."
+    ]
+  },
+  "case_id": "changed-limit",
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "3770ccb984e43c998ccad034f1c912a92a09df9a0b42df3b44f092325fc94399",
+    "finish_reason": "stop",
+    "latency_ms": 10091.327,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "0bd84bf2cbb4be8aa5f1c63b5ec3151a230be0a6c804303f26697a6a15562e8d",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 804,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 566
+      },
+      "cost": 0.00046695,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000402,
+        "upstream_inference_cost": 0.00046695,
+        "upstream_inference_prompt_cost": 6.495e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 433,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1237
+    }
+  },
+  "schema_version": "research-thread-initial/1",
+  "status": "completed"
+}

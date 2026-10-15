@@ -1,0 +1,95 @@
+{
+  "schema_version": "research-thread-corpus/1",
+  "cases": [
+    {
+      "case_id": "changed-limit",
+      "stratum": "changed",
+      "question": "What changed in Atlas Runner's supported concurrency, and what is current now?",
+      "initial_question": "What concurrency does Atlas Runner support?",
+      "subjects": [{"subject_id": "atlas-runner", "label": "Atlas Runner", "identifiers": ["vendor.example/atlas-runner"]}],
+      "initial_sources": [{"snapshot_id": "atlas-release-1", "subject_id": "atlas-runner", "lineage_id": "atlas-release", "title": "Atlas Runner 1.0 release notes", "text": "Atlas Runner 1.0 supports up to 8 concurrent jobs.", "source_role": "primary"}],
+      "followup_sources": [{"snapshot_id": "atlas-release-2", "subject_id": "atlas-runner", "lineage_id": "atlas-release", "title": "Atlas Runner 1.1 release notes", "text": "Atlas Runner 1.1 raises the supported limit from 8 to 16 concurrent jobs.", "source_role": "primary"}],
+      "expected": {"change_events": ["The supported limit increased from 8 to 16."], "current_truths": ["Atlas Runner 1.1 supports 16 concurrent jobs."], "historical_truths": ["Atlas Runner 1.0 supported 8 concurrent jobs."], "unresolved": [], "prohibited_merges": []}
+    },
+    {
+      "case_id": "renamed-feature",
+      "stratum": "terminology",
+      "question": "Did Northstar remove policy checks, or were they renamed?",
+      "initial_question": "How are policy checks configured in Northstar?",
+      "subjects": [{"subject_id": "northstar", "label": "Northstar", "identifiers": ["docs.example/northstar"]}],
+      "initial_sources": [{"snapshot_id": "northstar-policy-old", "subject_id": "northstar", "lineage_id": "northstar-policy-doc", "title": "Northstar 3 guide", "text": "Northstar 3 calls pre-deployment controls policy checks.", "source_role": "primary"}],
+      "followup_sources": [{"snapshot_id": "northstar-policy-new", "subject_id": "northstar", "lineage_id": "northstar-policy-doc", "title": "Northstar 4 migration guide", "text": "Northstar 4 renames policy checks to release guards; their purpose is unchanged.", "source_role": "primary"}],
+      "expected": {"change_events": ["Policy checks were renamed release guards."], "current_truths": ["Northstar 4 uses the term release guards."], "historical_truths": ["Northstar 3 used the term policy checks."], "unresolved": [], "prohibited_merges": []}
+    },
+    {
+      "case_id": "syndicated-copy",
+      "stratum": "derivative",
+      "question": "Is there independent confirmation that BirchDB passed the audit?",
+      "initial_question": "What does BirchDB say about its audit status?",
+      "subjects": [{"subject_id": "birchdb", "label": "BirchDB", "identifiers": ["birch.example/product"]}],
+      "initial_sources": [{"snapshot_id": "birch-press", "subject_id": "birchdb", "lineage_id": "birch-announcement", "title": "BirchDB press release", "text": "BirchDB states that it passed the Cedar security audit.", "source_role": "primary"}],
+      "followup_sources": [{"snapshot_id": "birch-news-copy", "subject_id": "birchdb", "lineage_id": "birch-announcement", "title": "Industry Wire", "text": "Syndicated verbatim from BirchDB: BirchDB states that it passed the Cedar security audit.", "source_role": "derivative"}],
+      "expected": {"change_events": ["A derivative copy became available."], "current_truths": ["BirchDB claims it passed the audit."], "historical_truths": [], "unresolved": ["No independent audit confirmation is present."], "prohibited_merges": ["Do not count the syndicated copy as independent corroboration."]}
+    },
+    {
+      "case_id": "live-contradiction",
+      "stratum": "contradiction",
+      "question": "Does Delta Queue guarantee exactly-once delivery?",
+      "initial_question": "What delivery guarantee does Delta Queue document?",
+      "subjects": [{"subject_id": "delta-queue", "label": "Delta Queue", "identifiers": ["delta.example/queue"]}],
+      "initial_sources": [{"snapshot_id": "delta-doc", "subject_id": "delta-queue", "lineage_id": "delta-docs", "title": "Delta Queue documentation", "text": "Delta Queue documentation describes exactly-once delivery.", "source_role": "primary"}],
+      "followup_sources": [{"snapshot_id": "delta-incident", "subject_id": "delta-queue", "lineage_id": "delta-incident", "title": "Delta Queue incident report", "text": "During incident DQ-17, some messages were delivered twice.", "source_role": "primary"}],
+      "expected": {"change_events": ["A primary incident report introduced contradictory evidence."], "current_truths": [], "historical_truths": ["The documentation described exactly-once delivery."], "unresolved": ["The unconditional exactly-once guarantee is contested."], "prohibited_merges": ["Do not resolve the contradiction by selecting only one source."]}
+    },
+    {
+      "case_id": "historical-support",
+      "stratum": "historical",
+      "question": "Which authentication mode is current, and what was valid before?",
+      "initial_question": "Which authentication mode does Elm API require?",
+      "subjects": [{"subject_id": "elm-api", "label": "Elm API", "identifiers": ["elm.example/api"]}],
+      "initial_sources": [{"snapshot_id": "elm-auth-2025", "subject_id": "elm-api", "lineage_id": "elm-auth", "title": "Elm API 2025 guide", "text": "In 2025, Elm API required API keys.", "source_role": "primary"}],
+      "followup_sources": [{"snapshot_id": "elm-auth-2026", "subject_id": "elm-api", "lineage_id": "elm-auth", "title": "Elm API 2026 guide", "text": "Beginning in 2026, Elm API requires OAuth 2.1 and no longer accepts API keys.", "source_role": "primary"}],
+      "expected": {"change_events": ["OAuth 2.1 replaced API keys in 2026."], "current_truths": ["Elm API currently requires OAuth 2.1."], "historical_truths": ["API keys were valid in 2025."], "unresolved": [], "prohibited_merges": ["Do not rewrite the 2025 historical claim as false."]}
+    },
+    {
+      "case_id": "later-resolution",
+      "stratum": "resolved",
+      "question": "Has Fern CI now published its retention period?",
+      "initial_question": "How long does Fern CI retain build logs?",
+      "subjects": [{"subject_id": "fern-ci", "label": "Fern CI", "identifiers": ["fern.example/ci"]}],
+      "initial_sources": [{"snapshot_id": "fern-faq-old", "subject_id": "fern-ci", "lineage_id": "fern-faq", "title": "Fern CI FAQ", "text": "The build-log retention period is not specified.", "source_role": "primary"}],
+      "followup_sources": [{"snapshot_id": "fern-faq-new", "subject_id": "fern-ci", "lineage_id": "fern-faq", "title": "Fern CI FAQ update", "text": "Fern CI retains build logs for 30 days.", "source_role": "primary"}],
+      "expected": {"change_events": ["The previously missing retention period was published."], "current_truths": ["Fern CI retains build logs for 30 days."], "historical_truths": ["The earlier FAQ did not specify a period."], "unresolved": [], "prohibited_merges": []}
+    },
+    {
+      "case_id": "rotated-link",
+      "stratum": "unavailable",
+      "question": "What can we establish after Grove's old advisory URL disappeared?",
+      "initial_question": "What did Grove advisory G-12 report?",
+      "subjects": [{"subject_id": "grove", "label": "Grove", "identifiers": ["grove.example"]}],
+      "initial_sources": [{"snapshot_id": "grove-g12-old", "subject_id": "grove", "lineage_id": "grove-g12", "title": "Grove advisory G-12", "text": "Advisory G-12 reported that versions before 4.2 were affected.", "source_role": "primary"}],
+      "followup_sources": [{"snapshot_id": "grove-g12-gone", "subject_id": "grove", "lineage_id": "grove-g12", "title": "Former G-12 URL", "text": "The requested advisory is unavailable at this URL.", "source_role": "unavailable"}],
+      "expected": {"change_events": ["The live advisory URL became unavailable."], "current_truths": [], "historical_truths": ["The retained snapshot reported versions before 4.2 affected."], "unresolved": ["The current advisory status cannot be established from the unavailable page."], "prohibited_merges": ["Do not substitute unrelated current content for the retained snapshot."]}
+    },
+    {
+      "case_id": "near-match-products",
+      "stratum": "near_match",
+      "question": "Did Harbor Agent gain offline mode?",
+      "initial_question": "Does Harbor Agent support offline mode?",
+      "subjects": [{"subject_id": "harbor-agent", "label": "Harbor Agent", "identifiers": ["harbor.example/agent"]}, {"subject_id": "harbor-agent-cloud", "label": "Harbor Agent Cloud", "identifiers": ["harbor.example/agent-cloud"]}],
+      "initial_sources": [{"snapshot_id": "harbor-agent-doc", "subject_id": "harbor-agent", "lineage_id": "harbor-agent-docs", "title": "Harbor Agent guide", "text": "Harbor Agent requires a network connection.", "source_role": "primary"}],
+      "followup_sources": [{"snapshot_id": "harbor-cloud-doc", "subject_id": "harbor-agent-cloud", "lineage_id": "harbor-cloud-docs", "title": "Harbor Agent Cloud guide", "text": "Harbor Agent Cloud added an offline export mode.", "source_role": "primary"}],
+      "expected": {"change_events": [], "current_truths": ["Harbor Agent is still only documented as requiring a network connection."], "historical_truths": [], "unresolved": ["No new Harbor Agent source establishes offline support."], "prohibited_merges": ["Do not transfer Harbor Agent Cloud capability to Harbor Agent."]}
+    },
+    {
+      "case_id": "stable-anchor",
+      "stratum": "no_change",
+      "question": "Has Iris Build changed its artifact checksum algorithm?",
+      "initial_question": "Which checksum algorithm does Iris Build use?",
+      "subjects": [{"subject_id": "iris-build", "label": "Iris Build", "identifiers": ["iris.example/build"]}],
+      "initial_sources": [{"snapshot_id": "iris-checksum-old", "subject_id": "iris-build", "lineage_id": "iris-checksum", "title": "Iris Build guide", "text": "Iris Build records SHA-256 checksums for artifacts.", "source_role": "primary"}],
+      "followup_sources": [{"snapshot_id": "iris-checksum-new", "subject_id": "iris-build", "lineage_id": "iris-checksum", "title": "Iris Build current guide", "text": "Iris Build records SHA-256 checksums for artifacts.", "source_role": "primary"}],
+      "expected": {"change_events": [], "current_truths": ["Iris Build uses SHA-256 checksums."], "historical_truths": ["The earlier guide also specified SHA-256."], "unresolved": [], "prohibited_merges": ["Do not invent a change merely because a new snapshot exists."]}
+    }
+  ]
+}

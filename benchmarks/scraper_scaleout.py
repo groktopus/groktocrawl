@@ -22,7 +22,7 @@ COMPOSE = [
     "docker",
     "compose",
     "-p",
-    "groktocrawl-scaleout-smoke",
+    os.environ.get("SCALEOUT_PROJECT_NAME", "groktocrawl-scaleout-smoke"),
     "-f",
     "docker-compose.yml",
     "-f",
@@ -100,18 +100,37 @@ def graceful_drain_probe():
 def main():
     os.environ.setdefault("SCRAPER_HOST_PORT", "18091")
     report = {
-        "workload": "100ms acquisition twin, four slots per replica",
+        "workload": "100ms acquisition twin, 16 slots per one-CPU replica",
         "results": [],
     }
     try:
         for count in (1, 2, 4):
-            compose("up", "-d", "--scale", f"scraper-svc={count}", "scraper-gateway")
+            os.environ["ADMISSION_BROWSER_LIMIT"] = str(count * 16 * 8)
+            config = json.loads(compose("config", "--format", "json"))
+            scraper = config["services"]["scraper-svc"]
+            scraper_env = scraper["environment"]
+            agent_env = config["services"]["agent-svc"]["environment"]
+            assert float(scraper["cpus"]) == 1.0
+            assert scraper_env["SCRAPER_MAX_BROWSER_CONCURRENCY"] == "16"
+            assert scraper_env["SCRAPER_BROWSER_POOL_ENABLED"] == "true"
+            assert agent_env["ADMISSION_BROWSER_LIMIT"] == str(count * 16 * 8)
+            compose(
+                "up",
+                "-d",
+                "--pull",
+                "missing",
+                "--scale",
+                f"scraper-svc={count}",
+                "scraper-gateway",
+            )
             deadline = time.monotonic() + 60
             seen = set()
             while time.monotonic() < deadline:
                 try:
-                    with concurrent.futures.ThreadPoolExecutor(max_workers=16) as pool:
-                        samples = list(pool.map(lambda _: request(), range(16)))
+                    with concurrent.futures.ThreadPoolExecutor(
+                        max_workers=16 * count
+                    ) as pool:
+                        samples = list(pool.map(lambda _: request(), range(16 * count)))
                     seen = {backend for _, backend in samples}
                     if len(seen) == count:
                         break
@@ -123,8 +142,8 @@ def main():
             )
             single = [request()[0] for _ in range(5)]
             started = time.monotonic()
-            with concurrent.futures.ThreadPoolExecutor(max_workers=16) as pool:
-                samples = list(pool.map(lambda _: request(), range(64)))
+            with concurrent.futures.ThreadPoolExecutor(max_workers=16 * count) as pool:
+                samples = list(pool.map(lambda _: request(), range(64 * count)))
             elapsed = time.monotonic() - started
             latencies = sorted(t for t, _ in samples)
             report["results"].append(

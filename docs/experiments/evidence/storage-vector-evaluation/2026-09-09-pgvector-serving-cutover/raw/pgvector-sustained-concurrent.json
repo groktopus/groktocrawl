@@ -1,0 +1,58 @@
+{
+  "drain_seconds": 0.000782,
+  "manifest": {
+    "concurrency": 4,
+    "immediate_searches": 240,
+    "seed": "groktocrawl-x-shadow-lag-v1",
+    "shadow_sample_rate": 1.0,
+    "steady_searches": 120,
+    "stop_conditions": {
+      "backlog_drain_timeout_seconds": 60,
+      "http_timeout_seconds": 180
+    },
+    "utc_end": "2026-09-09T10:30:08.282989+00:00",
+    "utc_start": "2026-09-09T10:29:28.134365+00:00",
+    "writes": 240
+  },
+  "metrics": {
+    "after_mixed_comparisons": {},
+    "baseline_comparisons": {},
+    "completion_lag_histogram": {},
+    "final_comparisons": {},
+    "maximum_sampled_inflight": 0,
+    "sample_count": 394
+  },
+  "mixed": {
+    "duration_seconds": 30.408,
+    "index_http_failures": 0,
+    "index_latency": {
+      "count": 240,
+      "maximum_ms": 325.344,
+      "median_ms": 251.587,
+      "minimum_ms": 121.308,
+      "p95_ms": 303.218
+    },
+    "response_digest_count": 240,
+    "search_http_failures": 0,
+    "search_latency": {
+      "count": 240,
+      "maximum_ms": 336.646,
+      "median_ms": 245.222,
+      "minimum_ms": 197.259,
+      "p95_ms": 306.626
+    }
+  },
+  "schema_version": "pgvector-shadow-sustained-lag/1",
+  "steady": {
+    "duration_seconds": 7.664,
+    "http_failures": 0,
+    "latency": {
+      "count": 120,
+      "maximum_ms": 300.971,
+      "median_ms": 252.69,
+      "minimum_ms": 69.158,
+      "p95_ms": 296.177
+    },
+    "response_digest_count": 120
+  }
+}

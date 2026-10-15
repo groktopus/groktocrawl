@@ -1,0 +1,9 @@
+{
+  "base_url_origin": "https://research-provider.example/",
+  "concurrency": 5,
+  "model_route": "general",
+  "schema_version": "research-mission-intake-manifest/1",
+  "source_revision": "a2a743b44bb2c2420d523703ff15afb6e84c97c5",
+  "started_at": "2026-09-19T06:00:57.681126+00:00",
+  "work_order_sha256": "333540621af6c25f0babafadb0c8b6eccc23bc5b7a796e0eafab739d5f27dabb"
+}

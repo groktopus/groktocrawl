@@ -1,0 +1,7 @@
+{
+  "index_latency_ms": 60,
+  "index_status": "indexed",
+  "search_latency_ms": 76,
+  "search_returned": 3,
+  "search_top_url": "https://pilot.invalid/failure/postgres-unavailable"
+}

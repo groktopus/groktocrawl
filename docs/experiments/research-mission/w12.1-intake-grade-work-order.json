@@ -1,0 +1,187 @@
+{
+  "schema_version": "research-mission-intake-grade-work-order/1",
+  "seed": 20260919,
+  "trials": [
+    {
+      "candidate_id": "intake-candidate-b5c8a111de9c93d41e29",
+      "case_id": "mission-compound-recovery-portability",
+      "position": 1
+    },
+    {
+      "candidate_id": "intake-candidate-29e1804f4930d5ab48f8",
+      "case_id": "mission-ambiguous-productive",
+      "position": 2
+    },
+    {
+      "candidate_id": "intake-candidate-2e276a9303e00b64c01b",
+      "case_id": "mission-compound-governance",
+      "position": 3
+    },
+    {
+      "candidate_id": "intake-candidate-6049435a6d71f03ce658",
+      "case_id": "mission-unanswerable-release",
+      "position": 4
+    },
+    {
+      "candidate_id": "intake-candidate-c8f1b0c53a87b15d323b",
+      "case_id": "mission-ambiguous-ship",
+      "position": 5
+    },
+    {
+      "candidate_id": "intake-candidate-1c0100f57a9943f5b00f",
+      "case_id": "mission-temporal-exception",
+      "position": 6
+    },
+    {
+      "candidate_id": "intake-candidate-253c1f6f08c15f308437",
+      "case_id": "mission-contradictory-hostile",
+      "position": 7
+    },
+    {
+      "candidate_id": "intake-candidate-5e6c5d8a3fb2ae716cb7",
+      "case_id": "mission-temporal-exception",
+      "position": 8
+    },
+    {
+      "candidate_id": "intake-candidate-b77927883691eedec4b3",
+      "case_id": "mission-unanswerable-release",
+      "position": 9
+    },
+    {
+      "candidate_id": "intake-candidate-e515f2e650d88ca6c057",
+      "case_id": "mission-compound-governance",
+      "position": 10
+    },
+    {
+      "candidate_id": "intake-candidate-2e7d1ac8eb68147c6808",
+      "case_id": "mission-straightforward-delivery",
+      "position": 11
+    },
+    {
+      "candidate_id": "intake-candidate-4d6b1ed1b3473559ae35",
+      "case_id": "mission-temporal-provider",
+      "position": 12
+    },
+    {
+      "candidate_id": "intake-candidate-b22c4cf39ea24746458f",
+      "case_id": "mission-ambiguous-productive",
+      "position": 13
+    },
+    {
+      "candidate_id": "intake-candidate-661b4aac0f77f401eab7",
+      "case_id": "mission-straightforward-delivery",
+      "position": 14
+    },
+    {
+      "candidate_id": "intake-candidate-14aaee924f2d9fe32923",
+      "case_id": "mission-straightforward-security",
+      "position": 15
+    },
+    {
+      "candidate_id": "intake-candidate-bb3ff728b86137d44df4",
+      "case_id": "mission-contradictory-hostile",
+      "position": 16
+    },
+    {
+      "candidate_id": "intake-candidate-f0ee446d51dcf75ba5cf",
+      "case_id": "mission-ambiguous-ship",
+      "position": 17
+    },
+    {
+      "candidate_id": "intake-candidate-4189160b114e8d891956",
+      "case_id": "mission-unanswerable-release",
+      "position": 18
+    },
+    {
+      "candidate_id": "intake-candidate-426d6bbf9c71aa899622",
+      "case_id": "mission-contradictory-hostile",
+      "position": 19
+    },
+    {
+      "candidate_id": "intake-candidate-1b25270a07584ba038f4",
+      "case_id": "mission-contradictory-mirror",
+      "position": 20
+    },
+    {
+      "candidate_id": "intake-candidate-9f5e545b9c94066c7e48",
+      "case_id": "mission-contradictory-mirror",
+      "position": 21
+    },
+    {
+      "candidate_id": "intake-candidate-083df19e92e1b75abdeb",
+      "case_id": "mission-temporal-provider",
+      "position": 22
+    },
+    {
+      "candidate_id": "intake-candidate-28b3b1b334dfaf167f2f",
+      "case_id": "mission-compound-recovery-portability",
+      "position": 23
+    },
+    {
+      "candidate_id": "intake-candidate-b97da95534ed8d6f999c",
+      "case_id": "mission-ambiguous-productive",
+      "position": 24
+    },
+    {
+      "candidate_id": "intake-candidate-8c4e63f7e9696779701b",
+      "case_id": "mission-ambiguous-ship",
+      "position": 25
+    },
+    {
+      "candidate_id": "intake-candidate-db54e98153c06d1a681c",
+      "case_id": "mission-straightforward-security",
+      "position": 26
+    },
+    {
+      "candidate_id": "intake-candidate-1ba0b68c7135d2e07bd4",
+      "case_id": "mission-contradictory-mirror",
+      "position": 27
+    },
+    {
+      "candidate_id": "intake-candidate-c73fd0f4097b140ec75b",
+      "case_id": "mission-unanswerable-cost",
+      "position": 28
+    },
+    {
+      "candidate_id": "intake-candidate-fe7457cf916f30120f12",
+      "case_id": "mission-straightforward-security",
+      "position": 29
+    },
+    {
+      "candidate_id": "intake-candidate-8d65eccf46bcbb083b74",
+      "case_id": "mission-compound-recovery-portability",
+      "position": 30
+    },
+    {
+      "candidate_id": "intake-candidate-e24808dbe0c2e4d021d9",
+      "case_id": "mission-temporal-exception",
+      "position": 31
+    },
+    {
+      "candidate_id": "intake-candidate-15bccec4a79bed59918a",
+      "case_id": "mission-unanswerable-cost",
+      "position": 32
+    },
+    {
+      "candidate_id": "intake-candidate-97d6518f36452818d6b1",
+      "case_id": "mission-temporal-provider",
+      "position": 33
+    },
+    {
+      "candidate_id": "intake-candidate-13244fe7bc05f2ea4856",
+      "case_id": "mission-compound-governance",
+      "position": 34
+    },
+    {
+      "candidate_id": "intake-candidate-8fd6f4612d1cc760c3ce",
+      "case_id": "mission-unanswerable-cost",
+      "position": 35
+    },
+    {
+      "candidate_id": "intake-candidate-96d89ab26a283d162ae8",
+      "case_id": "mission-straightforward-delivery",
+      "position": 36
+    }
+  ],
+  "trials_sha256": "2588e0a0fe43ebc74c69474214fc6d22a2677c86e3c6c1832ee1539ac93d9e5f"
+}

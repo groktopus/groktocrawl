@@ -1,0 +1,13 @@
+{
+  "control_id": "synthetic-invalid-public-path-404",
+  "deterministic_action": "skip_without_provider_call",
+  "format": "jev-change-failed-acquisition-control/1",
+  "http_status": 404,
+  "kind": "synthetic_control",
+  "label": "uncertain",
+  "planned_provider_calls": 0,
+  "request_url": "https://raw.githubusercontent.com/kubernetes/website/9a4597563cb937f5f1f154fe440889d97208aa77/content/en/docs/concepts/services-networking/__jev_change_373_missing_page__.md",
+  "response_bytes": 14,
+  "response_sha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed",
+  "scoring": "excluded; acquisition failure is not evidence of immateriality or no change"
+}

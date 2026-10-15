@@ -1,0 +1,136 @@
+{
+  "case_id": "conflict-1",
+  "control_artifact": {
+    "admitted_evidence": [
+      {
+        "canonical_source_id": "canonical-conflict-1-generalist-conflict-1-scope",
+        "derivative": false,
+        "evidence_id": "conflict-1-generalist-conflict-1-scope",
+        "obligation_id": "conflict-1-scope",
+        "publisher_id": "publisher-conflict-1-generalist",
+        "source_id": "source-conflict-1-generalist-conflict-1-scope",
+        "span": "Pinned supports evidence for conflict-1-scope in conflict-1.",
+        "stance": "supports"
+      }
+    ],
+    "conflicting_obligation_ids": [],
+    "covered_obligation_ids": [
+      "conflict-1-scope"
+    ],
+    "handoff_failures": [],
+    "rejected_evidence": {},
+    "total_calls": 2
+  },
+  "control_calls": 2,
+  "preferred": "treatment",
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "adda954f824427bfa10c6701161125260250f24957fb315877b53d7a63ca35d3",
+    "finish_reason": "stop",
+    "latency_ms": 8557.896,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "dba6a4c2d9275a218f899570dfd21abe9e1d013d305113293094b36c95e63d78",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 120,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 15
+      },
+      "cost": 9.0375e-05,
+      "cost_details": {
+        "upstream_inference_completions_cost": 3e-05,
+        "upstream_inference_cost": 9.0375e-05,
+        "upstream_inference_prompt_cost": 6.0375e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 805,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 925
+    }
+  },
+  "repetition": 0,
+  "schema_version": "specialist-value-review/1",
+  "scores": {
+    "control": {
+      "reason": "Covers only conflict-1-scope; misses conflict-1-authority and conflict-1-risk; no conflicts or failures recorded.",
+      "trustworthiness": 0,
+      "usefulness": 0
+    },
+    "treatment": {
+      "reason": "Covers all three obligations with source-bound evidence, preserves the conflict-1-scope challenge, and reports no failures.",
+      "trustworthiness": 1,
+      "usefulness": 1
+    }
+  },
+  "separable": true,
+  "status": "completed",
+  "stratum": "contradiction",
+  "treatment_artifact": {
+    "admitted_evidence": [
+      {
+        "canonical_source_id": "canonical-conflict-1-discovery-conflict-1-scope",
+        "derivative": false,
+        "evidence_id": "conflict-1-discovery-conflict-1-scope",
+        "obligation_id": "conflict-1-scope",
+        "publisher_id": "publisher-conflict-1-discovery",
+        "source_id": "source-conflict-1-discovery-conflict-1-scope",
+        "span": "Pinned supports evidence for conflict-1-scope in conflict-1.",
+        "stance": "supports"
+      },
+      {
+        "canonical_source_id": "canonical-conflict-1-authority-conflict-1-authority",
+        "derivative": false,
+        "evidence_id": "conflict-1-authority-conflict-1-authority",
+        "obligation_id": "conflict-1-authority",
+        "publisher_id": "publisher-conflict-1-authority",
+        "source_id": "source-conflict-1-authority-conflict-1-authority",
+        "span": "Pinned supports evidence for conflict-1-authority in conflict-1.",
+        "stance": "supports"
+      },
+      {
+        "canonical_source_id": "canonical-conflict-1-risk-conflict-1-risk",
+        "derivative": false,
+        "evidence_id": "conflict-1-risk-conflict-1-risk",
+        "obligation_id": "conflict-1-risk",
+        "publisher_id": "publisher-conflict-1-risk",
+        "source_id": "source-conflict-1-risk-conflict-1-risk",
+        "span": "Pinned supports evidence for conflict-1-risk in conflict-1.",
+        "stance": "supports"
+      },
+      {
+        "canonical_source_id": "canonical-conflict-1-counter-conflict-1-scope",
+        "derivative": false,
+        "evidence_id": "conflict-1-counter-conflict-1-scope",
+        "obligation_id": "conflict-1-scope",
+        "publisher_id": "publisher-conflict-1-counter",
+        "source_id": "source-conflict-1-counter-conflict-1-scope",
+        "span": "Pinned challenges evidence for conflict-1-scope in conflict-1.",
+        "stance": "challenges"
+      }
+    ],
+    "conflicting_obligation_ids": [
+      "conflict-1-scope"
+    ],
+    "covered_obligation_ids": [
+      "conflict-1-authority",
+      "conflict-1-risk",
+      "conflict-1-scope"
+    ],
+    "handoff_failures": [],
+    "rejected_evidence": {},
+    "total_calls": 2
+  },
+  "treatment_calls": 3,
+  "trial_id": "conflict-1-r0"
+}

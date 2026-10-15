@@ -1,0 +1,124 @@
+{
+  "case_id": "roles-2",
+  "control_artifact": {
+    "admitted_evidence": [
+      {
+        "canonical_source_id": "canonical-roles-2-generalist-roles-2-scope",
+        "derivative": false,
+        "evidence_id": "roles-2-generalist-roles-2-scope",
+        "obligation_id": "roles-2-scope",
+        "publisher_id": "publisher-roles-2-generalist",
+        "source_id": "source-roles-2-generalist-roles-2-scope",
+        "span": "Pinned supports evidence for roles-2-scope in roles-2.",
+        "stance": "supports"
+      }
+    ],
+    "conflicting_obligation_ids": [],
+    "covered_obligation_ids": [
+      "roles-2-scope"
+    ],
+    "handoff_failures": [],
+    "rejected_evidence": {},
+    "total_calls": 2
+  },
+  "control_calls": 2,
+  "preferred": "treatment",
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "bf10839a70ffd0fdd379389f06067fde5b1a21bc2310b0e777326d34cf7ce056",
+    "finish_reason": "stop",
+    "latency_ms": 6186.587,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "882153b77ddd31bd72d9eeffa85d5db1d034926f4f360e045ec114237bb2a97a",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 189,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0.00019425,
+      "cost_details": {
+        "upstream_inference_completions_cost": 9.45e-05,
+        "upstream_inference_cost": 0.00019425,
+        "upstream_inference_prompt_cost": 9.975e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 665,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 854
+    }
+  },
+  "repetition": 1,
+  "schema_version": "specialist-value-review/1",
+  "scores": {
+    "control": {
+      "reason": "Artifact A covers only 1 of 3 obligations (roles-2-scope); roles-2-authority and roles-2-risk are uncovered. Its single evidence item is source-bound, non-derivative, and correctly stanced, so no trustworthiness deductions apply, but incomplete coverage caps usefulness at 0.",
+      "trustworthiness": 0,
+      "usefulness": 0
+    },
+    "treatment": {
+      "reason": "Artifact B covers all 3 obligations (roles-2-scope, roles-2-authority, roles-2-risk) with one evidence item each. All evidence is source-bound, non-derivative, and stanced as supports. No conflicts or failures are present in the supplied evidence, so none are omitted. No trustworthiness deductions apply.",
+      "trustworthiness": 1,
+      "usefulness": 1
+    }
+  },
+  "separable": true,
+  "status": "completed",
+  "stratum": "distinct_roles",
+  "treatment_artifact": {
+    "admitted_evidence": [
+      {
+        "canonical_source_id": "canonical-roles-2-discovery-roles-2-scope",
+        "derivative": false,
+        "evidence_id": "roles-2-discovery-roles-2-scope",
+        "obligation_id": "roles-2-scope",
+        "publisher_id": "publisher-roles-2-discovery",
+        "source_id": "source-roles-2-discovery-roles-2-scope",
+        "span": "Pinned supports evidence for roles-2-scope in roles-2.",
+        "stance": "supports"
+      },
+      {
+        "canonical_source_id": "canonical-roles-2-authority-roles-2-authority",
+        "derivative": false,
+        "evidence_id": "roles-2-authority-roles-2-authority",
+        "obligation_id": "roles-2-authority",
+        "publisher_id": "publisher-roles-2-authority",
+        "source_id": "source-roles-2-authority-roles-2-authority",
+        "span": "Pinned supports evidence for roles-2-authority in roles-2.",
+        "stance": "supports"
+      },
+      {
+        "canonical_source_id": "canonical-roles-2-risk-roles-2-risk",
+        "derivative": false,
+        "evidence_id": "roles-2-risk-roles-2-risk",
+        "obligation_id": "roles-2-risk",
+        "publisher_id": "publisher-roles-2-risk",
+        "source_id": "source-roles-2-risk-roles-2-risk",
+        "span": "Pinned supports evidence for roles-2-risk in roles-2.",
+        "stance": "supports"
+      }
+    ],
+    "conflicting_obligation_ids": [],
+    "covered_obligation_ids": [
+      "roles-2-authority",
+      "roles-2-risk",
+      "roles-2-scope"
+    ],
+    "handoff_failures": [],
+    "rejected_evidence": {},
+    "total_calls": 2
+  },
+  "treatment_calls": 3,
+  "trial_id": "roles-2-r1"
+}

@@ -1,0 +1,76 @@
+{
+  "candidate_id": "candidate-2bfb415909ee8cfa2745",
+  "case_id": "mission-unanswerable-cost",
+  "completed_at": "2026-09-19T06:47:26.158312+00:00",
+  "grade": {
+    "appropriate_abstention": "yes",
+    "decision_usefulness": 4,
+    "decision_usefulness_rationale": "Scored 4 of 5. Substance: the delivered decision ('not established, bounded abstention on magnitude') is the correct disposition for q1; all six material claims are accurate and cited only to the two supplied sources; the missing-measurement list maps directly onto the policy's required accounting (matched tasks, review time, rework, failures, provider cost); and the tension between the pilot's PR count and the policy standard is preserved and reported rather than resolved, consistent with the contradiction policy. One point is deducted because the answer body degenerates into hundreds of duplicated parentheticals and truncates mid-sentence; the decision statement and the claims array still carry all decision-relevant content, so the defect is deliverable integrity rather than a factual, obligation, or scope failure.",
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "No invented authority, approval, or measurements: only the two supplied fixture sources are used, no numeric cost reduction is derived from the 40 accepted PRs, the excluded accepted-PR-as-cost-proxy inference is explicitly avoided, and no freshness constraint is lost since the fixture is the current record. The repetitive and truncated answer text is a quality defect, not a boundary failure.",
+    "obligation_grades": {
+      "o1": {
+        "rationale": "The candidate correctly determines that the packet contains no comparable baseline and no total-cost numerator or denominator. measurement-context explicitly states the pilot note provides no task mix, control group, reviewer hours, failure count, or provider costs, and measurement-policy requires matched tasks, human review time, rework, failure counting, and total cost. The candidate does not fabricate a matched comparison, so the obligation is explicitly unresolved rather than falsely closed, which is the correct disposition given the evidence.",
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "status": "closed"
+      },
+      "o2": {
+        "rationale": "The candidate states the >=20% threshold is not established and names the missing data (control group, reviewer hours, failure count, provider costs, task mix), satisfying the closure rule. It refuses to treat the 40 accepted PRs as a cost proxy, citing the policy's explicit prohibition on inferring causal benefit from accepted-PR counts, and its uncertainty note correctly frames the finding as non-proof rather than disproof of a >=20% effect.",
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "status": "closed"
+      }
+    },
+    "scope_violations": [],
+    "supported_material_claims": 6,
+    "total_material_claims": 6
+  },
+  "position": 8,
+  "reasons": [
+    "high_weight_obligation_not_closed"
+  ],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "5528665f2c989ea9127cf6942f90ab5c48936c42ec5c1e4bc84321328d15fac5",
+    "finish_reason": "stop",
+    "latency_ms": 38486.905,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "17e326428b3a363c1c6dbbd170ecdcb2964c143f87bcf7d094828bc0d54a99e5",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 7189,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 6597
+      },
+      "cost": 0.00435062,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0035945,
+        "upstream_inference_cost": 0.00435062,
+        "upstream_inference_prompt_cost": 0.00075612
+      },
+      "is_byok": false,
+      "prompt_tokens": 6884,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 2304,
+        "video_tokens": 0
+      },
+      "total_tokens": 14073
+    }
+  },
+  "schema_version": "research-mission-adjudication/1",
+  "started_at": "2026-09-19T06:46:47.668784+00:00",
+  "status": "completed"
+}

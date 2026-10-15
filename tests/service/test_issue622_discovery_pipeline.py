@@ -28,7 +28,7 @@ def _scraper(started: asyncio.Event, urls: list[str]) -> MagicMock:
 
 
 @pytest.mark.asyncio
-async def test_fast_query_starts_scrape_before_slow_query_finishes(monkeypatch):
+async def test_fast_query_starts_scrape_before_slow_query_finishes():
     from agent.research import discovery
 
     slow_finished = asyncio.Event()
@@ -43,8 +43,6 @@ async def test_fast_query_starts_scrape_before_slow_query_finishes(monkeypatch):
 
     searxng = MagicMock(search=AsyncMock(side_effect=search))
     scraper = _scraper(scrape_started, scraped)
-    original_rank = discovery._filter_and_rank_urls
-    monkeypatch.setattr(discovery, "_filter_and_rank_urls", lambda urls, **_: urls)
 
     async def on_artifact(artifact):
         callback_urls.append(artifact.url)
@@ -70,7 +68,6 @@ async def test_fast_query_starts_scrape_before_slow_query_finishes(monkeypatch):
         "https://slow.example/page",
     ]
     assert callback_urls == scraped
-    monkeypatch.setattr(discovery, "_filter_and_rank_urls", original_rank)
 
 
 @pytest.mark.asyncio
@@ -134,7 +131,7 @@ async def test_credit_admission_waits_for_query_order_before_spending_budget():
 
 
 @pytest.mark.asyncio
-async def test_credit_admission_filters_blacklisted_urls_before_fetch():
+async def test_credit_admission_uses_search_order_without_url_blacklisting():
     from agent.research import discovery
 
     async def search(_query: str, **_kwargs):
@@ -157,9 +154,42 @@ async def test_credit_admission_filters_blacklisted_urls_before_fetch():
         max_credits=1,
     )
 
-    assert scraped == ["https://good.example/article/detail"]
+    assert scraped == ["https://bad.example/login"]
     assert result["credits_used"] == 1
-    assert all("/login" not in url for url in result["target_urls"])
+    assert result["target_urls"] == [
+        "https://bad.example/login",
+        "https://good.example/article/detail",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_unbudgeted_discovery_attempts_all_search_results():
+    from agent.research import discovery
+
+    async def search(_query: str, **_kwargs):
+        return (
+            [
+                _result("https://bad.example/login"),
+                _result("https://good.example/article/detail"),
+            ],
+            "healthy",
+        )
+
+    scraped: list[str] = []
+    searxng = MagicMock(search=AsyncMock(side_effect=search))
+    scraper = _scraper(asyncio.Event(), scraped)
+    result = await discovery._run_multi_query_discover_and_scrape(
+        queries=["one"],
+        urls=None,
+        searxng=searxng,
+        scraper=scraper,
+    )
+
+    assert set(scraped) == {
+        "https://bad.example/login",
+        "https://good.example/article/detail",
+    }
+    assert result["credits_used"] == 2
 
 
 @pytest.mark.asyncio

@@ -57,6 +57,25 @@ SCRAPER_PAYLOAD_LOW_YIELD = {
     ),
 }
 
+SCRAPER_PAYLOAD_RECOVERED = {
+    "success": True,
+    "data": {
+        "markdown": "Recovered article content",
+        "metadata": {"title": "Recovered"},
+        "recovery": {
+            "trigger": "barrier",
+            "barrier_type": "captcha",
+            "provider": "recaptcha",
+            "attempts": [
+                {"strategy": "playwright", "outcome": "barrier"},
+                {"strategy": "browser-svc", "outcome": "success"},
+            ],
+            "outcome": "recovered",
+            "exhausted": False,
+        },
+    },
+}
+
 
 def _build_app(scraper_payload: dict) -> FastAPI:
     """Minimal harness mirroring create_app wiring for the scrape route."""
@@ -89,6 +108,11 @@ def test_scrape_data_quality_default_none():
     """ScrapeData keeps quality as an optional dict (existing contract)."""
     assert "quality" in ScrapeData.model_fields
     assert ScrapeData().quality is None
+
+
+def test_scrape_data_recovery_default_none():
+    assert "recovery" in ScrapeData.model_fields
+    assert ScrapeData().recovery is None
 
 
 # ── Route pass-through ───────────────────────────────────────────
@@ -133,3 +157,17 @@ def test_v2_scrape_passes_markdown_verbatim():
     )
     body = resp.json()
     assert body["data"]["markdown"] == payload["data"]["markdown"]
+
+
+def test_v2_scrape_passes_through_recovery_receipt():
+    client = TestClient(_build_app(SCRAPER_PAYLOAD_RECOVERED))
+    resp = client.post(
+        "/v2/scrape", json={"url": "https://example.test/hw", "formats": ["markdown"]}
+    )
+    assert resp.status_code == 200
+    recovery = resp.json()["data"]["recovery"]
+    assert recovery["outcome"] == "recovered"
+    assert recovery["attempts"][-1] == {
+        "strategy": "browser-svc",
+        "outcome": "success",
+    }

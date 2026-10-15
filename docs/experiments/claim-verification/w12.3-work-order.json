@@ -1,0 +1,222 @@
+{
+  "schema_version": "claim-verification-work-order/1",
+  "seed": 20260919,
+  "items": [
+    {
+      "trial_id": "supported-retention-r1",
+      "case_id": "supported-retention",
+      "repetition": 1,
+      "position": 0
+    },
+    {
+      "trial_id": "supported-encryption-r1",
+      "case_id": "supported-encryption",
+      "repetition": 1,
+      "position": 1
+    },
+    {
+      "trial_id": "supported-status-r1",
+      "case_id": "supported-status",
+      "repetition": 1,
+      "position": 2
+    },
+    {
+      "trial_id": "supported-patch-r1",
+      "case_id": "supported-patch",
+      "repetition": 1,
+      "position": 3
+    },
+    {
+      "trial_id": "unsupported-soc2-r1",
+      "case_id": "unsupported-soc2",
+      "repetition": 1,
+      "position": 4
+    },
+    {
+      "trial_id": "missing-residency-r1",
+      "case_id": "missing-residency",
+      "repetition": 1,
+      "position": 5
+    },
+    {
+      "trial_id": "contradicted-delivery-r1",
+      "case_id": "contradicted-delivery",
+      "repetition": 1,
+      "position": 6
+    },
+    {
+      "trial_id": "roadmap-abstention-r1",
+      "case_id": "roadmap-abstention",
+      "repetition": 1,
+      "position": 7
+    },
+    {
+      "trial_id": "stale-limit-r1",
+      "case_id": "stale-limit",
+      "repetition": 1,
+      "position": 8
+    },
+    {
+      "trial_id": "derivative-customers-r1",
+      "case_id": "derivative-customers",
+      "repetition": 1,
+      "position": 9
+    },
+    {
+      "trial_id": "ambiguous-orion-r1",
+      "case_id": "ambiguous-orion",
+      "repetition": 1,
+      "position": 10
+    },
+    {
+      "trial_id": "hostile-delete-r1",
+      "case_id": "hostile-delete",
+      "repetition": 1,
+      "position": 11
+    },
+    {
+      "trial_id": "supported-retention-r2",
+      "case_id": "supported-retention",
+      "repetition": 2,
+      "position": 12
+    },
+    {
+      "trial_id": "supported-encryption-r2",
+      "case_id": "supported-encryption",
+      "repetition": 2,
+      "position": 13
+    },
+    {
+      "trial_id": "supported-status-r2",
+      "case_id": "supported-status",
+      "repetition": 2,
+      "position": 14
+    },
+    {
+      "trial_id": "supported-patch-r2",
+      "case_id": "supported-patch",
+      "repetition": 2,
+      "position": 15
+    },
+    {
+      "trial_id": "unsupported-soc2-r2",
+      "case_id": "unsupported-soc2",
+      "repetition": 2,
+      "position": 16
+    },
+    {
+      "trial_id": "missing-residency-r2",
+      "case_id": "missing-residency",
+      "repetition": 2,
+      "position": 17
+    },
+    {
+      "trial_id": "contradicted-delivery-r2",
+      "case_id": "contradicted-delivery",
+      "repetition": 2,
+      "position": 18
+    },
+    {
+      "trial_id": "roadmap-abstention-r2",
+      "case_id": "roadmap-abstention",
+      "repetition": 2,
+      "position": 19
+    },
+    {
+      "trial_id": "stale-limit-r2",
+      "case_id": "stale-limit",
+      "repetition": 2,
+      "position": 20
+    },
+    {
+      "trial_id": "derivative-customers-r2",
+      "case_id": "derivative-customers",
+      "repetition": 2,
+      "position": 21
+    },
+    {
+      "trial_id": "ambiguous-orion-r2",
+      "case_id": "ambiguous-orion",
+      "repetition": 2,
+      "position": 22
+    },
+    {
+      "trial_id": "hostile-delete-r2",
+      "case_id": "hostile-delete",
+      "repetition": 2,
+      "position": 23
+    },
+    {
+      "trial_id": "supported-retention-r3",
+      "case_id": "supported-retention",
+      "repetition": 3,
+      "position": 24
+    },
+    {
+      "trial_id": "supported-encryption-r3",
+      "case_id": "supported-encryption",
+      "repetition": 3,
+      "position": 25
+    },
+    {
+      "trial_id": "supported-status-r3",
+      "case_id": "supported-status",
+      "repetition": 3,
+      "position": 26
+    },
+    {
+      "trial_id": "supported-patch-r3",
+      "case_id": "supported-patch",
+      "repetition": 3,
+      "position": 27
+    },
+    {
+      "trial_id": "unsupported-soc2-r3",
+      "case_id": "unsupported-soc2",
+      "repetition": 3,
+      "position": 28
+    },
+    {
+      "trial_id": "missing-residency-r3",
+      "case_id": "missing-residency",
+      "repetition": 3,
+      "position": 29
+    },
+    {
+      "trial_id": "contradicted-delivery-r3",
+      "case_id": "contradicted-delivery",
+      "repetition": 3,
+      "position": 30
+    },
+    {
+      "trial_id": "roadmap-abstention-r3",
+      "case_id": "roadmap-abstention",
+      "repetition": 3,
+      "position": 31
+    },
+    {
+      "trial_id": "stale-limit-r3",
+      "case_id": "stale-limit",
+      "repetition": 3,
+      "position": 32
+    },
+    {
+      "trial_id": "derivative-customers-r3",
+      "case_id": "derivative-customers",
+      "repetition": 3,
+      "position": 33
+    },
+    {
+      "trial_id": "ambiguous-orion-r3",
+      "case_id": "ambiguous-orion",
+      "repetition": 3,
+      "position": 34
+    },
+    {
+      "trial_id": "hostile-delete-r3",
+      "case_id": "hostile-delete",
+      "repetition": 3,
+      "position": 35
+    }
+  ]
+}

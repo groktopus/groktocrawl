@@ -1,0 +1,93 @@
+{
+  "format": "jev-change-outcome/1",
+  "run_date": "2026-10-03",
+  "freeze_sha256": "67781243e22b7b753fb059a61a452216a80cc0aeac0ff168a8177218af1156d5",
+  "model_returned": "jev-1.13.0",
+  "planned_calls": 11,
+  "attempted_calls": 11,
+  "valid_responses": 11,
+  "failures": 0,
+  "retries": 0,
+  "calibration": {
+    "n": 4,
+    "valid_responses": 4,
+    "score_range": [
+      0.14,
+      0.92
+    ],
+    "uncertain_reference_cases": 1,
+    "used_for_threshold_or_prompt_tuning": false
+  },
+  "validation": {
+    "n": 7,
+    "determinate_reference_n": 7,
+    "material_reference_n": 5,
+    "immaterial_reference_n": 2,
+    "fixed_probability_cut": 0.5,
+    "accuracy": {
+      "correct": 7,
+      "denominator": 7
+    },
+    "false_immaterial": {
+      "count": 0,
+      "material_reference_denominator": 5
+    },
+    "false_material": {
+      "count": 0,
+      "immaterial_reference_denominator": 2
+    },
+    "brier_score": 0.03738571428571429,
+    "material_probability_mean": 0.846,
+    "immaterial_probability_mean": 0.2,
+    "probability_range": [
+      0.07,
+      0.94
+    ],
+    "runner_latency_ms": {
+      "mean": 508.4,
+      "median": 505
+    }
+  },
+  "calibration_runner_latency_ms": {
+    "mean": 551.25,
+    "median": 536
+  },
+  "paired_intent_scores": [
+    {
+      "same_diff_group": "cosign-link",
+      "first_intent_probability": 0.83,
+      "second_intent_probability": 0.07,
+      "first_minus_second": 0.76
+    },
+    {
+      "same_diff_group": "k8s-nav",
+      "first_intent_probability": 0.33,
+      "second_intent_probability": 0.71,
+      "first_minus_second": -0.38
+    }
+  ],
+  "usage_tokens": {
+    "input": 8896,
+    "output": 231
+  },
+  "provider_cost": "unknown; not returned",
+  "label_status": "best-effort assistant references; not independent gold",
+  "runtime_or_notification_changes": 0,
+  "disposition": "revise; remain shadow-only",
+  "limitations": [
+    "small constructed case set with source and intent clustering",
+    "no established incremental answer quality",
+    "no independent gold or production-representative sample",
+    "no runtime precedence or user-visible policy was tested",
+    "returned model identifier does not establish upstream inference route"
+  ],
+  "casewise_ledger": "casewise-outcome-ledger.json",
+  "public_redaction_manifest": "publication-redactions.json",
+  "failed_acquisition_control": {
+    "status": "skipped_without_provider_call",
+    "judged": false,
+    "provider_calls": 0,
+    "synthetic": true
+  },
+  "public_redaction_note": "Four source snapshot copies had unrelated encrypted private-key blocks removed after calls; original source hashes remain preserved and the judged spans are unchanged."
+}

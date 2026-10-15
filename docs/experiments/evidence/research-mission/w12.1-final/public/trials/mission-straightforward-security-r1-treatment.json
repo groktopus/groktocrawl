@@ -1,0 +1,85 @@
+{
+  "arm": "treatment",
+  "case_id": "mission-straightforward-security",
+  "completed_at": "2026-09-19T05:46:45.575920+00:00",
+  "position": 1,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "e839261e146f7b4b25d19d21e57d24753b2dbc26256465c375742be47df2e877",
+    "finish_reason": "stop",
+    "latency_ms": 21958.827,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "8bc9569db6ea46b96d5542ea94de1ea9f7159ea6ae74385e0f4210f5f3fe228d",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 656,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 7
+      },
+      "cost": 0.000316,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0002296,
+        "upstream_inference_cost": 0.000316,
+        "upstream_inference_prompt_cost": 8.64e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 864,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1520
+    }
+  },
+  "repetition": 1,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Build agent credential and write boundary (decision support, fixture record only)**Allowed for the build agent** (per the security policy [security-policy]): read-only access to source code, plus short-lived, scoped credentials.**Kept separate from the build agent** (same source): production configuration writes are performed only by a distinct release identity, and only after approval. Raw secrets must not enter prompts or logs.**Context note (preserved, not a contradiction of controls):** an onboarding guide labels the release identity an “agent identity,” but it grants no additional privileges and delegates authorization to the security policy [security-context]. This is a naming inconsistency across documents; it does not change the permission boundary, though the naming should not be read as evidence of expanded rights.**Decision:** configure the build agent with read-only source access and short-lived scoped credentials; route any production configuration writes through the separately approved release identity; enforce that raw secrets never appear in prompts or logs.**Unresolved limits:** the supplied fixture defines the controls but does not specify operational details (e.g., credential TTLs, scopes, approval workflow mechanics), and the “agent identity” naming in the onboarding guide is not further explained. No material evidence gain remains from the fixed source pack.",
+    "candidate_id": "candidate-80d3936d35664267961c",
+    "citations": [
+      "security-policy",
+      "security-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "security-policy"
+        ],
+        "text": "Build agents receive read-only source access and short-lived scoped credentials.",
+        "uncertainty": "No material uncertainty; exact TTLs and scopes are unspecified in the fixture."
+      },
+      {
+        "source_ids": [
+          "security-policy"
+        ],
+        "text": "Production configuration writes require a separate release identity with approval; the build agent does not write production configuration.",
+        "uncertainty": "No material uncertainty regarding the boundary; approval mechanics are not detailed."
+      },
+      {
+        "source_ids": [
+          "security-policy"
+        ],
+        "text": "Raw secrets must not enter prompts or logs.",
+        "uncertainty": "No material uncertainty; enforcement mechanisms are unspecified."
+      },
+      {
+        "source_ids": [
+          "security-context"
+        ],
+        "text": "An onboarding guide calls the release identity an 'agent identity,' but grants it no additional privileges and delegates authorization to the security policy.",
+        "uncertainty": "The naming inconsistency is documented but its motivation or any operational impact cannot be established from the supplied sources."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:46:23.616303+00:00",
+  "status": "completed",
+  "trial_id": "mission-straightforward-security-r1-treatment"
+}

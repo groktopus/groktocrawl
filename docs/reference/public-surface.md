@@ -32,6 +32,7 @@ GET /v2/crawl/{job_id}/stream
 POST /v2/enrich
 POST /v2/extract
 GET /v2/extract/{job_id}
+POST /v2/followup/preview
 POST /v2/find-similar
 POST /v2/generate-llmstxt
 GET /v2/generate-llmstxt/{job_id}
@@ -48,6 +49,7 @@ PATCH /v2/monitor/{monitor_id}
 DELETE /v2/monitor/{monitor_id}
 POST /v2/monitor/{monitor_id}/run
 POST /v2/parse
+POST /v2/parse/upload-url
 PUT /v2/parse/upload/{upload_id}
 POST /v2/research-memory/query
 POST /v2/research-memory/store
@@ -56,10 +58,28 @@ POST /v2/scrape
 POST /v2/search
 POST /v2/session/create
 GET /v2/session/{session_id}
+GET /v2/session/{session_id}/evidence/{ref_id}
 POST /v2/session/{session_id}/export
 POST /v2/session/{session_id}/resolve
 POST /v2/session/{session_id}/step
+POST /v2/session/{session_id}/documents
+GET /v2/session/{session_id}/documents
+GET /v2/session/{session_id}/documents/{ref_id}
+DELETE /v2/session/{session_id}/documents/{ref_id}
 DELETE /v2/session/{session_id}
+GET /experimental/research/v1/capabilities
+POST /experimental/research/v1/runs
+GET /experimental/research/v1/runs/{run_id}
+GET /experimental/research/v1/runs/{run_id}/events
+POST /experimental/research/v1/runs/{run_id}/cancel
+GET /experimental/research/v1/artifact-sets/{artifact_set_id}
+GET /experimental/research/v1/artifacts/{artifact_id}
+GET /experimental/research/v1/research/{research_id}/evidence/{snapshot_id}
+DELETE /experimental/research/v1/research/{research_id}
+POST /experimental/research/v1/sessions/{session_id}/attachments
+GET /experimental/research/v1/workspace
+GET /experimental/research/v1/workspace/{run_id}
+POST /experimental/research/v1/workspace/{run_id}/actions
 <!-- api-inventory:end -->
 
 ## CLI commands
@@ -67,12 +87,15 @@ DELETE /v2/session/{session_id}
 <!-- cli-inventory:start -->
 - active
 - agent
+- followup
 - answer
 - batch-scrape
 - browser
 - crawl
+- document
 - download
 - enrich
+- evidence
 - extract
 - find-similar
 - generate-llmstxt
@@ -80,6 +103,7 @@ DELETE /v2/session/{session_id}
 - monitor
 - parse
 - parse-upload
+- research
 - scrape
 - search
 <!-- cli-inventory:end -->
@@ -133,8 +157,8 @@ The configuration inventory follows `.env.sample`; unlisted implementation-only 
 - AGENT_SEARCH_RATE_LIMIT
 - API_KEY
 - ASHBY_API_KEY
-- BROWSER_SVC_URL
 - BRAVE_API_KEY
+- BROWSER_SVC_URL
 - CAPTCHA_VISION_API_KEY
 - CAPTCHA_VISION_BASE_URL
 - CAPTCHA_VISION_MODEL
@@ -143,15 +167,23 @@ The configuration inventory follows `.env.sample`; unlisted implementation-only 
 - CIRCUIT_BREAKER_FAILURE_THRESHOLD
 - CRAWL_IDLE_TIMEOUT_SECONDS
 - CRAWL_MAX_DURATION_SECONDS
+- DURABLE_RESEARCH_POSTGRES_DSN
+- DURABLE_RESEARCH_POSTGRES_PASSWORD_FILE
+- DURABLE_RESEARCH_REDIS_URL
 - EMBED_DIM
 - EMBED_MODEL_NAME
 - ENGINE_SEMANTICSCHOLAR_API_KEY
+- FEATURE_EXPERIMENTAL_RESEARCH
+- FEATURE_EXPERIMENTAL_RESEARCH_DURABLE
+- FEATURE_EXPERIMENTAL_RESEARCH_POSTGRES_ARTIFACTS
+- FEATURE_EXPERIMENTAL_RESEARCH_RUNS
 - FLARE_SOLVERR_URL
 - GITHUB_TOKEN
 - GROKTOCRAWL_API_KEY
 - GROKTOCRAWL_RETRY_FALLBACK_SECONDS
 - GROKTOCRAWL_RETRY_MAX_ATTEMPTS
 - GROKTOCRAWL_RETRY_MAX_WAIT_SECONDS
+- GROKTOCRAWL_REVISION
 - HTTP_TIMEOUT
 - JOB_RETRY_FALLBACK_SECONDS
 - JOB_RETRY_MAX_ATTEMPTS
@@ -160,68 +192,104 @@ The configuration inventory follows `.env.sample`; unlisted implementation-only 
 - LLM_BASE_URL
 - LLM_CALL_TIMEOUT
 - LLM_ENABLE_THINKING
+- LLM_HEALTH_TOKEN_BUDGET
 - LLM_LLAMA_CPP_DISABLE_THINKING
+- LLM_MAX_COMPLETION_TOKENS
+- LLM_MAX_OUTPUT_TOKENS
+- LLM_MAX_TOKENS
 - LLM_MODEL
 - LLM_TOKEN_PARAMETER
-- LLM_MAX_TOKENS
-- LLM_MAX_COMPLETION_TOKENS
-- LLM_HEALTH_TOKEN_BUDGET
 - LOG_LEVEL
 - MCP_ALLOWED_HOSTS
 - MCP_ALLOWED_ORIGINS
+- MCP_GRANT_DEPENDENCY_DOSSIER
 - MCP_GRANT_JOBS
 - MCP_GRANT_RESEARCH
+- MCP_GRANT_RETRIEVAL_RECEIPTS
+- MCP_GRANT_SAVED_SEARCH_EVENTS
+- MCP_GRANT_SAVED_SEARCHES
 - MCP_GRANT_SCIENCE
 - MCP_GRANT_SECURITY
+- MCP_GRANT_STAGED_SEARCH
 - MCP_PORT
 - MCP_TARGETED_SENSITIVE_ALLOWED
 - NEAR_DUP_MODE
 - NEAR_DUP_THRESHOLD
-- QDRANT_CLIENT_TIMEOUT
-- QDRANT_QUERY_TIMEOUT
-- QDRANT_URL
 - PARSE_MAX_SIZE_MB
+- PGVECTOR_SHADOW_BACKFILL_BATCH_SIZE
+- PGVECTOR_SHADOW_DSN
+- PGVECTOR_SHADOW_SAMPLE_RATE
+- PGVECTOR_SHADOW_SCORE_TOLERANCE
+- PGVECTOR_SHADOW_TIMEOUT_SECONDS
 - QA_MAX_BOILERPLATE_RATIO
 - QA_MIN_CONTENT_CHARS
 - QA_MIN_QUALITY_THRESHOLD
 - QA_MIN_TITLE_CHARS
+- QDRANT_CLIENT_TIMEOUT
+- QDRANT_QUERY_TIMEOUT
+- QDRANT_URL
 - RECOVERY_LLM_TIMEOUT
 - RESEARCH_MEMORY_MAX_ARTIFACT_BYTES
 - RESEARCH_MEMORY_SCOPE
 - RESEARCH_MEMORY_TTL
-- SCRAPER_DISTRIBUTED_POLITENESS
-- SCRAPER_MAX_BROWSER_CONCURRENCY
-- SCRAPER_BROWSER_POOL_ENABLED
-- SCRAPER_BROWSER_POOL_MAX_PROCESSES
-- SCRAPER_BROWSER_POOL_IDLE_TTL_SECONDS
-- SCRAPER_BROWSER_POOL_MAX_AGE_SECONDS
-- SCRAPER_POLITENESS_CRAWL_DELAY
-- SCRAPER_POLITENESS_ENABLED
-- SCRAPER_POLITENESS_ROBOTS_TTL
-- SCRAPER_POLITENESS_ROBOTS_TIMEOUT
-- SCRAPER_PRIVATE_URL_ALLOWLIST
-- SCRAPER_PROXY_URL
-- SCRAPER_URL
-- SLOPSEARX_MCP_AUTH_TOKEN
-- SLOPSEARX_MCP_PORT
-- TYPESAFE_API_KEY
 - SCRAPE_CACHE_DOMAIN_TTLS
 - SCRAPE_CACHE_MAX_TTL
 - SCRAPE_CACHE_MIN_TTL
 - SCRAPE_CACHE_STABLE_MULTIPLIER
 - SCRAPE_CACHE_TTL
 - SCRAPE_CACHE_VOLATILE_CAP
+- SCRAPER_BROWSER_POOL_ENABLED
+- SCRAPER_BROWSER_POOL_IDLE_TTL_SECONDS
+- SCRAPER_BROWSER_POOL_MAX_AGE_SECONDS
+- SCRAPER_BROWSER_POOL_MAX_PROCESSES
+- SCRAPER_CAPTURE_EGRESS_PROXY_URL
+- SCRAPER_DISTRIBUTED_POLITENESS
+- SCRAPER_MAX_BROWSER_CONCURRENCY
+- SCRAPER_POLITENESS_CRAWL_DELAY
+- SCRAPER_POLITENESS_ENABLED
+- SCRAPER_POLITENESS_ROBOTS_TIMEOUT
+- SCRAPER_POLITENESS_ROBOTS_TTL
+- SCRAPER_PRIVATE_URL_ALLOWLIST
+- SCRAPER_PROXY_URL
+- SCRAPER_URL
 - SEARXNG_URL
-- SEMANTIC_URL
-- SEMANTIC_INFERENCE_ADMISSION_TIMEOUT_SECONDS
-- SEMANTIC_INFERENCE_QUEUE_SIZE
-- SEMANTIC_INFERENCE_WORKERS
 - SECTION_FILTER_DEFAULT_EXCLUDE
 - SECTION_FILTER_DEFAULT_INCLUDE
 - SECTION_FILTER_DEFAULT_VERBOSITY
+- SEMANTIC_CLIENT_TIMEOUT_SECONDS
+- SEMANTIC_INFERENCE_ADMISSION_TIMEOUT_SECONDS
+- SEMANTIC_INFERENCE_QUEUE_SIZE
+- SEMANTIC_INFERENCE_WORKERS
+- SEMANTIC_URL
 - SESSION_SWEEP_INTERVAL
 - SESSION_TTL
+- SLOPSEARX_MCP_AUTH_TOKEN
+- SLOPSEARX_MCP_PORT
+- SLOPSEARX_PROVENANCE_MCP_URL
+- SLOPSEARX_PROVENANCE_PROFILE
+- SLOPSEARX_PROVENANCE_SNAPSHOT_TTL_SECONDS
+- SLOPSEARX_PROVENANCE_TOKEN
+- TYPESAFE_API_KEY
+- TYPESAFE_JEV_MIN_SCORE
 - VALKEY_URL
 - VECTOR_INDEX_MAX_DOCS
+- VECTOR_STORE_MODE
 - WEBHOOK_SECRET
 <!-- env-inventory:end -->
+
+## Bounded evidence controls
+
+`agent` and `answer` accept optional `--evidence-budget-chars` (256–128000),
+matching API/MCP `evidence_budget_chars`. Omission preserves server defaults.
+CLI JSON retains `evidence_coverage` in synchronous and streaming completion
+results. This budget selects verbatim source characters for synthesis; it does
+not limit acquisition or claim exhaustive evidence coverage.
+
+`groktocrawl evidence SESSION_ID REF_ID --query "question" --json` and MCP
+`select_session_evidence` inspect exact retained spans, content digest and
+coverage without retrieval or model work. Omit query to page from `--offset`
+(default 0), using `--budget-chars` (default 32000, range 256–128000). Query
+selection and a nonzero offset are mutually exclusive. Follow the returned
+continuation with its offset and `--expected-digest` (64 lowercase hexadecimal
+characters); changed content is rejected. `coverage_complete` remains false.
+Session ownership, reference liveness, deletion and existing TTL govern access.

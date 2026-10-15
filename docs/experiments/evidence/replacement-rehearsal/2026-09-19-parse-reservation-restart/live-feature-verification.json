@@ -1,0 +1,13 @@
+{
+  "checks": {
+    "api_health": "passed",
+    "filename_preserved": true,
+    "mcp_health": "passed",
+    "staged_parse": "passed",
+    "staged_upload": "passed"
+  },
+  "deployment_revision": "b6ecca0d7183a6349b31db018b81e347cdea6e38",
+  "observed_at": "2026-09-19T19:04:28Z",
+  "schema_version": "w9-live-feature-verification/1",
+  "storage_seeded_directly": false
+}

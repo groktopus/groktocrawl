@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-931d4021879dda65a5cb",
+  "case_id": "changed-limit",
+  "completed_at": "2026-09-19T09:23:56.106105+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 100,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "Change, current, and historical truths match the reference and sources exactly with correct citations and no false merges or stale-current leakage. The first unresolved item (no snapshots after 1.1) is reasonable, but the hard-cap/configurable and editions/deployment-mode questions are invented peripheral issues not grounded in the reference, halving unresolved accuracy.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 50,
+    "unsupported_claims": 0,
+    "usefulness": 95
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "199afc52add1acb4307554a8543e406072df75aa102d4e1129c1aec1131f7bb1",
+    "finish_reason": "stop",
+    "latency_ms": 6747.124,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "5030c8b0703189fb4ca228db4b85ac1ce83ae3dde065af154d41eab2c5848306",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 159,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 16
+      },
+      "cost": 0.00011805,
+      "cost_details": {
+        "upstream_inference_completions_cost": 3.975e-05,
+        "upstream_inference_cost": 0.00011805,
+        "upstream_inference_prompt_cost": 7.83e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 1044,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1203
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:23:49.358638+00:00",
+  "status": "completed",
+  "trial_id": "changed-limit-r2-treatment"
+}

@@ -1,0 +1,65 @@
+{
+  "candidate_id": "intake-candidate-1ba0b68c7135d2e07bd4",
+  "case_id": "mission-contradictory-mirror",
+  "completed_at": "2026-09-19T06:32:12.925543+00:00",
+  "grade": {
+    "action_correct": false,
+    "action_rationale": "Expected intake was 'accept'; the candidate returned 'abstain'. The reference mission is fully constructible and answerable from the supplied fixture (the delivery policy and its verbatim mirror), so abstention at intake is an unauthorized action under the hard boundary definition.",
+    "clarification_utility": null,
+    "correction_actions": [],
+    "hard_boundary_failure": true,
+    "hard_boundary_rationale": "Unauthorized action (abstain where accept was required and supportable). Additionally, the candidate's blanket refusal drops obligation o2: the governing policy's actual production approval and rollback conditions would never be stated, a primary-authority preservation the reference mission requires even when o1 resolves negatively.",
+    "invented_constraints": [
+      "The premise 'No supplied sources exist to research' contradicts the fixture record ('Use the supplied policy and context as the current fixture record'); the candidate manufactured an evidentiary vacuum as the stated basis for abstention.",
+      "The claim that the conclusion holds 'regardless of what further searching might show' forecloses the mission's budgeted process (max_searches 4, stop_when evidence-gain accounting) and replaces it with an a priori dismissal."
+    ],
+    "lost_hard_boundaries": [
+      "Obligation o2 (preserve the governing policy's production approval and rollback conditions without expansion) is silently dropped by refusing to build the mission.",
+      "The mission's acceptable_uncertainty mechanism (state what the evidence cannot establish, leave unsupported obligations unresolved) is bypassed entirely."
+    ],
+    "required_field_recall": 0,
+    "unnecessary_fields": [
+      "None: the result contains only action, null clarifying_question, null mission, and rationale; no invented scope, fields, or granted authority appear."
+    ]
+  },
+  "position": 27,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "78c53e7a5e2fc9089edb3d793fc6b9528ce804db57c112077d359482ab53069d",
+    "finish_reason": "stop",
+    "latency_ms": 77819.195,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "dbf51007929e202a90d3ef96153b3b06bcb9987780e30f1c819b9830afdbfb40",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 4406,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 4813
+      },
+      "cost": 0.0023236,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.002203,
+        "upstream_inference_cost": 0.0023236,
+        "upstream_inference_prompt_cost": 0.0001206
+      },
+      "is_byok": false,
+      "prompt_tokens": 804,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 5210
+    }
+  },
+  "schema_version": "research-mission-intake-grade/1",
+  "started_at": "2026-09-19T06:30:55.103729+00:00",
+  "status": "completed"
+}

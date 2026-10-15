@@ -1,0 +1,95 @@
+{
+  "case_id": "stale-limit",
+  "completed_at": "2026-09-19T10:10:21.753379+00:00",
+  "completion_attempt": 1,
+  "position": 32,
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "d6f97e1169fdf243dffe6947c2ffcc137a429591f82e66844d88eb3f27cde3c7",
+    "finish_reason": "stop",
+    "latency_ms": 15963.357,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "ee5f5f7303cbe5f08048e013c293394d9313c5c9cd47566babc7acd629025cb4",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 684,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 688
+      },
+      "cost": 0.00022599,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.00019152,
+        "upstream_inference_cost": 0.00022599,
+        "upstream_inference_prompt_cost": 3.447e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 383,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1067
+    }
+  },
+  "repetition": 3,
+  "schema_version": "claim-verification-trial/1",
+  "started_at": "2026-09-19T10:10:05.789508+00:00",
+  "status": "completed",
+  "trial_id": "stale-limit-r3",
+  "verification": {
+    "checked_input": {
+      "case_id": "stale-limit",
+      "claim": "The free plan allows 50 projects.",
+      "claim_id": "claim-stale-limit",
+      "evidence": [
+        {
+          "contains_instructions": false,
+          "source_id": "source-old-pricing",
+          "source_kind": "primary",
+          "span_id": "old-pricing",
+          "temporal_status": "historical",
+          "text": "The free plan includes up to 50 projects."
+        },
+        {
+          "contains_instructions": false,
+          "source_id": "source-new-pricing",
+          "source_kind": "primary",
+          "span_id": "new-pricing",
+          "temporal_status": "current",
+          "text": "The free plan includes up to 10 projects."
+        }
+      ],
+      "evidence_obligation": "A current plan limit.",
+      "risk": "low",
+      "schema_version": "claim-verification-input/1"
+    },
+    "checked_input_digest": "eed653429a295c74dcfc97d7c8f42545e00245b52f5aa7c0539e7a40d584a605",
+    "confidence": 95,
+    "contradiction_span_ids": [
+      "new-pricing"
+    ],
+    "evidence_span_ids": [
+      "old-pricing",
+      "new-pricing"
+    ],
+    "publish_recommendation": false,
+    "reason": "The current pricing source states the free plan includes up to 10 projects, directly conflicting with the claimed 50; the 50-project figure appears only in the historical pricing span and does not satisfy the current-plan-limit obligation.",
+    "schema_version": "independent-claim-verification/1",
+    "verdict": "contradicted",
+    "verification_id": "verification-stale-limit-r3",
+    "verifier": {
+      "model": "general",
+      "prompt_version": "w12.3-verifier/1",
+      "route": "local-litellm"
+    }
+  }
+}

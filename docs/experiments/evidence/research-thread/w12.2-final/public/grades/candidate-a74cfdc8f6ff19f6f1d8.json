@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-a74cfdc8f6ff19f6f1d8",
+  "case_id": "stable-anchor",
+  "completed_at": "2026-09-19T09:26:12.208760+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 100,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "The candidate correctly answers 'no change': both snapshots document SHA-256, matching the reference's empty change set and honoring the prohibition on inventing a change merely because a new snapshot exists. The current truth (SHA-256 per the current guide) and the historical truth (the earlier guide also specified SHA-256) are both preserved with correct temporal scoping and citations. Deductions come from the unresolved field, which invents three peripheral open questions where the reference specifies none, and from the answer's reference to a 'prior thread's open item on currency,' which appears in no supplied source (one unsupported claim). No false merge, no stale-current leakage, and no lost history.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 0,
+    "unsupported_claims": 1,
+    "usefulness": 85
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "84a425e9e7ae66e4904aff2e986c62f5bdf0e5f255ec4e6064455fbeaa46cc4d",
+    "finish_reason": "stop",
+    "latency_ms": 76901.791,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "c09478f649884a2ed3ba04fbbbdc9e797fecaad6576aad4166ed5090f247c24b",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 3363,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 3796
+      },
+      "cost": 0.00183255,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0016815,
+        "upstream_inference_cost": 0.00183255,
+        "upstream_inference_prompt_cost": 0.00015105
+      },
+      "is_byok": false,
+      "prompt_tokens": 1007,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 4370
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:24:55.306315+00:00",
+  "status": "completed",
+  "trial_id": "stable-anchor-r3-treatment"
+}

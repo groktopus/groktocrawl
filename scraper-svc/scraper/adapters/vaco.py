@@ -18,6 +18,7 @@ import re
 
 import httpx
 
+from ..source_http import source_httpx_client
 from ._helpers import scrape_page
 from .base import AdapterContext, AdapterError, AdapterResult, SiteAdapter, adapter
 
@@ -40,7 +41,7 @@ async def _fetch_html(url: str) -> str | None:
     Uses a browser-like User-Agent to ensure SSR content is returned.
     """
     try:
-        async with httpx.AsyncClient(
+        async with source_httpx_client(
             timeout=15,
             follow_redirects=True,
         ) as client:

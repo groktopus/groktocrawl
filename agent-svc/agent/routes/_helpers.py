@@ -5,8 +5,9 @@ import logging
 import os
 from typing import Any
 
-import httpx
 from fastapi import Request
+
+from agent.browser_client import browser_request_url, create_browser_client
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +50,7 @@ def _derive_user_id(request: Request) -> str | None:
     """Derive a user identifier from the request for cache scoping.
 
     When RESEARCH_MEMORY_SCOPE=per_user, the user_id is derived from
-    the ``X-API-Key`` or ``Authorization: Bearer`` header.  When no
+    the credential accepted from ``Authorization: Bearer`` or ``X-API-Key``. When no
     API key is present, the client IP is used as a fallback.
 
     Returns ``None`` for global scope (no per-user isolation).
@@ -58,11 +59,9 @@ def _derive_user_id(request: Request) -> str | None:
     if scope != "per_user":
         return None
 
-    # Try API key first
-    api_key = (
-        request.headers.get("X-API-Key", "")
-        or request.headers.get("Authorization", "").removeprefix("Bearer ").strip()
-    )
+    from ..auth import request_credential
+
+    api_key = request_credential(request)
     if api_key:
         # Hash the key for privacy — we only need a stable identifier
         return hashlib.sha256(api_key.encode()).hexdigest()[:16]
@@ -82,14 +81,20 @@ def _get_redis_url(request: Request) -> str:
 async def _browser_proxy(
     path: str, method: str = "POST", json_data: dict[str, Any] | None = None
 ) -> Any:
-    """Proxy a request to the browser service."""
-    async with httpx.AsyncClient(timeout=120) as client:
+    """Proxy a request to the browser service over its configured transport."""
+    socket_path = os.environ.get("BROWSER_CONTROL_SOCKET") or None
+    target = browser_request_url(
+        path,
+        socket_path=socket_path,
+        legacy_base_url=BROWSER_SVC_URL,
+    )
+    async with create_browser_client(socket_path=socket_path, timeout=120) as client:
         if method == "GET":
-            resp = await client.get(f"{BROWSER_SVC_URL}{path}")
+            resp = await client.get(target)
         elif method == "DELETE":
-            resp = await client.delete(f"{BROWSER_SVC_URL}{path}")
+            resp = await client.delete(target)
         else:
-            resp = await client.post(f"{BROWSER_SVC_URL}{path}", json=json_data or {})
+            resp = await client.post(target, json=json_data or {})
         try:
             return resp.json()
         except Exception:

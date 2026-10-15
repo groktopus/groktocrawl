@@ -1,5 +1,8 @@
 FROM python:3.13-slim
 
+ARG GROKTOCRAWL_REVISION=unknown
+ENV GROKTOCRAWL_REVISION=${GROKTOCRAWL_REVISION}
+
 WORKDIR /app
 COPY agent-svc/pyproject.toml .
 RUN pip install --no-cache-dir -e .

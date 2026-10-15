@@ -1,0 +1,64 @@
+{
+  "candidate_id": "candidate-20d7d79e6c9cb2adfbf0",
+  "case_id": "mission-temporal-exception",
+  "completed_at": "2026-09-19T06:11:14.106150+00:00",
+  "grade": {
+    "appropriate_abstention": "no",
+    "decision_usefulness": 5,
+    "decision_usefulness_rationale": "The candidate directly answers the as-of question (not effective on 2026-09-19), grounded in the expiry comparison and absence of renewal, with clearly stated limits. This is exactly the decision the mission requests and is actionable for the stated audience.",
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "No invented authority, no scope broadening, freshness constraint (as-of 2026-09-19) is preserved, and no unauthorized action is taken. The candidate correctly treats source text as evidence only and does not infer renewal or approval outside the packet, respecting the prohibited assumptions list.",
+    "obligation_grades": {
+      "o1": {
+        "rationale": "The candidate explicitly compares the 2026-06-30 expiry to the 2026-09-19 decision time, states the as-of time falls after expiry, and notes no renewal is present in the bundle. It does not infer renewal; it explicitly flags that absence of renewal in the packet is not proof no renewal exists elsewhere, satisfying the closure rule.",
+        "source_ids": [
+          "governance-context"
+        ],
+        "status": "closed"
+      }
+    },
+    "scope_violations": [],
+    "supported_material_claims": 4,
+    "total_material_claims": 4
+  },
+  "position": 6,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "7314310650195c8092785f86777b0b7b9a4145126d7cabe6f4c22d24df213059",
+    "finish_reason": "stop",
+    "latency_ms": 20125.32,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "5217eee3c20ea99261f28f21ab695f2737e3a5d54f391cb916d7abe9b91b5011",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 295,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0.00033215,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0001475,
+        "upstream_inference_cost": 0.00033215,
+        "upstream_inference_prompt_cost": 0.00018465
+      },
+      "is_byok": false,
+      "prompt_tokens": 1231,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1526
+    }
+  },
+  "schema_version": "research-mission-grade/1",
+  "started_at": "2026-09-19T06:10:53.980207+00:00",
+  "status": "completed"
+}

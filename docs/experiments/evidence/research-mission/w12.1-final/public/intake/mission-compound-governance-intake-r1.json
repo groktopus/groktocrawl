@@ -1,0 +1,52 @@
+{
+  "case_id": "mission-compound-governance",
+  "completed_at": "2026-09-19T06:01:36.848298+00:00",
+  "position": 6,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "d3b9622e9d4861b04aa087140328a78f8ff5174719dade55b556444b736ef4ac",
+    "finish_reason": "stop",
+    "latency_ms": 18406.127,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "f5de73e91da15f3c0301ea71db5becd3cf6c7d284191898aacabae46342885c7",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 213,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 46
+      },
+      "cost": 0.00028165,
+      "cost_details": {
+        "upstream_inference_completions_cost": 7.455e-05,
+        "upstream_inference_cost": 0.00028165,
+        "upstream_inference_prompt_cost": 0.0002071
+      },
+      "is_byok": false,
+      "prompt_tokens": 2071,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 2284
+    }
+  },
+  "repetition": 1,
+  "result": {
+    "action": "clarify",
+    "clarifying_question": "Which packet should be analyzed? No source document or evidence packet was supplied with this request, so I cannot summarize its 'high-risk-change rule,' assess its documented exception, or identify what it fails to prove without guessing. Please attach or cite the specific packet (with version/date) to be reviewed.",
+    "mission": null,
+    "rationale": "The request references a specific packet ('this packet') and asks for a summary of its rule, assessment of its exception, and an inventory of what it cannot prove. No source text or packet was supplied, and the contract forbids inventing scope, facts, or source findings. Guessing which document is meant would be decision-changing, so one blocking clarification is required before any research-mission can be formed."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:01:18.435946+00:00",
+  "status": "completed",
+  "trial_id": "mission-compound-governance-intake-r1"
+}

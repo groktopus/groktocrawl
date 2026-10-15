@@ -1,0 +1,20 @@
+{
+  "schema_version": "human-review-presentation/1",
+  "worksheet_sha256": "8890fbe2945e309d610f1b4a37ff9c3564ac68b2cb8405556a1363fd3741ce99",
+  "case_number_mapping": {
+    "1": "delivery-01",
+    "2": "delivery-07",
+    "3": "security-01",
+    "4": "security-06",
+    "5": "governance-01",
+    "6": "governance-04",
+    "7": "reliability-01",
+    "8": "reliability-04",
+    "9": "measurement-01",
+    "10": "measurement-05",
+    "11": "platform-01",
+    "12": "platform-07"
+  },
+  "judgment_status": "no human judgments collected",
+  "interpretation": "Whole-answer feedback only; do not infer human assertion-level labels, severity codes or complete calibration from these choices."
+}

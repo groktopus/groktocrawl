@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import logging
 
+from ..source_http import source_httpx_client
+
 logger = logging.getLogger(__name__)
 
 
@@ -20,9 +22,7 @@ async def scrape_page(url: str, timeout: float = 15.0) -> str | None:
     Returns markdown text, or ``None`` on failure.
     """
     try:
-        import httpx
-
-        async with httpx.AsyncClient(
+        async with source_httpx_client(
             timeout=timeout,
             follow_redirects=True,
             headers={"User-Agent": "Mozilla/5.0 (compatible; GroktoCrawl/0.7.0)"},

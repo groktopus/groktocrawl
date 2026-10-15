@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-f3fbeec8d4bd444caa6e",
+  "case_id": "rotated-link",
+  "completed_at": "2026-09-19T09:18:57.909645+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 100,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "The candidate correctly reports the change (URL now unavailable), correctly preserves the historical snapshot claim (G-12 reported versions before 4.2 affected), and avoids stale-current leakage or false merges. However, it invents peripheral unresolved questions beyond the reference (why the advisory disappeared, whether content changed, which product, whether 4.2+ are affected). Only 'current advisory status cannot be established' is the reference unresolved item; the product-identity question in particular goes beyond the sources. Unresolved accuracy is thus partial. Unsupported peripheral claims number one (product identity), with the others reasonable hedges grounded in the unavailability notice.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 60,
+    "unsupported_claims": 1,
+    "usefulness": 95
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "67bbad4b48845f9f3a1c2e6a5150e63bf89d36cec48fb12027802b7602fa4eaa",
+    "finish_reason": "stop",
+    "latency_ms": 35261.994,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "a17df816633fd6c7f06d79d20c3242cf3f26cee26d3549fe7f58b68c38dc4e48",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 314,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 112
+      },
+      "cost": 0.00030205,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000157,
+        "upstream_inference_cost": 0.00030205,
+        "upstream_inference_prompt_cost": 0.00014505
+      },
+      "is_byok": false,
+      "prompt_tokens": 967,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1281
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:18:22.646360+00:00",
+  "status": "completed",
+  "trial_id": "rotated-link-r1-treatment"
+}

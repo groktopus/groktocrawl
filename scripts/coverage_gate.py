@@ -66,9 +66,12 @@ class FileResult:
     high_risk: bool
     threshold: float
     exception: Mapping[str, Any] | None = None
+    measured: bool = True
 
     @property
     def passed(self) -> bool:
+        if not self.measured:
+            return not self.high_risk or self.exception is not None
         return (
             self.coverage_percent is None
             or self.coverage_percent >= self.threshold
@@ -151,7 +154,11 @@ def normalize_coverage_path(name: str, repo_root: Path) -> str:
 
     path = Path(name)
     if not path.is_absolute():
-        return path.as_posix().lstrip("./")
+        relative = path.as_posix().lstrip("./")
+        # coverage.py relativizes the baked /app/agent copy against /app.
+        if relative.startswith("agent/"):
+            return "agent-svc/" + relative
+        return relative
 
     try:
         return path.relative_to(repo_root).as_posix()
@@ -460,6 +467,7 @@ def evaluate(
         results.append(
             FileResult(
                 path=path,
+                measured=report is not None,
                 changed_lines=len(executable),
                 covered_lines=len(covered),
                 coverage_percent=percent,
@@ -513,6 +521,12 @@ def render_summary(
     for result in rows:
         if result.exception is not None:
             outcome = f"EXCEPTION ({result.exception['issue']})"
+        elif not result.measured:
+            outcome = (
+                "FAIL (unmeasured module)"
+                if result.high_risk
+                else "INFO (unmeasured module)"
+            )
         elif result.coverage_percent is None:
             outcome = "INFO (no executable lines)"
         elif not result.passed:
@@ -533,7 +547,7 @@ def render_summary(
                 "",
                 "## Required action",
                 "",
-                "The high-risk modules above are below policy. Add focused tests or add a reviewed, non-expired exception to `qa/coverage-exceptions.toml`.",
+                "The high-risk modules above are below policy or unmeasured. Bind their coverage reports and add focused tests, or add a reviewed, non-expired exception to `qa/coverage-exceptions.toml`.",
             ]
         )
     return "\n".join(lines) + "\n"

@@ -1,0 +1,52 @@
+{
+  "case_id": "mission-compound-governance",
+  "completed_at": "2026-09-19T06:03:36.446700+00:00",
+  "position": 3,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "80efd9a27dfaf36b56007e02aad5465af1a7203583a73af1dbcb73fa1e32eae9",
+    "finish_reason": "stop",
+    "latency_ms": 13175.004,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "b17eba8f8cda7054139825ded7525073b9f0dc7fb71ccff62df028e8bd94b230",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 234,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 44
+      },
+      "cost": 0.00012516,
+      "cost_details": {
+        "upstream_inference_completions_cost": 8.19e-05,
+        "upstream_inference_cost": 0.00012516,
+        "upstream_inference_prompt_cost": 4.326e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 2071,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 2048,
+        "video_tokens": 0
+      },
+      "total_tokens": 2305
+    }
+  },
+  "repetition": 2,
+  "result": {
+    "action": "clarify",
+    "clarifying_question": "No source packet or policy document was actually supplied with this request. Which artifact defines the 'high-risk-change rule' and its documented exception (e.g., a policy file ID, repository path, or paste of the packet text), and should the assessment be limited strictly to that artifact or also draw on external/secondary sources?",
+    "mission": null,
+    "rationale": "The request presumes a supplied 'packet' containing the high-risk-change rule and exception, but no such evidence was provided. Both the summarization target and the exception assessment would require guessing at which document is meant — a decision-changing ambiguity. Also unclear is whether 'what this packet cannot prove' refers only to the (absent) packet or permits external research; that choice changes the mission's scope and source policy. Research is appropriate once the artifact is identified, so abstention is not warranted."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:03:23.262091+00:00",
+  "status": "completed",
+  "trial_id": "mission-compound-governance-intake-r2"
+}

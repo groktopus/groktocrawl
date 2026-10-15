@@ -10,8 +10,7 @@ from __future__ import annotations
 import logging
 import re
 
-import httpx
-
+from ..source_http import source_httpx_client
 from ._helpers import scrape_page
 from .base import AdapterContext, AdapterError, AdapterResult, SiteAdapter, adapter
 
@@ -34,7 +33,7 @@ def _extract_domain(url: str) -> str | None:
 
 async def _fetch_api(domain: str) -> list[dict] | None:
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
+        async with source_httpx_client(timeout=10) as client:
             resp = await client.get(
                 "https://crt.sh/", params={"output": "json", "q": domain}
             )
