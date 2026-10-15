@@ -1508,6 +1508,8 @@ def test_search_preserves_bounded_media_payload():
     )
     result = asyncio.run(client.search("fixture"))
     assert result["data"]["web"][0] == row
+
+
 @pytest.mark.asyncio
 async def test_document_client_bytes_and_scoped_metadata_workflow():
     calls = []
@@ -1597,6 +1599,7 @@ async def test_staged_attachment_does_not_read_remote_url_or_local_path():
     finally:
         await client.close()
 
+
 def test_workspace_client_lists_selects_and_resumes_exact_revision():
     captured = []
 
@@ -1636,3 +1639,26 @@ def test_workspace_client_lists_selects_and_resumes_exact_revision():
             {"action": "render", "expected_revision": "observed"},
         ),
     ]
+
+
+@pytest.mark.asyncio
+async def test_search_preserves_bounded_date_contract():
+    captured = []
+
+    def handler(request):
+        captured.append(json.loads(request.content))
+        return httpx.Response(
+            200, json={"success": True, "date_filter": {"status": "enforced"}}
+        )
+
+    client = _make_matched_client({("POST", "/v2/search"): handler})
+    try:
+        result = await client.search(
+            "paper", date_from="2026-01-01", date_to="2026-01-31", engines=["openalex"]
+        )
+        assert captured[0]["date_from"] == "2026-01-01"
+        assert captured[0]["date_to"] == "2026-01-31"
+        assert captured[0]["engines"] == ["openalex"]
+        assert result["date_filter"]["status"] == "enforced"
+    finally:
+        await client.close()

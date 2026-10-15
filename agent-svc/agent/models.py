@@ -898,6 +898,44 @@ class BatchScrapeRequest(BaseModel):
 
 
 class SearchRequest(BaseModel):
+    date_from: str | None = None
+    date_to: str | None = None
+    time_range: str | None = None
+    engines: list[str] | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_unknown_date_controls(cls, value: Any) -> Any:
+        if isinstance(value, dict):
+            for key in value:
+                normalized = key.lower().replace("_", "").replace("-", "")
+                if (
+                    normalized.startswith(
+                        ("date", "publicationdate", "published", "timerange")
+                    )
+                ) and key not in {"date_from", "date_to", "time_range"}:
+                    raise ValueError(f"Unknown date control: {key}")
+        return value
+
+    @model_validator(mode="after")
+    def validate_date_scope(self) -> "SearchRequest":
+        from .date_filters import validate_dates
+
+        if validate_dates(self.date_from, self.date_to, self.time_range, self.engines):
+            if (
+                self.search_type != "fast"
+                or self.retrieval_mode != "keyword"
+                or self.stream
+                or self.contents is not None
+                or self.output_schema is not None
+                or self.sources not in (None, [], ["web"])
+                or self.categories not in (None, [], ["science"], ["research"])
+            ):
+                raise ValueError(
+                    "Date bounds require non-streaming fast keyword scholarly search without enrichment"
+                )
+        return self
+
     query: str
     limit: int = 5
     search_type: str = "fast"  # "fast" | "rich" | "deep"
@@ -993,6 +1031,7 @@ class ImageSearchResult(BaseModel):
 
 
 class SearchResponse(BaseModel):
+    date_filter: dict[str, Any] | None = None
     success: bool = True
     evidence_coverage: dict[str, Any] | None = None
     data: dict = Field(default_factory=lambda: {"web": [], "images": [], "news": []})

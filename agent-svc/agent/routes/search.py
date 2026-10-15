@@ -23,6 +23,14 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+def _date_params(body: SearchRequest) -> dict[str, Any]:
+    return {
+        key: getattr(body, key)
+        for key in ("date_from", "date_to", "time_range", "engines")
+        if getattr(body, key) is not None
+    }
+
+
 @router.post("/v1/search")
 async def search_v1(request: Request, body: SearchRequest) -> dict[str, Any]:
     """Firecrawl v1-compatible search endpoint.
@@ -39,14 +47,21 @@ async def search_v1(request: Request, body: SearchRequest) -> dict[str, Any]:
             limit=body.limit,
             categories=body.categories,
             sources=body.sources,
+            **_date_params(body),
         )
         return {
             "success": True,
+            **(
+                {"date_filter": _health.date_filter}
+                if body.date_from is not None or body.date_to is not None
+                else {}
+            ),
             "data": [
                 {
                     "url": r["url"],
                     "title": r["title"],
                     "description": r.get("description", ""),
+                    **search_metadata(r),
                 }
                 for r in results
             ],
@@ -86,6 +101,7 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
     from ..searxng_client import SearXNGClient
 
     searxng = SearXNGClient(request.app.state.searxng_url)
+    date_filter: dict | None = None
     warning_msg: str | None = None
     acquired_artifacts = []
     refused_urls: set[str] = set()
@@ -239,7 +255,9 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
                 limit=body.limit,
                 categories=body.categories,
                 sources=effective_sources,
+                **_date_params(body),
             )
+            date_filter = getattr(_health, "date_filter", None)
             if not results and _health.engines_responding == 0:
                 warning_msg = (
                     "All search engines returned no results. "
@@ -421,6 +439,7 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
 
         return SearchResponse(
             data=result_data,
+            date_filter=date_filter,
             output=output,
             warning=warning_msg,
             evidence_coverage=output.get("evidence_coverage") if output else None,

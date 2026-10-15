@@ -1883,3 +1883,24 @@ class TestMCPSurfaceCoverage:
         assert proc.returncode == 0, (
             f"check-mcp-coverage.py failed:\n{proc.stdout}\n{proc.stderr}"
         )
+
+
+@pytest.mark.asyncio
+async def test_search_tool_exposes_and_forwards_date_controls(monkeypatch):
+    from unittest.mock import AsyncMock
+
+    import mcp_server as mod
+
+    call = AsyncMock(
+        return_value={"success": True, "date_filter": {"status": "enforced"}}
+    )
+    monkeypatch.setattr(mod._client, "search", call)
+    await mod.search(
+        "paper", date_from="2026-01-01", date_to="2026-01-31", engines=["openalex"]
+    )
+    assert call.call_args.kwargs["date_from"] == "2026-01-01"
+    assert call.call_args.kwargs["engines"] == ["openalex"]
+    tool = next(tool for tool in await mcp.list_tools() if tool.name == "search")
+    assert {"date_from", "date_to", "time_range", "engines"} <= tool.inputSchema[
+        "properties"
+    ].keys()

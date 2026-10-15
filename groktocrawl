@@ -1010,6 +1010,10 @@ class Client:
         retrieval_mode: str = "keyword",
         output_schema: dict | None = None,
         system_prompt: str | None = None,
+        date_from: str | None = None,
+        date_to: str | None = None,
+        time_range: str | None = None,
+        engines: list[str] | None = None,
         contents: dict | None = None,
     ) -> dict[str, Any]:
         data: dict[str, Any] = {
@@ -1020,6 +1024,14 @@ class Client:
         }
         if scrape:
             data["scrapeOptions"] = {"formats": ["markdown"]}
+        for key, value in {
+            "date_from": date_from,
+            "date_to": date_to,
+            "time_range": time_range,
+            "engines": engines,
+        }.items():
+            if value is not None:
+                data[key] = value
         if categories:
             data["categories"] = categories
         if sources:
@@ -1042,6 +1054,10 @@ class Client:
         retrieval_mode: str = "keyword",
         output_schema: dict | None = None,
         system_prompt: str | None = None,
+        date_from: str | None = None,
+        date_to: str | None = None,
+        time_range: str | None = None,
+        engines: list[str] | None = None,
     ):
         """Search with SSE streaming.
 
@@ -1054,6 +1070,14 @@ class Client:
             "retrieval_mode": retrieval_mode,
             "stream": True,
         }
+        for key, value in {
+            "date_from": date_from,
+            "date_to": date_to,
+            "time_range": time_range,
+            "engines": engines,
+        }.items():
+            if value is not None:
+                data[key] = value
         if categories:
             data["categories"] = categories
         if sources:
@@ -1592,6 +1616,10 @@ def cmd_search(client: Client, args: argparse.Namespace) -> None:
                 retrieval_mode=args.retrieval_mode,
                 output_schema=output_schema,
                 system_prompt=args.system_prompt,
+                date_from=args.date_from,
+                date_to=args.date_to,
+                time_range=args.time_range,
+                engines=args.engines,
             )
             resp = result["_stream"]
             shown_header = False
@@ -1633,6 +1661,10 @@ def cmd_search(client: Client, args: argparse.Namespace) -> None:
             output_schema=output_schema,
             system_prompt=args.system_prompt,
             contents=contents,
+            date_from=args.date_from,
+            date_to=args.date_to,
+            time_range=args.time_range,
+            engines=args.engines,
         )
     except ApiError as e:
         die(e)
@@ -1645,6 +1677,8 @@ def cmd_search(client: Client, args: argparse.Namespace) -> None:
         output_data = {"results": data, "query": args.query}
         if image_data:
             output_data["images"] = image_data
+        if result.get("date_filter"):
+            output_data["date_filter"] = result["date_filter"]
         if result.get("output"):
             output_data["output"] = result["output"]
         emit("", output_data)
@@ -3264,6 +3298,11 @@ def make_parser() -> argparse.ArgumentParser:
         choices=["keyword", "semantic", "hybrid", "vector", "hybrid_vector"],
         help="Retrieval strategy (default: keyword)",
     )
+
+    p_search.add_argument("--date-from", help="Inclusive publication start YYYY-MM-DD")
+    p_search.add_argument("--date-to", help="Inclusive publication end YYYY-MM-DD")
+    p_search.add_argument("--time-range", choices=["day", "week", "month", "year"])
+    p_search.add_argument("--engines", nargs="+", help="Exact bounds require openalex")
 
     p_map = subparsers.add_parser("map", help="Discover URLs on a site")
     p_map.add_argument("url", help="Site URL to map")

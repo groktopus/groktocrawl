@@ -1740,6 +1740,8 @@ def test_search_json_keeps_media_and_engine_attribution(monkeypatch):
     monkeypatch.setitem(_cli_ns, "emit", lambda _text, data: output.append(data))
     _cli_ns["cmd_search"](client, args)
     assert output[0]["results"][0] == row
+
+
 class TestDocumentWorkflowCLI:
     def test_query_passes_explicit_refs_model_and_evidence_budget(self, client, capsys):
         parser = _cli_ns["make_parser"]()
@@ -1825,3 +1827,40 @@ class TestDocumentWorkflowCLI:
             )
             if action == "show":
                 assert request.call_args.kwargs["params"] == {"start": 1, "end": 4}
+
+
+def test_search_forwards_date_controls(client):
+    parser = _cli_ns["make_parser"]()
+    args = parser.parse_args(
+        [
+            "search",
+            "paper",
+            "--date-from",
+            "2026-01-01",
+            "--date-to",
+            "2026-01-31",
+            "--engines",
+            "openalex",
+        ]
+    )
+    assert args.date_from == "2026-01-01" and args.engines == ["openalex"]
+    with patch.object(client, "_request", return_value={"data": {}}) as request:
+        client.search(
+            "paper",
+            date_from=args.date_from,
+            date_to=args.date_to,
+            engines=args.engines,
+        )
+    body = request.call_args.kwargs["json_data"]
+    assert body["date_from"] == "2026-01-01"
+    assert body["date_to"] == "2026-01-31"
+    assert body["engines"] == ["openalex"]
+
+
+def test_search_stream_does_not_drop_date_controls(client):
+    with patch.object(
+        client, "_post_stream_with_retry", return_value=MagicMock()
+    ) as request:
+        client.search_stream("paper", date_from="2026-01-01", engines=["openalex"])
+    body = request.call_args.args[1]
+    assert body["date_from"] == "2026-01-01" and body["stream"] is True

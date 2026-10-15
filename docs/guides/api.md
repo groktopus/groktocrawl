@@ -80,3 +80,20 @@ crawl evidence. Unsafe/private/local URLs, signed or credential-bearing links,
 malformed values, unknown fields and embed HTML are omitted. A public hostname
 is not a guarantee about DNS or permission to fetch/render it. See
 [ADR-0095](../adr/0095-retain-bounded-source-media-metadata.md) for bounds.
+
+### Bounded scholarly search
+
+`POST /v1/search` and `POST /v2/search` accept optional inclusive publication
+`date_from` and `date_to` strings in canonical `YYYY-MM-DD` format. One-sided
+ranges are supported. Explicit `engines: ["openalex"]` is required. Exact dates
+cannot be combined with `time_range`; relative windows are not supported on this
+API. This audited slice requires non-streaming `fast` search with `keyword`
+retrieval, optional `web` source and `science`/`research` category, and no content
+or structured-output enrichment. Other combinations fail validation before work.
+
+Successful bounded responses include `date_filter` with requested and applied
+bounds, enforcement status, engine identity and warnings. Results retain
+`publishedDate`. An old or incompatible backend, missing enforcement proof,
+failed acquisition, or out-of-range result fails closed rather than returning an
+unbounded success. Deploy the compatible search backend before this client.
+This contract does not establish publication-date coverage for general news.

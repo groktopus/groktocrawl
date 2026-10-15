@@ -247,6 +247,10 @@ async def search(
     retrieval_mode: str | None = None,
     output_schema: dict[str, Any] | None = None,
     system_prompt: str | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    time_range: str | None = None,
+    engines: list[str] | None = None,
 ) -> str:
     """Search the web and return results with URLs titles and snippets.
 
@@ -267,6 +271,10 @@ async def search(
         output_schema: Optional JSON Schema for structured extraction
             from the search results (single-call search→scrape→extract).
         system_prompt: Optional guidance for synthesis behavior.
+        date_from: Inclusive publication start (YYYY-MM-DD).
+        date_to: Inclusive publication end (YYYY-MM-DD).
+        time_range: Unsupported on this API; use exact publication bounds.
+        engines: Exact bounds require ["openalex"], fast keyword mode.
     """
     result = await _client.search(
         query=query,
@@ -277,6 +285,10 @@ async def search(
         retrieval_mode=retrieval_mode,
         output_schema=output_schema,
         system_prompt=system_prompt,
+        date_from=date_from,
+        date_to=date_to,
+        time_range=time_range,
+        engines=engines,
     )
     _ensure_success(result)
     return _resp(result)
