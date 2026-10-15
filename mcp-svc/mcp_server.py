@@ -247,6 +247,10 @@ async def search(
     retrieval_mode: str | None = None,
     output_schema: dict[str, Any] | None = None,
     system_prompt: str | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    time_range: str | None = None,
+    engines: list[str] | None = None,
 ) -> str:
     """Search the web and return results with URLs titles and snippets.
 
@@ -267,6 +271,10 @@ async def search(
         output_schema: Optional JSON Schema for structured extraction
             from the search results (single-call search→scrape→extract).
         system_prompt: Optional guidance for synthesis behavior.
+        date_from: Inclusive publication start (YYYY-MM-DD).
+        date_to: Inclusive publication end (YYYY-MM-DD).
+        time_range: Unsupported on this API; use exact publication bounds.
+        engines: Exact bounds require ["openalex"], fast keyword mode.
     """
     result = await _client.search(
         query=query,
@@ -277,9 +285,56 @@ async def search(
         retrieval_mode=retrieval_mode,
         output_schema=output_schema,
         system_prompt=system_prompt,
+        date_from=date_from,
+        date_to=date_to,
+        time_range=time_range,
+        engines=engines,
     )
     _ensure_success(result)
     return _resp(result)
+
+
+# Keep date-like typos from disappearing in the SDK's default ignore-extra model.
+# Other legacy extra arguments retain the SDK's existing behavior.
+def _validate_search_date_arguments(cls: Any, value: Any) -> Any:
+    if isinstance(value, dict):
+        for key in value:
+            normalized = key.lower().replace("_", "").replace("-", "")
+            if (
+                normalized.startswith(
+                    ("date", "publicationdate", "published", "timerange")
+                )
+                or normalized in {"startdate", "enddate", "fromdate", "todate"}
+            ) and key not in {"date_from", "date_to", "time_range"}:
+                raise ValueError(f"Unknown date control: {key}")
+    return value
+
+
+def _guard_search_date_arguments() -> None:
+    from pydantic import create_model, model_validator
+
+    tool = mcp._tool_manager.get_tool("search")
+    if tool is None:
+        raise RuntimeError("Search tool must be registered before date argument guard")
+    original = tool.fn_metadata.arg_model
+    tool.fn_metadata.arg_model = create_model(
+        "BoundedSearchArguments",
+        __base__=tool.fn_metadata.arg_model,
+        __validators__={
+            "validate_date_controls": model_validator(mode="before")(
+                _validate_search_date_arguments
+            )
+        },
+    )
+    if set(tool.fn_metadata.arg_model.model_fields) != set(original.model_fields):
+        raise RuntimeError("Search date guard must preserve SDK argument fields")
+    if not {"date_from", "date_to", "time_range", "engines"}.issubset(
+        tool.parameters.get("properties", {})
+    ):
+        raise RuntimeError("Search date controls missing from MCP schema")
+
+
+_guard_search_date_arguments()
 
 
 # ── Tools 3–6: crawl, get_crawl_status, cancel_crawl, get_crawl_errors ──

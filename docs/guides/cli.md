@@ -60,3 +60,11 @@ The experimental `research workspace [RUN_ID]` lists or selects retained roots;
 `research resume RUN_ID OPERATION --expected-revision DIGEST` performs a named
 revision-guarded operation. See [research workspace](research-workspace.md) for
 render/export/evidence, explicit session document context and follow-up preview.
+
+For audited scholarly publication windows, use
+`groktocrawl search "retrieval evaluation" --engines openalex --date-from 2026-01-01 --date-to 2026-01-31 --json`.
+Bounds are inclusive and may be one-sided. Only non-streaming fast keyword search
+is supported; relative `--time-range`, mixed engines and enriched modes are
+rejected. JSON output preserves the backend `date_filter` enforcement receipt.
+The MCP `search` tool exposes the same `date_from`, `date_to`, `time_range` and
+`engines` arguments and applies the same API validation.

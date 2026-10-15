@@ -1508,6 +1508,8 @@ def test_search_preserves_bounded_media_payload():
     )
     result = asyncio.run(client.search("fixture"))
     assert result["data"]["web"][0] == row
+
+
 @pytest.mark.asyncio
 async def test_document_client_bytes_and_scoped_metadata_workflow():
     calls = []
@@ -1597,6 +1599,7 @@ async def test_staged_attachment_does_not_read_remote_url_or_local_path():
     finally:
         await client.close()
 
+
 def test_workspace_client_lists_selects_and_resumes_exact_revision():
     captured = []
 
@@ -1636,3 +1639,171 @@ def test_workspace_client_lists_selects_and_resumes_exact_revision():
             {"action": "render", "expected_revision": "observed"},
         ),
     ]
+
+
+@pytest.mark.asyncio
+async def test_search_preserves_bounded_date_contract():
+    captured = []
+
+    def handler(request):
+        captured.append(json.loads(request.content))
+        return httpx.Response(
+            200,
+            json={
+                "success": True,
+                "data": {"web": []},
+                "date_filter": _bounded_proof(),
+            },
+        )
+
+    client = _make_matched_client({("POST", "/v2/search"): handler})
+    try:
+        result = await client.search(
+            "paper", date_from="2026-01-01", date_to="2026-01-31", engines=["openalex"]
+        )
+        assert captured[0]["date_from"] == "2026-01-01"
+        assert captured[0]["date_to"] == "2026-01-31"
+        assert captured[0]["engines"] == ["openalex"]
+        assert result["date_filter"]["status"] == "enforced"
+    finally:
+        await client.close()
+
+
+def _bounded_proof():
+    bounds = {"date_from": "2026-01-01", "date_to": "2026-01-31"}
+    return {
+        "requested": {**bounds, "time_range": None},
+        "applied": bounds,
+        "status": "enforced",
+        "engines": ["openalex"],
+        "enforced_by": ["upstream:openalex"],
+        "reason": "audited",
+        "warnings": [],
+    }
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        {"success": True, "error": None, "data": {"web": []}},
+        {"success": True, "error": "legacy", "data": {"web": []}},
+        {
+            "success": True,
+            "error": "failure",
+            "date_filter": _bounded_proof(),
+            "data": {"web": []},
+        },
+        {"success": True, "data": {"web": []}},
+        {
+            "success": True,
+            "date_filter": _bounded_proof() | {"applied": {}},
+            "data": {"web": []},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_proof(),
+            "data": {"web": [{"publishedDate": "2025-01-01"}]},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_proof(),
+            "data": {"web": [{"publishedDate": None}]},
+        },
+        {"success": False, "date_filter": _bounded_proof(), "data": {"web": []}},
+        {
+            "success": True,
+            "date_filter": _bounded_proof() | {"status": "partially_enforced"},
+            "data": {"web": []},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_proof() | {"requested": {}},
+            "data": {"web": []},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_proof() | {"engines": ["brave"]},
+            "data": {"web": []},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_proof() | {"warnings": "bad"},
+            "data": {"web": []},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_proof() | {"reason": None},
+            "data": {"web": []},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_proof(),
+            "data": {"web": [{"publishedDate": "2026-02-30"}]},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_proof(),
+            "data": {"web": [{"publishedDate": "2026-01-01", "engine": "brave"}]},
+        },
+    ],
+)
+def test_bounded_mcp_rejects_old_or_mismatched_agent(response):
+    client = _make_matched_client({("POST", "/v2/search"): _json_handler(response)})
+    result = asyncio.run(
+        client.search(
+            "paper", date_from="2026-01-01", date_to="2026-01-31", engines=["openalex"]
+        )
+    )
+    assert "error" in result
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"date_from": "bad"},
+        {"date_to": "2025-01-01"},
+        {"engines": ["arxiv"]},
+        {"search_type": "deep"},
+        {"retrieval_mode": "vector"},
+        {"time_range": "week"},
+    ],
+)
+def test_bounded_mcp_validates_before_dispatch(changes):
+    client = _make_matched_client({})
+    result = asyncio.run(
+        client.search(
+            "paper",
+            **(
+                {
+                    "date_from": "2026-01-01",
+                    "date_to": "2026-01-31",
+                    "engines": ["openalex"],
+                }
+                | changes
+            ),
+        )
+    )
+    assert result["status_code"] == 422
+
+
+@pytest.mark.parametrize(
+    "bounds",
+    [
+        {"date_from": "2026-01-01", "date_to": None},
+        {"date_from": None, "date_to": "2026-01-01"},
+        {"date_from": "2026-01-01", "date_to": "2026-01-01"},
+    ],
+)
+def test_bounded_mcp_accepts_inclusive_one_sided_results(bounds):
+    proof = _bounded_proof() | {
+        "requested": {**bounds, "time_range": None},
+        "applied": bounds,
+    }
+    response = {
+        "success": True,
+        "data": {"web": [{"publishedDate": "2026-01-01", "engine": "openalex"}]},
+        "date_filter": proof,
+    }
+    client = _make_matched_client({("POST", "/v2/search"): _json_handler(response)})
+    result = asyncio.run(client.search("paper", engines=["openalex"], **bounds))
+    assert result == response
