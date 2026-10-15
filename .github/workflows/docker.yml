@@ -384,6 +384,9 @@ jobs:
           cp .env.sample .env
           echo "TWIN_RUN_ID=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> .env
           echo "DURABLE_RESEARCH_REDIS_URL=redis://valkey:6379/15" >> .env
+          # The full suite uses the real agent API, whose upstream must be the
+          # deterministic fixture rather than the live SlopSearX service.
+          echo "SEARXNG_URL=http://slopsearx-fixture:8080" >> .env
           echo "LLM_BASE_URL=http://llm-svc:8011/v1?run_id=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> .env
           echo "LLM_MODEL=fixture-model" >> .env
           echo "CAPTCHA_VISION_BASE_URL=http://llm-svc:8011/v1" >> .env
@@ -789,9 +792,15 @@ jobs:
       - name: Verify LLM fixture contract and agent routing
         run: |
           docker compose exec -T agent-svc python3 -c "
-          import os
+          import json, os, urllib.request
+          assert os.environ['SEARXNG_URL'] == 'http://slopsearx-fixture:8080'
           assert os.environ['LLM_BASE_URL'].startswith('http://llm-svc:8011/v1?run_id='), os.environ.get('LLM_BASE_URL')
-          print('agent LLM routing verified')
+          request = urllib.request.Request('http://agent-svc:8080/v2/search', data=json.dumps({'query': 'fixture pricing', 'limit': 2}).encode(), headers={'Content-Type': 'application/json'})
+          payload = json.load(urllib.request.urlopen(request, timeout=15))
+          results = payload['data']['web']
+          assert payload['success'] and results, 'agent fixture search returned no results'
+          assert all(result['url'].startswith('http://test-site:8000/') for result in results), 'agent search escaped deterministic fixture'
+          print('agent LLM and deterministic search routing verified')
           "
           docker compose exec -T agent-svc python3 -c "
           import json, urllib.request
@@ -906,7 +915,7 @@ jobs:
             QA_OUTCOME_PATH=/app/qa-outcomes-integration.json \
             PYTHONPATH=/app/agent-svc:/app/scraper-svc:/app/llm-svc:/app/parse-svc:/app/portal-svc:/app/browser-svc:/app \
             SCRAPER_BASE_URL=http://scraper-svc:8001 \
-            SEARCH_BASE_URL=http://slopsearx:8080 \
+            SEARCH_BASE_URL=http://slopsearx-fixture:8080 \
             LLM_BASE_URL=http://llm-svc:8011/v1?run_id=${{ github.run_id }}-${{ github.run_attempt }} \
             TEST_SITE_BASE_URL=http://test-site:8000 \
             TIER3_FIXTURE_BASE_URL=http://tier3-fixture:8000 \

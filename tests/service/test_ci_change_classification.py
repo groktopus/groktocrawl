@@ -522,7 +522,7 @@ class RuntimeGateWorkflowContractTests(unittest.TestCase):
             self.integration_tests,
         )
         self.assertIn(
-            "SEARCH_BASE_URL=http://slopsearx:8080",
+            "SEARCH_BASE_URL=http://slopsearx-fixture:8080",
             self.integration_tests,
         )
         self.assertIn(
@@ -544,7 +544,10 @@ class RuntimeGateWorkflowContractTests(unittest.TestCase):
         self.assertIn(
             "Verify LLM fixture contract and agent routing", self.integration_tests
         )
-        self.assertIn("agent LLM routing verified", self.integration_tests)
+        self.assertIn(
+            "agent LLM and deterministic search routing verified",
+            self.integration_tests,
+        )
         self.assertIn(
             "endpoint = 'http://llm-svc:8011/v1/chat/completions'",
             self.integration_tests,

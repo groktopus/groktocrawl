@@ -111,6 +111,30 @@ def test_workflows_have_structured_trusted_and_hosted_contracts():
     assert "twin-out" in twin_run and "junitxml" in twin_run
 
 
+def test_mainline_ci_routes_the_real_agent_and_direct_search_clients_to_fixture():
+    root = Path(__file__).parents[2]
+    workflow = yaml.safe_load((root / ".github/workflows/docker.yml").read_text())
+    steps = {
+        step.get("name"): step.get("run", "")
+        for step in workflow["jobs"]["integration-tests"]["steps"]
+    }
+    setup = steps["Set up .env"]
+    assert 'echo "SEARXNG_URL=http://slopsearx-fixture:8080" >> .env' in setup
+    integration = steps["Run integration tests"]
+    assert "SEARCH_BASE_URL=http://slopsearx-fixture:8080" in integration
+    assert "SEARCH_BASE_URL=http://slopsearx:8080" not in integration
+    probe = steps["Verify LLM fixture contract and agent routing"]
+    assert (
+        "assert os.environ['SEARXNG_URL'] == 'http://slopsearx-fixture:8080'" in probe
+    )
+    assert "http://agent-svc:8080/v2/search" in probe
+    assert "result['url'].startswith('http://test-site:8000/')" in probe
+    assert "payload['success'] and results" in probe
+    # These inputs configure test clients and the agent without changing either
+    # SlopSearX service's production contract.
+    assert "docker compose --profile indexing up -d" in steps["Start the Docker stack"]
+
+
 def test_published_service_images_target_amd64_and_arm64():
     root = Path(__file__).parents[2]
     docker = yaml.safe_load((root / ".github/workflows/docker.yml").read_text())
