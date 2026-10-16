@@ -657,3 +657,53 @@ async def test_numeric_citation_key_resolves_to_exact_document_source(monkeypatc
             "extraction": {},
         }
     ]
+
+
+@pytest.mark.asyncio
+async def test_artifact_only_context_does_not_offer_a_resolvable_citation_key(
+    monkeypatch,
+):
+    from agent.session import SessionManager
+
+    class FixtureLLM:
+        def __init__(self, *_args):
+            pass
+
+        async def generate(self, **kwargs):
+            context = kwargs["context"]
+            assert "Citation key" not in context
+            assert "session notes" in context.lower()
+            assert "cannot be cited as a retained source" in context.lower()
+            return "The earlier note records a proposed total."
+
+        async def close(self):
+            pass
+
+    monkeypatch.setattr("agent.session.LLMClient", FixtureLLM)
+
+    class Store:
+        refs = {"ref_1": {"source": "web", "description": "Old search result"}}
+
+        async def aget_artifact(self, _session_id):
+            return "Previous session notes mention a proposed total of USD 12000."
+
+        async def aget_refs(self, _session_id):
+            return self.refs
+
+        async def aappend_step(self, _session_id, _step):
+            return 1
+
+        async def aappend_artifact(self, _session_id, _content):
+            return True
+
+    manager = SessionManager.__new__(SessionManager)
+    manager.store = Store()
+    result = await manager._step_query(
+        "session",
+        {"question": "What total did the earlier notes mention?"},
+        "http://fixture.invalid/llm",
+        "",
+        "fixture",
+    )
+    assert result["evidence_coverage"]["sources"][0]["id"] == "session-notes"
+    assert result["citations"] == []
