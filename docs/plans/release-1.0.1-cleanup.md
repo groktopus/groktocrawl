@@ -27,6 +27,15 @@ Architectural changes require new decisions where existing ADRs no longer apply.
 
 Do not change SlopSearch. Use isolated test services and controlled search/model/capture responses for repeatable acceptance. Preserve existing deployment data and client configuration. Record actual test limitations rather than treating collection, fixture counts, or successful health responses as proof of user outcomes.
 
+## Verification in progress
+
+PR #671 includes `tests/integration/test_document_session_journey.py`: a PDF is
+uploaded through the session API, parsed by the real Parse HTTP service, stored
+in isolated Valkey, used in a session question, and read back as an exact citation.
+The test also checks foreign-owner rejection and evidence removal after deletion.
+The model response is controlled. This verifies the integrated API workflow;
+CLI/MCP client-path acceptance and final deployment checks remain required.
+
 ## Documentation audit
 
 Keep this audit open until the final code is merged. A corrected paragraph is not
