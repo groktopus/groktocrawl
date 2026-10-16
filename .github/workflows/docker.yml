@@ -343,6 +343,7 @@ jobs:
     # sane defaults if the preflight step is ever removed or bypassed.
     env:
       COMPOSE_PROJECT_NAME: groktocrawl-ci-${{ github.run_id }}-${{ github.run_attempt }}
+      COMPOSE_FILE: docker-compose.yml:compose.ci-research-inputs.yml
       AGENT_PORT: "18080"
       SCRAPER_HOST_PORT: "18001"
       SLOPSEARX_HOST_PORT: "18081"
@@ -513,6 +514,36 @@ jobs:
           for line in lines:
               print(f"exported {line}")
           PY
+
+      - name: Seed daemon-owned research inputs
+        run: |
+          set -euo pipefail
+          seed_container="${COMPOSE_PROJECT_NAME}-research-inputs"
+          trap 'docker rm -f "$seed_container" >/dev/null 2>&1 || true' EXIT
+          for volume in ci_research_secret ci_research_init; do
+            docker volume create \
+              --label "com.docker.compose.project=$COMPOSE_PROJECT_NAME" \
+              --label "com.docker.compose.volume=$volume" \
+              "${COMPOSE_PROJECT_NAME}_${volume}" >/dev/null
+          done
+          research_image=$(uv run --no-sync python -c 'import yaml; print(yaml.safe_load(open("docker-compose.yml"))["services"]["research-postgres"]["image"])')
+          docker create --name "$seed_container" \
+            --label "com.docker.compose.project=$COMPOSE_PROJECT_NAME" \
+            --network none --user 0:0 --entrypoint /bin/sh \
+            --mount "type=volume,source=${COMPOSE_PROJECT_NAME}_ci_research_secret,target=/run/secrets" \
+            --mount "type=volume,source=${COMPOSE_PROJECT_NAME}_ci_research_init,target=/docker-entrypoint-initdb.d" \
+            "$research_image" -ec '
+              test -s /run/secrets/research_postgres_password
+              test -s /docker-entrypoint-initdb.d/016_artifact_evidence.sql
+              chmod 0755 /run/secrets /docker-entrypoint-initdb.d
+              chmod 0444 /run/secrets/research_postgres_password /docker-entrypoint-initdb.d/*.sql
+            ' >/dev/null
+          research_password_file="${RUNNER_TEMP}/groktocrawl-postgres-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.password"
+          docker cp "$research_password_file" "$seed_container:/run/secrets/research_postgres_password"
+          docker cp agent-svc/agent/experimental/migrations/. "$seed_container:/docker-entrypoint-initdb.d/"
+          docker start --attach "$seed_container"
+          test "$(docker inspect -f '{{.State.ExitCode}}' "$seed_container")" = 0
+        timeout-minutes: 5
 
       - name: Start the Docker stack
         run: docker compose --profile indexing --profile durable-research up -d
@@ -756,6 +787,7 @@ jobs:
           docker cp .github/workflows/fast-tests.yml "$svc":/app/.github/workflows/fast-tests.yml
           docker cp .github/workflows/. "$svc":/app/.github/workflows/
           docker cp docker-compose.ci.yml "$svc":/app/docker-compose.ci.yml
+          docker cp compose.ci-research-inputs.yml "$svc":/app/compose.ci-research-inputs.yml
           # Include the protected-profile inputs read by service contract tests.
           docker cp compose.experimental-candidate.yml "$svc":/app/compose.experimental-candidate.yml
           docker cp compose.protected-flare-ci.yml "$svc":/app/compose.protected-flare-ci.yml
@@ -1129,6 +1161,7 @@ jobs:
         if: always()
         run: |
           trap 'rm -f "${RUNNER_TEMP}/groktocrawl-postgres-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.password"' EXIT
+          docker rm -f "${COMPOSE_PROJECT_NAME}-research-inputs" >/dev/null 2>&1 || true
           docker compose --profile durable-research down --volumes --remove-orphans --timeout 30
 
   research-runtime:
