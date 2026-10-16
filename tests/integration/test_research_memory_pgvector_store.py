@@ -6,15 +6,20 @@ import os
 import uuid
 from datetime import UTC, datetime, timedelta
 
-import pytest
 from agent.research_memory_pgvector import MemoryVector, PgvectorResearchMemoryStore
+
+from tests.outcome_governance import governed_skip
 
 
 def test_pgvector_research_memory_store_round_trip_and_expiry():
     dsn = os.getenv("RESEARCH_MEMORY_PGVECTOR_TEST_DSN")
     if not dsn:
-        pytest.skip(
-            "set RESEARCH_MEMORY_PGVECTOR_TEST_DSN to an isolated test database"
+        governed_skip(
+            "set RESEARCH_MEMORY_PGVECTOR_TEST_DSN to an isolated test database",
+            owner="repository-maintainer",
+            issue="#672",
+            classification="retained",
+            environment="opt-in PostgreSQL integration DSN is not configured",
         )
     store = PgvectorResearchMemoryStore(dsn)
     store.ensure_schema()

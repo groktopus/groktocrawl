@@ -7,7 +7,7 @@ import sys
 import uuid
 from pathlib import Path
 
-import pytest
+from tests.outcome_governance import governed_skip
 
 sys.path.insert(0, str(Path(__file__).parents[2] / "semantic-svc"))
 
@@ -17,7 +17,13 @@ from shadow_pgvector import PgvectorShadowStore, ShadowConfig, ShadowRecord
 def test_pgvector_only_store_round_trip_and_capacity_cleanup():
     dsn = os.getenv("PGVECTOR_SEMANTIC_TEST_DSN")
     if not dsn:
-        pytest.skip("set PGVECTOR_SEMANTIC_TEST_DSN to an isolated test database")
+        governed_skip(
+            "set PGVECTOR_SEMANTIC_TEST_DSN to an isolated test database",
+            owner="repository-maintainer",
+            issue="#672",
+            classification="retained",
+            environment="opt-in PostgreSQL integration DSN is not configured",
+        )
 
     schema = f"gtc_semantic_it_{uuid.uuid4().hex[:16]}"
     config = ShadowConfig(
