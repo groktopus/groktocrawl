@@ -137,6 +137,11 @@ async def test_focused_search_skips_gap_planning_and_second_acquisition():
         )
 
     gap_planning.assert_not_awaited()
-    assert [call.args[0] for call in searxng.search.await_args_list] == ["first-a"]
+    # Focused mode searches each planned comparison subject in its single
+    # discovery pass; it still skips gap planning and any follow-up query.
+    assert [call.args[0] for call in searxng.search.await_args_list] == [
+        "first-a",
+        "first-b",
+    ]
     assert len(scraper.calls) == 1
     llm.generate.assert_awaited_once()
