@@ -23,17 +23,19 @@ class TestDeploymentCallout:
     def test_deployment_guide_has_durability_section(self):
         text = _read("docs/guides/deployment.md")
         assert "### Job durability and recovery" in text
-        assert "not restart-safe" in text
-        # SLO boundary is explicit.
-        assert "no durability SLO" in text
+        assert "OUTCOME_UNKNOWN" in text
+        assert "queued" in text
+        # The recovery contract is bounded and does not promise completion.
+        assert "completion SLO" in text
+        assert "does not provide" in text
         # Recovery procedure points at the tool and the runbook.
         assert "reconcile-jobs.py" in text
         assert "interrupted-jobs.md" in text
 
     def test_readme_quickstart_does_not_imply_durability(self):
         text = _read("README.md")
-        assert "best-effort" in text
-        assert "not restart-safe" in text
+        assert "OUTCOME_UNKNOWN" in text
+        assert "partial artifacts are not rolled back" in text
         assert "deployment.md#job-durability-and-recovery" in text
 
 
@@ -58,8 +60,8 @@ class TestADRDecisionRecord:
 
     def test_cross_links_from_architecture_and_api_guides(self):
         architecture = _read("docs/architecture.md")
-        assert "0047-defer-restart-safe-execution.md" in architecture
+        assert "0072-valkey-leased-legacy-job-recovery.md" in architecture
         assert "interrupted-jobs.md" in architecture
         api = _read("docs/guides/api.md")
-        assert "0047-defer-restart-safe-execution.md" in api
+        assert "0072-valkey-leased-legacy-job-recovery.md" in api
         assert "interrupted-jobs.md" in api

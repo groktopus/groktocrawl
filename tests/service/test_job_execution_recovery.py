@@ -15,6 +15,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.outcome_governance import governed_skip
+
 
 def _free_port() -> int:
     with socket.socket() as sock:
@@ -26,7 +28,13 @@ def _free_port() -> int:
 def valkey_url(tmp_path: Path):
     executable = shutil.which("valkey-server") or shutil.which("redis-server")
     if executable is None:
-        pytest.skip("requires local Valkey/Redis server for Lua lease validation")
+        governed_skip(
+            "Requires a local Valkey/Redis server for Lua lease validation",
+            owner="repository-maintainer",
+            issue="ADR-0072",
+            classification="retained",
+            environment="local Valkey/Redis server unavailable",
+        )
     port = _free_port()
     process = subprocess.Popen(
         [
