@@ -581,6 +581,15 @@ async def _readiness_payload() -> dict[str, str]:
         return {"status": "starting", "models": "loading"}
 
     loop = asyncio.get_running_loop()
+    if getattr(SHADOW_CONFIG, "pg_only", False):
+        pgvector_ready = await loop.run_in_executor(None, _is_pgvector_ready)
+        return {
+            "status": "ok" if pgvector_ready else "starting",
+            "models": "loaded",
+            "vector_store": "pgvector",
+            "pgvector": "ready" if pgvector_ready else "unavailable",
+            "qdrant": "not_required",
+        }
     if SHADOW_CONFIG.serving:
         pgvector_ready, qdrant_ready = await asyncio.gather(
             loop.run_in_executor(None, _is_pgvector_ready),

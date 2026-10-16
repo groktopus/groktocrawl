@@ -85,7 +85,7 @@ def test_durable_research_profile_wires_one_password_secret_and_keeps_default_of
     semantic = services["semantic-svc"]
     agent = services["agent-svc"]
 
-    assert postgres["profiles"] == ["durable-research"]
+    assert postgres["profiles"] == ["durable-research", "pgvector-only"]
     assert postgres["environment"]["POSTGRES_PASSWORD_FILE"] == (
         "/run/secrets/research_postgres_password"
     )
@@ -104,7 +104,17 @@ def test_durable_research_profile_wires_one_password_secret_and_keeps_default_of
             "research-postgres:5432:groktocrawl:groktocrawl:%s" in service["command"][0]
         )
 
-    assert semantic["profiles"] == ["indexing", "durable-research"]
+    assert semantic["profiles"] == [
+        "indexing",
+        "durable-research",
+        "pgvector-only",
+    ]
+    assert semantic["depends_on"]["qdrant"] == {
+        "condition": "service_healthy",
+        "required": False,
+    }
+    assert "pgvector-only" not in services["qdrant"]["profiles"]
+    assert "durable-research" in services["qdrant"]["profiles"]
     assert _env(semantic)["PGVECTOR_SHADOW_DSN"].startswith(
         "${PGVECTOR_SHADOW_DSN:-postgresql://groktocrawl@research-postgres:5432/"
     )

@@ -25,7 +25,7 @@ An Architecture Decision Record captures an important architectural decision mad
 
 **Current accepted decisions:** ADR-0001–0007, 0009–0012, 0014–0022, 0026 (as superseded for migrated deployments), 0029–0035, 0038, 0039, 0043–0057, 0059–0067, and 0069.
 
-**Proposed work:** ADR-0070 and ADR-0023–0025, 0027, 0028, 0036, 0037, and 0040–0042.
+**Proposed work:** ADR-0023–0025, 0027, 0028, 0036, 0037, 0040–0042, 0068, 0070, and 0071.
 
 | ADR | Title | Status |
 |-----|-------|--------|
@@ -98,4 +98,5 @@ An Architecture Decision Record captures an important architectural decision mad
 | 0068 | [Select bounded evidence from complete sources](0068-bounded-full-source-evidence.md) | proposed |
 | 0069 | [Adopt a Bounded Research Substrate](0069-adopt-bounded-research-substrate.md) | accepted; rollout-gated adoption in standard deployment |
 | 0070 | [Execute live durable research with persisted external-call receipts](0070-execute-live-durable-research.md) | proposed; implementation acceptance pending |
+| 0071 | [Use pgvector for Research Memory with Reversible Rollback](0071-use-pgvector-for-research-memory-with-reversible-rollback.md) | proposed |
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full ADR workflow: when to write an ADR, how to number it, and how to get it reviewed in a PR. Experimental records are linked from the provenance archive, not included in the mainline sequence.
