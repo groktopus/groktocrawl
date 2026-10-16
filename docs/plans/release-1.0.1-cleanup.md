@@ -1,8 +1,8 @@
 # Complete the 1.0.1 integration cleanup
 
-Status: in progress. This plan is a release checklist, not a claim that the changes are available.
+Status: all ten cleanup requirements verified; release publication is being finalized.
 
-The 1.0.0 integration left the new durable research endpoint connected to example data. The correction must complete the intended user workflows and check the other release claims against actual behavior. Release 1.0.1 follows completion of every item below.
+The 1.0.0 integration left the new durable research endpoint connected to example data. The correction must complete the intended user workflows and check the other release claims against actual behavior. The table below defines the completed cleanup scope; supporting evidence follows it.
 
 ## Work and acceptance
 
@@ -19,120 +19,47 @@ The 1.0.0 integration left the new durable research endpoint connected to exampl
 | Evidence and capture | Passage selection and automatic recovery work across service boundaries | Relevant late-source passages reach answering context; controlled challenge service exercises real recovery transport and caller-visible outcomes |
 | Documentation | Current instructions describe the final implementation accurately | Audit README, AGENTS.md, CONTRIBUTING.md, architecture/ADR index, guides, API/CLI/MCP reference, Compose examples, runbooks, changelog and release notes against final source and tests |
 
-## Delivery sequence
+## Completion evidence
 
-Use focused pull requests for durable execution, storage, legacy job recovery, workspace integration, and remaining verification/documentation. Each pull request must pass its required checks on the current head and address one review pass before merging. Keep progress and evidence links here as changes merge. Do not release from a partial checklist.
+Implementation PRs [#670](https://github.com/groktopus/groktocrawl/pull/670),
+[#671](https://github.com/groktopus/groktocrawl/pull/671),
+[#672](https://github.com/groktopus/groktocrawl/pull/672),
+[#673](https://github.com/groktopus/groktocrawl/pull/673), and
+[#674](https://github.com/groktopus/groktocrawl/pull/674) passed required checks and
+merged. Documentation corrections merged in
+[#675](https://github.com/groktopus/groktocrawl/pull/675). The separately reviewed
+migration comparison tool merged in
+[#676](https://github.com/groktopus/groktocrawl/pull/676).
 
-Architectural changes require new decisions where existing ADRs no longer apply. Preserve historical experiment results and superseded decisions as history; do not rewrite them to imply capabilities were already implemented. Reserve ADR numbers centrally to avoid concurrent collisions.
-
-Do not change SlopSearch. Use isolated test services and controlled search/model/capture responses for repeatable acceptance. Preserve existing deployment data and client configuration. Record actual test limitations rather than treating collection, fixture counts, or successful health responses as proof of user outcomes.
-
-## Delivery status
-
-| Change | Review | Remaining verification |
-| --- | --- | --- |
-| Live durable research and retained sources | [#670](https://github.com/groktopus/groktocrawl/pull/670) | Merged after required CI and review; deployment remains |
-| Workspace evidence, explicit follow-ups and document/client acceptance | [#671](https://github.com/groktopus/groktocrawl/pull/671) | Merged after required CI and review, including public API capture and PostgreSQL follow-up acceptance; deployment remains |
-| PostgreSQL-only memory and semantic indexing | [#672](https://github.com/groktopus/groktocrawl/pull/672) | Merged after required CI and review, including startup, indexing and restart without Qdrant; deployment remains |
-| Legacy job recovery and durable callbacks | [#673](https://github.com/groktopus/groktocrawl/pull/673) | Merged after required CI and review; deployment remains |
-| Multi-query research, time semantics and research callbacks | [#674](https://github.com/groktopus/groktocrawl/pull/674) | Merged after all required CI and review; deployment remains |
-| Documentation and architecture reconciliation | [#675](https://github.com/groktopus/groktocrawl/pull/675) | Source review, surface inventories and relative file links checked; final required CI and release evidence remain |
-
-Research breadth, time semantics and research callbacks are a separate follow-on
-to the durable core. None of the rows above alone completes the release.
-
-## Verification in progress
-
-The combined implementation at `92e5cc17` passed 4,780 unit/service tests and
-42 subtests, with 21 skips. MCP tests passed 269 cases; type checking passed
-across 257 files. Later CI fixes supplied the SQL migrations and semantic service source needed
-by the container tests. A separate semantic HTTP acceptance test was also added. These local results complement the required checks on each
-final PR head; skipped cases are not counted as passes.
-
-All nine cases in `tests/integration/test_live_research_http_adapters.py` passed
-at integrated source `a2a717485b3b72cbb789083a0daf35f92e476c43` against isolated PostgreSQL 17
-and Valkey, with the tracked SQL migrations. The cases cover distinct objectives
-through HTTP/MCP, recovery, search failure, success/failure callbacks, `as_of`,
-and retained-source follow-ups. Search, capture, model and callback responses
-came from local HTTP twins. This verifies service integration and failure handling;
-it does not measure live search quality or establish deployment readiness.
-
-PR #671 includes `tests/integration/test_document_session_journey.py`: a PDF is
-uploaded through the session API, parsed by the real Parse HTTP service, stored
-in isolated Valkey, used in a session question, and read back as an exact citation.
-The test also checks foreign-owner rejection and evidence removal after deletion.
-The same journey runs the CLI as a subprocess and dispatches MCP upload, query,
-and read tools against the local HTTP API. A second document places the answer
-beyond character 8,000 and verifies that passage reaches the model and can be
-read back exactly through MCP. The model response is controlled;
-this verifies service and client integration, not model answer quality. Final
-deployment checks remain required.
-
-The container CAPTCHA probe also exercises the public `/v2/scrape` route with no
-manual recovery options. It requires the packaged browser to recover the local
-grid challenge and checks that an unresolved challenge returns
-`CAPTCHA_UNRESOLVED` without caching challenge content. The probe passed on
-`42a4914f` in the [container acceptance job](https://github.com/groktopus/groktocrawl/actions/runs/38851810673/job/116815758817).
-Final required checks and deployment verification remain.
-
-The PostgreSQL-only storage checks also ran against an isolated PostgreSQL 17
-instance: research memory and semantic storage both passed. The semantic HTTP
-acceptance test in PR #672 starts the real service with Qdrant unavailable and
-verifies readiness, single and batch indexing, search, deletion, and persisted
-search after a fresh process starts. It passed with controlled embeddings;
-this proves the storage workflow, not real-model relevance. All three storage
-cases also passed in the [final container run](https://github.com/groktopus/groktocrawl/actions/runs/38862542492/job/116848939850)
-at `b43d9b836d1e36be08e5ed9c9641c0444f7cb366`. Required checks passed before
-PR #672 merged. Deployment verification remains open.
-
-PR #673 passed all required checks at
-`9409e7b04fc553024249a941fc42ccab02e317e3` before merging. Both the standard
-and research-runtime integration suites passed 2,764 tests, with 162 skips and
-17 deselections recorded separately. The [required CI run](https://github.com/groktopus/groktocrawl/actions/runs/38869783999)
-also passed PostgreSQL migration/backup/restore/capacity and protected capture
-checks. The API image identity is checked before testing, and the API restarts
-after checkout source is staged so old imported modules cannot survive into
-new-source tests. This is CI evidence; deployment verification remains required.
-
-PR #674's hosted integration suite passed 2,798 tests at
-`231172e5c8321ffac689fee875be4a10d181d71d`, with 162 skips and 17 deselections
-recorded separately. All nine live-research HTTP acceptance cases passed in that
-[run](https://github.com/groktopus/groktocrawl/actions/runs/38877715181/job/116896737119).
-The self-hosted suite also passed 2,798 tests, with the same 162 skips and
-17 deselections, in its [final run](https://github.com/groktopus/groktocrawl/actions/runs/38877715181/job/116896743290).
-The PostgreSQL storage probes and all required checks passed before PR #674
-merged as `3f1406970c900ab999b04bb07009c2c16bb2eeeb`. These results do not
-complete deployment verification.
+The [verification report](../experiments/release-1.0.1-verification.md) maps all ten
+requirements above to their implementation and acceptance evidence. It records
+exact-release CI, deployment checks, retained data, document/client behavior,
+vector migration, and limitations. Controlled integration tests establish behavior;
+they are not evidence of a measured improvement in live-model answer quality.
 
 ## Documentation audit
 
-The source audit is complete against the merged implementation. Documentation
-PR #675 still requires its final checks and merge; release notes and deployment
-evidence remain open. A corrected paragraph alone is not proof of behavior.
+The audit checked README, AGENTS.md, CONTRIBUTING.md, architecture and ADRs,
+API/CLI/MCP references, research/document/workspace guides, Compose examples,
+migration and recovery runbooks, changelog, and release notes against source and
+tests. Surface inventories passed, and all 175 relative links in the audited
+Markdown resolved.
 
-| Documents | Compare against | Completion requirement |
-| --- | --- | --- |
-| README and quick start | Compose defaults, feature flags, service health and public capabilities | A new operator can distinguish live features from test fixtures and start the documented configuration |
-| AGENTS.md and CONTRIBUTING.md | Current source layout, test workflows, job ownership and error handling | Commands and development guidance match the implementation and required CI |
-| Architecture guide and ADR index | Durable research, legacy job recovery, storage backends and workspace integration | New decisions are indexed; obsolete contracts are clearly superseded without rewriting historical evidence |
-| Research, document and workspace guides | API routes, CLI parsing, MCP tools, ownership and retained evidence | Examples exercise the actual operation and explain expiry, deletion and uncertain outcomes |
-| Deployment and recovery runbooks | Compose profiles, schema migrations, backup/restore and callback delivery | Prerequisites, rollback steps and recovery limits match the tested implementation |
-| Public surface inventory and references | Routes, command flags, tool signatures and environment settings | Automated inventory checks pass and manual behavior review finds no unsupported promises |
-| Changelog, release notes and announcement | Merged changes and final acceptance results | Describe verified user benefits and material limitations; no unsupported quality claims |
+Corrections include live versus fixture research, legacy queued-job recovery and
+unknown outcomes, durable callbacks, storage prerequisites, explicit follow-ups,
+HTTP-only evidence-date settings, and commands that run tests from the checkout.
+ADRs 0068, 0070, 0071, and 0072 are accepted; superseded decisions and experimental
+results remain historical records. The migration runbook now distinguishes the
+failed strict approximate-search comparison from the passing exact-rank check.
 
-Workspace and follow-up corrections are included in PR #671. Storage and restart
-instructions have been reconciled with merged PRs #672 and #673. Research policy
-and client guidance were checked against PR #674. ADR-0070 is accepted following
-its completed implementation and integration tests. Documentation surface and
-CLI/MCP inventory checks pass, and all 175 relative file links checked in the
-changed Markdown resolve. Release instructions still require final image and
-deployment evidence before publication.
+## Release verification
 
-The command audit also corrected AGENTS.md and CONTRIBUTING.md: tests run from
-the checkout, not a nonexistent test directory inside the production image. The
-two documented HTTP health test names collect successfully; they are explicitly
-a smoke check, not a substitute for the isolated CI acceptance suite.
+The exact release implementation is
+`729d34d360d819b29a633389e0067e34b2dfe7ce`. Both final integration suites passed
+2,798 tests, with 162 skips and 17 deselections recorded separately. All ten
+multi-architecture images passed build and provenance checks. Both deployments
+passed their applicable acceptance checks; mainline now serves PostgreSQL vectors
+and live durable research. Existing data and client configuration were preserved.
 
-## Release completion
-
-After all changes merge, run the complete required checks on the exact release commit, verify the built images, and perform the documented deployment and user-workflow checks. Confirm that the release notes and announcement match those results. Publish 1.0.1 only when every row above has linked completion evidence.
+The release verification report records final publication and image-tag checks.
+The cleanup changes are confined to GroktoCrawl.
