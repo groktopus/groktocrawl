@@ -293,6 +293,35 @@ def test_webhook_outbox_deduplicates_and_releases_leases(valkey_url: str) -> Non
     assert store.list_pending_webhooks() == []
 
 
+@pytest.mark.parametrize("key_type", [str, bytes])
+def test_pending_webhook_job_id_is_text_for_scan_key_types(key_type) -> None:
+    """Redis clients may return scan keys as bytes or decoded strings."""
+    from agent.store import JobStore
+
+    job_id = "job-123"
+    key = f"job:{job_id}:webhooks"
+
+    class RedisStub:
+        def scan(self, *, cursor, match, count):
+            assert cursor == 0
+            assert match == "job:*:webhooks"
+            return 0, [key_type(key.encode() if key_type is bytes else key)]
+
+        def hgetall(self, scanned_key):
+            assert scanned_key == key_type(key.encode() if key_type is bytes else key)
+            return {
+                b"event-1": json.dumps({"status": "pending", "webhookId": "event-1"})
+            }
+
+    store = JobStore.__new__(JobStore)
+    store.redis = RedisStub()
+
+    events = store.list_pending_webhooks()
+
+    assert events == [{"status": "pending", "webhookId": "event-1", "job_id": job_id}]
+    assert isinstance(events[0]["job_id"], str)
+
+
 def test_restart_replays_pending_webhook_with_original_id(
     valkey_url: str, monkeypatch
 ) -> None:

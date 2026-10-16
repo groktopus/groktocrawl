@@ -648,11 +648,12 @@ class JobStore:
                 cursor=cursor, match="job:*:webhooks", count=100
             )
             for key in keys:
-                job_id = key.split(":", 2)[1]
+                key_text = key.decode("utf-8") if isinstance(key, bytes) else key
+                job_id = key_text.split(":", 2)[1]
                 for raw in self.redis.hgetall(key).values():
                     event = json.loads(raw)
                     if event.get("status") in ("pending", "delivering"):
-                        event["job_id"] = job_id
+                        event["job_id"] = str(job_id)
                         events.append(event)
                         if len(events) >= limit:
                             return events
