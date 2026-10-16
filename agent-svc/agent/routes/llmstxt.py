@@ -25,16 +25,19 @@ async def create_llmstxt(
     store: JobStore = request.app.state.job_store
     job_id = store.create_job(kind="llmstxt", payload=body.model_dump())
 
+    from ..job_execution import submit_job
     from ..worker import _process_llmstxt_async
 
-    request.app.state.task_tracker.create_background_task(
+    submit_job(
+        request,
+        job_id,
         _process_llmstxt_async(
             job_id=job_id,
             url=body.url,
             max_pages=body.max_pages,
             scraper_url=request.app.state.scraper_url,
             webhook_config=body.webhook,
-        )
+        ),
     )
     return LLMsTextCreateResponse(id=job_id)
 
@@ -51,5 +54,6 @@ async def get_llmstxt_status(request: Request, job_id: str) -> LLMsTextStatusRes
         status=job.get("status", "processing"),
         data=job.get("data"),
         error=job.get("error"),
+        error_code=job.get("error_code"),
         expires_at=job.get("completed_at") or job.get("created_at"),
     )

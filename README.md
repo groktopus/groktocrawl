@@ -4,6 +4,8 @@ GroktoCrawl is a self-hosted, MIT-licensed web data platform compatible with the
 
 It is designed as a local-first, observable, model-flexible foundation for organizations that want agentic research and web intelligence without surrendering control of their data, infrastructure, or model choices.
 
+Research memory keeps full artifacts in Valkey and defaults to Qdrant for vector lookup. Deployments can explicitly mirror that index to PostgreSQL/pgvector and migrate it with the [research-memory storage runbook](docs/runbooks/research-memory-pgvector.md); the separate semantic page index also has a PostgreSQL-only mode after its own backfill. These modes are opt-in and do not change existing storage configuration by default.
+
 ## Start here
 
 Choose your path. Both run the same Docker stack defined in `docker-compose.yml`; they differ in which services and credentials you configure.
@@ -67,7 +69,7 @@ curl -N -X POST http://localhost:8080/v2/crawl \
 
 **Expected success output:** the webhook fires a `crawl.started` event before scraping, a `crawl.page` event after each page, and a `crawl.completed` event at the end — each with a unique `webhookId` (omit an `events` filter to receive all of them). The SSE stream emits flat `page` events and a terminal `done` event.
 
-> **Background jobs are best-effort.** Async jobs (crawl, agent, extract, batch-scrape, llmstxt, plan execution) run in-process and are **not restart-safe**: a restart does not resume interrupted work, roll back partial artifacts, or replay undelivered webhooks. After any `agent-svc` restart, reconcile jobs stranded in `processing` — see [Job durability and recovery](docs/guides/deployment.md#job-durability-and-recovery), the [Interrupted Jobs runbook](docs/runbooks/interrupted-jobs.md), and [ADR-0047](docs/adr/0047-defer-restart-safe-execution.md).
+> **Background work has a fail-closed restart boundary.** Async jobs (crawl, agent, extract, batch-scrape, llmstxt, plan execution) still run in-process. New jobs that are durably recorded but not yet claimed can be dispatched after restart. If a worker had started, GroktoCrawl does not replay it: after its Valkey lease expires, the job becomes `failed` with `OUTCOME_UNKNOWN`, because an external side effect may already have happened. Pre-marker records follow the same rule. Terminal webhook intents are persisted and retried with the same `webhookId` (delivery is at-least-once), while partial artifacts are not rolled back. See [Job durability and recovery](docs/guides/deployment.md#job-durability-and-recovery), the [Interrupted Jobs runbook](docs/runbooks/interrupted-jobs.md), and [ADR-0072](docs/adr/0072-valkey-leased-legacy-job-recovery.md).
 
 ## Research architecture
 
@@ -75,7 +77,7 @@ The `/experimental/research/v1` endpoint can execute an objective through the se
 
 This durable endpoint plans up to three searches and retains up to eight sources within 256,000 source bytes and a 180-second deadline. Known capture failures remain visible as insufficient coverage; ambiguous external dispatch stops as `outcome_unknown`. Completed call receipts are reused after restart without another paid call. `as_of` is a timezone-aware, nonfuture evidence evaluation target: it does not retrieve an archived web page, and a new capture cannot establish past validity by itself. Optional completion, failure and cancellation webhooks use a durable outbox with three attempts and one stable event ID; receivers must deduplicate that ID. See the [live execution contract](docs/guides/durable-research.md) and [ADR-0070](docs/adr/0070-execute-live-durable-research.md). The remaining 1.0.1 acceptance work is tracked in [#666](https://github.com/groktopus/groktocrawl/issues/666).
 
-Vector serving moves from Qdrant to pgvector after verified backfill and parity checks, with Qdrant retained for rollback. See [ADR-0069](docs/adr/0069-adopt-bounded-research-substrate.md), the [migration plan](docs/plans/research-architecture-migration.md), and the [deployment migration runbook](docs/runbooks/mainline-architecture-migration.md). Protected capture is described in the [protected Compose override](docker-compose.protected.yml). Historical decisions remain in the [GroktoCrawl X ADR archive](docs/adr/experimental/groktocrawl-x/README.md).
+Research-memory artifacts remain in Valkey; its vector index defaults to Qdrant and can be migrated to PostgreSQL/pgvector after a verified backfill. The semantic page index has separate Qdrant, shadow, and PostgreSQL-only modes. Qdrant remains available for rollback until operators verify a reverse copy and end their rollback window. The `/experimental/research/v1` path remains stable for compatibility. See [ADR-0069](docs/adr/0069-adopt-bounded-research-substrate.md), [ADR-0071](docs/adr/0071-use-pgvector-for-research-memory-with-reversible-rollback.md), the [research-memory storage runbook](docs/runbooks/research-memory-pgvector.md), and the [deployment migration runbook](docs/runbooks/mainline-architecture-migration.md). The protected capture topology is described in the [protected Compose override](docker-compose.protected.yml). Historical experiment decisions and their scope are recorded in the [GroktoCrawl X ADR archive](docs/adr/experimental/groktocrawl-x/README.md).
 
 ## What it provides
 
@@ -102,7 +104,7 @@ When the stack is running, FastAPI publishes the canonical request/response sche
 
 ## Architecture at a glance
 
-`agent-svc` is the public API and coordinator. It persists job state in Valkey, calls `scraper-svc` and SlopSearX, uses `semantic-svc`/Qdrant for vector retrieval, and delegates synthesis to an OpenAI-compatible LLM. Supporting services provide browser sessions, document parsing, the portal, scheduled monitors, and MCP access. See the [architecture guide](docs/architecture.md) for the service graph and boundaries.
+`agent-svc` is the public API and coordinator. It persists job state and research-memory artifacts in Valkey, calls `scraper-svc` and SlopSearX, uses `semantic-svc` for page-vector retrieval, and delegates synthesis to an OpenAI-compatible LLM. The semantic index defaults to Qdrant and can use PostgreSQL/pgvector in its explicit PostgreSQL-only mode. Research-memory vectors have their own Qdrant/shadow/pgvector modes. Supporting services provide browser sessions, document parsing, the portal, scheduled monitors, and MCP access. See the [architecture guide](docs/architecture.md) for the service graph and boundaries.
 
 ## Adapters
 

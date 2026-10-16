@@ -4,7 +4,19 @@
 
 `docker compose up -d` starts the production service graph. `docker compose --profile fixture up --build -d` additionally starts `llm-svc`, `test-site`, `tier3-fixture`, `slopsearx-fixture`, and `agent-svc-fixture` for local evaluation. Semantic indexing is optional and best-effort on constrained hosts; before first enabling it, create the external model-cache volume with `docker volume create hf-cache`, then start `semantic-svc` and Qdrant with `docker compose --profile indexing up -d`. Without that profile, ordinary scrape and keyword/deep search continue, while vector and hybrid-vector retrieval, semantic/hybrid reranking, `/v2/find-similar`, and semantic-backed research-memory indexing are unavailable. The main public ports are agent API `8080`, fixture agent API `8084` when the fixture profile is enabled, portal `8082`, scraper `8001`, semantic service `8003` when indexing is enabled, SlopSearX `8081`, GroktoCrawl MCP `8002`, and direct SlopSearX MCP `8007` when the `mcp` profile is enabled.
 
-`agent-svc` coordinates requests; `scraper-svc` fetches content; optional `semantic-svc` uses Qdrant; Valkey stores operational state; SlopSearX discovers web results; `browser-svc`, `parse-svc`, `portal-svc`, `mcp-svc`, `slopsearx-mcp`, and Ofelia provide specialized capabilities. `mcp-svc` exposes GroktoCrawl API tools; the opt-in `slopsearx-mcp` companion exposes direct SlopSearX search-engine tools when the `mcp` profile is enabled. The [architecture guide](../architecture.md) describes ownership and data flow.
+`agent-svc` coordinates requests; `scraper-svc` fetches content; optional `semantic-svc` uses Qdrant by default; Valkey stores operational state; SlopSearX discovers web results; `browser-svc`, `parse-svc`, `portal-svc`, `mcp-svc`, `slopsearx-mcp`, and Ofelia provide specialized capabilities. `mcp-svc` exposes GroktoCrawl API tools; the opt-in `slopsearx-mcp` companion exposes direct SlopSearX search-engine tools when the `mcp` profile is enabled. The [architecture guide](../architecture.md) describes ownership and data flow.
+
+Research memory stores full artifacts in Valkey and defaults to Qdrant vectors.
+After starting the `durable-research` profile and following the
+[research-memory pgvector runbook](../runbooks/research-memory-pgvector.md),
+operators may select PostgreSQL shadow or PostgreSQL-only vector mode. This is
+separate from semantic page-index `VECTOR_STORE_MODE`; `pgvector_only` removes
+Qdrant from that service's readiness and request path, while the existing
+`pgvector` mode retains Qdrant writes for immediate rollback. For a
+PostgreSQL-only semantic service, set `VECTOR_STORE_MODE=pgvector_only` and use
+the dedicated `pgvector-only` Compose profile without `indexing` or
+`durable-research`; Qdrant is not started by that profile. Existing Qdrant
+containers and data remain available for rollback.
 
 The published GroktoCrawl service images support both `linux/amd64` and
 `linux/arm64`, so arm64 hosts such as Apple Silicon Macs do not need to run
@@ -135,23 +147,23 @@ fallback when the vector service is unavailable.
 
 ### Job durability and recovery
 
-Async jobs (crawl, agent, extract, batch-scrape, llmstxt, and plan execution) run in-process inside `agent-svc` and are **not restart-safe**. Job records persist in Valkey for 24 hours, but execution is best-effort: a crash, forced termination, or restart does not resume or reclaim interrupted work, does not roll back partial artifacts already written to downstream stores, and does not replay undelivered webhooks. An orderly shutdown gives in-flight tasks a five-second grace period before cancellation (ADR-0035). In-flight background execution carries **no durability SLO**; after a restart, treat completion as at-least-once-with-verification and re-submit critical work.
+Async jobs (crawl, agent, extract, batch-scrape, llmstxt, and plan execution) run in-process inside `agent-svc`, with Valkey-backed ownership and recovery (ADR-0072). On restart, records still queued and never claimed can be reconstructed from their persisted normalized request and dispatched. Work that had started is not replayed: after the 45-second lease expires it becomes `failed` with `OUTCOME_UNKNOWN`, because an external side effect may already have happened. Records created before the versioned execution marker are failed the same way. Completion/failure webhook intents are committed with the terminal transition and replayed at-least-once with the original `webhookId`; webhook receivers must deduplicate that ID. Existing partial artifacts are not rolled back, and this does not provide exactly-once execution or a completion SLO.
 
-After any `agent-svc` restart, check for jobs still stuck in `processing` and reconcile them:
+After an `agent-svc` restart, allow queued jobs to be redispatched and running leases to expire. Check for jobs still `processing` after the lease window and inspect `OUTCOME_UNKNOWN` failures before deciding whether to resubmit:
 
 ```bash
 # List all processing jobs (API)
 curl -s http://localhost:8080/v2/activity
 
-# Flag processing jobs older than one hour (dry-run, nothing changes)
-docker compose exec agent-svc python3 /app/scripts/reconcile-jobs.py --stale-after 3600
+# Flag processing jobs older than the lease window (dry-run, nothing changes)
+docker compose exec agent-svc python3 /app/scripts/reconcile-jobs.py --stale-after 60
 
-# Reconcile: mark flagged jobs failed (only ever transitions processing -> failed;
-# --assume-stopped attests agent-svc is stopped so a live job is never failed)
-docker compose exec agent-svc python3 /app/scripts/reconcile-jobs.py --stale-after 3600 --fail --assume-stopped
+# Manual fallback only for records still stranded after startup recovery.
+# Stop agent-svc first and inspect effects before resubmitting.
+docker compose exec agent-svc python3 /app/scripts/reconcile-jobs.py --stale-after 60 --fail --assume-stopped
 ```
 
-The reconcile tool reads `VALKEY_URL` inside the container; from a checkout, pass `--redis-url`. It refuses `--fail` without `--assume-stopped`: failing a job whose worker is still alive would make the worker's later completion no-op and silently discard its final result. Full symptoms, identification, and per-job-kind resolution steps: [Interrupted Jobs runbook](../runbooks/interrupted-jobs.md). The durability contract, SLO boundary, and durable-execution roadmap (milestones M1–M5) are recorded in [ADR-0047](../adr/0047-defer-restart-safe-execution.md).
+The reconcile tool reads `VALKEY_URL` inside the container; from a checkout, pass `--redis-url`. It refuses `--fail` without `--assume-stopped`. Use it only if startup recovery has not resolved a stale record; it is not a substitute for checking an `OUTCOME_UNKNOWN` job's external effects. Full symptoms, identification, and resolution steps: [Interrupted Jobs runbook](../runbooks/interrupted-jobs.md). The recovery boundary is recorded in [ADR-0072](../adr/0072-valkey-leased-legacy-job-recovery.md), which updates the prior deferred direction in [ADR-0047](../adr/0047-defer-restart-safe-execution.md).
 
 CAPTCHA screenshots are challenge-widget crops held only in memory for the
 configured vision request. They are never logged, cached, returned, or written

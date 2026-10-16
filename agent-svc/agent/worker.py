@@ -1,6 +1,7 @@
 """Worker entrypoint and processing functions for GroktoCrawl jobs."""
 
 import asyncio
+import inspect
 import logging
 import os
 import time
@@ -24,7 +25,7 @@ from .retry import (
 from .scraper_client import ScraperClient
 from .settings import load_settings
 from .store import JobStore
-from .webhook import deliver_webhook
+from .webhook import build_webhook_intent, deliver_webhook
 from .workload_metrics import record_job_cancelled, record_job_end, record_job_start
 
 logger = logging.getLogger(__name__)
@@ -37,6 +38,24 @@ def _get_worker_settings() -> Any:
 def _iso_now_plus(seconds: float) -> str:
     """ISO 8601 UTC timestamp ``seconds`` from now."""
     return (datetime.now(UTC) + timedelta(seconds=seconds)).isoformat()
+
+
+def _complete_with_webhook_intent(
+    store, job_id: str, data: dict, intent: dict | None
+) -> bool:
+    """Pass atomic outbox intent to JobStore while tolerating legacy test doubles."""
+    if "webhook_event" in inspect.signature(store.complete_job).parameters:
+        return store.complete_job(job_id, data, webhook_event=intent)
+    return store.complete_job(job_id, data)
+
+
+def _fail_with_webhook_intent(
+    store, job_id: str, error: str, intent: dict | None
+) -> bool:
+    """Pass atomic outbox intent to JobStore while tolerating legacy test doubles."""
+    if "webhook_event" in inspect.signature(store.fail_job).parameters:
+        return store.fail_job(job_id, error, webhook_event=intent)
+    return store.fail_job(job_id, error)
 
 
 async def _run_job_with_observability(
@@ -87,7 +106,19 @@ async def _run_job_with_observability(
                         )
                     )
                     logger.error("%s job %s %s", job_type, job_id, error_message)
-                    store.fail_job(job_id, error_message)
+                    _fail_with_webhook_intent(
+                        store,
+                        job_id,
+                        error_message,
+                        build_webhook_intent(
+                            webhook_config,
+                            "failed",
+                            job_id,
+                            {"error": error_message},
+                            success=False,
+                            error=error_message,
+                        ),
+                    )
                     await deliver_webhook(
                         webhook_config,
                         "failed",
@@ -173,7 +204,12 @@ async def _run_job_with_observability(
                 continue
 
             # ── Success ─────────────────────────────────────────
-            store.complete_job(job_id, result)
+            _complete_with_webhook_intent(
+                store,
+                job_id,
+                result,
+                build_webhook_intent(webhook_config, "completed", job_id, result),
+            )
             await deliver_webhook(webhook_config, "completed", job_id, result)
             elapsed = time.monotonic() - start
             METRICS.histogram(
@@ -205,7 +241,19 @@ async def _run_job_with_observability(
         raise
     except Exception as e:
         logger.exception("%s job %s failed", job_type, job_id)
-        store.fail_job(job_id, str(e))
+        _fail_with_webhook_intent(
+            store,
+            job_id,
+            str(e),
+            build_webhook_intent(
+                webhook_config,
+                "failed",
+                job_id,
+                {"error": str(e)},
+                success=False,
+                error=str(e),
+            ),
+        )
         await deliver_webhook(webhook_config, "failed", job_id, {"error": str(e)})
         elapsed = time.monotonic() - start
         METRICS.histogram(
@@ -324,7 +372,14 @@ async def _process_agent_async(
                             )
                         cached_payload["sources_compact"] = compact_sources
                         cached_payload["source_details"] = []
-                    store.complete_job(job_id, cached_payload)
+                    _complete_with_webhook_intent(
+                        store,
+                        job_id,
+                        cached_payload,
+                        build_webhook_intent(
+                            webhook_config, "completed", job_id, cached_payload
+                        ),
+                    )
                     await deliver_webhook(
                         webhook_config, "completed", job_id, cached_payload
                     )
@@ -375,7 +430,14 @@ async def _process_agent_async(
                             )
                         stale_payload["sources_compact"] = compact_sources
                         stale_payload["source_details"] = []
-                    store.complete_job(job_id, stale_payload)
+                    _complete_with_webhook_intent(
+                        store,
+                        job_id,
+                        stale_payload,
+                        build_webhook_intent(
+                            webhook_config, "completed", job_id, stale_payload
+                        ),
+                    )
                     await deliver_webhook(
                         webhook_config, "completed", job_id, stale_payload
                     )
@@ -735,7 +797,12 @@ async def _process_crawl_async(
             await _deliver_crawl_completed_webhook(job_id, webhook_config, task_tracker)
             _record_crawl_cancelled_metrics(start)
         else:
-            store.complete_job(job_id, payload)
+            _complete_with_webhook_intent(
+                store,
+                job_id,
+                payload,
+                build_webhook_intent(webhook_config, "crawl.completed", job_id, []),
+            )
             await _deliver_crawl_completed_webhook(job_id, webhook_config, task_tracker)
 
             elapsed = time.monotonic() - start
@@ -779,7 +846,19 @@ async def _process_crawl_async(
         raise
     except Exception as e:
         logger.exception("Crawl job %s failed", job_id)
-        store.fail_job(job_id, str(e))
+        _fail_with_webhook_intent(
+            store,
+            job_id,
+            str(e),
+            build_webhook_intent(
+                webhook_config,
+                "crawl.failed",
+                job_id,
+                [],
+                success=False,
+                error=str(e),
+            ),
+        )
         if task_tracker is not None:
             task_tracker.create_background_task(
                 deliver_webhook(

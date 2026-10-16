@@ -125,8 +125,6 @@ async def create_crawl(
             max_depth = merged["max_depth"]
 
     store: JobStore = request.app.state.job_store
-    job_id = store.create_job(kind="crawl", payload=body.model_dump())
-
     # Resolve limit vs max_pages conflict (stricter wins, per VAL-CRAWL-089).
     # max_pages=0 means unlimited, so limit must feed the resolver directly
     # — a plain min(max_pages, limit) would collapse to 0 and silently
@@ -154,9 +152,22 @@ async def create_crawl(
             logger.info(
                 "NL→params derived max_pages=%d applied to crawl %s",
                 derived_cap,
-                job_id,
+                body.url,
             )
             effective_max_pages = derived_cap
+
+    # Persist the normalized values so a queued-but-not-started crawl can be
+    # reconstructed without another NL-to-params model call.
+    job_payload = body.model_dump()
+    job_payload.update(
+        {
+            "include_paths": include_paths,
+            "exclude_paths": exclude_paths,
+            "max_depth": max_depth,
+            "effective_max_pages": effective_max_pages,
+        }
+    )
+    job_id = store.create_job(kind="crawl", payload=job_payload)
 
     # ── Streaming path: run inline, return SSE ────────────
     if body.stream:
@@ -166,7 +177,7 @@ async def create_crawl(
         _settings = _load_crawl_settings()
 
         async def event_stream() -> Any:
-            async for event in crawl_event_stream(
+            events = crawl_event_stream(
                 job_id=job_id,
                 url=body.url,
                 max_pages=effective_max_pages,
@@ -195,7 +206,10 @@ async def create_crawl(
                 else None,
                 max_duration_seconds=_settings.crawl_max_duration_seconds,
                 idle_timeout_seconds=_settings.crawl_idle_timeout_seconds,
-            ):
+            )
+            from ..job_execution import stream_job
+
+            async for event in stream_job(request, job_id, events):
                 yield event
             yield "data: [DONE]\n\n"
 
@@ -213,9 +227,12 @@ async def create_crawl(
         )
 
     # ── Sync path (non-streaming): create background task ─────────
+    from ..job_execution import submit_job
     from ..worker import _process_crawl_async
 
-    request.app.state.task_tracker.create_background_task(
+    submit_job(
+        request,
+        job_id,
         _process_crawl_async(
             job_id=job_id,
             url=body.url,
@@ -241,7 +258,6 @@ async def create_crawl(
             if body.scrape_options
             else None,
         ),
-        job_id=job_id,
     )
     return CrawlCreateResponse(id=job_id)
 
@@ -371,6 +387,7 @@ async def get_crawl_status(
         credits_used=credits_used,
         data=chunk_pages or (all_pages if offset == 0 else []),
         error=job.get("error"),
+        error_code=job.get("error_code"),
         outcome_summary=data.get("outcome_summary"),
         next=next_url,
         created_at=created_at,
@@ -388,11 +405,26 @@ async def get_crawl_status(
 @router.delete("/v2/crawl/{job_id}", response_model=AgentCancelResponse)
 async def cancel_crawl(request: Request, job_id: str) -> AgentCancelResponse:
     store: JobStore = request.app.state.job_store
-    if not store.cancel_job(job_id):
+    from ..webhook import build_webhook_intent
+
+    job = store.get_job(job_id)
+    webhook_event = build_webhook_intent(
+        (job or {}).get("payload", {}).get("webhook"),
+        "crawl.completed",
+        job_id,
+        [],
+    )
+    if not store.cancel_job(job_id, webhook_event):
         raise NotFoundError(
             detail="Job not found or already completed", details={"job_id": job_id}
         )
     request.app.state.task_tracker.cancel_job(job_id)
+    if webhook_event:
+        from ..webhook import replay_pending_webhooks
+
+        request.app.state.task_tracker.create_background_task(
+            replay_pending_webhooks(store, request.app.state.task_tracker)
+        )
     return AgentCancelResponse(success=True)
 
 

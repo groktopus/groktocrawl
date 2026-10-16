@@ -374,6 +374,7 @@ def create_app() -> FastAPI:
         from common.features import is_enabled
 
         from .experimental.research_notifications import run_notification_loop
+        from .job_execution import recover_legacy_jobs
         from .routes.experimental_research import recover_research_runs
 
         if is_enabled("experimental_research_runs") and is_enabled(
@@ -385,6 +386,9 @@ def create_app() -> FastAPI:
             app.state.task_tracker.create_background_task(
                 run_notification_loop(app, app.state.task_tracker.shutdown_event)
             )
+        app.state.task_tracker.create_background_task(
+            recover_legacy_jobs(app, app.state.task_tracker.shutdown_event)
+        )
         if app.state.slopsearx_provenance is not None:
             await app.state.slopsearx_provenance.check_profile()
         app.state.task_tracker.create_background_task(
@@ -400,10 +404,12 @@ def create_app() -> FastAPI:
 
     @app.on_event("shutdown")
     async def shutdown_event() -> None:
+        from .job_execution import stop_legacy_jobs
         from .routes.experimental_research import stop_research_runs
 
         await app.state.task_tracker.shutdown(grace_period=5.0)
         await stop_research_runs(app)
+        await stop_legacy_jobs(app)
         await app.state.research_memory.close()
         await app.state.scraper_client.close()
         await app.state.searxng_client.close()

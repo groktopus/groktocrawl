@@ -19,8 +19,9 @@ browser capacity. `--dry-run` prints the plan without starting Docker, and
 `--no-build` uses existing images.
 
 Changing the count on a running stack can recreate `agent-svc` because its
-admission environment changes; active inline jobs are not restart-safe.
-Drain or finish those jobs first and pass `--allow-api-restart`. For downscale,
+admission environment changes. Queued, unclaimed jobs can be redispatched;
+claimed jobs are not replayed and become `OUTCOME_UNKNOWN` after lease expiry.
+Drain or finish active jobs first and pass `--allow-api-restart`. For downscale,
 also drain the removed gateway backends using the procedure below, then pass
 `--confirm-drained-downscale`. The launcher will refuse these changes without
 those explicit acknowledgments; it does not perform the drains for you.
@@ -84,7 +85,7 @@ For downscale/replacement, drain the affected backend in the gateway before
 stopping it and allow active requests to finish. The 75-second process grace
 period alone is not a drain guarantee. An abrupt failed backend can fail active
 requests; the gateway deliberately avoids duplicate expensive retries. Running
-agent jobs remain best-effort across restarts under ADR-0047.
+agent jobs follow the fail-closed recovery contract in [ADR-0072](../adr/0072-valkey-leased-legacy-job-recovery.md).
 
 The gateway's runtime API binds only its own loopback interface. Use `show
 servers state` to map the selected replica address to its backend slot; then

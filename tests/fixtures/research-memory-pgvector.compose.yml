@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_DB: memory_test
+      POSTGRES_USER: memory_test
+      POSTGRES_PASSWORD: isolated-test-only
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U memory_test -d memory_test"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    mem_limit: 768m
+    cpus: 1.0
+    networks: [memory_test]
+    volumes: [memory_pg_data:/var/lib/postgresql/data]
+
+  qdrant:
+    image: qdrant/qdrant:v1.18.2
+    environment:
+      QDRANT__SERVICE__HTTP_PORT: 6333
+    mem_limit: 768m
+    cpus: 1.0
+    networks: [memory_test]
+    volumes: [memory_qdrant_data:/qdrant/storage]
+
+  valkey:
+    image: valkey/valkey:8-alpine
+    mem_limit: 256m
+    cpus: 0.5
+    networks: [memory_test]
+    volumes: [memory_valkey_data:/data]
+
+networks:
+  memory_test:
+    internal: true
+
+volumes:
+  memory_pg_data:
+  memory_qdrant_data:
+  memory_valkey_data:

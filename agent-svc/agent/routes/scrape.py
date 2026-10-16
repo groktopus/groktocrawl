@@ -98,9 +98,12 @@ async def create_batch_scrape(
     store: JobStore = request.app.state.job_store
     job_id = store.create_job(kind="batch_scrape", payload=body.model_dump())
 
+    from ..job_execution import submit_job
     from ..worker import _process_batch_scrape_async
 
-    request.app.state.task_tracker.create_background_task(
+    submit_job(
+        request,
+        job_id,
         _process_batch_scrape_async(
             job_id=job_id,
             urls=body.urls,
@@ -109,7 +112,6 @@ async def create_batch_scrape(
             task_tracker=request.app.state.task_tracker,
             max_concurrency=body.max_concurrency,
         ),
-        job_id=job_id,
     )
     return CrawlCreateResponse(id=job_id)
 
@@ -168,6 +170,7 @@ async def get_batch_scrape_status(
         credits_used=credits_used,
         data=chunk_pages or (all_pages if offset == 0 else []),
         error=job.get("error"),
+        error_code=job.get("error_code"),
         next=next_url,
         created_at=created_at,
         completed_at=completed_at,

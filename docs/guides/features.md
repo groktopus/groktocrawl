@@ -22,7 +22,8 @@ The feature-gated research workspace exposes retained research roots, versioned 
 audited artifacts, and explicit revision-guarded actions in the standard deployment. It
 runs alongside the existing research API and does not change `/v2/agent`, `/v2/answer`,
 sessions, or research-memory behavior. Its durable ledger is separate from legacy inline
-jobs, which remain best-effort across restarts. See the [workspace guide](research-workspace.md) and [ADR-0069](../adr/0069-adopt-bounded-research-substrate.md).
+jobs, which use the queued-only redispatch and fail-closed active-job contract in
+[ADR-0072](../adr/0072-valkey-leased-legacy-job-recovery.md). See the [workspace guide](research-workspace.md) and [ADR-0069](../adr/0069-adopt-bounded-research-substrate.md).
 
 ## Browser, parse, portal, and MCP
 

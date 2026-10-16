@@ -133,10 +133,10 @@ The `--profile fixture` flag starts test helper services (`llm-svc` for a built-
 
 - **Python 3.12+** with type hints
 - **FastAPI** for all HTTP services
-- **Async/await** throughout; background jobs run in the API process through `TaskTracker` and `asyncio.create_task()`.
+- **Async/await** throughout; background jobs run in the API process through `TaskTracker` and `asyncio.create_task()`. Legacy jobs may redispatch after restart only while still queued and never claimed. A claimed job is not blindly replayed; after lease expiry it fails with `OUTCOME_UNKNOWN`. See [ADR-0072](docs/adr/0072-valkey-leased-legacy-job-recovery.md) and the [interrupted-jobs runbook](docs/runbooks/interrupted-jobs.md). Cross-service artifacts are not transactionally rolled back.
 - **MIT license** — all contributions are under this license
 - Keep dependencies minimal. Each service's `pyproject.toml` should list only what it needs.
-- **Webhook support required for all async endpoints** — any new endpoint that returns a job ID must accept a `webhook` field in its request and fire it on completion/failure via `deliver_webhook()` in `agent/webhook.py`. This ensures all async jobs are observable.
+- **Webhook support required for all async endpoints** — any new endpoint that returns a job ID must accept a `webhook` field in its request and persist terminal delivery intent through the Valkey outbox, with stable `webhookId` values and bounded at-least-once retries. Reuse the job store's terminal transition/outbox operation; direct `deliver_webhook()` remains best-effort for callers outside the durable job outbox.
 - **Durable research callbacks** use the recorded outbox and `deliver_recorded_webhook()` rather than an untracked fire-and-forget delivery. Preserve exact body/event identity across retries and expose unconfirmed delivery honestly. See the [live research contract](docs/guides/durable-research.md); its retained-call and time-evaluation rules are separate from legacy job behavior.
 
 ## Project Layout
@@ -144,11 +144,39 @@ The `--profile fixture` flag starts test helper services (`llm-svc` for a built-
 - `agent-svc/` — the main API service (FastAPI + research worker)
 - `scraper-svc/` — URL-to-markdown conversion service (three-tier fetch: llms.txt → content-negotiation → Playwright)
 - `browser-svc/` — headless Playwright browser sessions
-- `semantic-svc/` — vector indexing and near-duplicate detection (Qdrant)
+- `semantic-svc/` — vector indexing and near-duplicate detection (Qdrant or PostgreSQL/pgvector)
 - `portal-svc/` — web UI for human users
 - `llm-svc/` — LLM fixture for local testing (replaceable with any OpenAI-compatible backend)
 - `test-site/` — fixture website for integration tests
 - `tests/` — unit, service, and integration tests
+
+### Vector storage and migrations
+
+Qdrant remains the default vector store. Research-memory artifacts and their
+expiry metadata remain in Valkey; `RESEARCH_MEMORY_VECTOR_MODE` selects the
+vector projection (`qdrant`, `shadow_pgvector`, or `pgvector`). The semantic
+page index uses `VECTOR_STORE_MODE`; `pgvector_only` serves from PostgreSQL
+without Qdrant readiness checks or writes. These are separate stores and
+backfills, even though they may share the PostgreSQL service.
+
+PostgreSQL modes require the `research-postgres` service and its pgvector
+extension. In Compose, the `durable-research` profile enables PostgreSQL for
+research-memory migration and keeps Qdrant available; `pgvector-only` enables
+PostgreSQL plus `semantic-svc` without activating Qdrant. Do not enable the
+`indexing` or `durable-research` profile when you intend to run the semantic
+service without Qdrant.
+
+Before changing a deployed mode, take and verify backups of the active Valkey,
+Qdrant, and PostgreSQL data. Initialize the destination schema, run the
+idempotent backfill, and require exact active-ID and metadata parity plus
+vector parity within the documented tolerance before switching reads. Keep
+the source data intact through the rollback window. The
+[research-memory migration runbook](docs/runbooks/research-memory-pgvector.md)
+contains the copy, verification, and reverse-copy commands; in particular,
+semantic restore preserves unmatched Qdrant points unless the operator
+explicitly requests `--prune-stale` after verifying a backup. Storage changes
+must add or update tests for migration idempotency, missing-backend behavior,
+and rollback, and record architectural changes in the [ADR index](docs/adr/README.md).
 
 ## Error Handling Conventions
 

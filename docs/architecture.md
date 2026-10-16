@@ -10,6 +10,7 @@ flowchart LR
     agent --> search["SlopSearX\nweb discovery"]
     agent --> semantic["semantic-svc\nembeddings and reranking"]
     semantic <--> qdrant[("Qdrant\nvector index")]
+    semantic -. pgvector modes .-> postgres[("PostgreSQL\npgvector projection")]
     agent --> llm["OpenAI-compatible LLM"]
     scraper --> browser["browser-svc\nPlaywright sessions"]
     scraper -. optional .-> flare["FlareSolverr"]
@@ -38,18 +39,18 @@ flowchart TD
 
 ### Asynchronous job durability contract
 
-Valkey makes job metadata, status, and completed results persistent; it does not make execution restart-safe. `TaskTracker` gives in-flight work a five-second grace period during an orderly shutdown, then cancels remaining tasks. A crash, forced termination, or restart does not resume or reclaim interrupted jobs.
+Valkey stores job metadata, status, completed results, execution leases, and a webhook outbox. `TaskTracker` gives in-flight work a five-second grace period during an orderly shutdown, then cancels remaining tasks. At startup, only jobs still queued and never claimed are reconstructed from their normalized request. A claimed job whose owner disappears is not replayed; after lease expiry it becomes `failed` with `OUTCOME_UNKNOWN`.
 
 After process loss:
 
-- A job record may remain `processing` until its TTL expires because no recovery pass changes its state.
-- A cancellation request can update persisted state, but there is no interrupted task to resume or durable execution lease to revoke.
+- An old record without an execution marker is treated as `OUTCOME_UNKNOWN`; a newly queued record may be dispatched once through the fenced owner.
+- A cancellation request atomically records cancellation and revokes the current fence. The worker task itself remains process-local.
 - Partial artifacts already written to Valkey, Qdrant, or another downstream system can remain; there is no transaction or rollback across those stores.
-- A completion or failure webhook that was not delivered before exit is not replayed automatically.
+- Completion and failure webhook intent is committed with the terminal state and replayed at-least-once with the original `webhookId`; receivers must deduplicate it.
 
-Restart-safe execution is deliberately deferred; [ADR-0047](adr/0047-defer-restart-safe-execution.md) records the durability contract, SLO boundary, target architecture (Valkey-native execution leases and a webhook outbox), and the roadmap milestones (M1–M5) that will implement it. If operational evidence establishes restart-safe execution as a product requirement, implementation must follow that ADR's milestones — defining the durable owner, lease and reclaim rules, retry policy, cancellation semantics, artifact consistency, and idempotent webhook delivery before selecting queue technology. Operators reconcile jobs stranded in `processing` after process loss per the [Interrupted Jobs runbook](runbooks/interrupted-jobs.md). This boundary extends the best-effort decision in [ADR-0035](adr/0035-graceful-shutdown.md).
+This is fail-closed recovery, not general resumability or exactly-once execution. The owner and remaining consistency limits are specified in [ADR-0072](adr/0072-valkey-leased-legacy-job-recovery.md), which updates the historical decision in [ADR-0047](adr/0047-defer-restart-safe-execution.md). Operators should follow the [Interrupted Jobs runbook](runbooks/interrupted-jobs.md). This boundary extends the best-effort decision in [ADR-0035](adr/0035-graceful-shutdown.md).
 
-Research code lives in `agent/research/`: it plans a query, discovers sources, scrapes them, synthesizes with the LLM, optionally detects gaps for another pass, and can stream progress and tokens. Research memory combines Valkey metadata with semantic lookup. Crawl uses a breadth-first engine with sitemap discovery, path filters, concurrency, cache controls, robots/politeness handling, canonical/content deduplication, and SSE progress.
+Research code lives in `agent/research/`: it plans a query, discovers sources, scrapes them, synthesizes with the LLM, optionally detects gaps for another pass, and can stream progress and tokens. Research memory keeps artifacts and their TTL in Valkey; its vectors default to Qdrant, with explicit PostgreSQL shadow and PostgreSQL-only modes. The semantic page index is a separate projection with its own Qdrant/pgvector modes and backfill. PostgreSQL does not replace Valkey artifacts, and enabling one pgvector mode does not migrate the other index. See [ADR-0071](adr/0071-use-pgvector-for-research-memory-with-reversible-rollback.md) and the [storage migration runbook](runbooks/research-memory-pgvector.md). Crawl uses a breadth-first engine with sitemap discovery, path filters, concurrency, cache controls, robots/politeness handling, canonical/content deduplication, and SSE progress.
 
 ## Scraping pipeline
 
@@ -71,7 +72,7 @@ Adapters cover publishing and media, source code and GitHub social content, recr
 
 ## Semantic retrieval
 
-`semantic-svc` loads its embedding model during application lifespan and exposes embedding, reranking, index, migration, retention, and search routers. Qdrant persists named-vector collections. `GET /health` is the backward-compatible liveness and component-detail surface; `GET /ready` returns HTTP 503 until the models and configured serving vector store are available. Compose uses `/ready` for routing readiness. `agent-svc` treats indexing as best effort, so a semantic-service outage does not fail a scrape or crawl request.
+`semantic-svc` loads its embedding model during application lifespan and exposes embedding, reranking, index, migration, retention, and search routers. Qdrant persists named-vector collections by default; `VECTOR_STORE_MODE=pgvector_only` serves the semantic page index from PostgreSQL without Qdrant probes or writes. The `pgvector-only` Compose profile starts PostgreSQL and `semantic-svc` without enabling the Qdrant profile. `GET /ready` checks only the active serving store. Compose uses `/ready` for routing readiness. `agent-svc` treats indexing as best effort, so a semantic-service outage does not fail a scrape or crawl request.
 
 ## Performance telemetry
 
@@ -80,7 +81,7 @@ Stage-level latency and capacity signals are recorded with bounded labels and ex
 ## Operational boundaries
 
 - Valkey is the shared state boundary for jobs, monitor/session data, and caches.
-- Qdrant is the persistent vector-index boundary.
+- Qdrant is the default persistent vector-index boundary. PostgreSQL/pgvector is an explicit alternative; its two indexes have separate schemas, modes, and backfills as documented in ADR-0071.
 - SlopSearX and the configured LLM are external capabilities; their availability is surfaced through health checks and request failures/degradation.
 - `portal-svc` and `mcp-svc` are thin clients of the public agent API; they do not own duplicate business logic.
 - `ofelia` triggers scheduled monitor execution through the agent service.
