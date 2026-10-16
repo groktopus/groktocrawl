@@ -74,5 +74,7 @@ MCP callers use `followup_execute(request, idempotency_key)`. Execution can call
 configured search, capture, and model services; reuse the same key only when
 retrying the same request. Poll the returned run using the ordinary research
 status tools. This requires live durable research and its PostgreSQL authority.
+Execution requires an owned session for selected session evidence; legacy unowned
+sessions remain readable but cannot be copied into a durable follow-up.
 Selected sources retain their original provenance; unknown capture dates stay
 unknown. The selected evidence is subject to the research byte and source budgets.

@@ -31,7 +31,11 @@ async def resolve_selected_sources(
     total_bytes = 0
     for item in selected:
         if item.kind == "session":
-            await authorize_session(store, item.container_id, request)
+            session = await authorize_session(store, item.container_id, request)
+            if session.get("owner_scope") is None:
+                raise HTTPException(
+                    422, "Create an owned session before using evidence in research"
+                )
             ref = await store.aget_ref(item.container_id, item.ref_id)
             if ref is not None and ref.get("research_source"):
                 ref = await resolve_attached_reference(ref, request)

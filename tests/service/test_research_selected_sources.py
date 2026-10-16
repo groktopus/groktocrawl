@@ -209,3 +209,19 @@ async def test_query_does_not_publish_if_linked_root_disappears_during_model(
     assert exc.value.status_code == 410
     manager.store.aappend_step.assert_not_awaited()
     manager.store.aappend_artifact.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_unowned_legacy_session_rejected_before_copying_evidence(monkeypatch):
+    store = SimpleNamespace(aget_ref=AsyncMock())
+    monkeypatch.setattr("agent.research_sources.SessionStore", lambda **kwargs: store)
+    monkeypatch.setattr(
+        "agent.research_sources.authorize_session", AsyncMock(return_value={})
+    )
+    selected = EvidenceChoice(
+        kind="session", container_id="legacy", ref_id="ref", subject="Legacy"
+    )
+    with pytest.raises(HTTPException) as exc:
+        await resolve_selected_sources([selected], request())
+    assert exc.value.status_code == 422
+    store.aget_ref.assert_not_awaited()
