@@ -259,6 +259,34 @@ def test_repeated_boilerplate_in_navigation_does_not_trigger_content_recovery(
     fetch_quality.html_to_markdown(html)
 
 
+def test_repeated_content_with_emphasis_is_not_reported_missing():
+    """HTML emphasis converted to Markdown still counts as preserved text."""
+    from scraper.extract import _missing_repeated_content_blocks
+
+    records = [
+        f'<div class="record">Record {index} has <strong>important highlighted '
+        f"content</strong> plus enough supporting detail to be a substantial entry "
+        f"number {index}.</div>"
+        for index in range(4)
+    ]
+    html = "<html><body><main>" + "".join(records) + "</main></body></html>"
+    complete = "\n\n".join(
+        f"Record {index} has **important highlighted content** plus enough "
+        f"supporting detail to be a substantial entry number {index}."
+        for index in range(4)
+    )
+
+    assert _missing_repeated_content_blocks(complete, html) == []
+
+    incomplete = complete.replace(
+        "Record 2 has **important highlighted content** plus enough supporting detail to be a substantial entry number 2.",
+        "",
+    )
+    missing = _missing_repeated_content_blocks(incomplete, html)
+    assert len(missing) == 1
+    assert "Record 2" in missing[0]
+
+
 # ── VAL-YIELD-003: card-grid body survives html_to_markdown ──────
 
 

@@ -281,7 +281,16 @@ def _missing_repeated_content_blocks(markdown: str, html: str) -> list[str]:
     body_text = re.sub(r"\s+", " ", body.get_text(" ", strip=True)).strip()
     body_size = len(body_text)
     markdown_without_link_targets = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", markdown)
-    markdown_text = re.sub(r"\s+", "", markdown_without_link_targets).casefold()
+
+    def comparable_text(value: str) -> str:
+        # HTML emphasis becomes Markdown delimiters (for example <strong> to
+        # **text**). Compare the words and digits so formatting and punctuation
+        # changes do not make a fully retained record look absent.
+        return "".join(
+            character.casefold() for character in value if character.isalnum()
+        )
+
+    markdown_text = comparable_text(markdown_without_link_targets)
 
     relevant_groups = [
         texts
@@ -292,11 +301,7 @@ def _missing_repeated_content_blocks(markdown: str, html: str) -> list[str]:
         return []
 
     texts = max(relevant_groups, key=lambda group: sum(map(len, group)))
-    return [
-        text
-        for text in texts
-        if re.sub(r"\s+", "", text).casefold() not in markdown_text
-    ]
+    return [text for text in texts if comparable_text(text) not in markdown_text]
 
 
 def _check_block_page(
