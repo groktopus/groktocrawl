@@ -528,7 +528,7 @@ class RuntimeGateWorkflowContractTests(unittest.TestCase):
             self.integration_tests,
         )
         self.assertIn(
-            "for pkg in scraper-svc/scraper parse-svc/parse_svc portal-svc/portal browser-svc/browser_svc llm-svc/llm_svc slopsearx-fixture/slopsearx_fixture common; do",
+            "for pkg in scraper-svc/scraper parse-svc/parse_svc portal-svc/portal browser-svc/browser_svc llm-svc/llm_svc slopsearx-fixture/slopsearx_fixture semantic-svc common; do",
             self.integration_tests,
         )
         self.assertIn(

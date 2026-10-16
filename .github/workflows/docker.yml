@@ -441,6 +441,45 @@ jobs:
           docker compose --profile indexing --profile durable-research pull || true
         timeout-minutes: 10
 
+      # The self-hosted Docker daemon is shared by concurrent workflows. Both
+      # API services historically used the same mutable agent image tag, so a
+      # fixture rebuild could reassign that tag between the API build and
+      # container creation. Existing containers retain their image ID, but a
+      # later-created service can otherwise pick up the replacement. Give
+      # each run distinct local tags before checkout builds or stack startup.
+      - name: Isolate agent CI image tags
+        env:
+          AFFECTED_SERVICES: ${{ needs.changes.outputs.affected_services }}
+        run: |
+          set -euo pipefail
+          run_tag="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          cat > .ci-agent-images.yml <<EOF
+          services:
+            agent-svc:
+              image: groktocrawl-ci/agent:${run_tag}
+            agent-svc-fixture:
+              image: groktocrawl-ci/agent-fixture:${run_tag}
+            # Tests reach MCP through the Compose network, not the shared host.
+            mcp-svc:
+              ports: !reset []
+          EOF
+          echo "COMPOSE_FILE=${COMPOSE_FILE}:${GITHUB_WORKSPACE}/.ci-agent-images.yml" >> "$GITHUB_ENV"
+          # Preserve the pulled/published image for jobs that do not rebuild
+          # agent-svc. A checkout build later in this job replaces only this
+          # run's private tag. Release-tag pushes build every service from the
+          # checkout and do not necessarily have a :latest image to seed.
+          if docker image inspect ghcr.io/groktopus/groktocrawl-agent >/dev/null 2>&1; then
+            docker image tag ghcr.io/groktopus/groktocrawl-agent "groktocrawl-ci/agent:${run_tag}"
+          elif [ "${GITHUB_EVENT_NAME}" = "push" ] && [ "${GITHUB_REF}" != "refs/heads/main" ]; then
+            echo "Release-tag workflow will build agent-svc from checkout."
+          elif [ "${GITHUB_EVENT_NAME}" = "pull_request" ] && \
+            { [ "$AFFECTED_SERVICES" = "all" ] || [[ " ${AFFECTED_SERVICES} " == *" agent-svc "* ]]; }; then
+            echo "Pull request will build agent-svc from checkout."
+          else
+            echo "Expected pulled agent image is unavailable" >&2
+            exit 1
+          fi
+
       - name: Build service images (service-local PR build / tag-push full build)
         if: >-
           github.event_name == 'pull_request' ||
@@ -548,6 +587,20 @@ jobs:
       - name: Start the Docker stack
         run: docker compose --profile indexing --profile durable-research up -d
         timeout-minutes: 10
+
+      - name: Verify running agent image identity
+        run: |
+          set -euo pipefail
+          run_tag="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          expected_image=$(docker image inspect --format '{{.Id}}' "groktocrawl-ci/agent:${run_tag}")
+          agent_container=$(docker compose ps -q agent-svc)
+          actual_image=$(docker inspect --format '{{.Image}}' "$agent_container")
+          if [ "$actual_image" != "$expected_image" ]; then
+            echo "agent-svc is not running the image pinned for this workflow run" >&2
+            echo "expected and actual image IDs differ" >&2
+            exit 1
+          fi
+          echo "agent-svc image ID matches the run-scoped image tag"
 
       - name: Start test fixtures
         run: |
@@ -800,13 +853,37 @@ jobs:
           docker compose exec -T agent-svc mkdir -p /app/agent
           docker cp agent-svc/agent/. "$svc":/app/agent/
           # Copy the remaining service packages under their repository paths.
-          for pkg in scraper-svc/scraper parse-svc/parse_svc portal-svc/portal browser-svc/browser_svc llm-svc/llm_svc slopsearx-fixture/slopsearx_fixture common; do
+          for pkg in scraper-svc/scraper parse-svc/parse_svc portal-svc/portal browser-svc/browser_svc llm-svc/llm_svc slopsearx-fixture/slopsearx_fixture semantic-svc common; do
             docker compose exec -T agent-svc mkdir -p "/app/$pkg"
             docker cp "$pkg/." "$svc:/app/$pkg/"
           done
           # Copy mcp-svc package + its tests under /app/mcp-svc
           docker compose exec -T agent-svc mkdir -p /app/mcp-svc
           docker cp mcp-svc/. "$svc:/app/mcp-svc/"
+
+      - name: Restart agent after source refresh
+        run: |
+          set -euo pipefail
+          docker compose restart agent-svc
+          python3 - <<'PY'
+          import os
+          import time
+          import urllib.request
+
+          url = f"http://localhost:{os.environ['AGENT_PORT']}/health"
+          deadline = time.monotonic() + 120
+          while time.monotonic() < deadline:
+              try:
+                  with urllib.request.urlopen(url, timeout=3) as response:
+                      if response.status == 200:
+                          print("agent-svc healthy after source refresh restart")
+                          break
+              except Exception:
+                  pass
+              time.sleep(2)
+          else:
+              raise RuntimeError("agent-svc did not become healthy after source refresh")
+          PY
 
       - name: Install critical test dependencies
         run: |
@@ -1061,7 +1138,14 @@ jobs:
           TWIN_EXECUTION_MODE: compose
           TWIN_REQUIRE_IMAGES: "1"
           TWIN_RECORD_IMAGES: "1"
-          TWIN_BUILT_FROM_CHECKOUT: llm-svc,slopsearx-fixture,agent-svc-fixture,test-site,tier3-fixture
+          TWIN_BUILT_FROM_CHECKOUT: >-
+            ${{ (
+              (github.event_name == 'push' && github.ref != 'refs/heads/main') ||
+              (github.event_name == 'pull_request' &&
+               (needs.changes.outputs.affected_services == 'all' ||
+                contains(format(' {0} ', needs.changes.outputs.affected_services), ' agent-svc ')))
+            ) && 'llm-svc,slopsearx-fixture,agent-svc-fixture,test-site,tier3-fixture,agent-svc' ||
+              'llm-svc,slopsearx-fixture,agent-svc-fixture,test-site,tier3-fixture' }}
           TWIN_TESTS: '["tests/integration/test_stack.py::test_cross_endpoint_compact_citations_resolvable","tests/integration/test_stack.py::test_cross_plan_agent_structured_output_val_cross_005","tests/integration/test_critical_journey.py","tests/integration/","tests/service/","tests/integration/test_twin_failure_injection.py","mcp-svc/tests/test_integration.py::TestHostHeaderTransportSecurity"]'
           TWIN_EXCLUDED_TESTS: '["tests/service/test_twin_contract.py","tests/service/test_twin_network_isolation.py","tests/service/test_workflow_contract.py","tests/service/test_answer_evals.py"]'
           TWIN_CHECKS: scenario-version-precheck,manifest-validation
@@ -1166,7 +1250,8 @@ jobs:
       - name: Tear down stack
         if: always()
         run: |
-          trap 'rm -f "${RUNNER_TEMP}/groktocrawl-postgres-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.password"' EXIT
+          run_tag="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          trap 'docker image rm "groktocrawl-ci/agent:${run_tag}" "groktocrawl-ci/agent-fixture:${run_tag}" >/dev/null 2>&1 || true; rm -f "${RUNNER_TEMP}/groktocrawl-postgres-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.password"' EXIT
           docker rm -f "${COMPOSE_PROJECT_NAME}-research-inputs" >/dev/null 2>&1 || true
           docker compose --profile durable-research down --volumes --remove-orphans --timeout 30
 

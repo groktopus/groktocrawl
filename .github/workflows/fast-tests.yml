@@ -33,6 +33,28 @@ jobs:
       - uses: astral-sh/setup-uv@v7
       - name: Install declared test dependencies
         run: uv sync --locked --no-dev --group fast-tests
+      - name: Install isolated Valkey test server
+        run: |
+          set -euo pipefail
+          policy=/usr/sbin/policy-rc.d
+          backup="$(mktemp -d "$RUNNER_TEMP/redis-policy.XXXXXX")"
+          if sudo test -e "$policy"; then
+            sudo cp -a "$policy" "$backup/policy-rc.d"
+          fi
+          restore_policy() {
+            if [ -e "$backup/policy-rc.d" ]; then
+              sudo cp -a "$backup/policy-rc.d" "$policy"
+            else
+              sudo rm -f "$policy"
+            fi
+            rm -rf "$backup"
+          }
+          trap restore_policy EXIT
+          printf '#!/bin/sh\nexit 101\n' | sudo tee "$policy" >/dev/null
+          sudo chmod 755 "$policy"
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y redis-server
+          redis-server --version
       - name: Verify coverage tooling
         run: uv run --no-sync python -c "import coverage, pytest_cov; print(f'coverage={coverage.__version__} pytest-cov={pytest_cov.__version__}')"
       - name: Run unit and service tests
