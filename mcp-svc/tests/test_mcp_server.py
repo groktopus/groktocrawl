@@ -138,9 +138,9 @@ class TestToolDiscovery:
     """VAL-MCP-B01: tools/list returns the complete MCP tool surface."""
 
     async def test_tool_count(self):
-        """tools/list returns exactly 73 tools."""
+        """tools/list returns exactly 74 tools."""
         tools = await mcp.list_tools()
-        assert len(tools) == 73, f"Expected 73 tools, got {len(tools)}"
+        assert len(tools) == 74, f"Expected 74 tools, got {len(tools)}"
 
     async def test_all_tool_names(self):
         """All 52 expected tool names are present."""
@@ -159,6 +159,7 @@ class TestToolDiscovery:
             "research_resume",
             "research_capabilities",
             "followup_preview",
+            "followup_execute",
             "research_create",
             "research_status",
             "research_cancel",
