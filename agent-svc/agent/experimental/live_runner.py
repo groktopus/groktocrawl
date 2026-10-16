@@ -33,7 +33,11 @@ async def run_live(record: Any, app: Any):
         raise ValueError("admission unavailable")
     evaluated = datetime.fromisoformat(admitted.payload["evaluation_time"])
     model = admitted.payload["model"]
-    planned_policy = admitted.payload.get("policy_version") == "durable-live/2"
+    bounded_evidence_policy = admitted.payload.get("policy_version") == "durable-live/3"
+    planned_policy = admitted.payload.get("policy_version") in {
+        "durable-live/2",
+        "durable-live/3",
+    }
     selected_sources = tuple(
         CapturedSource(**source)
         for source in admitted.payload.get("selected_sources", [])
@@ -198,6 +202,7 @@ async def run_live(record: Any, app: Any):
         token_parameter, token_budget = next(
             iter(admitted.payload["token_params"].items())
         )
+        completion_budget = min(token_budget, 8192) if bounded_evidence_policy else 2048
         transport = ReviewTransport(
             client,
             base_url=app.state.llm_base_url,
@@ -243,6 +248,7 @@ async def run_live(record: Any, app: Any):
                     model=model,
                     selected_sources=selected_sources,
                     as_of=admitted.payload.get("as_of"),
+                    max_output_tokens=completion_budget,
                 )
                 if planned_policy and len(selected_sources) < 8
                 else None
@@ -265,4 +271,6 @@ async def run_live(record: Any, app: Any):
                 queries=queries,
                 source_limit=8 if queries is not None else 3,
                 allow_partial=planned_policy,
+                max_output_tokens=completion_budget,
+                evidence_budget_chars=32000 if bounded_evidence_policy else None,
             )

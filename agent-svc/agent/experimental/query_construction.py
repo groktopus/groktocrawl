@@ -6,7 +6,7 @@ import json
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Annotated, Literal
+from typing import Annotated, Literal, NotRequired, TypedDict
 from uuid import NAMESPACE_URL, uuid4, uuid5
 
 from pydantic import Field
@@ -159,6 +159,57 @@ def _edges(content: ConstructedContent, revision_id: str) -> list[dict[str, obje
     return edges
 
 
+class ConstructionLine(TypedDict):
+    line: int
+    text: str
+
+
+class ConstructionSource(TypedDict):
+    source_index: int
+    url: str | None
+    lines: list[ConstructionLine]
+    omitted_lines: NotRequired[int]
+
+
+def construction_sources(
+    sources: tuple[CapturedSource, ...], objective: str, budget: int | None = None
+) -> list[ConstructionSource]:
+    """Select whole original lines; retain full snapshots separately for citation reads."""
+    from ..research.evidence import select_passages, validate_evidence_budget
+
+    if budget is not None:
+        validate_evidence_budget(budget)
+    remaining = budget
+    result: list[ConstructionSource] = []
+    for index, source in enumerate(sources, 1):
+        lines = source.text.splitlines(keepends=True)
+        rows: list[ConstructionLine]
+        if remaining is None:
+            rows = [{"line": n, "text": line} for n, line in enumerate(lines, 1)]
+        else:
+            allowance = remaining // (len(sources) - index + 1)
+            spans = select_passages(source.text, objective, allowance)["spans"]
+            rows = []
+            offset = 0
+            for n, line in enumerate(lines, 1):
+                end = offset + len(line)
+                if any(
+                    offset >= span["start"] and end <= span["end"] for span in spans
+                ):
+                    rows.append({"line": n, "text": line})
+                offset = end
+            remaining -= sum(len(row["text"]) for row in rows)
+        entry: ConstructionSource = {
+            "source_index": index,
+            "url": source.url,
+            "lines": rows,
+        }
+        if budget is not None:
+            entry["omitted_lines"] = len(lines) - len(rows)
+        result.append(entry)
+    return result
+
+
 async def construct_research(
     objective: str,
     sources: tuple[CapturedSource, ...],
@@ -171,6 +222,8 @@ async def construct_research(
     revision_id: str | None = None,
     as_of: str | None = None,
     acquisition_failures: tuple[str, ...] = (),
+    max_output_tokens: int = 2048,
+    evidence_budget_chars: int | None = None,
 ) -> ConstructedResearch:
     """One model call, no retries; returned knowledge is NOT verified or publishable."""
     if (
@@ -214,23 +267,16 @@ async def construct_research(
                 reference, source.text.encode(), "utf8-exact/1", "text/plain"
             )
         )
+    if type(max_output_tokens) is not int or not 1 <= max_output_tokens <= 8192:
+        raise ValueError("invalid construction completion budget")
+    presented_sources = construction_sources(sources, objective, evidence_budget_chars)
     payload = json.dumps(
         {
             "objective": objective,
             "as_of": as_of,
             "acquisition_failures": acquisition_failures,
             "as_of_semantics": "Evidence evaluation target only; newly captured text is not an archived capture. Do not invent dates or historical validity.",
-            "sources": [
-                {
-                    "source_index": index,
-                    "url": s.url,
-                    "lines": [
-                        {"line": n, "text": line}
-                        for n, line in enumerate(s.text.splitlines(keepends=True), 1)
-                    ],
-                }
-                for index, s in enumerate(sources, 1)
-            ],
+            "sources": presented_sources,
             "schema": ConstructedContent.model_json_schema(),
         }
     ).encode()
@@ -240,10 +286,15 @@ async def construct_research(
         reply = await asyncio.ensure_future(
             complete(
                 ReviewRequest(
-                    CONSTRUCTION_PROMPT,
+                    CONSTRUCTION_PROMPT
+                    + (
+                        "\nSources are selected excerpts with original line numbers and possible gaps. Select only contiguous lines actually supplied. Never infer absence or exhaustive coverage from omitted lines."
+                        if evidence_budget_chars is not None
+                        else ""
+                    ),
                     payload,
                     model,
-                    2048,
+                    max_output_tokens,
                     ConstructedContent.model_json_schema(),
                 )
             )
@@ -255,6 +306,15 @@ async def construct_research(
         reply.content, schema_version="research-construction/4"
     )
     content = ConstructedContent.model_validate_json(document.data)
+    if evidence_budget_chars is not None:
+        for item in content.evidence:
+            if not 1 <= item.source_index <= len(presented_sources):
+                raise ValueError("model evidence was not supplied")
+            shown = {
+                row["line"] for row in presented_sources[item.source_index - 1]["lines"]
+            }
+            if not all(n in shown for n in range(item.start_line, item.end_line + 1)):
+                raise ValueError("model evidence was not supplied")
     answer = _selected((content.answer_claim_index,), len(content.claims), "claim")[0]
     now = clock()
     offset = now.utcoffset()
