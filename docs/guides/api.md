@@ -78,30 +78,31 @@ GroktoCrawl targets Firecrawl v2 request/response conventions for its compatible
 
 ### Experimental research protocol
 
-The opt-in research protocol is separate from `/v2/agent` and `/v2/answer`:
-`GET /experimental/research/v1/capabilities` reports enabled capabilities, and
-`POST /experimental/research/v1/runs` admits only development fixture runs when
-`FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS=true`; it returns 404 by default,
-before storage or execution. This backend uses fictional sources and authored
-judgments, not live web research. Run status and events
-are available under `/runs/{run_id}` and `/runs/{run_id}/events`; audited artifacts,
-evidence, and explicit workspace actions have routes under the same prefix. See the
-[retained research workspace guide](research-workspace.md) for named actions and
-state boundaries.
+The research protocol is separate from `/v2/agent` and `/v2/answer`.
+`GET /experimental/research/v1/capabilities` reports enabled capabilities and the
+active execution mode. With all four research feature flags enabled and
+PostgreSQL migrated through application schema 16,
+`POST /experimental/research/v1/runs` uses the configured search, scraper and
+model services. Supply an `Idempotency-Key` when creating a run. Keep
+`FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS=false`; setting it true deliberately
+selects fictional demonstration sources for development.
 
-The protocol uses `FEATURE_EXPERIMENTAL_RESEARCH`; run readability, durable execution,
-and PostgreSQL artifact authority have separate feature flags during rollout.
-The additional fixture-admission flag affects only new POST admissions. Leave it
-false in production while preserving the existing flags for retained status,
-artifacts, evidence, workspace access, and recovery of already admitted runs.
-Capabilities distinguish readable runs from `create_available` and always identify
-the fixture execution backend, including with PostgreSQL artifact authority. A
-disabled capability returns 404. PostgreSQL is included in the standard Compose
-deployment; durable operation requires its configured connection and explicit ordered
-schema migrations. Existing inline jobs, sessions, research-memory records, and `/v2/*`
-contracts are not imported or changed by enabling the protocol. The route name remains
-`experimental` for compatibility and API stability while its capabilities mature; it
-does not require a separate deployment or repository.
+Run status and events are available under `/runs/{run_id}` and
+`/runs/{run_id}/events`; retained artifacts, exact evidence and explicit workspace
+actions have routes under the same prefix. See the
+[workspace guide](research-workspace.md) and [live execution decision](../adr/0070-execute-live-durable-research.md).
+Completed external-call receipts can be reused after restart. A dispatch whose
+outcome cannot be established fails as `outcome_unknown` rather than making an
+unrecorded replacement call.
+
+The flags are `FEATURE_EXPERIMENTAL_RESEARCH`,
+`FEATURE_EXPERIMENTAL_RESEARCH_RUNS`, `FEATURE_EXPERIMENTAL_RESEARCH_DURABLE`,
+and `FEATURE_EXPERIMENTAL_RESEARCH_POSTGRES_ARTIFACTS`. Disabled capabilities
+return 404; missing required storage or schema prevents admission. Enabling these
+flags does not migrate existing jobs or session data into durable research.
+The `experimental` route name is retained for API compatibility; no separate
+repository or deployment is required. Release acceptance and deployment
+verification are tracked in the [1.0.1 cleanup plan](../plans/release-1.0.1-cleanup.md).
 
 ## Evidence selection and search continuation
 
