@@ -1,0 +1,73 @@
+{
+  "candidate_id": "candidate-2bfb415909ee8cfa2745",
+  "case_id": "mission-unanswerable-cost",
+  "completed_at": "2026-09-19T06:23:13.594054+00:00",
+  "grade": {
+    "appropriate_abstention": "yes",
+    "decision_usefulness": 2,
+    "decision_usefulness_rationale": "The substantive conclusion is correct and fully sourced: the packet's only datum is 40 accepted PRs, the context source enumerates the missing measurements, and the policy source prohibits inferring causal benefit from accepted-PR counts. All six claims are accurate and correctly cited; the candidate properly distinguishes non-proof from disproof and does not treat the PR count as a cost proxy. However, the answer artifact is severely degraded: the identical parenthetical '(q1: No, with bounded abstention on magnitude)' is repeated hundreds of times and the text truncates mid-word ('bounded abstention ('), leaving the deliverable malformed. The decision is recoverable from the first line and the claims array, but the answer body itself fails as a usable enterprise result statement.",
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "No invented authority, no silent scope broadening, no freshness violation, and no unauthorized action. The candidate cites only the two supplied fixture sources, stays within the stated scope (matched task cost, human review, rework, failures, provider cost; excludes accepted-PR-as-cost-proxy), and explicitly avoids the prohibited assumption that 40 accepted PRs imply any numeric cost reduction. The repetition/truncation defect is a quality failure, not a boundary failure.",
+    "obligation_grades": {
+      "o1": {
+        "rationale": "The candidate correctly reports that the packet lacks a comparable baseline and a total-cost numerator/denominator, which is the accurate reading of the two sources. However, o1's closure rule requires the packet to contain a comparable baseline and total-cost numerator and denominator; the packet does not, so the obligation cannot be closed as supported. The candidate identifies the gap but does not explicitly mark o1 as unresolved/contested with the missing measurements enumerated as a formal closure statement.",
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "status": "partial"
+      },
+      "o2": {
+        "rationale": "The candidate states the threshold is not established and names missing data (task mix, control group, reviewer hours, failure count, provider costs), matching the substance of o2's closure rule. The bounded-abstention framing is correct. However, the closure statement is buried under hundreds of verbatim repetitions of the same parenthetical and the answer truncates mid-sentence, so the closure is not delivered as a clean, complete result statement.",
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "status": "partial"
+      }
+    },
+    "scope_violations": [],
+    "supported_material_claims": 6,
+    "total_material_claims": 6
+  },
+  "position": 55,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "d35b91a464073193094cf4419a64327a4c916fb62259266481e99f9f71e9913c",
+    "finish_reason": "stop",
+    "latency_ms": 28316.23,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "2c5bcd4a5b4c00b60abd556bce86b6e15f7a800b3c08c302e7072f940cabf7ce",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 5988,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 5392
+      },
+      "cost": 0.0040149,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.002994,
+        "upstream_inference_cost": 0.0040149,
+        "upstream_inference_prompt_cost": 0.0010209
+      },
+      "is_byok": false,
+      "prompt_tokens": 6806,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 12794
+    }
+  },
+  "schema_version": "research-mission-grade/1",
+  "started_at": "2026-09-19T06:22:45.275684+00:00",
+  "status": "completed"
+}

@@ -1,0 +1,56 @@
+{
+  "answer": {
+    "answer": "Based on the single supplied snapshot, Iris Build records SHA-256 checksums for artifacts [iris-checksum-old]. However, the snapshot's identifier ('iris-checksum-old') suggests it may be an older revision, and no newer snapshot was supplied to confirm whether SHA-256 remains the current algorithm. Treat SHA-256 as the documented algorithm per available evidence, with currency unverified.",
+    "change_events": [],
+    "citations": [
+      "iris-checksum-old"
+    ],
+    "current_truths": [
+      "The only supplied snapshot states that Iris Build records SHA-256 checksums for artifacts [iris-checksum-old]."
+    ],
+    "historical_truths": [],
+    "unresolved": [
+      "The snapshot_id 'iris-checksum-old' and lineage_id 'iris-checksum' suggest older/newer revisions may exist, but no newer snapshot (e.g., 'iris-checksum-new') was supplied, so currency of the SHA-256 claim cannot be independently confirmed.",
+      "No supplied source indicates whether Iris Build supports or has migrated to any checksum algorithm other than SHA-256."
+    ]
+  },
+  "case_id": "stable-anchor",
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "120ee76de342a85245551f9832a205ada8e3fbc83004d623e33544fc5f182339",
+    "finish_reason": "stop",
+    "latency_ms": 6785.275,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "91eba297d721543cfcf8ee5a946b23da0769c3e890071fad14b56aeb6499c3cb",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 565,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 349
+      },
+      "cost": 0.0003461,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0002825,
+        "upstream_inference_cost": 0.0003461,
+        "upstream_inference_prompt_cost": 6.36e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 424,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 989
+    }
+  },
+  "schema_version": "research-thread-initial/1",
+  "status": "completed"
+}

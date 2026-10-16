@@ -1,0 +1,72 @@
+{
+  "answer": {
+    "answer": "Current mode: per the latest supplied snapshot, Elm API requires OAuth 2.1 and no longer accepts API keys, effective beginning in 2026 (elm-auth-2026). What changed: authentication moved from API keys to OAuth 2.1, with API key acceptance explicitly ended as of the 2026 guide (elm-auth-2026). Historically valid: in 2025, Elm API required API keys — accurate for the 2025 period, now superseded (elm-auth-2025). Identity basis: both snapshots share subject_id 'elm-api' and lineage_id 'elm-auth', so the temporal comparison is within a single lineage established by explicit identifiers, not by name similarity. Unresolved: the exact effective date within 2026, whether OAuth 2.1 remains current after the 2026 guide (no later snapshot is supplied), and any migration or grace-period details are not addressed by the sources. 'Current' therefore means current as of the supplied evidence, not a guarantee beyond it.",
+    "change_events": [
+      "Elm API authentication changed from API keys to OAuth 2.1: beginning in 2026, OAuth 2.1 is required and API keys are no longer accepted (elm-auth-2026).",
+      "The 2025 requirement of API keys for Elm API authentication was superseded by the 2026 change (elm-auth-2025 superseded by elm-auth-2026)."
+    ],
+    "citations": [
+      "elm-auth-2025",
+      "elm-auth-2026"
+    ],
+    "current_truths": [
+      "As of the most recent supplied snapshot (the 2026 guide), Elm API requires OAuth 2.1 for authentication (elm-auth-2026).",
+      "As of the most recent supplied snapshot (the 2026 guide), Elm API no longer accepts API keys (elm-auth-2026)."
+    ],
+    "historical_truths": [
+      "In 2025, Elm API required API keys for authentication; this was valid for the 2025 period and is now superseded (elm-auth-2025).",
+      "The 2025 API-key requirement is historically accurate but no longer describes current behavior, per the later snapshot in the same lineage (elm-auth-2025, elm-auth-2026)."
+    ],
+    "unresolved": [
+      "The precise effective date within 2026 is not specified beyond the phrase 'beginning in 2026' (elm-auth-2026).",
+      "No snapshot after 2026 is supplied, so whether OAuth 2.1 remains the current mode beyond the 2026 guide cannot be confirmed from the sources.",
+      "Migration details — such as grace periods, token lifetimes, scopes, or deprecation timelines for existing API keys — are not covered in the supplied snapshots (elm-auth-2025, elm-auth-2026)."
+    ]
+  },
+  "arm": "control",
+  "case_id": "historical-support",
+  "completed_at": "2026-09-19T07:48:26.182049+00:00",
+  "position": 5,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "f9555742c7995018e8f983681004e1d8ff24211b7cd418778bac5a131a192ea5",
+    "finish_reason": "stop",
+    "latency_ms": 40574.943,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "5f973a51d32851d13628ba7884879a825bbe739264d0096ed8961b8ccdb7c2a0",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 1878,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 1262
+      },
+      "cost": 0.0010173,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000939,
+        "upstream_inference_cost": 0.0010173,
+        "upstream_inference_prompt_cost": 7.83e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 522,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 2400
+    }
+  },
+  "repetition": 1,
+  "schema_version": "research-thread-trial/1",
+  "started_at": "2026-09-19T07:47:45.606658+00:00",
+  "status": "completed",
+  "stratum": "historical",
+  "trial_id": "historical-support-r1-control"
+}

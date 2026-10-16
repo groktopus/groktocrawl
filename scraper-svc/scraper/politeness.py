@@ -35,6 +35,8 @@ from dataclasses import dataclass, field
 from common.url import extract_domain
 
 from .settings import load_settings
+from .source_http import source_httpx_client
+from .valkey_control import RESERVE_SLOT_SCRIPT
 
 logger = logging.getLogger(__name__)
 
@@ -59,18 +61,7 @@ _RATE_KEY_PREFIX = "politeness:rate:"
 # Use Valkey's clock and one atomic reservation across all scraper replicas.
 # A cancelled reservation is deliberately not reclaimed: later callers may
 # already own subsequent slots. TTL bounds this conservative unused delay.
-_RESERVE_SLOT = """
-local clock = redis.call('TIME')
-local now = clock[1] * 1000 + math.floor(clock[2] / 1000)
-local delay = tonumber(ARGV[1])
-local ceiling = tonumber(ARGV[2])
-local next_slot = tonumber(redis.call('GET', KEYS[1]) or '0')
-local slot = math.max(now, next_slot)
-local wait = slot - now
-if wait > ceiling then return -1 end
-redis.call('PSETEX', KEYS[1], math.max(1000, wait + delay + 1000), slot + delay)
-return wait
-"""
+_RESERVE_SLOT = RESERVE_SLOT_SCRIPT
 
 
 @dataclass
@@ -182,9 +173,7 @@ class PolitenessManager:
         robots_url = f"https://{domain}/robots.txt"
 
         try:
-            import httpx
-
-            async with httpx.AsyncClient(
+            async with source_httpx_client(
                 timeout=ROBOTS_TIMEOUT, follow_redirects=True
             ) as client:
                 resp = await client.get(robots_url, headers={"User-Agent": ua})

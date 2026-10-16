@@ -1,0 +1,36 @@
+{
+  "adapter_calls_limit": 6,
+  "adapter_calls_used": 3,
+  "advisory_applicability": "not_evaluated",
+  "captured_results": 1,
+  "ecosystem": "pypi",
+  "evidence_origin": "retained-live-probe-reanalysis",
+  "hard_gate_passed": true,
+  "limitation_count": 3,
+  "missing_coverage_consistent": true,
+  "missing_sections": [
+    "repository_records"
+  ],
+  "observed_version_count": 1,
+  "package_ownership_proven": false,
+  "package_resolution_status": "resolved",
+  "package_sha256": "ec72420df5dfbdce4111f715c96338df3b7cb75f58e478d2449c9720e560de8c",
+  "partial": true,
+  "report_sha256": "54c4eec584d1da9f1749e3aec8d83fc0c95b3523f9bb37e36164ce89302ee16d",
+  "report_stable_on_reread": true,
+  "repository_basis": "caller_supplied",
+  "repository_sha256": "a3d1696c5c9028275869979ed5bcc22fee7e1943f72b210009d3406518e6dedf",
+  "repository_status": "requested",
+  "requested_version_sha256": "0c4e7355a2d119ae96a7ddd6c8f5c449bd89678eb869c5fd675bc250c786a7cb",
+  "result_limit": 500,
+  "same_job_on_start_replay": true,
+  "schema_version": "enterprise-evaluation/w11-dependency-dossier-live/1",
+  "section_states": {
+    "advisory_leads": "empty",
+    "package_information": "available",
+    "repository_records": "failed"
+  },
+  "start_replayed": true,
+  "terminal_state": "partial",
+  "version_match": "different"
+}

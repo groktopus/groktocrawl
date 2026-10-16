@@ -1,6 +1,6 @@
 {
   "citation_style": "inline",
-  "content_hash": "sha256:bd1d4b095fc362be37bf705eb8d82101c832ae2a8915bc383077eb42b00882de",
+  "content_hash": "sha256:64ad8320f9d47451512940a37a41568b4247f9573105f8711045c6c3f87d3211",
   "expected": {
     "abstain_expected": false,
     "abstain_qualifier": null,
@@ -37,7 +37,7 @@
   "query": "What does the Fixture Site Pro plan cost?",
   "retrieval_mode": "keyword",
   "search_fixture": {
-    "fixture_version": "v2",
+    "fixture_version": "v3",
     "scenario": "contradictory-sources",
     "scenario_version": "v1",
     "service": "slopsearx-fixture"

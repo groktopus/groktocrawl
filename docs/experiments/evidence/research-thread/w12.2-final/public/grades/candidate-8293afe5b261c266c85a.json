@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-8293afe5b261c266c85a",
+  "case_id": "changed-limit",
+  "completed_at": "2026-09-19T09:22:52.426876+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 100,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "The candidate exactly matches the reference: the change event (supported limit raised from 8 to 16 in v1.1) and the current truth (Atlas Runner 1.1 supports 16 concurrent jobs) are both stated and cited to atlas-release-2, and the v1.0/8-job fact is preserved as historical with explicit supersession, cited to atlas-release-1. Versions 1.0 and 1.1 are kept distinct, so no false merge; the 8-job limit is framed as superseded history rather than current, so no stale-current leak; and the historical claim is retained, so no lost history. Every factual claim is grounded in the two primary snapshots, including the accurate meta-claims about what the sources do and do not cover, hence zero unsupported claims. The sole weakness is the unresolved section: the reference lists nothing unresolved, and two of the three items (hard cap vs. configurable; editions/tiers/deployment modes) are invented peripheral questions that earn no credit; the post-1.1 corpus-boundary note is a defensible hedge, yielding partial credit. The answer is otherwise well-structured, fully cited, and decision-useful.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 30,
+    "unsupported_claims": 0,
+    "usefulness": 95
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "730dab90b233e92ba76bba46c43c812eeb9e5ca49a25bb0520ff701973c25386",
+    "finish_reason": "stop",
+    "latency_ms": 211128.182,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "0574f097e0c70a548057e89e189ca1fc80644ee8cad32fee3210fb5e728e4316",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 5621,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 5292
+      },
+      "cost": 0.00297985,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0028105,
+        "upstream_inference_cost": 0.00297985,
+        "upstream_inference_prompt_cost": 0.00016935
+      },
+      "is_byok": false,
+      "prompt_tokens": 1129,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 6750
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:19:21.295617+00:00",
+  "status": "completed",
+  "trial_id": "changed-limit-r3-treatment"
+}

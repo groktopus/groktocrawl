@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-e264e0c6d7a3cc192d03",
+  "case_id": "renamed-feature",
+  "completed_at": "2026-09-19T09:14:03.765427+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 100,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "The candidate directly answers the question: policy checks were renamed to release guards, not removed, matching the reference change event and the Northstar 4 migration guide. The current truth (Northstar 4 uses 'release guards', purpose unchanged) is correctly sourced to the newer snapshot, and the historical truth (Northstar 3 called them 'policy checks') is preserved as historical with the older snapshot cited. The lineage/supersession reasoning is grounded in the supplied snapshot metadata (same subject and lineage, old vs. new versions). The unresolved list is empty, matching the reference. No false merges, no stale-current leakage, no lost history, and every factual claim traces to a source.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 100,
+    "unsupported_claims": 0,
+    "usefulness": 100
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "f8eacb995b8eef2f59c9aa4d3e8d1f30b968a578e919d181c47cf20a0f657227",
+    "finish_reason": "stop",
+    "latency_ms": 20239.366,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "20e23ec71bada7794f70cd20da1b26fb43c0d8c81d753d8ba9b3ccbb3cce5bb1",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 1508,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 1283
+      },
+      "cost": 0.0008884,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000754,
+        "upstream_inference_cost": 0.0008884,
+        "upstream_inference_prompt_cost": 0.0001344
+      },
+      "is_byok": false,
+      "prompt_tokens": 896,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 2404
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:13:43.524383+00:00",
+  "status": "completed",
+  "trial_id": "renamed-feature-r2-control"
+}

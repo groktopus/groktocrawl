@@ -12,8 +12,7 @@ from __future__ import annotations
 import logging
 import re
 
-import httpx
-
+from ..source_http import source_httpx_client
 from ._helpers import scrape_page
 from .base import AdapterContext, AdapterError, AdapterResult, SiteAdapter, adapter
 
@@ -80,7 +79,7 @@ async def _fetch_stix_data(obj_type: str, obj_id: str) -> dict | None:
         return None
 
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
+        async with source_httpx_client(timeout=15) as client:
             resp = await client.get(bundle_path)
             if resp.status_code != 200:
                 return None

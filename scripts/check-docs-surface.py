@@ -32,11 +32,26 @@ def route_inventory() -> set[str]:
     for source in ROUTES_DIR.glob("*.py"):
         if source.name.startswith("_"):
             continue
+        text = source.read_text()
+        constants = dict(
+            re.findall(
+                r"^([A-Z_][A-Z0-9_]*)\s*=\s*\"([^\"]+)\"", text, re.MULTILINE
+            )
+        )
+        route_constants = constants
         for method, path in re.findall(
-            r'@router\.(get|post|put|patch|delete)\s*\(\s*"([^"]+)"',
-            source.read_text(),
+            r'@router\.(get|post|put|patch|delete)\s*\(\s*f?"([^"]+)"',
+            text,
         ):
-            if path.startswith("/v2/"):
+            path = re.sub(
+                r"\{([A-Z_][A-Z0-9_]*)\}",
+                lambda match, route_constants=route_constants: route_constants.get(
+                    match.group(1), match.group(0)
+                ),
+                path,
+            )
+            path = path.replace("{{", "{").replace("}}", "}")
+            if path.startswith("/v2/") or path.startswith("/experimental/"):
                 routes.add(f"{method.upper()} {path}")
     return routes
 
@@ -83,7 +98,8 @@ def main() -> int:
             "API routes",
             route_inventory(),
             documented_inventory(
-                "api-inventory", r"^(?:GET|POST|PUT|PATCH|DELETE) /v2/[^\s]+$"
+                "api-inventory",
+                r"^(?:GET|POST|PUT|PATCH|DELETE) /(?:v2|experimental)/[^\s]+$",
             ),
         )
         errors += compare(

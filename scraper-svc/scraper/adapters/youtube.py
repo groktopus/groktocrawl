@@ -24,6 +24,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
+from ..source_http import (
+    capture_egress_proxy_url,
+    source_httpx_client,
+    source_requests_session,
+    trusted_control_base_url,
+    trusted_control_httpx_client,
+)
 from .base import AdapterContext, AdapterError, AdapterResult, SiteAdapter, adapter
 
 logger = logging.getLogger(__name__)
@@ -131,14 +138,13 @@ async def _fetch_oembed(video_id: str) -> dict:
 
     Raises ``AdapterError`` on failure.
     """
-    import httpx
 
     oembed_url = f"https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v={video_id}&format=json"
     try:
         import asyncio
 
         await asyncio.to_thread(_YOUTUBE_GATE.wait)
-        async with httpx.AsyncClient(timeout=10) as client:
+        async with source_httpx_client(timeout=10) as client:
             resp = await client.get(oembed_url)
             if resp.status_code == 200:
                 return resp.json()
@@ -163,14 +169,13 @@ async def _fetch_description(video_id: str) -> str | None:
     Uses a lightweight ``httpx.get()`` — no browser rendering needed.
     Returns the description text or ``None``.
     """
-    import httpx
 
     url = f"https://www.youtube.com/watch?v={video_id}"
     try:
         import asyncio
 
         await asyncio.to_thread(_YOUTUBE_GATE.wait)
-        async with httpx.AsyncClient(timeout=10) as client:
+        async with source_httpx_client(timeout=10) as client:
             resp = await client.get(
                 url,
                 headers={
@@ -324,56 +329,67 @@ async def _fetch_transcript(video_id: str) -> _TranscriptFetch | None:
         from youtube_transcript_api import YouTubeTranscriptApi
 
         def _get_transcript():
-            api = YouTubeTranscriptApi()
-            _YOUTUBE_GATE.wait()
-            transcripts = list(api.list(video_id))
+            http_client = source_requests_session()
+            try:
+                api = (
+                    YouTubeTranscriptApi(http_client=http_client)
+                    if http_client is not None
+                    else YouTubeTranscriptApi()
+                )
+                _YOUTUBE_GATE.wait()
+                transcripts = list(api.list(video_id))
 
-            # Keep native English ahead of translated output, including when
-            # the native track is auto-generated.
-            english = [t for t in transcripts if t.language_code == "en"]
-            candidates = english + [
-                t for t in transcripts if t.language_code != "en" and t.is_translatable
-            ]
-            for transcript in candidates:
-                translated_to = None
-                selected = transcript
-                if transcript.language_code != "en":
+                # Keep native English ahead of translated output, including when
+                # the native track is auto-generated.
+                english = [t for t in transcripts if t.language_code == "en"]
+                candidates = english + [
+                    t
+                    for t in transcripts
+                    if t.language_code != "en" and t.is_translatable
+                ]
+                for transcript in candidates:
+                    translated_to = None
+                    selected = transcript
+                    if transcript.language_code != "en":
+                        try:
+                            selected = transcript.translate("en")
+                            translated_to = "en"
+                        except Exception as exc:
+                            logger.debug(
+                                "Transcript translation failed for %s (%s -> en): %s",
+                                video_id,
+                                transcript.language_code,
+                                exc,
+                            )
+                            continue
+
                     try:
-                        selected = transcript.translate("en")
-                        translated_to = "en"
+                        _YOUTUBE_GATE.wait(_YOUTUBE_GATE.subtitle_interval)
+                        fetched = selected.fetch()
+                        text = " ".join(item.text for item in fetched).strip()
+                    except _YouTubeCooldownError:
+                        raise
                     except Exception as exc:
+                        if _is_youtube_rate_limit(exc):
+                            _YOUTUBE_GATE.mark_rate_limited()
+                            raise _YouTubeCooldownError from exc
                         logger.debug(
-                            "Transcript translation failed for %s (%s -> en): %s",
+                            "Transcript fetch failed for %s (%s): %s",
                             video_id,
                             transcript.language_code,
                             exc,
                         )
                         continue
-
-                try:
-                    _YOUTUBE_GATE.wait(_YOUTUBE_GATE.subtitle_interval)
-                    fetched = selected.fetch()
-                    text = " ".join(item.text for item in fetched).strip()
-                except _YouTubeCooldownError:
-                    raise
-                except Exception as exc:
-                    if _is_youtube_rate_limit(exc):
-                        _YOUTUBE_GATE.mark_rate_limited()
-                        raise _YouTubeCooldownError from exc
-                    logger.debug(
-                        "Transcript fetch failed for %s (%s): %s",
-                        video_id,
-                        transcript.language_code,
-                        exc,
-                    )
-                    continue
-                if text:
-                    return _TranscriptFetch(
-                        text=text,
-                        language=transcript.language_code,
-                        translated_to=translated_to,
-                    )
-            return None
+                    if text:
+                        return _TranscriptFetch(
+                            text=text,
+                            language=transcript.language_code,
+                            translated_to=translated_to,
+                        )
+                return None
+            finally:
+                if http_client is not None:
+                    http_client.close()
 
         transcript = await asyncio.to_thread(_get_transcript)
         if transcript:
@@ -420,6 +436,11 @@ async def _fetch_transcript_via_ytdlp(video_id: str) -> _TranscriptFetch | None:
                 "subtitlesformat": "vtt",
                 "outtmpl": output,
             }
+            proxy_url = capture_egress_proxy_url()
+            if proxy_url is not None:
+                # Explicit yt-dlp proxy configuration suppresses its fallback
+                # to process environment proxies and routes every request here.
+                options["proxy"] = proxy_url
             with yt_dlp.YoutubeDL(options) as ydl:
                 info = ydl.extract_info(
                     f"https://www.youtube.com/watch?v={video_id}", download=True
@@ -478,12 +499,12 @@ async def _fetch_via_browser(
 
     Returns ``(markdown, metadata)`` or ``None``.
     """
-    import httpx
-
-    browser_svc_url = ctx.config.get("BROWSER_SVC_URL", "http://browser-svc:8012")
+    browser_svc_url = trusted_control_base_url(
+        ctx.config.get("BROWSER_SVC_URL", "http://browser-svc:8012"), "browser"
+    )
     session_id = None
     try:
-        async with httpx.AsyncClient(timeout=30) as client:
+        async with trusted_control_httpx_client(service="browser", timeout=30) as client:
             # Create session
             create_resp = await client.post(
                 f"{browser_svc_url}/browsers",
@@ -563,7 +584,7 @@ async def _fetch_via_browser(
     finally:
         if session_id:
             try:
-                async with httpx.AsyncClient(timeout=5) as c:
+                async with trusted_control_httpx_client(service="browser", timeout=5) as c:
                     await c.delete(f"{browser_svc_url}/browsers/{session_id}")
             except Exception as e:
                 logger.debug("Session cleanup failed for %s: %s", url, e)

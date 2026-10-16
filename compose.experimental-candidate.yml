@@ -1,0 +1,811 @@
+name: groktocrawl-x-candidate
+
+# Experimental replacement candidate. This stack is deliberately independent
+# from the inherited GroktoCrawl deployment and does not share its containers,
+# networks, volumes, image tags, databases, or published ports.
+services:
+  candidate-valkey:
+    image: valkey/valkey@sha256:cfb2aa4c8352930130fd45eb231a57310ac326d7323edae12b384b9270c46dda
+    restart: unless-stopped
+    command: [valkey-server, --appendonly, "yes", --appendfsync, everysec]
+    volumes:
+      - candidate_valkey_data:/data
+    networks:
+      candidate_private:
+        aliases: [valkey]
+    healthcheck:
+      test: [CMD, valkey-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    mem_limit: 512m
+    cpus: 1.0
+    pids_limit: 128
+
+  candidate-postgres:
+    image: pgvector/pgvector@sha256:cf134a767f474095eeba57e0117be8e568e011a63f33fbf252f14c9b760f8e6f
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: groktocrawl_x
+      POSTGRES_USER: groktocrawl_x
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    secrets: [postgres_password]
+    volumes:
+      - candidate_postgres_data:/var/lib/postgresql/data
+      - ./agent-svc/agent/experimental/migrations:/docker-entrypoint-initdb.d:ro
+    networks: [candidate_private]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    stop_grace_period: 30s
+    mem_limit: 2g
+    cpus: 2.0
+    pids_limit: 256
+
+  candidate-slopsearx:
+    image: ghcr.io/magnus919/slopsearx@sha256:8643ed14703bf899bd579b1b06f4b62b798d7f42f303ce9af8aa2386c928108d
+    restart: unless-stopped
+    environment:
+      ENGINE_BRAVE_API_KEY: ${BRAVE_API_KEY:-}
+      ENGINE_SEMANTICSCHOLAR_API_KEY: ${ENGINE_SEMANTICSCHOLAR_API_KEY:-}
+      VALKEY_URL: redis://candidate-valkey:6379/0
+    depends_on:
+      candidate-valkey:
+        condition: service_healthy
+    networks: [candidate_egress, candidate_private]
+    healthcheck:
+      test: [CMD, python, /app/healthcheck.py]
+      interval: 15s
+      timeout: 5s
+      start_period: 5s
+      retries: 10
+    mem_limit: 1g
+    cpus: 1.0
+    pids_limit: 256
+
+  candidate-capture-egress:
+    build:
+      context: .
+      dockerfile: capture-egress-svc/Dockerfile
+    image: groktocrawl-x-capture-egress:${CANDIDATE_IMAGE_TAG:-dev}
+    restart: unless-stopped
+    networks:
+      candidate_egress:
+        gw_priority: 1
+      candidate_capture:
+        ipv4_address: ${CAPTURE_EGRESS_IP:-172.31.254.2}
+      candidate_browser_capture:
+        ipv4_address: 172.31.254.10
+      candidate_flare_capture:
+        ipv4_address: 172.31.254.18
+    environment:
+      CAPTURE_PROXY_BIND_HOST: 0.0.0.0
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8081/healthz', timeout=2)"
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    mem_limit: 512m
+    cpus: 1.0
+    pids_limit: 128
+
+  candidate-flare-renderer:
+    build:
+      context: .
+      dockerfile: flare-protected/Dockerfile
+    image: groktocrawl-x-protected-flare:${CANDIDATE_IMAGE_TAG:-dev}
+    restart: unless-stopped
+    profiles: [protected-flare]
+    group_add: ["20000"]
+    networks:
+      candidate_flare_capture:
+        ipv4_address: 172.31.254.19
+    environment:
+      FLARE_API_UNIX_SOCKET: /run/flaresolverr/api.sock
+      LOG_LEVEL: ${FLARE_SOLVERR_LOG_LEVEL:-info}
+      LOG_HTML: "false"
+      CAPTCHA_SOLVER: ${FLARE_SOLVERR_CAPTCHA_SOLVER:-none}
+    volumes:
+      - candidate_flare_socket:/run/flaresolverr
+    cap_drop: [ALL]
+    cap_add: [CHOWN, NET_ADMIN, SETUID, SETGID, SETPCAP]
+    security_opt: [no-new-privileges:true]
+    depends_on:
+      candidate-scraper-socket-init:
+        condition: service_completed_successfully
+      candidate-capture-egress:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import socket; s=socket.socket(socket.AF_UNIX); s.settimeout(2);
+          s.connect('/run/flaresolverr/api.sock');
+          s.sendall(b'GET /health HTTP/1.1\r\nHost: flaresolverr.local\r\nConnection: close\r\n\r\n');
+          assert b'200 OK' in s.recv(2048)
+      interval: 10s
+      timeout: 5s
+      start_period: 45s
+      retries: 20
+    mem_limit: 1500m
+    cpus: 1.0
+    pids_limit: 256
+
+  candidate-flare-control:
+    build:
+      context: .
+      dockerfile: flare-control/Dockerfile
+    image: groktocrawl-x-flare-control:${CANDIDATE_IMAGE_TAG:-dev}
+    restart: unless-stopped
+    profiles: [protected-flare]
+    environment:
+      FLARE_CONTROL_UNIX_SOCKET: /run/flare-control/control.sock
+    user: "10003:10003"
+    group_add: ["20000"]
+    volumes:
+      - candidate_flare_socket:/run/flaresolverr:ro
+      - candidate_flare_control_socket:/run/flare-control
+    network_mode: none
+    depends_on:
+      candidate-flare-control-socket-init:
+        condition: service_completed_successfully
+      candidate-flare-renderer:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import socket; s=socket.socket(socket.AF_UNIX); s.settimeout(2);
+          s.connect('/run/flare-control/control.sock');
+          s.sendall(b'GET /health HTTP/1.1\r\nHost: flare.local\r\nConnection: close\r\n\r\n');
+          assert b'200 OK' in s.recv(2048)
+      interval: 10s
+      timeout: 5s
+      start_period: 5s
+      retries: 20
+    mem_limit: 256m
+    cpus: 0.25
+    pids_limit: 64
+
+  candidate-flare-control-socket-init:
+    build:
+      context: .
+      dockerfile: flare-control/Dockerfile
+    image: groktocrawl-x-flare-control:${CANDIDATE_IMAGE_TAG:-dev}
+    profiles: [protected-flare]
+    user: "0:0"
+    command:
+      - /bin/sh
+      - -c
+      - >-
+        mkdir -p /run/flare-control || { echo 'failed to create Flare control socket directory' >&2; exit 1; };
+        chown 10003:20000 /run/flare-control || { echo 'failed to set Flare control socket ownership' >&2; exit 1; };
+        chmod 2710 /run/flare-control || { echo 'failed to set Flare control socket mode' >&2; exit 1; };
+        test "$$(stat -c '%u:%g:%a' /run/flare-control)" = '10003:20000:2710' || { echo 'Flare control socket directory ownership or mode mismatch' >&2; exit 1; }
+    volumes:
+      - candidate_flare_control_socket:/run/flare-control
+    network_mode: none
+    cap_drop: [ALL]
+    cap_add: [CHOWN, FOWNER, FSETID]
+    security_opt: [no-new-privileges:true]
+    restart: "no"
+
+  candidate-browser-renderer:
+    build:
+      context: .
+      dockerfile: browser-svc/Dockerfile
+    image: groktocrawl-x-candidate-browser:${CANDIDATE_IMAGE_TAG:-dev}
+    command: [python, -m, browser_svc.renderer_entrypoint]
+    restart: unless-stopped
+    group_add: ["20000"]
+    networks:
+      candidate_browser_capture:
+        ipv4_address: 172.31.254.11
+    environment:
+      BROWSER_PROTECTED_RENDERER: "1"
+      BROWSER_CAPTURE_PROXY_URL: http://172.31.254.10:8080
+      BROWSER_RENDERER_SOCKET: /run/browser/renderer.sock
+      BROWSER_COOKIE_RPC_SOCKET: /run/browser/cookies.sock
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      - candidate_browser_renderer_socket:/run/browser
+    cap_drop: [ALL]
+    cap_add: [CHOWN, NET_ADMIN, SETUID, SETGID, SETPCAP]
+    security_opt: [no-new-privileges:true]
+    depends_on:
+      candidate-capture-egress:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import socket; s=socket.socket(socket.AF_UNIX); s.settimeout(2); s.connect('/run/browser/renderer.sock'); s.sendall(b'GET /health HTTP/1.1\\r\\nHost: renderer.local\\r\\nConnection: close\\r\\n\\r\\n'); assert b'200 OK' in s.recv(1024)"
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 20
+    mem_limit: 1500m
+    cpus: 1.0
+    pids_limit: 256
+
+  candidate-browser-controller:
+    init: true
+    build:
+      context: .
+      dockerfile: browser-svc/Dockerfile
+    image: groktocrawl-x-candidate-browser:${CANDIDATE_IMAGE_TAG:-dev}
+    command:
+      - /bin/sh
+      - -c
+      - >-
+        exec python -m browser_svc.controller_entrypoint
+    restart: unless-stopped
+    networks:
+      candidate_private:
+        aliases: [browser-svc]
+    environment:
+      BROWSER_RENDERER_SOCKET: /run/browser/renderer.sock
+      BROWSER_COOKIE_RPC_SOCKET: /run/browser/cookies.sock
+      BROWSER_CONTROLLER_SOCKET: /run/browser-control/controller.sock
+      VALKEY_HOST: candidate-valkey
+      VALKEY_PORT: "6379"
+    volumes:
+      - candidate_browser_renderer_socket:/run/browser
+      - candidate_browser_controller_socket:/run/browser-control
+    group_add: ["20000"]
+    cap_drop: [ALL]
+    cap_add: [CHOWN]
+    security_opt: [no-new-privileges:true]
+    depends_on:
+      candidate-browser-renderer:
+        condition: service_healthy
+      candidate-scraper-socket-init:
+        condition: service_completed_successfully
+      candidate-valkey:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import socket; s=socket.socket(socket.AF_UNIX); s.settimeout(2);
+          s.connect('/run/browser-control/controller.sock');
+          s.sendall(b'GET /health HTTP/1.1\r\nHost: browser.local\r\nConnection: close\r\n\r\n');
+          assert b'200 OK' in s.recv(2048)
+      interval: 10s
+      timeout: 5s
+      start_period: 10s
+      retries: 20
+    mem_limit: 256m
+    cpus: 0.5
+    pids_limit: 128
+
+  candidate-scraper-state-control:
+    build:
+      context: .
+      dockerfile: scraper-svc/Dockerfile
+    image: groktocrawl-x-candidate-scraper:${CANDIDATE_IMAGE_TAG:-dev}
+    command: [python, -m, scraper.valkey_control]
+    user: "10002:20000"
+    restart: unless-stopped
+    environment:
+      VALKEY_HOST: candidate-valkey
+      VALKEY_PORT: "6379"
+      VALKEY_DB: "0"
+      VALKEY_RPC_SOCKET: /run/scraper-state/control.sock
+    volumes:
+      - candidate_scraper_state_socket:/run/scraper-state
+    depends_on:
+      candidate-scraper-socket-init:
+        condition: service_completed_successfully
+      candidate-valkey:
+        condition: service_healthy
+    networks: [candidate_private]
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import socket; s=socket.socket(socket.AF_UNIX); s.settimeout(2);
+          s.connect('/run/scraper-state/control.sock'); s.sendall(b'{"operation":"ping"}\n');
+          assert b'"value":true' in s.recv(1024)
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+    cpus: 0.25
+    pids_limit: 64
+
+  candidate-model-egress:
+    build:
+      context: .
+      dockerfile: capture-egress-svc/Dockerfile
+    image: groktocrawl-x-capture-egress:${CANDIDATE_IMAGE_TAG:-dev}
+    command: [python, -m, capture_egress_svc.model_proxy]
+    restart: unless-stopped
+    environment:
+      LLM_BASE_URL: ${LLM_BASE_URL:?Set LLM_BASE_URL in the private candidate environment file}
+      CAPTCHA_VISION_BASE_URL: ${CAPTCHA_VISION_BASE_URL:-}
+      LLM_GATEWAY_PRIVATE_HOSTS: ${LLM_GATEWAY_PRIVATE_HOSTS:-}
+      MODEL_PROXY_BIND_HOST: 0.0.0.0
+    networks:
+      candidate_model_upstream:
+        gw_priority: 1
+      candidate_model_gateway:
+        ipv4_address: 172.31.254.34
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import socket; s=socket.create_connection(('127.0.0.1',8080),timeout=2); s.sendall(b'GET http://invalid.invalid/ HTTP/1.1\\r\\nHost: invalid.invalid\\r\\nConnection: close\\r\\n\\r\\n'); assert b'403 Forbidden' in s.recv(1024)"
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    cpus: 0.5
+    pids_limit: 64
+
+  candidate-scraper-model-control:
+    build:
+      context: .
+      dockerfile: scraper-svc/Dockerfile
+    image: groktocrawl-x-candidate-scraper:${CANDIDATE_IMAGE_TAG:-dev}
+    command: [python, -m, scraper.llm_control_entrypoint]
+    restart: unless-stopped
+    user: "10002:20000"
+    environment:
+      MODEL_CONTROL_SOCKET: /run/scraper-llm/control.sock
+      LLM_BASE_URL: ${LLM_BASE_URL:?Set LLM_BASE_URL in the private candidate environment file}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      CAPTCHA_VISION_BASE_URL: ${CAPTCHA_VISION_BASE_URL:-}
+      CAPTCHA_VISION_API_KEY: ${CAPTCHA_VISION_API_KEY:-}
+      MODEL_EGRESS_PROXY_URL: http://172.31.254.34:8080
+    volumes:
+      - candidate_scraper_llm_socket:/run/scraper-llm
+    depends_on:
+      candidate-scraper-socket-init:
+        condition: service_completed_successfully
+      candidate-model-egress:
+        condition: service_healthy
+    # Only the model broker can reach the model-only proxy. It has no direct
+    # egress path and no source-capture gateway access.
+    networks: [candidate_model_gateway]
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import socket; s=socket.socket(socket.AF_UNIX); s.settimeout(2);
+          s.connect('/run/scraper-llm/control.sock');
+          s.sendall(b'GET /health HTTP/1.1\r\nHost: llm-control.local\r\nConnection: close\r\n\r\n');
+          assert b'200 OK' in s.recv(1024)
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    cpus: 0.25
+    pids_limit: 64
+
+  candidate-scraper:
+    build:
+      context: .
+      dockerfile: scraper-svc/Dockerfile
+    image: groktocrawl-x-candidate-scraper:${CANDIDATE_IMAGE_TAG:-dev}
+    restart: unless-stopped
+    # OCI healthchecks need the same private socket group as the dropped worker.
+    group_add: ["20000"]
+    environment:
+      VALKEY_RPC_SOCKET: /run/scraper-state/control.sock
+      LLM_CONTROL_SOCKET: /run/scraper-llm/control.sock
+      LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+      CAPTCHA_VISION_MODEL: ${CAPTCHA_VISION_MODEL:-}
+      BROWSER_SVC_URL: http://candidate-browser-controller:8012
+      FLARE_SOLVERR_URL: http://candidate-flare-control:8191/v1
+      BROWSER_CONTROL_SOCKET: /run/browser-control/controller.sock
+      FLARE_CONTROL_SOCKET: /run/flare-control/control.sock
+      SCRAPER_API_SOCKET: /run/scraper/app.sock
+      SCRAPER_CAPTURE_EGRESS_PROXY_URL: http://${CAPTURE_EGRESS_IP:-172.31.254.2}:8080
+      SCRAPER_CAPTURE_GATEWAY_IP: ${CAPTURE_EGRESS_IP:-172.31.254.2}
+      CAPTURE_PEER_IP: ${CAPTURE_PEER_IP:-172.31.254.3}
+      CAPTURE_EGRESS_IP: ${CAPTURE_EGRESS_IP:-172.31.254.2}
+      SCRAPER_CAPTURE_GATEWAY_PORT: "8080"
+      SCRAPER_MAX_BROWSER_CONCURRENCY: ${SCRAPER_MAX_BROWSER_CONCURRENCY:-4}
+      SCRAPER_BROWSER_POOL_ENABLED: ${SCRAPER_BROWSER_POOL_ENABLED:-false}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      ADAPTER_NVD_API_KEY: ${ADAPTER_NVD_API_KEY:-}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      HOME: /home/scraper
+    depends_on:
+      candidate-scraper-socket-init:
+        condition: service_completed_successfully
+      candidate-capture-egress:
+        condition: service_healthy
+      candidate-scraper-state-control:
+        condition: service_healthy
+      candidate-scraper-model-control:
+        condition: service_healthy
+      candidate-browser-controller:
+        condition: service_healthy
+      candidate-flare-control:
+        condition: service_healthy
+        required: false
+    volumes:
+      - candidate_scraper_api_socket:/run/scraper
+      - candidate_scraper_state_socket:/run/scraper-state:ro
+      - candidate_scraper_llm_socket:/run/scraper-llm:ro
+      - candidate_browser_controller_socket:/run/browser-control:ro
+      - candidate_flare_control_socket:/run/flare-control:ro
+    # No private/egress attachment: source TCP/UDP can reach only this internal
+    # capture link. Its namespace firewall allows only the fixed gateway peer.
+    networks: [candidate_capture]
+    user: "0:0"
+    cap_drop: [ALL]
+    cap_add: [CHOWN, NET_ADMIN, SETUID, SETGID, SETPCAP]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import socket; s=socket.socket(socket.AF_UNIX); s.settimeout(3);
+          s.connect('/run/scraper/app.sock');
+          s.sendall(b'GET /health HTTP/1.1\r\nHost: scraper.local\r\nConnection: close\r\n\r\n');
+          assert b'200 OK' in s.recv(4096)
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 20
+    mem_limit: 2500m
+    cpus: 2.0
+    pids_limit: 512
+
+  candidate-scraper-socket-init:
+    build:
+      context: .
+      dockerfile: scraper-svc/Dockerfile
+    image: groktocrawl-x-candidate-scraper:${CANDIDATE_IMAGE_TAG:-dev}
+    user: "0:0"
+    command:
+      - /bin/sh
+      - -c
+      - >-
+        setup_socket_dir() {
+          d=$$1; owner=$$2; mode=$$3;
+          mkdir -p "$$d" || { echo "failed to create socket directory: $$d" >&2; exit 1; };
+          chown "$$owner" "$$d" || { echo "failed to set socket directory ownership: $$d" >&2; exit 1; };
+          chmod "$$mode" "$$d" || { echo "failed to set socket directory mode: $$d" >&2; exit 1; };
+          test "$$(stat -c '%u:%g:%a' "$$d")" = "$${owner}:$${mode}" || { echo "socket directory ownership or mode mismatch: $$d" >&2; exit 1; };
+        };
+        setup_socket_dir /run/scraper 10001:20000 2710;
+        setup_socket_dir /run/scraper-state 10002:20000 2710;
+        setup_socket_dir /run/scraper-llm 10002:20000 2710;
+        setup_socket_dir /run/browser-control 0:20000 2710
+    volumes:
+      - candidate_scraper_api_socket:/run/scraper
+      - candidate_scraper_state_socket:/run/scraper-state
+      - candidate_scraper_llm_socket:/run/scraper-llm
+      - candidate_browser_controller_socket:/run/browser-control
+    network_mode: none
+    cap_drop: [ALL]
+    cap_add: [CHOWN, FOWNER, FSETID]
+    security_opt: [no-new-privileges:true]
+    restart: "no"
+
+  candidate-scraper-ingress:
+    build:
+      context: .
+      dockerfile: scraper-svc/Dockerfile
+    image: groktocrawl-x-candidate-scraper:${CANDIDATE_IMAGE_TAG:-dev}
+    command: [uvicorn, scraper.ingress:app, --host, 0.0.0.0, --port, "8010"]
+    restart: unless-stopped
+    user: "10001:20000"
+    environment:
+      SCRAPER_API_SOCKET: /run/scraper/app.sock
+    volumes:
+      - candidate_scraper_api_socket:/run/scraper:ro
+    depends_on:
+      candidate-scraper-socket-init:
+        condition: service_completed_successfully
+      candidate-scraper:
+        condition: service_healthy
+    networks: [candidate_private]
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8010/health', timeout=3)"]
+      interval: 10s
+      timeout: 4s
+      retries: 10
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    cpus: 0.25
+    pids_limit: 64
+
+  candidate-qdrant-rollback:
+    image: qdrant/qdrant@sha256:75eab8c4ba42096724fdcfde8b4de0b5713d529dde32f285a1f86fdcb2c9e50c
+    platform: linux/amd64
+    restart: unless-stopped
+    volumes:
+      - candidate_qdrant_rollback_data:/qdrant/storage
+    networks:
+      candidate_private:
+        aliases: [qdrant]
+    environment:
+      MALLOC_CONF: retain:false
+    healthcheck:
+      test:
+        - CMD
+        - bash
+        - -c
+        - >-
+          exec 3<>/dev/tcp/127.0.0.1/6333 &&
+          printf 'GET /readyz HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 &&
+          IFS= read -r status <&3 && [[ "$${status}" == *200* ]]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    mem_limit: 2g
+    cpus: 1.0
+    pids_limit: 256
+
+  candidate-semantic:
+    build:
+      context: .
+      dockerfile: semantic-svc/Dockerfile
+    image: groktocrawl-x-candidate-semantic:${CANDIDATE_IMAGE_TAG:-dev}
+    restart: unless-stopped
+    entrypoint: [/bin/sh, -c]
+    command:
+      - |
+        umask 077
+        password=$$(cat /run/secrets/postgres_password)
+        printf 'candidate-postgres:5432:groktocrawl_x:groktocrawl_x:%s\n' "$$password" > /tmp/postgres.pgpass
+        unset password
+        exec uvicorn app:app --host 0.0.0.0 --port 8003
+    environment:
+      QDRANT_URL: http://candidate-qdrant-rollback:6333
+      VECTOR_STORE_MODE: ${VECTOR_STORE_MODE:-pgvector}
+      PGVECTOR_SHADOW_DSN: postgresql://groktocrawl_x@candidate-postgres:5432/groktocrawl_x
+      PGPASSFILE: /tmp/postgres.pgpass
+      PGVECTOR_SHADOW_SAMPLE_RATE: "1"
+      PGVECTOR_SHADOW_SCORE_TOLERANCE: ${PGVECTOR_SHADOW_SCORE_TOLERANCE:-0.0001}
+      PGVECTOR_SHADOW_TIMEOUT_SECONDS: ${PGVECTOR_SHADOW_TIMEOUT_SECONDS:-2}
+      VECTOR_INDEX_MAX_DOCS: ${VECTOR_INDEX_MAX_DOCS:-250000}
+      EMBED_MODEL_NAME: ${EMBED_MODEL_NAME:-BAAI/bge-m3}
+      EMBED_DIM: ${EMBED_DIM:-1024}
+      ACTIVE_EMBED_MODEL: ${ACTIVE_EMBED_MODEL:-v_bge-m3}
+      SEMANTIC_INFERENCE_WORKERS: ${SEMANTIC_INFERENCE_WORKERS:-1}
+      SEMANTIC_INFERENCE_QUEUE_SIZE: ${SEMANTIC_INFERENCE_QUEUE_SIZE:-16}
+      SEMANTIC_INFERENCE_ADMISSION_TIMEOUT_SECONDS: ${SEMANTIC_INFERENCE_ADMISSION_TIMEOUT_SECONDS:-0.25}
+    secrets: [postgres_password]
+    volumes:
+      - candidate_hf_cache:/root/.cache/huggingface
+    depends_on:
+      candidate-postgres:
+        condition: service_healthy
+      candidate-qdrant-rollback:
+        condition: service_healthy
+    networks: [candidate_egress, candidate_private]
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8003/ready', timeout=5)"]
+      interval: 10s
+      timeout: 5s
+      start_period: 60s
+      retries: 60
+    mem_limit: 4g
+    cpus: ${SEMANTIC_CPU_LIMIT:-2.0}
+    pids_limit: 512
+
+  candidate-parse:
+    build:
+      context: .
+      dockerfile: parse-svc/Dockerfile
+    image: groktocrawl-x-candidate-parse:${CANDIDATE_IMAGE_TAG:-dev}
+    restart: unless-stopped
+    networks:
+      candidate_private:
+        aliases: [parse-svc]
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8013/health', timeout=5)"]
+      interval: 10s
+      timeout: 5s
+      start_period: 10s
+      retries: 20
+    mem_limit: 2g
+    cpus: 1.0
+    pids_limit: 256
+
+  candidate-agent:
+    build:
+      context: .
+      dockerfile: agent-svc/Dockerfile
+    image: groktocrawl-x-candidate-agent:${CANDIDATE_IMAGE_TAG:-dev}
+    restart: unless-stopped
+    group_add: ["20000"]
+    entrypoint: [/bin/sh, -c]
+    command:
+      - |
+        umask 077
+        password=$$(cat /run/secrets/postgres_password)
+        printf 'candidate-postgres:5432:groktocrawl_x:groktocrawl_x:%s\n' "$$password" > /tmp/postgres.pgpass
+        unset password
+        exec uvicorn agent.app:app --host 0.0.0.0 --port 8080
+    ports:
+      - target: 8080
+        published: "${CANDIDATE_AGENT_PORT:-18080}"
+        host_ip: "${CANDIDATE_BIND_IP:-127.0.0.1}"
+    environment:
+      API_KEY: ${CANDIDATE_API_KEY:?Set CANDIDATE_API_KEY in the private candidate environment file}
+      VALKEY_URL: redis://candidate-valkey:6379/1
+      DURABLE_RESEARCH_REDIS_URL: redis://candidate-valkey:6379/2
+      DURABLE_RESEARCH_POSTGRES_DSN: postgresql://groktocrawl_x@candidate-postgres:5432/groktocrawl_x
+      PGPASSFILE: /tmp/postgres.pgpass
+      SEARXNG_URL: http://candidate-slopsearx:8080
+      SCRAPER_URL: http://candidate-scraper-ingress:8010
+      BROWSER_CONTROL_SOCKET: /run/browser-control/controller.sock
+      SEMANTIC_URL: http://candidate-semantic:8003
+      SEMANTIC_CLIENT_TIMEOUT_SECONDS: ${SEMANTIC_CLIENT_TIMEOUT_SECONDS:-60}
+      QDRANT_URL: http://candidate-qdrant-rollback:6333
+      LLM_BASE_URL: ${LLM_BASE_URL:?Set LLM_BASE_URL in the private candidate environment file}
+      LLM_API_KEY: ${LLM_API_KEY:?Set LLM_API_KEY in the private candidate environment file}
+      LLM_MODEL: ${LLM_MODEL:-local}
+      GROKTOCRAWL_REVISION: ${CANDIDATE_IMAGE_TAG:-dev}
+      LLM_CALL_TIMEOUT: ${LLM_CALL_TIMEOUT:-300}
+      FEATURE_EXPERIMENTAL_RESEARCH: "true"
+      FEATURE_EXPERIMENTAL_RESEARCH_RUNS: "true"
+      FEATURE_EXPERIMENTAL_RESEARCH_DURABLE: "true"
+      FEATURE_EXPERIMENTAL_RESEARCH_POSTGRES_ARTIFACTS: "true"
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      HOST: 0.0.0.0
+      PORT: "8080"
+    secrets: [postgres_password]
+    volumes:
+      - candidate_browser_controller_socket:/run/browser-control:ro
+    depends_on:
+      candidate-valkey:
+        condition: service_healthy
+      candidate-postgres:
+        condition: service_healthy
+      candidate-slopsearx:
+        condition: service_healthy
+      candidate-scraper:
+        condition: service_healthy
+      candidate-scraper-ingress:
+        condition: service_healthy
+      candidate-semantic:
+        condition: service_healthy
+      candidate-parse:
+        condition: service_healthy
+      candidate-portal:
+        condition: service_healthy
+      candidate-browser-controller:
+        condition: service_healthy
+    networks: [candidate_egress, candidate_private]
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; request=urllib.request.Request('http://127.0.0.1:8080/health', headers={'Authorization':'Bearer ' + __import__('os').environ['API_KEY']}); urllib.request.urlopen(request, timeout=5)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  candidate-portal:
+    build:
+      context: .
+      dockerfile: portal-svc/Dockerfile
+    image: groktocrawl-x-candidate-portal:${CANDIDATE_IMAGE_TAG:-dev}
+    restart: unless-stopped
+    environment:
+      AGENT_BASE_URL: http://candidate-agent:8080
+    networks:
+      candidate_private:
+        aliases: [portal-svc]
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8081/health', timeout=5)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  candidate-mcp:
+    build:
+      context: ./mcp-svc
+    image: groktocrawl-x-candidate-mcp:${CANDIDATE_IMAGE_TAG:-dev}
+    restart: unless-stopped
+    ports:
+      - target: 8002
+        published: "${CANDIDATE_MCP_PORT:-18002}"
+        host_ip: "${CANDIDATE_BIND_IP:-127.0.0.1}"
+    environment:
+      GROKTOCRAWL_URL: http://candidate-agent:8080
+      GROKTOCRAWL_API_KEY: ${CANDIDATE_API_KEY:?Set CANDIDATE_API_KEY in the private candidate environment file}
+      MCP_PORT: "8002"
+      MCP_ALLOWED_HOSTS: ${MCP_ALLOWED_HOSTS:-127.0.0.1:*,localhost:*}
+      MCP_ALLOWED_ORIGINS: ${MCP_ALLOWED_ORIGINS:-}
+      SESSION_TTL: ${SESSION_TTL:-3600}
+      SESSION_SWEEP_INTERVAL: ${SESSION_SWEEP_INTERVAL:-300}
+      HTTP_TIMEOUT: ${HTTP_TIMEOUT:-300}
+    depends_on:
+      candidate-agent:
+        condition: service_healthy
+    networks: [candidate_egress, candidate_private]
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8002/health', timeout=5)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    stop_grace_period: 35s
+
+secrets:
+  postgres_password:
+    file: ${CANDIDATE_POSTGRES_PASSWORD_FILE:?Set an absolute path to the PostgreSQL password file}
+
+volumes:
+  candidate_valkey_data:
+  candidate_postgres_data:
+  candidate_qdrant_rollback_data:
+  candidate_hf_cache:
+  candidate_cloakbrowser_cache:
+  candidate_scraper_api_socket:
+  candidate_scraper_state_socket:
+  candidate_scraper_llm_socket:
+  candidate_browser_renderer_socket:
+  candidate_browser_controller_socket:
+  candidate_flare_socket:
+  candidate_flare_control_socket:
+
+networks:
+  candidate_egress:
+    ipam:
+      config:
+        - subnet: 172.31.252.0/24
+  candidate_private:
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.31.253.0/24
+  candidate_capture:
+    internal: true
+    ipam:
+      config:
+        - subnet: ${CAPTURE_HOST_BRIDGE_SUBNET:-172.31.254.0/29}
+          ip_range: ${CAPTURE_HOST_BRIDGE_IP_RANGE:-172.31.254.4/30}
+          gateway: ${CAPTURE_HOST_BRIDGE_IP:-172.31.254.1}
+  candidate_browser_capture:
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.31.254.8/29
+          ip_range: 172.31.254.12/30
+  candidate_flare_capture:
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.31.254.16/29
+          ip_range: 172.31.254.20/30
+  candidate_model_gateway:
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.31.254.32/29
+          ip_range: 172.31.254.36/30
+  candidate_model_upstream:
+    ipam:
+      config:
+        - subnet: 172.31.254.40/29

@@ -1,0 +1,93 @@
+{
+  "arm": "treatment",
+  "case_id": "mission-temporal-provider",
+  "completed_at": "2026-09-19T05:44:53.390998+00:00",
+  "position": 1,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "ff37837c70c035f390eeac4e3861c4d195e03c4ddca1cadcfe44714d134074ff",
+    "finish_reason": "stop",
+    "latency_ms": 17230.964,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "1bb3ada1273e8d39675a0a5c39b87fec91c489942a55fcfb63bb40293a090eb9",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 840,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 11
+      },
+      "cost": 0.0003744,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000294,
+        "upstream_inference_cost": 0.0003744,
+        "upstream_inference_prompt_cost": 8.04e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 804,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1644
+    }
+  },
+  "repetition": 1,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Provider-switch decision: **Not approvable (rejected/unresolved)** as of 2026-09-19 (as-of decision; version- and vendor-dependent, per freshness rationale in the mission scope — sources do not state a switch date, so any switch must be re-evaluated at the time of change), per the supplied two-source pack only (single authoritative source, no independent vendor evidence; limits stated below). **q1: Does the packet satisfy the provider-change gate? — No, as stated by the supplied policy.** The enterprise gate requires, for every production model change: (a) the same frozen task suite, (b) provenance checks, (c) declared resource limits, and (d) provider adapters preserving tool-result identities and cancellation semantics [platform-policy]. The vendor brochure asserts the model is 'enterprise ready' and 'faster' but supplies **no comparison workload, version pins, error distribution, or review methodology** [platform-context]. This cannot satisfy the gate under an evidentiary standard comparable to policy for the following named gaps: (1) **frozen task suite**: no comparison workload is supplied, so suite compatibility and comparability cannot be established [platform-policy, platform-context]; (2) **provenance checks**: version pins are absent, so model/provider identity and provenance cannot be verified [platform-policy, platform-context]; (3) **declared resource limits**: not stated anywhere in the vendor material [platform-policy, platform-context]; (4) **tool-result identity and cancellation semantics**: no evidence is supplied that the vendor's adapters preserve these [platform-policy, platform-context]; (5) **reliability evidence**: the brochure omits error distribution and review methodology, so its 'faster' and 'enterprise ready' claims are unverified marketing assertions, not gate evidence [platform-context]. No independent or official source corroborates the vendor's claims in the supplied pack. **Unresolved limits**: the pack cannot establish whether the vendor *could* pass the gate (only that the *supplied* note does not), and the brochure itself notes no methodology against which its claims could be audited. Recommendation: reject approval pending frozen-suite run results, version pins, declared resource limits, adapter identity/cancellation conformance evidence, and an independent review methodology; re-evaluate upon receipt.",
+    "candidate_id": "candidate-502d47483706d6434cdf",
+    "citations": [
+      "platform-policy",
+      "platform-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "platform-policy"
+        ],
+        "text": "Every production model change requires the same frozen task suite, provenance checks, and declared resource limits.",
+        "uncertainty": "No material uncertainty; policy is stated as requirement."
+      },
+      {
+        "source_ids": [
+          "platform-policy"
+        ],
+        "text": "Provider adapters must preserve tool-result identities and cancellation semantics.",
+        "uncertainty": "No material uncertainty; policy is stated as requirement."
+      },
+      {
+        "source_ids": [
+          "platform-context"
+        ],
+        "text": "The vendor brochure supplies no comparison workload, version pins, error distribution, or review methodology.",
+        "uncertainty": "No material uncertainty as to what the brochure omits; whether the vendor could supply these later is not established."
+      },
+      {
+        "source_ids": [
+          "platform-context"
+        ],
+        "text": "The vendor's 'enterprise ready' and 'faster' claims are unverified by any independent or official source in the supplied pack.",
+        "uncertainty": "Limits: no independent publisher is present in the pack, so corroboration is impossible within this source set."
+      },
+      {
+        "source_ids": [
+          "platform-policy",
+          "platform-context"
+        ],
+        "text": "The supplied packet does not satisfy the provider-change gate.",
+        "uncertainty": "Limits: this judgment applies to the supplied evidence as of 2026-09-19; future vendor submissions could change the outcome and are outside this pack."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:44:36.159585+00:00",
+  "status": "completed",
+  "trial_id": "mission-temporal-provider-r1-treatment"
+}

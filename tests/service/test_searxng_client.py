@@ -264,6 +264,44 @@ class TestSearch:
             assert captured_params["categories"] == "news,science"
 
     @pytest.mark.asyncio
+    async def test_unscoped_search_omits_categories(self, client):
+        captured_params = {}
+
+        async def mock_get(url, params=None):
+            captured_params.update(params or {})
+            import types
+
+            r = types.SimpleNamespace()
+            r.status_code = 200
+            r.json = lambda: {"results": [], "engines": []}
+            return r
+
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(client._client, "get", mock_get)
+            await client.search("npm package provenance")
+
+        assert "categories" not in captured_params
+
+    @pytest.mark.asyncio
+    async def test_explicit_general_scope_is_preserved(self, client):
+        captured_params = {}
+
+        async def mock_get(url, params=None):
+            captured_params.update(params or {})
+            import types
+
+            r = types.SimpleNamespace()
+            r.status_code = 200
+            r.json = lambda: {"results": [], "engines": []}
+            return r
+
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(client._client, "get", mock_get)
+            await client.search("npm package provenance", categories=["general"])
+
+        assert captured_params["categories"] == "general"
+
+    @pytest.mark.asyncio
     async def test_forwards_scenario_param(self, client):
         """search() must forward the scenario parameter in the HTTP request.
 

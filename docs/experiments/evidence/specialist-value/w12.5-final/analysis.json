@@ -1,0 +1,62 @@
+{
+  "schema_version": "specialist-value-analysis/1",
+  "decision": "retain_generalist",
+  "completed_reviews": 33,
+  "failed_reviews": 3,
+  "passing_repetitions": 0,
+  "required_passing_repetitions": 2,
+  "repetitions": [
+    {
+      "repetition": 0,
+      "coverage_delta": 0.6666666666666667,
+      "usefulness_delta": 1.125,
+      "simple_usefulness_delta": 0,
+      "contradiction_loss": 0,
+      "cost_ratio": 1.3636363636363635,
+      "gate": {
+        "coverage_delta_at_least_10_points": true,
+        "usefulness_delta_at_least_10_points": false,
+        "no_contradiction_loss": true,
+        "simple_noninferiority_within_2_points": true,
+        "cost_within_50_percent": true,
+        "no_hard_failures": false
+      },
+      "passed": false
+    },
+    {
+      "repetition": 1,
+      "coverage_delta": 0.6666666666666667,
+      "usefulness_delta": 1.2222222222222223,
+      "simple_usefulness_delta": 0,
+      "contradiction_loss": 0,
+      "cost_ratio": 1.4090909090909092,
+      "gate": {
+        "coverage_delta_at_least_10_points": true,
+        "usefulness_delta_at_least_10_points": false,
+        "no_contradiction_loss": true,
+        "simple_noninferiority_within_2_points": true,
+        "cost_within_50_percent": true,
+        "no_hard_failures": false
+      },
+      "passed": false
+    },
+    {
+      "repetition": 2,
+      "coverage_delta": 0.6666666666666667,
+      "usefulness_delta": 9.11111111111111,
+      "simple_usefulness_delta": 0,
+      "contradiction_loss": 0,
+      "cost_ratio": 1.4090909090909092,
+      "gate": {
+        "coverage_delta_at_least_10_points": true,
+        "usefulness_delta_at_least_10_points": false,
+        "no_contradiction_loss": true,
+        "simple_noninferiority_within_2_points": true,
+        "cost_within_50_percent": true,
+        "no_hard_failures": false
+      },
+      "passed": false
+    }
+  ],
+  "external_validity": "Synthetic evidence and one reviewer route support a bounded task-class decision, not generic fan-out."
+}

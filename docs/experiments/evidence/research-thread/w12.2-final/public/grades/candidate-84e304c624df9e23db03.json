@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-84e304c624df9e23db03",
+  "case_id": "changed-limit",
+  "completed_at": "2026-09-19T09:19:21.295228+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 100,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "The candidate correctly reports the single change event (limit raised from 8 to 16 concurrent jobs in 1.1, per atlas-release-2), the current truth (Atlas Runner 1.1 supports 16 concurrent jobs), and preserves the historical truth (1.0 supported 8 concurrent jobs) as historical rather than current, with correct citations to both primary snapshots. No distinct subjects or capabilities were merged, no superseded evidence leaked into the current state, and no historical claim was lost. The sole defect is the unresolved section: the reference lists no unresolved items, and the candidate invented three peripheral questions (post-1.1 versions, hard cap vs. configurable, other editions/deployment modes), which per the rules earns no credit and slightly reduces usefulness. All factual claims about the subject are supported by the supplied sources, so unsupported_claims is 0.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 0,
+    "unsupported_claims": 0,
+    "usefulness": 90
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "6dbd0f49e0a099d92e98006fc3c91b2ad4cec93486b52827f97754cafca9914c",
+    "finish_reason": "stop",
+    "latency_ms": 27259.731,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "735157ce3c176edd0071876d843b73c16994c5e6c6d7651ff740d3b29ea645cc",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 2604,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 2353
+      },
+      "cost": 0.0014616,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.001302,
+        "upstream_inference_cost": 0.0014616,
+        "upstream_inference_prompt_cost": 0.0001596
+      },
+      "is_byok": false,
+      "prompt_tokens": 1064,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 3668
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:18:54.033930+00:00",
+  "status": "completed",
+  "trial_id": "changed-limit-r1-treatment"
+}

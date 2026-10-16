@@ -1,0 +1,765 @@
+{
+  "acquired_public_source_blobs": {
+    "agent-svc/agent/models.py": "\"\"\"Pydantic models matching the Firecrawl v2 agent API contract.\"\"\"\n\nfrom enum import Enum\nfrom typing import Any\nfrom urllib.parse import urlparse\n\nfrom pydantic import (\n    BaseModel,\n    ConfigDict,\n    Field,\n    SerializerFunctionWrapHandler,\n    field_validator,\n    model_serializer,\n    model_validator,\n)\nfrom pydantic.alias_generators import to_camel\n\nfrom .search_metadata import METADATA_FIELDS\n\n# ── Valid scrape format values ──────────────────────────────────\nVALID_SCRAPE_FORMATS: frozenset[str] = frozenset(\n    {\n        \"markdown\",\n        \"html\",\n        \"links\",\n        \"screenshot\",\n        \"rawHtml\",\n        \"screenshot@fullPage\",\n        \"images\",\n    }\n)\n\n# ── Valid browser action types ──────────────────────────────────\nVALID_SCRAPE_ACTION_TYPES: frozenset[str] = frozenset(\n    {\n        \"wait\",  # Wait for a specified number of milliseconds\n        \"click\",  # Click on a CSS selector\n        \"screenshot\",  # Take a screenshot\n        \"scroll\",  # Scroll the page\n        \"write\",  # Type text into a field\n        \"executeScript\",  # Execute JavaScript\n        \"select\",  # Select an option from a dropdown\n    }\n)\n\n# ── Valid parser types ──────────────────────────────────────────\nVALID_SCRAPE_PARSER_TYPES: frozenset[str] = frozenset(\n    {\n        \"pdf\",  # Extract PDF content as markdown\n    }\n)\n\n# ── Valid proxy values ──────────────────────────────────────────\nVALID_SCRAPE_PROXY_VALUES: frozenset[str] = frozenset(\n    {\n        \"basic\",\n        \"enhanced\",\n        \"auto\",\n    }\n)\n\n\nclass VerbosityLevel(str, Enum):\n    compact = \"compact\"  # ~300 chars of body text\n    standard = \"standard\"  # Current behavior (readability extraction)\n    full = \"full\"  # Complete page text including structural markup\n\n\nclass CitationStyle(str, Enum):\n    \"\"\"Citation formatting styles for agent and answer responses.\n\n    Attributes:\n        inline: Bare ``[N]`` markers with a separate citations list in the\n            response body (current behaviour, Firecrawl v2 default).\n        compact: Self-contained ``[N](url)`` markers embedded directly in\n            the markdown answer text.  No separate citations list needed.\n    \"\"\"\n\n    inline = \"inline\"\n    compact = \"compact\"\n\n\nclass SectionCategory(str, Enum):\n    header = \"header\"\n    navigation = \"navigation\"\n    banner = \"banner\"\n    body = \"body\"\n    sidebar = \"sidebar\"\n    footer = \"footer\"\n    metadata = \"metadata\"\n\n\nclass ExtrasOptions(BaseModel):\n    links: int | None = None  # Max external links to extract\n    imageLinks: int | None = None  # Max image URLs to extract\n    codeBlocks: int | None = None  # Max code blocks to extract\n\n\nclass ContentsOptions(BaseModel):\n    text: bool | dict | None = None  # True = full text, or dict with verbosity/sections\n    highlights: bool | dict | None = (\n        None  # True = auto highlights, or dict with query/maxCharacters\n    )\n    summary: bool | dict | None = (\n        None  # True = auto summary, or dict with query/maxTokens\n    )\n    extras: ExtrasOptions | None = None\n\n\nclass ErrorDetail(BaseModel):\n    \"\"\"A single field-level validation error.\"\"\"\n\n    field: str\n    message: str\n\n\nclass ErrorResponse(BaseModel):\n    \"\"\"Standard error response body for all API endpoints.\"\"\"\n\n    success: bool = False\n    error: str = \"An unexpected error occurred\"\n    error_code: str = \"INTERNAL_ERROR\"\n    details: list[ErrorDetail] | dict | None = None\n\n\nclass ScrapeOptions(BaseModel):\n    \"\"\"Firecrawl-compatible scrape options for controlling per-page extraction.\n\n    All fields are optional with documented defaults. When ``None`` (or omitted),\n    the scraper-svc applies its own sensible defaults for each field.\n\n    ``model_config`` uses ``extra=\"allow\"`` so that unrecognised fields are\n    preserved and forwarded to the scraper-svc as-is (forward-compatible\n    passthrough).\n\n    Attributes:\n        formats: List of output formats to return. Allowed values:\n            ``markdown`` (default), ``html``, ``links``, ``screenshot``,\n            ``rawHtml``, ``screenshot@fullPage``.\n        only_main_content: When True, strip navigation, header, footer and\n            other boilerplate from the extracted content (default: True).\n        include_tags: If set, only content from these CSS/tag selectors is\n            included in the output.\n        exclude_tags: If set, content from these CSS/tag selectors is removed\n            from the output.\n        wait_for: Time in milliseconds to wait for the page to load/stabilize\n            before extracting content. Useful for JS-rendered SPAs.\n        mobile: When True, use a mobile user-agent and viewport dimensions\n            (default: False).\n        timeout: Per-page timeout in milliseconds (default: 30000, minimum: 1000).\n        headers: Custom HTTP headers to forward with the request (e.g.,\n            ``{\"Authorization\": \"Bearer ...\"}``).\n        remove_base64_images: When True, strip ``data:image/...`` URIs from\n            the extracted content (default: False).\n        max_age: Maximum age of cached content in milliseconds. If the cached\n            response is younger than ``max_age``, it is returned without\n            re-scraping. When set to 0, caching is bypassed entirely.\n        min_age: Minimum age for cache-only mode in milliseconds. When set,\n            only cached content is returned. A cache miss produces a\n            ``cache_miss`` error rather than fetching fresh content.\n        actions: Ordered list of browser actions to execute before scraping\n            each page. Each action is a dict with at minimum a ``type`` key.\n            Supported types: ``wait``, ``click``, ``screenshot``, ``scroll``,\n            ``write``, ``executeScript``, ``select``.\n        location: Geo-location settings for the browser session. A dict with\n            optional ``country`` (ISO 3166-1 alpha-2) and ``languages``\n            (list of BCP 47 language tags).\n        proxy: Proxy selection hint. One of ``\"basic\"``, ``\"enhanced\"``, or\n            ``\"auto\"``. When set, influences which proxy pool is used for\n            the crawl's scraping requests.\n        block_ads: When True (default), ad content is stripped from scraped\n            pages. When False, ads remain in the output.\n        parsers: List of parser types to use for extraction. At minimum\n            ``[\"pdf\"]`` is recognised — when set, PDF files are extracted\n            to markdown.\n    \"\"\"\n\n    model_config = ConfigDict(\n        populate_by_name=True,\n        alias_generator=to_camel,\n        extra=\"allow\",\n    )\n\n    formats: list[str] = Field(\n        default=[\"markdown\"],\n        description=\"Output formats: markdown, html, links, etc.\",\n    )\n    only_main_content: bool = Field(\n        default=True,\n        description=\"Strip navigation/header/footer boilerplate\",\n    )\n    include_tags: list[str] | None = Field(\n        default=None, description=\"Only include content from these selectors\"\n    )\n    exclude_tags: list[str] | None = Field(\n        default=None, description=\"Exclude content from these selectors\"\n    )\n    wait_for: int | None = Field(\n        default=None, ge=0, description=\"Wait time in milliseconds before extraction\"\n    )\n    mobile: bool = Field(default=False, description=\"Use mobile viewport and UA\")\n    timeout: int = Field(\n        default=30000, ge=1000, description=\"Per-page timeout in milliseconds\"\n    )\n    headers: dict[str, str] | None = Field(\n        default=None, description=\"Custom HTTP headers\"\n    )\n    remove_base64_images: bool = Field(\n        default=False, description=\"Strip data:image/... URIs from output\"\n    )\n    max_age: int | None = Field(\n        default=None,\n        ge=0,\n        description=(\n            \"Maximum age of cached content in milliseconds. If the cached response\"\n            \" is younger than ``max_age``, it is returned without re-scraping.\"\n            \" When set to 0, caching is bypassed entirely (every request is fresh).\"\n        ),\n    )\n    min_age: int | None = Field(\n        default=None,\n        ge=0,\n        description=(\n            \"Minimum age for cache-only mode in milliseconds. When set, only cached\"\n            \" content is returned. A cache miss produces a cache_miss error for that\"\n            \" URL rather than fetching fresh content.\"\n        ),\n    )\n    actions: list[dict] | None = Field(\n        default=None,\n        description=(\n            \"Ordered list of browser actions to execute before scraping each page.\"\n            \" Each action is a dict with at minimum a ``type`` key. Supported types:\"\n            \" ``wait``, ``click``, ``screenshot``, ``scroll``, ``write``,\"\n            \" ``executeScript``, ``select``.\"\n        ),\n    )\n    location: dict[str, Any] | None = Field(\n        default=None,\n        description=(\n            \"Geo-location settings. Dict with optional ``country``\"\n            \" (ISO 3166-1 alpha-2) and ``languages`` (list of BCP 47 tags).\"\n        ),\n    )\n    proxy: str | None = Field(\n        default=None,\n        description=\"Proxy selection: ``basic``, ``enhanced``, or ``auto``.\",\n    )\n    block_ads: bool = Field(\n        default=True,\n        description=\"When True, strip ad content from scraped pages.\",\n    )\n    parsers: list[str] | None = Field(\n        default=None,\n        description=('List of parser types. At minimum ``[\"pdf\"]`` is recognised.'),\n    )\n\n    @field_validator(\"formats\")\n    @classmethod\n    def validate_formats(cls, value: list[str]) -> list[str]:\n        \"\"\"Validate that each format is a known/recognised value.\"\"\"\n        if not value:\n            raise ValueError(\"formats must be a non-empty list\")\n        for fmt in value:\n            if fmt not in VALID_SCRAPE_FORMATS:\n                allowed = \", \".join(sorted(VALID_SCRAPE_FORMATS))\n                raise ValueError(f\"Invalid format '{fmt}'. Allowed values: {allowed}\")\n        return value\n\n    @field_validator(\"timeout\")\n    @classmethod\n    def validate_timeout(cls, value: int) -> int:\n        \"\"\"Reject out-of-range timeout values.\"\"\"\n        if value < 1000:\n            raise ValueError(f\"timeout must be >= 1000ms, got {value}\")\n        return value\n\n    @field_validator(\"wait_for\")\n    @classmethod\n    def validate_wait_for(cls, value: int | None) -> int | None:\n        \"\"\"Reject negative wait_for values.\"\"\"\n        if value is not None and value < 0:\n            raise ValueError(f\"wait_for must be >= 0, got {value}\")\n        return value\n\n    @field_validator(\"max_age\")\n    @classmethod\n    def validate_max_age(cls, value: int | None) -> int | None:\n        \"\"\"Reject negative max_age values.\n\n        VAL-SCRAPE-032: negative maxAge returns 422.\n        \"\"\"\n        if value is not None and value < 0:\n            raise ValueError(f\"max_age must be >= 0, got {value}\")\n        return value\n\n    @field_validator(\"actions\")\n    @classmethod\n    def validate_actions(cls, value: list[dict] | None) -> list[dict] | None:\n        \"\"\"Validate that each action has at minimum a ``type`` key with a\n        recognised value.\n\n        VAL-SCRAPE-056 / VAL-PARITY-021: actions field accepted and validated.\n        \"\"\"\n        if value is None:\n            return value\n        if not isinstance(value, list):\n            raise ValueError(\"actions must be a list of action objects\")\n        allowed = sorted(VALID_SCRAPE_ACTION_TYPES)\n        for i, action in enumerate(value):\n            if not isinstance(action, dict):\n                raise ValueError(\n                    f\"actions[{i}] must be a dict/object, got {type(action).__name__}\"\n                )\n            action_type = action.get(\"type\")\n            if not action_type:\n                raise ValueError(f\"actions[{i}] is missing required 'type' field\")\n            if action_type not in VALID_SCRAPE_ACTION_TYPES:\n                raise ValueError(\n                    f\"Invalid action type '{action_type}' at actions[{i}]. \"\n                    f\"Allowed values: {', '.join(allowed)}\"\n                )\n            # ``click`` and ``write`` actions require a ``selector`` field\n            if action_type in (\"click\", \"write\", \"select\"):\n                if \"selector\" not in action:\n                    raise ValueError(\n                        f\"actions[{i}]: '{action_type}' action requires a 'selector' field\"\n                    )\n            # ``write`` action also requires a ``value`` (text) field\n            if action_type == \"write\":\n                if \"value\" not in action:\n                    raise ValueError(\n                        f\"actions[{i}]: 'write' action requires a 'value' field\"\n                    )\n        return value\n\n    @field_validator(\"proxy\")\n    @classmethod\n    def validate_proxy(cls, value: str | None) -> str | None:\n        \"\"\"Validate that proxy is one of the recognised values.\n\n        VAL-PARITY-023: proxy field accepted with ``basic``/``enhanced``/``auto``.\n        \"\"\"\n        if value is None:\n            return value\n        if value not in VALID_SCRAPE_PROXY_VALUES:\n            allowed = \", \".join(sorted(VALID_SCRAPE_PROXY_VALUES))\n            raise ValueError(f\"Invalid proxy '{value}'. Allowed values: {allowed}\")\n        return value\n\n    @field_validator(\"parsers\")\n    @classmethod\n    def validate_parsers(cls, value: list[str] | None) -> list[str] | None:\n        \"\"\"Validate parser type strings.\n\n        VAL-PARITY-025: parsers field accepted with at minimum ``pdf``.\n        \"\"\"\n        if value is None:\n            return value\n        if not isinstance(value, list):\n            raise ValueError(\"parsers must be a list of parser type strings\")\n        allowed = sorted(VALID_SCRAPE_PARSER_TYPES)\n        for i, parser in enumerate(value):\n            if not isinstance(parser, str):\n                raise ValueError(\n                    f\"parsers[{i}] must be a string, got {type(parser).__name__}\"\n                )\n            if parser not in VALID_SCRAPE_PARSER_TYPES:\n                raise ValueError(\n                    f\"Invalid parser '{parser}' at parsers[{i}]. \"\n                    f\"Allowed values: {', '.join(allowed)}\"\n                )\n        return value\n\n    @field_validator(\"location\")\n    @classmethod\n    def validate_location(cls, value: dict[str, Any] | None) -> dict[str, Any] | None:\n        \"\"\"Validate the location object structure.\n\n        VAL-PARITY-022: location field accepted with ``country`` and\n        ``languages``.\n        \"\"\"\n        if value is None:\n            return value\n        if not isinstance(value, dict):\n            raise ValueError(\"location must be a dict/object\")\n        # ``country`` should be a string (ISO 3166-1 alpha-2) if present\n        country = value.get(\"country\")\n        if country is not None and not isinstance(country, str):\n            raise ValueError(\n                f\"location.country must be a string, got {type(country).__name__}\"\n            )\n        # ``languages`` should be a list of strings if present\n        languages = value.get(\"languages\")\n        if languages is not None:\n            if not isinstance(languages, list):\n                raise ValueError(\n                    f\"location.languages must be a list, got {type(languages).__name__}\"\n                )\n            for i, lang in enumerate(languages):\n                if not isinstance(lang, str):\n                    raise ValueError(\n                        f\"location.languages[{i}] must be a string, \"\n                        f\"got {type(lang).__name__}\"\n                    )\n        return value\n\n    @model_validator(mode=\"after\")\n    def validate_cache_ages(self) -> \"ScrapeOptions\":\n        \"\"\"Validate that min_age does not exceed max_age.\n\n        VAL-SCRAPE-033: minAge greater than maxAge is rejected.\n        \"\"\"\n        min_age = self.min_age\n        max_age = self.max_age\n        if min_age is not None and max_age is not None and min_age > max_age:\n            raise ValueError(\n                f\"min_age ({min_age}ms) cannot exceed max_age ({max_age}ms)\"\n            )\n        return self\n\n\nclass ScrapeRequest(BaseModel):\n    url: str\n    formats: list[str] = [\"markdown\"]\n    only_main_content: bool = True\n    timeout: int = 30000\n\n\nclass DownloadData(BaseModel):\n    \"\"\"Binary content metadata for non-HTML responses.\"\"\"\n\n    filename: str\n    content_type: str\n    size: int\n    data_url: str | None = None\n\n\nclass ImageData(BaseModel):\n    \"\"\"Structured image metadata matching the Firecrawl v2 contract.\"\"\"\n\n    url: str\n    alt: str = \"\"\n    width: int | None = None\n    height: int | None = None\n    position: int = 0\n\n\nclass ScrapeData(BaseModel):\n    markdown: str = \"\"\n    metadata: dict[str, Any] = Field(default_factory=dict)\n    download: DownloadData | None = None\n    quality: dict[str, Any] | None = None\n    images: list[ImageData] | None = None\n    recovery: dict[str, Any] | None = None\n\n\nclass ScrapeResponse(BaseModel):\n    success: bool\n    data: ScrapeData | None = None\n    error: str | None = None\n    # Extraction-quality diagnostic mirrored from scraper-svc (#587): set\n    # when the final markdown is anomalously thin relative to its source\n    # so a truncation never presents as an unqualified success.\n    warning: str | None = None\n\n\nclass AgentRequest(BaseModel):\n    prompt: str = Field(\n        ...,\n        min_length=1,\n        max_length=100000,\n        description=\"What the agent should research\",\n    )\n    urls: list[str] | None = Field(\n        None, description=\"Optional seed URLs to constrain research\"\n    )\n    schema_: dict[str, Any] | None = Field(\n        None, alias=\"schema\", description=\"JSON Schema for structured output\"\n    )\n    output_schema: dict[str, Any] | None = Field(\n        None, description=\"JSON Schema for structured output (alias for schema)\"\n    )\n    model: str = Field(default=\"default\", description=\"Model hint\")\n    mode: str | None = Field(\n        default=None,\n        description=\"Agent mode: None (default agent pipeline), 'plan' (plan-only, no execution)\",\n    )\n    max_credits: int | None = Field(\n        default=None,\n        ge=1,\n        description=(\n            \"Attempt-bounded research budget: discovery stops admitting \"\n            \"scrape attempts once this many candidates have been scraped \"\n            \"(candidates are truncated before scraping, so failed scrapes \"\n            \"still consume budget — credits are not success-guaranteed).\"\n        ),\n    )\n    webhook: dict[str, Any] | None = None\n    strict_constrain_to_urls: bool = False\n    stream: bool = Field(default=False, description=\"SSE streaming response\")\n    include_images: bool = Field(\n        default=False, description=\"Collect images from scraped sources\"\n    )\n    citation_style: CitationStyle = Field(\n        default=CitationStyle.inline,\n        description=\"Citation formatting style: inline or compact. inline uses bare [N] markers with a separate citations list; compact embeds [N](url) directly in the answer text.\",\n    )\n    force_fresh: bool = Field(\n        default=False,\n        description=\"When True, bypass the research memory cache and run fresh research pipeline\",\n    )\n    stale_while_revalidate: bool = Field(\n        default=False,\n        description=\"When True, a stale cached artifact may be replayed while a single background refresh runs\",\n    )\n    max_stale_hours: float = Field(\n        default=6.0,\n        ge=0,\n        le=720,\n        description=\"Maximum hours past the stale boundary to serve a stale artifact when stale_while_revalidate is enabled\",\n    )\n    search_type: str = Field(\n        default=\"deep\",\n        description=\"Research depth: 'deep' (multi-query, multi-pass, default) or 'focused' (single-query, single-pass)\",\n    )\n    model_config = ConfigDict(populate_by_name=True)\n\n    @model_validator(mode=\"before\")\n    @classmethod\n    def reject_retired_max_results_per_query(cls, value: Any) -> Any:\n        \"\"\"Fail clearly instead of silently ignoring the retired field.\"\"\"\n        if isinstance(value, dict) and \"max_results_per_query\" in value:\n            raise ValueError(\n                \"max_results_per_query was retired; agent now considers all distinct \"\n                \"results returned by SlopSearX; omit max_results_per_query\"\n            )\n        return value\n\n    @field_validator(\"output_schema\")\n    @classmethod\n    def validate_output_schema(cls, value: Any) -> dict[str, Any] | None:\n        \"\"\"Reject non-dict output_schema values (e.g., arrays, strings) with 422.\"\"\"\n        if value is None:\n            return None\n        if not isinstance(value, dict):\n            raise ValueError(\n                f\"output_schema must be a JSON Schema object (dict), got {type(value).__name__}\"\n            )\n        return value\n\n    @field_validator(\"schema_\")\n    @classmethod\n    def validate_schema_(cls, value: Any) -> dict[str, Any] | None:\n        \"\"\"Reject non-dict schema alias values with 422.\"\"\"\n        if value is None:\n            return None\n        if not isinstance(value, dict):\n            raise ValueError(\n                f\"schema must be a JSON Schema object (dict), got {type(value).__name__}\"\n            )\n        return value\n\n    @field_validator(\"search_type\")\n    @classmethod\n    def validate_search_type(cls, value: str) -> str:\n        \"\"\"Reject invalid search_type values.\"\"\"\n        allowed = {\"deep\", \"focused\"}\n        if value not in allowed:\n            raise ValueError(f\"search_type must be one of {allowed}, got '{value}'\")\n        return value\n\n\nclass AgentCreateResponse(BaseModel):\n    success: bool = True\n    id: str\n\n\nclass AgentStatusResponse(BaseModel):\n    success: bool = True\n    status: str = (\n        \"processing\"  # processing | retry_scheduled | completed | failed | cancelled\n    )\n    data: dict[str, Any] | None = None\n    error: str | None = None\n    expires_at: str | None = None\n    credits_used: int | None = None\n    # Retry metadata (ADR-0053) — populated while status == \"retry_scheduled\".\n    # ``retryable`` is True only for a job waiting on a downstream rate-limit\n    # condition; ``retry_reason`` carries the normalized reason (RATE_LIMITED).\n    retry_at: str | None = None\n    retry_attempt: int | None = None\n    retry_limit: int | None = None\n    retryable: bool | None = None\n    retry_reason: str | None = None\n\n\nclass AgentCancelResponse(BaseModel):\n    success: bool = True\n\n\nclass CrawlRequest(BaseModel):\n    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)\n\n    url: str\n    max_pages: int = Field(\n        default=0, ge=0, description=\"Maximum pages to scrape, 0 = unlimited\"\n    )\n    max_depth: int = Field(\n        default=2, ge=0, description=\"Maximum link-follow depth, must be >= 0\"\n    )\n    limit: int | None = Field(\n        default=None,\n        ge=1,\n        description=(\n            \"Maximum number of pages to crawl (Firecrawl v2 parity). \"\n            \"Like max_pages but ge=1: unlike max_pages, 0 is rejected \"\n            \"rather than meaning unlimited; when both are set the \"\n            \"stricter cap wins.\"\n        ),\n    )\n    ignore_sitemap: bool = False\n    sitemap: str = Field(\n        default=\"include\",\n        description=\"Sitemap mode: 'include' (default), 'skip', or 'only'\",\n    )\n    ignore_query_parameters: bool = False\n    include_paths: list[str] | None = None\n    exclude_paths: list[str] | None = None\n    regex_on_full_url: bool = False\n    verbose: bool = False\n    webhook: dict[str, Any] | None = None\n    crawl_entire_domain: bool = False\n    allow_subdomains: bool = False\n    allow_external_links: bool = False\n    max_concurrency: int = Field(\n        default=3,\n        ge=1,\n        description=\"Maximum concurrent page scrapes (1-50, values > 50 are capped)\",\n    )\n    delay: float | None = Field(\n        default=None,\n        ge=0,\n        description=\"Delay in seconds between scrapes. Forces concurrency to 1 when set.\",\n    )\n    ignore_robots_txt: bool = Field(\n        default=False,\n        description=\"When True, bypass robots.txt enforcement. All discovered URLs are scraped regardless of robots.txt Disallow rules.\",\n    )\n    robots_user_agent: str | None = Field(\n        default=None,\n        description=\"Custom User-Agent string for robots.txt evaluation. When set, robots.txt rules are evaluated against this User-Agent instead of the default bot UA.\",\n    )\n    scrape_options: ScrapeOptions | None = Field(\n        default=None,\n        description=\"Per-page scrape options controlling output format, content filtering, viewport, and timeout behavior. Applied to every page in the crawl, including the start URL.\",\n    )\n    prompt: str | None = Field(\n        default=None,\n        max_length=10000,\n        description=\"Natural language description of what to crawl. Used to derive crawl parameters (includePaths, excludePaths, maxDepth) via LLM. Explicitly-set parameters override LLM-derived ones.\",\n    )\n    stream: bool = Field(\n        default=False,\n        description=\"When True, the crawl response is delivered as Server-Sent Events (SSE) stream. Per-page data is streamed incrementally as pages are scraped, with a final done event on completion.\",\n    )\n\n    @field_validator(\"url\")\n    @classmethod\n    def validate_url(cls, value: str) -> str:\n        \"\"\"Validate that url is a well-formed HTTP/HTTPS URL.\"\"\"\n        parsed = urlparse(value)\n        if not parsed.scheme:\n            raise ValueError(\"URL must have a scheme (http:// or https://)\")\n        if parsed.scheme.lower() not in (\"http\", \"https\"):\n            raise ValueError(f\"URL scheme must be http or https, got '{parsed.scheme}'\")\n        if not parsed.netloc:\n            raise ValueError(\"URL must have a network location (host)\")\n        return value\n\n    @field_validator(\"max_concurrency\")\n    @classmethod\n    def validate_max_concurrency(cls, value: int) -> int:\n        \"\"\"Validate and cap max_concurrency values.\n\n        Values of 0 or negative are rejected (would deadlock the semaphore).\n        Values above 50 are silently capped to 50 to prevent resource exhaustion.\n        \"\"\"\n        if value < 1:\n            raise ValueError(f\"max_concurrency must be >= 1, got {value}\")\n        return min(value, 50)\n\n    @field_validator(\"delay\")\n    @classmethod\n    def validate_delay(cls, value: float | None) -> float | None:\n        \"\"\"Reject negative delay values.\"\"\"\n        if value is not None and value < 0:\n            raise ValueError(f\"delay must be >= 0, got {value}\")\n        return value\n\n    @model_validator(mode=\"after\")\n    def validate_regex_patterns(self) -> \"CrawlRequest\":\n        \"\"\"When regex_on_full_url is True, validate that all path\n        patterns are valid Python regular expressions.\"\"\"\n        if not self.regex_on_full_url:\n            return self\n        import re as _re\n\n        for field_name in (\"include_paths\", \"exclude_paths\"):\n            patterns = getattr(self, field_name)\n            if not patterns:\n                continue\n            for i, pattern in enumerate(patterns):\n                try:\n                    _re.compile(pattern)\n                except _re.error as exc:\n                    raise ValueError(\n                        f\"Invalid regex in {field_name}[{i}]: '{pattern}' — {exc}\"\n                    ) from exc\n        return self\n\n    @model_validator(mode=\"after\")\n    def resolve_sitemap_mode(self) -> \"CrawlRequest\":\n        \"\"\"Backward compatibility: ignore_sitemap=true → sitemap='skip'.\n\n        Also validates that sitemap is one of the allowed values.\n        \"\"\"\n        # Backward compatibility: ignore_sitemap overrides sitemap field\n        if self.ignore_sitemap:\n            self.sitemap = \"skip\"\n\n        # Validate sitemap value\n        allowed = (\"include\", \"skip\", \"only\")\n        if self.sitemap not in allowed:\n            raise ValueError(\n                f\"Invalid sitemap mode '{self.sitemap}'. Must be one of: {', '.join(allowed)}\"\n            )\n        return self\n\n\nclass CrawlCreateResponse(BaseModel):\n    success: bool = True\n    id: str\n\n\nclass BatchScrapeStatusResponse(BaseModel):\n    \"\"\"Status response for GET /v2/batch/scrape/{id}.\n\n    Mirrors CrawlStatusResponse but without crawl-specific fields\n    (errors, robots_blocked, filtered_out are separate endpoints).\n    \"\"\"\n\n    model_config = ConfigDict(\n        populate_by_name=True,\n        alias_generator=to_camel,\n    )\n\n    success: bool = True\n    status: str = \"processing\"\n    completed: int = 0\n    total: int = 0\n    credits_used: int | None = None\n    data: list[dict[str, Any]] | None = None\n    error: str | None = None\n    next: str | None = Field(\n        default=None,\n        description=\"URL for the next chunk of paginated results.\",\n    )\n    created_at: str | None = None\n    completed_at: str | None = None\n    expires_at: str | None = None\n    duration: int | None = None\n\n\nclass CrawlStatusResponse(BaseModel):\n    \"\"\"Firecrawl v2-compatible crawl status response.\n\n    Attributes:\n        success: Whether the API call succeeded.\n        status: Job status: ``processing``, ``completed``, ``failed``,\n            or ``cancelled``.\n        completed: Number of pages successfully scraped.\n        total: Total number of pages discovered (scraped + queued).\n        credits_used: Number of credits consumed (1 per page scraped).\n        data: List of page documents, each containing ``url``, ``markdown``,\n            ``metadata`` (with ``title``, ``description``, ``language``,\n            ``sourceURL``, ``statusCode``), and other optional fields.\n        error: Error message if the job failed.\n        next: URL for the next chunk of paginated results. ``null`` when\n            all data fits in a single response (under ~10MB).\n        created_at: ISO 8601 timestamp when the crawl was created.\n        completed_at: ISO 8601 timestamp when the crawl finished\n            (``null`` while processing).\n        expires_at: ISO 8601 timestamp when results expire\n            (24h after creation).\n        duration: Elapsed milliseconds between ``created_at`` and\n            ``completed_at`` (``null`` while processing).\n    \"\"\"\n\n    model_config = ConfigDict(\n        populate_by_name=True,\n        alias_generator=to_camel,\n    )\n\n    success: bool = True\n    status: str = \"processing\"\n    completed: int = 0\n    total: int = 0\n    credits_used: int | None = None\n    data: list[dict[str, Any]] | None = None\n    error: str | None = None\n    outcome_summary: dict[str, Any] | None = None\n    next: str | None = Field(\n        default=None,\n        description=(\n            \"URL for the next chunk of paginated results. Present when the response\"\n            \" data exceeds ~10MB. Null when all data fits in a single response.\"\n        ),\n    )\n    created_at: str | None = None\n    completed_at: str | None = None\n    expires_at: str | None = None\n    duration: int | None = None\n    # Retry metadata (ADR-0053) — populated while status == \"retry_scheduled\".\n    retry_at: str | None = None\n    retry_attempt: int | None = None\n    retry_limit: int | None = None\n    retryable: bool | None = None\n    retry_reason: str | None = None\n\n\nclass ParamsPreviewRequest(BaseModel):\n    \"\"\"Request model for POST /v2/crawl/params-preview.\n\n    Attributes:\n        url: The target URL to crawl (used for context).\n        prompt: Natural language description of what to crawl.\n            Required — the endpoint derives crawl parameters from this.\n    \"\"\"\n\n    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)\n\n    url: str\n    prompt: str = Field(\n        ...,\n        max_length=10000,\n        description=\"Natural language description of what to crawl\",\n    )\n\n    @field_validator(\"url\")\n    @classmethod\n    def validate_url(cls, value: str) -> str:\n        \"\"\"Validate that url is a well-formed HTTP/HTTPS URL.\"\"\"\n        from urllib.parse import urlparse\n\n        parsed = urlparse(value)\n        if not parsed.scheme:\n            raise ValueError(\"URL must have a scheme (http:// or https://)\")\n        if parsed.scheme.lower() not in (\"http\", \"https\"):\n            raise ValueError(f\"URL scheme must be http or https, got '{parsed.scheme}'\")\n        if not parsed.netloc:\n            raise ValueError(\"URL must have a network location (host)\")\n        return value\n\n\nclass ParamsPreviewResponse(BaseModel):\n    \"\"\"Response model for POST /v2/crawl/params-preview.\n\n    Returns the derived crawl parameters WITHOUT starting a crawl job.\n    Explicitly-set fields (when provided alongside ``prompt``) override\n    LLM-derived equivalents — this preview shows the final merged result.\n    \"\"\"\n\n    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)\n\n    success: bool = True\n    include_paths: list[str] | None = None\n    exclude_paths: list[str] | None = None\n    max_depth: int | None = None\n    limit: int | None = None\n    ignore_robots_txt: bool | None = None\n    robots_user_agent: str | None = None\n    deduplicate_similar_urls: bool | None = None\n    error: str | None = None\n\n\nclass BatchScrapeRequest(BaseModel):\n    urls: list[str]\n    max_concurrency: int = 3\n    webhook: dict[str, Any] | None = None\n\n\nclass SearchRequest(BaseModel):\n    query: str\n    limit: int = 5\n    search_type: str = \"fast\"  # \"fast\" | \"rich\" | \"deep\"\n    retrieval_mode: str = (\n        \"keyword\"  # \"keyword\" | \"semantic\" | \"hybrid\" | \"vector\" | \"hybrid_vector\"\n    )\n    categories: list[str] | None = None\n    sources: list[str] | None = None\n    output_schema: dict[str, Any] | None = None  # JSON Schema for structured extraction\n    system_prompt: str | None = None  # Guidance for synthesis\n    contents: ContentsOptions | None = None  # Content extraction options\n    stream: bool = Field(default=False, description=\"SSE streaming response\")\n\n\nclass SearchResult(BaseModel):\n    url: str\n    title: str\n    description: str = \"\"\n    # Optional additive source metadata; absent keys retain the legacy shape.\n    engine: str | None = None\n    engines: list[str] | None = None\n    doi: str | None = None\n    authors: list[str] | None = None\n    journal: str | None = None\n    publisher: str | None = None\n    editor: str | None = None\n    pages: str | None = None\n    number: str | None = None\n    comments: str | None = None\n    type: str | None = None\n    pdf_url: str | None = None\n    html_url: str | None = None\n    publishedDate: str | None = None\n    issn: list[str] | None = None\n    isbn: list[str] | None = None\n    tags: list[str] | None = None\n    volume: str | int | None = None\n\n    @model_serializer(mode=\"wrap\")\n    def serialize_source_metadata(\n        self, handler: SerializerFunctionWrapHandler\n    ) -> dict[str, Any]:\n        data = handler(self)\n        return {\n            key: value\n            for key, value in data.items()\n            if key not in METADATA_FIELDS or value is not None\n        }\n\n    # ── Content extraction fields (populated when contents in SearchRequest) ──\n    highlights: str | None = None  # LLM-extracted relevant passages\n    summary: str | None = None  # LLM-generated summary\n    extras: dict | None = None  # Links, images, code blocks from scraper\n    markdown: str | None = None  # Full scraped markdown when contents requested\n\n\nclass ImageSearchResult(BaseModel):\n    \"\"\"Firecrawl v2 image search result shape.\n\n    Maps to the ``data.images[]`` slot in SearchResponse.\n    \"\"\"\n\n    title: str = \"\"\n    image_url: str = \"\"\n    image_width: int | None = None\n    image_height: int | None = None\n    url: str = \"\"\n    position: int = 0\n\n\nclass SearchResponse(BaseModel):\n    success: bool = True\n    data: dict = Field(default_factory=lambda: {\"web\": [], \"images\": [], \"news\": []})\n    output: dict[str, Any] | None = None  # Present only when output_schema provided\n    query_variations: list[str] | None = None  # Present for deep search type\n    warning: str | None = (\n        None  # Degraded search state (e.g. all engines returned no results)\n    )\n\n\nclass FindSimilarRequest(BaseModel):\n    url: str\n    limit: int = 10\n    search_mode: str = \"qdrant\"  # \"qdrant\" | \"web\"\n    contents: ContentsOptions | None = None\n\n\nclass FindSimilarResponse(BaseModel):\n    success: bool = True\n    data: list[dict]\n    query_url: str\n    search_mode: str\n    latency_ms: float\n\n\nclass MapRequest(BaseModel):\n    url: str\n    limit: int = 100\n    search: str | None = None\n    allow_subdomains: bool = False\n    allow_external_links: bool = False\n\n\nclass MapResponse(BaseModel):\n    success: bool = True\n    links: list[str] = Field(default_factory=list)\n\n\nclass BrowserCreateRequest(BaseModel):\n    ttl: int = Field(default=300, ge=30, le=3600, description=\"Session TTL in seconds\")\n\n\nclass BrowserExecuteRequest(BaseModel):\n    action: str = Field(\n        ...,\n        description=\"Action: navigate, click, type, screenshot, scroll, wait, getContent, executeScript\",\n    )\n    url: str | None = None\n    selector: str | None = None\n    text: str | None = None\n    script: str | None = None\n    timeout: int = 10000\n\n\nclass BrowserCreateResponse(BaseModel):\n    success: bool = True\n    id: str\n\n\nclass BrowserExecuteResponse(BaseModel):\n    success: bool = True\n    result: Any = None\n    error: str | None = None\n\n\nclass BrowserListResponse(BaseModel):\n    success: bool = True\n    sessions: list[dict] = Field(default_factory=list)\n\n\nclass BrowserDeleteResponse(BaseModel):\n    success: bool = True\n    id: str\n\n\nclass ExtractRequest(BaseModel):\n    urls: list[str] = Field(..., min_length=1, description=\"URLs to extract data from\")\n    prompt: str | None = Field(\n        None, max_length=10000, description=\"Optional instruction for extraction\"\n    )\n    schema_: dict[str, Any] | None = Field(\n        None, alias=\"schema\", description=\"JSON Schema for structured output\"\n    )\n    model: str = Field(default=\"default\", description=\"Model hint\")\n    webhook: dict[str, Any] | None = None\n\n    model_config = ConfigDict(populate_by_name=True)\n\n\nclass ExtractCreateResponse(BaseModel):\n    success: bool = True\n    id: str\n\n\nclass ExtractStatusResponse(BaseModel):\n    success: bool = True\n    status: str = \"processing\"  # processing | completed | failed\n    data: dict[str, Any] | None = None\n    error: str | None = None\n    expires_at: str | None = None\n\n\nclass SearchMonitorConfig(BaseModel):\n    \"\"\"Configuration for search-based monitors.\"\"\"\n\n    query: str = Field(..., description=\"Search query to monitor\")\n    sources: list[str] | None = Field(\n        None, description=\"Source types (web, news, images, video, social)\"\n    )\n    categories: list[str] | None = Field(\n        None,\n        description=\"Content categories (research, github, pdf, news, science, it)\",\n    )\n    numResults: int = Field(\n        default=10, ge=1, le=50, description=\"Max results per check\"\n    )\n\n\nclass MonitorCreateRequest(BaseModel):\n    url: str | None = Field(None, description=\"URL to monitor (scrape type)\")\n    schedule: str = Field(\n        default=\"0 */6 * * *\", description=\"Cron expression for check frequency\"\n    )\n    webhook: str | None = Field(None, description=\"Webhook URL called on change\")\n    monitor_type: str = Field(\n        default=\"scrape\", description=\"Monitor type: 'scrape' or 'search'\"\n    )\n    search_config: SearchMonitorConfig | None = Field(\n        None, description=\"Search monitor configuration (required for search type)\"\n    )\n\n    @model_validator(mode=\"after\")\n    def validate_monitor_type_fields(self):\n        if self.monitor_type == \"search\":\n            if self.search_config is None or not self.search_config.query:\n                raise ValueError(\n                    \"search_config with a non-empty query is required for monitor_type='search'\"\n                )\n        elif self.monitor_type == \"scrape\":\n            if not self.url:\n                raise ValueError(\"url is required for monitor_type='scrape'\")\n        else:\n            raise ValueError(\n                f\"Unknown monitor_type: '{self.monitor_type}'. Must be 'scrape' or 'search'\"\n            )\n        return self\n\n\nclass MonitorUpdateRequest(BaseModel):\n    url: str | None = None\n    schedule: str | None = None\n    webhook: str | None = None\n    search_config: SearchMonitorConfig | None = None\n\n\nclass MonitorResponse(BaseModel):\n    success: bool = True\n    id: str\n    monitor_type: str = \"scrape\"\n    url: str | None = None\n    search_config: dict | None = None\n    schedule: str\n    webhook: str | None = None\n    last_checked: str | None = None\n    last_result: str | None = None\n    created_at: str\n\n\nclass MonitorListResponse(BaseModel):\n    success: bool = True\n    monitors: list[MonitorResponse] = Field(default_factory=list)\n\n\nclass MonitorDeleteResponse(BaseModel):\n    success: bool = True\n\n\nclass MonitorCheckItem(BaseModel):\n    \"\"\"A single monitor check result entry.\"\"\"\n\n    monitor_id: str = \"\"\n    monitor_type: str = \"scrape\"\n    url: str | None = None\n    query: str | None = None\n    checked_at: str = \"\"\n    changed: bool = False\n    diff: str | None = None\n    previous_length: int | None = None\n    current_length: int | None = None\n    new_results: list[dict[str, Any]] | None = None\n    new_count: int | None = None\n    total_results: int | None = None\n    error: str | None = None\n\n\nclass MonitorCheckListResponse(BaseModel):\n    \"\"\"Response for GET /v2/monitor/{id}/checks.\"\"\"\n\n    success: bool = True\n    data: list[MonitorCheckItem] = Field(default_factory=list)\n    total: int = 0\n\n\nclass ParseResponse(BaseModel):\n    success: bool\n    data: dict[str, Any] | None = None\n    error: str | None = None\n\n\nclass ParseUploadUrlResponse(BaseModel):\n    \"\"\"Response for POST /v2/parse/upload-url.\"\"\"\n\n    success: bool = True\n    upload_id: str\n    upload_url: str\n\n\nclass LLMsTextRequest(BaseModel):\n    url: str = Field(..., description=\"Site URL to generate llms.txt for\")\n    max_pages: int = Field(default=50, ge=1, le=500, description=\"Max pages to scan\")\n    webhook: dict[str, Any] | None = None\n\n\nclass LLMsTextCreateResponse(BaseModel):\n    success: bool = True\n    id: str\n\n\nclass LLMsTextStatusResponse(BaseModel):\n    success: bool = True\n    status: str = \"processing\"\n    data: dict[str, Any] | None = None\n    error: str | None = None\n    expires_at: str | None = None\n\n\nclass Source(BaseModel):\n    \"\"\"A source used to ground an answer.\"\"\"\n\n    url: str\n    title: str = \"\"\n    relevance: str = \"\"\n\n\nclass Citation(BaseModel):\n    \"\"\"An inline citation mapping [N] to a URL.\"\"\"\n\n    index: int\n    url: str\n\n\nclass AnswerRequest(BaseModel):\n    query: str = Field(..., max_length=10000, description=\"Natural language question\")\n    search_type: str = Field(default=\"auto\", description=\"Hint for search depth\")\n    retrieval_mode: str = Field(\n        default=\"keyword\",\n        description=\"keyword | semantic | hybrid | vector | hybrid_vector\",\n    )\n    num_sources: int = Field(\n        default=5, ge=1, le=20, description=\"How many sources to ground the answer\"\n    )\n    model: str = Field(default=\"default\", description=\"Per-request LLM override\")\n    stream: bool = Field(default=False, description=\"SSE streaming response\")\n    schema_: dict[str, Any] | None = Field(\n        None,\n        alias=\"schema\",\n        description=\"JSON Schema for structured output (alias for output_schema)\",\n    )\n    output_schema: dict[str, Any] | None = Field(\n        None, description=\"JSON Schema for structured output from the answer\"\n    )\n    citation_style: CitationStyle = Field(\n        default=CitationStyle.inline,\n        description=\"Citation formatting style: inline or compact. inline uses bare [N] markers with a separate citations list; compact embeds [N](url) directly in the answer text.\",\n    )\n\n    model_config = ConfigDict(populate_by_name=True)\n\n    @field_validator(\"output_schema\")\n    @classmethod\n    def validate_output_schema(cls, value: Any) -> dict[str, Any] | None:\n        \"\"\"Reject non-dict output_schema values (e.g., arrays, strings) with 422.\"\"\"\n        if value is None:\n            return None\n        if not isinstance(value, dict):\n            raise ValueError(\n                f\"output_schema must be a JSON Schema object (dict), got {type(value).__name__}\"\n            )\n        return value\n\n    @field_validator(\"schema_\")\n    @classmethod\n    def validate_schema_(cls, value: Any) -> dict[str, Any] | None:\n        \"\"\"Reject non-dict schema alias values with 422.\"\"\"\n        if value is None:\n            return None\n        if not isinstance(value, dict):\n            raise ValueError(\n                f\"schema must be a JSON Schema object (dict), got {type(value).__name__}\"\n            )\n        return value\n\n\nclass AnswerResponse(BaseModel):\n    success: bool = True\n    answer: str = \"\"\n    sources: list[Source] = Field(default_factory=list)\n    citations: list[Citation] = Field(default_factory=list)\n    search_type: str = \"auto\"\n    latency_ms: int = 0\n\n\n# ── Citations Resolve ──────────────────────────────────────────\n\n\nclass CitationsResolveRequest(BaseModel):\n    \"\"\"Request to resolve inline citation markers to full URLs.\n\n    Takes markdown text with ``[N]`` markers and a source list, and\n    returns the text with resolved citations according to the requested\n    style.\n    \"\"\"\n\n    text: str = Field(\n        ...,\n        min_length=1,\n        max_length=500_000,\n        description=\"Markdown text with [N] citation markers to resolve\",\n    )\n    sources: list[Source] = Field(\n        ...,\n        min_length=1,\n        max_length=500,\n        description=\"Source list where index matches [N] markers (1-based)\",\n    )\n    style: CitationStyle = Field(\n        default=CitationStyle.inline,\n        description=\"Target citation style for the resolved output\",\n    )\n\n\nclass ResolvedCitation(BaseModel):\n    \"\"\"A single resolved citation with both marker and full URL.\"\"\"\n\n    index: int\n    url: str\n    title: str = \"\"\n    marker_text: str = \"\"  # The original [N] text in the source\n    resolved_text: str = \"\"  # The replacement text (e.g., [1](url) for compact)\n\n\nclass CitationsResolveResponse(BaseModel):\n    \"\"\"Response from the citations resolve endpoint.\"\"\"\n\n    success: bool = True\n    resolved_text: str = Field(\n        default=\"\",\n        description=\"The input text with all [N] markers resolved per the requested style\",\n    )\n    citations: list[ResolvedCitation] = Field(\n        default_factory=list,\n        description=\"Mapping of each resolved citation marker to its URL and title\",\n    )\n    style: CitationStyle = CitationStyle.inline\n    citation_count: int = 0\n\n\n# ── Session Protocol ───────────────────────────────────────────\n\n\nclass SessionCreateRequest(BaseModel):\n    \"\"\"Request to create a new research session.\"\"\"\n\n    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)\n\n    ttl: int | None = Field(\n        default=None,\n        ge=60,\n        le=86400,\n        description=\"Session TTL in seconds (60-86400). Default: 3600 (1 hour).\",\n    )\n\n\nclass SessionCreateResponse(BaseModel):\n    \"\"\"Response from session creation.\"\"\"\n\n    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)\n\n    success: bool = True\n    session_id: str = \"\"\n    expires_at: str = \"\"\n    ttl: int = 3600\n\n\nclass SessionStepRequest(BaseModel):\n    \"\"\"Execute an action step within a research session.\n\n    Supported actions:\n        - ``search``: Search via SearXNG.  Params: ``query`` (required),\n          ``limit``, ``sources``, ``categories``.\n        - ``scrape``: Scrape specific URLs.  Params: ``urls`` (required,\n          list of URLs), ``scrape_options`` (optional).\n        - ``query``: Run LLM over accumulated session context.  Params:\n          ``question`` (required), ``model`` (optional).\n        - ``deepen``: Drill deeper into a cited source.  Params: ``ref_id``\n          (required, citation ref from session), ``sub_topic`` (required,\n          follow-up question), ``max_sources`` (optional, default 3).\n    \"\"\"\n\n    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)\n\n    action: str = Field(\n        ...,\n        description=\"Step action: search, scrape, query, or deepen\",\n    )\n    params: dict[str, Any] = Field(\n        default_factory=dict,\n        description=\"Action-specific parameters\",\n    )\n    parallel: bool = Field(\n        default=False,\n        description=(\n            \"Opt in to overlap independent search/scrape steps. \"\n            \"Query and deepen remain serialized.\"\n        ),\n    )\n    idempotency_key: str | None = Field(\n        default=None,\n        max_length=200,\n        description=\"Stable retry key for an opted-in independent step\",\n    )\n\n    @field_validator(\"action\")\n    @classmethod\n    def validate_action(cls, value: str) -> str:\n        allowed = {\"search\", \"scrape\", \"query\", \"deepen\"}\n        if value not in allowed:\n            raise ValueError(\n                f\"Unknown action: {value!r}. Supported: {', '.join(sorted(allowed))}\"\n            )\n        return value\n\n    @model_validator(mode=\"after\")\n    def validate_required_params(self) -> \"SessionStepRequest\":\n        \"\"\"Validate that required params are present for each action type.\n\n        VAL-SES-017: search requires ``query`` in params.\n        VAL-SES-018: scrape requires ``urls`` in params.\n        VAL-SES-019: query requires ``question`` in params.\n        VAL-SES-046: search with empty query string is rejected.\n        VAL-SES-047: scrape with empty URLs list is rejected.\n        \"\"\"\n        params = self.params or {}\n        if self.action == \"search\":\n            query = params.get(\"query\")\n            if query is None:\n                raise ValueError(\"search action requires a 'query' parameter\")\n            if isinstance(query, str) and not query.strip():\n                raise ValueError(\"search action requires a non-empty 'query' parameter\")\n        elif self.action == \"scrape\":\n            urls = params.get(\"urls\")\n            if urls is None:\n                raise ValueError(\"scrape action requires a 'urls' parameter\")\n            if isinstance(urls, list) and len(urls) == 0:\n                raise ValueError(\"scrape action requires a non-empty 'urls' list\")\n        elif self.action == \"query\":\n            question = params.get(\"question\")\n            if question is None:\n                raise ValueError(\"query action requires a 'question' parameter\")\n            if isinstance(question, str) and not question.strip():\n                raise ValueError(\n                    \"query action requires a non-empty 'question' parameter\"\n                )\n        elif self.action == \"deepen\":\n            ref_id = params.get(\"ref_id\")\n            sub_topic = params.get(\"sub_topic\")\n            if ref_id is None:\n                raise ValueError(\"deepen action requires a 'ref_id' parameter\")\n            if not isinstance(ref_id, str) or not ref_id.strip():\n                raise ValueError(\n                    \"deepen action requires a non-empty 'ref_id' parameter\"\n                )\n            if sub_topic is None:\n                raise ValueError(\"deepen action requires a 'sub_topic' parameter\")\n            if not isinstance(sub_topic, str) or not sub_topic.strip():\n                raise ValueError(\n                    \"deepen action requires a non-empty 'sub_topic' parameter\"\n                )\n        return self\n\n\nclass SessionStepResponse(BaseModel):\n    \"\"\"Response from a session step execution.\"\"\"\n\n    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)\n\n    success: bool = True\n    step_index: int = 0\n    action: str = \"\"\n    summary: str = \"\"\n    result: dict[str, Any] = Field(default_factory=dict)\n\n\nclass SessionExportResponse(BaseModel):\n    \"\"\"Response from session export.\"\"\"\n\n    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)\n\n    success: bool = True\n    session_id: str = \"\"\n    artifact: str = \"\"\n    steps: list[dict[str, Any]] = Field(default_factory=list)\n    refs: dict[str, dict[str, str]] = Field(default_factory=dict)\n    artifact_length: int = 0\n\n\nclass SessionStatusResponse(BaseModel):\n    \"\"\"Response from GET /v2/session/{id} — session status and history.\"\"\"\n\n    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)\n\n    success: bool = True\n    session_id: str = \"\"\n    status: str = \"active\"\n    created_at: str = \"\"\n    expires_at: str = \"\"\n    step_count: int = 0\n    steps: list[dict[str, Any]] = Field(default_factory=list)\n    artifact_length: int = 0\n\n\n# Alias for the GET session response (used by the session endpoints feature)\nSessionGetResponse = SessionStatusResponse\n\n\nclass SessionDeleteResponse(BaseModel):\n    \"\"\"Response from DELETE /v2/session/{id}.\"\"\"\n\n    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)\n\n    success: bool = True\n    session_id: str = \"\"\n    deleted: bool = False\n\n\nclass SessionResolveRequest(BaseModel):\n    \"\"\"Request to resolve reference IDs to full source content.\n\n    Takes a list of ref IDs (e.g., ``[\"ref_1_1\", \"ref_2_3\"]``) and\n    returns the full content for each found ref.\n    \"\"\"\n\n    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)\n\n    ref_ids: list[str] = Field(\n        default_factory=list,\n        min_length=1,\n        max_length=100,\n        description=\"Ref IDs to resolve (e.g., ['ref_1_1', 'ref_2_3'])\",\n    )\n\n\nclass SessionResolveResponse(BaseModel):\n    \"\"\"Response from POST /v2/session/{id}/resolve.\n\n    Returns full source content for each requested ref ID.\n    Missing refs are silently omitted from the ``refs`` dict.\n    \"\"\"\n\n    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)\n\n    success: bool = True\n    session_id: str = \"\"\n    refs: dict[str, dict[str, Any]] = Field(default_factory=dict)\n    resolved: int = 0\n    missing: list[str] = Field(default_factory=list)\n\n\nclass ActivityItem(BaseModel):\n    \"\"\"A single job entry in the activity feed.\"\"\"\n\n    id: str\n    kind: str\n    status: str\n    url: str | None = None\n    created_at: str\n    completed_at: str | None = None\n\n\nclass ActivityResponse(BaseModel):\n    \"\"\"Response model for the unified activity endpoint.\"\"\"\n\n    success: bool = True\n    data: list[ActivityItem] = Field(default_factory=list)\n\n\nclass ConcurrencyCheckResponse(BaseModel):\n    \"\"\"Response for GET /v2/concurrency-check.\"\"\"\n\n    success: bool = True\n    max_concurrency: int = 50\n    current: int = 0\n\n\nclass EnrichmentField(BaseModel):\n    \"\"\"A field to extract for each enrichment item.\"\"\"\n\n    description: str\n\n\nclass EnrichRequest(BaseModel):\n    \"\"\"Request to enrich a list of entities with web-sourced structured data.\"\"\"\n\n    items: list[dict[str, Any]]\n    fields: dict[str, EnrichmentField]\n    source_hint: str | None = None  # company, person, url, product\n    effort: str = \"low\"  # low | medium | high\n\n\nclass EnrichmentValue(BaseModel):\n    \"\"\"The extracted value for a single field, with source attribution.\"\"\"\n\n    value: str | None = None\n    source: str | None = None  # URL where this value was found\n\n\nclass EnrichResponse(BaseModel):\n    \"\"\"Response for the enrichment endpoint.\"\"\"\n\n    success: bool = True\n    data: list[dict]\n    latency_ms: float = 0\n    items_enriched: int = 0\n    fields_per_item: int = 0\n\n\nclass CrawlActiveItem(BaseModel):\n    \"\"\"A single active crawl job entry for ``GET /v2/crawl/active``.\n\n    Includes crawl-specific fields (``url``, ``max_pages``, ``max_depth``,\n    ``completed``, ``total``) that distinguish it from the generic\n    ``ActivityItem`` used by the unified ``/v2/activity`` endpoint.\n    \"\"\"\n\n    id: str\n    url: str | None = None\n    status: str = \"processing\"\n    created_at: str\n    completed: int = 0\n    total: int = 0\n    max_pages: int | None = None\n    max_depth: int | None = None\n\n\nclass CrawlActiveResponse(BaseModel):\n    \"\"\"Response model for ``GET /v2/crawl/active``.\n\n    Returns only jobs with ``kind: \"crawl\"``. Excludes completed, failed,\n    and cancelled crawls by default (filterable via ``status`` query param).\n    \"\"\"\n\n    success: bool = True\n    data: list[CrawlActiveItem] = Field(default_factory=list)\n\n\nclass CrawlErrorItem(BaseModel):\n    \"\"\"A single error entry for the GET /v2/crawl/{id}/errors endpoint.\n\n    Attributes:\n        url: The URL that failed.\n        error: Human-readable error description (maps to ``message`` in\n            the validation contract).\n        error_type: Machine-readable error category (e.g., ``timeout``,\n            ``robots_blocked``, ``dns_error``, ``http_error``,\n            ``scrape_error``, ``cache_miss``, ``duplicate_canonical``,\n            ``duplicate_content``).\n        error_code: Machine-readable error code string (e.g., ``TIMEOUT``,\n            ``ROBOTS_BLOCKED``, ``SCRAPE_ERROR``).\n        timestamp: ISO 8601 timestamp of when the error occurred.\n        timeout_ms: For timeout errors, the configured per-scrape timeout\n            in milliseconds.\n        elapsed_ms: For timeout errors, the actual elapsed time before\n            the timeout fired, in milliseconds.\n        http_status: For HTTP errors, the HTTP status code (e.g., 404,\n            403, 500).\n    \"\"\"\n\n    url: str\n    error: str = \"\"\n    error_type: str = \"scrape_error\"\n    error_code: str = \"\"\n    timestamp: str = \"\"\n    timeout_ms: int | None = None\n    elapsed_ms: int | None = None\n    http_status: int | None = None\n\n\nclass CrawlErrorsResponse(BaseModel):\n    \"\"\"Response model for GET /v2/crawl/{id}/errors.\n\n    Attributes:\n        success: Always ``True`` for a successful response.\n        errors: List of error objects. Includes all scrape failures,\n            cache misses, and duplicate-detection errors. Politeness-\n            blocked URLs are also included here (with ``error_type:\n            \"robots_blocked\"``) and in ``robots_blocked``.\n        robots_blocked: Subset of ``errors`` containing only URLs that\n            were blocked by robots.txt or politeness rate limiting.\n    \"\"\"\n\n    success: bool = True\n    errors: list[CrawlErrorItem] = Field(default_factory=list)\n    robots_blocked: list[CrawlErrorItem] = Field(default_factory=list)\n    error: str | None = None\n\n\nclass BatchScrapeErrorsResponse(BaseModel):\n    \"\"\"Response model for GET /v2/batch/scrape/{id}/errors.\"\"\"\n\n    success: bool = True\n    errors: list[CrawlErrorItem] = Field(default_factory=list)\n\n\n# ── Plan-Consent (Phase 3) ─────────────────────────────────────\n\n\nclass PlanRequest(BaseModel):\n    \"\"\"Request to generate a structured research plan.\n\n    Attributes:\n        prompt: The user's natural-language research question.\n        model: Optional per-request LLM override.  When ``\"default\"``\n            or omitted, the environment-configured model is used.\n        urls: Optional seed URLs to scope the research plan around.\n        stream: When True, stream plan generation via SSE events.\n    \"\"\"\n\n    prompt: str = Field(\n        ...,\n        min_length=1,\n        max_length=100000,\n        description=\"Natural-language research question to plan for\",\n    )\n    model: str | None = Field(\n        default=None,\n        description=\"Optional per-request LLM model override\",\n    )\n    urls: list[str] | None = Field(\n        default=None,\n        description=\"Optional seed URLs to scope the research plan around\",\n    )\n    stream: bool = Field(\n        default=False,\n        description=\"When True, stream plan generation via SSE events\",\n    )\n\n\nclass PlanResponse(BaseModel):\n    \"\"\"Response from POST /v2/agent/plan or POST /v2/agent {mode: plan}.\n\n    Returns the generated plan ID, full plan object, and metadata so the\n    client can display it for review and modification before executing.\n    \"\"\"\n\n    success: bool = True\n    plan_id: str = \"\"\n    plan: dict = Field(default_factory=dict)\n    created_at: str = \"\"\n    expires_at: str = \"\"\n\n\nclass PlanModification(BaseModel):\n    \"\"\"A single modification to apply to a plan before execution.\n\n    Supported types:\n        - ``narrow``: Reduce scope (fewer sources, narrower focus).\n          Params: ``focus`` (str, required).\n        - ``add_dimension``: Add a comparison dimension.\n          Params: ``dimension`` (str, required).\n        - ``modify_query``: Change a search query in the plan.\n          Params: ``phase_index`` (int, 0-based), ``new_query`` (str, required).\n    \"\"\"\n\n    type: str = Field(\n        ...,\n        description=\"Modification type: narrow, add_dimension, or modify_query\",\n    )\n    params: dict[str, Any] = Field(\n        default_factory=dict,\n        description=\"Type-specific parameters\",\n    )\n\n    @field_validator(\"type\")\n    @classmethod\n    def validate_type(cls, value: str) -> str:\n        allowed = frozenset({\"narrow\", \"add_dimension\", \"modify_query\"})\n        if value not in allowed:\n            raise ValueError(\n                f\"Invalid modification type '{value}'. \"\n                f\"Allowed: {', '.join(sorted(allowed))}\"\n            )\n        return value\n\n    @model_validator(mode=\"after\")\n    def validate_required_params(self) -> \"PlanModification\":\n        \"\"\"Validate that required params are present for each modification type.\"\"\"\n        params = self.params or {}\n        if self.type == \"narrow\":\n            if not params.get(\"focus\"):\n                raise ValueError(\"narrow modification requires 'focus' in params\")\n        elif self.type == \"add_dimension\":\n            if not params.get(\"dimension\"):\n                raise ValueError(\n                    \"add_dimension modification requires 'dimension' in params\"\n                )\n        elif self.type == \"modify_query\":\n            if \"phase_index\" not in params:\n                raise ValueError(\n                    \"modify_query modification requires 'phase_index' in params\"\n                )\n            if not params.get(\"new_query\"):\n                raise ValueError(\n                    \"modify_query modification requires 'new_query' in params\"\n                )\n        return self\n\n\nclass PlanModifications(BaseModel):\n    \"\"\"Optional modifications to apply to a plan before execution (dict form).\n\n    This is the legacy dict form — use ``PlanModification`` list form for\n    new code.  Both are accepted by the execute endpoint.\n\n    Attributes:\n        narrow: Optional focus string to narrow the research scope.\n            Injected into the first search phase as additional context.\n        add_dimension: Additional analysis dimensions to append.\n        remove_dimension: Dimensions to exclude from the analysis.\n    \"\"\"\n\n    narrow: str | None = Field(\n        default=None,\n        max_length=5000,\n        description=\"Narrow the research focus with this additional context\",\n    )\n    add_dimension: list[str] | None = Field(\n        default=None,\n        description=\"Additional analysis dimensions to include\",\n    )\n    remove_dimension: list[str] | None = Field(\n        default=None,\n        description=\"Dimensions to exclude from the analysis\",\n    )\n\n\nclass ExecutePlanRequest(BaseModel):\n    \"\"\"Request to execute a previously-generated research plan.\n\n    Loads the plan from Valkey, applies any modifications, and creates\n    a job for the research pipeline.  Plans are one-shot: consumed on\n    first successful execution.\n\n    Supports two modification formats:\n        - List form (preferred): ``[{type: \"narrow\"/\"add_dimension\"/\"modify_query\",\n          params: {...}}]``\n        - Dict form (legacy): ``{narrow: \"...\", add_dimension: [...], ...}``\n\n    Attributes:\n        plan_id: The plan ID returned by POST /v2/agent/plan or\n            POST /v2/agent with mode:plan.\n        modifications: Optional adjustments to narrow scope or change\n            analysis dimensions before execution.\n    \"\"\"\n\n    plan_id: str = Field(..., description=\"Plan ID from plan generation\")\n    modifications: Any = Field(\n        default=None,\n        description=\"Optional plan modifications before execution\",\n    )\n    stream: bool = Field(\n        default=False,\n        description=\"When True, stream execution results via SSE events\",\n    )\n    webhook: dict[str, Any] | None = Field(\n        default=None,\n        description=\"Optional webhook URL and configuration for completion/failure notifications\",\n    )\n\n    model_config = ConfigDict(populate_by_name=True)\n\n    @model_validator(mode=\"after\")\n    def normalize_modifications(self) -> \"ExecutePlanRequest\":\n        \"\"\"Normalize modifications into a validated internal form.\n\n        - ``None`` → ``None`` (no modifications)\n        - Dict form (``{narrow: ..., add_dimension: ...}``) → validated\n          ``PlanModifications``\n        - List form (``[{type: ..., params: ...}, ...]``) → validated\n          list of ``PlanModification``\n        - Empty list ``[]`` → ``None``\n        \"\"\"\n        raw = self.modifications\n        if raw is None:\n            return self\n\n        if isinstance(raw, list):\n            if len(raw) == 0:\n                # Empty list → treat as no modifications\n                self.modifications = None\n                return self\n            # Validate each item as a PlanModification\n            validated: list[PlanModification] = []\n            for item in raw:\n                if not isinstance(item, dict):\n                    raise ValueError(\n                        f\"Each modification must be an object, got {type(item).__name__}\"\n                    )\n                validated.append(PlanModification(**item))\n            self.modifications = validated\n            return self\n\n        if isinstance(raw, dict):\n            # Try to interpret as dict form (PlanModifications)\n            if \"type\" in raw:\n                # Looks like a single PlanModification in dict form\n                mod = PlanModification(**raw)\n                self.modifications = [mod]\n                return self\n            # Otherwise treat as legacy PlanModifications form\n            mods = PlanModifications(**raw)\n            self.modifications = mods\n            return self\n\n        raise ValueError(\n            f\"modifications must be a dict, list, or null, got {type(raw).__name__}\"\n        )\n\n\n# ── Depth Injection (Phase 3) ──────────────────────────────────\n\n\nclass DeepenRequest(BaseModel):\n    \"\"\"Request to drill deeper into a cited source within a research session.\n\n    Used as a standalone request to the deepen endpoint or embedded in\n    ``SessionStepRequest.params`` for the ``deepen`` session action.\n\n    Attributes:\n        ref_id: Citation reference from the session (e.g., ``ref_2_3``).\n        sub_topic: Follow-up question or investigation angle.\n        max_sources: Maximum new sources to discover (default 3).\n    \"\"\"\n\n    ref_id: str = Field(\n        ...,\n        description=\"Citation reference from the session (e.g., ref_2_3)\",\n    )\n    sub_topic: str = Field(\n        ...,\n        max_length=10000,\n        description=\"Follow-up question or investigation angle\",\n    )\n    max_sources: int | None = Field(\n        default=None,\n        ge=1,\n        le=10,\n        description=\"Maximum new sources to discover (default 3)\",\n    )\n\n\nclass DeepenResponse(BaseModel):\n    \"\"\"Response from a deepen action.\n\n    Attributes:\n        new_findings: LLM-synthesised findings from the deep-dive.\n        new_sources: List of newly discovered source dicts with\n            ``url`` and ``title``.\n        inserted_at: Citation reference where findings were inserted\n            into the session artifact.\n    \"\"\"\n\n    success: bool = True\n    new_findings: str = \"\"\n    new_sources: list[dict] = Field(default_factory=list)\n    inserted_at: str = \"\"\n\n\n# ── Research Memory (Phase 4) ──────────────────────────────────\n\n\nclass ResearchMemoryQueryRequest(BaseModel):\n    \"\"\"Request to search the research memory for a semantically similar\n    cached artifact.\n\n    Attributes:\n        question: The research question to search for.  Embedded via\n            BAAI/bge-m3 and matched against stored artifacts by cosine\n            similarity.\n        max_age_hours: Maximum age in hours of artifacts to consider.\n            Default 72 (3 days).  Older artifacts are skipped.\n    \"\"\"\n\n    question: str = Field(\n        ...,\n        max_length=100000,\n        description=\"Research question to search for in memory\",\n    )\n    max_age_hours: int | None = Field(\n        default=None,\n        ge=1,\n        le=720,\n        description=\"Maximum age in hours of artifacts to consider (default 72)\",\n    )\n\n\nclass ResearchMemoryQueryResponse(BaseModel):\n    \"\"\"Response from a research memory query.\n\n    Attributes:\n        hit: Whether a semantically similar artifact was found.\n        artifact: The full artifact dict if ``hit`` is True, with keys\n            ``query``, ``artifact``, ``sources``, ``model``,\n            ``created_at``, ``expires_at``, and ``user_id``.\n        similarity: Cosine similarity score of the best match\n            (``None`` on miss).\n        freshness: Freshness classification: ``\"fresh\"``, ``\"aging\"``,\n            or ``\"stale\"`` (``None`` on miss).\n        memory_id: The UUID of the matched entry (``None`` on miss).\n    \"\"\"\n\n    hit: bool = False\n    artifact: dict | None = None\n    similarity: float | None = None\n    freshness: str | None = None\n    memory_id: str | None = None\n    age_hours: float | None = None\n    expires_at: str | None = None\n    compatibility: str | None = None\n\n\nclass ResearchMemoryStoreRequest(BaseModel):\n    \"\"\"Request to store a research artifact in memory.\n\n    Attributes:\n        question: The original research question (used for semantic\n            indexing).\n        answer: The LLM-synthesised answer (markdown).\n        sources: List of source dicts, each with at minimum ``url``\n            and ``title``.\n        metadata: Optional dict with extra context (model used,\n            user context, etc.).\n    \"\"\"\n\n    question: str = Field(\n        ...,\n        max_length=100000,\n        description=\"Original research question\",\n    )\n    answer: str = Field(\n        ...,\n        max_length=500000,\n        description=\"LLM-synthesised answer\",\n    )\n    sources: list[dict] = Field(\n        ...,\n        description=\"Source documents with url and title\",\n    )\n    metadata: dict | None = Field(\n        default=None,\n        description=\"Optional extra context\",\n    )\n\n\nclass ResearchMemoryStoreResponse(BaseModel):\n    \"\"\"Response from storing a research artifact in memory.\n\n    Attributes:\n        artifact_id: UUID v4 identifier for the stored artifact.\n    \"\"\"\n\n    artifact_id: str = \"\"\n\n\n# ── Research Memory Batch Operations ────────────────────────────\n\n\nclass MemoryBatchQueryRequest(BaseModel):\n    \"\"\"Batch query request: look up multiple queries against memory.\n\n    Each query is independently embedded and searched against Qdrant.\n    Results are returned in the same order as queries.\n    \"\"\"\n\n    queries: list[str] = Field(\n        default_factory=list,\n        max_length=100,\n        description=\"List of query strings to look up\",\n    )\n\n\nclass MemoryBatchQueryEntry(BaseModel):\n    \"\"\"A single batch query result entry.\"\"\"\n\n    hit: bool = False\n    similarity: float | None = None\n    freshness: str | None = None\n    memory_id: str | None = None\n    query: str | None = None\n    artifact: str | None = None\n    sources: list[dict] | None = None\n    error: str | None = None\n\n\nclass MemoryBatchQueryResponse(BaseModel):\n    \"\"\"Batch query response containing per-query results.\"\"\"\n\n    success: bool = True\n    results: list[MemoryBatchQueryEntry] = Field(default_factory=list)\n\n\nclass MemoryBatchStoreEntry(BaseModel):\n    \"\"\"A single entry in a batch store request.\"\"\"\n\n    query: str = Field(..., min_length=1, description=\"Research question\")\n    artifact: str = Field(..., min_length=1, description=\"LLM-synthesised answer\")\n    sources: list[dict] = Field(\n        ...,\n        min_length=1,\n        description=\"Source documents with url and title\",\n    )\n    model: str = Field(default=\"\", description=\"LLM model name\")\n\n\nclass MemoryBatchStoreRequest(BaseModel):\n    \"\"\"Batch store request: store multiple artifacts independently.\n\n    Each entry is stored independently.  Partial success is allowed —\n    if one entry fails (e.g. embedding failure), the others still\n    succeed with per-entry status.\n    \"\"\"\n\n    entries: list[MemoryBatchStoreEntry] = Field(\n        default_factory=list,\n        max_length=100,\n        description=\"List of artifacts to store\",\n    )\n\n\nclass MemoryBatchStoreResult(BaseModel):\n    \"\"\"Per-entry result from a batch store operation.\"\"\"\n\n    success: bool = False\n    memory_id: str | None = None\n    error: str | None = None\n\n\nclass MemoryBatchStoreResponse(BaseModel):\n    \"\"\"Batch store response with per-entry status.\"\"\"\n\n    success: bool = True\n    stored_count: int = 0\n    failed_count: int = 0\n    results: list[MemoryBatchStoreResult] = Field(default_factory=list)\n",
+    "docs/adr/0038-crawl-engine.md": "# ADR-0038: Crawl Engine — BFS Orchestrator with Shared Link Extraction\n\n**Status:** accepted\n\n**Deciders:** @magnus919\n\n**Date:** 2026-06-19\n\n## Context\n\nGroktoCrawl's original `/v2/crawl` endpoint scraped only the start URL and returned it as a single-page result — it was a stub with no recursive link following. The mission called for a full recursive crawl engine matching Firecrawl's `/v2/crawl` feature set.\n\nThree distinct code paths independently extracted links from HTML pages:\n\n- The **stub crawl worker** (`_process_crawl_async` in `worker.py`) — no link extraction at all initially\n- The **`/v2/map` endpoint** — inline BeautifulSoup parsing directly in the route handler\n- The **`llmstxt.py` `discover_pages()` function** — its own link extraction logic\n\nEach used different HTML parsing approaches, had different edge-case handling (malformed HTML, `<base>` tag resolution, fragment stripping), and maintained its own URL dedup logic. This divergence meant bug fixes and improvements to link extraction had to be applied in three places.\n\nThe crawl engine itself needed decisions across several dimensions:\n\n1. **Traversal strategy** — breadth-first (BFS) vs depth-first (DFS) for ordering page discovery\n2. **Link extraction ownership** — one shared module vs per-consumer extraction\n3. **Deduplication approach** — within-run seen sets, canonical URL resolution, content hash comparison\n4. **Concurrency model** — sequential vs parallel page scraping, coordination across workers\n5. **Path filtering** — how include/exclude patterns work with glob vs regex semantics\n6. **Sitemap integration** — how sitemap-discovered URLs interact with BFS discovery\n\n## Decision Drivers\n\n1. **Firecrawl API compatibility** — the output shape (BFS-order data, status response fields, path filter patterns) must match what Firecrawl users expect\n2. **No separate worker container** — crawl jobs are processed inline via `asyncio.create_task()` in the API process, matching the existing job architecture (ADR-0000 precedent)\n3. **Deterministic ordering** — users polling `GET /v2/crawl/{id}` expect pages to appear in a predictable order with the start URL first\n4. **Consistency across features** — `/v2/map`, `/v2/crawl`, and `/v2/generate-llmstxt` should discover the same links from the same HTML\n5. **Low latency for small crawls** — sub-second overhead for `max_pages=1` crawls (the common case)\n6. **Self-hosted simplicity** — avoid external dependencies where possible; Valkey is already in the stack\n\n## Considered Options\n\n### Traversal Strategy — BFS vs DFS\n\n**Option A: BFS (breadth-first search).** Use a FIFO deque. Start URL at depth 0 is scraped first, then all depth-1 pages, then depth-2, and so on.\n\n**Option B: DFS (depth-first search).** Use a stack (LIFO). The crawl follows one branch to its deepest page before backtracking.\n\n| Criterion | BFS | DFS |\n|-----------|-----|-----|\n| Start URL appears first | Yes | No |\n| Predictable page ordering | Yes | Depends on discovery order |\n| Memory usage for deep sites | Higher (queue holds all siblings) | Lower (stack holds one branch) |\n| User expectation (Firecrawl compat) | Matches | Does not match |\n| Early results visible in polling | Better (depth-1 pages appear quickly) | Worse (deep pages appear first) |\n\n**Chosen: BFS** — Firecrawl returns pages in BFS order, and users polling for progress expect to see shallow pages first. The start URL is always at index 0, making validation trivial. Memory overhead is acceptable for our concurrency model (max_pages caps the queue).\n\n### Link Extraction — Shared vs Per-Consumer\n\n**Option A: Shared `LinkExtractor` module.** A single stateless module with `extract_links()` and `filter_links()` used by all three consumers.\n\n**Option B: Per-consumer extraction.** Each consumer (crawl, map, llmstxt) maintains its own link extraction logic.\n\n| Criterion | Shared | Per-Consumer |\n|-----------|--------|--------------|\n| Bug-fix surface | One place | Three places |\n| Edge-case consistency | Guaranteed | Divergent over time |\n| Test surface | One test suite | Three test suites |\n| Consumer coupling | Tighter | Looser |\n| Adding a new consumer | Import the module | Rewrite extraction |\n\n**Chosen: Shared `LinkExtractor`** — The extraction logic is complex enough (relative URL resolution, `<base>` tag handling, fragment stripping, non-HTTP scheme filtering, dedup, malformed HTML tolerance) that maintaining three copies would create a constant tax of inconsistent behavior. The shared module is stateless (pure functions), making it testable in isolation and safe to call from concurrent contexts.\n\n### Deduplication Strategy\n\n**Option A: URL-level only.** Track a `set[str]` of normalized URLs within a crawl run. Normalization handles fragments, trailing slashes, default ports, and query parameter sorting. Optional `ignoreQueryParameters` mode strips query strings entirely.\n\n**Option B: URL + canonical tag.** After scraping, extract `<link rel=\"canonical\">` from HTML. If the canonical URL differs from the fetched URL, replace the page reference and check against the seen set.\n\n**Option C: URL + canonical + content hash.** Compute a SHA-256 hash of the extracted markdown text. If two pages produce the same content hash, skip the duplicate.\n\n**Chosen: Option C (URL + canonical + content hash).** All three layers are implemented in `dedup.py` (`DedupManager`). Layer 1: URL-level seen-set within a crawl run. Layer 2: canonical tag check (`<link rel=\"canonical\">`) — if the canonical URL was already scraped, the current page is skipped. Layer 3: SHA-256 content hash — byte-for-byte identical markdown is treated as duplicate. Canonical check always runs before content hash check. This provides full content deduplication matching Firecrawl's capabilities.\n\n### Concurrency Model\n\n**Option A: Sequential.** Process one page at a time in the BFS loop. Simple, no coordination needed.\n\n**Option B: `asyncio.Semaphore` worker pool.** A fixed-size pool of concurrent scrape tasks coordinated by `asyncio.Semaphore(N)`. Workers pop from the shared BFS queue.\n\n**Option C: Valkey-backed distributed semaphore.** Similar to Option B but using a Valkey (Redis) distributed semaphore for multi-instance coordination.\n\n**Chosen: Option B (`asyncio.Semaphore` worker pool).** Configurable via `maxConcurrency` (1-50, default 3) with `asyncio.Semaphore`. When `delay` is set, concurrency is forced to 1 with `asyncio.sleep()` between scrapes for pacing. Valkey-backed distributed coordination (Option C) is optional for multi-instance deployments. This provides the performance benefit of parallel scraping while keeping coordination simple and in-process.\n\n### Path Filtering — Glob vs Regex\n\n**Option A: Glob only.** Use Unix glob-style patterns (`*`, `**`, `?`). Familiar to most users, fewer escaping edge cases.\n\n**Option B: Regex only.** Use Python regular expressions. More expressive but requires users to understand regex syntax.\n\n**Option C: Both, controlled by `regexOnFullUrl` flag.** Default to glob (backward-compatible with Firecrawl defaults), switch to regex when the flag is set.\n\n**Chosen: Option C (both).** Firecrawl supports both glob and regex patterns for `includePaths` and `excludePaths`. The `regexOnFullUrl` flag controls which mode is used. In glob mode, special regex characters (`.`, `+`, `?`, etc.) are escaped to prevent accidental false matches. In regex mode, patterns are passed directly to `re.search()` and can match against the full URL (including query parameters) when enabled.\n\n### Sitemap Integration\n\n**Option A: Ignore sitemaps entirely.** Only discover pages via BFS link following from the start URL.\n\n**Option B: Sitemap as seed only.** Fetch sitemap URLs, deduplicate them against the BFS seen-set, and insert them at the front of the queue. Pages from sitemaps are subject to the same path filtering and max_pages limits as BFS-discovered pages.\n\n**Option C: Three sitemap modes (include/skip/only).** An explicit `sitemap` field with three values:\n- `include` (default): sitemap URLs seeded into BFS queue, combined with HTML link discovery\n- `skip`: no sitemap fetch, HTML-only discovery\n- `only`: exclusively sitemap URLs, no HTML link extraction\n\n**Chosen: Option C (three modes).** This matches Firecrawl's sitemap behavior and gives users explicit control. The sitemap parser (`SitemapParser`) is a separate module (`agent-svc/agent/sitemap_parser.py`) that handles XML sitemap parsing, nested sitemap index recursion (up to 3 levels), robots.txt sitemap directive processing, gzipped content, and fallback to common locations (`/sitemap.xml`, `/sitemap_index.xml`). The `ignoreSitemap` boolean field is preserved as a backward-compatible alias for `sitemap: \"skip\"`. Sitemap-discovered URLs count toward `max_pages` and are subject to the same path filters as BFS-discovered URLs.\n\n## Decision\n\n**BFS traversal, shared `LinkExtractor`, three-layer dedup (URL + canonical + content hash), asyncio.Semaphore concurrency, glob+regex path filtering, three-mode sitemap integration, Valkey-backed cache, SSE streaming, and NL-to-params translation.**\n\n## Consequences\n\n### Positive\n\n- **Predictable BFS order.** The start URL is always first, depth-1 pages appear next, and polling users see progress in a natural top-down order.\n- **Single source of truth for link extraction.** All link discovery (crawl, map, llmstxt) routes through the same `extract_links()` function, ensuring consistent handling of `<base>` tags, fragments, relative URLs, non-HTTP schemes, and malformed HTML.\n- **Configurable concurrency.** The asyncio.Semaphore worker pool (default 3, up to 50) accelerates large crawls significantly. Delay-based pacing forces sequential mode when needed for politeness.\n- **Full content deduplication.** Three-layer dedup (URL seen-set → canonical tag → SHA-256 content hash) prevents both URL-level and content-level duplicates, matching Firecrawl's capabilities.\n- **Sitemap support with three modes.** SitemapParser handles robots.txt discovery, nested index files, gzipped content, and falls back gracefully. Sitemap-discovered URLs respect path filters and max_pages limits.\n- **Valkey-backed response cache.** CrawlCache provides maxAge/minAge semantics, reducing redundant scrapes of recently-fetched pages.\n- **SSE streaming.** Real-time per-page progress events via Server-Sent Events, with reconnection support for in-progress crawls.\n- **NL-to-params translation.** The `prompt` field on CrawlRequest and the `/v2/crawl/params-preview` endpoint let users describe crawl intent in natural language.\n- **Path filtering is both powerful and familiar.** Glob patterns work the way users expect (`*` matches path segments, `**` matches across segments), while regex mode provides an escape hatch for complex patterns.\n\n### Negative\n\n- **Distributed coordination is deferred.** Multi-instance deployments must coordinate via Valkey job status (cooperative cancellation) rather than a distributed semaphore. Concurrent instances of the same crawl are not supported.\n- **SitemapParser is a separate module dependency.** The crawl engine must import and coordinate with `SitemapParser`, adding module coupling. The parser's fallback logic (robots.txt → common locations) can mask misconfigured sites.\n\n### Neutral\n\n- **The `normalize_url()` function centralizes dedup logic.** Changes to normalization rules (e.g., adding trailing-slash policy) apply everywhere automatically.\n- **Path filter evaluation order is fixed:** exclude checks run first, then include checks. This is documented and tested. Changing the order in the future would be a breaking change.\n- **Module boundaries follow existing patterns** (ADR-0036, ADR-0037): `crawler.py` (orchestrator), `link_extractor.py` (shared extraction), `sitemap_parser.py` (XML parsing), `dedup.py` (multi-layer dedup), `crawl_cache.py` (response cache), `crawl_stream.py` (SSE streaming), `nl_params.py` (NL→params).\n\n### Neutral\n\n- **The `normalize_url()` function centralizes dedup logic.** Changes to normalization rules (e.g., adding trailing-slash policy) apply everywhere automatically.\n- **Path filter evaluation order is fixed:** exclude checks run first, then include checks. This is documented and tested. Changing the order in the future would be a breaking change.\n- **Module boundaries follow existing patterns** (ADR-0036, ADR-0037): `crawler.py` (orchestrator), `link_extractor.py` (shared extraction), `sitemap_parser.py` (XML parsing), with dedup and cache logic inlined where appropriate.\n\n## Module Architecture\n\n```\nagent-svc/agent/\n  crawler.py           — CrawlEngine BFS loop, normalize_url, path filtering,\n                         queue management, seen-set dedup, store updates\n  link_extractor.py    — extract_links(), filter_links(), classify_links()\n                         (shared with /v2/map and llmstxt.py)\n  sitemap_parser.py    — SitemapParser: fetch XML sitemaps, handle nested\n                         index files, fallback to common locations\n  dedup.py             — DedupManager: multi-layer URL normalization,\n                         canonical tag extraction, content hash comparison\n  crawl_cache.py       — CrawlCache: Valkey-backed response cache with\n                         maxAge/minAge semantics\n  worker.py            — _process_crawl_async(): orchestrates CrawlEngine +\n                         job store + webhooks + metrics\n  store.py             — JobStore: Valkey CRUD for job lifecycle\n  scraper_client.py    — ScraperClient: HTTP client to scraper-svc\n  webhook.py           — Webhook delivery: crawl.started, crawl.page,\n                         crawl.completed, crawl.failed\n  metrics.py           — Prometheus metrics: crawl jobs, pages, duration\n```\n\n## Data Flow\n\n```\nPOST /v2/crawl { url, max_pages, max_depth, include_paths, ... }\n  │\n  ▼\napi.py: create_crawl()\n  ├── Validate CrawlRequest (Pydantic)\n  ├── store.create_job(kind=\"crawl\", status=\"processing\")\n  ├── task_tracker.create_background_task(_process_crawl_async(...))\n  └── return { id, success: true }\n       │\n       ▼\nworker.py: _process_crawl_async()\n  ├── Fire crawl.started webhook\n  ├── CrawlEngine.run(start_url, job_id)\n  │   ├── [sitemap mode != skip]\n  │   │   └── SitemapParser.get_urls(domain) → seed queue\n  │   ├── BFS loop: deque.pop() → process (url, depth)\n  │   │   ├── normalize_url(url) → _seen check → skip if duplicate\n  │   │   ├── depth > max_depth? → skip\n  │   │   ├── _match_path(url, include_paths, exclude_paths)? → skip\n  │   │   ├── scraper.scrape(url, scrape_options)\n  │   │   ├── Record page in result with metadata\n  │   │   ├── [depth < max_depth]:\n  │   │   │   ├── fetch_html(url) → raw HTML\n  │   │   │   ├── LinkExtractor.extract_links(html, base_url)\n  │   │   │   ├── LinkExtractor.filter_links(links, base_domain, ...)\n  │   │   │   └── Enqueue unique child URLs at depth+1\n  │   │   ├── Fire crawl.page webhook per page\n  │   │   ├── Periodic store update for polling\n  │   │   └── Check cancellation flag\n  │   └── Stop: max_pages reached, queue empty, or cancelled\n  ├── store.complete_job() or cancel_job()\n  ├── Fire crawl.completed webhook\n  └── Record Prometheus metrics\n```\n\n## Path Filter Precedence Rules\n\n1. **URL-level checks are positional** — exclude_paths is checked before include_paths (short-circuit: if a URL matches any exclude pattern, it is immediately rejected)\n2. **Exclude always wins over include** — a URL matching both exclude and include patterns is excluded\n3. **Missing include_paths means \"include all\"** — when include_paths is `None` or `[]`, all non-excluded URLs pass (empty list is treated as \"no constraint\", i.e., identity filter)\n4. **Empty include_paths (`[]`) means \"include all\"** — an explicit empty list is treated the same as `None`: no include constraint, all non-excluded URLs pass\n5. **Mode selector (`regexOnFullUrl`)** — `false` (default): patterns are globs matched against URL path only; `true`: patterns are regexes matched against full URL\n6. **Target selection depends on mode and flags** — in glob mode, matching is against the parsed path component; in regex mode, when `regexOnFullUrl` is true, matching is against the full URL including query parameters\n7. **Path filters apply to every URL including the start URL** — if the start URL does not pass filters, the crawl returns 0 pages\n8. **Filter evaluation happens before scraper dispatch** — filtered URLs do not consume scraper budget and do not count toward max_pages\n\n## Dedup Normalization Pipeline\n\nThe `normalize_url()` function applies these transformations in order:\n\n1. **Lowercase scheme and host** — `HTTP://Example.COM/Path` → `http://example.com/Path`\n2. **Remove default ports** — `http://example.com:80/` → `http://example.com/`; `https://example.com:443/` → `https://example.com/`\n3. **Strip fragment** — `/page#section` → `/page`\n4. **Collapse dot segments** — `/./` removed, `/../` resolved via `posixpath.normpath()`\n5. **Normalize trailing slash** — non-root paths ending in `/` have the slash removed\n6. **Sort query parameters** — `?b=2&a=1` → `?a=1&b=2` (only when `ignoreQueryParameters` is false)\n7. **Strip query strings** — when `ignoreQueryParameters` is true, `?ref=abc` is removed entirely\n\n## Links\n\n- Implementation: `agent-svc/agent/crawler.py` (BFS crawl engine with concurrency), `agent-svc/agent/link_extractor.py` (shared link extraction)\n- Dedup: `agent-svc/agent/dedup.py` (DedupManager with canonical tag + content hash)\n- Sitemap: `agent-svc/agent/sitemap_parser.py` (SitemapParser with robots.txt discovery and nested index support)\n- Cache: `agent-svc/agent/crawl_cache.py` (CrawlCache with Valkey-backed maxAge/minAge)\n- Streaming: `agent-svc/agent/crawl_stream.py` (SSE event streaming for crawl progress)\n- NL→params: `agent-svc/agent/nl_params.py` (NL-to-params translation for crawl parameter derivation)\n- Refines ADR-0012: Webhook delivery pattern reused for crawl lifecycle webhooks\n",
+    "docs/guides/api.md": "# API guide\n\nThe API is served by `agent-svc` on port 8080. FastAPI publishes the authoritative schema at `/openapi.json`; use `/docs` for an interactive reference. The validated [public surface inventory](../reference/public-surface.md) lists every current route.\n\n## Authentication and errors\n\nAuthentication is optional for local development and required for production. Set `API_KEY`, then send either `Authorization: Bearer <key>` or `X-API-Key: <key>`. `/health` and `/metrics` remain unauthenticated for infrastructure probes.\n\nErrors use a common object with `error`, `error_code`, and optional `details`. Typical codes are `INVALID_REQUEST`, `AUTH_ERROR`, `NOT_FOUND`, `RATE_LIMITED`, `UPSTREAM_ERROR`, and `INTERNAL_ERROR`.\n\n```bash\ncurl -X POST http://localhost:8080/v2/scrape \\\n  -H 'Authorization: Bearer YOUR_KEY' -H 'Content-Type: application/json' \\\n  -d '{\"url\":\"https://example.com\"}'\n```\n\n### Rate limits and retries\n\nPer-client rate limits reject `POST /v2/agent`, `POST /v2/answer`, and `POST /v2/crawl` before a job is created. A rejection is HTTP 429 with `error_code: RATE_LIMITED`, `retryable: true`, a positive `retry_after_seconds`, and `details` describing the non-secret bucket (`search` or `crawl`), limit, remaining, and reset time. The response also carries standard `Retry-After`, `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` headers. Because rejection happens before job creation, retrying a definitively rejected admission never creates duplicate jobs.\n\nA 429 admission is a temporary condition, not an operation failure: the CLI (`answer`, `agent`, `crawl`) retries automatically with a bounded policy (at most 3 total attempts, server-provided delays clamped to 60s, fallback backoff with jitter; see [ADR-0053](../adr/0053-retryable-rate-limit-contract.md)). Retry progress goes to stderr; `--json` stdout stays valid JSON. Other clients can apply the same policy from the response metadata.\n\nAccepted asynchronous jobs that hit a downstream rate-limit condition (for example SlopSearX answering 429) transition to the non-terminal `retry_scheduled` status, exposed via `retry_at`, `retry_attempt`, `retry_limit`, `retryable: true`, and `retry_reason: RATE_LIMITED` on the status response, with a `retry_scheduled` webhook event. The worker resumes the same job after the bounded delay; exhaustion fails the job with rate-limit details. A scheduled retry is in-process state: it is not resumed after a process restart (see the durability paragraph below and ADR-0047).\n\n## Jobs, streaming, and webhooks\n\nScrape, map, search, answer, browser, and similar lightweight operations return directly. Crawl, extraction, batch scrape, and llms.txt generation create persistent job records: create the job, poll its status route, and cancel where a DELETE route is available. Job responses include IDs suitable for polling.\n\nPersistent state is not restart-safe execution. Valkey preserves job status and completed results, but `agent-svc` executes work in-process. If that process exits before a job finishes, the job is not resumed or reclaimed automatically and may remain `processing` until its record expires. Cancellation can update the stored status, but it does not recover interrupted work. Partial writes to downstream stores are not rolled back, and completion or failure webhooks are not replayed after restart. Restart-safe execution is deferred until there is an explicit product requirement for a durable job owner, retry and lease semantics, cancellation behavior, artifact consistency, and idempotent webhook delivery.\n\nOperators: the [deployment guide](deployment.md#job-durability-and-recovery) documents the durability contract and recovery procedure, the [Interrupted Jobs runbook](../runbooks/interrupted-jobs.md) covers identifying and reconciling jobs stranded in `processing`, and [ADR-0047](../adr/0047-defer-restart-safe-execution.md) records the decision and roadmap.\n\n`POST /v2/agent` and `POST /v2/answer` support SSE when `stream: true`; agent events include planning, source discovery, scraping, tokens, and completion. Crawls stream through `GET /v2/crawl/{job_id}/stream`, including replay for completed jobs. Consume each SSE event as JSON and treat `done`/`error` as terminal.\n\nEvery asynchronous creation request accepts webhook configuration. Completion and failure delivery is best effort and is not persisted for retry after process loss; verify the endpoint’s OpenAPI model for the exact field shape and sign requests with `WEBHOOK_SECRET` where configured.\n\nWebhook destinations are validated before delivery: only `http`/`https` URLs resolving to public hosts are accepted, and private, loopback, link-local, multicast, metadata, and other restricted destinations are skipped with a warning in the service log. Redirects are not followed during delivery, so a validated destination cannot be redirected to a restricted host. Monitor webhooks follow the same policy.\n\n## Common workflows\n\n### Research or answer\n\nUse `/v2/answer` for one grounded response with citations. Use `/v2/agent` for multi-query research, seed URLs, structured output, citation styling, image collection, plan events, and optional streaming. `search_type` selects the research depth where supported.\n\nThe experimental agent no longer accepts `max_results_per_query`; the old\nJSON field is rejected with HTTP 422 rather than ignored. The matching CLI\nflag and MCP argument are also removed. Omit them and use `max_credits` only\nwhen an explicit attempt budget is required. This does not change the\ncaller-provided `limit` on `POST /v2/search`.\n\n### Search and retrieval\n\n`/v2/search` supports source/category filters, content extraction, optional streaming, structured extraction, and keyword/semantic/hybrid retrieval modes. Semantic modes depend on `semantic-svc` and Qdrant; keyword search depends on SlopSearX and its configured search provider.\n\n### Agent-native state\n\nThe plan endpoints create and retrieve a consentable research plan; execution starts an approved plan. Sessions preserve stepwise research context. Research-memory endpoints query, store, batch, delete, and sweep reusable artifacts. Citation resolution expands compact citations. These APIs are public but are intentionally not all exposed by the CLI yet.\n\n### Files and browser sessions\n\nUse the two-step parse flow when an upload must be staged: `PUT /v2/parse/upload/{upload_id}`, then `POST /v2/parse` referencing that ID. Browser routes create, execute against, list, and destroy short-lived Playwright sessions.\n\n## Compatibility\n\nGroktoCrawl targets Firecrawl v2 request/response conventions for its compatible operations. GroktoCrawl-specific facilities—plans, sessions, research memory, citation resolution, enrichment, semantic similarity, portal support, and MCP—extend that surface. Do not infer unsupported Firecrawl options from compatibility language; consult `/openapi.json` for accepted fields.\n",
+    "docs/guides/features.md": "# Feature guide\n\n## Scraping and adapters\n\n`POST /v2/scrape` and `scrape` return clean markdown plus optional formats, quality assessment, metadata, links, screenshots, and images. Adapters run before generic fetching for supported sites and use their own fallback chains. Generic extraction applies cache revalidation, politeness/robots controls, llms.txt, markdown negotiation, browser rendering, optional recovery, and quality gates.\n\n## Crawl, map, and monitors\n\n`/v2/map` discovers site URLs. `/v2/crawl` runs a breadth-first crawl with sitemap modes, path filters, depth/page limits, concurrency, delay, cache age controls, deduplication, per-page results/errors, webhooks, and SSE progress. Terminal crawl responses include an `outcomeSummary` with discovered, filtered, robots-blocked, failed, barrier-rejected, duplicate, and retained counts. Empty completed crawls also carry a stable reason such as `all_urls_filtered` or `all_fetches_failed`. Monitors schedule scrape or search checks and notify configured webhooks when a change is detected.\n\n## Search and semantic retrieval\n\nSearch uses SlopSearX for discovery and supports content enrichment, `fast`, `rich`, and deeper modes. Semantic and hybrid retrieval use the embedding service and Qdrant; `/v2/find-similar` finds related pages from the local index or web-assisted reranking. Web similarity results include their cosine score, confidence band, raw and reranked positions, metadata-completeness flag, and search provenance so clients can distinguish weak leads from strong matches. Semantic indexing is best effort and never blocks a scrape or crawl result.\n\n## Research, plans, sessions, and memory\n\nThe agent plans queries, discovers/scrapes sources, synthesizes cited results, and can run a gap-filling second pass. `/v2/answer` is the lower-latency grounded-Q&A path. Plans support review/execute workflows; sessions retain stepwise research context; research memory reuses compatible past artifacts; citation resolution expands compact references. Streaming clients should render planning/source/token events incrementally and treat `done`/`error` as terminal.\n\n## Browser, parse, portal, and MCP\n\nBrowser routes expose short-lived Playwright sessions. Parse supports direct local document parsing and a two-step upload flow, converting Word, PowerPoint, Excel, OpenDocument, RTF, EPUB, and CSV documents via firecrawl-anydoc alongside PDF and plain text. The portal is a thin web client for agent and answer workflows. `mcp-svc` exposes GroktoCrawl capabilities as MCP tools, using the same agent API and its own session lifecycle — scrape, search, crawl, map, agent, answer, extract, enrich, batch scrape, llms.txt, citations, browser sessions, change monitors, parse, and job cancellation/status tools, with read-only/destructive annotations for safe client use. A coverage gate (`scripts/check-mcp-coverage.py`) keeps the MCP tool surface in lockstep with the agent-svc API, mirroring the CLI coverage policy. The separate, opt-in `slopsearx-mcp` service exposes direct SlopSearX search-engine tools when the `mcp` Compose profile is enabled. Its jobs, science, research, security, and targeted sensitive-engine grants are independently configurable, but grants do not create provider credentials or bypass MCP authentication. Search results are discovery leads and snippets, not independently verified full-page evidence. See the API guide for endpoint contracts and the deployment guide for service configuration.\n"
+  },
+  "cases": [
+    {
+      "assistant_reference": {
+        "evidence_status": "satisfied",
+        "provenance": "assistant best-effort assessment; not independent gold",
+        "rationale": "The exact default and range are stated.",
+        "search_needed": "no",
+        "stage1_yes": true,
+        "stage3_yes": false,
+        "stage4_yes_if_reached": null
+      },
+      "case_id": "pilot-01",
+      "frozen_request_sha256": {
+        "stage1_sufficiency": "21b2ff7b4e569244d79c31c33ecf091a86f468e160b53f91f64e9cfb7c8a2c51",
+        "stage3_hypothesis_review": "6ec3bbf6b5cb7a9c73d8bf7bb2a7d43386d24ea332886cff7c7278df05f1c9a6",
+        "stage4_addressability_if_stage3_positive": "afa91f84865e7b3d6bdc2bc3a6b4e96108ff5f17b3fd28ec9ec59cb8172714ed"
+      },
+      "proposal_provenance": "separate research-agent stage, assistant-authored for this pilot; not Jev-generated and not independent gold",
+      "research_agent_proposal": {
+        "absence_scope": "supplied_material_only",
+        "context": "configuration contract",
+        "hypothesis_id": "pilot-01-h1",
+        "kind": "missing_information",
+        "proposition": "The supplied passage does not state the default maxConcurrency.",
+        "source_spans": [
+          {
+            "context": "configuration contract",
+            "end_byte": 6730,
+            "quote": "**Chosen: Option B (`asyncio.Semaphore` worker pool).** Configurable via `maxConcurrency` (1-50, default 3) with `asyncio.Semaphore`. When `delay` is set, concurrency is forced to 1 with `asyncio.sleep()` between scrapes for pacing. Valkey-backed distributed coordination (Option C) is optional for multi-instance deployments. This provides the performance benefit of parallel scraping while keeping coordination simple and in-process.",
+            "source_id": "crawl-adr",
+            "source_sha256": "3dae2ff7a855d93f52dc7e26687083177212a991cdb35725d78707cace9084d8",
+            "start_byte": 6295,
+            "subject": "crawl maxConcurrency",
+            "version": "origin/main@7b9bf51de133"
+          }
+        ],
+        "specific_information": "the documented default maxConcurrency value",
+        "subject": "crawl maxConcurrency",
+        "version": "origin/main@7b9bf51de133"
+      },
+      "source_blob_by_id": {
+        "crawl-adr": "docs/adr/0038-crawl-engine.md"
+      },
+      "state": {
+        "first_pass": {
+          "acquisition_status": "complete",
+          "coverage": {
+            "acquired_source_ids": [
+              "crawl-adr"
+            ],
+            "omitted_source_ids": [],
+            "omitted_text_within_sources": true,
+            "presented_source_ids": [
+              "crawl-adr"
+            ],
+            "scope": "bounded_excerpts_only"
+          },
+          "sources": [
+            {
+              "excerpt_end_byte": 6730,
+              "excerpt_start_byte": 6295,
+              "fetch_status": "success",
+              "source_id": "crawl-adr",
+              "source_sha256": "3dae2ff7a855d93f52dc7e26687083177212a991cdb35725d78707cace9084d8",
+              "supplied_text": "**Chosen: Option B (`asyncio.Semaphore` worker pool).** Configurable via `maxConcurrency` (1-50, default 3) with `asyncio.Semaphore`. When `delay` is set, concurrency is forced to 1 with `asyncio.sleep()` between scrapes for pacing. Valkey-backed distributed coordination (Option C) is optional for multi-instance deployments. This provides the performance benefit of parallel scraping while keeping coordination simple and in-process.",
+              "text_scope": "excerpt",
+              "title": "docs/adr/0038-crawl-engine.md",
+              "url": "https://github.com/magnus919/groktocrawl-x/blob/7b9bf51de1334d4d7e6bd6256d3085c8c2a8d60d/docs/adr/0038-crawl-engine.md"
+            }
+          ]
+        },
+        "obligation": {
+          "id": "pilot-01",
+          "scope": "public project documentation at 7b9bf51de1334d4d7e6bd6256d3085c8c2a8d60d",
+          "statement": "Determine documented crawl concurrency default and range."
+        },
+        "public_search_scope": {
+          "allowed_source_types": [
+            "public project documentation",
+            "public source code",
+            "official upstream documentation"
+          ],
+          "excluded_scopes": [
+            "private deployment configuration",
+            "authenticated data",
+            "non-public operational state"
+          ]
+        },
+        "research_question": "What is the documented default maxConcurrency for a crawl, and what range is accepted?"
+      },
+      "stratum": "adequate-with-false-missing-proposal"
+    },
+    {
+      "assistant_reference": {
+        "evidence_status": "satisfied",
+        "provenance": "assistant best-effort assessment; not independent gold",
+        "rationale": "The passage explicitly says adapters run before generic fetching.",
+        "search_needed": "no",
+        "stage1_yes": true,
+        "stage3_yes": false,
+        "stage4_yes_if_reached": null
+      },
+      "case_id": "pilot-02",
+      "frozen_request_sha256": {
+        "stage1_sufficiency": "49210a4d1ca3f1b67d39e48dbcb5af9421ba74ae3ade3d8aa2eea81ec57235e8",
+        "stage3_hypothesis_review": "1d2fe9ba951de84f1abb45b75266e74e69b2d3263daf74315640e6304e00810b",
+        "stage4_addressability_if_stage3_positive": "f81c1951ae644809414d668197dd0e260f780d8627f8cb22e7f021f5dc2514ca"
+      },
+      "proposal_provenance": "separate research-agent stage, assistant-authored for this pilot; not Jev-generated and not independent gold",
+      "research_agent_proposal": {
+        "absence_scope": "supplied_material_only",
+        "context": "supported-site scraping pipeline",
+        "hypothesis_id": "pilot-02-h1",
+        "kind": "missing_information",
+        "proposition": "The supplied passage does not state whether adapters run before or after generic fetching.",
+        "source_spans": [
+          {
+            "context": "supported-site scraping pipeline",
+            "end_byte": 436,
+            "quote": "`POST /v2/scrape` and `scrape` return clean markdown plus optional formats, quality assessment, metadata, links, screenshots, and images. Adapters run before generic fetching for supported sites and use their own fallback chains. Generic extraction applies cache revalidation, politeness/robots controls, llms.txt, markdown negotiation, browser rendering, optional recovery, and quality gates.",
+            "source_id": "scrape-guide",
+            "source_sha256": "7c13c23e8a166e6779f7e3e5263c1835bbca847df394f6641d7848b218de115e",
+            "start_byte": 43,
+            "subject": "adapter execution order",
+            "version": "origin/main@7b9bf51de133"
+          }
+        ],
+        "specific_information": "whether site adapters run before or after generic fetching",
+        "subject": "adapter execution order",
+        "version": "origin/main@7b9bf51de133"
+      },
+      "source_blob_by_id": {
+        "scrape-guide": "docs/guides/features.md"
+      },
+      "state": {
+        "first_pass": {
+          "acquisition_status": "complete",
+          "coverage": {
+            "acquired_source_ids": [
+              "scrape-guide"
+            ],
+            "omitted_source_ids": [],
+            "omitted_text_within_sources": true,
+            "presented_source_ids": [
+              "scrape-guide"
+            ],
+            "scope": "bounded_excerpts_only"
+          },
+          "sources": [
+            {
+              "excerpt_end_byte": 436,
+              "excerpt_start_byte": 43,
+              "fetch_status": "success",
+              "source_id": "scrape-guide",
+              "source_sha256": "7c13c23e8a166e6779f7e3e5263c1835bbca847df394f6641d7848b218de115e",
+              "supplied_text": "`POST /v2/scrape` and `scrape` return clean markdown plus optional formats, quality assessment, metadata, links, screenshots, and images. Adapters run before generic fetching for supported sites and use their own fallback chains. Generic extraction applies cache revalidation, politeness/robots controls, llms.txt, markdown negotiation, browser rendering, optional recovery, and quality gates.",
+              "text_scope": "excerpt",
+              "title": "docs/guides/features.md",
+              "url": "https://github.com/magnus919/groktocrawl-x/blob/7b9bf51de1334d4d7e6bd6256d3085c8c2a8d60d/docs/guides/features.md"
+            }
+          ]
+        },
+        "obligation": {
+          "id": "pilot-02",
+          "scope": "public project documentation at 7b9bf51de1334d4d7e6bd6256d3085c8c2a8d60d",
+          "statement": "Determine where site adapters run relative to generic fetching."
+        },
+        "public_search_scope": {
+          "allowed_source_types": [
+            "public project documentation",
+            "public source code",
+            "official upstream documentation"
+          ],
+          "excluded_scopes": [
+            "private deployment configuration",
+            "authenticated data",
+            "non-public operational state"
+          ]
+        },
+        "research_question": "What execution order does the scraping guide specify for site adapters and generic fetching?"
+      },
+      "stratum": "adequate-with-false-missing-proposal"
+    },
+    {
+      "assistant_reference": {
+        "evidence_status": "missing",
+        "provenance": "assistant best-effort assessment; not independent gold",
+        "rationale": "The excerpt names retry_limit and exhaustion but no numeric value.",
+        "search_needed": "yes",
+        "stage1_yes": false,
+        "stage3_yes": true,
+        "stage4_yes_if_reached": true
+      },
+      "case_id": "pilot-03",
+      "frozen_request_sha256": {
+        "stage1_sufficiency": "ce8fc48cd1a4090472ecfb0a6ac8c28ae076b9cf5d809b060fce7826741f35cf",
+        "stage3_hypothesis_review": "182c1b6aeb18fa2dfba47912e3acfd4bfc4d81b35d699a55f876c645b59dba16",
+        "stage4_addressability_if_stage3_positive": "66225cc575c3bbff7c6658b4c64d2e01e312493f0586ea6c6e3bcfb3b844de39"
+      },
+      "proposal_provenance": "separate research-agent stage, assistant-authored for this pilot; not Jev-generated and not independent gold",
+      "research_agent_proposal": {
+        "absence_scope": "supplied_material_only",
+        "context": "public API contract for retry_scheduled jobs",
+        "hypothesis_id": "pilot-03-h1",
+        "kind": "missing_information",
+        "proposition": "The exact numeric retry_limit for accepted downstream rate-limit retries is not stated in the supplied excerpt.",
+        "source_spans": [
+          {
+            "context": "public API contract for retry_scheduled jobs",
+            "end_byte": 2525,
+            "quote": "Accepted asynchronous jobs that hit a downstream rate-limit condition (for example SlopSearX answering 429) transition to the non-terminal `retry_scheduled` status, exposed via `retry_at`, `retry_attempt`, `retry_limit`, `retryable: true`, and `retry_reason: RATE_LIMITED` on the status response, with a `retry_scheduled` webhook event. The worker resumes the same job after the bounded delay; exhaustion fails the job with rate-limit details. A scheduled retry is in-process state: it is not resumed after a process restart (see the durability paragraph below and ADR-0047).",
+            "source_id": "api-rate-limit",
+            "source_sha256": "32aa516b809d5afa6a9e4b0a2c9e2bb824a5c4ae2a1c6bc5d6b57708ca1d12f8",
+            "start_byte": 1950,
+            "subject": "accepted async rate-limit retry_limit",
+            "version": "origin/main@7b9bf51de133"
+          }
+        ],
+        "specific_information": "the numeric retry_limit value for accepted asynchronous downstream-rate-limit retries",
+        "subject": "accepted async rate-limit retry_limit",
+        "version": "origin/main@7b9bf51de133"
+      },
+      "source_blob_by_id": {
+        "api-rate-limit": "docs/guides/api.md"
+      },
+      "state": {
+        "first_pass": {
+          "acquisition_status": "complete",
+          "coverage": {
+            "acquired_source_ids": [
+              "api-rate-limit"
+            ],
+            "omitted_source_ids": [],
+            "omitted_text_within_sources": true,
+            "presented_source_ids": [
+              "api-rate-limit"
+            ],
+            "scope": "bounded_excerpts_only"
+          },
+          "sources": [
+            {
+              "excerpt_end_byte": 2525,
+              "excerpt_start_byte": 1950,
+              "fetch_status": "success",
+              "source_id": "api-rate-limit",
+              "source_sha256": "32aa516b809d5afa6a9e4b0a2c9e2bb824a5c4ae2a1c6bc5d6b57708ca1d12f8",
+              "supplied_text": "Accepted asynchronous jobs that hit a downstream rate-limit condition (for example SlopSearX answering 429) transition to the non-terminal `retry_scheduled` status, exposed via `retry_at`, `retry_attempt`, `retry_limit`, `retryable: true`, and `retry_reason: RATE_LIMITED` on the status response, with a `retry_scheduled` webhook event. The worker resumes the same job after the bounded delay; exhaustion fails the job with rate-limit details. A scheduled retry is in-process state: it is not resumed after a process restart (see the durability paragraph below and ADR-0047).",
+              "text_scope": "excerpt",
+              "title": "docs/guides/api.md",
+              "url": "https://github.com/magnus919/groktocrawl-x/blob/7b9bf51de1334d4d7e6bd6256d3085c8c2a8d60d/docs/guides/api.md"
+            }
+          ]
+        },
+        "obligation": {
+          "id": "pilot-03",
+          "scope": "public project documentation at 7b9bf51de1334d4d7e6bd6256d3085c8c2a8d60d",
+          "statement": "Determine numeric retry limit for downstream retry_scheduled jobs."
+        },
+        "public_search_scope": {
+          "allowed_source_types": [
+            "public project documentation",
+            "public source code",
+            "official upstream documentation"
+          ],
+          "excluded_scopes": [
+            "private deployment configuration",
+            "authenticated data",
+            "non-public operational state"
+          ]
+        },
+        "research_question": "What exact retry_limit is used for accepted asynchronous jobs that encounter a downstream rate limit?"
+      },
+      "stratum": "missing-numeric-contract"
+    },
+    {
+      "assistant_reference": {
+        "evidence_status": "missing",
+        "provenance": "assistant best-effort assessment; not independent gold",
+        "rationale": "The excerpt names maxAge/minAge semantics but not the miss response.",
+        "search_needed": "yes",
+        "stage1_yes": false,
+        "stage3_yes": true,
+        "stage4_yes_if_reached": true
+      },
+      "case_id": "pilot-04",
+      "frozen_request_sha256": {
+        "stage1_sufficiency": "a20cb15916456b56e37e89440563baee927531506b309201b86a132e41447943",
+        "stage3_hypothesis_review": "9983f699fe32f9ee6698b9e17d4c8523a86a5b68e19241a4fffd97fd0d4ee015",
+        "stage4_addressability_if_stage3_positive": "fb3af03a62d37c99cfe1cbad036ffbec704759813035e527e583043a51d8448a"
+      },
+      "proposal_provenance": "separate research-agent stage, assistant-authored for this pilot; not Jev-generated and not independent gold",
+      "research_agent_proposal": {
+        "absence_scope": "supplied_material_only",
+        "context": "cache miss behavior in the public contract",
+        "hypothesis_id": "pilot-04-h1",
+        "kind": "missing_information",
+        "proposition": "The exact cache-miss behavior for minAge is not stated in the supplied excerpt.",
+        "source_spans": [
+          {
+            "context": "cache miss behavior in the public contract",
+            "end_byte": 10358,
+            "quote": "- **Valkey-backed response cache.** CrawlCache provides maxAge/minAge semantics, reducing redundant scrapes of recently-fetched pages.",
+            "source_id": "crawl-cache-adr",
+            "source_sha256": "3dae2ff7a855d93f52dc7e26687083177212a991cdb35725d78707cace9084d8",
+            "start_byte": 10224,
+            "subject": "crawl cache minAge",
+            "version": "origin/main@7b9bf51de133"
+          }
+        ],
+        "specific_information": "the response produced by minAge cache-only mode when the cache misses",
+        "subject": "crawl cache minAge",
+        "version": "origin/main@7b9bf51de133"
+      },
+      "source_blob_by_id": {
+        "crawl-cache-adr": "docs/adr/0038-crawl-engine.md"
+      },
+      "state": {
+        "first_pass": {
+          "acquisition_status": "complete",
+          "coverage": {
+            "acquired_source_ids": [
+              "crawl-cache-adr"
+            ],
+            "omitted_source_ids": [],
+            "omitted_text_within_sources": true,
+            "presented_source_ids": [
+              "crawl-cache-adr"
+            ],
+            "scope": "bounded_excerpts_only"
+          },
+          "sources": [
+            {
+              "excerpt_end_byte": 10358,
+              "excerpt_start_byte": 10224,
+              "fetch_status": "success",
+              "source_id": "crawl-cache-adr",
+              "source_sha256": "3dae2ff7a855d93f52dc7e26687083177212a991cdb35725d78707cace9084d8",
+              "supplied_text": "- **Valkey-backed response cache.** CrawlCache provides maxAge/minAge semantics, reducing redundant scrapes of recently-fetched pages.",
+              "text_scope": "excerpt",
+              "title": "docs/adr/0038-crawl-engine.md",
+              "url": "https://github.com/magnus919/groktocrawl-x/blob/7b9bf51de1334d4d7e6bd6256d3085c8c2a8d60d/docs/adr/0038-crawl-engine.md"
+            }
+          ]
+        },
+        "obligation": {
+          "id": "pilot-04",
+          "scope": "public project documentation at 7b9bf51de1334d4d7e6bd6256d3085c8c2a8d60d",
+          "statement": "Determine minAge cache-miss semantics."
+        },
+        "public_search_scope": {
+          "allowed_source_types": [
+            "public project documentation",
+            "public source code",
+            "official upstream documentation"
+          ],
+          "excluded_scopes": [
+            "private deployment configuration",
+            "authenticated data",
+            "non-public operational state"
+          ]
+        },
+        "research_question": "What response does minAge cache-only mode return on a cache miss?"
+      },
+      "stratum": "missing-cache-behavior"
+    },
+    {
+      "assistant_reference": {
+        "evidence_status": "satisfied",
+        "provenance": "assistant best-effort assessment; not independent gold",
+        "rationale": "The excerpt states the maximum nesting depth.",
+        "search_needed": "no",
+        "stage1_yes": true,
+        "stage3_yes": false,
+        "stage4_yes_if_reached": null
+      },
+      "case_id": "pilot-05",
+      "frozen_request_sha256": {
+        "stage1_sufficiency": "8de0e44a944f443da6fa6d840edce5cccfb80bbfc47f870d5f1b2e5e312213af",
+        "stage3_hypothesis_review": "92e597c316708f1911b4ea721d8efc6b7d301c5ec8514676c3b45be782dfba9c",
+        "stage4_addressability_if_stage3_positive": "0ed92479e6bc6bb6fe1516064396450cc49d7d83059c0e76ecb36bcf585853da"
+      },
+      "proposal_provenance": "separate research-agent stage, assistant-authored for this pilot; not Jev-generated and not independent gold",
+      "research_agent_proposal": {
+        "absence_scope": "supplied_material_only",
+        "context": "documented sitemap parser behavior",
+        "hypothesis_id": "pilot-05-h1",
+        "kind": "missing_information",
+        "proposition": "The supplied passage does not state the maximum nested sitemap index depth.",
+        "source_spans": [
+          {
+            "context": "documented sitemap parser behavior",
+            "end_byte": 8913,
+            "quote": "**Chosen: Option C (three modes).** This matches Firecrawl's sitemap behavior and gives users explicit control. The sitemap parser (`SitemapParser`) is a separate module (`agent-svc/agent/sitemap_parser.py`) that handles XML sitemap parsing, nested sitemap index recursion (up to 3 levels), robots.txt sitemap directive processing, gzipped content, and fallback to common locations (`/sitemap.xml`, `/sitemap_index.xml`). The `ignoreSitemap` boolean field is preserved as a backward-compatible alias for `sitemap: \"skip\"`. Sitemap-discovered URLs count toward `max_pages` and are subject to the same path filters as BFS-discovered URLs.",
+            "source_id": "sitemap-parser",
+            "source_sha256": "3dae2ff7a855d93f52dc7e26687083177212a991cdb35725d78707cace9084d8",
+            "start_byte": 8277,
+            "subject": "sitemap index recursion depth",
+            "version": "origin/main@7b9bf51de133"
+          }
+        ],
+        "specific_information": "the maximum nested sitemap index recursion depth",
+        "subject": "sitemap index recursion depth",
+        "version": "origin/main@7b9bf51de133"
+      },
+      "source_blob_by_id": {
+        "sitemap-parser": "docs/adr/0038-crawl-engine.md"
+      },
+      "state": {
+        "first_pass": {
+          "acquisition_status": "complete",
+          "coverage": {
+            "acquired_source_ids": [
+              "sitemap-parser"
+            ],
+            "omitted_source_ids": [],
+            "omitted_text_within_sources": true,
+            "presented_source_ids": [
+              "sitemap-parser"
+            ],
+            "scope": "bounded_excerpts_only"
+          },
+          "sources": [
+            {
+              "excerpt_end_byte": 8913,
+              "excerpt_start_byte": 8277,
+              "fetch_status": "success",
+              "source_id": "sitemap-parser",
+              "source_sha256": "3dae2ff7a855d93f52dc7e26687083177212a991cdb35725d78707cace9084d8",
+              "supplied_text": "**Chosen: Option C (three modes).** This matches Firecrawl's sitemap behavior and gives users explicit control. The sitemap parser (`SitemapParser`) is a separate module (`agent-svc/agent/sitemap_parser.py`) that handles XML sitemap parsing, nested sitemap index recursion (up to 3 levels), robots.txt sitemap directive processing, gzipped content, and fallback to common locations (`/sitemap.xml`, `/sitemap_index.xml`). The `ignoreSitemap` boolean field is preserved as a backward-compatible alias for `sitemap: \"skip\"`. Sitemap-discovered URLs count toward `max_pages` and are subject to the same path filters as BFS-discovered URLs.",
+              "text_scope": "excerpt",
+              "title": "docs/adr/0038-crawl-engine.md",
+              "url": "https://github.com/magnus919/groktocrawl-x/blob/7b9bf51de1334d4d7e6bd6256d3085c8c2a8d60d/docs/adr/0038-crawl-engine.md"
+            }
+          ]
+        },
+        "obligation": {
+          "id": "pilot-05",
+          "scope": "public project documentation at 7b9bf51de1334d4d7e6bd6256d3085c8c2a8d60d",
+          "statement": "Determine documented nested sitemap index recursion depth."
+        },
+        "public_search_scope": {
+          "allowed_source_types": [
+            "public project documentation",
+            "public source code",
+            "official upstream documentation"
+          ],
+          "excluded_scopes": [
+            "private deployment configuration",
+            "authenticated data",
+            "non-public operational state"
+          ]
+        },
+        "research_question": "How many nested sitemap index levels does the documented parser support?"
+      },
+      "stratum": "adequate-with-false-missing-proposal"
+    },
+    {
+      "assistant_reference": {
+        "evidence_status": "satisfied",
+        "provenance": "assistant best-effort assessment; not independent gold",
+        "rationale": "The excerpt explicitly states the maximum total attempts.",
+        "search_needed": "no",
+        "stage1_yes": true,
+        "stage3_yes": false,
+        "stage4_yes_if_reached": null
+      },
+      "case_id": "pilot-06",
+      "frozen_request_sha256": {
+        "stage1_sufficiency": "2ebab2819a4290c6d5d75566b5569a6b2024143ca7f35aa1d8aa9964dabd146c",
+        "stage3_hypothesis_review": "3232ce974e0e447dff6669fd676f809fb28cf21c9274688b60d0f2e965dff25c",
+        "stage4_addressability_if_stage3_positive": "ea06650e47f38b6061fc8a7983192c684401e659602a9c606cb442d98a347b1b"
+      },
+      "proposal_provenance": "separate research-agent stage, assistant-authored for this pilot; not Jev-generated and not independent gold",
+      "research_agent_proposal": {
+        "absence_scope": "supplied_material_only",
+        "context": "documented API and CLI behavior for a 429 admission",
+        "hypothesis_id": "pilot-06-h1",
+        "kind": "missing_information",
+        "proposition": "The supplied passage does not state the maximum total attempts.",
+        "source_spans": [
+          {
+            "context": "documented API and CLI behavior for a 429 admission",
+            "end_byte": 1948,
+            "quote": "A 429 admission is a temporary condition, not an operation failure: the CLI (`answer`, `agent`, `crawl`) retries automatically with a bounded policy (at most 3 total attempts, server-provided delays clamped to 60s, fallback backoff with jitter; see [ADR-0053](../adr/0053-retryable-rate-limit-contract.md)). Retry progress goes to stderr; `--json` stdout stays valid JSON. Other clients can apply the same policy from the response metadata.",
+            "source_id": "api-admission-retry",
+            "source_sha256": "32aa516b809d5afa6a9e4b0a2c9e2bb824a5c4ae2a1c6bc5d6b57708ca1d12f8",
+            "start_byte": 1508,
+            "subject": "CLI rate-limit admission retry count",
+            "version": "origin/main@7b9bf51de133"
+          }
+        ],
+        "specific_information": "the maximum number of total CLI attempts after 429 admission",
+        "subject": "CLI rate-limit admission retry count",
+        "version": "origin/main@7b9bf51de133"
+      },
+      "source_blob_by_id": {
+        "api-admission-retry": "docs/guides/api.md"
+      },
+      "state": {
+        "first_pass": {
+          "acquisition_status": "complete",
+          "coverage": {
+            "acquired_source_ids": [
+              "api-admission-retry"
+            ],
+            "omitted_source_ids": [],
+            "omitted_text_within_sources": true,
+            "presented_source_ids": [
+              "api-admission-retry"
+            ],
+            "scope": "bounded_excerpts_only"
+          },
+          "sources": [
+            {
+              "excerpt_end_byte": 1948,
+              "excerpt_start_byte": 1508,
+              "fetch_status": "success",
+              "source_id": "api-admission-retry",
+              "source_sha256": "32aa516b809d5afa6a9e4b0a2c9e2bb824a5c4ae2a1c6bc5d6b57708ca1d12f8",
+              "supplied_text": "A 429 admission is a temporary condition, not an operation failure: the CLI (`answer`, `agent`, `crawl`) retries automatically with a bounded policy (at most 3 total attempts, server-provided delays clamped to 60s, fallback backoff with jitter; see [ADR-0053](../adr/0053-retryable-rate-limit-contract.md)). Retry progress goes to stderr; `--json` stdout stays valid JSON. Other clients can apply the same policy from the response metadata.",
+              "text_scope": "excerpt",
+              "title": "docs/guides/api.md",
+              "url": "https://github.com/magnus919/groktocrawl-x/blob/7b9bf51de1334d4d7e6bd6256d3085c8c2a8d60d/docs/guides/api.md"
+            }
+          ]
+        },
+        "obligation": {
+          "id": "pilot-06",
+          "scope": "public project documentation at 7b9bf51de1334d4d7e6bd6256d3085c8c2a8d60d",
+          "statement": "Determine the bounded CLI admission retry count."
+        },
+        "public_search_scope": {
+          "allowed_source_types": [
+            "public project documentation",
+            "public source code",
+            "official upstream documentation"
+          ],
+          "excluded_scopes": [
+            "private deployment configuration",
+            "authenticated data",
+            "non-public operational state"
+          ]
+        },
+        "research_question": "How many total attempts does the CLI make for a rate-limited admission?"
+      },
+      "stratum": "adequate-with-false-missing-proposal"
+    },
+    {
+      "assistant_reference": {
+        "evidence_status": "satisfied",
+        "provenance": "assistant best-effort assessment; not independent gold",
+        "rationale": "Both cited passages state default 3 and a maximum of 50 concurrent tasks.",
+        "search_needed": "no",
+        "stage1_yes": true,
+        "stage3_yes": false,
+        "stage4_yes_if_reached": null
+      },
+      "case_id": "pilot-07",
+      "frozen_request_sha256": {
+        "stage1_sufficiency": "b39a6cd28ddd7f3c332bb7b4a31de5446eb8ed57b4cebed36f33d4a244642602",
+        "stage3_hypothesis_review": "292593cd96346b113129faafaa57598f08a2c5cdbe9930bfa912c146692fe971",
+        "stage4_addressability_if_stage3_positive": "808a1d8e8301125631939a5b75d115c34f956c09d250e08c0bd1a68d8d85af48"
+      },
+      "proposal_provenance": "separate research-agent stage, assistant-authored for this pilot; not Jev-generated and not independent gold",
+      "research_agent_proposal": {
+        "context": "documented crawl concurrency configuration contract",
+        "hypothesis_id": "pilot-07-h1",
+        "kind": "contradiction",
+        "proposition": "The two passages make materially incompatible claims about the crawl concurrency default or maximum.",
+        "source_spans": [
+          {
+            "context": "documented crawl concurrency configuration contract",
+            "end_byte": 6730,
+            "quote": "**Chosen: Option B (`asyncio.Semaphore` worker pool).** Configurable via `maxConcurrency` (1-50, default 3) with `asyncio.Semaphore`. When `delay` is set, concurrency is forced to 1 with `asyncio.sleep()` between scrapes for pacing. Valkey-backed distributed coordination (Option C) is optional for multi-instance deployments. This provides the performance benefit of parallel scraping while keeping coordination simple and in-process.",
+            "source_id": "crawl-concurrency-choice",
+            "source_sha256": "3dae2ff7a855d93f52dc7e26687083177212a991cdb35725d78707cace9084d8",
+            "start_byte": 6295,
+            "subject": "crawl maxConcurrency default and range",
+            "version": "origin/main@7b9bf51de133"
+          },
+          {
+            "context": "documented crawl concurrency configuration contract",
+            "end_byte": 25417,
+            "quote": "url: str\n    max_pages: int = Field(\n        default=0, ge=0, description=\"Maximum pages to scrape, 0 = unlimited\"\n    )\n    max_depth: int = Field(\n        default=2, ge=0, description=\"Maximum link-follow depth, must be >= 0\"\n    )\n    limit: int | None = Field(\n        default=None,\n        ge=1,\n        description=(\n            \"Maximum number of pages to crawl (Firecrawl v2 parity). \"\n            \"Like max_pages but ge=1: unlike max_pages, 0 is rejected \"\n            \"rather than meaning unlimited; when both are set the \"\n            \"stricter cap wins.\"\n        ),\n    )\n    ignore_sitemap: bool = False\n    sitemap: str = Field(\n        default=\"include\",\n        description=\"Sitemap mode: 'include' (default), 'skip', or 'only'\",\n    )\n    ignore_query_parameters: bool = False\n    include_paths: list[str] | None = None\n    exclude_paths: list[str] | None = None\n    regex_on_full_url: bool = False\n    verbose: bool = False\n    webhook: dict[str, Any] | None = None\n    crawl_entire_domain: bool = False\n    allow_subdomains: bool = False\n    allow_external_links: bool = False\n    max_concurrency: int = Field(\n        default=3,\n        ge=1,\n        description=\"Maximum concurrent page scrapes (1-50, values > 50 are capped)\",\n    )\n    delay: float | None = Field(\n        default=None,\n        ge=0,\n        description=\"Delay in seconds between scrapes. Forces concurrency to 1 when set.\",\n    )\n    ignore_robots_txt: bool = Field(\n        default=False,\n        description=\"When True, bypass robots.txt enforcement. All discovered URLs are scraped regardless of robots.txt Disallow rules.\",\n    )\n    robots_user_agent: str | None = Field(\n        default=None,\n        description=\"Custom User-Agent string for robots.txt evaluation. When set, robots.txt rules are evaluated against this User-Agent instead of the default bot UA.\",\n    )\n    scrape_options: ScrapeOptions | None = Field(\n        default=None,\n        description=\"Per-page scrape options controlling output format, content filtering, viewport, and timeout behavior. Applied to every page in the crawl, including the start URL.\",\n    )\n    prompt: str | None = Field(\n        default=None,\n        max_length=10000,\n        description=\"Natural language description of what to crawl. Used to derive crawl parameters (includePaths, excludePaths, maxDepth) via LLM. Explicitly-set parameters override LLM-derived ones.\",\n    )\n    stream: bool = Field(\n        default=False,\n        description=\"When True, the crawl response is delivered as Server-Sent Events (SSE) stream. Per-page data is streamed incrementally as pages are scraped, with a final done event on completion.\",\n    )",
+            "source_id": "crawl-request-model",
+            "source_sha256": "f0cff4bc05b1a3d02e61688bff9a29b04595d80c30ba1bf0b3be91ef84371dd2",
+            "start_byte": 22740,
+            "subject": "crawl maxConcurrency default and range",
+            "version": "origin/main@7b9bf51de133"
+          }
+        ],
+        "subject": "crawl maxConcurrency default and range",
+        "version": "origin/main@7b9bf51de133"
+      },
+      "source_blob_by_id": {
+        "crawl-concurrency-choice": "docs/adr/0038-crawl-engine.md",
+        "crawl-request-model": "agent-svc/agent/models.py"
+      },
+      "state": {
+        "first_pass": {
+          "acquisition_status": "complete",
+          "coverage": {
+            "acquired_source_ids": [
+              "crawl-concurrency-choice",
+              "crawl-request-model"
+            ],
+            "omitted_source_ids": [],
+            "omitted_text_within_sources": true,
+            "presented_source_ids": [
+              "crawl-concurrency-choice",
+              "crawl-request-model"
+            ],
+            "scope": "bounded_excerpts_only"
+          },
+          "sources": [
+            {
+              "excerpt_end_byte": 6730,
+              "excerpt_start_byte": 6295,
+              "fetch_status": "success",
+              "source_id": "crawl-concurrency-choice",
+              "source_sha256": "3dae2ff7a855d93f52dc7e26687083177212a991cdb35725d78707cace9084d8",
+              "supplied_text": "**Chosen: Option B (`asyncio.Semaphore` worker pool).** Configurable via `maxConcurrency` (1-50, default 3) with `asyncio.Semaphore`. When `delay` is set, concurrency is forced to 1 with `asyncio.sleep()` between scrapes for pacing. Valkey-backed distributed coordination (Option C) is optional for multi-instance deployments. This provides the performance benefit of parallel scraping while keeping coordination simple and in-process.",
+              "text_scope": "excerpt",
+              "title": "docs/adr/0038-crawl-engine.md",
+              "url": "https://github.com/magnus919/groktocrawl-x/blob/7b9bf51de1334d4d7e6bd6256d3085c8c2a8d60d/docs/adr/0038-crawl-engine.md"
+            },
+            {
+              "excerpt_end_byte": 25417,
+              "excerpt_start_byte": 22740,
+              "fetch_status": "success",
+              "source_id": "crawl-request-model",
+              "source_sha256": "f0cff4bc05b1a3d02e61688bff9a29b04595d80c30ba1bf0b3be91ef84371dd2",
+              "supplied_text": "url: str\n    max_pages: int = Field(\n        default=0, ge=0, description=\"Maximum pages to scrape, 0 = unlimited\"\n    )\n    max_depth: int = Field(\n        default=2, ge=0, description=\"Maximum link-follow depth, must be >= 0\"\n    )\n    limit: int | None = Field(\n        default=None,\n        ge=1,\n        description=(\n            \"Maximum number of pages to crawl (Firecrawl v2 parity). \"\n            \"Like max_pages but ge=1: unlike max_pages, 0 is rejected \"\n            \"rather than meaning unlimited; when both are set the \"\n            \"stricter cap wins.\"\n        ),\n    )\n    ignore_sitemap: bool = False\n    sitemap: str = Field(\n        default=\"include\",\n        description=\"Sitemap mode: 'include' (default), 'skip', or 'only'\",\n    )\n    ignore_query_parameters: bool = False\n    include_paths: list[str] | None = None\n    exclude_paths: list[str] | None = None\n    regex_on_full_url: bool = False\n    verbose: bool = False\n    webhook: dict[str, Any] | None = None\n    crawl_entire_domain: bool = False\n    allow_subdomains: bool = False\n    allow_external_links: bool = False\n    max_concurrency: int = Field(\n        default=3,\n        ge=1,\n        description=\"Maximum concurrent page scrapes (1-50, values > 50 are capped)\",\n    )\n    delay: float | None = Field(\n        default=None,\n        ge=0,\n        description=\"Delay in seconds between scrapes. Forces concurrency to 1 when set.\",\n    )\n    ignore_robots_txt: bool = Field(\n        default=False,\n        description=\"When True, bypass robots.txt enforcement. All discovered URLs are scraped regardless of robots.txt Disallow rules.\",\n    )\n    robots_user_agent: str | None = Field(\n        default=None,\n        description=\"Custom User-Agent string for robots.txt evaluation. When set, robots.txt rules are evaluated against this User-Agent instead of the default bot UA.\",\n    )\n    scrape_options: ScrapeOptions | None = Field(\n        default=None,\n        description=\"Per-page scrape options controlling output format, content filtering, viewport, and timeout behavior. Applied to every page in the crawl, including the start URL.\",\n    )\n    prompt: str | None = Field(\n        default=None,\n        max_length=10000,\n        description=\"Natural language description of what to crawl. Used to derive crawl parameters (includePaths, excludePaths, maxDepth) via LLM. Explicitly-set parameters override LLM-derived ones.\",\n    )\n    stream: bool = Field(\n        default=False,\n        description=\"When True, the crawl response is delivered as Server-Sent Events (SSE) stream. Per-page data is streamed incrementally as pages are scraped, with a final done event on completion.\",\n    )",
+              "text_scope": "excerpt",
+              "title": "agent-svc/agent/models.py",
+              "url": "https://github.com/magnus919/groktocrawl-x/blob/7b9bf51de1334d4d7e6bd6256d3085c8c2a8d60d/agent-svc/agent/models.py"
+            }
+          ]
+        },
+        "obligation": {
+          "id": "pilot-07",
+          "scope": "public project documentation at 7b9bf51de1334d4d7e6bd6256d3085c8c2a8d60d",
+          "statement": "Compare two passages describing the same crawl concurrency contract."
+        },
+        "public_search_scope": {
+          "allowed_source_types": [
+            "public project documentation",
+            "public source code",
+            "official upstream documentation"
+          ],
+          "excluded_scopes": [
+            "private deployment configuration",
+            "authenticated data",
+            "non-public operational state"
+          ]
+        },
+        "research_question": "Do these two passages agree about the documented maxConcurrency default and range?"
+      },
+      "stratum": "aligned-passage-noncontradiction-control"
+    },
+    {
+      "assistant_reference": {
+        "evidence_status": "insufficient_to_assess",
+        "provenance": "assistant best-effort assessment; not independent gold",
+        "rationale": "Public documentation gives a default, not a particular deployment's effective value.",
+        "search_needed": "no",
+        "stage1_yes": false,
+        "stage3_yes": true,
+        "stage4_yes_if_reached": false
+      },
+      "case_id": "pilot-08",
+      "frozen_request_sha256": {
+        "stage1_sufficiency": "cbf4073a79f657813ac5ed1586b5fd3bca58ab11119a0f3a6c75a26846311fbf",
+        "stage3_hypothesis_review": "8aad298eea0f372a43be21045b764b0895e8906137b84eee31737c6baff38b05",
+        "stage4_addressability_if_stage3_positive": "2c6c6cab86683beea2d9140f709b818858cc9598599fc7987862ebc756eb8aee"
+      },
+      "proposal_provenance": "separate research-agent stage, assistant-authored for this pilot; not Jev-generated and not independent gold",
+      "research_agent_proposal": {
+        "absence_scope": "supplied_material_only",
+        "context": "live configuration of a particular operator deployment",
+        "hypothesis_id": "pilot-08-h1",
+        "kind": "missing_information",
+        "proposition": "The supplied public documentation does not identify a particular deployment's effective maxConcurrency setting.",
+        "source_spans": [
+          {
+            "context": "live configuration of a particular operator deployment",
+            "end_byte": 6730,
+            "quote": "**Chosen: Option B (`asyncio.Semaphore` worker pool).** Configurable via `maxConcurrency` (1-50, default 3) with `asyncio.Semaphore`. When `delay` is set, concurrency is forced to 1 with `asyncio.sleep()` between scrapes for pacing. Valkey-backed distributed coordination (Option C) is optional for multi-instance deployments. This provides the performance benefit of parallel scraping while keeping coordination simple and in-process.",
+            "source_id": "crawl-adr",
+            "source_sha256": "3dae2ff7a855d93f52dc7e26687083177212a991cdb35725d78707cace9084d8",
+            "start_byte": 6295,
+            "subject": "deployment-specific crawl concurrency setting",
+            "version": "origin/main@7b9bf51de133"
+          }
+        ],
+        "specific_information": "the actual effective maxConcurrency setting in a particular deployment",
+        "subject": "deployment-specific crawl concurrency setting",
+        "version": "origin/main@7b9bf51de133"
+      },
+      "source_blob_by_id": {
+        "crawl-adr": "docs/adr/0038-crawl-engine.md"
+      },
+      "state": {
+        "first_pass": {
+          "acquisition_status": "complete",
+          "coverage": {
+            "acquired_source_ids": [
+              "crawl-adr"
+            ],
+            "omitted_source_ids": [],
+            "omitted_text_within_sources": true,
+            "presented_source_ids": [
+              "crawl-adr"
+            ],
+            "scope": "bounded_excerpts_only"
+          },
+          "sources": [
+            {
+              "excerpt_end_byte": 6730,
+              "excerpt_start_byte": 6295,
+              "fetch_status": "success",
+              "source_id": "crawl-adr",
+              "source_sha256": "3dae2ff7a855d93f52dc7e26687083177212a991cdb35725d78707cace9084d8",
+              "supplied_text": "**Chosen: Option B (`asyncio.Semaphore` worker pool).** Configurable via `maxConcurrency` (1-50, default 3) with `asyncio.Semaphore`. When `delay` is set, concurrency is forced to 1 with `asyncio.sleep()` between scrapes for pacing. Valkey-backed distributed coordination (Option C) is optional for multi-instance deployments. This provides the performance benefit of parallel scraping while keeping coordination simple and in-process.",
+              "text_scope": "excerpt",
+              "title": "docs/adr/0038-crawl-engine.md",
+              "url": "https://github.com/magnus919/groktocrawl-x/blob/7b9bf51de1334d4d7e6bd6256d3085c8c2a8d60d/docs/adr/0038-crawl-engine.md"
+            }
+          ]
+        },
+        "obligation": {
+          "id": "pilot-08",
+          "scope": "public project documentation at 7b9bf51de1334d4d7e6bd6256d3085c8c2a8d60d",
+          "statement": "Determine live effective setting for a specific deployment."
+        },
+        "public_search_scope": {
+          "allowed_source_types": [
+            "public project documentation",
+            "public source code",
+            "official upstream documentation"
+          ],
+          "excluded_scopes": [
+            "private deployment configuration",
+            "authenticated data",
+            "non-public operational state"
+          ]
+        },
+        "research_question": "What maxConcurrency value is currently configured in a particular operator deployment?"
+      },
+      "stratum": "private-state-unanswerable"
+    }
+  ],
+  "contract": "continuation-evidence-gap-addressability/2",
+  "model": "jev-1.13.0",
+  "source_revision": "7b9bf51de1334d4d7e6bd6256d3085c8c2a8d60d",
+  "source_revision_ref": "origin/main at freeze",
+  "study_id": "jev-continuation-v2-pilot-2026-10-03"
+}

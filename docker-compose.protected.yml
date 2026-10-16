@@ -1,0 +1,543 @@
+# Production network-isolation overlay. Keep docker-compose.yml as the
+# backwards-compatible local/default HTTP topology; select this file explicitly
+# for a protected capture deployment.
+services:
+  valkey:
+    networks: !override [default, control_private]
+
+  scraper-svc:
+    # The protected entrypoint drops to its worker UID, then execs its own
+    # tini. An outer Compose init would remain PID 1 as root and fail the
+    # scraper's PID-1 identity check.
+    init: false
+    ports: !override []
+    env_file: !override []
+    environment: !override
+      VALKEY_HOST: valkey
+      VALKEY_PORT: "6379"
+      VALKEY_DB: "0"
+      VALKEY_RPC_SOCKET: /run/scraper-state/control.sock
+      LLM_CONTROL_SOCKET: /run/scraper-llm/control.sock
+      LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+      CAPTCHA_VISION_MODEL: ${CAPTCHA_VISION_MODEL:-}
+      CAPTCHA_VISION_BASE_URL: ${CAPTCHA_VISION_BASE_URL:-}
+      BROWSER_SVC_URL: http://browser-svc:8012
+      BROWSER_CONTROL_SOCKET: /run/browser-control/controller.sock
+      FLARE_SOLVERR_URL: http://flare-control-svc:8191/v1
+      FLARE_CONTROL_SOCKET: /run/flare-control/control.sock
+      FLARE_CAPTURE_GATEWAY_IP: ${PROTECTED_CAPTURE_FLARE_GATEWAY_IP:-10.240.254.18}
+      FLARE_CAPTURE_GATEWAY_SUBNET: ${PROTECTED_CAPTURE_FLARE_SUBNET:-10.240.254.16/29}
+      FLARE_CAPTURE_PROXY_URL: http://${PROTECTED_CAPTURE_FLARE_GATEWAY_IP:-10.240.254.18}:8080
+      SCRAPER_API_SOCKET: /run/scraper/app.sock
+      SCRAPER_CAPTURE_EGRESS_PROXY_URL: http://${PROTECTED_CAPTURE_SOURCE_IP:-10.240.254.2}:8080
+      SCRAPER_CAPTURE_GATEWAY_IP: ${PROTECTED_CAPTURE_SOURCE_IP:-10.240.254.2}
+      SCRAPER_CAPTURE_GATEWAY_SUBNET: ${PROTECTED_CAPTURE_SOURCE_SUBNET:-10.240.254.0/29}
+      SCRAPER_CAPTURE_GATEWAY_PORT: "8080"
+      SCRAPER_MAX_BROWSER_CONCURRENCY: ${SCRAPER_MAX_BROWSER_CONCURRENCY:-4}
+      SCRAPER_BROWSER_POOL_ENABLED: ${SCRAPER_BROWSER_POOL_ENABLED:-false}
+      SCRAPER_BROWSER_POOL_MAX_PROCESSES: ${SCRAPER_BROWSER_POOL_MAX_PROCESSES:-2}
+      SCRAPER_BROWSER_POOL_IDLE_TTL_SECONDS: ${SCRAPER_BROWSER_POOL_IDLE_TTL_SECONDS:-60}
+      SCRAPER_BROWSER_POOL_MAX_AGE_SECONDS: ${SCRAPER_BROWSER_POOL_MAX_AGE_SECONDS:-900}
+      SCRAPER_POLITENESS_ENABLED: ${SCRAPER_POLITENESS_ENABLED:-false}
+      SCRAPER_DISTRIBUTED_POLITENESS: ${SCRAPER_DISTRIBUTED_POLITENESS:-false}
+      SCRAPER_POLITENESS_CRAWL_DELAY: ${SCRAPER_POLITENESS_CRAWL_DELAY:-1.0}
+      SCRAPER_POLITENESS_ROBOTS_TTL: ${SCRAPER_POLITENESS_ROBOTS_TTL:-3600}
+      SCRAPER_POLITENESS_ROBOTS_TIMEOUT: ${SCRAPER_POLITENESS_ROBOTS_TIMEOUT:-10}
+      SCRAPE_CACHE_TTL: ${SCRAPE_CACHE_TTL:-3600}
+      SCRAPE_CACHE_MIN_TTL: ${SCRAPE_CACHE_MIN_TTL:-60}
+      SCRAPE_CACHE_MAX_TTL: ${SCRAPE_CACHE_MAX_TTL:-86400}
+      SCRAPE_CACHE_STABLE_MULTIPLIER: ${SCRAPE_CACHE_STABLE_MULTIPLIER:-2.0}
+      SCRAPE_CACHE_VOLATILE_CAP: ${SCRAPE_CACHE_VOLATILE_CAP:-300}
+      SCRAPE_CACHE_DOMAIN_TTLS: ${SCRAPE_CACHE_DOMAIN_TTLS:-{}}
+      QA_MIN_CONTENT_CHARS: ${QA_MIN_CONTENT_CHARS:-200}
+      QA_MIN_TITLE_CHARS: ${QA_MIN_TITLE_CHARS:-10}
+      QA_MAX_BOILERPLATE_RATIO: ${QA_MAX_BOILERPLATE_RATIO:-0.7}
+      QA_MIN_QUALITY_THRESHOLD: ${QA_MIN_QUALITY_THRESHOLD:-0.3}
+      SECTION_FILTER_DEFAULT_INCLUDE: ${SECTION_FILTER_DEFAULT_INCLUDE:-}
+      SECTION_FILTER_DEFAULT_EXCLUDE: ${SECTION_FILTER_DEFAULT_EXCLUDE:-}
+      SECTION_FILTER_DEFAULT_VERBOSITY: ${SECTION_FILTER_DEFAULT_VERBOSITY:-standard}
+      RECOVERY_LLM_TIMEOUT: ${RECOVERY_LLM_TIMEOUT:-15}
+      CAPTCHA_VISION_TIMEOUT: ${CAPTCHA_VISION_TIMEOUT:-60}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      ADAPTER_NVD_API_KEY: ${ADAPTER_NVD_API_KEY:-}
+      ADAPTER_YOUTUBE_API_KEY: ${ADAPTER_YOUTUBE_API_KEY:-}
+      ADAPTER_ASHBY_API_KEY: ${ADAPTER_ASHBY_API_KEY:-}
+      ASHBY_API_KEY: ${ASHBY_API_KEY:-}
+      ADAPTER_GUTENBERG_CACHE_BASE: ${ADAPTER_GUTENBERG_CACHE_BASE:-}
+      ADAPTER_GUTENDEX_API_BASE: ${ADAPTER_GUTENDEX_API_BASE:-}
+      ADAPTER_ABUSEIPDB_API_KEY: ${ADAPTER_ABUSEIPDB_API_KEY:-}
+      ADAPTER_OTX_API_KEY: ${ADAPTER_OTX_API_KEY:-}
+      ADAPTER_SHODAN_API_KEY: ${ADAPTER_SHODAN_API_KEY:-}
+      ADAPTER_HIBP_API_KEY: ${ADAPTER_HIBP_API_KEY:-}
+      ADAPTER_CENSYS_API_ID: ${ADAPTER_CENSYS_API_ID:-}
+      ADAPTER_CENSYS_API_SECRET: ${ADAPTER_CENSYS_API_SECRET:-}
+      ADAPTER_VIRUSTOTAL_API_KEY: ${ADAPTER_VIRUSTOTAL_API_KEY:-}
+      ADAPTER_VULNCHECK_API_KEY: ${ADAPTER_VULNCHECK_API_KEY:-}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      HOME: /home/scraper
+    depends_on:
+      scraper-socket-init:
+        condition: service_completed_successfully
+      capture-egress-svc:
+        condition: service_healthy
+      scraper-state-control:
+        condition: service_healthy
+      scraper-model-control:
+        condition: service_healthy
+      browser-svc:
+        condition: service_healthy
+      flare-control-svc:
+        condition: service_healthy
+        required: false
+    volumes: !override
+      - scraper_api_socket:/run/scraper
+      - scraper_state_socket:/run/scraper-state:ro
+      - scraper_llm_socket:/run/scraper-llm:ro
+      - browser_controller_socket:/run/browser-control:ro
+      - flare_control_socket:/run/flare-control:ro
+    networks: !override [capture_source]
+    user: "0:0"
+    group_add: ["20000"]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, NET_ADMIN, SETUID, SETGID, SETPCAP]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import socket; s=socket.socket(socket.AF_UNIX); s.settimeout(3);
+          s.connect('/run/scraper/app.sock');
+          s.sendall(b'GET /health HTTP/1.1\r\nHost: scraper.local\r\nConnection: close\r\n\r\n');
+          assert b'200 OK' in s.recv(4096)
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 20
+
+  scraper-socket-init:
+    image: ghcr.io/groktopus/groktocrawl-scraper
+    user: "0:0"
+    command:
+      - /bin/sh
+      - -c
+      - >-
+        setup_socket_dir() {
+          d=$$1; owner=$$2; mode=$$3;
+          mkdir -p "$$d" || { echo "failed to create socket directory: $$d" >&2; exit 1; };
+          chown "$$owner" "$$d" || { echo "failed to set socket directory ownership: $$d" >&2; exit 1; };
+          chmod "$$mode" "$$d" || { echo "failed to set socket directory mode: $$d" >&2; exit 1; };
+          test "$$(stat -c '%u:%g:%a' "$$d")" = "$${owner}:$${mode}" || { echo "socket directory ownership or mode mismatch: $$d" >&2; exit 1; };
+        };
+        setup_socket_dir /run/scraper 10001:20000 2710;
+        setup_socket_dir /run/scraper-state 10002:20000 2710;
+        setup_socket_dir /run/scraper-llm 10002:20000 2710;
+        setup_socket_dir /run/browser 10001:20000 2710;
+        setup_socket_dir /run/browser-control 0:20000 2710;
+        setup_socket_dir /run/flare-control 10003:20000 2710
+    volumes:
+      - scraper_api_socket:/run/scraper
+      - scraper_state_socket:/run/scraper-state
+      - scraper_llm_socket:/run/scraper-llm
+      - browser_renderer_socket:/run/browser
+      - browser_controller_socket:/run/browser-control
+      - flare_control_socket:/run/flare-control
+    network_mode: none
+    cap_drop: [ALL]
+    cap_add: [CHOWN, FOWNER, FSETID]
+    security_opt: [no-new-privileges:true]
+    restart: "no"
+
+  scraper-ingress-svc:
+    image: ghcr.io/groktopus/groktocrawl-scraper
+    command: [uvicorn, scraper.ingress:app, --host, 0.0.0.0, --port, "8010"]
+    restart: unless-stopped
+    user: "10001:20000"
+    environment:
+      SCRAPER_API_SOCKET: /run/scraper/app.sock
+    volumes:
+      - scraper_api_socket:/run/scraper:ro
+    depends_on:
+      scraper-socket-init:
+        condition: service_completed_successfully
+      scraper-svc:
+        condition: service_healthy
+    networks: [scraper_private]
+    ports:
+      - "${SCRAPER_HOST_PORT:-8001}:8010"
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8010/health', timeout=3)"]
+      interval: 10s
+      timeout: 4s
+      retries: 10
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    cpus: 0.25
+    pids_limit: 64
+
+  scraper-state-control:
+    image: ghcr.io/groktopus/groktocrawl-scraper
+    command: [python, -m, scraper.valkey_control]
+    user: "10002:20000"
+    restart: unless-stopped
+    environment:
+      VALKEY_HOST: valkey
+      VALKEY_PORT: "6379"
+      VALKEY_DB: "0"
+      VALKEY_RPC_SOCKET: /run/scraper-state/control.sock
+    volumes:
+      - scraper_state_socket:/run/scraper-state
+    depends_on:
+      scraper-socket-init:
+        condition: service_completed_successfully
+      valkey:
+        condition: service_healthy
+    networks: [control_private]
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import socket; s=socket.socket(socket.AF_UNIX); s.settimeout(2);
+          s.connect('/run/scraper-state/control.sock'); s.sendall(b'{"operation":"ping"}\n');
+          assert b'"value":true' in s.recv(1024)
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+    cpus: 0.25
+    pids_limit: 64
+
+  capture-egress-svc:
+    build:
+      context: .
+      dockerfile: capture-egress-svc/Dockerfile
+    image: ghcr.io/groktopus/groktocrawl-capture-egress
+    restart: unless-stopped
+    networks:
+      capture_egress:
+        gw_priority: 1
+      capture_source:
+        ipv4_address: ${PROTECTED_CAPTURE_SOURCE_IP:-10.240.254.2}
+      capture_browser:
+        ipv4_address: ${PROTECTED_CAPTURE_BROWSER_GATEWAY_IP:-10.240.254.10}
+      capture_flare:
+        ipv4_address: ${PROTECTED_CAPTURE_FLARE_GATEWAY_IP:-10.240.254.18}
+    environment:
+      CAPTURE_PROXY_BIND_HOST: 0.0.0.0
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8081/healthz', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+    cpus: 1.0
+    pids_limit: 128
+
+  browser-renderer-svc:
+    image: ghcr.io/groktopus/groktocrawl-browser
+    command: [python, -m, browser_svc.renderer_entrypoint]
+    restart: unless-stopped
+    group_add: ["20000"]
+    networks:
+      capture_browser:
+        ipv4_address: ${PROTECTED_CAPTURE_BROWSER_RENDERER_IP:-10.240.254.11}
+    environment:
+      BROWSER_PROTECTED_RENDERER: "1"
+      BROWSER_CAPTURE_PROXY_URL: http://${PROTECTED_CAPTURE_BROWSER_GATEWAY_IP:-10.240.254.10}:8080
+      BROWSER_RENDERER_SOCKET: /run/browser/renderer.sock
+      BROWSER_COOKIE_RPC_SOCKET: /run/browser/cookies.sock
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      - browser_renderer_socket:/run/browser
+    cap_drop: [ALL]
+    cap_add: [CHOWN, NET_ADMIN, SETUID, SETGID, SETPCAP]
+    security_opt: [no-new-privileges:true]
+    depends_on:
+      scraper-socket-init:
+        condition: service_completed_successfully
+      capture-egress-svc:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import socket; s=socket.socket(socket.AF_UNIX); s.settimeout(2);
+          s.connect('/run/browser/renderer.sock');
+          s.sendall(b'GET /health HTTP/1.1\r\nHost: renderer.local\r\nConnection: close\r\n\r\n');
+          assert b'200 OK' in s.recv(1024)
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 20
+    mem_limit: 1500m
+    cpus: 1.0
+    pids_limit: 256
+
+  browser-svc:
+    command: [python, -m, browser_svc.controller_entrypoint]
+    restart: unless-stopped
+    networks: !override [control_private]
+    environment: !override
+      BROWSER_RENDERER_SOCKET: /run/browser/renderer.sock
+      BROWSER_COOKIE_RPC_SOCKET: /run/browser/cookies.sock
+      BROWSER_CONTROLLER_SOCKET: /run/browser-control/controller.sock
+      VALKEY_HOST: valkey
+      VALKEY_PORT: "6379"
+    volumes:
+      - browser_renderer_socket:/run/browser
+      - browser_controller_socket:/run/browser-control
+    group_add: ["20000"]
+    cap_drop: [ALL]
+    cap_add: [CHOWN]
+    security_opt: [no-new-privileges:true]
+    depends_on:
+      scraper-socket-init:
+        condition: service_completed_successfully
+      browser-renderer-svc:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import socket; s=socket.socket(socket.AF_UNIX); s.settimeout(2);
+          s.connect('/run/browser-control/controller.sock');
+          s.sendall(b'GET /health HTTP/1.1\r\nHost: browser.local\r\nConnection: close\r\n\r\n');
+          assert b'200 OK' in s.recv(2048)
+    mem_limit: 256m
+    cpus: 0.5
+    pids_limit: 128
+
+  scraper-model-control:
+    image: ghcr.io/groktopus/groktocrawl-scraper
+    command: [python, -m, scraper.llm_control_entrypoint]
+    restart: unless-stopped
+    user: "10002:20000"
+    environment:
+      MODEL_CONTROL_SOCKET: /run/scraper-llm/control.sock
+      LLM_BASE_URL: ${LLM_BASE_URL:?Set the production model endpoint in the private environment file}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      CAPTCHA_VISION_BASE_URL: ${CAPTCHA_VISION_BASE_URL:-}
+      CAPTCHA_VISION_API_KEY: ${CAPTCHA_VISION_API_KEY:-}
+      MODEL_EGRESS_PROXY_URL: http://${PROTECTED_MODEL_GATEWAY_IP:-10.240.254.34}:8080
+    volumes:
+      - scraper_llm_socket:/run/scraper-llm
+    depends_on:
+      scraper-socket-init:
+        condition: service_completed_successfully
+      model-egress-svc:
+        condition: service_healthy
+    networks: [model_gateway]
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import socket; s=socket.socket(socket.AF_UNIX); s.settimeout(2);
+          s.connect('/run/scraper-llm/control.sock');
+          s.sendall(b'GET /health HTTP/1.1\r\nHost: llm-control.local\r\nConnection: close\r\n\r\n');
+          assert b'200 OK' in s.recv(1024)
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    cpus: 0.25
+    pids_limit: 64
+
+  model-egress-svc:
+    image: ghcr.io/groktopus/groktocrawl-capture-egress
+    command: [python, -m, capture_egress_svc.model_proxy]
+    restart: unless-stopped
+    environment:
+      LLM_BASE_URL: ${LLM_BASE_URL:?Set the production model endpoint in the private environment file}
+      CAPTCHA_VISION_BASE_URL: ${CAPTCHA_VISION_BASE_URL:-}
+      LLM_GATEWAY_PRIVATE_HOSTS: ${LLM_GATEWAY_PRIVATE_HOSTS:-}
+      MODEL_PROXY_BIND_HOST: 0.0.0.0
+    networks:
+      model_upstream:
+        gw_priority: 1
+      model_gateway:
+        ipv4_address: ${PROTECTED_MODEL_GATEWAY_IP:-10.240.254.34}
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import socket; s=socket.create_connection(('127.0.0.1',8080),timeout=2);
+          s.sendall(b'GET http://invalid.invalid/ HTTP/1.1\r\nHost: invalid.invalid\r\nConnection: close\r\n\r\n');
+          assert b'403 Forbidden' in s.recv(1024)
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    cpus: 0.5
+    pids_limit: 64
+
+  agent-svc:
+    networks: !override [default, scraper_private]
+    environment:
+      - SCRAPER_URL=http://scraper-ingress-svc:8010
+      - BROWSER_CONTROL_SOCKET=/run/browser-control/controller.sock
+    volumes:
+      - browser_controller_socket:/run/browser-control:ro
+    group_add: ["20000"]
+    depends_on:
+      scraper-ingress-svc:
+        condition: service_healthy
+      browser-svc:
+        condition: service_healthy
+
+  flare-renderer-svc:
+    build:
+      context: .
+      dockerfile: flare-protected/Dockerfile
+    image: ghcr.io/groktopus/groktocrawl-protected-flare
+    restart: unless-stopped
+    profiles: [protected-flare]
+    group_add: ["20000"]
+    networks:
+      capture_flare:
+        ipv4_address: ${PROTECTED_CAPTURE_FLARE_RENDERER_IP:-10.240.254.19}
+    environment:
+      FLARE_API_UNIX_SOCKET: /run/flaresolverr/api.sock
+      FLARE_CAPTURE_GATEWAY_IP: ${PROTECTED_CAPTURE_FLARE_GATEWAY_IP:-10.240.254.18}
+      FLARE_CAPTURE_GATEWAY_SUBNET: ${PROTECTED_CAPTURE_FLARE_SUBNET:-10.240.254.16/29}
+      FLARE_CAPTURE_PROXY_URL: http://${PROTECTED_CAPTURE_FLARE_GATEWAY_IP:-10.240.254.18}:8080
+      LOG_LEVEL: ${FLARE_SOLVERR_LOG_LEVEL:-info}
+      LOG_HTML: "false"
+      CAPTCHA_SOLVER: ${FLARE_SOLVERR_CAPTCHA_SOLVER:-none}
+    volumes:
+      - flare_socket:/run/flaresolverr
+    cap_drop: [ALL]
+    cap_add: [CHOWN, NET_ADMIN, SETUID, SETGID, SETPCAP]
+    security_opt: [no-new-privileges:true]
+    depends_on:
+      scraper-socket-init:
+        condition: service_completed_successfully
+      capture-egress-svc:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import socket; s=socket.socket(socket.AF_UNIX); s.settimeout(2);
+          s.connect('/run/flaresolverr/api.sock');
+          s.sendall(b'GET /health HTTP/1.1\r\nHost: flaresolverr.local\r\nConnection: close\r\n\r\n');
+          assert b'200 OK' in s.recv(2048)
+      interval: 10s
+      timeout: 5s
+      start_period: 45s
+      retries: 20
+    mem_limit: 1500m
+    cpus: 1.0
+    pids_limit: 256
+
+  flare-control-svc:
+    build:
+      context: .
+      dockerfile: flare-control/Dockerfile
+    image: ghcr.io/groktopus/groktocrawl-flare-control
+    restart: unless-stopped
+    profiles: [protected-flare]
+    environment:
+      FLARE_CONTROL_UNIX_SOCKET: /run/flare-control/control.sock
+    user: "10003:10003"
+    group_add: ["20000"]
+    volumes:
+      - flare_socket:/run/flaresolverr:ro
+      - flare_control_socket:/run/flare-control
+    network_mode: none
+    depends_on:
+      scraper-socket-init:
+        condition: service_completed_successfully
+      flare-renderer-svc:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import socket; s=socket.socket(socket.AF_UNIX); s.settimeout(2);
+          s.connect('/run/flare-control/control.sock');
+          s.sendall(b'GET /health HTTP/1.1\r\nHost: flare.local\r\nConnection: close\r\n\r\n');
+          assert b'200 OK' in s.recv(2048)
+      interval: 10s
+      timeout: 5s
+      start_period: 5s
+      retries: 20
+    mem_limit: 256m
+    cpus: 0.25
+    pids_limit: 64
+
+networks:
+  capture_egress:
+    ipam:
+      config:
+        - subnet: ${PROTECTED_CAPTURE_EGRESS_SUBNET:-10.240.251.0/24}
+  control_private:
+    internal: true
+    ipam:
+      config:
+        - subnet: ${PROTECTED_CONTROL_PRIVATE_SUBNET:-10.240.252.0/24}
+  scraper_private:
+    internal: true
+    ipam:
+      config:
+        - subnet: ${PROTECTED_SCRAPER_PRIVATE_SUBNET:-10.240.253.0/24}
+  capture_source:
+    internal: true
+    ipam:
+      config:
+        - subnet: ${PROTECTED_CAPTURE_SOURCE_SUBNET:-10.240.254.0/29}
+          ip_range: ${PROTECTED_CAPTURE_SOURCE_POOL:-10.240.254.4/30}
+          gateway: ${PROTECTED_CAPTURE_SOURCE_GATEWAY:-10.240.254.1}
+  capture_browser:
+    internal: true
+    ipam:
+      config:
+        - subnet: ${PROTECTED_CAPTURE_BROWSER_SUBNET:-10.240.254.8/29}
+          ip_range: ${PROTECTED_CAPTURE_BROWSER_POOL:-10.240.254.12/30}
+  capture_flare:
+    internal: true
+    ipam:
+      config:
+        - subnet: ${PROTECTED_CAPTURE_FLARE_SUBNET:-10.240.254.16/29}
+          ip_range: ${PROTECTED_CAPTURE_FLARE_POOL:-10.240.254.20/30}
+  model_gateway:
+    internal: true
+    ipam:
+      config:
+        - subnet: ${PROTECTED_MODEL_GATEWAY_SUBNET:-10.240.254.32/29}
+          ip_range: ${PROTECTED_MODEL_GATEWAY_POOL:-10.240.254.36/30}
+  model_upstream:
+    ipam:
+      config:
+        - subnet: ${PROTECTED_MODEL_UPSTREAM_SUBNET:-10.240.254.40/29}
+
+volumes:
+  scraper_api_socket:
+  scraper_state_socket:
+  scraper_llm_socket:
+  browser_renderer_socket:
+  browser_controller_socket:
+  flare_socket:
+  flare_control_socket:

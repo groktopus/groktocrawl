@@ -133,3 +133,27 @@ def test_token_policy_defaults_preserve_legacy_budget():
     assert settings.llm_max_tokens == 8192
     assert settings.llm_max_completion_tokens == 32768
     assert settings.llm_health_token_budget == 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("parameter", ["max_tokens", "max_completion_tokens"])
+@pytest.mark.parametrize("explicit", [False, True])
+async def test_legacy_output_alias_uses_one_selected_field_with_explicit_precedence(
+    monkeypatch, parameter, explicit
+):
+    values = {"LLM_TOKEN_PARAMETER": parameter, "LLM_MAX_OUTPUT_TOKENS": 4321}
+    if explicit:
+        values[f"LLM_{parameter.upper()}"] = 6543
+    settings = AgentSettings(**values)
+    monkeypatch.setattr(llm_module, "load_settings", lambda: settings)
+    requests = _install_strict_provider(monkeypatch, parameter)
+    client = LLMClient(base_url="https://provider.invalid/v1", model="fixture")
+    try:
+        assert await client.generate("system", "question") == "ok"
+        events = [event async for event in client.generate_stream("system", "question")]
+        assert events[-1]["type"] == "done"
+        assert await client.check_health()
+    finally:
+        await client.close()
+    expected = 6543 if explicit else 4321
+    assert [body[parameter] for body in requests] == [expected, expected, 1]

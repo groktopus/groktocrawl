@@ -1,0 +1,33 @@
+{
+  "schema_version": "pgvector-application-serving-cutover-result/1",
+  "status": "cutover_and_rollback_gates_passed",
+  "pinned_search_parity": {
+    "pgvector_cutover": true,
+    "qdrant_outage": true,
+    "qdrant_restored": true,
+    "qdrant_rollback": true,
+    "score_precision_decimal_places": 5
+  },
+  "document_count_parity": true,
+  "mutation": {
+    "pgvector_served_write_found": true,
+    "deleted_write_absent": true
+  },
+  "faults": {
+    "qdrant_outage_reads_served": true,
+    "qdrant_outage_writes_rejected_http": 503,
+    "postgresql_outage_reads_rejected_http": 503,
+    "rollback_while_postgresql_down": true
+  },
+  "sustained": {
+    "index_http_failures": 0,
+    "search_http_failures": 0,
+    "steady_search_http_failures": 0
+  },
+  "shared_postgresql": {
+    "retained_artifact_tests_passed": 40,
+    "retained_artifact_tests_failed": 0,
+    "duration_seconds": 20.700
+  },
+  "recommendation": "Review ADR-0079 and retain Qdrant through an explicit experimental rollback window."
+}

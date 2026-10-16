@@ -4,12 +4,16 @@ on:
     paths:
       - docker-compose.yml
       - docker-compose.scaleout.yml
+      - deploy/scaleout.py
       - deploy/scraper-gateway.cfg
       - benchmarks/scraper_scaleout.py
       - scraper-svc/scraper/politeness.py
       - scraper-svc/scraper/settings.py
       - tests/fixtures/scaleout_server.py
       - tests/fixtures/compose.scaleout.yml
+      - scripts/ci_public_image_prefetch.py
+      - tests/unit/test_ci_public_image_prefetch.py
+      - tests/unit/test_scaleout_capacity.py
       - .github/workflows/scraper-scaleout.yml
   workflow_dispatch:
 permissions:
@@ -38,6 +42,14 @@ jobs:
         run: uv sync --locked --no-dev --group fast-tests
       - name: Prepare fixture-only environment
         run: cp .env.sample .env
+      - name: Prefetch pinned scale-out fixture images
+        run: >-
+          python3 scripts/ci_public_image_prefetch.py
+          --group topology
+          --compose-file docker-compose.yml
+          --compose-file docker-compose.scaleout.yml
+          --compose-file tests/fixtures/compose.scaleout.yml
+          --receipt scaleout-public-image-prefetch.json
       - name: Exercise Valkey reservation and cancellation semantics
         env:
           TEST_VALKEY_URL: redis://127.0.0.1:6379/0
@@ -49,6 +61,12 @@ jobs:
         run: |
           set -euo pipefail
           python3 benchmarks/scraper_scaleout.py | tee scaleout-evidence.json
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: scaleout-public-image-prefetch
+          path: scaleout-public-image-prefetch.json
+          if-no-files-found: warn
       - uses: actions/upload-artifact@v7
         with:
           name: scraper-scaleout-evidence

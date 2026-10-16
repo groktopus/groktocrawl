@@ -1,0 +1,182 @@
+{
+  "case_id": "mission-contradictory-mirror",
+  "completed_at": "2026-09-19T06:05:16.835716+00:00",
+  "position": 2,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "959e15069c1e07d259517e19e6e37c66436c3a6d48e534aa8387a7105a009f55",
+    "finish_reason": "stop",
+    "latency_ms": 142375.954,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "bbd38a0f9c8d13bfd7c4e0e0d394bbbc81404d42d7cb5bc1e749bc57661b7e0c",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 10981,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 11282
+      },
+      "cost": 0.00555449,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0054905,
+        "upstream_inference_cost": 0.00555449,
+        "upstream_inference_prompt_cost": 6.399e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 2065,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 2048,
+        "video_tokens": 0
+      },
+      "total_tokens": 13046
+    }
+  },
+  "repetition": 2,
+  "result": {
+    "action": "ready",
+    "clarifying_question": null,
+    "mission": {
+      "abstain_when": [
+        "The request shifts from evidentiary analysis to obtaining, asserting, or substituting for production deployment authority; no research output may serve as an authority grant.",
+        "The artifact is shown not to be a verbatim reproduction of the delivery policy; report the premise failure instead of concluding on a different question.",
+        "No primary or official governance or evidence-standard source is accessible; do not close the corroboration determination on derivative or inaccessible sources alone."
+      ],
+      "acceptable_uncertainty": "A determination may state that verbatim mirrors are derivative and not independent corroboration only when supported by at least two independent authoritative sources; any residual uncertainty about the specific mirror's provenance, or a single-publisher evidence base, must be reported explicitly rather than resolved by assumption.",
+      "audience": "Enterprise governance, risk, and platform-engineering reviewers assessing deployment-governance evidence, and the requester deciding whether the mirror may be cited as corroboration.",
+      "budget": {
+        "max_elapsed_seconds": 300,
+        "max_model_calls": 6,
+        "max_searches": 4,
+        "max_sources": 10
+      },
+      "clarifications": [
+        {
+          "blocking": false,
+          "clarification_id": "mirror-provenance-nonverbatim",
+          "question": "If sources indicate the mirrored text is not a verbatim reproduction of the authoritative delivery policy (e.g., independently authored or modified), should the mission pivot to that artifact's independence or close with a premise-unmet finding?",
+          "trigger": "Research reveals the mirrored text diverges from the authoritative delivery policy or has a separate authoring origin."
+        }
+      ],
+      "contradiction_policy": "preserve_and_report",
+      "decision": "Determine whether a verbatim mirror repetition of the delivery policy constitutes independent corroboration of production deployment authority in the enterprise agentic software factory's deployment-governance evidence chain; the output is an evidentiary determination only and is not a grant, denial, or substitute for deployment authority.",
+      "freshness": {
+        "as_of": null,
+        "mode": "current",
+        "rationale": "Deployment-governance standards and policy status change over time; the corroboration determination must reflect the governance corpus as it currently stands, not a prior state."
+      },
+      "mission_id": "mirror-verbatim-corroboration-deploy-authority",
+      "obligations": [
+        {
+          "closure_rule": "Closed when criteria from at least two independent authoritative sources are captured and cited; if fewer are accessible, report the shortfall and leave the obligation open.",
+          "description": "Locate primary or official governance and evidence-standard sources defining source independence; capture their criteria verbatim or by precise paraphrase.",
+          "evidence_role": "primary_authority",
+          "obligation_id": "obl1.independence-criteria",
+          "question_id": "q1.independence-criteria",
+          "weight": 5
+        },
+        {
+          "closure_rule": "Closed when provenance is established from accessible sources with the classification cited, or when no accessible source establishes provenance and the gap is reported as unresolved.",
+          "description": "Establish, from available sources, the provenance of the mirror's delivery-policy text relative to the authoritative delivery policy; classify as derivative or separate-origin.",
+          "evidence_role": "implementation_evidence",
+          "obligation_id": "obl2.mirror-provenance",
+          "question_id": "q2.mirror-provenance",
+          "weight": 5
+        },
+        {
+          "closure_rule": "Closed when requirements are captured from primary or official sources with publisher count reported, or reported as not established within budget.",
+          "description": "Capture the deployment-governance requirements for production deployment authority and the evidence those requirements demand.",
+          "evidence_role": "primary_authority",
+          "obligation_id": "obl3.deploy-authority-requirements",
+          "question_id": "q3.deploy-authority-requirements",
+          "weight": 4
+        },
+        {
+          "closure_rule": "Closed when the counterevidence search is executed and its results, including null results and any contradictions, are reported.",
+          "description": "Search authoritative sources for any explicit treatment of verbatim mirrors or replicas as independent corroboration of deployment authority; preserve contradictions rather than resolving them.",
+          "evidence_role": "counterevidence",
+          "obligation_id": "obl4.counterevidence-search",
+          "question_id": "q4.counterevidence-verbatim-independent",
+          "weight": 4
+        },
+        {
+          "closure_rule": "Closed when context is captured or budget exhausts; this optional obligation is dropped first under budget pressure.",
+          "description": "Capture governance-source statements on permitted roles of mirrors or replicas to distinguish legitimate uses from evidentiary corroboration.",
+          "evidence_role": "context",
+          "obligation_id": "obl5.mirror-role-context",
+          "question_id": "q5.mirror-role-context",
+          "weight": 2
+        }
+      ],
+      "questions": [
+        {
+          "question_id": "q1.independence-criteria",
+          "required": true,
+          "text": "Under recognized governance and evidence standards, what criteria determine whether a source is independent, and does a verbatim reproduction of a policy document meet them?"
+        },
+        {
+          "question_id": "q2.mirror-provenance",
+          "required": true,
+          "text": "Do available primary or official sources establish whether the mirror's delivery-policy text shares provenance with the authoritative delivery policy (derivative) or originates from a separate authoritative act?"
+        },
+        {
+          "question_id": "q3.deploy-authority-requirements",
+          "required": true,
+          "text": "How do accessible governance sources define production deployment authority, and what evidence do they require to establish it?"
+        },
+        {
+          "question_id": "q4.counterevidence-verbatim-independent",
+          "required": true,
+          "text": "Is there any authoritative source that explicitly treats verbatim duplication or mirroring as independent corroboration of deployment authority? Preserve any contradiction with the derivativeness analysis."
+        },
+        {
+          "question_id": "q5.mirror-role-context",
+          "required": false,
+          "text": "What role, if any, do governance sources assign to mirrors or replicas (e.g., availability, redundancy, audit retention) distinct from evidentiary corroboration?"
+        }
+      ],
+      "schema_version": "research-mission/1",
+      "scope": {
+        "exclude": [
+          "Any determination that production deployment authority exists, is granted, or is sufficient; the mission yields evidentiary analysis only, never an authority grant or permission.",
+          "Execution, configuration, or approval of any production deployment, and any change to deployment enforcement mechanisms.",
+          "Non-verbatim restatements, re-approvals, or independently authored policies; the request concerns verbatim repetition only.",
+          "Security testing or attempts to bypass deployment controls beyond what governance sources state."
+        ],
+        "include": [
+          "Evidentiary status of any artifact that reproduces the delivery policy verbatim (repository mirrors, document copies, mirrored agent or system outputs, mirrored configurations) with respect to production deployment authority.",
+          "Recognized enterprise governance, change-management, and software-factory control standards on what evidence establishes production deployment authority and what counts as independent corroboration.",
+          "Doctrinal treatment of derivative versus independent evidence: criteria for when a verbatim reproduction of a source can, or cannot, serve as a second independent source for the same facts.",
+          "Provenance of the mirror's delivery-policy text relative to the authoritative delivery policy: shared origin versus separate authoritative act.",
+          "The enterprise's own delivery and deployment governance definitions of production deployment authority and its required evidence, where accessible in primary or official sources."
+        ]
+      },
+      "source_policy": {
+        "allowed_authority": [
+          "primary",
+          "official",
+          "independent"
+        ],
+        "derivative_sources_count_as_independent": false,
+        "inaccessible_sources_can_close_obligations": false,
+        "minimum_independent_publishers": 2
+      },
+      "stop_when": [
+        "Independence criteria from at least two independent authoritative sources are captured and applied to verbatim reproduction, yielding a supported determination or an explicit unsupported finding.",
+        "The mirror's provenance relative to the authoritative delivery policy is established from sources, or reported as unestablishable within budget.",
+        "Budget limits (4 searches, 10 sources, 6 model calls, 300 seconds) are reached; report partial findings and open gaps."
+      ]
+    },
+    "rationale": "The request poses a well-formed evidentiary question, so research is appropriate and no blocking clarification is required: the request's own wording ('repeats the delivery policy verbatim') fixes the object of study as a verbatim reproduction, making artifact-type ambiguity non-decision-changing, and the scope covers all verbatim-reproduction forms without guessing. The mission is a research boundary only — it neither grants nor denies production deployment authority, treats the mirror as evidence to be provenance-checked rather than as permission, and its abstain_when rules block any use of the output as an authority grant."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:02:54.449427+00:00",
+  "status": "completed",
+  "trial_id": "mission-contradictory-mirror-intake-r2"
+}

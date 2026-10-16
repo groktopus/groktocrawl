@@ -1,0 +1,3 @@
+CONTAINER ID                                                       NAME                                                            CPU %     MEM USAGE / LIMIT   MEM %     NET I/O          BLOCK I/O         PIDS
+50477de1c02d08d57563e02405d0645120ff29909de078420215a7448aee2021   groktocrawl-x-vector-scale-34287607217-vector-eval-postgres-1   4.72%     28.11MiB / 1GiB     2.75%     1.09MB / 222kB   0B / 58.4MB       6
+5ef5531074aed76a947a3131351d9b2b904c2a98725b989e7208d1a8a8a3d62b   groktocrawl-x-vector-scale-34287607217-vector-eval-qdrant-1     0.02%     92.25MiB / 1GiB     9.01%     1.39MB / 490kB   49.2kB / 2.53MB   21

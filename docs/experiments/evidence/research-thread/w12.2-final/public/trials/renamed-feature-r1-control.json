@@ -1,0 +1,69 @@
+{
+  "answer": {
+    "answer": "Northstar did not remove policy checks; they were renamed. The Northstar 4 migration guide states that Northstar 4 renames policy checks to release guards and that their purpose is unchanged (northstar-policy-new). This is consistent with the older documentation, which shows that Northstar 3 called pre-deployment controls policy checks (northstar-policy-old). Both snapshots belong to the same documentation lineage (lineage_id: northstar-policy-doc, subject_id: northstar), so the Northstar 4 snapshot represents the current state and supersedes the Northstar 3 terminology. Conclusion: the controls persist under a new name (release guards); no removal is documented in the supplied sources.",
+    "change_events": [
+      "Northstar 4 renames policy checks to release guards; their purpose is unchanged (northstar-policy-new).",
+      "Terminology changed between Northstar 3 and Northstar 4: Northstar 3 called pre-deployment controls policy checks, while Northstar 4 uses the term release guards (northstar-policy-old; northstar-policy-new)."
+    ],
+    "citations": [
+      "northstar-policy-old",
+      "northstar-policy-new"
+    ],
+    "current_truths": [
+      "In Northstar 4, the controls formerly called policy checks are named release guards (northstar-policy-new).",
+      "The purpose of these controls is unchanged after the rename (northstar-policy-new)."
+    ],
+    "historical_truths": [
+      "In Northstar 3, pre-deployment controls were called policy checks (northstar-policy-old)."
+    ],
+    "unresolved": [
+      "The sources state the purpose is unchanged, but do not detail whether any behavior or implementation details beyond the name changed in Northstar 4 (northstar-policy-new)."
+    ]
+  },
+  "arm": "control",
+  "case_id": "renamed-feature",
+  "completed_at": "2026-09-19T07:49:08.299163+00:00",
+  "position": 16,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "0c4fef6147a50deee05d44400e67858e2a4336af0467d9ca9ad77670092b07dd",
+    "finish_reason": "stop",
+    "latency_ms": 25602.219,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "b90d45c2fa1f7825c557f7120b004921e54f2fa6eba6a1758b50c68ec4e50892",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 825,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 575
+      },
+      "cost": 0.0004899,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0004125,
+        "upstream_inference_cost": 0.0004899,
+        "upstream_inference_prompt_cost": 7.74e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 516,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1341
+    }
+  },
+  "repetition": 1,
+  "schema_version": "research-thread-trial/1",
+  "started_at": "2026-09-19T07:48:42.696609+00:00",
+  "status": "completed",
+  "stratum": "terminology",
+  "trial_id": "renamed-feature-r1-control"
+}

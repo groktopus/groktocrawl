@@ -1,0 +1,55 @@
+{
+  "schema_version": "research-thread-experiment-freeze/3",
+  "status": "frozen_before_regrade",
+  "source_revision": "186c16f803e502905d5640ca0477fcffab366c8c",
+  "supersedes": "w12.2-freeze-v2.json",
+  "model_route": "general",
+  "endpoint_origin": "http://inference.example.internal:4000/",
+  "concurrency": 5,
+  "maximum_authorized_concurrency": 10,
+  "logical_candidate_count": 54,
+  "measured_request_ceiling": 216,
+  "reasoning_effort": "minimal",
+  "maximum_completion_tokens": 16000,
+  "request_timeout_seconds": 300,
+  "transport_attempt_limit": 2,
+  "invalid_completion_attempt_limit": 2,
+  "failure_guardrail": 0.1,
+  "inherited_v1_evidence": {
+    "source": "w12.2-run-v1-3ee907f",
+    "file_count": 235,
+    "manifest_byte_count": 26281,
+    "canonical_manifest_sha256": "cd657e3f50c323b76952bb9133939c3d7705e67aa0e5be4b6ca7c216c75fd876",
+    "copy_policy": "exact read-only copy before removing copied v1 grades from the v3 grading workspace"
+  },
+  "excluded_v2_evidence": {
+    "source": "w12.2-run-v2-90a351a",
+    "file_count": 463,
+    "manifest_byte_count": 55738,
+    "canonical_manifest_sha256": "991d2353352cc5bf159e799ed687b194f9cd234545deffe39de21b3790143651"
+  },
+  "preflight": {
+    "source": "w12.2-preflight-v3-536dd15",
+    "scope": "the 10 candidates that failed v2",
+    "completed": 10,
+    "failed": 0,
+    "inside_measured_tree": false
+  },
+  "bounded_corrections": [
+    "exact output example and field-by-field definitions in the blind grader prompt",
+    "raw completion, receipt, and envelope retained before validation",
+    "up to two bounded transport attempts per grading completion",
+    "one fresh completion attempt after a non-final or schema-invalid answer",
+    "all retry attempts retained and the policy applied uniformly to every candidate"
+  ],
+  "files": {
+    "scripts/grade_w12_thread_experiment.py": "e388fb2fd9c5b7b2ea45a06d4c3fea8a533687de21522b0982040901e0f8f05d",
+    "scripts/analyze_w12_thread_experiment.py": "ce708428bf102e71cba410786f843d7959ff9bcb1c9b44e63a1c3822947032da",
+    "docs/experiments/research-thread/w12.2-protocol.md": "68b63d4b2503b1e819db6410587707c0df7785593b4032b232a6228c5cf9b58e",
+    "docs/experiments/research-thread/w12.2-freeze.json": "4207b924b4427cee855bbc1adebf4c6ef45be60c0cf90788bee2d5dee2d104c4",
+    "docs/experiments/research-thread/w12.2-freeze-v2.json": "7e3410dd42e4d27afcf34374428c892409ffde8e4a77f9012b820919aab120e8",
+    "docs/experiments/research-thread/w12.2-cases.json": "af33310c49599a90b72792726d2f91b9e82a850a52d61afa5bb3f183b5649ece",
+    "docs/experiments/research-thread/w12.2-work-order.json": "e4df62cd79b29a77fd52c0e3c2b89b99976cdfdf79ee5843eaeeac5092855c07",
+    "docs/experiments/research-thread/w12.2-research-log.md": "74a358aada8aae32e4d64624cac41233902ff6a1af889b186cf45c790b545b1b"
+  }
+}

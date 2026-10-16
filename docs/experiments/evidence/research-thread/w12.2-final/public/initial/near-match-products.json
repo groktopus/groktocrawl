@@ -1,0 +1,56 @@
+{
+  "answer": {
+    "answer": "No. Based on the supplied primary documentation, Harbor Agent does not support offline mode: the guide states that Harbor Agent requires a network connection [harbor-agent-doc]. Note that the documentation does not explicitly discuss an 'offline mode' feature by name; it only establishes the network requirement, so the absence of any documented offline capability is the basis for this conclusion.",
+    "change_events": [],
+    "citations": [
+      "harbor-agent-doc"
+    ],
+    "current_truths": [
+      "Harbor Agent requires a network connection [harbor-agent-doc].",
+      "The Harbor Agent documentation does not describe any offline mode or offline operation capability [harbor-agent-doc]."
+    ],
+    "historical_truths": [],
+    "unresolved": [
+      "The documentation states a network connection is required but does not explicitly use the term 'offline mode'; whether any limited offline functionality exists is not addressed in the supplied snapshot [harbor-agent-doc]."
+    ]
+  },
+  "case_id": "near-match-products",
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "4cf07cc0a217d802313d52fa3a2e276aeca476097f990c5f6cdc6d346c05fb45",
+    "finish_reason": "stop",
+    "latency_ms": 6879.49,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "0cd34cf851969a3f64016485dfff0b69bfbfbdb6a181729b2dca9cd49f4691f9",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 426,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 237
+      },
+      "cost": 0.0002763,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000213,
+        "upstream_inference_cost": 0.0002763,
+        "upstream_inference_prompt_cost": 6.33e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 422,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 848
+    }
+  },
+  "schema_version": "research-thread-initial/1",
+  "status": "completed"
+}

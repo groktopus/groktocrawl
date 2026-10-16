@@ -1,0 +1,94 @@
+{
+  "arm": "control",
+  "case_id": "mission-straightforward-delivery",
+  "completed_at": "2026-09-19T05:48:55.707144+00:00",
+  "position": 2,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "8a4a90e6fde38632fa49ba59cf0ba0f9ca1f45f38b9f04fe8dfccd7ace92ba76",
+    "finish_reason": "stop",
+    "latency_ms": 114754.584,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "7a096a4d38094c77892b8ca7c7dcacf992a6d54a499e9bcc8e4b7f8cffb5fcfb",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 5537,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 6149
+      },
+      "cost": 0.00285385,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0027685,
+        "upstream_inference_cost": 0.00285385,
+        "upstream_inference_prompt_cost": 8.535e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 569,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 6106
+    }
+  },
+  "repetition": 2,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Decision support — Release actions authorized for the build agent (Aster fixture, current record)**Bottom line:** The build agent is authorized to open pull requests once tests pass. It holds no unilateral production-deployment authority: production deployment is gated on service-owner approval plus a recorded rollback plan. No supplied source grants the agent automatic production deployment rights.### Authorized actions and conditions| Release action | Ruling | Conditions / limits | Source ||---|---|---|---|| Open a pull request | Authorized (conditional) | Permitted only after tests pass; the policy does not define the pass criteria | [delivery-policy] || Deploy to production | Not authorized unilaterally | Requires approval by the service owner and a recorded rollback plan; the policy states the gate but does not say the agent executes the deployment once the gate is satisfied | [delivery-policy] || Automatic deployment (sandbox experiment) | Scoped; not production authority | Applied only to disposable test environments and explicitly 'did not authorize production deployment'; whether it applies to this agent is not established | [delivery-context] |### Evidence obligation — closure- **Distinguish PR permission from production deployment permission (primary_authority, weight 5): Closed.** The governing policy states both the permission and its conditions: PR creation is granted to the agent conditional on tests passing, while production deployment is conditioned on owner approval and a recorded rollback plan and is not granted to the agent on its own authority [delivery-policy]. The context record independently corroborates the production restriction [delivery-context].### Contradictions- **None identified.** The two supplied records are consistent: the sandbox experiment's automatic-deployment permission was limited to disposable test environments and did not authorize production deployment [delivery-context], which aligns with the policy's production gate [delivery-policy].### Unresolved limits (cannot be established from the supplied pack)1. **Post-approval execution:** The policy requires owner approval and a recorded rollback plan for production deployment but does not state whether the agent may execute the deployment once those conditions are met, or whether execution rests with another role. Left unresolved.2. **'Tests pass' definition:** The operational criteria (suites, thresholds, attestation) for the PR precondition are not specified. Left unresolved.3. **Sandbox scope/status:** The context does not establish that the sandbox experiment's test-environment deployment permission applies to this build agent or remains in effect; it is recorded as context only and cannot broaden production authority [delivery-context].### Scope and method notes- New deployment-policy design is excluded by the request and is not proposed.- Abstention not triggered: the primary authority supports the requested decision without inventing approval, authority, or measurements.- The fixed two-source pack is fully accounted for; no further searches would yield material evidence gain.",
+    "candidate_id": "candidate-8771632f8fafa4eb276d",
+    "citations": [
+      "delivery-policy",
+      "delivery-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "delivery-policy"
+        ],
+        "text": "The build agent may open a pull request after tests pass.",
+        "uncertainty": "The policy does not define what constitutes 'tests pass' (test suites, thresholds, or attestation); that operational detail is unresolved."
+      },
+      {
+        "source_ids": [
+          "delivery-policy"
+        ],
+        "text": "The agent holds no unilateral production-deployment authority; production deployment requires approval by the service owner and a recorded rollback plan.",
+        "uncertainty": "The policy states the gating conditions but does not state whether the agent may execute the deployment once approval and a rollback plan exist; post-approval execution authority is unresolved."
+      },
+      {
+        "source_ids": [
+          "delivery-context"
+        ],
+        "text": "A sandbox experiment allowed automatic deployment only to disposable test environments and did not authorize production deployment.",
+        "uncertainty": "The context does not establish whether this sandbox permission applies to the build agent in scope or is currently in effect; it cannot be used to extend production authority."
+      },
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-context"
+        ],
+        "text": "Pull-request creation and production deployment are distinct authorities: the former is conditionally granted to the agent, while the latter is gated on owner approval and a recorded rollback plan and is not granted to the agent unilaterally.",
+        "uncertainty": "The distinction is established by the primary policy and corroborated by the context record; the only residual gap is post-approval execution of production deployments."
+      },
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-context"
+        ],
+        "text": "No contradiction exists between the supplied sources; the sandbox context corroborates the policy's production-deployment restriction.",
+        "uncertainty": "No material uncertainty; both fixture records align on the production gate."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:47:00.950730+00:00",
+  "status": "completed",
+  "trial_id": "mission-straightforward-delivery-r2-control"
+}

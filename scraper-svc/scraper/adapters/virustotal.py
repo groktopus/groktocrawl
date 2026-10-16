@@ -9,8 +9,7 @@ from __future__ import annotations
 import logging
 import re
 
-import httpx
-
+from ..source_http import source_httpx_client
 from ._helpers import scrape_page
 from .base import AdapterContext, AdapterError, AdapterResult, SiteAdapter, adapter
 
@@ -35,7 +34,7 @@ async def _fetch_api(resource_id: str, api_key: str) -> dict | None:
     if not api_key:
         return None
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
+        async with source_httpx_client(timeout=10) as client:
             resp = await client.get(
                 f"https://www.virustotal.com/api/v3/files/{resource_id}",
                 headers={"x-apikey": api_key, "Accept": "application/json"},

@@ -81,7 +81,8 @@ class TestTransportSecurity:
         import mcp_server as mod
 
         monkeypatch.setenv(
-            "MCP_ALLOWED_HOSTS", "localhost:*,127.0.0.1:*,[::1]:*,hal2000:*"
+            "MCP_ALLOWED_HOSTS",
+            "localhost:*,127.0.0.1:*,[::1]:*,incumbent.example.internal:*",
         )
         ts = mod._build_transport_security()
         assert ts.enable_dns_rebinding_protection is True
@@ -89,32 +90,37 @@ class TestTransportSecurity:
             "localhost:*",
             "127.0.0.1:*",
             "[::1]:*",
-            "hal2000:*",
+            "incumbent.example.internal:*",
         ]
 
     def test_build_transport_security_ignores_empty_entries(self, monkeypatch):
         """Trailing/empty comma entries are dropped, not kept as empty hosts."""
         import mcp_server as mod
 
-        monkeypatch.setenv("MCP_ALLOWED_HOSTS", "hal2000:*, ,localhost:*,")
+        monkeypatch.setenv(
+            "MCP_ALLOWED_HOSTS", "incumbent.example.internal:*, ,localhost:*,"
+        )
         ts = mod._build_transport_security()
         assert ts.enable_dns_rebinding_protection is True
-        assert ts.allowed_hosts == ["hal2000:*", "localhost:*"]
+        assert ts.allowed_hosts == ["incumbent.example.internal:*", "localhost:*"]
 
     def test_build_transport_security_derives_origins(self, monkeypatch):
         """allowed_origins mirror the host allowlist under http and https."""
         import mcp_server as mod
 
-        monkeypatch.setenv("MCP_ALLOWED_HOSTS", "hal2000:*")
+        monkeypatch.setenv("MCP_ALLOWED_HOSTS", "incumbent.example.internal:*")
         monkeypatch.delenv("MCP_ALLOWED_ORIGINS", raising=False)
         ts = mod._build_transport_security()
-        assert ts.allowed_origins == ["http://hal2000:*", "https://hal2000:*"]
+        assert ts.allowed_origins == [
+            "http://incumbent.example.internal:*",
+            "https://incumbent.example.internal:*",
+        ]
 
     def test_build_transport_security_origins_override(self, monkeypatch):
         """MCP_ALLOWED_ORIGINS overrides the host-derived origin default."""
         import mcp_server as mod
 
-        monkeypatch.setenv("MCP_ALLOWED_HOSTS", "hal2000:*")
+        monkeypatch.setenv("MCP_ALLOWED_HOSTS", "incumbent.example.internal:*")
         monkeypatch.setenv(
             "MCP_ALLOWED_ORIGINS", "http://client.example:*,https://client.example:*"
         )
@@ -132,9 +138,9 @@ class TestToolDiscovery:
     """VAL-MCP-B01: tools/list returns the complete MCP tool surface."""
 
     async def test_tool_count(self):
-        """tools/list returns exactly 52 tools."""
+        """tools/list returns exactly 73 tools."""
         tools = await mcp.list_tools()
-        assert len(tools) == 52, f"Expected 52 tools, got {len(tools)}"
+        assert len(tools) == 73, f"Expected 73 tools, got {len(tools)}"
 
     async def test_all_tool_names(self):
         """All 52 expected tool names are present."""
@@ -149,10 +155,31 @@ class TestToolDiscovery:
             "get_crawl_errors",
             "get_active_crawls",
             "map",
+            "research_workspace",
+            "research_resume",
+            "research_capabilities",
+            "followup_preview",
+            "research_create",
+            "research_status",
+            "research_cancel",
+            "research_show",
+            "research_artifact",
+            "research_evidence",
+            "research_delete",
+            "research_attach",
+            "session_create",
+            "session_query",
+            "session_export",
+            "session_delete",
+            "document_attach",
+            "document_list",
+            "document_read",
+            "document_detach",
             "agent",
             "get_agent_status",
             "cancel_agent",
             "answer",
+            "select_session_evidence",
             "extract",
             "get_extract_status",
             "enrich",
@@ -401,6 +428,9 @@ class TestToolAnnotations:
             "research_session_step",
             "store_research_memory",
             "batch_store_research_memory",
+            "session_create",
+            "session_query",
+            "document_attach",
         }
         for t in tools:
             if t.name in neutral_tools:
@@ -526,12 +556,121 @@ class TestContentBlocks:
         assert "400" in err_text
         assert "Invalid URL" in err_text
 
+    async def test_error_result_preserves_barrier_error_code(self, monkeypatch):
+        _patch_client(
+            monkeypatch,
+            {
+                "scrape": {
+                    "error": "Barrier or challenge content detected",
+                    "error_code": "BARRIER_DETECTED",
+                    "status_code": 502,
+                },
+            },
+        )
+        from mcp.server.fastmcp.exceptions import ToolError
+
+        with pytest.raises(ToolError) as exc_info:
+            await mcp.call_tool("scrape", {"url": "https://example.com/challenge"})
+        error_text = str(exc_info.value)
+        assert '"error_code": "BARRIER_DETECTED"' in error_text
+        assert '"status_code": 502' in error_text
+
 
 # ── Tool Call Routing (VAL-MCP-C01, C02, D04, E01, E06) ───────────
 
 
 class TestToolCallRouting:
     """Verify each tool maps to the correct client method."""
+
+    async def test_research_capabilities_routes_to_client(self, monkeypatch):
+        """Experimental capability discovery is exposed as a read-only tool."""
+
+        async def _fake_capabilities() -> dict[str, Any]:
+            return {
+                "protocol_version": "research/1",
+                "implementation_stage": "contract_and_golden_traces",
+                "recovery_mode": "not_advertised",
+                "operations": {},
+            }
+
+        monkeypatch.setattr(
+            __import__("mcp_server", fromlist=["_client"])._client,
+            "experimental_research_capabilities",
+            _fake_capabilities,
+        )
+
+        result = await mcp.call_tool("research_capabilities", {})
+        assert "research/1" in str(result)
+
+    async def test_research_create_passes_idempotency_key(self, monkeypatch):
+        captured: dict[str, Any] = {}
+
+        async def _fake_create(
+            objective: str, idempotency_key: str, webhook: str | None = None
+        ) -> dict:
+            captured.update(
+                objective=objective, idempotency_key=idempotency_key, webhook=webhook
+            )
+            return {"run_id": "run-1", "state": "accepted"}
+
+        monkeypatch.setattr(
+            __import__("mcp_server", fromlist=["_client"])._client,
+            "experimental_research_create",
+            _fake_create,
+        )
+        await mcp.call_tool(
+            "research_create",
+            {"objective": "objective", "idempotency_key": "stable-key"},
+        )
+        assert captured == {
+            "objective": "objective",
+            "idempotency_key": "stable-key",
+            "webhook": None,
+        }
+
+    async def test_research_artifact_routes_to_client(self, monkeypatch):
+        async def _fake_artifact(artifact_id: str) -> dict:
+            return {
+                "artifact_id": artifact_id,
+                "content_type": "text/markdown",
+                "content_base64": "IyBleGFjdA==",
+            }
+
+        monkeypatch.setattr(
+            __import__("mcp_server", fromlist=["_client"])._client,
+            "experimental_research_artifact",
+            _fake_artifact,
+        )
+        result = await mcp.call_tool("research_artifact", {"artifact_id": "a-1"})
+        assert "a-1" in str(result)
+
+    async def test_research_attach_passes_expected_revision(self, monkeypatch):
+        captured: dict[str, Any] = {}
+
+        async def _fake_attach(
+            session_id: str, run_id: str, expected_revision: int
+        ) -> dict:
+            captured.update(
+                session_id=session_id,
+                run_id=run_id,
+                expected_revision=expected_revision,
+            )
+            return {"session_id": session_id, "revision": 1}
+
+        monkeypatch.setattr(
+            __import__("mcp_server", fromlist=["_client"])._client,
+            "experimental_research_attach",
+            _fake_attach,
+        )
+        await mcp.call_tool(
+            "research_attach",
+            {"session_id": "s-1", "run_id": "run-1", "expected_revision": 0},
+        )
+        assert captured == {
+            "session_id": "s-1",
+            "run_id": "run-1",
+            "expected_revision": 0,
+        }
 
     async def test_scrape_passes_only_main_content(self, monkeypatch):
         """Scrape passes only_main_content=False through."""
@@ -637,6 +776,7 @@ class TestToolCallRouting:
         assert captured.get("include_images") is True
         assert captured.get("force_fresh") is True
         assert captured.get("search_type") == "focused"
+        assert "max_results_per_query" not in captured
 
     async def test_map_passes_limit(self, monkeypatch):
         """Map passes limit through."""
@@ -2051,3 +2191,77 @@ class TestMCPSurfaceCoverage:
         assert proc.returncode == 0, (
             f"check-mcp-coverage.py failed:\n{proc.stdout}\n{proc.stderr}"
         )
+
+
+@pytest.mark.asyncio
+async def test_search_tool_exposes_and_forwards_date_controls(monkeypatch):
+    from unittest.mock import AsyncMock
+
+    import mcp_server as mod
+
+    call = AsyncMock(
+        return_value={"success": True, "date_filter": {"status": "enforced"}}
+    )
+    monkeypatch.setattr(mod._client, "search", call)
+    await mod.search(
+        "paper", date_from="2026-01-01", date_to="2026-01-31", engines=["openalex"]
+    )
+    assert call.call_args.kwargs["date_from"] == "2026-01-01"
+    assert call.call_args.kwargs["engines"] == ["openalex"]
+    tool = next(tool for tool in await mcp.list_tools() if tool.name == "search")
+    assert {"date_from", "date_to", "time_range", "engines"} <= tool.inputSchema[
+        "properties"
+    ].keys()
+
+
+@pytest.mark.asyncio
+async def test_bounded_search_old_agent_is_tool_error(monkeypatch):
+    from unittest.mock import AsyncMock
+
+    import mcp_server as mod
+    from mcp.server.fastmcp.exceptions import ToolError
+
+    monkeypatch.setattr(
+        mod._client,
+        "_post",
+        AsyncMock(return_value={"success": True, "data": {"web": []}}),
+    )
+    with pytest.raises(ToolError, match="did not prove"):
+        await mcp.call_tool(
+            "search",
+            {"query": "paper", "date_from": "2026-01-01", "engines": ["openalex"]},
+        )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "alias",
+    ["dateFrom", "date_form", "from_date", "endDate", "published_after", "timeRange"],
+)
+async def test_search_rejects_unknown_date_arguments_before_dispatch(
+    monkeypatch, alias
+):
+    from unittest.mock import AsyncMock
+
+    import mcp_server as mod
+    from mcp.server.fastmcp.exceptions import ToolError
+
+    call = AsyncMock(return_value={"success": True, "data": {"web": []}})
+    monkeypatch.setattr(mod._client, "search", call)
+    with pytest.raises(ToolError, match="Unknown date control"):
+        await mcp.call_tool("search", {"query": "paper", alias: "2026-01-01"})
+    call.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_search_preserves_unrelated_legacy_extra_arguments(monkeypatch):
+    from unittest.mock import AsyncMock
+
+    import mcp_server as mod
+
+    call = AsyncMock(return_value={"success": True, "data": {"web": []}})
+    monkeypatch.setattr(mod._client, "search", call)
+    await mcp.call_tool(
+        "search", {"query": "paper", "candidate": "legacy", "timeout": 5}
+    )
+    call.assert_awaited_once()

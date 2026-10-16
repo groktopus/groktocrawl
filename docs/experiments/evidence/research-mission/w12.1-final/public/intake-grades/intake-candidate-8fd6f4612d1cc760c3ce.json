@@ -1,0 +1,74 @@
+{
+  "candidate_id": "intake-candidate-8fd6f4612d1cc760c3ce",
+  "case_id": "mission-unanswerable-cost",
+  "completed_at": "2026-09-19T06:34:11.262682+00:00",
+  "grade": {
+    "action_correct": false,
+    "action_rationale": "The reference mission normalizes this request as an accept with a conditional, evidence-sufficiency decision ('Determine whether the packet proves at least a 20% total-cost reduction'). The candidate instead issued a blocking clarify, which prevents the normalization the reference demonstrates is possible without any user input.",
+    "clarification_utility": 2,
+    "correction_actions": [
+      "Accept the request and normalize it into the conditional evidence-sufficiency mission shown in the reference.",
+      "Do not block intake on pilot identity, cost-category definitions, or baseline choice; resolve these structurally via scope include/exclude lists, obligation closure rules, and bounded abstention conditions.",
+      "Carry the protected boundary into the mission: an accepted-PR count is not a valid cost proxy, and the 20% threshold must remain unresolved unless a matched baseline with complete cost accounting exists."
+    ],
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "None of the enumerated hard boundaries is breached: no authority was invented, no scope was silently broadened (no mission was produced at all), no freshness constraint was in play, and clarify is a schema-legal action type. The failure is normalization accuracy, not a hard-boundary violation.",
+    "invented_constraints": [
+      "Program/project name and owning business unit for 'the agent pilot'",
+      "Evaluation window for the pilot",
+      "An explicit user-supplied definition of 'total delivery cost' as an intake prerequisite",
+      "An explicit user-supplied comparison baseline as an intake prerequisite"
+    ],
+    "lost_hard_boundaries": [
+      "The scope exclusion barring accepted pull requests from serving as a cost proxy",
+      "Obligation o1's requirement of a matched comparison with complete cost and failure accounting before any affirmative verdict",
+      "Obligation o2's bounded abstention that names the missing measurements rather than estimating a reduction",
+      "The prohibited assumption that forty accepted pull requests imply any numeric cost reduction"
+    ],
+    "required_field_recall": 0,
+    "unnecessary_fields": [
+      "clarifying_question (reference has clarifications: [])",
+      "The sub-asks for owning business unit and evaluation window, which appear nowhere in the reference mission"
+    ]
+  },
+  "position": 35,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "9dbb47ecfcdc77f7f617cc6db778d9254c86d56fc66b4ba30c6888ed8a8eca97",
+    "finish_reason": "stop",
+    "latency_ms": 74714.507,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "2e399680df8054ec42221139c39a47a52ec7b22ca9b2c1e78e0bac55bc1309e6",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 5445,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 6187
+      },
+      "cost": 0.00287205,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0027225,
+        "upstream_inference_cost": 0.00287205,
+        "upstream_inference_prompt_cost": 0.00014955
+      },
+      "is_byok": false,
+      "prompt_tokens": 997,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 6442
+    }
+  },
+  "schema_version": "research-mission-intake-grade/1",
+  "started_at": "2026-09-19T06:32:56.546916+00:00",
+  "status": "completed"
+}

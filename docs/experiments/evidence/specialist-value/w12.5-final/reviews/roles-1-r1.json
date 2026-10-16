@@ -1,0 +1,124 @@
+{
+  "case_id": "roles-1",
+  "control_artifact": {
+    "admitted_evidence": [
+      {
+        "canonical_source_id": "canonical-roles-1-generalist-roles-1-scope",
+        "derivative": false,
+        "evidence_id": "roles-1-generalist-roles-1-scope",
+        "obligation_id": "roles-1-scope",
+        "publisher_id": "publisher-roles-1-generalist",
+        "source_id": "source-roles-1-generalist-roles-1-scope",
+        "span": "Pinned supports evidence for roles-1-scope in roles-1.",
+        "stance": "supports"
+      }
+    ],
+    "conflicting_obligation_ids": [],
+    "covered_obligation_ids": [
+      "roles-1-scope"
+    ],
+    "handoff_failures": [],
+    "rejected_evidence": {},
+    "total_calls": 2
+  },
+  "control_calls": 2,
+  "preferred": "treatment",
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "661b11b1d258a7d375e045e17922637486c130c9d65eda3e9b0859877615bf21",
+    "finish_reason": "stop",
+    "latency_ms": 56024.504,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "2a90300d20920cf31c9b8e3b6b54922d5288958d1c273109ef2c5d8c70aefd2f",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 1990,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 1762
+      },
+      "cost": 0.00109565,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000995,
+        "upstream_inference_cost": 0.00109565,
+        "upstream_inference_prompt_cost": 0.00010065
+      },
+      "is_byok": false,
+      "prompt_tokens": 671,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 2661
+    }
+  },
+  "repetition": 1,
+  "schema_version": "specialist-value-review/1",
+  "scores": {
+    "control": {
+      "reason": "Partial coverage: only roles-1-scope is supported; roles-1-authority and roles-1-risk are uncovered. Evidence is pinned, non-derivative, and source-bound (canonical-roles-1-generalist-roles-1-scope), so it is trustworthy for what it claims. No conflicts or failures were supplied, so empty conflicts/failures arrays are accurate, not omissions.",
+      "trustworthiness": 1,
+      "usefulness": 0
+    },
+    "treatment": {
+      "reason": "Complete coverage: all three obligations (roles-1-scope, roles-1-authority, roles-1-risk) each backed by a distinct pinned, non-derivative, source-bound supports evidence item. No conflicts or failures were supplied, so empty conflicts/failures arrays are accurate. Agreement with A on roles-1-scope is not treated as additional proof of truth.",
+      "trustworthiness": 1,
+      "usefulness": 1
+    }
+  },
+  "separable": true,
+  "status": "completed",
+  "stratum": "distinct_roles",
+  "treatment_artifact": {
+    "admitted_evidence": [
+      {
+        "canonical_source_id": "canonical-roles-1-discovery-roles-1-scope",
+        "derivative": false,
+        "evidence_id": "roles-1-discovery-roles-1-scope",
+        "obligation_id": "roles-1-scope",
+        "publisher_id": "publisher-roles-1-discovery",
+        "source_id": "source-roles-1-discovery-roles-1-scope",
+        "span": "Pinned supports evidence for roles-1-scope in roles-1.",
+        "stance": "supports"
+      },
+      {
+        "canonical_source_id": "canonical-roles-1-authority-roles-1-authority",
+        "derivative": false,
+        "evidence_id": "roles-1-authority-roles-1-authority",
+        "obligation_id": "roles-1-authority",
+        "publisher_id": "publisher-roles-1-authority",
+        "source_id": "source-roles-1-authority-roles-1-authority",
+        "span": "Pinned supports evidence for roles-1-authority in roles-1.",
+        "stance": "supports"
+      },
+      {
+        "canonical_source_id": "canonical-roles-1-risk-roles-1-risk",
+        "derivative": false,
+        "evidence_id": "roles-1-risk-roles-1-risk",
+        "obligation_id": "roles-1-risk",
+        "publisher_id": "publisher-roles-1-risk",
+        "source_id": "source-roles-1-risk-roles-1-risk",
+        "span": "Pinned supports evidence for roles-1-risk in roles-1.",
+        "stance": "supports"
+      }
+    ],
+    "conflicting_obligation_ids": [],
+    "covered_obligation_ids": [
+      "roles-1-authority",
+      "roles-1-risk",
+      "roles-1-scope"
+    ],
+    "handoff_failures": [],
+    "rejected_evidence": {},
+    "total_calls": 2
+  },
+  "treatment_calls": 3,
+  "trial_id": "roles-1-r1"
+}

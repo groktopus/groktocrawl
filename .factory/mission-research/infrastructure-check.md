@@ -80,7 +80,7 @@ The `.env` file has the default `VALKEY_URL=redis://valkey:6379/0` (commented ou
 
 | Package | Version | Notes |
 |---------|---------|-------|
-| `groktocrawl` | 0.8.0 | Editable install from `/Volumes/tank01/magnus/git/groktocrawl` |
+| `groktocrawl` | 0.8.0 | Editable install from `/path/to/groktocrawl` |
 | `agent-svc` | 0.7.0 | Editable install (from groktocrawl-wt-agent-query-intelligence dir) |
 | `scraper-svc` | 0.7.0 | Editable install (from ~/git/groktocrawl/scraper-svc) |
 | `fastapi` | 0.138.0 | Web framework |
@@ -113,7 +113,7 @@ The `.env` file has the default `VALKEY_URL=redis://valkey:6379/0` (commented ou
 
 ## 5. Environment Configuration (.env)
 
-**File exists** at `/Volumes/tank01/magnus/git/groktocrawl/.env`
+**File exists** at `/path/to/groktocrawl/.env`
 
 Structure (secrets redacted):
 ```
@@ -171,7 +171,7 @@ Adequate resources to run the full GroktoCrawl Docker stack (typically needs 2-4
 **No — Docker is not running.** Docker.app exists in `/Applications` but the daemon is not active and the `docker` CLI is not in PATH. You need to:
 1. Launch Docker Desktop (or start Docker Engine)
 2. Ensure `docker` CLI is in PATH
-3. Then: `cd /Volumes/tank01/magnus/git/groktocrawl && docker compose up --build -d`
+3. Then: `cd /path/to/groktocrawl && docker compose up --build -d`
 
 ### What works without Docker?
 - Python 3.13.6 is available with all dependencies installed

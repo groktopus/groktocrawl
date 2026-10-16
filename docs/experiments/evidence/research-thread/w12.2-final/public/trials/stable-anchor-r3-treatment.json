@@ -1,0 +1,68 @@
+{
+  "answer": {
+    "answer": "No. Based on the supplied snapshots, there is no evidence that Iris Build changed its artifact checksum algorithm. Both the earlier snapshot [iris-checksum-old] and the current snapshot [iris-checksum-new] state that Iris Build records SHA-256 checksums for artifacts, so the documented algorithm is identical across both revisions. This also addresses the prior thread's open item on currency: the newest supplied snapshot confirms SHA-256 remains the documented algorithm, so the earlier SHA-256 claim stands as both historically and currently valid. Caveat: the sources only document that SHA-256 checksums are recorded; they do not affirmatively state that no other algorithm was ever used, and they do not address whether additional algorithms are supported.",
+    "change_events": [],
+    "citations": [
+      "iris-checksum-old",
+      "iris-checksum-new"
+    ],
+    "current_truths": [
+      "Iris Build records SHA-256 checksums for artifacts, per the current guide snapshot [iris-checksum-new]."
+    ],
+    "historical_truths": [
+      "Iris Build recorded SHA-256 checksums for artifacts, per the earlier guide snapshot [iris-checksum-old].",
+      "The earlier SHA-256 documentation is corroborated rather than superseded by the newer snapshot; no supplied evidence indicates any algorithm change [iris-checksum-old] [iris-checksum-new]."
+    ],
+    "unresolved": [
+      "The snapshots document which checksum algorithm is recorded (SHA-256) but do not affirmatively certify that no other algorithm was ever used; absence of a documented change is not absolute proof that no migration occurred outside the supplied record.",
+      "Whether Iris Build supports or records checksum algorithms other than SHA-256 is not addressed by the supplied snapshots.",
+      "The relative recency of the two snapshots is implied by their identifiers ('old'/'new') but is not stated in the snapshot text; both document the same algorithm, so the conclusion is unaffected by ordering."
+    ]
+  },
+  "arm": "treatment",
+  "case_id": "stable-anchor",
+  "completed_at": "2026-09-19T07:51:03.078213+00:00",
+  "position": 39,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "4dfcb10cfc68d497d6fdee581ff73b8a96baaddbed5839b44ac0a54317f7456b",
+    "finish_reason": "stop",
+    "latency_ms": 25440.331,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "088666dba8cf9bceab75f5d5834461d68eb8f5d0b0628092d39ceb19a406a8f7",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 2978,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 3100
+      },
+      "cost": 0.00162235,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.001489,
+        "upstream_inference_cost": 0.00162235,
+        "upstream_inference_prompt_cost": 0.00013335
+      },
+      "is_byok": false,
+      "prompt_tokens": 889,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 3867
+    }
+  },
+  "repetition": 3,
+  "schema_version": "research-thread-trial/1",
+  "started_at": "2026-09-19T07:50:37.635444+00:00",
+  "status": "completed",
+  "stratum": "no_change",
+  "trial_id": "stable-anchor-r3-treatment"
+}

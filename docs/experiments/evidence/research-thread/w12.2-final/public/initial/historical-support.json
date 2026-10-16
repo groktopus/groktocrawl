@@ -1,0 +1,58 @@
+{
+  "answer": {
+    "answer": "Per the only supplied snapshot, Elm API required API keys as of 2025 (elm-auth-2025). Because no later snapshot is provided, it cannot be confirmed that API keys remain the required authentication mode at present; the 2025 requirement is the most recent evidence available.",
+    "change_events": [],
+    "citations": [
+      "elm-auth-2025"
+    ],
+    "current_truths": [
+      "The latest supplied snapshot (2025) states that Elm API required API keys (elm-auth-2025)."
+    ],
+    "historical_truths": [
+      "In 2025, Elm API required API keys (elm-auth-2025)."
+    ],
+    "unresolved": [
+      "No snapshot dated after 2025 is supplied, so whether Elm API still requires API keys today cannot be confirmed (elm-auth-2025).",
+      "The snapshot does not specify key format, issuance, rotation, or whether any alternative authentication modes are supported (elm-auth-2025)."
+    ]
+  },
+  "case_id": "historical-support",
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "35219c6cfeb00225fc8dcc11250e73a5753f5b0bf53651e603b65093494edcbc",
+    "finish_reason": "stop",
+    "latency_ms": 10484.305,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "1013174d1d81741c8eea17a573b50c83f4e9e3b19100000cc0f882957051dacc",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 905,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 685
+      },
+      "cost": 0.0005167,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0004525,
+        "upstream_inference_cost": 0.0005167,
+        "upstream_inference_prompt_cost": 6.42e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 428,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1333
+    }
+  },
+  "schema_version": "research-thread-initial/1",
+  "status": "completed"
+}

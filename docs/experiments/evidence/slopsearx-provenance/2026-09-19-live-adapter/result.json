@@ -1,0 +1,32 @@
+{
+  "adapter": {
+    "broad_profile_rejected": true,
+    "expired_state_failed_closed": true,
+    "manifest_reference_present": true,
+    "missing_state_failed_closed": true,
+    "observations_verified": false,
+    "profile_health": "available",
+    "publishable": false,
+    "receipt_replay_stable": true,
+    "snapshot_reference_present": true
+  },
+  "deployment": {
+    "ordinary_http_search_default_unchanged": true,
+    "profile": "retrieval-provenance-v1",
+    "slopsearx_image": "ghcr.io/magnus919/slopsearx@sha256:4cd9c04ae4ef2f154a104cd95cf2219d603e461c9449f4392ce562b0541dd2d3"
+  },
+  "observed_at": "2026-09-19T02:39:18Z",
+  "rollback": {
+    "candidate_agent_healthy_while_adapter_stopped": true,
+    "http_search_healthy_while_adapter_stopped": true,
+    "isolated_state_store_healthy": true,
+    "mcp_restored_healthy": true
+  },
+  "schema_version": "w12-live-provenance-result/1",
+  "storage": {
+    "ephemeral_bootstrap_passed": true,
+    "provenance_reference_table_present": true,
+    "schema_version": 15
+  },
+  "tested_revision": "8c18a350"
+}

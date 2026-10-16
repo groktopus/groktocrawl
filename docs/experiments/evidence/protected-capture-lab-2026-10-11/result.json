@@ -1,0 +1,307 @@
+{
+  "historical_attempts_retained": true,
+  "https_checks": [
+    {
+      "check": "health",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "check": "missing-bearer",
+      "passed": true,
+      "status": 401
+    },
+    {
+      "check": "wrong-bearer",
+      "passed": true,
+      "status": 401
+    },
+    {
+      "check": "wrong-method-scrape",
+      "passed": true,
+      "status": 404
+    },
+    {
+      "check": "wrong-method-health",
+      "passed": true,
+      "status": 404
+    },
+    {
+      "check": "query-denied",
+      "passed": true,
+      "status": 404
+    },
+    {
+      "check": "unlisted-route",
+      "passed": true,
+      "status": 404
+    },
+    {
+      "check": "fixture-scrape",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "check": "wrong-hostname",
+      "passed": true
+    },
+    {
+      "check": "untrusted-ca",
+      "passed": true
+    }
+  ],
+  "local_shell_setup_failure_retained_no_remote_execution": true,
+  "model_diagnostic": {
+    "alias": "free",
+    "logical_requests_attempted": 1,
+    "maximum_output_tokens": 8,
+    "retries": 0,
+    "status": "broker_completion_accepted",
+    "timeout_seconds": 155,
+    "upstream_usage": "not_captured_unknown"
+  },
+  "protected_capture_probes": [
+    {
+      "elapsed_seconds": 3.173,
+      "exit_code": 0,
+      "log_sha256": "53849b0d52aa5efba74c1906784f1d625901f09ac891c08c956955dbe077674f",
+      "probe": "ingress",
+      "script_sha256": "269322b10bf2d6f97c7d06cf4df27217876b8a54072c2421d315392e0a0b175e",
+      "started_at": "2026-10-11T03:11:07.813350+00:00"
+    },
+    {
+      "elapsed_seconds": 19.973,
+      "exit_code": 0,
+      "log_sha256": "179034749531a67ca88f728537f69dc980dcfb8e8dc2e771b07fd8a805b4e69d",
+      "probe": "egress",
+      "script_sha256": "6ceb284b9393c420617c4c47678d435979ef5622d639ac18a8365589465fb177",
+      "started_at": "2026-10-11T03:11:10.987562+00:00"
+    },
+    {
+      "elapsed_seconds": 6.276,
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "probe": "flare-api",
+      "script_sha256": "4442aeea720544122ca291dc9fe65e068240629565447549b85dbe1ac8339934",
+      "started_at": "2026-10-11T03:11:30.960898+00:00"
+    },
+    {
+      "elapsed_seconds": 2.319,
+      "exit_code": 0,
+      "log_sha256": "720765d1a0bdf8612ea4628a615cfe20428dd7f5e034c1f713499a431feca247",
+      "probe": "browser-controller",
+      "script_sha256": "a353fe63b8919785c1f8c4f5fa789a63343393db561a23429f0ae8a2c21ac319",
+      "started_at": "2026-10-11T03:11:37.237197+00:00"
+    },
+    {
+      "elapsed_seconds": 0.114,
+      "exit_code": 0,
+      "log_sha256": "7322dc02f8ec65f22267d7453f651251baf2890d71bdc9a82d9a3ccc319c6ca1",
+      "probe": "browser-renderer",
+      "script_sha256": "f2a90df078680252b7a9e244d09c5113b5416c837bc5058f71051d391369c456",
+      "started_at": "2026-10-11T03:11:39.556441+00:00"
+    },
+    {
+      "elapsed_seconds": 0.114,
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "probe": "flare-renderer",
+      "script_sha256": "951ff8555d7346042824c20329f30547c2cc143341ddeacf85de9b9b4eeb38c8",
+      "started_at": "2026-10-11T03:11:39.671430+00:00"
+    }
+  ],
+  "rendered_config_sha256": "483e295be7d8e9a14cd8c5c79db8bbb03588b1de5de2cc65dc41ad81d79e5c6e",
+  "runtime_ci_run": 38106209264,
+  "runtime_provenance_note": "Only the agent was rebuilt and recreated from the merged revision. Other containers retain their prior image identities and application definitions; pinned third-party images are identified by immutable image IDs.",
+  "schema": "protected-capture-lab-result/1",
+  "scientific_evaluation_calls": 0,
+  "sentinel": {
+    "negative_events": 0,
+    "positive_events": 1
+  },
+  "services": [
+    {
+      "application_definition_revision": "15af8db803a049a67cb24095e037bc07a5bab75c",
+      "health": "healthy",
+      "image_id": "sha256:73c23f6159434ddd6d34a7fa1cfd26f1d3e61b1f3680517e2cc54f696a99f487",
+      "model_alias": "free",
+      "runtime_revision": "15af8db803a049a67cb24095e037bc07a5bab75c",
+      "service": "candidate-agent",
+      "status": "running"
+    },
+    {
+      "application_definition_revision": "890e0a8c0cc3be26914fe4b6bf118151676b2a53",
+      "health": "healthy",
+      "image_id": "sha256:4d1d57d6be0fbe8d00212da762dba12ce340c066bbdb847db83388da25e70c99",
+      "service": "candidate-browser-controller",
+      "status": "running"
+    },
+    {
+      "application_definition_revision": "890e0a8c0cc3be26914fe4b6bf118151676b2a53",
+      "health": "healthy",
+      "image_id": "sha256:4d1d57d6be0fbe8d00212da762dba12ce340c066bbdb847db83388da25e70c99",
+      "service": "candidate-browser-renderer",
+      "status": "running"
+    },
+    {
+      "application_definition_revision": "890e0a8c0cc3be26914fe4b6bf118151676b2a53",
+      "health": "healthy",
+      "image_id": "sha256:b1af8634043638fe20055c9fb9d214bd9a2535038e7ed4484e644dfa28462581",
+      "service": "candidate-capture-egress",
+      "status": "running"
+    },
+    {
+      "application_definition_revision": "890e0a8c0cc3be26914fe4b6bf118151676b2a53",
+      "health": null,
+      "image_id": "sha256:0727772b591b2f0fe6a01dd3174c74d7b268fdcc53dd9013f937ce63c0baac08",
+      "service": "candidate-capture-https",
+      "status": "running"
+    },
+    {
+      "application_definition_revision": "890e0a8c0cc3be26914fe4b6bf118151676b2a53",
+      "health": "healthy",
+      "image_id": "sha256:9351a9a0a697a69e156f8bd067dd5ef3f9fa9b110abbdbbda1f343c622c7adc0",
+      "service": "candidate-capture-peer-sentinel",
+      "status": "running"
+    },
+    {
+      "application_definition_revision": "890e0a8c0cc3be26914fe4b6bf118151676b2a53",
+      "health": "healthy",
+      "image_id": "sha256:4dd97ea8976873faff7dd3f4c1a4b85308c151682892f0827c3f53d5379a4749",
+      "service": "candidate-flare-control",
+      "status": "running"
+    },
+    {
+      "application_definition_revision": "890e0a8c0cc3be26914fe4b6bf118151676b2a53",
+      "health": null,
+      "image_id": "sha256:4dd97ea8976873faff7dd3f4c1a4b85308c151682892f0827c3f53d5379a4749",
+      "service": "candidate-flare-control-socket-init",
+      "status": "exited"
+    },
+    {
+      "application_definition_revision": "890e0a8c0cc3be26914fe4b6bf118151676b2a53",
+      "health": "healthy",
+      "image_id": "sha256:505fb0d70659c4cb7b76c23832219e1580a78212ebda683cd81722da36ea1833",
+      "service": "candidate-flare-renderer",
+      "status": "running"
+    },
+    {
+      "application_definition_revision": "890e0a8c0cc3be26914fe4b6bf118151676b2a53",
+      "health": "healthy",
+      "image_id": "sha256:b479d57323e6a3c39c955f9caf919da63f55dcea3e5795ec2bdcb49ee8f73eb4",
+      "service": "candidate-flare-test-origin",
+      "status": "running"
+    },
+    {
+      "application_definition_revision": "890e0a8c0cc3be26914fe4b6bf118151676b2a53",
+      "health": "healthy",
+      "image_id": "sha256:9351a9a0a697a69e156f8bd067dd5ef3f9fa9b110abbdbbda1f343c622c7adc0",
+      "service": "candidate-host-bridge-sentinel",
+      "status": "running"
+    },
+    {
+      "application_definition_revision": "890e0a8c0cc3be26914fe4b6bf118151676b2a53",
+      "health": "healthy",
+      "image_id": "sha256:b1af8634043638fe20055c9fb9d214bd9a2535038e7ed4484e644dfa28462581",
+      "service": "candidate-model-egress",
+      "status": "running"
+    },
+    {
+      "application_definition_revision": "890e0a8c0cc3be26914fe4b6bf118151676b2a53",
+      "health": "healthy",
+      "image_id": "sha256:8637549fc81d536e7631c7e99cb45a57658daef359c514bc5f10aaac2edc9546",
+      "service": "candidate-parse",
+      "status": "running"
+    },
+    {
+      "application_definition_revision": "890e0a8c0cc3be26914fe4b6bf118151676b2a53",
+      "health": "healthy",
+      "image_id": "sha256:eb78addd0fd3ca94ab3daba461efe5a64f169e7dcb214078ab4f9734dd71862e",
+      "service": "candidate-portal",
+      "status": "running"
+    },
+    {
+      "application_definition_revision": "890e0a8c0cc3be26914fe4b6bf118151676b2a53",
+      "health": "healthy",
+      "image_id": "sha256:17a06c0a60bf6fb548a8493b8f6057dc830b791bbbe1f1ab706ca4b9d97c8180",
+      "service": "candidate-postgres",
+      "status": "running"
+    },
+    {
+      "application_definition_revision": "890e0a8c0cc3be26914fe4b6bf118151676b2a53",
+      "health": "healthy",
+      "image_id": "sha256:9351a9a0a697a69e156f8bd067dd5ef3f9fa9b110abbdbbda1f343c622c7adc0",
+      "service": "candidate-private-sentinel",
+      "status": "running"
+    },
+    {
+      "application_definition_revision": "890e0a8c0cc3be26914fe4b6bf118151676b2a53",
+      "health": "healthy",
+      "image_id": "sha256:e13294053db80229932ca53f6ace97c3da1ae2581b770373e187a15707244eb5",
+      "service": "candidate-qdrant-rollback",
+      "status": "running"
+    },
+    {
+      "application_definition_revision": "890e0a8c0cc3be26914fe4b6bf118151676b2a53",
+      "health": "healthy",
+      "image_id": "sha256:9a2070cb7893ba0307e90e3dbc8dfa60bca1c5412ee3bfc1d8f80aa754086a00",
+      "service": "candidate-scraper",
+      "status": "running"
+    },
+    {
+      "application_definition_revision": "890e0a8c0cc3be26914fe4b6bf118151676b2a53",
+      "health": "healthy",
+      "image_id": "sha256:9a2070cb7893ba0307e90e3dbc8dfa60bca1c5412ee3bfc1d8f80aa754086a00",
+      "service": "candidate-scraper-ingress",
+      "status": "running"
+    },
+    {
+      "application_definition_revision": "890e0a8c0cc3be26914fe4b6bf118151676b2a53",
+      "health": "healthy",
+      "image_id": "sha256:9a2070cb7893ba0307e90e3dbc8dfa60bca1c5412ee3bfc1d8f80aa754086a00",
+      "service": "candidate-scraper-model-control",
+      "status": "running"
+    },
+    {
+      "application_definition_revision": "890e0a8c0cc3be26914fe4b6bf118151676b2a53",
+      "health": null,
+      "image_id": "sha256:9a2070cb7893ba0307e90e3dbc8dfa60bca1c5412ee3bfc1d8f80aa754086a00",
+      "service": "candidate-scraper-socket-init",
+      "status": "exited"
+    },
+    {
+      "application_definition_revision": "890e0a8c0cc3be26914fe4b6bf118151676b2a53",
+      "health": "healthy",
+      "image_id": "sha256:9a2070cb7893ba0307e90e3dbc8dfa60bca1c5412ee3bfc1d8f80aa754086a00",
+      "service": "candidate-scraper-state-control",
+      "status": "running"
+    },
+    {
+      "application_definition_revision": "890e0a8c0cc3be26914fe4b6bf118151676b2a53",
+      "cpu_quota_cores": 14.0,
+      "health": "healthy",
+      "image_id": "sha256:a81cb896aa10baa7b70eb518fc00b87d3e65eec73832f10567bb2ef8a7ae4dae",
+      "service": "candidate-semantic",
+      "status": "running"
+    },
+    {
+      "application_definition_revision": "890e0a8c0cc3be26914fe4b6bf118151676b2a53",
+      "health": "healthy",
+      "image_id": "sha256:b6e4cbb218caf6aca483322faa1398b75a600d5502be72dd9b08fdb1b58eb077",
+      "service": "candidate-slopsearx",
+      "status": "running"
+    },
+    {
+      "application_definition_revision": "890e0a8c0cc3be26914fe4b6bf118151676b2a53",
+      "health": "healthy",
+      "image_id": "sha256:c326b3ef584399b57afe334c4952af7b464b81f2c69bc36297c6e7fe2db6e03a",
+      "service": "candidate-valkey",
+      "status": "running"
+    }
+  ],
+  "source_archive_sha256": "fc8a0921a2c46977e57aee34370632ff42367eccc507be560f7c649db5c92f85",
+  "source_revision": "15af8db803a049a67cb24095e037bc07a5bab75c",
+  "status": "setup_checks_passed_not_study_admission",
+  "unchanged_build_source_revision": "890e0a8c0cc3be26914fe4b6bf118151676b2a53",
+  "unchanged_service_containers_verified": true
+}

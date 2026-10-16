@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-e5ebb6507d4eb6016389",
+  "case_id": "historical-support",
+  "completed_at": "2026-09-19T09:12:55.231232+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 100,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "The candidate correctly identifies OAuth 2.1 as the current authentication mode and preserves the 2025 API-key requirement as historical, not current, matching the reference. Change events, citations, and subject-lineage analysis are accurate. The unresolved items go slightly beyond the reference (which lists none), including reasonable but peripheral questions about transition periods and implementation details, so unresolved_accuracy is slightly reduced.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 90,
+    "unsupported_claims": 0,
+    "usefulness": 95
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "cc545e287351def131039e6739fbcd1ae498d7026dcd625b112982e057184cca",
+    "finish_reason": "stop",
+    "latency_ms": 11343.866,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "c9296023ee0b7f8c1dc42ea1930fb9086e9aab71ea5e73b4721821550feccf98",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 153,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 1
+      },
+      "cost": 0.00016685,
+      "cost_details": {
+        "upstream_inference_completions_cost": 5.355e-05,
+        "upstream_inference_cost": 0.00016685,
+        "upstream_inference_prompt_cost": 0.0001133
+      },
+      "is_byok": false,
+      "prompt_tokens": 1133,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1286
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:12:43.886819+00:00",
+  "status": "completed",
+  "trial_id": "historical-support-r2-treatment"
+}

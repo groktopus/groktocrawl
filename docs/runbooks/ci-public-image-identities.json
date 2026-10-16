@@ -1,0 +1,60 @@
+{
+  "observed_at": "2026-10-09T21:53:32.839839+00:00",
+  "verification": "anonymous-upstream-head-and-unauthenticated-cache-head",
+  "images": [
+    {
+      "image": "prom/prometheus:v3.2.1",
+      "upstream_digest": "sha256:6927e0919a144aa7616fd0137d4816816d42f6b816de3af269ab065250859a62",
+      "cache_digest": "sha256:6927e0919a144aa7616fd0137d4816816d42f6b816de3af269ab065250859a62",
+      "identical": true
+    },
+    {
+      "image": "pgvector/pgvector:pg17",
+      "upstream_digest": "sha256:ac08538c6f8b9904c33c8224c5e5706dbe760aca29db1d096972b4052c22a75d",
+      "cache_digest": "sha256:ac08538c6f8b9904c33c8224c5e5706dbe760aca29db1d096972b4052c22a75d",
+      "identical": true
+    },
+    {
+      "image": "mcuadros/ofelia:latest",
+      "upstream_digest": "sha256:efcbe2c5cf658a25de6443c1462d653f9cc03791d642e01fc6c638a00f97e492",
+      "cache_digest": "sha256:efcbe2c5cf658a25de6443c1462d653f9cc03791d642e01fc6c638a00f97e492",
+      "identical": true
+    },
+    {
+      "image": "qdrant/qdrant:v1.18.2",
+      "upstream_digest": "sha256:75eab8c4ba42096724fdcfde8b4de0b5713d529dde32f285a1f86fdcb2c9e50c",
+      "cache_digest": "sha256:75eab8c4ba42096724fdcfde8b4de0b5713d529dde32f285a1f86fdcb2c9e50c",
+      "identical": true
+    },
+    {
+      "image": "valkey/valkey:8-alpine",
+      "upstream_digest": "sha256:081c2f5cb575efc901aa80ff9cdbd1ec6a301682fd35e1ebb4b0990a4a4a8507",
+      "cache_digest": "sha256:081c2f5cb575efc901aa80ff9cdbd1ec6a301682fd35e1ebb4b0990a4a4a8507",
+      "identical": true
+    },
+    {
+      "image": "library/postgres:17.11-bookworm",
+      "upstream_digest": "sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826",
+      "cache_digest": "sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826",
+      "identical": true
+    },
+    {
+      "image": "library/python:3.12-alpine",
+      "upstream_digest": "sha256:1b668429b3511ab407d8e00648891631b0b1a4d7e15e3ca70f38ab5b91ad4ab4",
+      "cache_digest": "sha256:1b668429b3511ab407d8e00648891631b0b1a4d7e15e3ca70f38ab5b91ad4ab4",
+      "identical": true
+    },
+    {
+      "image": "library/haproxy:3.0-alpine",
+      "upstream_digest": "sha256:56b887da77428b7a6621e59e480cdbd330cc805c22d3cedb66ceea76ffdea2c6",
+      "cache_digest": "sha256:56b887da77428b7a6621e59e480cdbd330cc805c22d3cedb66ceea76ffdea2c6",
+      "identical": true
+    },
+    {
+      "image": "moby/buildkit:buildx-stable-1",
+      "upstream_digest": "sha256:cec9f139f45e93c5c69c60f8b07cfad9f43f4ef6b6a6cd917527fea5ff2e3dea",
+      "cache_digest": "sha256:cec9f139f45e93c5c69c60f8b07cfad9f43f4ef6b6a6cd917527fea5ff2e3dea",
+      "identical": true
+    }
+  ]
+}

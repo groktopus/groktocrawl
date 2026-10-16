@@ -1,0 +1,119 @@
+{
+  "arm": "control",
+  "case_id": "mission-unanswerable-cost",
+  "completed_at": "2026-09-19T05:47:49.244448+00:00",
+  "position": 2,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "8a4ec194ceddcaa436f730f157409e8eb3c41048f8fe62759abce6802d370ffd",
+    "finish_reason": "stop",
+    "latency_ms": 63667.228,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "aa60e3aae0278ab663d67fc47bc0e1a2ffc1e01cbc9d0d3817384fbf8fe4696a",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 6473,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 5154
+      },
+      "cost": 0.0033373,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0032365,
+        "upstream_inference_cost": 0.0033373,
+        "upstream_inference_prompt_cost": 0.0001008
+      },
+      "is_byok": false,
+      "prompt_tokens": 672,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 7145
+    }
+  },
+  "repetition": 1,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Decision support: Does the packet prove a ≥20% total-cost reduction? [measurement-policy] [measurement-context] **Answer: No — the threshold is not established.** The packet contains no total-cost figure, no baseline, and no matched comparison. Nothing in the supplied sources quantifies any cost change, causal or otherwise, let alone a reduction of 20% or more. ### What the supplied record contains - **Measurement policy (current fixture record):** agent-assisted delivery must be evaluated with matched tasks, quality gates, human review time, rework, elapsed lead time, and total cost; failed or abandoned tasks must be counted; causal benefit must **not** be inferred from accepted-PR counts. [measurement-policy] - **Pilot context:** a pilot note reports **40 accepted pull requests in one month**, with no task mix, control group, reviewer hours, failure count, or provider costs. [measurement-context] ### Why the 40-PR figure cannot support the decision The packet's only quantitative datum is an accepted-PR count. The governing policy explicitly forbids inferring causal benefit from accepted-PR counts, and the decision request excludes using accepted PRs as a cost proxy. The figure therefore cannot serve as evidence for or against a 20% total-cost reduction. [measurement-policy] [measurement-context] **Contradiction preserved:** the pilot's sole reported result (40 accepted PRs) is a metric the packet's own measurement policy disqualifies as evidence of causal benefit. Both facts are reported as supplied; the policy governs the measurement standard, so the PR count is treated as non-probative for cost. ### Missing data named (required to close the decision) - A matched task set with a comparable baseline (control group) and matched task cost - Total-cost numerator and denominator: provider costs, human review time, rework cost - Failure and abandonment counts - Task mix and elapsed lead time ### Obligation status - **Matched comparison with complete cost and failure accounting — unresolved.** The packet contains neither a comparable baseline nor a total-cost numerator/denominator, so this obligation cannot be closed by the supplied sources and is left explicitly unresolved. [measurement-policy] [measurement-context] - **Bounded abstention — closed by this result:** the ≥20% threshold is stated as not established, and the missing measurements are named above. [measurement-policy] [measurement-context] ### Limits - The finding rests entirely on the two supplied fixture documents; no independent publishers are present (none are required, minimum 0), and the result does not generalize beyond the supplied record. - The pilot note itself is not supplied in full; only its reported PR count is described, so any additional claims it may contain are unknown. - No measurements were invented or assumed; the fixed source pack is fully accounted for with no material evidence gain remaining within it.",
+    "candidate_id": "candidate-459807c5c0431c06f46a",
+    "citations": [
+      "measurement-policy",
+      "measurement-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "text": "The packet does not establish a causal total-cost reduction of at least 20%; it contains no total-cost measurement, no baseline, and no matched comparison.",
+        "uncertainty": "No material uncertainty: the packet contains no cost figures of any kind, so non-establishment is directly verifiable from the supplied sources."
+      },
+      {
+        "source_ids": [
+          "measurement-context"
+        ],
+        "text": "The only quantitative datum in the packet is a pilot note reporting 40 accepted pull requests in one month, with no task mix, control group, reviewer hours, failure count, or provider costs.",
+        "uncertainty": "No material uncertainty for the reported figure and stated omissions; the full pilot note is not supplied, so any additional content it may contain is unknown."
+      },
+      {
+        "source_ids": [
+          "measurement-policy"
+        ],
+        "text": "The measurement policy requires evaluation via matched tasks, quality gates, human review time, rework, elapsed lead time, and total cost, and requires counting failed or abandoned tasks.",
+        "uncertainty": "No material uncertainty: this is the explicit policy text."
+      },
+      {
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "text": "The policy explicitly prohibits inferring causal benefit from accepted-PR counts, so the 40-PR figure cannot be used as a cost proxy or as evidence toward the 20% threshold.",
+        "uncertainty": "No material uncertainty: the prohibition is explicit in the policy and the PR count is the figure the pilot reports."
+      },
+      {
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "text": "Contradiction preserved: the pilot's sole reported result (40 accepted PRs) is a metric the packet's own policy disqualifies as evidence of causal benefit; the policy governs the measurement standard, so the PR count is treated as non-probative for cost.",
+        "uncertainty": "The pilot note's full text is not supplied; the packet does not show the pilot making an explicit cost-reduction claim, so the conflict is between the reported metric and the policy's evidentiary rule rather than between two explicit cost claims."
+      },
+      {
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "text": "The implementation-evidence obligation — a matched comparison with complete cost and failure accounting, including a comparable baseline and a total-cost numerator and denominator — is unresolved; the packet cannot close it.",
+        "uncertainty": "No material uncertainty about the absence; the obligation remains open and is left explicitly unresolved per the packet's limits."
+      },
+      {
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "text": "Bounded abstention is closed: the ≥20% total-cost reduction threshold is not established, and the missing measurements are named (matched task set/control with matched task cost, total-cost numerator and denominator including provider costs, human review time, and rework, failure/abandonment counts, task mix, elapsed lead time).",
+        "uncertainty": "No material uncertainty: this is the bounded conclusion the packet supports; it asserts no cost direction or magnitude."
+      },
+      {
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "text": "The finding rests entirely on the two supplied fixture documents (policy and context), treated as the current official record; no independent publishers are present and none are required (minimum 0).",
+        "uncertainty": "Within the fixture, no material uncertainty; the result does not generalize beyond the supplied record."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:46:45.576200+00:00",
+  "status": "completed",
+  "trial_id": "mission-unanswerable-cost-r1-control"
+}

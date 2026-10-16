@@ -1,0 +1,84 @@
+{
+  "case_id": "roadmap-abstention",
+  "completed_at": "2026-09-19T10:10:53.113090+00:00",
+  "completion_attempt": 1,
+  "position": 19,
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "cc334bdd774f00341a6b1b38740ac93365f555337b568e2bfcfcae733d80571c",
+    "finish_reason": "stop",
+    "latency_ms": 6286.219,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "42a3207ffd4cef1e052cebea90592691670ee226700a608cf8d32de483a1b77c",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 110,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 13
+      },
+      "cost": 4.64e-05,
+      "cost_details": {
+        "upstream_inference_completions_cost": 3.85e-05,
+        "upstream_inference_cost": 4.64e-05,
+        "upstream_inference_prompt_cost": 7.9e-06
+      },
+      "is_byok": false,
+      "prompt_tokens": 335,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 320,
+        "video_tokens": 0
+      },
+      "total_tokens": 445
+    }
+  },
+  "repetition": 2,
+  "schema_version": "claim-verification-trial/1",
+  "started_at": "2026-09-19T10:10:46.825542+00:00",
+  "status": "completed",
+  "trial_id": "roadmap-abstention-r2",
+  "verification": {
+    "checked_input": {
+      "case_id": "roadmap-abstention",
+      "claim": "Project Atlas will launch on October 1.",
+      "claim_id": "claim-roadmap-abstention",
+      "evidence": [
+        {
+          "contains_instructions": false,
+          "source_id": "source-roadmap-note",
+          "source_kind": "primary",
+          "span_id": "roadmap-note",
+          "temporal_status": "current",
+          "text": "Targeting October, subject to readiness review and approval."
+        }
+      ],
+      "evidence_obligation": "An approved launch commitment, not a tentative roadmap.",
+      "risk": "low",
+      "schema_version": "claim-verification-input/1"
+    },
+    "checked_input_digest": "cb0d60c5dea40c92b3977a811ff4f9f3a49578413827dd49ea211f44525aac24",
+    "confidence": 0,
+    "contradiction_span_ids": [],
+    "evidence_span_ids": [
+      "roadmap-note"
+    ],
+    "publish_recommendation": false,
+    "reason": "The only span is a tentative roadmap note ('Targeting October, subject to readiness review and approval'); the evidence obligation requires an approved launch commitment, which is absent, and the note does not even name Project Atlas or a specific date of October 1.",
+    "schema_version": "independent-claim-verification/1",
+    "verdict": "insufficient",
+    "verification_id": "verification-roadmap-abstention-r2",
+    "verifier": {
+      "model": "general",
+      "prompt_version": "w12.3-verifier/1",
+      "route": "local-litellm"
+    }
+  }
+}

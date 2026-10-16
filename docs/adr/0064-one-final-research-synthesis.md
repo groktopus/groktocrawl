@@ -4,6 +4,8 @@
 - Deciders: GroktoCrawl maintainers
 - Date: 2026-09-04
 
+- Research-substrate scope: Existing synthesis behavior remains unchanged. The opt-in research-substrate scope follows [ADR-0069](0069-adopt-bounded-research-substrate.md); the former experiment decision records are preserved in the [provenance archive](experimental/groktocrawl-x/README.md).
+
 ## Context
 
 Gap analysis reads evidence and the original question, never the draft answer.

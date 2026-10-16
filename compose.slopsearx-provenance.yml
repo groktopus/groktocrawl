@@ -1,0 +1,29 @@
+# Opt-in ADR-0082 narrow provenance profile. Use with docker-compose.yml and
+# `--profile mcp`. Ordinary deployments do not load these grants or settings.
+services:
+  slopsearx-mcp:
+    # W11-tested release containing the receipt/manifest contracts selected by
+    # ADR-0082. Kept isolated from the ordinary HTTP search image.
+    image: ghcr.io/magnus919/slopsearx@sha256:4cd9c04ae4ef2f154a104cd95cf2219d603e461c9449f4392ce562b0541dd2d3
+    environment:
+      MCP_AUTH_TOKEN: ${SLOPSEARX_PROVENANCE_TOKEN:?Set a dedicated provenance token}
+      MCP_GRANT_RETRIEVAL_RECEIPTS: "1"
+      MCP_GRANT_JOBS: "0"
+      MCP_GRANT_DEPENDENCY_DOSSIER: "0"
+      MCP_GRANT_RESEARCH: "0"
+      MCP_GRANT_SAVED_SEARCHES: "0"
+      MCP_GRANT_SAVED_SEARCH_EVENTS: "0"
+      MCP_GRANT_STAGED_SEARCH: "0"
+      MCP_GRANT_SECURITY: "0"
+      MCP_GRANT_SCIENCE: "0"
+      MCP_TARGETED_SENSITIVE_ALLOWED: "0"
+      MCP_SNAPSHOT_TTL_SECONDS: ${SLOPSEARX_PROVENANCE_SNAPSHOT_TTL_SECONDS:-3600}
+
+  agent-svc:
+    environment:
+      SLOPSEARX_PROVENANCE_PROFILE: retrieval-provenance-v1
+      SLOPSEARX_PROVENANCE_MCP_URL: http://slopsearx-mcp:8000/mcp
+      SLOPSEARX_PROVENANCE_TOKEN: ${SLOPSEARX_PROVENANCE_TOKEN:?Set a dedicated provenance token}
+    depends_on:
+      slopsearx-mcp:
+        condition: service_healthy

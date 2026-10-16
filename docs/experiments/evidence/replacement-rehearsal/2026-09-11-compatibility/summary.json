@@ -1,0 +1,174 @@
+{
+  "arms": {
+    "candidate": {
+      "answer_citation_counts": [
+        2,
+        3
+      ],
+      "answer_source_counts": [
+        3
+      ],
+      "completed_runs": 3,
+      "failed_runs": 0,
+      "journeys": {
+        "agent": true,
+        "agent_sse": true,
+        "answer": true,
+        "answer_sse": true,
+        "cli": true,
+        "crawl": true,
+        "health": true,
+        "mcp": true,
+        "scrape": true,
+        "search": true,
+        "webhook": true
+      },
+      "latency_ms": {
+        "agent_sse_ms": {
+          "max": 730.871,
+          "median": 606.166,
+          "min": 524.142
+        },
+        "agent_terminal_ms": {
+          "max": 20731.841,
+          "median": 1014.332,
+          "min": 1013.573
+        },
+        "answer_ms": {
+          "max": 6156.467,
+          "median": 3715.32,
+          "min": 3172.487
+        },
+        "answer_sse_ms": {
+          "max": 10186.207,
+          "median": 4065.769,
+          "min": 1992.388
+        },
+        "cli_scrape_ms": {
+          "max": 137.2,
+          "median": 102.319,
+          "min": 87.775
+        },
+        "cli_search_ms": {
+          "max": 538.462,
+          "median": 99.46,
+          "min": 94.57
+        },
+        "crawl_terminal_ms": {
+          "max": 520.451,
+          "median": 513.407,
+          "min": 503.106
+        },
+        "health_ms": {
+          "max": 19.405,
+          "median": 18.257,
+          "min": 17.957
+        },
+        "scrape_ms": {
+          "max": 74.217,
+          "median": 10.322,
+          "min": 6.974
+        },
+        "search_ms": {
+          "max": 654.115,
+          "median": 646.707,
+          "min": 32.976
+        }
+      },
+      "scrape_bytes": [
+        13358
+      ],
+      "search_result_counts": [
+        3
+      ],
+      "stable_scrape_hash": true
+    },
+    "incumbent": {
+      "answer_citation_counts": [
+        1,
+        3
+      ],
+      "answer_source_counts": [
+        3
+      ],
+      "completed_runs": 3,
+      "failed_runs": 0,
+      "journeys": {
+        "agent": true,
+        "agent_sse": true,
+        "answer": true,
+        "answer_sse": true,
+        "cli": true,
+        "crawl": true,
+        "health": true,
+        "mcp": true,
+        "scrape": true,
+        "search": true,
+        "webhook": true
+      },
+      "latency_ms": {
+        "agent_sse_ms": {
+          "max": 2090.781,
+          "median": 555.313,
+          "min": 313.68
+        },
+        "agent_terminal_ms": {
+          "max": 7289.906,
+          "median": 2031.786,
+          "min": 1526.559
+        },
+        "answer_ms": {
+          "max": 6875.804,
+          "median": 6357.726,
+          "min": 2150.63
+        },
+        "answer_sse_ms": {
+          "max": 13436.504,
+          "median": 7804.041,
+          "min": 2372.608
+        },
+        "cli_scrape_ms": {
+          "max": 147.265,
+          "median": 131.832,
+          "min": 124.703
+        },
+        "cli_search_ms": {
+          "max": 840.935,
+          "median": 113.452,
+          "min": 103.222
+        },
+        "crawl_terminal_ms": {
+          "max": 539.725,
+          "median": 517.346,
+          "min": 510.185
+        },
+        "health_ms": {
+          "max": 100.861,
+          "median": 65.348,
+          "min": 43.564
+        },
+        "scrape_ms": {
+          "max": 97.859,
+          "median": 52.616,
+          "min": 25.095
+        },
+        "search_ms": {
+          "max": 631.196,
+          "median": 417.303,
+          "min": 59.782
+        }
+      },
+      "scrape_bytes": [
+        13358
+      ],
+      "search_result_counts": [
+        3
+      ],
+      "stable_scrape_hash": true
+    }
+  },
+  "classification": "functionally_equivalent",
+  "primary_gates_passed": true,
+  "runs_per_arm": 3,
+  "schema_version": "w9-compatibility-summary/1"
+}

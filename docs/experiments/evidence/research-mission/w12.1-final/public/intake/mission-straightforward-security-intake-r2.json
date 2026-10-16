@@ -1,0 +1,196 @@
+{
+  "case_id": "mission-straightforward-security",
+  "completed_at": "2026-09-19T06:08:27.266276+00:00",
+  "position": 5,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "8a86f2d028f9451729eb96cd0624f8b5b99e18d66b2fbfded7e0a7ba8721841e",
+    "finish_reason": "stop",
+    "latency_ms": 290809.272,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "825e05fce1ce9d34090a229a1b741d054c5ccf5db1445a7e1905a2decd802491",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 17996,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 15819
+      },
+      "cost": 0.00906862,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.008998,
+        "upstream_inference_cost": 0.00906862,
+        "upstream_inference_prompt_cost": 7.062e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 2058,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 1984,
+        "video_tokens": 0
+      },
+      "total_tokens": 20054
+    }
+  },
+  "repetition": 2,
+  "result": {
+    "action": "ready",
+    "clarifying_question": null,
+    "mission": {
+      "abstain_when": [
+        "The request shifts to issuing, obtaining, or configuring actual credentials or to authorizing write access; research cannot grant, issue, or configure anything.",
+        "The decision requires asserting what internal enterprise policy currently permits and no authorized internal policy source is supplied; external research cannot establish internal permission facts.",
+        "Progress would require accessing non-public enterprise systems, secrets, or restricted internal repositories."
+      ],
+      "acceptable_uncertainty": "Platform-generic conclusions are acceptable where the enterprise stack is unspecified; platform-specific details are reported as conditional. Uncertainty about how internal enterprise policy bounds what a build agent 'may' receive must be surfaced as a required internal-policy check, never assumed away.",
+      "audience": "Security architecture and platform engineering leads designing credentialing and authorization for the enterprise agentic software factory's build layer.",
+      "budget": {
+        "max_elapsed_seconds": 300,
+        "max_model_calls": 6,
+        "max_searches": 4,
+        "max_sources": 10
+      },
+      "clarifications": [
+        {
+          "blocking": true,
+          "clarification_id": "build-platform-identification",
+          "question": "Which build platform(s) does the factory use (e.g., GitHub Actions, GitLab CI, Jenkins, Tekton), and are build runners hosted or self-hosted?",
+          "trigger": "Platform-specific credential mechanisms are needed to close the credential-mechanisms or platform-restriction-controls obligations and the platform cannot be determined from accessible sources."
+        }
+      ],
+      "contradiction_policy": "preserve_and_report",
+      "decision": "Select the credential types and write-permission scope that a build agent in the enterprise agentic software factory should and should not receive, grounded in authoritative external guidance, as input to the factory's credentialing and authorization design. The mission and any findings are decision inputs only: they grant no credentials, authorize no write access, and do not establish what internal enterprise policy currently permits; internal policy remains the binding authority for any final 'may'.",
+      "freshness": {
+        "as_of": null,
+        "mode": "current",
+        "rationale": "CI/CD platform capabilities and supply-chain security guidance change frequently; use current official documentation and current guidance versions, recording retrieval dates."
+      },
+      "mission_id": "build-agent-credential-profile",
+      "obligations": [
+        {
+          "closure_rule": "Closed when official documentation for at least two platforms' build-agent credential mechanisms is captured and cited; otherwise report as an explicit gap at budget exhaustion.",
+          "description": "Capture, from official vendor documentation, the credential mechanisms issued to build agents on at least two major CI/CD platforms.",
+          "evidence_role": "primary_authority",
+          "obligation_id": "ob.credential-mechanisms",
+          "question_id": "credential-mechanisms",
+          "weight": 5
+        },
+        {
+          "closure_rule": "Closed when recommended boundaries are documented from at least one standards/independent source and at least one official vendor source, with disagreements preserved and reported.",
+          "description": "Establish recommended write-permission boundaries per surface (repositories, registries, deploy targets) from authoritative frameworks and vendor guidance.",
+          "evidence_role": "primary_authority",
+          "obligation_id": "ob.write-scope-boundaries",
+          "question_id": "write-scope-recommendations",
+          "weight": 5
+        },
+        {
+          "closure_rule": "Closed when at least two independent publishers corroborate the principles, or when corroboration gaps are explicitly reported.",
+          "description": "Corroborate least-privilege and credential-lifetime principles for build identities across independent publishers.",
+          "evidence_role": "independent_corroboration",
+          "obligation_id": "ob.least-privilege-corroboration",
+          "question_id": "least-privilege-principles",
+          "weight": 4
+        },
+        {
+          "closure_rule": "Closed with at least one documented incident or attack-path source, or an explicit not-found report after the search budget is spent.",
+          "description": "Document attack paths or incidents showing harm from over-privileged build systems to ground the recommended restrictions.",
+          "evidence_role": "counterevidence",
+          "obligation_id": "ob.over-privilege-counterevidence",
+          "question_id": "over-privilege-risk",
+          "weight": 3
+        },
+        {
+          "closure_rule": "Closed when controls are documented for each platform covered by ob.credential-mechanisms, or remaining platforms are listed as gaps.",
+          "description": "Document platform-native controls that bound build-agent write access, from official vendor documentation.",
+          "evidence_role": "implementation_evidence",
+          "obligation_id": "ob.platform-write-controls",
+          "question_id": "platform-restriction-controls",
+          "weight": 4
+        },
+        {
+          "closure_rule": "Closed with a short gap and disagreement note even if sources are silent on agentic build executors.",
+          "description": "Note whether and how authoritative guidance extends to agentic or AI-driven build executors; record disagreements and silences.",
+          "evidence_role": "context",
+          "obligation_id": "ob.agentic-guidance-gaps",
+          "question_id": "agentic-build-gaps",
+          "weight": 2
+        }
+      ],
+      "questions": [
+        {
+          "question_id": "credential-mechanisms",
+          "required": true,
+          "text": "What credential types and issuance mechanisms (OIDC/workload identity, short-lived tokens, scoped static secrets) do major enterprise CI/CD platforms provide to build agents, per official documentation?"
+        },
+        {
+          "question_id": "write-scope-recommendations",
+          "required": true,
+          "text": "What write-permission scopes do authoritative sources recommend build agents should and should not hold across source repositories, package/artifact registries, and deployment targets?"
+        },
+        {
+          "question_id": "least-privilege-principles",
+          "required": true,
+          "text": "What least-privilege, scope-restriction, and credential-lifetime principles do independent standards and industry guidance prescribe for build-system identities?"
+        },
+        {
+          "question_id": "over-privilege-risk",
+          "required": true,
+          "text": "What documented attack paths or incidents involve over-privileged build or CI/CD systems, and what restrictions do they motivate?"
+        },
+        {
+          "question_id": "platform-restriction-controls",
+          "required": true,
+          "text": "What platform-native controls bound build-agent write access (token scopes, environment protection, registry permissions, ephemeral runners), per official vendor documentation?"
+        },
+        {
+          "question_id": "agentic-build-gaps",
+          "required": false,
+          "text": "Do authoritative sources address credentialing for agentic or AI-driven build executors, and where do sources disagree or leave gaps?"
+        }
+      ],
+      "schema_version": "research-mission/1",
+      "scope": {
+        "exclude": [
+          "Determining what this enterprise's internal policy, identity provider, or existing build systems currently permit; internal facts are out of scope and internal policy remains the binding authority.",
+          "Requesting, generating, handling, or configuring actual credentials, tokens, or secrets, or making any change to build systems.",
+          "Treating mission findings as authorization to grant any credential or write permission to any agent or identity.",
+          "Credential and permission profiles for non-build agent roles (coding, review, planning agents) or human access, except as boundary context.",
+          "Release governance or production deployment approval policy beyond the build agent's own write-permission boundary."
+        ],
+        "include": [
+          "Credential issuance mechanisms for build agents on widely used enterprise CI/CD platforms (for example GitHub Actions, GitLab CI, Jenkins, Tekton), including OIDC/workload identity, short-lived tokens, and scoped static secrets, per official vendor documentation.",
+          "Recommended write-permission boundaries for build agents across source repositories, package and artifact registries, container registries, and deployment or configuration targets, per authoritative frameworks and vendor guidance.",
+          "Least-privilege, scope-limitation, and credential-lifetime principles for build-system identities from recognized standards bodies and independent industry guidance (candidate sources to be verified during research, e.g., NIST SSDF, OWASP CI/CD security guidance, CIS software supply chain guidance, SLSA).",
+          "Platform-native controls that bound build-agent write access (token permission settings, environment and branch protection, registry scopes, ephemeral or isolated runners), per official documentation.",
+          "Documented risks, attack paths, or incidents involving over-privileged build or CI/CD systems, as counterevidence shaping the profile."
+        ]
+      },
+      "source_policy": {
+        "allowed_authority": [
+          "primary",
+          "official",
+          "independent"
+        ],
+        "derivative_sources_count_as_independent": false,
+        "inaccessible_sources_can_close_obligations": false,
+        "minimum_independent_publishers": 2
+      },
+      "stop_when": [
+        "All required obligations are closed per their closure rules, with at least two independent publishers represented across the evidence base.",
+        "A draft least-privilege profile is produced: allowed and prohibited credential types plus write-permission boundaries per surface, with platform notes.",
+        "The budget is exhausted; deliver closed obligations, the partial profile, and an explicit gap list."
+      ]
+    },
+    "rationale": "The request is a researchable normative question - what credential and write-permission profile is appropriate for a build agent - so normalization proceeds without guessing. The decision-changing readings collapse into one bounded mission: an evidence-based least-privilege profile for build agents in the caller's stated domain. The two things research cannot do are fenced explicitly: it cannot determine what the enterprise's internal policy currently permits (an internal fact), and it cannot grant or configure credentials (an action, not a finding), so no output constitutes permission or truth. The one residual decision-relevant unknown, the enterprise's actual build platform, is handled by platform-generic scoping plus a single embedded conditional blocking clarification rather than by guessing a platform now."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:03:36.447315+00:00",
+  "status": "completed",
+  "trial_id": "mission-straightforward-security-intake-r2"
+}

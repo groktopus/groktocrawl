@@ -1,0 +1,3 @@
+groktocrawl_pgvector_shadow_operations_total{operation="upsert",outcome="failure"} 1.0
+groktocrawl_pgvector_shadow_operations_total{operation="search",outcome="failure"} 1.0
+groktocrawl_pgvector_shadow_comparisons_total{outcome="failure"} 1.0

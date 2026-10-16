@@ -11,6 +11,12 @@ from common.metrics import METRICS
 
 from .barrier import BarrierInfo, _classify_barrier
 from .settings import load_settings
+from .source_http import (
+    protected_llm_control_mode,
+    trusted_llm_endpoint,
+    trusted_llm_headers,
+    trusted_llm_httpx_client,
+)
 
 logger = logging.getLogger(__name__)
 MAX_IMAGE_GRID_ROUNDS = 2
@@ -87,7 +93,10 @@ async def _vision_request(
     base_url = _settings.captcha_vision_base_url
     api_key = _settings.captcha_vision_api_key
     model = _settings.captcha_vision_model
-    if _vision_unavailable or not (base_url and api_key and model):
+    enabled = bool(model) and (
+        protected_llm_control_mode() or bool(base_url and api_key)
+    )
+    if _vision_unavailable or not enabled:
         return None, "unavailable"
     columns = int(math.sqrt(tile_count))
     rows = tile_count // columns if columns and tile_count % columns == 0 else 1
@@ -97,12 +106,12 @@ async def _vision_request(
         '{"tiles":[...],"submit":true} only.'
     )
     try:
-        async with httpx.AsyncClient(
-            timeout=_settings.captcha_vision_timeout
+        async with trusted_llm_httpx_client(
+            "captcha", timeout=_settings.captcha_vision_timeout
         ) as client:
             response = await client.post(
-                f"{base_url.rstrip('/')}/chat/completions",
-                headers={"Authorization": f"Bearer {api_key}"},
+                trusted_llm_endpoint("captcha", base_url),
+                headers=trusted_llm_headers("captcha", api_key),
                 json={
                     "model": model,
                     "messages": [

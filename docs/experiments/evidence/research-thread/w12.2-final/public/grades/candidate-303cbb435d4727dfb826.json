@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-303cbb435d4727dfb826",
+  "case_id": "later-resolution",
+  "completed_at": "2026-09-19T09:12:55.231275+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 100,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "The candidate directly answers yes and matches the reference ledger on every dimension. Change: it correctly reports the FAQ update publishing the retention period (30 days), replacing the earlier unspecified statement, supported by both snapshots of the same lineage. Current truth 'Fern CI retains build logs for 30 days' matches the reference and is cited to fern-faq-new. The old 'not specified' statement is preserved as historical and explicitly marked superseded, so no stale-current leakage and no lost history. Unresolved is empty in both candidate and reference. No distinct subjects or capabilities were merged (both snapshots belong to the same fern-ci/fern-faq lineage). All factual claims trace to the supplied sources; zero unsupported claims.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 100,
+    "unsupported_claims": 0,
+    "usefulness": 100
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "7ff9add707915ea8a56ba6da51f1b3727d9255b6c11aafbf8e432cd775b9a7fb",
+    "finish_reason": "stop",
+    "latency_ms": 11343.15,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "7fe0217fc768b217bc9b4dbbbe1b597cf11c036ae58fa2ca048bd49ea5faf855",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 1388,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 1172
+      },
+      "cost": 0.00081475,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000694,
+        "upstream_inference_cost": 0.00081475,
+        "upstream_inference_prompt_cost": 0.00012075
+      },
+      "is_byok": false,
+      "prompt_tokens": 805,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 2193
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:12:43.887047+00:00",
+  "status": "completed",
+  "trial_id": "later-resolution-r1-treatment"
+}

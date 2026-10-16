@@ -1,0 +1,57 @@
+{
+  "candidate_id": "intake-candidate-b97da95534ed8d6f999c",
+  "case_id": "mission-ambiguous-productive",
+  "completed_at": "2026-09-19T06:30:35.100557+00:00",
+  "grade": {
+    "action_correct": true,
+    "action_rationale": "Candidate action 'clarify' matches the expected intake and the reference mission's posture: one blocking clarification (c1, blocking: true), mission left unauthored (null), no facts or findings asserted, research not begun. The candidate correctly treats the request as answerable in principle rather than abstaining, consistent with a reference mission existing for this request.",
+    "clarification_utility": 0,
+    "correction_actions": [],
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "No invented authority (no sources, measurements, or approvals asserted); no silent scope broadening (the 'e.g.' outcome examples are illustrative prompts to the user, not scope commitments, and none asserts the prohibited assumption that accepted PRs prove causal benefit); no freshness constraint is lost since no research was performed and no freshness claim was made; the action 'clarify' is authorized and expected. The candidate's rationale explicitly disclaims asserted facts, matching the reference's abstain guard against inventing authority or missing measurements.",
+    "invented_constraints": [],
+    "lost_hard_boundaries": [],
+    "required_field_recall": 0,
+    "unnecessary_fields": []
+  },
+  "position": 24,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "44da5e742b03ab6fa610a66b7c3f8f7b92ad62a62d930dffea89c72356e4eec3",
+    "finish_reason": "stop",
+    "latency_ms": 36678.135,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "d54603b96cd5770659ed1a0ad1c98c26ddc7483b4215853b86ab197e34bf49b7",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 6174,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 7269
+      },
+      "cost": 0.0032064,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.003087,
+        "upstream_inference_cost": 0.0032064,
+        "upstream_inference_prompt_cost": 0.0001194
+      },
+      "is_byok": false,
+      "prompt_tokens": 796,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 6970
+    }
+  },
+  "schema_version": "research-mission-intake-grade/1",
+  "started_at": "2026-09-19T06:29:58.420651+00:00",
+  "status": "completed"
+}

@@ -13,11 +13,17 @@ dependencies = [
     "referencing>=0.28.4",
     "beautifulsoup4>=4.13.0",
     "python-multipart>=0.0.20",
+    "rfc8785==0.1.4",
+    "psycopg[binary]==3.3.5",
 ]
 
 [tool.deptry.per_rule_ignores]
 # Uvicorn is the container entry point; FastAPI loads multipart support dynamically.
 DEP002 = ["uvicorn", "python-multipart"]
+# LangGraph is intentionally an optional W4 comparison dependency. It must not
+# enter the production service or locked default test environment before the
+# runtime comparison is authorized and its exact version is pinned.
+DEP001 = ["langgraph"]
 
 [tool.mutmut]
 # Bounded mutation-testing pilot config (issue #572). Run from cwd agent-svc/.

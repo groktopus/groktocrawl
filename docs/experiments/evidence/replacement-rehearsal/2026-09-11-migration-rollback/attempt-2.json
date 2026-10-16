@@ -1,0 +1,10 @@
+{
+  "corpus_size": 6,
+  "deleted_documents": 1,
+  "failure": "semantic service did not become ready in qdrant mode",
+  "failure_type": "RehearsalError",
+  "git_revision": "0473b738dfbe357af767e6412f994feedd8d1de7",
+  "rollback_target_ms": 120000,
+  "schema_version": "w9-migration-rollback/1",
+  "status": "failed"
+}

@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-109a44668277738841ff",
+  "case_id": "historical-support",
+  "completed_at": "2026-09-19T09:26:24.009018+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 100,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "The candidate correctly states OAuth 2.1 as the current mode per elm-auth-2026, fully captures the change (API keys replaced by OAuth 2.1 beginning 2026, key acceptance ended), and preserves the 2025 API-key requirement as historical without rewriting it as false, satisfying the prohibited-merge constraint. Lineage is established via shared subject_id/lineage_id rather than name similarity, so no false merge; no superseded evidence is presented as current; no historical claim is lost. All factual claims trace to the two primary snapshots, so unsupported_claims is 0. The sole weakness is the unresolved section: the reference ledger lists nothing unresolved, but the candidate invents three open questions — a precision demand on the effective date, doubt about post-2026 currency that the ledger treats as settled, and peripheral migration/grace-period details — which cannot be rewarded and add audit noise, lowering unresolved_accuracy and usefulness slightly.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 25,
+    "unsupported_claims": 0,
+    "usefulness": 90
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "3c039e748c41e752f9459d2051bdefd28275fe38dbd63d8b6c1cbc232b0ed18f",
+    "finish_reason": "stop",
+    "latency_ms": 36109.379,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "7a9c7aa97e277fd3e9c06f7e677249802eebdf27d2b4681eec1f1b10867c2cc5",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 4886,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 5286
+      },
+      "cost": 0.00262795,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.002443,
+        "upstream_inference_cost": 0.00262795,
+        "upstream_inference_prompt_cost": 0.00018495
+      },
+      "is_byok": false,
+      "prompt_tokens": 1233,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 6119
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:25:47.897127+00:00",
+  "status": "completed",
+  "trial_id": "historical-support-r1-control"
+}

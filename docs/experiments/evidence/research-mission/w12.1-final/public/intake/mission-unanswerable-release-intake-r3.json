@@ -1,0 +1,52 @@
+{
+  "case_id": "mission-unanswerable-release",
+  "completed_at": "2026-09-19T06:08:25.347731+00:00",
+  "position": 6,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "0f94db087584a9e1cce78068a7b19c4979620889e1f81aba1a6e760d9f38cc0d",
+    "finish_reason": "stop",
+    "latency_ms": 79530.35,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "e92f2ac0982562fbe6607bf33bcdde1246363a11e5d23005ffe374053b11f575",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 2014,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 2384
+      },
+      "cost": 0.00108033,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.001007,
+        "upstream_inference_cost": 0.00108033,
+        "upstream_inference_prompt_cost": 7.333e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 2059,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 2048,
+        "video_tokens": 0
+      },
+      "total_tokens": 4073
+    }
+  },
+  "repetition": 3,
+  "result": {
+    "action": "clarify",
+    "clarifying_question": "Which timed-out production release are you asking about? Please provide the service name, the release or pipeline-run identifier, and the date/time (or the change/incident ticket reference) so that approval records for that exact release can be located.",
+    "mission": null,
+    "rationale": "The request presupposes a specific, already-known release ('the timed-out production release') but supplies no service, release/run identifier, or time window. Approval status is release-specific and accountability-sensitive; proceeding would require guessing which release's approval records to inspect, which could yield a wrong or misleading answer about a different release. Research itself is appropriate (so abstention is not warranted), but it is blocked on this single decision-changing ambiguity. Once the release is identified, the request can be normalized into a research-mission/1 object scoped to that release's approval evidence, with the requester's own systems of record treated as the only permissible sources."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:07:05.810506+00:00",
+  "status": "completed",
+  "trial_id": "mission-unanswerable-release-intake-r3"
+}

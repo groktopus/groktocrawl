@@ -1,0 +1,120 @@
+{
+  "candidate_revision": "46a528228b1365189cdd38d0bcdb12109a8dc763",
+  "completed_at": "2026-09-30T19:40:57.866103Z",
+  "completed_checkpoints": 3,
+  "earliest_completion_at": "2026-09-30T00:09:25.966168Z",
+  "next_checkpoint_not_before": "2026-09-26T00:09:25.966168Z",
+  "notes": [
+    "The original pilot window failed after a host restart because volatile private-file bind sources prevented container recreation.",
+    "The outage remains failed operational evidence; the clock and successful-request count restarted.",
+    "Private configuration now uses persistent per-user storage with owner-only permissions.",
+    "Restart checkpoint 0 passed all 11 inherited journeys and one experimental cross-client research journey.",
+    "A quoted-key observation-command error stopped at the first scrape request and is retained separately; the corrected command then passed.",
+    "The loopback-only window ended when the owner selected real Hermes traffic as the pilot workload.",
+    "The API and MCP ports now publish on trusted host interfaces; the candidate API remains key-protected and MCP Host values are allowlisted.",
+    "The first LAN-binding edit accidentally remained loopback-only because of shell expansion. That failed observation is retained in the LAN restart packet.",
+    "Real-use checkpoint 0 passed at 2026-09-19T13:51:26Z with 12 successful representative operations.",
+    "A real-client audit found streaming-search, candidate Parse wiring, and semantic timeout failures; the reviewed fixes invalidated the preceding window.",
+    "Live follow-up found and repaired staged Parse metadata consumption before the final runtime freeze.",
+    "The repaired runtime passed streaming search, direct and staged Parse, and web similarity checks without changing client configuration.",
+    "The final runtime checkpoint 0 passed all 12 declared operations at 2026-09-19T18:15:21Z.",
+    "Live verification found that staged Parse still required an internal upload reservation; the public reservation route and automatic CLI flow were restored.",
+    "The final runtime checkpoint 0 passed all 12 declared operations at 2026-09-19T19:03:37Z.",
+    "An independent 105-case audit exposed sustained model-backed failures while retrieval and document workflows remained broadly healthy.",
+    "Candidate logs traced the failures to the retired local model alias; the approved general alias restored rich search, grounded answer, focused agent, and extraction smoke cases.",
+    "The corrected configuration checkpoint 0 passed all 12 declared operations at 2026-09-19T21:50:36Z.",
+    "The independent retest passed 27 of 29 cases with no failures; two projections of local-vector relevance remained partial.",
+    "The bounded relevance experiment rejected cross-encoder reranking and clean-v1 representation changes; raw cosine retrieval passed the labeled screen.",
+    "The semantic CPU quota became deployment configuration rather than a one-off container setting, restarting the operational window.",
+    "Current-runtime checkpoint 0 passed all 12 declared operations at 2026-09-20T05:23:26Z.",
+    "The first current-runtime runner invocation stopped before product traffic because host Python lacked httpx; the unchanged runner passed through an isolated dependency environment.",
+    "The September 20 window ended when the candidate agent image changed on September 21; its 12 passed operations remain retained evidence, not current-window credit.",
+    "Candidate SlopSearX was recreated with Semantic Scholar key wiring on September 22; the keyed engine returned five results with status ok. A new frozen baseline and checkpoint 0 are required before timing gates resume.",
+    "A clean current-main candidate replaced the temporary Jev agent override and recreated the stack with the pinned SlopSearX image; all eleven services and public health were healthy before this new window started.",
+    "Two new-baseline checkpoint attempts stopped at the CLI fixture scrape because the isolated runner environment had httpx but lacked requests; host Python passed the diagnostic while the uv environment did not. Both failed packets are retained as setup evidence, and the corrected dependency preflight precedes product traffic.",
+    "The corrected current-main checkpoint 0 passed all 12 declared operations at 2026-09-22T16:49:57.651610Z; that historical window had 12/30 successful operations and 1/3 checkpoints at the time.",
+    "The September 22 window ended before checkpoint 1 when a separate free-model comparison recreated the candidate agent with an older image and model alias free. Its checkpoint-0 operations remain historical evidence only.",
+    "The candidate agent was restored to the frozen current-main image and general model at 2026-09-22T19:16:26.093854409Z.",
+    "The first new-window checkpoint attempt reached grounded answer and received HTTP 502 while the shared model gateway restarted; the failed receipt is retained without credit. The protocol's single retry passed all 12 declared operations at 2026-09-22T19:20:21.394803Z, giving that historical window 12/30 successful operations and 1/3 checkpoints.",
+    "The owner pinned experimental candidate inference to LiteLLM free; the prior general window ended and has zero credit toward the new frozen window.",
+    "Free-model checkpoint 0 passed 12/12 declared operations; text and structured model readiness both passed. A setup-only first attempt ran the verifier from the wrong source revision and earned no credit.",
+    "Free-model checkpoint 1 passed all 12 declared operations at 2026-09-26T19:38:03.623260Z from a clean checkout matching the deployed revision; text and structured-output readiness passed and the cross-client research completed.",
+    "Final free-model checkpoint 2 passed 12/12 on the single permitted retry after an LLM health-check timeout caused HTTP 503. The failed attempt remains zero-credit evidence. Current window has 36 successful operations and three checkpoints; owner ADR ratification remains separate."
+  ],
+  "previous_windows": [
+    {
+      "ended_at": "2026-09-16T21:50:00Z",
+      "outcome": "failed_operational_restart",
+      "started_at": "2026-09-11T17:26:19Z",
+      "successful_requests": 12
+    },
+    {
+      "ended_at": "2026-09-19T13:42:50Z",
+      "outcome": "configuration_changed_for_real_hermes_traffic",
+      "started_at": "2026-09-19T02:19:40Z",
+      "successful_requests": 12
+    },
+    {
+      "ended_at": "2026-09-19T18:12:36.512533Z",
+      "outcome": "runtime_changed_to_repair_live_feature_boundaries",
+      "started_at": "2026-09-19T13:42:50Z",
+      "successful_requests": 12
+    },
+    {
+      "ended_at": "2026-09-19T19:00:53.139536Z",
+      "outcome": "runtime_changed_to_restore_public_staged_parse_reservation",
+      "started_at": "2026-09-19T18:12:36.512533Z",
+      "successful_requests": 12
+    },
+    {
+      "ended_at": "2026-09-19T21:46:56.859244Z",
+      "outcome": "configuration_changed_to_correct_retired_model_alias",
+      "started_at": "2026-09-19T19:00:53.139536Z",
+      "successful_requests": 12
+    },
+    {
+      "ended_at": "2026-09-20T00:29:23.190959898Z",
+      "outcome": "runtime_changed_to_apply_independent_audit_fixes",
+      "started_at": "2026-09-19T21:46:56.859244Z",
+      "successful_requests": 12
+    },
+    {
+      "ended_at": "2026-09-20T03:50:12.128796138Z",
+      "outcome": "runtime_changed_for_similarity_experiment_and_rollback",
+      "started_at": "2026-09-20T00:29:23.190959898Z",
+      "successful_requests": 27
+    },
+    {
+      "ended_at": "2026-09-20T05:16:52.26916171Z",
+      "outcome": "deployment_changed_to_make_semantic_cpu_quota_durable",
+      "started_at": "2026-09-20T03:50:12.128796138Z",
+      "successful_requests": 3
+    },
+    {
+      "ended_at": "2026-09-21T17:45:02.472507659Z",
+      "outcome": "candidate_agent_runtime_replaced_before_due_checkpoint",
+      "started_at": "2026-09-20T05:16:52.26916171Z",
+      "successful_requests": 12
+    },
+    {
+      "ended_at": "2026-09-22T18:53:27.962311981Z",
+      "outcome": "candidate_agent_recreated_for_separate_free_model_test",
+      "started_at": "2026-09-22T16:47:25.742584Z",
+      "successful_requests": 12
+    },
+    {
+      "ended_at": "2026-09-23T00:09:25.966168523Z",
+      "outcome": "model_alias_changed_to_free_by_owner_directive",
+      "started_at": "2026-09-22T19:16:26.093854409Z",
+      "successful_requests": 12
+    }
+  ],
+  "required_checkpoints": 3,
+  "required_elapsed_days": 7,
+  "required_successful_requests": 30,
+  "runtime_revision": "46a528228b1365189cdd38d0bcdb12109a8dc763",
+  "schema_version": "w9-operational-pilot-state/2",
+  "started_at": "2026-09-23T00:09:25.966168523Z",
+  "status": "complete",
+  "successful_requests": 36
+}

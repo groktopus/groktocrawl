@@ -46,6 +46,27 @@ def _make_response(status_code=200, json_data=None, text=""):
 
 class TestLLMClientGenerate:
     @pytest.mark.asyncio
+    async def test_output_budget_preserves_mainline_default_and_legacy_override(
+        self, llm, monkeypatch
+    ):
+        monkeypatch.delenv("LLM_MAX_OUTPUT_TOKENS", raising=False)
+        load_settings.cache_clear()
+        response = _make_response(
+            json_data={"choices": [{"message": {"content": "ok"}}]}
+        )
+        try:
+            with patch.object(llm._client, "post", return_value=response) as post:
+                assert await llm.generate("system", "user") == "ok"
+                assert post.call_args.kwargs["json"]["max_tokens"] == 8192
+            monkeypatch.setenv("LLM_MAX_OUTPUT_TOKENS", "32768")
+            load_settings.cache_clear()
+            with patch.object(llm._client, "post", return_value=response) as post:
+                assert await llm.generate("system", "user") == "ok"
+                assert post.call_args.kwargs["json"]["max_tokens"] == 32768
+        finally:
+            load_settings.cache_clear()
+
+    @pytest.mark.asyncio
     async def test_successful_generation(self, llm):
         with patch.object(
             llm._client,
@@ -321,6 +342,42 @@ class TestLLMClientGenerateStream:
             assert tokens[2] == {"type": "token", "content": "world"}
             assert tokens[3]["type"] == "done"
             assert "Hello world" in tokens[3]["full_content"]
+
+    @pytest.mark.asyncio
+    async def test_stream_length_stop_is_not_a_completed_answer(self, llm):
+        mock_client_cls, _ = self._setup_stream_mock(
+            [
+                'data: {"choices":[{"delta":{"content":"Partial"}}]}',
+                'data: {"choices":[{"delta":{},"finish_reason":"length"}]}',
+                "data: [DONE]",
+            ]
+        )
+        with patch("httpx.AsyncClient", mock_client_cls):
+            events = [event async for event in llm.generate_stream("x", "y")]
+        assert events[0] == {"type": "token", "content": "Partial"}
+        assert events[-1]["type"] == "error"
+        assert events[-1]["classification"] == "truncated"
+        assert not any(event["type"] == "done" for event in events)
+
+    @pytest.mark.asyncio
+    async def test_stream_output_budget_preserves_mainline_default_and_legacy_override(
+        self, llm, monkeypatch
+    ):
+        mock_client_cls, mock_client = self._setup_stream_mock(["data: [DONE]"])
+        monkeypatch.delenv("LLM_MAX_OUTPUT_TOKENS", raising=False)
+        load_settings.cache_clear()
+        try:
+            with patch("httpx.AsyncClient", mock_client_cls):
+                _ = [event async for event in llm.generate_stream("x", "y")]
+                assert mock_client.stream.call_args.kwargs["json"]["max_tokens"] == 8192
+                monkeypatch.setenv("LLM_MAX_OUTPUT_TOKENS", "32768")
+                load_settings.cache_clear()
+                _ = [event async for event in llm.generate_stream("x", "y")]
+                assert (
+                    mock_client.stream.call_args.kwargs["json"]["max_tokens"] == 32768
+                )
+        finally:
+            load_settings.cache_clear()
 
     @pytest.mark.asyncio
     async def test_yields_error_on_non_200(self, llm):

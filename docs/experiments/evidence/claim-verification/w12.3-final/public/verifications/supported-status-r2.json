@@ -1,0 +1,84 @@
+{
+  "case_id": "supported-status",
+  "completed_at": "2026-09-19T10:10:07.623967+00:00",
+  "completion_attempt": 1,
+  "position": 14,
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "988d304d1a1f7da7606c2124d4ddae2269a501186cf825830618d84dfe7cdb0a",
+    "finish_reason": "stop",
+    "latency_ms": 1833.188,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "1e0ee4e1e5760bca3173ee8ee9c61b90eb05183b47128f945dbfaac40b80b3a6",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 96,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 17
+      },
+      "cost": 9.885e-05,
+      "cost_details": {
+        "upstream_inference_completions_cost": 4.8e-05,
+        "upstream_inference_cost": 9.885e-05,
+        "upstream_inference_prompt_cost": 5.085e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 339,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 435
+    }
+  },
+  "repetition": 2,
+  "schema_version": "claim-verification-trial/1",
+  "started_at": "2026-09-19T10:10:05.789151+00:00",
+  "status": "completed",
+  "trial_id": "supported-status-r2",
+  "verification": {
+    "checked_input": {
+      "case_id": "supported-status",
+      "claim": "The incident was resolved at 14:10 UTC.",
+      "claim_id": "claim-supported-status",
+      "evidence": [
+        {
+          "contains_instructions": false,
+          "source_id": "source-incident-resolution",
+          "source_kind": "primary",
+          "span_id": "incident-resolution",
+          "temporal_status": "current",
+          "text": "Resolved: 14:10 UTC. All queued requests have drained."
+        }
+      ],
+      "evidence_obligation": "A primary incident record with a resolution time.",
+      "risk": "low",
+      "schema_version": "claim-verification-input/1"
+    },
+    "checked_input_digest": "79a89f3aa090c4a8be1c7b5cb7187b7d1de64c975608ba6a599dd2acc4f2d44b",
+    "confidence": 95,
+    "contradiction_span_ids": [],
+    "evidence_span_ids": [
+      "incident-resolution"
+    ],
+    "publish_recommendation": true,
+    "reason": "A primary, current incident record directly states 'Resolved: 14:10 UTC,' which directly entails the claim that the incident was resolved at 14:10 UTC.",
+    "schema_version": "independent-claim-verification/1",
+    "verdict": "supported",
+    "verification_id": "verification-supported-status-r2",
+    "verifier": {
+      "model": "general",
+      "prompt_version": "w12.3-verifier/1",
+      "route": "local-litellm"
+    }
+  }
+}

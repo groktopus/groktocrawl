@@ -1,0 +1,50 @@
+# Valkey-backed W5 recovery contract lane. No production deployment or image publication.
+name: W5 Durable Recovery
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "agent-svc/agent/experimental/durable_research.py"
+      - "tests/unit/test_durable_research.py"
+      - ".github/workflows/w5-durable-recovery.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "agent-svc/agent/experimental/durable_research.py"
+      - "tests/unit/test_durable_research.py"
+      - ".github/workflows/w5-durable-recovery.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  durable-recovery:
+    name: Valkey recovery matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      valkey:
+        image: valkey/valkey:8-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "valkey-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v7
+      - name: Install locked test environment
+        run: uv sync --locked --no-dev --group fast-tests
+      - name: Run W5 recovery matrix
+        env:
+          DURABLE_RESEARCH_REDIS_URL: redis://127.0.0.1:6379/15
+          PYTHONPATH: .:agent-svc
+        run: uv run --no-sync pytest tests/unit/test_durable_research.py -q -o addopts=

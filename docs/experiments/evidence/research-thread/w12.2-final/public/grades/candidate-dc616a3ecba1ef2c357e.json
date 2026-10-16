@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-dc616a3ecba1ef2c357e",
+  "case_id": "rotated-link",
+  "completed_at": "2026-09-19T09:28:31.116130+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 100,
+    "current_accuracy": 95,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "The candidate cleanly separates the two snapshots: the versions-before-4.2 finding is preserved strictly as historical ('as previously captured', 'as of the earlier snapshot') per grove-g12-old, while the URL unavailability is correctly reported as the change and current state per grove-g12-gone, matching the reference change event. The prohibited substitution of unrelated current content for the retained snapshot did not occur, no superseded evidence was stated as current, and no distinct subjects were merged, so all failure flags are false. The core unresolved point (current advisory status cannot be established) is captured; the two additional unknowns (reason for unavailability, relocation/supersession/retraction) are consistent elaborations rather than invented facts. Minor deductions reflect the current-truth and unresolved lists slightly exceeding the reference ledger (the URL state is double-listed as a current truth beyond the reference's empty current-truth set), though every claim is source-cited and accurate. No unsupported factual claims were made, and the answer is well-structured, cited, and explicitly bounds inference to the two snapshots.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 95,
+    "unsupported_claims": 0,
+    "usefulness": 100
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "a2cf501d768c8dce5d1d049784dc7a976df6781a0143e37e8903e868a3c41e48",
+    "finish_reason": "stop",
+    "latency_ms": 138904.232,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "2d817b23ca155c3a47c89a01039e29576b2135297cabe4417ba431947e247db1",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 7298,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 8545
+      },
+      "cost": 0.0038008,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.003649,
+        "upstream_inference_cost": 0.0038008,
+        "upstream_inference_prompt_cost": 0.0001518
+      },
+      "is_byok": false,
+      "prompt_tokens": 1012,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 8310
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:26:12.208905+00:00",
+  "status": "completed",
+  "trial_id": "rotated-link-r3-control"
+}

@@ -1,0 +1,62 @@
+{
+  "containers": [
+    {
+      "cpu_percent": "0.13%",
+      "memory_percent": "0.33%",
+      "service": "agent"
+    },
+    {
+      "cpu_percent": "0.13%",
+      "memory_percent": "34.79%",
+      "service": "browser"
+    },
+    {
+      "cpu_percent": "0.27%",
+      "memory_percent": "0.22%",
+      "service": "mcp"
+    },
+    {
+      "cpu_percent": "0.15%",
+      "memory_percent": "1.79%",
+      "service": "parse"
+    },
+    {
+      "cpu_percent": "0.14%",
+      "memory_percent": "0.12%",
+      "service": "portal"
+    },
+    {
+      "cpu_percent": "0.02%",
+      "memory_percent": "2.27%",
+      "service": "postgres"
+    },
+    {
+      "cpu_percent": "0.06%",
+      "memory_percent": "1.30%",
+      "service": "qdrant-rollback"
+    },
+    {
+      "cpu_percent": "11.43%",
+      "memory_percent": "35.25%",
+      "service": "scraper"
+    },
+    {
+      "cpu_percent": "0.17%",
+      "memory_percent": "22.76%",
+      "service": "semantic"
+    },
+    {
+      "cpu_percent": "0.14%",
+      "memory_percent": "80.16%",
+      "service": "slopsearx"
+    },
+    {
+      "cpu_percent": "1.47%",
+      "memory_percent": "2.08%",
+      "service": "valkey"
+    }
+  ],
+  "observed_at": "2026-09-26T19:38:03.621910+00:00",
+  "schema_version": "w9-resource-snapshot/1",
+  "source_receipt_sha256": "a3b0ea6dbc2a2255b3aea553d9e6a91e06c3f1aaf2b151be02a7ca880267435b"
+}

@@ -1,0 +1,107 @@
+"""Frozen-input experiment runner. Offline by default; transport supplied externally."""
+import argparse,datetime,hashlib,json,math,pathlib,subprocess,time
+
+def encoded(body):
+    return json.dumps(body,ensure_ascii=False,separators=(',',':'),allow_nan=False).encode()
+
+def finite(x):
+    return type(x) in (int,float) and math.isfinite(x)
+
+def expectation_bounds(probabilities):
+    # Explicit exploratory assumption: each printed probability is rounded to
+    # nearest 0.01; intervals must permit a normalized distribution.
+    lo={int(k):max(0.0,v-.005) for k,v in probabilities.items()}
+    hi={int(k):min(1.0,v+.005) for k,v in probabilities.items()}
+    if sum(lo.values())>1+1e-9 or sum(hi.values())<1-1e-9:
+        return None
+    bounds=[]
+    for descending in (False,True):
+        actual=dict(lo);remaining=1-sum(actual.values())
+        for k in sorted(actual,reverse=descending):
+            delta=min(remaining,hi[k]-lo[k]);actual[k]+=delta;remaining-=delta
+        if remaining>1e-9:return None
+        bounds.append(sum(k*v for k,v in actual.items()))
+    return bounds
+
+def validate(raw,body):
+    errors=[]
+    if raw.get('model')!=body['model']: errors.append('model_identity')
+    answers=raw.get('answers',{})
+    if not isinstance(answers,dict): return ['answers_not_map']
+    if set(answers)!=set(body['questions']): errors.append('answer_membership')
+    for id,q in body['questions'].items():
+        a=answers.get(id,{})
+        if not isinstance(a,dict) or a.get('type')!=q['type']:
+            errors.append(id+':type');continue
+        expected={str(i) for i in range(len(q['criteria']))} if q['type']=='score' else set(q['criteria'])
+        p=a.get('probabilities')
+        if not isinstance(p,dict) or set(p)!=expected or not all(finite(v) and 0<=v<=1 for v in p.values()) or abs(sum(p.values())-1)>.02:
+            errors.append(id+':probabilities');continue
+        if not finite(a.get('confidence')) or not 0<=a['confidence']<=1: errors.append(id+':confidence')
+        if q['type']=='score':
+            s=a.get('score')
+            bounds=expectation_bounds(p)
+            if not finite(s) or not 0<=s<=len(q['criteria'])-1 or bounds is None or not bounds[0]-.005-1e-9<=s<=bounds[1]+.005+1e-9: errors.append(id+':score')
+        elif a.get('choice') not in expected or p[a['choice']]<max(p.values())-.011: errors.append(id+':choice')
+    usage=raw.get('usage')
+    if not isinstance(usage,dict) or any(type(usage.get(k)) is not int or usage[k]<0 for k in ('input_tokens','output_tokens')): errors.append('usage')
+    return errors
+
+def clean_answers(raw):
+    return {id:{k:v for k,v in a.items() if k in ('type','score','choice','probabilities','confidence')} for id,a in raw.get('answers',{}).items() if isinstance(a,dict)}
+
+def main():
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('root',type=pathlib.Path)
+    parser.add_argument('--live',action='store_true')
+    parser.add_argument('--transport',type=pathlib.Path,help='Private JSON argv file; never published')
+    parser.add_argument('--pilot',action='store_true')
+    args=parser.parse_args();root=args.root
+    requests=json.loads((root/'requests.json').read_text());contract=json.loads((root/'contracts.json').read_text())
+    assert len(requests)==contract['max_calls']==28
+    assert len({r['id'] for r in requests})==len(requests)
+    for r in requests:
+        b=encoded(r['body'])
+        assert len(b)<=contract['max_request_bytes'] and len(b)==r['request_bytes']
+        assert hashlib.sha256(b).hexdigest()==r['request_sha256']
+    if not args.live:
+        print(json.dumps({'mode':'offline','requests':len(requests),'max_bytes':max(r['request_bytes'] for r in requests)}));return
+    if not args.transport: parser.error('--live requires --transport')
+    argv=json.loads(args.transport.read_text());assert isinstance(argv,list) and all(isinstance(x,str) for x in argv)
+    out=root/'receipts';out.mkdir(exist_ok=True)
+    if args.pilot: requests=requests[:3]
+    else:
+        for r in requests[:3]:
+            existing=out/(r['id']+'.json')
+            if not existing.exists() or json.loads(existing.read_text())['status']!='valid':raise SystemExit('pilot must pass before expansion')
+    start=time.monotonic()
+    for r in requests:
+        receipt=out/(r['id']+'.json')
+        if receipt.exists():
+            saved=json.loads(receipt.read_text())
+            if saved['status']!='valid':raise SystemExit('existing non-valid attempt: no automatic retry')
+            continue
+        previous=[json.loads(p.read_text()) for p in out.glob('*.json')]
+        tokens=sum(p.get('usage',{}).get('input_tokens',0) for p in previous)
+        if len(previous)>=contract['max_calls'] or tokens>=contract['max_input_tokens'] or time.monotonic()-start>=contract['max_wall_seconds']:raise SystemExit('registered stopping rule')
+        row={k:r[k] for k in ('id','pool','order','wording','kind','candidate_ids','request_bytes','request_sha256')}
+        row.update(status='started',started_at=datetime.datetime.now(datetime.timezone.utc).isoformat(),model=None,answers={},validation_errors=[])
+        receipt.write_text(json.dumps(row,indent=2)+'\n')
+        started=time.monotonic()
+        try:
+            p=subprocess.run(argv,input=encoded(r['body']),stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,timeout=contract['timeout_seconds'])
+            if len(p.stdout)>contract['max_response_bytes']:raise ValueError('response_limit')
+            if p.returncode:raw={'error':'transport_exit'}
+            else:
+                try:raw=json.loads(p.stdout)
+                except (ValueError,UnicodeError):raw={'error':'response_not_json'}
+            if not isinstance(raw,dict):raw={'error':'response_not_object'}
+        except subprocess.TimeoutExpired:raw={'error':'transport_timeout'}
+        except (OSError,ValueError):raw={'error':'transport_or_response_limit'}
+        errors=validate(raw,r['body'])
+        row.update(validation_protocol='v2-rounding-feasibility',status='valid' if not errors else 'invalid',model=raw.get('model'),answers=clean_answers(raw),usage=raw.get('usage',{}),provider_ms=raw.get('_elapsed_ms'),total_ms=round((time.monotonic()-started)*1000,3),validation_errors=errors,error=raw.get('error'),http_status=raw.get('status'))
+        receipt.write_text(json.dumps(row,indent=2,allow_nan=False)+'\n')
+        print(json.dumps({k:row[k] for k in ('id','status','provider_ms','total_ms','validation_errors')}),flush=True)
+        if errors:raise SystemExit('invalid output: stop expansion, preserve attempt')
+        if tokens+row['usage']['input_tokens']>contract['max_input_tokens']:raise SystemExit('token ceiling exceeded; no further calls')
+if __name__=='__main__':main()

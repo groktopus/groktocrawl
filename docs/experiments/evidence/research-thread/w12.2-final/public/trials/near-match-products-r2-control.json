@@ -1,0 +1,71 @@
+{
+  "answer": {
+    "answer": "No — the supplied sources do not show Harbor Agent gaining offline mode. The Harbor Agent guide states that Harbor Agent requires a network connection [harbor-agent-doc]. An offline export mode was added to Harbor Agent Cloud, but that is a distinct subject (subject_id 'harbor-agent-cloud', lineage_id 'harbor-cloud-docs') and, per the instruction not to infer identity from name similarity, it cannot be treated as the same product as Harbor Agent [harbor-cloud-doc]. Therefore, the offline export mode change applies only to Harbor Agent Cloud, and Harbor Agent's documented requirement for a network connection stands as the current truth for that product.",
+    "change_events": [
+      "Harbor Agent Cloud added an offline export mode; this change pertains to the distinct subject 'harbor-agent-cloud', not to 'harbor-agent' [harbor-cloud-doc]"
+    ],
+    "citations": [
+      "harbor-agent-doc",
+      "harbor-cloud-doc"
+    ],
+    "current_truths": [
+      "Harbor Agent requires a network connection [harbor-agent-doc]",
+      "Harbor Agent Cloud has an offline export mode [harbor-cloud-doc]"
+    ],
+    "historical_truths": [
+      "Per its guide's wording that offline export mode was 'added', Harbor Agent Cloud did not have an offline export mode at some earlier point [harbor-cloud-doc]"
+    ],
+    "unresolved": [
+      "No prior snapshot of the Harbor Agent guide is supplied, so it cannot be confirmed whether Harbor Agent's network-connection requirement ever changed [harbor-agent-doc]",
+      "The supplied snapshots are undated, so the relative timing of the two documents cannot be established [harbor-agent-doc, harbor-cloud-doc]",
+      "Whether the offline export mode in Harbor Agent Cloud has any relationship to, or effect on, Harbor Agent cannot be determined from the supplied text [harbor-cloud-doc]",
+      "Whether Harbor Agent has any offline capability not mentioned in the supplied guide excerpt is unknown [harbor-agent-doc]"
+    ]
+  },
+  "arm": "control",
+  "case_id": "near-match-products",
+  "completed_at": "2026-09-19T07:50:16.378608+00:00",
+  "position": 23,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "d0632145deb84f02e556155c37c2c3ed6743ff19481d60097c34d6da454ef2af",
+    "finish_reason": "stop",
+    "latency_ms": 61848.973,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "143574dc937a9330a7406110b6080644fce13c85e0ae68a18ff682f5a2dd6ce9",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 1074,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 796
+      },
+      "cost": 0.00061245,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000537,
+        "upstream_inference_cost": 0.00061245,
+        "upstream_inference_prompt_cost": 7.545e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 503,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1577
+    }
+  },
+  "repetition": 2,
+  "schema_version": "research-thread-trial/1",
+  "started_at": "2026-09-19T07:49:14.528243+00:00",
+  "status": "completed",
+  "stratum": "near_match",
+  "trial_id": "near-match-products-r2-control"
+}

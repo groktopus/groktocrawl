@@ -1,0 +1,109 @@
+{
+  "arm": "control",
+  "case_id": "mission-compound-governance",
+  "completed_at": "2026-09-19T05:54:03.208308+00:00",
+  "position": 2,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "ca674db91aadf1ae0480bd5fc8aafdbfc84eab050e29e72362ecb6266bfa55e8",
+    "finish_reason": "stop",
+    "latency_ms": 39914.384,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "9377e4fc9f2ccb98b314f1b4e3dd1875ab277f3e7ba0a49581b9631aecce117d",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 3828,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 3113
+      },
+      "cost": 0.0020241,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.001914,
+        "upstream_inference_cost": 0.0020241,
+        "upstream_inference_prompt_cost": 0.0001101
+      },
+      "is_byok": false,
+      "prompt_tokens": 734,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 4562
+    }
+  },
+  "repetition": 3,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Decision: No — the documented exception does not authorize a current high-risk change (as of 2026-09-19) [governance-policy, governance-context].**",
+    "candidate_id": "candidate-59b33b04f58b99b8dc1d",
+    "citations": [
+      "governance-policy",
+      "governance-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "governance-policy"
+        ],
+        "text": "High-risk changes require a named human approver and an audit record.",
+        "uncertainty": "No material uncertainty; stated directly in the governing policy."
+      },
+      {
+        "source_ids": [
+          "governance-policy"
+        ],
+        "text": "An exception must identify its scope, expiration, and accountable owner, and the agent cannot approve its own exception (no self-approval).",
+        "uncertainty": "No material uncertainty; both conditions appear verbatim in the primary policy."
+      },
+      {
+        "source_ids": [
+          "governance-context"
+        ],
+        "text": "The supplied signed exception covered only low-risk documentation changes in the internal pilot, through 2026-06-30; it never extended to high-risk changes.",
+        "uncertainty": "Scope and expiry are stated in the source, but the bundle does not record the exception's accountable owner, so compliance with that policy-required field cannot be verified from the supplied text."
+      },
+      {
+        "source_ids": [
+          "governance-context"
+        ],
+        "text": "As of the as-of date 2026-09-19, the exception is expired, and no renewal is present in the supplied source bundle.",
+        "uncertainty": "Expiry is established by comparing the 2026-06-30 end date to the 2026-09-19 as-of date. Absence of a renewal is established only within the bundle; whether a renewal exists outside the supplied sources can be neither confirmed nor denied."
+      },
+      {
+        "source_ids": [
+          "governance-policy",
+          "governance-context"
+        ],
+        "text": "The documented exception does not authorize a current high-risk change: the requested work is outside the exception's low-risk documentation scope, and the exception expired before the as-of date.",
+        "uncertainty": "No material uncertainty on the negative determination; it follows directly from scope and expiry reconciled with the as-of time."
+      },
+      {
+        "source_ids": [
+          "governance-policy",
+          "governance-context"
+        ],
+        "text": "The packet cannot prove approval or enforcement for a high-risk production change: no named human approver or audit record for any current high-risk change appears in the supplied sources.",
+        "uncertainty": "Explicitly unresolved — the bundle is silent on any high-risk approval; absence of evidence here does not establish that no approval exists elsewhere."
+      },
+      {
+        "source_ids": [
+          "governance-policy",
+          "governance-context"
+        ],
+        "text": "No direct contradiction exists between the two sources; the operative conflict is between the requested high-risk change and the exception's low-risk scope and 2026-06-30 expiry.",
+        "uncertainty": "No material uncertainty; the sources are mutually consistent, and the tension is between the request and the exception's terms."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:53:23.293168+00:00",
+  "status": "completed",
+  "trial_id": "mission-compound-governance-r3-control"
+}

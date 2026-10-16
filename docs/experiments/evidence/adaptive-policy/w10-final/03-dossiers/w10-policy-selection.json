@@ -1,0 +1,24 @@
+{
+  "adr": "ADR-0081",
+  "complete": true,
+  "inputs": {
+    "accounting": "f7566190dc420ab87de12f26519a19ce8e25fcf53eb5b45e4d29dcc2cd4ae235",
+    "adjudication_analysis": "9b2a9ae28d0cedc090e52d512722642a84c81dcf827a78080de3fb35114dd1ad",
+    "challenge_cases": "6761705e14ea1b535a8debdd0e54c6be14d8a42608c6f3606e6e445290aa21d6",
+    "primary_summary": "7bc5592931f33eb09f2c4a90bcddaaad1e662a3499b7441f27615b8da3f9f575"
+  },
+  "known_challenge_types": [
+    "contradiction",
+    "entity_ambiguity",
+    "missing_primary",
+    "publisher_independence",
+    "stale_evidence",
+    "unsupported_claim"
+  ],
+  "outcome": "keep_fixed_retrieval",
+  "rationale": "The full bounded policy failed the frozen anchor and every challenge-type replacement gate. It reduced weighted anchor closure by 33.3 percentage points, while only 11.1% of follow-up queries produced a declared gain and 88.9% occurred after the final gain. Independent blinded adjudication and equal-weight sensitivity preserved the decision.",
+  "reversal_condition": "Reconsider a materially different adaptive control when matched repeated evidence clears the frozen closure, unsupported-claim, precision, unnecessary-query, bounds, failure-rate, and anchor non-inferiority gates. Retuning this failed policy without a new frozen comparison is insufficient.",
+  "schema_version": "enterprise-evaluation/w10-policy-selection/1",
+  "selected_challenge_types": [],
+  "w11_measurement_authorized": true
+}

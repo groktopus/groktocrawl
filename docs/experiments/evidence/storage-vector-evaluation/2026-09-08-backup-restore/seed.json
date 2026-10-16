@@ -1,0 +1,33 @@
+{
+  "created_at": "2026-09-08T14:28:16.257901+00:00",
+  "manifest": {
+    "corpus_sha256": "5817c09ae7b94803b760a3003b967a5a223264dc265f5caf9b773d0da33462b7",
+    "dimension": 3,
+    "distance": "cosine",
+    "duplicate_replay_count": 2,
+    "embedding_model": "fixture-vector-3d-v1",
+    "query_count": 4,
+    "random_seed": 0,
+    "record_count": 6,
+    "schema_version": "vector-store-evaluation/3",
+    "scopes": [
+      "alpha",
+      "beta"
+    ],
+    "workloads": [
+      "bulk_upsert",
+      "duplicate_replay",
+      "filtered_search",
+      "delete"
+    ]
+  },
+  "phase": "seed",
+  "production_change": false,
+  "qdrant_removal": false,
+  "run_id": "backup-34238404432",
+  "schema_version": "vector-store-backup-evaluation/1",
+  "seeded": [
+    "qdrant",
+    "pgvector"
+  ]
+}

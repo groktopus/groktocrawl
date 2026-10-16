@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-f74573d053db3a63e43e",
+  "case_id": "live-contradiction",
+  "completed_at": "2026-09-19T09:14:49.820314+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 95,
+    "current_accuracy": 0,
+    "false_merge": false,
+    "historical_preservation": 50,
+    "lost_history": false,
+    "rationale": "The candidate correctly captures the sole change event (incident DQ-17 duplicate deliveries contradicting the documentation) and cites both primary snapshots, preserving the documentation's exactly-once claim as historically valid without omission or rewrite — no false merge, no lost history, and every factual statement traces to the supplied sources. The core failure is categorization: the reference ledger records NO current truths (the exactly-once claim is historical; the unconditional guarantee is contested), yet the candidate asserts two current truths, restating the documentation's exactly-once description as current ('still describes') — stale-current leakage of superseded evidence — and filing the change event as a current truth. Hence current_accuracy is 0 and the 'not current' half of historical preservation fails. The unresolved list partially captures the contested guarantee ('current operational guarantee cannot be confirmed') but dilutes it with three invented peripheral questions (guarantee scope/conditions, root cause, isolated vs. ongoing) that earn no credit. The candidate avoids the prohibited single-source resolution, though its bottom line ('cannot be treated as reliably holding') leans toward resolving the contradiction rather than leaving it fully contested.",
+    "stale_current_leak": true,
+    "unresolved_accuracy": 50,
+    "unsupported_claims": 0,
+    "usefulness": 70
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "87553b55549d82d304caa2027961103c86fd510706dda272fb067737b23986d2",
+    "finish_reason": "stop",
+    "latency_ms": 80110.59,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "38b541cc3b12e98960b44de23acfd5496a41f2b66c3408f2a6ca3bce9df6dc35",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 14106,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 13804
+      },
+      "cost": 0.00721155,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.007053,
+        "upstream_inference_cost": 0.00721155,
+        "upstream_inference_prompt_cost": 0.00015855
+      },
+      "is_byok": false,
+      "prompt_tokens": 1057,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 15163
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:13:29.705834+00:00",
+  "status": "completed",
+  "trial_id": "live-contradiction-r3-treatment"
+}

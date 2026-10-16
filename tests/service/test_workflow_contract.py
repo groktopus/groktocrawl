@@ -5,8 +5,10 @@ import re
 import subprocess
 import sys
 import textwrap
+import tomllib
 from pathlib import Path
 
+import pytest
 import yaml
 
 
@@ -39,7 +41,10 @@ def test_runtime_gate_depends_on_hosted_twin_without_renaming_required_check():
     workflow = (Path(__file__).parents[2] / ".github/workflows/docker.yml").read_text()
     runtime = workflow.split("  runtime-gate:\n", 1)[1]
     assert "name: Runtime Gate" in runtime
-    assert "needs: [changes, twin-contracts, integration-tests]" in runtime
+    assert (
+        "needs: [changes, twin-contracts, integration-tests, research-runtime]"
+        in runtime
+    )
     assert "Fail when required twin validation fails" in runtime
 
 
@@ -106,6 +111,30 @@ def test_workflows_have_structured_trusted_and_hosted_contracts():
     assert "twin-out" in twin_run and "junitxml" in twin_run
 
 
+def test_mainline_ci_routes_the_real_agent_and_direct_search_clients_to_fixture():
+    root = Path(__file__).parents[2]
+    workflow = yaml.safe_load((root / ".github/workflows/docker.yml").read_text())
+    steps = {
+        step.get("name"): step.get("run", "")
+        for step in workflow["jobs"]["integration-tests"]["steps"]
+    }
+    setup = steps["Set up .env"]
+    assert 'echo "SEARXNG_URL=http://slopsearx-fixture:8080" >> .env' in setup
+    integration = steps["Run integration tests"]
+    assert "SEARCH_BASE_URL=http://slopsearx-fixture:8080" in integration
+    assert "SEARCH_BASE_URL=http://slopsearx:8080" not in integration
+    probe = steps["Verify LLM fixture contract and agent routing"]
+    assert (
+        "assert os.environ['SEARXNG_URL'] == 'http://slopsearx-fixture:8080'" in probe
+    )
+    assert "http://agent-svc:8080/v2/search" in probe
+    assert "result['url'].startswith('http://test-site:8000/')" in probe
+    assert "payload['success'] and results" in probe
+    # These inputs configure test clients and the agent without changing either
+    # SlopSearX service's production contract.
+    assert "docker compose --profile indexing up -d" in steps["Start the Docker stack"]
+
+
 def test_published_service_images_target_amd64_and_arm64():
     root = Path(__file__).parents[2]
     docker = yaml.safe_load((root / ".github/workflows/docker.yml").read_text())
@@ -117,6 +146,68 @@ def test_published_service_images_target_amd64_and_arm64():
     )
 
     assert build_step["with"]["platforms"] == "linux/amd64,linux/arm64"
+
+
+@pytest.mark.parametrize("filename", ["docker.yml", "runtime.yml"])
+def test_runtime_container_tests_use_hash_locked_fast_test_requirements(filename):
+    root = Path(__file__).parents[2]
+    workflow = yaml.safe_load((root / ".github/workflows" / filename).read_text())
+    runtime = workflow["jobs"]["integration-tests"]
+    steps = {step.get("name"): step.get("run", "") for step in runtime["steps"]}
+    export_command = (
+        "uv export --locked --only-group fast-tests --no-dev --no-emit-project "
+        "--no-emit-workspace --no-header --format requirements.txt "
+        "--output-file runtime-test-requirements.txt"
+    )
+    for name in ("Install critical test dependencies", "Run integration tests"):
+        command = steps[name]
+        assert export_command in command
+        assert (
+            'docker cp runtime-test-requirements.txt "$svc:/tmp/runtime-test-requirements.txt"'
+            in command
+        )
+        assert (
+            "pip install --require-hashes -r /tmp/runtime-test-requirements.txt"
+            in command
+        )
+        assert "pip install pytest " not in command
+
+    groups = tomllib.loads((root / "pyproject.toml").read_text())["dependency-groups"]
+    fast_tests = groups["fast-tests"]
+    assert any(item.startswith("curl_cffi") for item in fast_tests)
+    assert any(item.startswith("pytest-timeout>=2") for item in fast_tests)
+    lock = (root / "uv.lock").read_text()
+    assert 'name = "pytest-timeout"' in lock
+
+
+@pytest.mark.parametrize("filename", ["docker.yml", "runtime.yml"])
+def test_container_test_staging_includes_service_contract_inputs(filename):
+    root = Path(__file__).parents[2]
+    workflow = yaml.safe_load((root / ".github/workflows" / filename).read_text())
+    steps = workflow["jobs"]["integration-tests"]["steps"]
+    staging = next(
+        step["run"]
+        for step in steps
+        if step.get("name") == "Copy test files and source directories"
+    )
+    for fixture in (
+        ".env.sample",
+        "groktocrawl",
+        "docker-compose.ci.yml",
+        "compose.experimental-candidate.yml",
+        "compose.protected-flare-ci.yml",
+        "compose.protected-capture-ci.yml",
+        "compose.protected-capture-lab.yml",
+    ):
+        assert f'docker cp {fixture} "$svc":/app/{fixture}' in staging
+    assert 'docker cp .github/workflows/. "$svc":/app/.github/workflows/' in staging
+    assert (
+        "for script in ci_fork_pr_guard.py enforce-branch-protection.py reconcile-jobs.py; do"
+        in staging
+    )
+    assert 'docker cp "scripts/$script" "$svc:/app/scripts/$script"' in staging
+    assert 'docker cp agent-svc/agent/. "$svc":/app/agent/' in staging
+    assert "docker cp pyproject.toml" not in staging
 
 
 def test_answer_evals_workflow_is_advisory_and_not_pr_gated():
@@ -150,7 +241,10 @@ def test_answer_evals_workflow_is_advisory_and_not_pr_gated():
     assert "answer-evals.yml" not in docker
     runtime_gate = docker.split("name: Runtime Gate", 1)[1]
     assert "answer-evals" not in runtime_gate
-    assert "needs: [changes, twin-contracts, integration-tests]" in runtime_gate
+    assert (
+        "needs: [changes, twin-contracts, integration-tests, research-runtime]"
+        in runtime_gate
+    )
 
 
 def test_compose_run_id_and_failure_provenance_are_unambiguous():
@@ -158,6 +252,15 @@ def test_compose_run_id_and_failure_provenance_are_unambiguous():
     compose = (root / "docker-compose.yml").read_text()
     workflow = (root / ".github/workflows/docker.yml").read_text()
     docker = yaml.safe_load(workflow)
+    runtime_workflow = (root / ".github/workflows/runtime.yml").read_text()
+    for source in (workflow, runtime_workflow):
+        assert source.count("TWIN_EVENT_KIND: ${{ github.event_name }}") == 2
+        assert (
+            source.count(
+                "TWIN_EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}"
+            )
+            == 2
+        )
     assert "${LLM_BASE_URL:-http://llm-svc:8011/v1?run_id=${" not in compose
     assert "LLM_BASE_URL=${LLM_BASE_URL:-http://llm-svc:8011/v1}" in compose
     assert "TWIN_RUN_ID=${TWIN_RUN_ID:-local}" in compose
@@ -174,6 +277,11 @@ def test_compose_run_id_and_failure_provenance_are_unambiguous():
     assert "uv run --no-sync python scripts/twin_provenance.py" in compose_evidence
     assert (
         "TWIN_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}"
+        in compose_evidence
+    )
+    assert "TWIN_EVENT_KIND: ${{ github.event_name }}" in compose_evidence
+    assert (
+        "TWIN_EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}"
         in compose_evidence
     )
     assert (
@@ -296,3 +404,85 @@ def test_droid_action_sanitizer_removes_debug_uploads_and_fails_closed(tmp_path)
     assert "Collect .factory debug files" not in result
     assert "Upload debug artifacts" not in result
     assert "actions/upload-artifact" not in result
+
+
+def test_research_runtime_is_required_by_the_mainline_gate():
+    root = Path(__file__).parents[2]
+    docker = yaml.safe_load((root / ".github/workflows/docker.yml").read_text())
+    runtime = yaml.safe_load((root / ".github/workflows/runtime.yml").read_text())
+    assert (
+        docker["jobs"]["research-runtime"]["uses"] == "./.github/workflows/runtime.yml"
+    )
+    assert "research-runtime" in docker["jobs"]["runtime-gate"]["needs"]
+    assert runtime["jobs"]["runtime-gate"]["name"] == "Research Runtime Gate"
+    assert set(runtime["jobs"]["runtime-gate"]["needs"]) >= {
+        "research-storage",
+        "protected-browser-profile",
+        "protected-flare-profile",
+        "protected-capture-composition",
+    }
+
+
+def test_published_agent_health_revision_is_baked_into_image():
+    root = Path(__file__).parents[2]
+    workflow = yaml.safe_load((root / ".github/workflows/docker.yml").read_text())
+    build = next(
+        step
+        for step in workflow["jobs"]["build-and-push"]["steps"]
+        if step.get("uses") == "docker/build-push-action@v6"
+    )
+    assert "GROKTOCRAWL_REVISION=${{ github.sha }}" in build["with"]["build-args"]
+    dockerfile = (root / "agent-svc/Dockerfile").read_text()
+    assert "ENV GROKTOCRAWL_REVISION=${GROKTOCRAWL_REVISION}" in dockerfile
+    compose = yaml.safe_load((root / "docker-compose.yml").read_text())
+    assert not any(
+        value.startswith("GROKTOCRAWL_REVISION=")
+        for value in compose["services"]["agent-svc"]["environment"]
+    )
+
+
+def test_called_runtime_artifacts_do_not_collide_with_parent_workflow():
+    root = Path(__file__).parents[2] / ".github/workflows"
+    artifact_sets = []
+    for filename in ("docker.yml", "runtime.yml"):
+        workflow = yaml.safe_load((root / filename).read_text())
+        names = [
+            step["with"]["name"]
+            for job in workflow["jobs"].values()
+            for step in job.get("steps", [])
+            if "upload-artifact" in step.get("uses", "")
+        ]
+        assert len(names) == len(set(names))
+        artifact_sets.append(set(names))
+    assert not artifact_sets[0] & artifact_sets[1]
+
+
+def test_image_publication_preserves_untagged_multiarch_child_manifests():
+    workflow = yaml.safe_load(
+        (Path(__file__).parents[2] / ".github/workflows/docker.yml").read_text()
+    )
+    for job in workflow["jobs"].values():
+        for step in job.get("steps", []):
+            # GHCR exposes platform and attestation manifests as untagged versions.
+            # A generic untagged-version cleanup destroys live index dependencies.
+            assert "prune untagged" not in step.get("name", "").lower()
+            action = step.get("uses", "").lower()
+            assert "delete-package-versions" not in action
+            assert "container-retention-policy" not in action
+            command = step.get("run", "")
+            if "/packages/container/" in command:
+                assert not re.search(r"(?:--method|-X)\s+DELETE\b", command)
+
+
+def test_full_integration_steps_allow_report_headroom_without_relaxing_test_timeouts():
+    root = Path(__file__).parents[2]
+    for filename in ("docker.yml", "runtime.yml"):
+        workflow = yaml.safe_load((root / ".github/workflows" / filename).read_text())
+        job = workflow["jobs"]["integration-tests"]
+        step = next(s for s in job["steps"] if s.get("name") == "Run integration tests")
+        assert step["timeout-minutes"] == 25
+        assert "--timeout=120" in step["run"]
+        assert 'docker cp "$svc:/app/coverage/." coverage/' in step["run"]
+        assert 'exit "$pytest_status"' in step["run"]
+        if filename == "runtime.yml":
+            assert job["timeout-minutes"] == 60

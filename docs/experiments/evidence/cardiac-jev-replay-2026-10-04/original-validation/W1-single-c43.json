@@ -1,0 +1,47 @@
+{
+  "id": "W1-single-c43",
+  "pool": "singleton",
+  "order": "original",
+  "wording": "W1",
+  "kind": "pilot",
+  "candidate_ids": [
+    "c43"
+  ],
+  "request_bytes": 1993,
+  "request_sha256": "a814f3b9ff7d9ef6ca57e784bf45c6eab9553059e00251af3e0c2495c8a904f7",
+  "status": "valid",
+  "started_at": "2026-10-04T03:21:53.787923+00:00",
+  "model": "jev-1.13.0",
+  "answers": {
+    "c43_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.99,
+      "probabilities": {
+        "skip": 0.0,
+        "maybe": 0.0,
+        "fetch": 1.0
+      }
+    },
+    "c43_evidence": {
+      "type": "score",
+      "score": 1.14,
+      "confidence": 0.85,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.89,
+        "2": 0.08,
+        "3": 0.03
+      }
+    }
+  },
+  "validation_errors": [],
+  "usage": {
+    "input_tokens": 731,
+    "output_tokens": 59
+  },
+  "provider_ms": 157.6004670932889,
+  "total_ms": 490.089,
+  "error": null,
+  "http_status": null
+}

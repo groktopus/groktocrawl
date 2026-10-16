@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-10d05d1b4c57ba60df56",
+  "case_id": "changed-limit",
+  "completed_at": "2026-09-19T09:18:25.675790+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 100,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "The candidate fully and correctly reports the single change event (limit raised from 8 to 16 concurrent jobs in version 1.1, from version 1.0's 8), states the current truth (1.1 supports 16 concurrent jobs, per atlas-release-2), and preserves the 8-job figure as a historical claim about 1.0 (atlas-release-1) without leaking it as current. Citations are correct, the same-subject/lineage reasoning is grounded in the supplied metadata, and no distinct subjects or capabilities were merged, so false_merge, stale_current_leak, and lost_history are all false; every factual claim traces to a source or is an accurate absence observation, so unsupported_claims is 0. The reference ledger lists no unresolved items, but the candidate invents four peripheral unknowns (post-1.1 releases, missing release dates, whether 1.1 is the latest release, configuration/edition dependence), which per the rules earn no credit, driving unresolved_accuracy to 0; this hedging adds modest noise to an otherwise decision-useful, auditable answer, reflected in usefulness of 90.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 0,
+    "unsupported_claims": 0,
+    "usefulness": 90
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "1f5a933e239e689392af3a97ec7d84f64ec5a0bac81591a99c0c9c969766b482",
+    "finish_reason": "stop",
+    "latency_ms": 30992.558,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "c1bace02d928b6d484a75d0971defd57e5437d6f7f3501739393ce88efcb8392",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 3751,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 3969
+      },
+      "cost": 0.00204545,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0018755,
+        "upstream_inference_cost": 0.00204545,
+        "upstream_inference_prompt_cost": 0.00016995
+      },
+      "is_byok": false,
+      "prompt_tokens": 1133,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 4884
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:17:54.682478+00:00",
+  "status": "completed",
+  "trial_id": "changed-limit-r1-control"
+}

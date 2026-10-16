@@ -17,6 +17,11 @@ import logging
 import httpx
 
 from .settings import load_settings
+from .source_http import (
+    trusted_llm_endpoint,
+    trusted_llm_headers,
+    trusted_llm_httpx_client,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +105,7 @@ async def classify_cloudflare_block(url: str, page_text: str) -> dict | None:
         return None
 
     try:
-        async with httpx.AsyncClient(timeout=RECOVERY_TIMEOUT) as client:
+        async with trusted_llm_httpx_client("recovery", timeout=RECOVERY_TIMEOUT) as client:
             body = {
                 "model": LLM_MODEL,
                 "messages": [
@@ -122,12 +127,10 @@ async def classify_cloudflare_block(url: str, page_text: str) -> dict | None:
                 "response_format": {"type": "json_object"},
             }
 
-            headers = {"Content-Type": "application/json"}
-            if LLM_API_KEY:
-                headers["Authorization"] = f"Bearer {LLM_API_KEY}"
+            headers = trusted_llm_headers("recovery", LLM_API_KEY)
 
             resp = await client.post(
-                f"{LLM_BASE_URL}/chat/completions",
+                trusted_llm_endpoint("recovery", LLM_BASE_URL),
                 headers=headers,
                 json=body,
             )
@@ -183,7 +186,7 @@ async def attempt_llm_recovery(url: str, page_text: str) -> dict | None:
         return None
 
     try:
-        async with httpx.AsyncClient(timeout=RECOVERY_TIMEOUT) as client:
+        async with trusted_llm_httpx_client("recovery", timeout=RECOVERY_TIMEOUT) as client:
             body = {
                 "model": LLM_MODEL,
                 "messages": [
@@ -203,12 +206,10 @@ async def attempt_llm_recovery(url: str, page_text: str) -> dict | None:
                 "response_format": {"type": "json_object"},
             }
 
-            headers = {"Content-Type": "application/json"}
-            if LLM_API_KEY:
-                headers["Authorization"] = f"Bearer {LLM_API_KEY}"
+            headers = trusted_llm_headers("recovery", LLM_API_KEY)
 
             resp = await client.post(
-                f"{LLM_BASE_URL}/chat/completions",
+                trusted_llm_endpoint("recovery", LLM_BASE_URL),
                 headers=headers,
                 json=body,
             )

@@ -1,0 +1,72 @@
+{
+  "answer": {
+    "answer": "The supplied sources conflict. Delta Queue's documentation describes exactly-once delivery (snapshot delta-doc), but an incident report records that during incident DQ-17, some messages were delivered twice (snapshot delta-incident). Therefore, the documented exactly-once claim is not supported by the operational evidence supplied: at least during DQ-17, delivery was not exactly-once. The sources do not indicate whether the guarantee was subsequently fixed, changed, or re-qualified, nor do they specify the scope or conditions of the documented guarantee, so whether Delta Queue guarantees exactly-once delivery in current operation remains unresolved based on the supplied snapshots.",
+    "change_events": [
+      "An incident report (snapshot delta-incident) documents that during incident DQ-17, some Delta Queue messages were delivered twice, contradicting the exactly-once delivery claim in the documentation (snapshot delta-doc)."
+    ],
+    "citations": [
+      "delta-doc",
+      "delta-incident"
+    ],
+    "current_truths": [
+      "Delta Queue's documentation describes exactly-once delivery (snapshot delta-doc).",
+      "An incident report records that during incident DQ-17, some messages were delivered twice (snapshot delta-incident)."
+    ],
+    "historical_truths": [
+      "Delta Queue's documentation described exactly-once delivery (snapshot delta-doc).",
+      "During incident DQ-17, some messages were delivered twice (snapshot delta-incident)."
+    ],
+    "unresolved": [
+      "The supplied snapshots do not establish whether the exactly-once guarantee was changed, narrowed, or re-qualified after incident DQ-17.",
+      "The scope and conditions of the exactly-once guarantee (e.g., which delivery modes or configurations it applies to) are not specified in the supplied sources.",
+      "The root cause of the duplicate deliveries in incident DQ-17 and whether it was fixed are not stated in the supplied sources.",
+      "The temporal relationship between the documentation snapshot and the incident snapshot is not established, so it cannot be determined which reflects the current state."
+    ]
+  },
+  "arm": "treatment",
+  "case_id": "live-contradiction",
+  "completed_at": "2026-09-19T07:48:21.945936+00:00",
+  "position": 6,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "b0ad88b4712a54ff177eb63d901841481821a009f6428dff5db0d98bde7d1703",
+    "finish_reason": "stop",
+    "latency_ms": 35769.483,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "f5e610b491d6cbf24a4f43e83a62cd1a949e8d050bd7324270a2fef2de1f72b4",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 402,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0.000327,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000201,
+        "upstream_inference_cost": 0.000327,
+        "upstream_inference_prompt_cost": 0.000126
+      },
+      "is_byok": false,
+      "prompt_tokens": 840,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1242
+    }
+  },
+  "repetition": 1,
+  "schema_version": "research-thread-trial/1",
+  "started_at": "2026-09-19T07:47:46.175941+00:00",
+  "status": "completed",
+  "stratum": "contradiction",
+  "trial_id": "live-contradiction-r1-treatment"
+}

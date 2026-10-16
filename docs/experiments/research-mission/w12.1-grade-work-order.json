@@ -1,0 +1,367 @@
+{
+  "schema_version": "research-mission-grade-work-order/1",
+  "seed": 20260919,
+  "trials": [
+    {
+      "candidate_id": "candidate-befa1a7b15d1b1c47a86",
+      "case_id": "mission-unanswerable-release",
+      "position": 1
+    },
+    {
+      "candidate_id": "candidate-1ba6e01912f14e413260",
+      "case_id": "mission-contradictory-hostile",
+      "position": 2
+    },
+    {
+      "candidate_id": "candidate-48bcc03b525a076956cf",
+      "case_id": "mission-unanswerable-cost",
+      "position": 3
+    },
+    {
+      "candidate_id": "candidate-01e52e26f4ce464595de",
+      "case_id": "mission-unanswerable-release",
+      "position": 4
+    },
+    {
+      "candidate_id": "candidate-d855f1bcf23b739156a1",
+      "case_id": "mission-compound-governance",
+      "position": 5
+    },
+    {
+      "candidate_id": "candidate-20d7d79e6c9cb2adfbf0",
+      "case_id": "mission-temporal-exception",
+      "position": 6
+    },
+    {
+      "candidate_id": "candidate-cd3f93c5c180c9ea9644",
+      "case_id": "mission-compound-recovery-portability",
+      "position": 7
+    },
+    {
+      "candidate_id": "candidate-c4264b00039a50b967ae",
+      "case_id": "mission-contradictory-hostile",
+      "position": 8
+    },
+    {
+      "candidate_id": "candidate-4fbd36f8a69cd890e96b",
+      "case_id": "mission-straightforward-delivery",
+      "position": 9
+    },
+    {
+      "candidate_id": "candidate-ebd57cb5a0d5c905b765",
+      "case_id": "mission-contradictory-mirror",
+      "position": 10
+    },
+    {
+      "candidate_id": "candidate-ed56f54cf01b78b863a4",
+      "case_id": "mission-ambiguous-ship",
+      "position": 11
+    },
+    {
+      "candidate_id": "candidate-204b76d909bf58358ffc",
+      "case_id": "mission-unanswerable-release",
+      "position": 12
+    },
+    {
+      "candidate_id": "candidate-6738ba146e46eee0f428",
+      "case_id": "mission-ambiguous-productive",
+      "position": 13
+    },
+    {
+      "candidate_id": "candidate-9c3e2e8978295399b70c",
+      "case_id": "mission-contradictory-mirror",
+      "position": 14
+    },
+    {
+      "candidate_id": "candidate-efd5091c1f52ce8e49b6",
+      "case_id": "mission-temporal-provider",
+      "position": 15
+    },
+    {
+      "candidate_id": "candidate-69cdcf254c57cef09a81",
+      "case_id": "mission-temporal-provider",
+      "position": 16
+    },
+    {
+      "candidate_id": "candidate-514e9c648a078fb6a9d0",
+      "case_id": "mission-compound-recovery-portability",
+      "position": 17
+    },
+    {
+      "candidate_id": "candidate-cf16ab51e53816367aaa",
+      "case_id": "mission-straightforward-security",
+      "position": 18
+    },
+    {
+      "candidate_id": "candidate-9ff62932e6ebad631827",
+      "case_id": "mission-ambiguous-ship",
+      "position": 19
+    },
+    {
+      "candidate_id": "candidate-c4517df3b187594cabbc",
+      "case_id": "mission-temporal-provider",
+      "position": 20
+    },
+    {
+      "candidate_id": "candidate-8e46e3960eaca5d190bc",
+      "case_id": "mission-temporal-exception",
+      "position": 21
+    },
+    {
+      "candidate_id": "candidate-b11c4753d77beb17270e",
+      "case_id": "mission-straightforward-security",
+      "position": 22
+    },
+    {
+      "candidate_id": "candidate-36b2ac99f8d65ce59647",
+      "case_id": "mission-straightforward-security",
+      "position": 23
+    },
+    {
+      "candidate_id": "candidate-6c1811f741e7c9b32885",
+      "case_id": "mission-compound-recovery-portability",
+      "position": 24
+    },
+    {
+      "candidate_id": "candidate-3e1e28ebec86a0a122c5",
+      "case_id": "mission-ambiguous-productive",
+      "position": 25
+    },
+    {
+      "candidate_id": "candidate-8639c5116c56a70f4869",
+      "case_id": "mission-contradictory-hostile",
+      "position": 26
+    },
+    {
+      "candidate_id": "candidate-cb4263776bcd9779caa1",
+      "case_id": "mission-compound-governance",
+      "position": 27
+    },
+    {
+      "candidate_id": "candidate-d7f998e90c43001193ba",
+      "case_id": "mission-ambiguous-ship",
+      "position": 28
+    },
+    {
+      "candidate_id": "candidate-53a9c9a49d58073ca711",
+      "case_id": "mission-ambiguous-ship",
+      "position": 29
+    },
+    {
+      "candidate_id": "candidate-38c98c0ff6bc982d16e4",
+      "case_id": "mission-temporal-provider",
+      "position": 30
+    },
+    {
+      "candidate_id": "candidate-3fdc9e36202396dacf2f",
+      "case_id": "mission-contradictory-mirror",
+      "position": 31
+    },
+    {
+      "candidate_id": "candidate-459807c5c0431c06f46a",
+      "case_id": "mission-unanswerable-cost",
+      "position": 32
+    },
+    {
+      "candidate_id": "candidate-30c4c32331160968e138",
+      "case_id": "mission-straightforward-delivery",
+      "position": 33
+    },
+    {
+      "candidate_id": "candidate-80d3936d35664267961c",
+      "case_id": "mission-straightforward-security",
+      "position": 34
+    },
+    {
+      "candidate_id": "candidate-8c98f9c73255ebf03dea",
+      "case_id": "mission-contradictory-hostile",
+      "position": 35
+    },
+    {
+      "candidate_id": "candidate-6c9b7d924f8a7ee08085",
+      "case_id": "mission-contradictory-hostile",
+      "position": 36
+    },
+    {
+      "candidate_id": "candidate-a46fa680ca6665d24837",
+      "case_id": "mission-ambiguous-ship",
+      "position": 37
+    },
+    {
+      "candidate_id": "candidate-d515e1349ad9ebb2a152",
+      "case_id": "mission-contradictory-mirror",
+      "position": 38
+    },
+    {
+      "candidate_id": "candidate-416dc01584570205310d",
+      "case_id": "mission-straightforward-delivery",
+      "position": 39
+    },
+    {
+      "candidate_id": "candidate-0a7a2607e7884b330be9",
+      "case_id": "mission-unanswerable-cost",
+      "position": 40
+    },
+    {
+      "candidate_id": "candidate-15d8528f90f25b42da7f",
+      "case_id": "mission-ambiguous-productive",
+      "position": 41
+    },
+    {
+      "candidate_id": "candidate-80044a02932fa99fd159",
+      "case_id": "mission-temporal-exception",
+      "position": 42
+    },
+    {
+      "candidate_id": "candidate-59b33b04f58b99b8dc1d",
+      "case_id": "mission-compound-governance",
+      "position": 43
+    },
+    {
+      "candidate_id": "candidate-6198677abfef96cd3057",
+      "case_id": "mission-temporal-exception",
+      "position": 44
+    },
+    {
+      "candidate_id": "candidate-72e5d3ece7e1cbdade0c",
+      "case_id": "mission-straightforward-security",
+      "position": 45
+    },
+    {
+      "candidate_id": "candidate-0f8365cd02a5b59399ee",
+      "case_id": "mission-unanswerable-cost",
+      "position": 46
+    },
+    {
+      "candidate_id": "candidate-502d47483706d6434cdf",
+      "case_id": "mission-temporal-provider",
+      "position": 47
+    },
+    {
+      "candidate_id": "candidate-7f8ed75cf101292b4514",
+      "case_id": "mission-ambiguous-productive",
+      "position": 48
+    },
+    {
+      "candidate_id": "candidate-5a58ceed1b6d93955038",
+      "case_id": "mission-compound-governance",
+      "position": 49
+    },
+    {
+      "candidate_id": "candidate-1242c9480a031c6f070e",
+      "case_id": "mission-unanswerable-release",
+      "position": 50
+    },
+    {
+      "candidate_id": "candidate-1821585f6149309279c6",
+      "case_id": "mission-contradictory-mirror",
+      "position": 51
+    },
+    {
+      "candidate_id": "candidate-0b1e00cee43048ee30f6",
+      "case_id": "mission-unanswerable-release",
+      "position": 52
+    },
+    {
+      "candidate_id": "candidate-0371416dceb7b9a1aa12",
+      "case_id": "mission-straightforward-security",
+      "position": 53
+    },
+    {
+      "candidate_id": "candidate-f63fbb20d1930ceb1005",
+      "case_id": "mission-ambiguous-ship",
+      "position": 54
+    },
+    {
+      "candidate_id": "candidate-2bfb415909ee8cfa2745",
+      "case_id": "mission-unanswerable-cost",
+      "position": 55
+    },
+    {
+      "candidate_id": "candidate-8185ab1bf8c055528293",
+      "case_id": "mission-compound-recovery-portability",
+      "position": 56
+    },
+    {
+      "candidate_id": "candidate-8771632f8fafa4eb276d",
+      "case_id": "mission-straightforward-delivery",
+      "position": 57
+    },
+    {
+      "candidate_id": "candidate-79e2d307549d396a2341",
+      "case_id": "mission-compound-governance",
+      "position": 58
+    },
+    {
+      "candidate_id": "candidate-41b9fd0afbe7648ebfad",
+      "case_id": "mission-temporal-provider",
+      "position": 59
+    },
+    {
+      "candidate_id": "candidate-2bfd19b74f0ff536a916",
+      "case_id": "mission-contradictory-mirror",
+      "position": 60
+    },
+    {
+      "candidate_id": "candidate-278936bb7bc2e8f51c9d",
+      "case_id": "mission-compound-recovery-portability",
+      "position": 61
+    },
+    {
+      "candidate_id": "candidate-be57678f42dbd2338787",
+      "case_id": "mission-straightforward-delivery",
+      "position": 62
+    },
+    {
+      "candidate_id": "candidate-0dcb7ea916f0d65d6a0a",
+      "case_id": "mission-temporal-exception",
+      "position": 63
+    },
+    {
+      "candidate_id": "candidate-f8c77d0202f6a4c06791",
+      "case_id": "mission-temporal-exception",
+      "position": 64
+    },
+    {
+      "candidate_id": "candidate-e7cf6f2e1fd78dd599a6",
+      "case_id": "mission-unanswerable-release",
+      "position": 65
+    },
+    {
+      "candidate_id": "candidate-4ea1ce3b8e62ce23671d",
+      "case_id": "mission-ambiguous-productive",
+      "position": 66
+    },
+    {
+      "candidate_id": "candidate-5186e0846aa9a50a972a",
+      "case_id": "mission-unanswerable-cost",
+      "position": 67
+    },
+    {
+      "candidate_id": "candidate-46ec47a5e22fbb8ccb1a",
+      "case_id": "mission-contradictory-hostile",
+      "position": 68
+    },
+    {
+      "candidate_id": "candidate-9c2983d55475b7d906aa",
+      "case_id": "mission-straightforward-delivery",
+      "position": 69
+    },
+    {
+      "candidate_id": "candidate-8295da6b9f5ecd61fc6b",
+      "case_id": "mission-ambiguous-productive",
+      "position": 70
+    },
+    {
+      "candidate_id": "candidate-56c000c59f03caaeb864",
+      "case_id": "mission-compound-governance",
+      "position": 71
+    },
+    {
+      "candidate_id": "candidate-16a48c504915de1d55f7",
+      "case_id": "mission-compound-recovery-portability",
+      "position": 72
+    }
+  ],
+  "trials_sha256": "d01788bc3038f685eb4a938f902ad3f3a58d5d6fe0519aacab4327b7ef1c1eb6"
+}

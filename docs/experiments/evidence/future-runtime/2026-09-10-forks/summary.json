@@ -1,0 +1,17 @@
+{
+  "conformance_failures": 0,
+  "measurements": {
+    "imperative": {
+      "checkpoint_bytes": 495.0,
+      "fork_ms": 0.494,
+      "journal_bytes": 1047.0
+    },
+    "langgraph": {
+      "checkpoint_bytes": 32768.0,
+      "fork_ms": 1.0837295,
+      "journal_bytes": 1047.0
+    }
+  },
+  "records": 60,
+  "schema_version": 1
+}

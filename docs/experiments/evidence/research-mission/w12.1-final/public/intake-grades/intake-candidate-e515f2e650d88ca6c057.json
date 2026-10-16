@@ -1,0 +1,63 @@
+{
+  "candidate_id": "intake-candidate-e515f2e650d88ca6c057",
+  "case_id": "mission-compound-governance",
+  "completed_at": "2026-09-19T06:26:41.347707+00:00",
+  "grade": {
+    "action_correct": false,
+    "action_rationale": "The candidate chose 'clarify' claiming no packet was supplied, but the task explicitly provides a fixed source pack (the reference mission's obligations and evidence roles) and the raw request is answerable against it. The mission's stop_when and abstain_when conditions anticipate working with the supplied evidence and explicitly resolving what it cannot prove, not blocking on a clarification. The clarification is therefore unnecessary and unhelpful, and the correct action was 'accept' to form the research mission.",
+    "clarification_utility": 0,
+    "correction_actions": [
+      "Replace the 'clarify' action with 'accept' and construct the research mission from the supplied reference mission.",
+      "Retain the three required questions (governing rule, exception scope/expiry as of 2026-09-19, and what the evidence cannot prove) as the mission's obligations.",
+      "Preserve the as-of freshness constraint (2026-09-19) and the abstain_when condition that unsupported approval/enforcement for a high-risk production change must remain explicitly unresolved rather than guessed."
+    ],
+    "hard_boundary_failure": true,
+    "hard_boundary_rationale": "The candidate's claim that no source document was supplied contradicts the task's fixed source pack and constitutes a silent loss of the evidence basis, a hard boundary failure under the definition (silent scope broadening / loss of a hard constraint). The clarification also invents a blocking condition not present in the mission's abstain_when or stop_when rules.",
+    "invented_constraints": [],
+    "lost_hard_boundaries": [
+      "The candidate lost the hard boundary that the supplied source pack is the evidence basis; by asserting no packet exists, it silently discarded the fixed evidence set the mission depends on."
+    ],
+    "required_field_recall": 0,
+    "unnecessary_fields": []
+  },
+  "position": 10,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "927e16aac031418e6afc49d16dd4d25494173e33a716d2e6504070c1932302ef",
+    "finish_reason": "stop",
+    "latency_ms": 32755.752,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "7f6eb854dd11cf395e4d36a1e42c56f2d2233cc881bfde862f6efc4ad9c70b3a",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 383,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0.0003418,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0001915,
+        "upstream_inference_cost": 0.0003418,
+        "upstream_inference_prompt_cost": 0.0001503
+      },
+      "is_byok": false,
+      "prompt_tokens": 1002,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1385
+    }
+  },
+  "schema_version": "research-mission-intake-grade/1",
+  "started_at": "2026-09-19T06:26:08.591055+00:00",
+  "status": "completed"
+}

@@ -127,7 +127,7 @@ class SessionStore:
 
     # ── Create / Read / Update / Delete ──────────────────────────
 
-    def create(self, ttl: int | None = None) -> str:
+    def create(self, ttl: int | None = None, *, owner_scope: str | None = None) -> str:
         """Create a new session and return its ID.
 
         Stores meta as a HSET so ``HINCRBY`` can atomically increment
@@ -157,6 +157,8 @@ class SessionStore:
             "revision": "0",
             "next_step_index": "0",
         }
+        if owner_scope is not None:
+            meta_mapping["owner_scope"] = owner_scope
         self.redis.hset(meta_key, mapping=meta_mapping)  # type: ignore[arg-type]
         self.redis.expire(meta_key, effective_ttl)
 
@@ -349,9 +351,11 @@ class SessionStore:
 
     # ── Async storage boundary ─────────────────────────────────
 
-    async def acreate(self, ttl: int | None = None) -> str:
+    async def acreate(
+        self, ttl: int | None = None, *, owner_scope: str | None = None
+    ) -> str:
         """Create a session without running blocking Redis I/O on the loop."""
-        return await self._offload(self.create, ttl)
+        return await self._offload(self.create, ttl, owner_scope=owner_scope)
 
     async def aget(self, session_id: str) -> dict | None:
         """Read session metadata off the event loop."""
@@ -494,6 +498,29 @@ class SessionStore:
 
     async def aget_refs(self, session_id: str) -> dict:
         return await self._offload(self.get_refs, session_id)
+
+    async def aremove_document(self, session_id: str, ref_id: str) -> bool:
+        """Detach only document evidence under the active session lock."""
+        script = """
+        -- session_remove_document_v1
+        if redis.call('exists', KEYS[1]) == 0 then return 0 end
+        if ARGV[2] == '' or redis.call('get', KEYS[3]) ~= ARGV[2] then return 0 end
+        local value = redis.call('hget', KEYS[2], ARGV[1])
+        if not value or cjson.decode(value).source ~= 'document' then return 0 end
+        return redis.call('hdel', KEYS[2], ARGV[1])
+        """
+        return bool(
+            await self._offload(
+                self.redis.eval,
+                script,
+                3,
+                _meta_key(session_id),
+                _refs_key(session_id),
+                _lock_key(session_id),
+                ref_id,
+                _LOCK_OWNER.get() or "",
+            )
+        )
 
     async def adelete(self, session_id: str) -> bool:
         return await self._offload(self.delete, session_id)

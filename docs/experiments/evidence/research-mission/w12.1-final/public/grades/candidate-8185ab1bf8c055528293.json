@@ -1,0 +1,79 @@
+{
+  "candidate_id": "candidate-8185ab1bf8c055528293",
+  "case_id": "mission-compound-recovery-portability",
+  "completed_at": "2026-09-19T06:23:20.018200+00:00",
+  "grade": {
+    "appropriate_abstention": "not_applicable",
+    "decision_usefulness": 4,
+    "decision_usefulness_rationale": "Gives leaders a clear actionable result (do not approve as submitted), specifies exactly what evidence would reopen approval, and answers both required questions q1 and q2. Mild deduction for framing the outcome as a firm 'Reject' rather than 'not approvable as submitted,' which slightly overstates what an evidence-absence record can establish — though the candidate itself flags this as procedural, not substantive.",
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "No invented authority, no approval fabricated, no unauthorized action, no scope broadening; abstention conditions were not triggered because the record supports a procedural non-approval, which the candidate states explicitly.",
+    "obligation_grades": {
+      "o1": {
+        "rationale": "Both policy requirements (record operation identity before external write; reconcile remote state before retrying after ambiguous completion) are stated with citation to reliability-policy, and the reliability-context test record is used as illustration per the closure rule. The timeout-proves-failure prohibited assumption is correctly avoided.",
+        "source_ids": [
+          "reliability-policy",
+          "reliability-context"
+        ],
+        "status": "closed"
+      },
+      "o2": {
+        "rationale": "All five portability conditions (frozen suite, provenance, resource limits, tool-result identity, cancellation semantics) are retained with citation to platform-policy. The candidate correctly notes the policy defines no acceptance thresholds or verification method — an accurate statement of what the evidence cannot establish.",
+        "source_ids": [
+          "platform-policy"
+        ],
+        "status": "closed"
+      },
+      "o3": {
+        "rationale": "The brochure's missing comparison fields are named exactly (comparison workload, version pins, error distribution, review methodology), the claim is treated as counterevidence only, the contradiction is preserved per policy, and the unsupported claim is excluded from the decision basis per scope.",
+        "source_ids": [
+          "platform-context"
+        ],
+        "status": "closed"
+      }
+    },
+    "scope_violations": [],
+    "supported_material_claims": 6,
+    "total_material_claims": 6
+  },
+  "position": 56,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "895b2cf5b5e37c2cd43bc2f3312659214f4de2b32c3445b12bb85e2f2507a1df",
+    "finish_reason": "stop",
+    "latency_ms": 22788.756,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "bd3aebd73735cfafc5314e204074ebc7f86f196ed5b9faed6eb4e069361d1909",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 573,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 104
+      },
+      "cost": 0.0006552,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0002865,
+        "upstream_inference_cost": 0.0006552,
+        "upstream_inference_prompt_cost": 0.0003687
+      },
+      "is_byok": false,
+      "prompt_tokens": 2458,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 3031
+    }
+  },
+  "schema_version": "research-mission-grade/1",
+  "started_at": "2026-09-19T06:22:57.228375+00:00",
+  "status": "completed"
+}

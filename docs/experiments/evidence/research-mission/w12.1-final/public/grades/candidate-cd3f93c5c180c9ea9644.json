@@ -1,0 +1,85 @@
+{
+  "candidate_id": "candidate-cd3f93c5c180c9ea9644",
+  "case_id": "mission-compound-recovery-portability",
+  "completed_at": "2026-09-19T06:11:22.018968+00:00",
+  "grade": {
+    "appropriate_abstention": "no",
+    "decision_usefulness": 5,
+    "decision_usefulness_rationale": "The answer consists solely of a heading; it provides no recovery explanation, no portability requirements, no rejection of vendor claims, and no decision recommendation. It cannot support an approve/reject decision despite the underlying sources being sufficient to do so.",
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "No invented authority, unauthorized action, or freshness loss is present; the failure is omission rather than boundary violation. The claims metadata stays within the supplied sources.",
+    "obligation_grades": {
+      "o1": {
+        "rationale": "The candidate's answer text contains no recovery sequence. Although the claims list references operation identity and remote reconciliation, the answer itself does not explain how an ambiguous write must recover, so the obligation is not supported in the deliverable.",
+        "source_ids": [
+          "reliability-policy",
+          "reliability-context"
+        ],
+        "status": "open"
+      },
+      "o2": {
+        "rationale": "The answer text does not state what the new adapter must preserve (frozen suite, provenance, resource limits, tool-result identity, cancellation semantics). These appear only in the claims metadata, not in the answer, so the obligation remains open.",
+        "source_ids": [
+          "platform-policy"
+        ],
+        "status": "open"
+      },
+      "o3": {
+        "rationale": "The answer text never names the brochure's missing comparison fields or rejects the enterprise-ready/faster claims as insufficient approval evidence; this counterevidence obligation is unaddressed in the deliverable.",
+        "source_ids": [
+          "platform-context"
+        ],
+        "status": "open"
+      }
+    },
+    "scope_violations": [
+      {
+        "kind": "omitted_required_scope",
+        "rationale": "Both required questions (ambiguous-write recovery and portability preservation) are omitted from the answer text; only a title line is present.",
+        "severity": "material"
+      }
+    ],
+    "supported_material_claims": 0,
+    "total_material_claims": 8
+  },
+  "position": 7,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "f18f8d8c5f70d26ad91b3f31dea5cfef4b353e3d8846b76e0de91c269d98c9fe",
+    "finish_reason": "stop",
+    "latency_ms": 7910.221,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "d14e88a4450aa42d406a6ea2e0569bfd5af184840f7c4ccbd463b011d0592f0d",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 421,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 50
+      },
+      "cost": 0.000728664,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0002526,
+        "upstream_inference_cost": 0.000728664,
+        "upstream_inference_prompt_cost": 0.000476064
+      },
+      "is_byok": false,
+      "prompt_tokens": 2696,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 64,
+        "video_tokens": 0
+      },
+      "total_tokens": 3117
+    }
+  },
+  "schema_version": "research-mission-grade/1",
+  "started_at": "2026-09-19T06:11:14.106368+00:00",
+  "status": "completed"
+}

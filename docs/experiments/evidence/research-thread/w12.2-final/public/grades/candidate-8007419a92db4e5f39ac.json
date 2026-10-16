@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-8007419a92db4e5f39ac",
+  "case_id": "live-contradiction",
+  "completed_at": "2026-09-19T09:25:00.367423+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 85,
+    "current_accuracy": 60,
+    "false_merge": false,
+    "historical_preservation": 70,
+    "lost_history": false,
+    "rationale": "The candidate correctly captures the change event (incident DQ-17 duplicate deliveries contradicting the documented claim) and preserves the documented exactly-once claim as historical. However, it also asserts as current that 'the documentation still describes exactly-once delivery' and lists the documented claim as a current truth, whereas the reference treats the documentation's exactly-once description as superseded/historical — a stale-current leak. The unresolved list omits the core contested point (whether the unconditional exactly-once guarantee holds) and instead invents peripheral questions (doc update status, guarantee scope, root cause, frequency). Four unsupported claims: references to a 'prior thread'/'prior_root' context not present in the sources, the assertion the documentation 'predates' the incident, the claim the prior thread flagged missing operational evidence, and the assertion the documentation 'still' describes exactly-once delivery as current. No false merge or lost history.",
+    "stale_current_leak": true,
+    "unresolved_accuracy": 40,
+    "unsupported_claims": 4,
+    "usefulness": 65
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "09944ef868c3bff93c20a84b5734493330501a4ba32ab7f590a74d529bb7b704",
+    "finish_reason": "stop",
+    "latency_ms": 20483.379,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "06ea4c48cae233c4f8ca19f0e8685f32cdf8e0c239d7ac0c8213111e575162d7",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 580,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 320
+      },
+      "cost": 0.0003255,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000203,
+        "upstream_inference_cost": 0.0003255,
+        "upstream_inference_prompt_cost": 0.0001225
+      },
+      "is_byok": false,
+      "prompt_tokens": 1225,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1805
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:24:39.883666+00:00",
+  "status": "completed",
+  "trial_id": "live-contradiction-r2-treatment"
+}

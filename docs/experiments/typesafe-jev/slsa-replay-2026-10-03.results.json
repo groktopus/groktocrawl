@@ -1,0 +1,507 @@
+{
+  "cases": [
+    {
+      "case_id": "slsa-replay-01",
+      "incumbent": {
+        "elapsed_ms": 14555.080501828343,
+        "non_string_items_dropped": 0,
+        "recommendation_only": true,
+        "requested_alias": "free",
+        "response_sha256": "76cf17c21690898a3c29dbb26c47a105e7d4baf6e1716553964a5881569f1937",
+        "returned_alias": "free",
+        "returned_model": "free",
+        "status": "parsed_incumbent_array",
+        "topics": [
+          "SLSA provenance v0.1 complete schema structure all fields",
+          "SLSA provenance builder id URI format examples and semantics",
+          "SLSA provenance v0.1 builder field definition and purpose",
+          "SLSA provenance v0.1 verification policy builder identification",
+          "SLSA provenance v0.1 vs v0.2 builder field differences"
+        ]
+      },
+      "jev": {
+        "stage1": {
+          "elapsed_ms": 188.8805979397148,
+          "model": "jev-1.13.0",
+          "probabilities": {
+            "n0": 0.84
+          },
+          "request_sha256": "fafec4358c809a44090b31dacafa3024604bb0f0aba9e28614faf69ecfa885fa",
+          "response_sha256": "70ba81c7e5b9ea298d035440868660c1139161a0344ac9e70bcd45d2152725c8",
+          "status": "evaluated",
+          "usage": {
+            "input_tokens": 800,
+            "output_tokens": 21
+          }
+        },
+        "stage3": {
+          "elapsed_ms": 165.93847493641078,
+          "model": "jev-1.13.0",
+          "probabilities": {
+            "q0000": 0.11
+          },
+          "request_sha256": "73b5176ceef502c23ca5048193b1d29cbc52b1109b2d130e537410b710838e92",
+          "response_sha256": "ee81a849ec8212c1d4168a95e5f1da23f7ed031338b2b5661c208a67fbf0a065",
+          "status": "evaluated",
+          "usage": {
+            "input_tokens": 1124,
+            "output_tokens": 24
+          }
+        },
+        "stage4": {
+          "stage3_yes_probability": 0.11,
+          "status": "skipped_by_frozen_binary_argmax"
+        }
+      },
+      "reference_assessment_best_effort": {
+        "obligation_status": "met",
+        "provenance": "assistant-authored best effort; pending parent review; not independent gold",
+        "rationale": "The supplied schema excerpt names builder.id.",
+        "search_needed": "no"
+      },
+      "replay_audit": {
+        "candidate_result_ids": [
+          "rank-04",
+          "rank-05",
+          "rank-06",
+          "rank-07",
+          "rank-08",
+          "rank-09",
+          "rank-10",
+          "rank-11",
+          "rank-12",
+          "rank-13",
+          "rank-14",
+          "rank-15",
+          "rank-16",
+          "rank-17",
+          "rank-18",
+          "rank-19",
+          "rank-20"
+        ],
+        "expected_contribution_summary": "No follow-up is needed to close this already met field-identification obligation.",
+        "expected_distinct_page_contribution": [],
+        "searches_dispatched": 0
+      }
+    },
+    {
+      "case_id": "slsa-replay-02",
+      "incumbent": {
+        "elapsed_ms": 10088.094130856916,
+        "non_string_items_dropped": 0,
+        "recommendation_only": true,
+        "requested_alias": "free",
+        "response_sha256": "9a2195ee0e66f8b30ce138c0540d7a2f2ba20823d432632dba59a4f964aa0701",
+        "returned_alias": "free",
+        "returned_model": "free",
+        "status": "parsed_incumbent_array",
+        "topics": [
+          "SLSA Build L3 transitive dependencies requirements specification",
+          "SLSA build level dependency provenance verification requirements",
+          "does SLSA require dependencies to meet same build level as artifact",
+          "SLSA Build Track dependency level inheritance rules",
+          "SLSA v1.0 specification transitive dependency build assurance"
+        ]
+      },
+      "jev": {
+        "stage1": {
+          "elapsed_ms": 176.23650492168963,
+          "model": "jev-1.13.0",
+          "probabilities": {
+            "n0": 0.05
+          },
+          "request_sha256": "4892181ca21a574a5079cc4f8938fb5f06f936247fe3416322ccb751131ccfbe",
+          "response_sha256": "088818356f459a20693c094de4d57218024a128ac794f268fff49d20cba6bac2",
+          "status": "evaluated",
+          "usage": {
+            "input_tokens": 830,
+            "output_tokens": 21
+          }
+        },
+        "stage3": {
+          "elapsed_ms": 178.3937329892069,
+          "model": "jev-1.13.0",
+          "probabilities": {
+            "q0000": 0.97
+          },
+          "request_sha256": "740f64fda9937ff4e41793f388f16a6be0e60aac7c9221073e2cbec5ceb31eed",
+          "response_sha256": "35d9aa92219d517ad389c4df96f59450f23eaeb298a5c94d025baa5839f9a8c2",
+          "status": "evaluated",
+          "usage": {
+            "input_tokens": 1180,
+            "output_tokens": 24
+          }
+        },
+        "stage4": {
+          "elapsed_ms": 187.29330482892692,
+          "model": "jev-1.13.0",
+          "probabilities": {
+            "n0": 0.85
+          },
+          "request_sha256": "47cf0aeeb8841ef9e21e8ce9463541778aea668a25b25ec843e17046910c67d6",
+          "response_sha256": "8049c7e927190d4f376a9fff0e32ae22f18da91163c19b3c8e1e7e1866b6598b",
+          "status": "evaluated",
+          "usage": {
+            "input_tokens": 1182,
+            "output_tokens": 21
+          }
+        }
+      },
+      "reference_assessment_best_effort": {
+        "obligation_status": "unmet",
+        "provenance": "assistant-authored best effort; pending parent review; not independent gold",
+        "rationale": "The first-pass overview describes SLSA and its Build Track but does not state a transitivity rule.",
+        "search_needed": "yes"
+      },
+      "replay_audit": {
+        "candidate_result_ids": [
+          "rank-04",
+          "rank-05",
+          "rank-06",
+          "rank-07",
+          "rank-08",
+          "rank-09",
+          "rank-10",
+          "rank-11",
+          "rank-12",
+          "rank-13",
+          "rank-14",
+          "rank-15",
+          "rank-16",
+          "rank-17",
+          "rank-18",
+          "rank-19",
+          "rank-20"
+        ],
+        "expected_contribution_summary": "The hidden result pool includes official FAQ guidance and a separate public explanation directly addressing independent artifact ratings.",
+        "expected_distinct_page_contribution": [
+          "rank-07",
+          "rank-12"
+        ],
+        "searches_dispatched": 0
+      }
+    },
+    {
+      "case_id": "slsa-replay-03",
+      "incumbent": {
+        "elapsed_ms": 9372.7460289374,
+        "non_string_items_dropped": 0,
+        "recommendation_only": true,
+        "requested_alias": "free",
+        "response_sha256": "0a52aa9ccc94d2b4d439cf8f2f69bc076754f3192cd08fed5b52dc75005046d3",
+        "returned_alias": "free",
+        "returned_model": "free",
+        "status": "parsed_incumbent_array",
+        "topics": [
+          "official SLSA v1.0 levels page slsa.dev build level labels L1 L2 L3 L4",
+          "SLSA v1.0 build level requirements criteria per level",
+          "SLSA build provenance attestation requirements each level",
+          "SLSA v1.0 specification document build levels definition",
+          "differences between SLSA build levels L1 through L4"
+        ]
+      },
+      "jev": {
+        "stage1": {
+          "elapsed_ms": 235.23720889352262,
+          "model": "jev-1.13.0",
+          "probabilities": {
+            "n0": 0.09
+          },
+          "request_sha256": "8aa16af702997330264b82078d1535291cab1bef853df66d1e7a51a45185c7bc",
+          "response_sha256": "0b2abf4a39c9284fa5849414e616582978b38b4e7fd99a4342c327f6ec9554d2",
+          "status": "evaluated",
+          "usage": {
+            "input_tokens": 836,
+            "output_tokens": 21
+          }
+        },
+        "stage3": {
+          "elapsed_ms": 153.11038587242365,
+          "model": "jev-1.13.0",
+          "probabilities": {
+            "q0000": 0.96
+          },
+          "request_sha256": "c601671f1049c1f860c5a30dfa12e60d35c533580f2ebcb577ba992a1239a187",
+          "response_sha256": "e0e7fc8b9e459c6437bfeab7870f720bb31eeda033daf6994822aae67ea3365b",
+          "status": "evaluated",
+          "usage": {
+            "input_tokens": 1185,
+            "output_tokens": 24
+          }
+        },
+        "stage4": {
+          "elapsed_ms": 203.72280199080706,
+          "model": "jev-1.13.0",
+          "probabilities": {
+            "n0": 0.9
+          },
+          "request_sha256": "6795cf314a38a55878af50f8716a23cbb6237c7f6dc42fc5ff77698a825f1be8",
+          "response_sha256": "7ad34557098587134405626bde2c088cc535fccfe8cef787bc04067c89874817",
+          "status": "evaluated",
+          "usage": {
+            "input_tokens": 1187,
+            "output_tokens": 21
+          }
+        }
+      },
+      "reference_assessment_best_effort": {
+        "obligation_status": "unmet",
+        "provenance": "assistant-authored best effort; pending parent review; not independent gold",
+        "rationale": "The first pass contains a secondary assertion but no official v1.0 levels page, so its version-specific enumeration is not authoritatively established.",
+        "search_needed": "yes"
+      },
+      "replay_audit": {
+        "candidate_result_ids": [
+          "rank-04",
+          "rank-05",
+          "rank-06",
+          "rank-07",
+          "rank-08",
+          "rank-09",
+          "rank-10",
+          "rank-11",
+          "rank-12",
+          "rank-13",
+          "rank-14",
+          "rank-15",
+          "rank-16",
+          "rank-17",
+          "rank-18",
+          "rank-19",
+          "rank-20"
+        ],
+        "expected_contribution_summary": "The hidden pool contains the official v1.0 levels page, whose table supplies the authoritative labels Build L0 through Build L3. The secondary excerpt's count of four levels is compatible with that list; this is an authority/completeness check, not a contradiction.",
+        "expected_distinct_page_contribution": [
+          "rank-11"
+        ],
+        "searches_dispatched": 0
+      }
+    },
+    {
+      "case_id": "slsa-replay-04",
+      "incumbent": {
+        "elapsed_ms": 7289.415907114744,
+        "non_string_items_dropped": 0,
+        "recommendation_only": true,
+        "requested_alias": "free",
+        "response_sha256": "dfa3d7753506710e20f3f94be4ea132e745191032b708d0e797524218f04bbba",
+        "returned_alias": "free",
+        "returned_model": "free",
+        "status": "parsed_incumbent_array",
+        "topics": [
+          "SLSA signing key rotation policy configuration",
+          "private SLSA deployment key management practices",
+          "SLSA builder signing key configuration options",
+          "organization-specific SLSA provenance generation setup",
+          "SLSA key rotation interval best practices"
+        ]
+      },
+      "jev": {
+        "stage1": {
+          "elapsed_ms": 216.21915511786938,
+          "model": "jev-1.13.0",
+          "probabilities": {
+            "n0": 0.03
+          },
+          "request_sha256": "c2602110cc16d6117f89468ff99830b909d44d7e75cf419867d02374936d8207",
+          "response_sha256": "b2bbfffe9ddf03d3c5d2a3274bf19b97078f291f9e813e6d00373d64dcd59965",
+          "status": "evaluated",
+          "usage": {
+            "input_tokens": 794,
+            "output_tokens": 21
+          }
+        },
+        "stage3": {
+          "elapsed_ms": 217.19772997312248,
+          "model": "jev-1.13.0",
+          "probabilities": {
+            "q0000": 0.98
+          },
+          "request_sha256": "41b86c918b5bdbb5eb186c9dfaef87b924eb35470f36f1bbe83b846ee0f2bae3",
+          "response_sha256": "6d60da92a2786d3b7b042f71322dba48effa7be26fb0d0b04004c3c94de0623b",
+          "status": "evaluated",
+          "usage": {
+            "input_tokens": 1117,
+            "output_tokens": 24
+          }
+        },
+        "stage4": {
+          "elapsed_ms": 225.06746393628418,
+          "model": "jev-1.13.0",
+          "probabilities": {
+            "n0": 0.27
+          },
+          "request_sha256": "bdea9dff2a117c0c2d21e24b88906a5557790c5439714d6973c1dc518953ea07",
+          "response_sha256": "b6a6e2282ab4f8d20f9940d97ed7c35a6a774252e23b4f29cd8783a27fb00549",
+          "status": "evaluated",
+          "usage": {
+            "input_tokens": 1119,
+            "output_tokens": 21
+          }
+        }
+      },
+      "reference_assessment_best_effort": {
+        "obligation_status": "unanswerable",
+        "provenance": "assistant-authored best effort; pending parent review; not independent gold",
+        "rationale": "The requested setting is private deployment state not identified in the public first-pass excerpt or bounded public corpus.",
+        "search_needed": "uncertain"
+      },
+      "replay_audit": {
+        "candidate_result_ids": [
+          "rank-04",
+          "rank-05",
+          "rank-06",
+          "rank-07",
+          "rank-08",
+          "rank-09",
+          "rank-10",
+          "rank-11",
+          "rank-12",
+          "rank-13",
+          "rank-14",
+          "rank-15",
+          "rank-16",
+          "rank-17",
+          "rank-18",
+          "rank-19",
+          "rank-20"
+        ],
+        "expected_contribution_summary": "The bounded public result set contains general key-management advice but no value for a particular private deployment.",
+        "expected_distinct_page_contribution": [],
+        "searches_dispatched": 0
+      }
+    }
+  ],
+  "incumbent_control": {
+    "calls_attempted": 4,
+    "calls_parsed": 4,
+    "outcomes": [
+      {
+        "case_id": "slsa-replay-01",
+        "elapsed_ms": 14555.080501828343,
+        "non_string_items_dropped": 0,
+        "recommendation_only": true,
+        "requested_alias": "free",
+        "response_sha256": "76cf17c21690898a3c29dbb26c47a105e7d4baf6e1716553964a5881569f1937",
+        "returned_alias": "free",
+        "returned_model": "free",
+        "status": "parsed_incumbent_array",
+        "topics": [
+          "SLSA provenance v0.1 complete schema structure all fields",
+          "SLSA provenance builder id URI format examples and semantics",
+          "SLSA provenance v0.1 builder field definition and purpose",
+          "SLSA provenance v0.1 verification policy builder identification",
+          "SLSA provenance v0.1 vs v0.2 builder field differences"
+        ]
+      },
+      {
+        "case_id": "slsa-replay-02",
+        "elapsed_ms": 10088.094130856916,
+        "non_string_items_dropped": 0,
+        "recommendation_only": true,
+        "requested_alias": "free",
+        "response_sha256": "9a2195ee0e66f8b30ce138c0540d7a2f2ba20823d432632dba59a4f964aa0701",
+        "returned_alias": "free",
+        "returned_model": "free",
+        "status": "parsed_incumbent_array",
+        "topics": [
+          "SLSA Build L3 transitive dependencies requirements specification",
+          "SLSA build level dependency provenance verification requirements",
+          "does SLSA require dependencies to meet same build level as artifact",
+          "SLSA Build Track dependency level inheritance rules",
+          "SLSA v1.0 specification transitive dependency build assurance"
+        ]
+      },
+      {
+        "case_id": "slsa-replay-03",
+        "elapsed_ms": 9372.7460289374,
+        "non_string_items_dropped": 0,
+        "recommendation_only": true,
+        "requested_alias": "free",
+        "response_sha256": "0a52aa9ccc94d2b4d439cf8f2f69bc076754f3192cd08fed5b52dc75005046d3",
+        "returned_alias": "free",
+        "returned_model": "free",
+        "status": "parsed_incumbent_array",
+        "topics": [
+          "official SLSA v1.0 levels page slsa.dev build level labels L1 L2 L3 L4",
+          "SLSA v1.0 build level requirements criteria per level",
+          "SLSA build provenance attestation requirements each level",
+          "SLSA v1.0 specification document build levels definition",
+          "differences between SLSA build levels L1 through L4"
+        ]
+      },
+      {
+        "case_id": "slsa-replay-04",
+        "elapsed_ms": 7289.415907114744,
+        "non_string_items_dropped": 0,
+        "recommendation_only": true,
+        "requested_alias": "free",
+        "response_sha256": "dfa3d7753506710e20f3f94be4ea132e745191032b708d0e797524218f04bbba",
+        "returned_alias": "free",
+        "returned_model": "free",
+        "status": "parsed_incumbent_array",
+        "topics": [
+          "SLSA signing key rotation policy configuration",
+          "private SLSA deployment key management practices",
+          "SLSA builder signing key configuration options",
+          "organization-specific SLSA provenance generation setup",
+          "SLSA key rotation interval best practices"
+        ]
+      }
+    ],
+    "raw_response_persisted": false,
+    "requested_alias": "free",
+    "returned_aliases": [
+      "free"
+    ],
+    "returned_model_values": [
+      "free"
+    ],
+    "searches_dispatched": 0,
+    "underlying_checkpoint": "unknown"
+  },
+  "jev_stage_summary": {
+    "stage1": {
+      "median_elapsed_ms": 202.54987652879208,
+      "usage": {
+        "input_tokens": 3260,
+        "output_tokens": 84
+      },
+      "validated_calls": 4
+    },
+    "stage3": {
+      "median_elapsed_ms": 172.16610396280885,
+      "usage": {
+        "input_tokens": 4606,
+        "output_tokens": 96
+      },
+      "validated_calls": 4
+    },
+    "stage4": {
+      "median_elapsed_ms": 203.72280199080706,
+      "usage": {
+        "input_tokens": 3488,
+        "output_tokens": 63
+      },
+      "validated_calls": 3
+    }
+  },
+  "limits": [
+    "Four assistant-authored best-effort cases are not independent gold or representative prevalence.",
+    "No actual search was dispatched; frozen result-pool replay reports whether existing acquired pages contain direct evidence, not marginal gain from new retrieval.",
+    "No answer/citation uplift, search savings, monetary cost, calibration, or production utility was measured.",
+    "Only the three strata present were tested; no direct aligned contradiction positive was included.",
+    "The incumbent free alias underlying checkpoint is unknown; its topic strings are recommendations, not evidence."
+  ],
+  "packet_sha256": "01f362a5ed691a970c58169afb33ee05fc45f313eed2022f00683f929179625c",
+  "provider_boundary": {
+    "jev_calls_attempted": 11,
+    "jev_calls_unevaluated": 0,
+    "jev_calls_validated": 11,
+    "searches_dispatched": 0,
+    "total_jev_allowance_consumed": 50
+  },
+  "requested_jev_model": "jev-1.13.0",
+  "returned_jev_model": "jev-1.13.0",
+  "study_id": "jev-slsa-deterministic-replay-2026-10-03"
+}

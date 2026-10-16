@@ -1,0 +1,38 @@
+{
+  "captured_at": "2026-09-11T20:40:16Z",
+  "groktocrawl_candidate": {
+    "compose_config_sha256": "146f506aac69b7c108d5adaadc8fcae24797df3614b31cc141a8e624d01b719c",
+    "image_id": "sha256:092d7ac8f8c4c04bfbaef0a4a109543d40f1afb9ed5c27df434a472349aec205",
+    "image_reference": "groktocrawl-x-candidate-agent:6b46bc9a3f44a1571ad68d5453fef90edc99466b"
+  },
+  "newer_workflow_boundary": {
+    "excluded_from_w10": true,
+    "reason": "W10 isolates GroktoCrawl-owned adaptive policy over the ordinary HTTP search contract. SlopSearX 0.5 MCP workflows are evaluated separately in W11."
+  },
+  "role": "pinned_flat_http_search_baseline",
+  "schema_version": "enterprise-evaluation/w10-search-environment/1",
+  "slopsearx": {
+    "compose_config_sha256": "c86718dddf7ba5ce73a1f715c42a5d400b27b287e0d6d7ddb7e6b74fa47da05a",
+    "general_engines": [
+      "brave",
+      "duckduckgo",
+      "google",
+      "hackernews",
+      "reddit",
+      "stackexchange",
+      "wikipedia"
+    ],
+    "http_paths": [
+      "/",
+      "/config",
+      "/health",
+      "/healthz",
+      "/metrics",
+      "/search"
+    ],
+    "image_id": "sha256:b6e4cbb218caf6aca483322faa1398b75a600d5502be72dd9b08fdb1b58eb077",
+    "image_reference": "ghcr.io/magnus919/slopsearx@sha256:8643ed14703bf899bd579b1b06f4b62b798d7f42f303ce9af8aa2386c928108d",
+    "package_version": "0.4.0",
+    "source_revision": "f4c7f960f09a1b2ce931d1e0bd2bf1a171cb5222"
+  }
+}

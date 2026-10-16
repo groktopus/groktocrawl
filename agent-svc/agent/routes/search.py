@@ -16,10 +16,19 @@ from ..models import (
     SearchResult,
 )
 from ..research.sources import normalize_source_url
+from ..search_metadata import search_metadata
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+def _date_params(body: SearchRequest) -> dict[str, Any]:
+    return {
+        key: getattr(body, key)
+        for key in ("date_from", "date_to", "time_range", "engines")
+        if getattr(body, key) is not None
+    }
 
 
 @router.post("/v1/search")
@@ -38,14 +47,21 @@ async def search_v1(request: Request, body: SearchRequest) -> dict[str, Any]:
             limit=body.limit,
             categories=body.categories,
             sources=body.sources,
+            **_date_params(body),
         )
         return {
             "success": True,
+            **(
+                {"date_filter": _health.date_filter}
+                if body.date_from is not None or body.date_to is not None
+                else {}
+            ),
             "data": [
                 {
                     "url": r["url"],
                     "title": r["title"],
                     "description": r.get("description", ""),
+                    **search_metadata(r),
                 }
                 for r in results
             ],
@@ -67,6 +83,16 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
             detail="page/offset continuation currently requires non-streaming fast keyword search without images",
         )
     if body.stream:
+        stream_sources = body.sources
+        if (
+            body.search_type == "deep"
+            and body.sources
+            and "images" in body.sources
+            and any(source != "images" for source in body.sources)
+        ):
+            # Deep search returns web rows; mirror the non-stream route's
+            # mixed-source filter without introducing image SSE events.
+            stream_sources = [source for source in body.sources if source != "images"]
 
         async def event_stream():
             from ..research import run_search_stream
@@ -77,7 +103,7 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
                 search_type=body.search_type,
                 retrieval_mode=body.retrieval_mode,
                 categories=body.categories,
-                sources=body.sources,
+                sources=stream_sources,
                 output_schema=body.output_schema,
                 system_prompt=body.system_prompt,
                 searxng_url=request.app.state.searxng_url,
@@ -95,6 +121,7 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
     from ..searxng_client import SearXNGClient
 
     searxng = SearXNGClient(request.app.state.searxng_url)
+    date_filter: dict | None = None
     warning_msg: str | None = None
     result_coverage: dict | None = None
     acquired_artifacts = []
@@ -133,11 +160,16 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
                 image_results.append(
                     ImageSearchResult(
                         title=item.get("title", ""),
-                        image_url=item.get("url", ""),
-                        image_width=width,
-                        image_height=height,
+                        image_url=item.get("media", {}).get("url", item.get("url", "")),
+                        image_width=item.get("media", {}).get("width", width),
+                        image_height=item.get("media", {}).get("height", height),
                         url=item.get("url", ""),
                         position=pos + 1,
+                        **{
+                            key: value
+                            for key, value in search_metadata(item).items()
+                            if key in {"engine", "engines", "media"}
+                        },
                     )
                 )
 
@@ -168,6 +200,8 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
                 llm_base_url=request.app.state.llm_base_url,
                 llm_api_key=request.app.state.llm_api_key,
                 llm_model=request.app.state.llm_model,
+                categories=body.categories,
+                sources=effective_sources,
             )
             search_results = deep_result["results"]
             deep_data: dict[str, list] = {
@@ -230,6 +264,7 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
                         url=r["url"],
                         title=r["title"],
                         description=r.get("description", ""),
+                        **search_metadata(r),
                     )
                     for r in plan.results
                 ]
@@ -249,16 +284,21 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
                 categories=body.categories,
                 sources=effective_sources,
                 **continuation_params,
+                **_date_params(body),
             )
             result_coverage = getattr(_health, "result_coverage", None)
-            if not results and _health.engines_responding == 0:
+            date_filter = getattr(_health, "date_filter", None)
+            if not results and _health.engines_responding == 0 and date_filter is None:
                 warning_msg = (
                     "All search engines returned no results. "
                     "Check your BRAVE_API_KEY configuration."
                 )
             search_results = [
                 SearchResult(
-                    url=r["url"], title=r["title"], description=r.get("description", "")
+                    url=r["url"],
+                    title=r["title"],
+                    description=r.get("description", ""),
+                    **search_metadata(r),
                 )
                 for r in results
             ]
@@ -277,10 +317,7 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
                     contents_payload = {
                         "extras": body.contents.extras.model_dump(exclude_none=True)
                     }
-                candidate_dicts = [
-                    {"url": r.url, "title": r.title, "description": r.description}
-                    for r in search_results[: body.limit]
-                ]
+                candidate_dicts = [r.model_dump() for r in search_results[: body.limit]]
                 acquired = await acquire_source_artifacts(
                     candidate_dicts,
                     scraper,
@@ -353,10 +390,7 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
             from ..research import run_rich_search
 
             output = await run_rich_search(
-                search_results=[
-                    {"url": r.url, "title": r.title, "description": r.description}
-                    for r in search_results
-                ],
+                search_results=[r.model_dump() for r in search_results],
                 query=body.query,
                 limit=body.limit,
                 output_schema=body.output_schema,
@@ -392,10 +426,7 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
             scraper_client = ScraperClient(request.app.state.scraper_url)
             try:
                 # Build result dicts from current search_results
-                result_dicts = [
-                    {"url": r.url, "title": r.title, "description": r.description}
-                    for r in search_results
-                ]
+                result_dicts = [r.model_dump() for r in search_results]
                 enriched = await process_contents_for_results(
                     result_dicts,
                     body.query,
@@ -412,6 +443,7 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
                         url=r["url"],
                         title=r["title"],
                         description=r.get("description", ""),
+                        **search_metadata(r),
                         highlights=r.get("highlights"),
                         summary=r.get("summary"),
                         extras=r.get("extras"),
@@ -461,6 +493,8 @@ async def search(request: Request, body: SearchRequest) -> SearchResponse:
             warning=warning_msg,
             coverage=result_coverage,
             continuation=continuation,
+            date_filter=date_filter,
+            evidence_coverage=output.get("evidence_coverage") if output else None,
         )
     finally:
         await searxng.close()

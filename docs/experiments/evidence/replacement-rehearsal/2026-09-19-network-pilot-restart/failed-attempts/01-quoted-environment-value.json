@@ -1,0 +1,8 @@
+{
+  "checkpoint": 0,
+  "error": "Command '['/home/operator/groktocrawl-x-w9-runner/.venv/bin/python', 'scripts/validate_experimental_candidate_config.py', '/home/operator/.config/groktocrawl-x-candidate/candidate.env']' returned non-zero exit status 2.",
+  "error_type": "CalledProcessError",
+  "failed_at": "2026-09-19T13:46:42.728787+00:00",
+  "schema_version": "w9-operational-checkpoint-failure/1",
+  "started_at": "2026-09-19T13:46:42.712368+00:00"
+}

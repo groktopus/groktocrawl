@@ -2541,7 +2541,7 @@ def test_crawl_cli_no_poll_returns_job_id():
         capture_output=True,
         text=True,
         timeout=30,
-        cwd="/Volumes/tank01/magnus/git/groktocrawl",
+        cwd="/path/to/groktocrawl",
     )
     # Exit code should be 0
     assert result.returncode == 0, (
@@ -2580,7 +2580,7 @@ def test_crawl_cli_json_output():
         capture_output=True,
         text=True,
         timeout=30,
-        cwd="/Volumes/tank01/magnus/git/groktocrawl",
+        cwd="/path/to/groktocrawl",
     )
     assert result.returncode == 0
     stdout = result.stdout.strip()
@@ -6290,7 +6290,7 @@ def test_memory_survives_agent_svc_restart():
     Store an artifact, restart agent-svc, verify the artifact is still
     retrievable and queries hit the same cache entry.
 
-    This test requires SSH access to saru to restart the container.
+    This test requires SSH access to deployment.example.internal to restart the container.
     If SSH is not available, the test is skipped.
     """
 
@@ -6317,8 +6317,8 @@ def test_memory_survives_agent_svc_restart():
         result = subprocess.run(
             [
                 "ssh",
-                "saru",
-                "cd /home/magnus/groktocrawl && docker compose restart agent-svc",
+                "deployment.example.internal",
+                "cd /home/operator/groktocrawl && docker compose restart agent-svc",
             ],
             capture_output=True,
             text=True,
@@ -8607,13 +8607,13 @@ def test_session_search_zero_results_val_ses_085():
     r = httpx.post(AGENT + "/v2/session/create", json={}, timeout=30)
     sid = r.json()["sessionId"]
 
-    # Use a nonsense query that should return zero results
+    # Select the fixture contract explicitly; nonsense text can still match results.
     step = httpx.post(
         AGENT + f"/v2/session/{sid}/step",
         json={
             "action": "search",
             "params": {
-                "query": "xyzkkkqqqzzznonexistent987654321abcdefghij",
+                "query": "[fixture:zero-results] no matching documents",
                 "limit": 5,
             },
         },
@@ -9224,68 +9224,63 @@ def test_cross_full_pipeline_val_cross_011():
 
 
 def test_cross_concurrent_session_isolation_val_cross_018():
-    """VAL-CROSS-018: Concurrent session isolation — no cross-session data leakage.
+    """VAL-CROSS-018: Concurrent writes and deletion preserve session isolation."""
+    from concurrent.futures import ThreadPoolExecutor
 
-    Two simultaneous sessions with different search queries must remain
-    fully isolated: no refs, steps, or artifacts cross-contaminate.
-    """
-    r1 = httpx.post(AGENT + "/v2/session/create", json={}, timeout=30)
-    r2 = httpx.post(AGENT + "/v2/session/create", json={}, timeout=30)
-    sid_a = r1.json()["sessionId"]
-    sid_b = r2.json()["sessionId"]
-    assert sid_a != sid_b
+    sessions = []
+    try:
+        for _ in range(2):
+            response = httpx.post(AGENT + "/v2/session/create", json={}, timeout=30)
+            assert response.status_code == 200, response.text
+            sessions.append(response.json()["sessionId"])
+        sid_a, sid_b = sessions
+        assert sid_a != sid_b
+        url_a = TEST_SITE + "/content/multi-sentence"
+        url_b = TEST_SITE + "/content/near-duplicate"
 
-    # Run different queries in each session
-    s_a = httpx.post(
-        AGENT + f"/v2/session/{sid_a}/step",
-        json={
-            "action": "search",
-            "params": {"query": "Rust programming language features", "limit": 3},
-        },
-        timeout=30,
-    )
-    s_b = httpx.post(
-        AGENT + f"/v2/session/{sid_b}/step",
-        json={
-            "action": "search",
-            "params": {"query": "Go programming language features", "limit": 3},
-        },
-        timeout=30,
-    )
-    assert s_a.status_code == 200, f"Session A step failed: {s_a.text}"
-    assert s_b.status_code == 200, f"Session B step failed: {s_b.text}"
+        # Distinct known inputs let us detect leakage independently of search
+        # ranking: two legitimate searches may return the same URL.
+        def scrape(sid, url):
+            return httpx.post(
+                AGENT + f"/v2/session/{sid}/step",
+                json={"action": "scrape", "params": {"urls": [url]}},
+                timeout=60,
+            )
 
-    # Verify isolation — each session has its own step count
-    status_a = httpx.get(AGENT + f"/v2/session/{sid_a}", timeout=30)
-    status_b = httpx.get(AGENT + f"/v2/session/{sid_b}", timeout=30)
-    assert status_a.json()["stepCount"] == 1
-    assert status_b.json()["stepCount"] == 1
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            futures = [
+                pool.submit(scrape, sid_a, url_a),
+                pool.submit(scrape, sid_b, url_b),
+            ]
+            for future in futures:
+                response = future.result()
+                assert response.status_code == 200, response.text
+                assert response.json()["result"]["succeeded"] == 1, response.text
 
-    # Export each session — verify no cross-contamination
-    export_a = httpx.post(AGENT + f"/v2/session/{sid_a}/export", timeout=30)
-    export_b = httpx.post(AGENT + f"/v2/session/{sid_b}/export", timeout=30)
-    artifact_a = export_a.json()["artifact"]
-    artifact_b = export_b.json()["artifact"]
+        exports = []
+        for sid, expected_url in [(sid_a, url_a), (sid_b, url_b)]:
+            status = httpx.get(AGENT + f"/v2/session/{sid}", timeout=30)
+            assert status.status_code == 200
+            assert status.json()["stepCount"] == 1
+            response = httpx.post(AGENT + f"/v2/session/{sid}/export", timeout=30)
+            assert response.status_code == 200, response.text
+            data = response.json()
+            assert {ref["url"] for ref in data["refs"].values()} == {expected_url}
+            assert len(data["steps"]) == 1
+            assert data["artifact"]
+            exports.append(data)
 
-    # SearXNG may be rate-limited — verify artifact mentions the correct query
-    # if results were returned, otherwise just verify sessions are independently accessible
-    if artifact_a:
-        assert "Rust" in artifact_a, (
-            f"Session A should mention Rust: {artifact_a[:200]}"
-        )
-    if artifact_b:
-        assert "Go" in artifact_b, f"Session B should mention Go: {artifact_b[:200]}"
-
-    # Verify refs are isolated: URLs from session A should not appear in session B
-    urls_a = {v["url"] for v in export_a.json()["refs"].values() if v.get("url")}
-    urls_b = {v["url"] for v in export_b.json()["refs"].values() if v.get("url")}
-    if urls_a and urls_b:
-        assert len(urls_a & urls_b) == 0, (
-            f"Ref URLs should not overlap between sessions: shared={urls_a & urls_b}"
-        )
-
-    httpx.delete(AGENT + f"/v2/session/{sid_a}", timeout=30)
-    httpx.delete(AGENT + f"/v2/session/{sid_b}", timeout=30)
+        # Removing one session must not remove shared store keys or alter the
+        # other session's references, history or artifact.
+        deleted = httpx.delete(AGENT + f"/v2/session/{sid_a}", timeout=30)
+        assert deleted.status_code == 200
+        remaining = httpx.post(AGENT + f"/v2/session/{sid_b}/export", timeout=30)
+        assert remaining.status_code == 200
+        for field in ("refs", "steps", "artifact"):
+            assert remaining.json()[field] == exports[1][field]
+    finally:
+        for sid in sessions:
+            httpx.delete(AGENT + f"/v2/session/{sid}", timeout=30)
 
 
 @require_docker

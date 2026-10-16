@@ -218,6 +218,24 @@ def _addr_is_restricted(addr: IPv4Address | IPv6Address) -> bool:
     return False
 
 
+def is_private_host_literal(hostname: str) -> bool | None:
+    """Classify a hostname without DNS, returning ``None`` when lookup is needed.
+
+    The result preserves the same literal-IP and internal-suffix policy used
+    by :func:`is_private_host`. A caller with a trusted DNS policy service can
+    resolve the remaining hostname without weakening this guard.
+    """
+    if not hostname:
+        return True
+    hostname_lower = hostname.lower()
+    if any(hostname_lower.endswith(suffix) for suffix in _PRIVATE_HOSTNAME_SUFFIXES):
+        return True
+    try:
+        return _addr_is_restricted(ip_address(hostname))
+    except ValueError:
+        return None
+
+
 def is_private_host(url: str) -> bool:
     """Check if a URL's hostname resolves to a private or internal IP.
 
@@ -235,17 +253,10 @@ def is_private_host(url: str) -> bool:
     if not hostname:
         return True
 
-    # Check hostname suffixes for internal Docker resolution
-    hostname_lower = hostname.lower()
-    for suffix in _PRIVATE_HOSTNAME_SUFFIXES:
-        if hostname_lower.endswith(suffix):
-            return True
-
-    # Check if hostname is itself a private IP literal
-    try:
-        return _addr_is_restricted(ip_address(hostname))
-    except ValueError:
-        pass  # Not an IP literal, treat as hostname
+    # Apply deterministic hostname/IP checks before any DNS lookup.
+    literal_policy = is_private_host_literal(hostname)
+    if literal_policy is not None:
+        return literal_policy
 
     # Resolve hostname to IPs and check each
     ips = _resolve_to_ips(hostname)

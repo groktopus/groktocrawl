@@ -1,0 +1,134 @@
+{
+  "created_at": "2026-09-09T02:30:22.760759+00:00",
+  "decision": "evaluation_only",
+  "manifest": {
+    "batch_size": 1000,
+    "corpus_family": "deterministic synthetic scale corpus",
+    "dimension": 1024,
+    "distance": "cosine",
+    "embedding_model": "deterministic-fixture-vector-1024d-v1",
+    "operations": 5000,
+    "random_seed": 0,
+    "sizes": [
+      10000
+    ],
+    "workers": 4
+  },
+  "ok": true,
+  "production_change": false,
+  "provider": "pgvector",
+  "qdrant_removal": false,
+  "resource_suffixes": [
+    "size_10000"
+  ],
+  "run_id": "scale-1024d-sustained-r2-round-2",
+  "schema_version": "vector-store-scale-evaluation/1",
+  "sizes": [
+    {
+      "bulk_upsert_ms": 10267.880638999997,
+      "duplicate_replay_ms": 11.291094999990037,
+      "errors": [],
+      "mixed_load": {
+        "errors": [],
+        "failed_operations": 0,
+        "latency_summary_ms": {
+          "search": {
+            "mean": 12.242968452533328,
+            "p50": 3.977243000008457,
+            "p95": 94.77788999998893,
+            "p99": 100.12206100003596
+          },
+          "upsert": {
+            "mean": 9.166155092000418,
+            "p50": 2.9529330000173104,
+            "p95": 71.82014199997866,
+            "p99": 75.66752399998222
+          }
+        },
+        "ok": true,
+        "operations": 5000,
+        "successful_operations": 5000,
+        "throughput_ops_s": 322.24452563876565,
+        "workers": 4
+      },
+      "ok": true,
+      "queries": [
+        {
+          "query_id": "query-scope-0",
+          "results": [
+            {
+              "id": "scale-00000",
+              "score": 1.0
+            },
+            {
+              "id": "scale-00404",
+              "score": 1.0
+            },
+            {
+              "id": "scale-00808",
+              "score": 1.0
+            }
+          ]
+        },
+        {
+          "query_id": "query-scope-1",
+          "results": [
+            {
+              "id": "scale-00001",
+              "score": 1.0
+            },
+            {
+              "id": "scale-00405",
+              "score": 1.0
+            },
+            {
+              "id": "scale-00809",
+              "score": 1.0
+            }
+          ]
+        },
+        {
+          "query_id": "query-scope-2",
+          "results": [
+            {
+              "id": "scale-00002",
+              "score": 1.0
+            },
+            {
+              "id": "scale-00406",
+              "score": 1.0
+            },
+            {
+              "id": "scale-00810",
+              "score": 1.0
+            }
+          ]
+        },
+        {
+          "query_id": "query-scope-3",
+          "results": [
+            {
+              "id": "scale-00003",
+              "score": 1.0
+            },
+            {
+              "id": "scale-00407",
+              "score": 1.0
+            },
+            {
+              "id": "scale-00811",
+              "score": 1.0
+            }
+          ]
+        }
+      ],
+      "search_latency_ms": {
+        "mean": 17.206922500001554,
+        "p50": 17.275438000012855,
+        "p95": 17.336712999991732,
+        "p99": 17.336712999991732
+      },
+      "size": 10000
+    }
+  ]
+}

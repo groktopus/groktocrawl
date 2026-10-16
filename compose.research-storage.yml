@@ -1,0 +1,111 @@
+# Independent opt-in exploration; never merge into the inherited Compose stack.
+services:
+  research-valkey:
+    image: valkey/valkey:8-alpine
+    profiles: [storage]
+    # Skip the root entrypoint's ownership repair: this probe deliberately drops
+    # every capability, and the world-writable tmpfs is the only writable path.
+    user: valkey
+    networks: [research_private]
+    healthcheck:
+      test: [CMD, valkey-cli, ping]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    read_only: true
+    tmpfs: ['/data:size=32m,mode=1777']
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+    cpus: 0.5
+    pids_limit: 64
+
+  research-postgres:
+    image: pgvector/pgvector:pg17
+    profiles: [storage]
+    environment:
+      POSTGRES_DB: research_experiment
+      POSTGRES_USER: research_owner
+      POSTGRES_PASSWORD_FILE: /run/secrets/research_password
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    secrets: [research_password]
+    volumes:
+      - research_data:/var/lib/postgresql/data
+    networks: [research_private]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    mem_limit: 512m
+    cpus: 1.0
+    pids_limit: 128
+    stop_grace_period: 30s
+
+  storage-probe:
+    # File-backed Compose secrets retain host ownership on Linux.
+    user: ${RESEARCH_PROBE_UID:?Set the password file owner UID with id -u}
+    image: postgres:17.11-bookworm
+    profiles: [storage]
+    depends_on:
+      research-postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: research-postgres
+      PGDATABASE: research_experiment
+      PGUSER: research_owner
+      PGCONNECT_TIMEOUT: '10'
+      PGOPTIONS: '-c statement_timeout=10000 -c lock_timeout=3000'
+    secrets: [research_password]
+    volumes:
+      - ./tests/storage:/probes:ro
+    networks: [research_private]
+    entrypoint: [sh, /probes/probe.sh]
+    command: [read]
+    read_only: true
+    tmpfs: ['/tmp:size=1m,mode=1777']
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+    cpus: 0.5
+    pids_limit: 32
+
+  storage-adapter:
+    build:
+      context: .
+      dockerfile: agent-svc/Dockerfile
+    profiles: [storage]
+    user: ${RESEARCH_PROBE_UID:?Set the password file owner UID with id -u}
+    depends_on:
+      research-postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: research-postgres
+      PGDATABASE: research_experiment
+      PGUSER: research_owner
+      PYTHONPATH: /app
+      PYTHONDONTWRITEBYTECODE: '1'
+      VALKEY_URL: redis://research-valkey:6379/13
+    secrets: [research_password]
+    volumes:
+      - ./tests/storage:/probes:ro
+      - ./semantic-svc:/semantic:ro
+    networks: [research_private]
+    entrypoint: [sh, /probes/probe.sh]
+    command: [adapter]
+    read_only: true
+    tmpfs: ['/tmp:size=32m,mode=1777']
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    cpus: 1.0
+    pids_limit: 64
+
+secrets:
+  research_password:
+    file: ${RESEARCH_POSTGRES_PASSWORD_FILE:?Set an absolute path to a private password file}
+volumes:
+  research_data:
+networks:
+  research_private:
+    internal: true

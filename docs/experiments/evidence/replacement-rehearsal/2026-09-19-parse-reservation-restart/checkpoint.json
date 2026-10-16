@@ -1,0 +1,15 @@
+{
+  "candidate_revision": "b6ecca0d7183a6349b31db018b81e347cdea6e38",
+  "checkpoint": 0,
+  "completed_at": "2026-09-19T19:03:37.101501+00:00",
+  "not_before": "2026-09-19T19:00:53.139536+00:00",
+  "receipts": {
+    "compatibility.json": "e889a1fe1f4e127a5b85b565732c054b541c630ed119f83e88c0e0fdebe3971f",
+    "research.json": "868c4d039edb5f8a408a12a696b955b02558f6563a6e36fd4702d64a720c6cf2",
+    "resources.json": "5a6987d65f19461356e71788d7879b961b86a15c5567cf5df819fd3650219602"
+  },
+  "runtime_revision": "b6ecca0d7183a6349b31db018b81e347cdea6e38",
+  "schema_version": "w9-operational-checkpoint/1",
+  "started_at": "2026-09-19T19:02:20.871933+00:00",
+  "successful_operations": 12
+}

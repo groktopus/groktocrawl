@@ -1,0 +1,67 @@
+{
+  "answer": {
+    "answer": "Yes. The earlier FAQ snapshot said Fern CI's build-log retention period was not specified (fern-faq-old), and the updated snapshot states Fern CI retains build logs for 30 days (fern-faq-new). So the retention period has now been published as 30 days for build logs.",
+    "change_events": [
+      "The Fern CI FAQ was updated: it previously stated the build-log retention period was not specified, and now states build logs are retained for 30 days (fern-faq-old, fern-faq-new)."
+    ],
+    "citations": [
+      "fern-faq-old",
+      "fern-faq-new"
+    ],
+    "current_truths": [
+      "Fern CI retains build logs for 30 days (fern-faq-new)."
+    ],
+    "historical_truths": [
+      "As of the earlier snapshot, Fern CI's build-log retention period was not specified (fern-faq-old)."
+    ],
+    "unresolved": [
+      "Whether the 30-day retention applies to anything beyond build logs, or its exact enforcement date, is not stated in the supplied snapshots."
+    ]
+  },
+  "arm": "control",
+  "case_id": "later-resolution",
+  "completed_at": "2026-09-19T07:51:31.297673+00:00",
+  "position": 46,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "b7a9624d3b95da5e3c712c262ed6cfd9fd92fa495fb8c7b1eacbea6d3084f0b1",
+    "finish_reason": "stop",
+    "latency_ms": 31304.788,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "904b5e5131f4375c21f0bcf20eb6bb55d439b817f847ca4dad1287a244ec5c85",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 237,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 1
+      },
+      "cost": 0.00013295,
+      "cost_details": {
+        "upstream_inference_completions_cost": 8.295e-05,
+        "upstream_inference_cost": 0.00013295,
+        "upstream_inference_prompt_cost": 5e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 500,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 737
+    }
+  },
+  "repetition": 3,
+  "schema_version": "research-thread-trial/1",
+  "started_at": "2026-09-19T07:50:59.992544+00:00",
+  "status": "completed",
+  "stratum": "resolved",
+  "trial_id": "later-resolution-r3-control"
+}

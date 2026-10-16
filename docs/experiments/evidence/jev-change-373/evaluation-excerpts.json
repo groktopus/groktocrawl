@@ -1,0 +1,325 @@
+{
+  "format": "jev-change-evaluation-excerpts/1",
+  "note": "Only exact line spans listed here enter System One state; full source snapshots remain evaluator-side.",
+  "pairs": {
+    "cosign-link": {
+      "after": {
+        "blocks": [
+          {
+            "line_end": 28,
+            "line_start": 26,
+            "text": "`Cosign` is developed as part of the [`sigstore`](https://sigstore.dev) project.\nWe also use a [slack channel](https://sigstore.slack.com)!\nClick [here](https://join.slack.com/t/sigstore/shared_invite/zt-47srvpyn6-j8Ek5hGBwKN32IjLw8BvYA) for the invite link.\n"
+          }
+        ],
+        "excerpt_sha256": "1fd5f4d605bd30259277b4674e17957ad4ff5f733a55d7b95e12da9766b0f1fe",
+        "excerpt_utf8_bytes": 259,
+        "page_sha256": "d7d9f949783cb02c0fe780fe3a68c87e43cd2aebc8639f0822b20ce57949670f"
+      },
+      "before": {
+        "blocks": [
+          {
+            "line_end": 28,
+            "line_start": 26,
+            "text": "`Cosign` is developed as part of the [`sigstore`](https://sigstore.dev) project.\nWe also use a [slack channel](https://sigstore.slack.com)!\nClick [here](https://join.slack.com/t/sigstore/shared_invite/zt-2ub0ztl5z-PkWb_Ldwef5d6nb~oryaTA) for the invite link.\n"
+          }
+        ],
+        "excerpt_sha256": "00197168fddda6cb8c3e428b78cf3ee40bd41de656a675cdc5a32c4cdaab0ef5",
+        "excerpt_utf8_bytes": 259,
+        "page_sha256": "b7adc8494040172cdd057fc1cc73126fab0ae2421b4014cbdf4da0ba8176d017"
+      }
+    },
+    "cosign-offline": {
+      "after": {
+        "blocks": [
+          {
+            "line_end": 160,
+            "line_start": 142,
+            "text": "### Verify a container in an air-gapped environment\n\n**Note:** This section is out of date.\n\n**Note:** Most verification workflows require periodically requesting service keys from a TUF repository.\nFor airgapped verification of signatures using the public-good instance, you will need to retrieve the\n[trusted root](https://github.com/sigstore/root-signing/blob/main/targets/trusted_root.json) file from the production\nTUF repository. The contents of this file will change without notification. By not using TUF, you will need\nto build your own mechanism to keep your airgapped copy of this file up-to-date.\n\nCosign can do completely offline verification by verifying a [bundle](./specs/SIGNATURE_SPEC.md#properties) which is typically distributed as an annotation on the image manifest.\nAs long as this annotation is present, then offline verification can be done.\nThis bundle annotation is always included by default for keyless signing, so the default `cosign sign` functionality will include all materials needed for offline verification.\n\nTo verify an image in an air-gapped environment, the image and signatures must be available locally on the filesystem.\n\nAn image can be saved locally using `cosign save` (note, this step must be done with a network connection):\n\n```\n"
+          }
+        ],
+        "excerpt_sha256": "2e6c397b3d22924ceed0dd0b513dcb2be0a51e049f4fae1b5c0d2cc76837cadc",
+        "excerpt_utf8_bytes": 1278,
+        "page_sha256": "47424f39f84dc04f3fadff93ff0c6970c4817f4e97c0fbb54bdb9911e93df691"
+      },
+      "before": {
+        "blocks": [
+          {
+            "line_end": 155,
+            "line_start": 142,
+            "text": "### Verify a container in an air-gapped environment\n\nCosign can do completely offline verification by verifying a [bundle](./specs/SIGNATURE_SPEC.md#properties) which is typically distributed as an annotation on the image manifest.\nAs long as this annotation is present, then offline verification can be done.\nThis bundle annotation is always included by default for keyless signing, so the default `cosign sign` functionality will include all materials needed for offline verification.\n\nTo verify an image in an air-gapped environment, the image and signatures must be available locally on the filesystem.\n\nAn image can be saved locally using `cosign save` (note, this step must be done with a network connection):\n\n```\ncosign initialize # This will pull in the latest TUF root\ncosign save $IMAGE_NAME --dir ./path/to/dir\n```\n"
+          }
+        ],
+        "excerpt_sha256": "cb4f5d673e72be6656d07e4cd3e8625ad4aa3d04c5172f81843f19e4d9da4388",
+        "excerpt_utf8_bytes": 827,
+        "page_sha256": "c7d082cbd62451b5d23914762c325f846872e2bb08ea5c08991175a3312a805e"
+      }
+    },
+    "k8s-format": {
+      "after": {
+        "blocks": [
+          {
+            "line_end": 12,
+            "line_start": 8,
+            "text": "This page shows how to create a Pod that uses a\n{{< glossary_tooltip text=\"Secret\" term_id=\"secret\" >}} to pull an image\nfrom a private container image registry or repository. There are many private\nregistries in use. This task uses [Docker Hub](https://www.docker.com/products/docker-hub)\nas an example registry.\n"
+          },
+          {
+            "line_end": 23,
+            "line_start": 20,
+            "text": "* To do this exercise, you need the `docker` command line tool, and a\n  [Docker ID](https://docs.docker.com/docker-id/) for which you know the password.\n* If you are using a different private container registry, you need the command\n  line tool for that registry and any login information for the registry.\n"
+          },
+          {
+            "line_end": 43,
+            "line_start": 41,
+            "text": "The login process creates or updates a `config.json` file that holds an authorization token.\nReview [how Kubernetes interprets this file](/docs/concepts/containers/images#config-json).\n\n"
+          },
+          {
+            "line_end": 248,
+            "line_start": 248,
+            "text": "* See the `imagePullSecrets` field within the [container definitions](/docs/reference/kubernetes-api/workload-resources/pod-v1/#containers) of a Pod"
+          }
+        ],
+        "excerpt_sha256": "d71fd232b0af7110fe7fc396181862c23220e47eed6040103972f87791423e1a",
+        "excerpt_utf8_bytes": 955,
+        "page_sha256": "b17e893a7162704bc1c840444cb6df804cbe4e6f54b0a797a7732fe1caab14bc"
+      },
+      "before": {
+        "blocks": [
+          {
+            "line_end": 12,
+            "line_start": 8,
+            "text": "This page shows how to create a Pod that uses a\n{{< glossary_tooltip text=\"Secret\" term_id=\"secret\" >}} to pull an image \nfrom a private container image registry or repository. There are many private \nregistries in use. This task uses [Docker Hub](https://www.docker.com/products/docker-hub)\nas an example registry.\n"
+          },
+          {
+            "line_end": 23,
+            "line_start": 20,
+            "text": "* To do this exercise, you need the `docker` command line tool, and a\n  [Docker ID](https://docs.docker.com/docker-id/) for which you know the password.\n* If you are using a different private container registry, you need the command \n  line tool for that registry and any login information for the registry. \n"
+          },
+          {
+            "line_end": 43,
+            "line_start": 41,
+            "text": "The login process creates or updates a `config.json` file that holds an authorization token.\nReview [how Kubernetes interprets this file](/docs/concepts/containers/images#config-json). \n\n"
+          },
+          {
+            "line_end": 248,
+            "line_start": 248,
+            "text": "* See the `imagePullSecrets` field within the [container definitions](/docs/reference/kubernetes-api/workload-resources/pod-v1/#containers) of a Pod\n"
+          }
+        ],
+        "excerpt_sha256": "8ffa6345bff15ecda6d552fa44694cbe815b4c86b22eb28cd0a38872f0537e54",
+        "excerpt_utf8_bytes": 961,
+        "page_sha256": "a4dd1f5240d904338af65c4ec48bb6a85bf199703215997e03df21bbfb21d25a"
+      }
+    },
+    "k8s-nav": {
+      "after": {
+        "blocks": [
+          {
+            "line_end": 7,
+            "line_start": 4,
+            "text": "title: EndpointSlices\ncontent_type: concept\nweight: 60\ndescription: >-\n"
+          }
+        ],
+        "excerpt_sha256": "3eb7ba87511e2e13338a23182284c1c5dcbb295aa029354ec5940fbbb9733b93",
+        "excerpt_utf8_bytes": 71,
+        "page_sha256": "77284dc28831964676ce0f1a0ccb1013ce847e1faa63dd5cc0115e585429cc8e"
+      },
+      "before": {
+        "blocks": [
+          {
+            "line_end": 7,
+            "line_start": 4,
+            "text": "title: EndpointSlices\ncontent_type: concept\nweight: 45\ndescription: >-\n"
+          }
+        ],
+        "excerpt_sha256": "a8f3442cfd42913a71e7098e3eb30ca3fbdaddf39f46e9627f265058a05cb9f9",
+        "excerpt_utf8_bytes": 71,
+        "page_sha256": "66c00b94e3393c5cd473cc179f5a023b74fbf811625b344e36c826f00c919097"
+      }
+    },
+    "k8s-qualifier": {
+      "after": {
+        "blocks": [
+          {
+            "line_end": 7,
+            "line_start": 7,
+            "text": "  EndpointSlices track the IP addresses of Pods for Services.\n"
+          },
+          {
+            "line_end": 16,
+            "line_start": 13,
+            "text": "EndpointSlices track the IP addresses of backend endpoints.\nEndpointSlices are normally associated with a\n{{< glossary_tooltip text=\"Service\" term_id=\"service\" >}} and the backend endpoints typically represent\n{{< glossary_tooltip text=\"Pods\" term_id=\"pod\" >}}.\n"
+          },
+          {
+            "line_end": 25,
+            "line_start": 19,
+            "text": "One Service can be backed by multiple Pods. Kubernetes represents the backing endpoints of a Service\nwith a set of EndpointSlices that are associated with that Service.\nThe backing endpoints are usually, but not always, pods running in the cluster.\n\nThe control plane usually manages EndpointSlices for you automatically. However,\nEndpointSlices can be defined manually for {{< glossary_tooltip text=\"Services\" term_id=\"service\" >}} without\n{{< glossary_tooltip text=\"selectors\" term_id=\"selector\" >}} specified.\n"
+          }
+        ],
+        "excerpt_sha256": "d2def1ff22389e664f62efde6120480a4f567dd5c7a107eeeb8b6991ac174bd6",
+        "excerpt_utf8_bytes": 837,
+        "page_sha256": "300545297ba62514fa4449831ff02da01fb5fb5183c042810c73abfb34b39f0a"
+      },
+      "before": {
+        "blocks": [
+          {
+            "line_end": 7,
+            "line_start": 7,
+            "text": "  EndpointSlices track the IP addresses of Pods with matching Service selectors.\n"
+          },
+          {
+            "line_end": 16,
+            "line_start": 13,
+            "text": " EndpointSlices track the IP addresses of Pods with matching  {{< glossary_tooltip text=\"selectors\" term_id=\"selector\" >}}.\n\n<!--more-->\nEndpointSlices can be configured manually for {{< glossary_tooltip text=\"Services\" term_id=\"service\" >}} without selectors specified.\n"
+          }
+        ],
+        "excerpt_sha256": "031dab46f387feb9bb20a787bc5a31ac8ec1b2c860ee9ad7ad93e917345f9f86",
+        "excerpt_utf8_bytes": 352,
+        "page_sha256": "62d571b9d5da9118f330ef07dc28379d076500dd0b5e5ca5c9af2e1a8bc0b2e2"
+      }
+    },
+    "k8s-removal": {
+      "after": {
+        "blocks": [
+          {
+            "line_end": 82,
+            "line_start": 73,
+            "text": "### Address types\n\nEndpointSlices support two address types:\n\n* IPv4\n* IPv6\n\nEach `EndpointSlice` object represents a specific IP address type. If you have\na Service that is available via IPv4 and IPv6, there will be at least two\n`EndpointSlice` objects (one for IPv4, and one for IPv6).\n"
+          },
+          {
+            "line_end": 95,
+            "line_start": 86,
+            "text": "The EndpointSlice API stores conditions about endpoints that may be useful for consumers.\nThe three conditions are `serving`, `terminating`, and `ready`.\n\n#### Serving\n\n{{< feature-state for_k8s_version=\"v1.26\" state=\"stable\" >}}\n\nThe `serving` condition indicates that the endpoint is currently serving responses, and\nso it should be used as a target for Service traffic. For endpoints backed by a Pod, this\nmaps to the Pod's `Ready` condition.\n"
+          },
+          {
+            "line_end": 110,
+            "line_start": 97,
+            "text": "#### Terminating\n\n{{< feature-state for_k8s_version=\"v1.26\" state=\"stable\" >}}\n\nThe `terminating` condition indicates that the endpoint is\nterminating. For endpoints backed by a Pod, this condition is set when\nthe Pod is first deleted (that is, when it receives a deletion\ntimestamp, but most likely before the Pod's containers exit).\n\nService proxies will normally ignore endpoints that are `terminating`,\nbut they may route traffic to endpoints that are both `serving` and\n`terminating` if all available endpoints are `terminating`. (This\nhelps to ensure that no Service traffic is lost during rolling updates\nof the underlying Pods.)\n"
+          },
+          {
+            "line_end": 117,
+            "line_start": 112,
+            "text": "#### Ready\n\nThe `ready` condition is essentially a shortcut for checking\n\"`serving` and not `terminating`\" (though it will also always be\n`true` for Services with `spec.publishNotReadyAddresses` set to\n`true`).\n"
+          }
+        ],
+        "excerpt_sha256": "2723f44e40389c3dda04c5abef9e4c4c85e1615c79bdbf50f6684344f9e8d7a8",
+        "excerpt_utf8_bytes": 1582,
+        "page_sha256": "fd5b3e5561288b3b057144985a7245808b004877ab7e0a1c70586bda59b5c93a"
+      },
+      "before": {
+        "blocks": [
+          {
+            "line_end": 84,
+            "line_start": 74,
+            "text": "### Address types\n\nEndpointSlices support three address types:\n\n* IPv4\n* IPv6\n* FQDN (Fully Qualified Domain Name)\n\nEach `EndpointSlice` object represents a specific IP address type. If you have\na Service that is available via IPv4 and IPv6, there will be at least two\n`EndpointSlice` objects (one for IPv4, and one for IPv6).\n"
+          },
+          {
+            "line_end": 98,
+            "line_start": 88,
+            "text": "The EndpointSlice API stores conditions about endpoints that may be useful for consumers.\nThe three conditions are `ready`, `serving`, and `terminating`.\n\n#### Ready\n\n`ready` is a condition that maps to a Pod's `Ready` condition. A running Pod with the `Ready`\ncondition set to `True` should have this EndpointSlice condition also set to `true`. For\ncompatibility reasons, `ready` is NEVER `true` when a Pod is terminating. Consumers should refer\nto the `serving` condition to inspect the readiness of terminating Pods. The only exception to\nthis rule is for Services with `spec.publishNotReadyAddresses` set to `true`. Endpoints for these\nServices will always have the `ready` condition set to `true`.\n"
+          },
+          {
+            "line_end": 117,
+            "line_start": 100,
+            "text": "#### Serving\n\n{{< feature-state for_k8s_version=\"v1.26\" state=\"stable\" >}}\n\nThe `serving` condition is almost identical to the `ready` condition. The difference is that\nconsumers of the EndpointSlice API should check the `serving` condition if they care about pod readiness while\nthe pod is also terminating.\n\n{{< note >}}\n\nAlthough `serving` is almost identical to `ready`, it was added to prevent breaking the existing meaning\nof `ready`. It may be unexpected for existing clients if `ready` could be `true` for terminating\nendpoints, since historically terminating endpoints were never included in the Endpoints or\nEndpointSlice API to begin with. For this reason, `ready` is _always_ `false` for terminating\nendpoints, and a new condition `serving` was added in v1.20 so that clients can track readiness\nfor terminating pods independent of the existing semantics for `ready`.\n\n{{< /note >}}\n"
+          },
+          {
+            "line_end": 125,
+            "line_start": 119,
+            "text": "#### Terminating\n\n{{< feature-state for_k8s_version=\"v1.22\" state=\"beta\" >}}\n\n`Terminating` is a condition that indicates whether an endpoint is terminating.\nFor pods, this is any pod that has a deletion timestamp set.\n\n"
+          }
+        ],
+        "excerpt_sha256": "6df66c96e832c04bb974f8a437c5b4e4449a78e88e0ae112fc462c682b65a842",
+        "excerpt_utf8_bytes": 2145,
+        "page_sha256": "e0a1b072067f64182f398062718e48189d9dad5bdc149f0dca845fb486aff9bd"
+      }
+    },
+    "k8s-status": {
+      "after": {
+        "blocks": [
+          {
+            "line_end": 115,
+            "line_start": 109,
+            "text": "#### Serving\n\n{{< feature-state for_k8s_version=\"v1.22\" state=\"beta\" >}}\n\n`serving` is identical to the `ready` condition, except it does not account for terminating states.\nConsumers of the EndpointSlice API should check this condition if they care about pod readiness while\nthe pod is also terminating.\n"
+          },
+          {
+            "line_end": 133,
+            "line_start": 128,
+            "text": "#### Terminating\n\n{{< feature-state for_k8s_version=\"v1.22\" state=\"beta\" >}}\n\n`Terminating` is a condition that indicates whether an endpoint is terminating.\nFor pods, this is any pod that has a deletion timestamp set.\n"
+          }
+        ],
+        "excerpt_sha256": "8dcf5d1f368fd3430e939d3d4b1f07a10ef78ff0165ea712c2bc501269c4f0f1",
+        "excerpt_utf8_bytes": 524,
+        "page_sha256": "22efaee0c0933b123215f94aef15242e51bd904be5b3bf8bb655941ba23b3c29"
+      },
+      "before": {
+        "blocks": [
+          {
+            "line_end": 115,
+            "line_start": 109,
+            "text": "#### Serving\n\n{{< feature-state for_k8s_version=\"v1.20\" state=\"alpha\" >}}\n\n`serving` is identical to the `ready` condition, except it does not account for terminating states.\nConsumers of the EndpointSlice API should check this condition if they care about pod readiness while\nthe pod is also terminating.\n"
+          },
+          {
+            "line_end": 133,
+            "line_start": 128,
+            "text": "#### Terminating\n\n{{< feature-state for_k8s_version=\"v1.20\" state=\"alpha\" >}}\n\n`Terminating` is a condition that indicates whether an endpoint is terminating.\nFor pods, this is any pod that has a deletion timestamp set.\n"
+          }
+        ],
+        "excerpt_sha256": "2247cdf9f6fa6f4cae2e0125a2be0c55e5d21768605bc0704266575768c500cc",
+        "excerpt_utf8_bytes": 526,
+        "page_sha256": "a46dceffb059aee875588c9da64b15dbd3bce7983a287cb96cc91c5b2d665aa5"
+      }
+    },
+    "python-cmdline": {
+      "after": {
+        "blocks": [
+          {
+            "line_end": 53,
+            "line_start": 50,
+            "text": "* When called with ``-c command``, it executes the Python statement(s) given as\n  *command*.  Here *command* may contain multiple statements separated by\n  newlines.\n* When called with ``-m module-name``, the given module is located on the\n"
+          }
+        ],
+        "excerpt_sha256": "06c97480175dc9a1dfeb68b2d80de0179e22b50ee3177b4d999eab0d4412f0d0",
+        "excerpt_utf8_bytes": 240,
+        "page_sha256": "ff251c651287d06fb987be5cbe40ef57b929f2f3e6e4c260325b1984a420b019"
+      },
+      "before": {
+        "blocks": [
+          {
+            "line_end": 53,
+            "line_start": 50,
+            "text": "* When called with ``-c command``, it executes the Python statement(s) given as\n  *command*.  Here *command* may contain multiple statements separated by\n  newlines. Leading whitespace is significant in Python statements!\n* When called with ``-m module-name``, the given module is located on the\n"
+          }
+        ],
+        "excerpt_sha256": "15a596896ff311a872f1e1518c17d406437cb15c1b3fe264f86723cd26ffc6f7",
+        "excerpt_utf8_bytes": 296,
+        "page_sha256": "0c50ffeb29401493c72f83d7958728ece891cd034a63df3251fc2d8c38699e26"
+      }
+    },
+    "python-monitoring": {
+      "after": {
+        "blocks": [
+          {
+            "line_end": 67,
+            "line_start": 53,
+            "text": ".. function:: clear_tool_id(tool_id: int, /) -> None\n\n   Unregister all events and callback functions associated with *tool_id*.\n\n   .. versionadded:: 3.14\n\n.. function:: free_tool_id(tool_id: int, /) -> None\n\n   Should be called once a tool no longer requires *tool_id*.\n   Will call :func:`clear_tool_id` before releasing *tool_id*.\n\n   .. versionchanged:: 3.14\n      Now calls :func:`clear_tool_id` before releasing *tool_id*.\n      Previously, it would not disable global or local events associated\n      with *tool_id*, nor unregister any callback functions.\n"
+          }
+        ],
+        "excerpt_sha256": "9f50699970cbeb2081efe45bf59de4ee5dd8120d3ff49ed4e7232138906285c3",
+        "excerpt_utf8_bytes": 564,
+        "page_sha256": "83aad82845e6fb2f9aa2a97184ff2e98b7e0297f5f455ac12e96bd1b3345a776"
+      },
+      "before": {
+        "blocks": [
+          {
+            "line_end": 61,
+            "line_start": 53,
+            "text": ".. function:: clear_tool_id(tool_id: int, /) -> None\n\n   Unregister all events and callback functions associated with *tool_id*.\n\n.. function:: free_tool_id(tool_id: int, /) -> None\n\n   Should be called once a tool no longer requires *tool_id*.\n   Will call :func:`clear_tool_id` before releasing *tool_id*.\n\n"
+          }
+        ],
+        "excerpt_sha256": "b29fdee52c5fdf0f0ef0c9c1c033b393338cfcdedf85e8f604616abdcc0a1438",
+        "excerpt_utf8_bytes": 309,
+        "page_sha256": "f1edca3f6aad9b7705df8c27e26b3c1e968673dbe0ab43914c64965a62537364"
+      }
+    }
+  }
+}

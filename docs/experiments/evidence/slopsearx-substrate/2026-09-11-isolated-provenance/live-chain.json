@@ -1,0 +1,52 @@
+{
+  "case_id": "w11-provenance-live-01",
+  "engine_scope_sha256": "552d0a8e54100ffed23f23474d8aa8eabcb63c6ed43060cd3c3427d56869f6eb",
+  "hard_gate_passed": true,
+  "items": [
+    {
+      "capture_status": "failed",
+      "content_sha256": null,
+      "discovery_capture_linked": true,
+      "handoff_eligible": true,
+      "observations_verified": false,
+      "receipt_created": true,
+      "receipt_identity_stable": true,
+      "receipt_replayed": true,
+      "result_id_sha256": "770d2ed79d4e3c633c75303f57fa3389e8524ca02164d64cabbcbb8c9eab3ab0",
+      "url_status": "ok"
+    },
+    {
+      "capture_status": "succeeded",
+      "content_sha256": "f96537973ef122cbffffceed53fed84add12c2cb93cd450e7ed18b7a01f04ef0",
+      "discovery_capture_linked": true,
+      "handoff_eligible": true,
+      "observations_verified": false,
+      "receipt_created": true,
+      "receipt_identity_stable": true,
+      "receipt_replayed": true,
+      "result_id_sha256": "821f34a820561b85e54833bc85c3727cfae8bd4e4479343fc0ae6927eb3e161e",
+      "url_status": "ok"
+    },
+    {
+      "capture_status": "succeeded",
+      "content_sha256": "f098cb9d406cc92d293251a74b6835c9c8e70e5fc9216e742d72fb9758bdd52c",
+      "discovery_capture_linked": true,
+      "handoff_eligible": true,
+      "observations_verified": false,
+      "receipt_created": true,
+      "receipt_identity_stable": true,
+      "receipt_replayed": true,
+      "result_id_sha256": "2ba60562265d378fd550f8191c46cb9218a10ccd406a77fdeb735e084783324f",
+      "url_status": "ok"
+    }
+  ],
+  "manifest": {
+    "all_results_present": true,
+    "observations_verified": false,
+    "present": true,
+    "verification_disclosed": true
+  },
+  "query_sha256": "87e690934b0f705bd4fa40f04542a797b4fb43adf22d1f4d6576c48e9f38eea4",
+  "result_count": 3,
+  "schema_version": "enterprise-evaluation/w11-provenance-case/1"
+}

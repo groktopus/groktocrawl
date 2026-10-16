@@ -1,0 +1,3 @@
+groktocrawl-x-semantic-pilot|0.12%|1.06GiB / 31.18GiB
+groktocrawl-x-pilot-vector-eval-postgres-1|5.96%|36.96MiB / 1GiB
+groktocrawl-x-pilot-vector-eval-qdrant-1|0.03%|25.32MiB / 1GiB

@@ -1,0 +1,117 @@
+{
+  "arm": "control",
+  "case_id": "mission-compound-recovery-portability",
+  "completed_at": "2026-09-19T05:48:13.211119+00:00",
+  "position": 2,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "be04e8b23c850c01f14ae0813b44f732b2631741a7cfbeaa37ada5e5ba069399",
+    "finish_reason": "stop",
+    "latency_ms": 23965.485,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "23cb1e9e3ded8c689cd239f8a8c82e803c3bc435107c39a6dc071b5ab601c74f",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 6890,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 8134
+      },
+      "cost": 0.00357085,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.003445,
+        "upstream_inference_cost": 0.00357085,
+        "upstream_inference_prompt_cost": 0.00012585
+      },
+      "is_byok": false,
+      "prompt_tokens": 839,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 7729
+    }
+  },
+  "repetition": 2,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "# Model-provider switch for the release workflow — decision support (reliability-policy, reliability-context, platform-policy, platform-context) — decision support for engineering, security, and platform leadership",
+    "candidate_id": "candidate-cd3f93c5c180c9ea9644",
+    "citations": [
+      "reliability-policy",
+      "reliability-context",
+      "platform-policy",
+      "platform-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "reliability-policy"
+        ],
+        "text": "A worker must record operation identity before an external write and, after an ambiguous completion, must reconcile remote state before retrying.",
+        "uncertainty": "No material uncertainty about the requirement; the supplied policy does not specify the reconciliation mechanism (e.g., idempotency key versus state query), which remains an open implementation detail."
+      },
+      {
+        "source_ids": [
+          "reliability-policy"
+        ],
+        "text": "A local checkpoint alone does not prove the external write failed.",
+        "uncertainty": "No material uncertainty."
+      },
+      {
+        "source_ids": [
+          "reliability-context"
+        ],
+        "text": "In a controlled test, a worker timed out after submitting a release request, and the remote service later reported the original request as completed; local and remote signals diverged.",
+        "uncertainty": "The record does not state whether the worker reconciled remote state before any retry or whether a duplicate release was avoided; correct execution of the recovery sequence in the test is unestablished."
+      },
+      {
+        "source_ids": [
+          "reliability-policy",
+          "reliability-context"
+        ],
+        "text": "The timeout-versus-completion divergence in the test is precisely the ambiguity the recovery policy governs: the local timeout did not establish the external outcome, and the remote report obtained through reconciliation is the signal that resolves it and governs retry safety.",
+        "uncertainty": "The precedence reading (remote reconciliation governs retry) follows from policy; the test record itself documents the divergent signals but not the reconciliation being performed."
+      },
+      {
+        "source_ids": [
+          "platform-policy"
+        ],
+        "text": "Every production model change requires the same frozen task suite, provenance checks, and declared resource limits.",
+        "uncertainty": "No material uncertainty about the requirement; the pack does not enumerate the specific provenance checks or resource-limit formats."
+      },
+      {
+        "source_ids": [
+          "platform-policy"
+        ],
+        "text": "Provider adapters must preserve tool-result identities and cancellation semantics.",
+        "uncertainty": "Whether the candidate provider's adapters satisfy this is not established anywhere in the supplied pack; adapter compliance is unresolved."
+      },
+      {
+        "source_ids": [
+          "platform-context"
+        ],
+        "text": "The vendor brochure claims the model is enterprise-ready and faster while supplying no comparison workload, version pins, error distribution, or review methodology; such claims are excluded as sufficient approval evidence.",
+        "uncertainty": "Only the insufficiency of the claims is established; their truth or falsity cannot be determined from the supplied pack, and no incumbent baseline exists in the pack for any comparison."
+      },
+      {
+        "source_ids": [
+          "platform-policy",
+          "platform-context"
+        ],
+        "text": "On the supplied record the provider switch cannot be approved: none of the policy-required evaluation artifacts (frozen-suite comparison, provenance checks, declared resource limits, demonstrated adapter preservation of tool-result identity and cancellation semantics) are present, so approval is rejected as unsupported and the switch remains unresolved pending that evidence.",
+        "uncertainty": "This is a finding of evidence insufficiency, not a measurement that the candidate model underperforms; the pack contains no performance data for either provider, so no merit-based comparison is possible."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:47:49.244656+00:00",
+  "status": "completed",
+  "trial_id": "mission-compound-recovery-portability-r2-control"
+}

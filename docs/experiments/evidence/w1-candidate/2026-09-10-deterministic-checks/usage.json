@@ -1,0 +1,18 @@
+[
+  {
+    "requested_model": "local",
+    "status": "received",
+    "resolved_model": "local",
+    "input_tokens": 1270,
+    "output_tokens": 273,
+    "raw_content_digest": "2b6d6961253eec2298b20727f538647feb24b4272c89ab6580d62d0cf0e0679f"
+  },
+  {
+    "requested_model": "local",
+    "status": "received",
+    "resolved_model": "local",
+    "input_tokens": 2375,
+    "output_tokens": 356,
+    "raw_content_digest": "3b86004829573d43179fd64115c816c35847a81594080c2398191ffadfb464cd"
+  }
+]

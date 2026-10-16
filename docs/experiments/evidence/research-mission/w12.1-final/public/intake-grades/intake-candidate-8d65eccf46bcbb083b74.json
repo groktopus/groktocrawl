@@ -1,0 +1,64 @@
+{
+  "candidate_id": "intake-candidate-8d65eccf46bcbb083b74",
+  "case_id": "mission-compound-recovery-portability",
+  "completed_at": "2026-09-19T06:32:48.263372+00:00",
+  "grade": {
+    "action_correct": false,
+    "action_rationale": "Expected intake is 'accept'; the candidate returned 'clarify'. The reference mission demonstrates the request is fully answerable as written: it fixes the decision (approve/reject a model-provider switch for the release workflow), derives two required questions that mirror the request's two clauses (q1: how ambiguous writes must recover; q2: what provider portability must preserve), and records zero clarifications ('clarifications': []). The candidate's questions — specific current/target provider identity and the referent of 'release write' — are answered by construction in the reference: the mission is provider-agnostic (scope: ambiguous external writes, remote reconciliation, frozen evaluation, identity, cancellation, resource limits) and grounds evidence in the supplied policy and context as the current fixture record.",
+    "clarification_utility": 1,
+    "correction_actions": [
+      "Accept the request and emit a mission equivalent to the reference: decision = approve/reject the provider switch for the release workflow; q1 = how ambiguous writes must recover (required); q2 = what provider portability must preserve (required).",
+      "Do not ask for provider names or internal-spec existence; the reference mission is provider-agnostic and treats the supplied policy/context as the current fixture record.",
+      "Do not offer 'generic write-recovery patterns applicable to any provider switch' as an alternative target; that option silently broadens scope beyond the release-workflow-specific decision and include/exclude boundaries.",
+      "Preserve the reference's hard boundaries: prohibited assumptions (a local timeout does not prove remote-write failure; a vendor brochure does not satisfy the frozen evaluation), contradiction_policy 'preserve_and_report', inaccessible sources cannot close obligations, and abstention when evidence cannot support the decision."
+    ],
+    "hard_boundary_failure": true,
+    "hard_boundary_rationale": "The candidate's rationale asserts that answering would 'require inventing scope, facts, and authority' — but the independently authored reference mission shows the request maps onto a complete, bounded mission with no invented authority, no provider-specific facts, and no clarification. By deflecting to clarification on decision-irrelevant specifics and floating a generic-patterns fallback, the candidate manufactures an ambiguity that does not exist and proposes a scope broadening the reference excludes. The clarification is unhelpful: it withholds a mission the supplied evidence fully supports, and its fallback option would dilute the release-workflow-specific scope (ambiguous external writes, remote reconciliation, frozen evaluation, identity, cancellation, resource limits) into generic literature research.",
+    "invented_constraints": [
+      "The rationale invents an evidence deficiency: it claims 'no source text defining this term or the providers was supplied' and that answering would 'require inventing scope, facts, and authority.' The reference mission contradicts this: its freshness mode is 'current' with rationale 'Use the supplied policy and context as the current fixture record,' its closure rules presuppose a supplied source pack (policy-supported recovery sequence, test record, vendor brochure), and its source policy (primary/official/independent, minimum_independent_publishers: 0) requires no additional authority. The claimed need for provider identity and internal specs is an invented requirement, not a property of the request."
+    ],
+    "lost_hard_boundaries": [],
+    "required_field_recall": 0,
+    "unnecessary_fields": []
+  },
+  "position": 30,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "a0d8da5f76ee52e80442c59309c12d88a3524d3fa266f682430ef9c89a24c25b",
+    "finish_reason": "stop",
+    "latency_ms": 35334.325,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "ccad385260b0048aebefb008f1da941dec4c3feb1ca64c808a559e9ea4c04b77",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 6078,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 6854
+      },
+      "cost": 0.00320085,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.003039,
+        "upstream_inference_cost": 0.00320085,
+        "upstream_inference_prompt_cost": 0.00016185
+      },
+      "is_byok": false,
+      "prompt_tokens": 1079,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 7157
+    }
+  },
+  "schema_version": "research-mission-intake-grade/1",
+  "started_at": "2026-09-19T06:32:12.926076+00:00",
+  "status": "completed"
+}

@@ -1,0 +1,27 @@
+{
+  "status": "exploratory_assistant_graded",
+  "comparison_authorized": false,
+  "held_out": false,
+  "assistant_graded": true,
+  "model": "local",
+  "judge_model": "local",
+  "cases": 30,
+  "calls_dispatched": 59,
+  "outcomes": {
+    "graded": 29,
+    "failed": 1
+  },
+  "grades": {
+    "needs_a_fix": 14,
+    "ready_to_use": 12,
+    "cant_tell": 3
+  },
+  "corpus": "/tmp/w1-refresh/docs/experiments/enterprise-evaluation/corpus.json",
+  "corpus_sha256": "sha256:d3d1821b54783fa831247ea66f362c4a0abacb733c1532ccdb4267be8a7076af",
+  "completed_at": "2026-09-10T08:53:35Z",
+  "limitations": [
+    "Exposed synthetic cases are not held-out evidence.",
+    "The same configured local model answers and grades each case.",
+    "Results do not authorize runtime adoption or a mainline replacement claim."
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "answer": {
+    "answer": "Current: Beginning in 2026, Elm API requires OAuth 2.1 and no longer accepts API keys (elm-auth-2026). This is the latest supplied snapshot, so OAuth 2.1 is the current required authentication mode as of the most recent evidence available. Previously valid: In 2025, Elm API required API keys (elm-auth-2025); that requirement was valid before the 2026 change and has been superseded. Both snapshots describe the same subject (subject_id elm-api, lineage_id elm-auth), so the 2026 snapshot supersedes the 2025 snapshot rather than describing a different subject. Unresolved: the exact effective date within 2026, any migration or grace-period arrangements for existing API keys, OAuth 2.1 implementation details, and whether OAuth 2.1 remains required beyond 2026 are not addressed by the supplied sources.",
+    "change_events": [
+      "Beginning in 2026, Elm API changed its required authentication mode from API keys to OAuth 2.1, and API keys are no longer accepted (elm-auth-2026; prior state documented in elm-auth-2025)."
+    ],
+    "citations": [
+      "elm-auth-2025",
+      "elm-auth-2026"
+    ],
+    "current_truths": [
+      "Beginning in 2026, Elm API requires OAuth 2.1 (elm-auth-2026).",
+      "Beginning in 2026, Elm API no longer accepts API keys (elm-auth-2026).",
+      "OAuth 2.1 is the current required authentication mode per the latest supplied snapshot (elm-auth-2026)."
+    ],
+    "historical_truths": [
+      "In 2025, Elm API required API keys (elm-auth-2025).",
+      "API-key authentication was the valid requirement before the 2026 change and is now superseded (elm-auth-2025; elm-auth-2026)."
+    ],
+    "unresolved": [
+      "The precise effective date within 2026 is not specified beyond 'beginning in 2026' (elm-auth-2026).",
+      "No snapshot dated after 2026 is supplied, so whether OAuth 2.1 remains the required mode beyond 2026 cannot be confirmed (elm-auth-2026).",
+      "No migration path, grace period, or deprecation timeline for existing API keys is described (elm-auth-2026).",
+      "OAuth 2.1 implementation details (flows, scopes, token issuance, token lifetimes) are not specified in the supplied snapshots (elm-auth-2026)."
+    ]
+  },
+  "arm": "treatment",
+  "case_id": "historical-support",
+  "completed_at": "2026-09-19T07:47:51.815465+00:00",
+  "position": 4,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "2c4d63130070ca2318de11efe2585616f953ec94e9d7d4e5f5098b15d1cf9cc9",
+    "finish_reason": "stop",
+    "latency_ms": 12508.998,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "cb3b25b26848572dcc809b1c05a98bfadf5474b3417035970c4c41061f538075",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 1772,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 1215
+      },
+      "cost": 0.00305805,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.002658,
+        "upstream_inference_cost": 0.00305805,
+        "upstream_inference_prompt_cost": 0.00040005
+      },
+      "is_byok": false,
+      "prompt_tokens": 889,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 2661
+    }
+  },
+  "repetition": 1,
+  "schema_version": "research-thread-trial/1",
+  "started_at": "2026-09-19T07:47:39.304727+00:00",
+  "status": "completed",
+  "stratum": "historical",
+  "trial_id": "historical-support-r1-treatment"
+}

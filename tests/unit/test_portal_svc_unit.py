@@ -419,3 +419,63 @@ class TestCircuitBreakerIntegration:
         # Restore state
         cb._state = CircuitBreakerState.CLOSED
         cb._consecutive_failures = 0
+
+
+def test_workspace_page_has_no_private_browser_storage():
+    response = client.get("/workspace")
+    assert response.status_code == 200
+    assert "Retained research workspace" in response.text
+    assert "localStorage" not in response.text
+    assert "textContent" in response.text
+
+
+def test_workspace_proxy_blocks_arbitrary_destinations():
+    assert client.get("/workspace/api/https://example.com").status_code == 404
+    assert client.post("/workspace/action/capabilities").status_code == 404
+    assert (
+        client.post(
+            "/workspace/action/workspace/example/actions",
+            headers={"Origin": "https://foreign.example"},
+        ).status_code
+        == 403
+    )
+
+
+def test_workspace_proxy_forwards_caller_scope_and_preserves_errors():
+    mock = AsyncMock(spec=httpx.AsyncClient)
+    mock.__aenter__.return_value = mock
+    mock.get.return_value = httpx.Response(410, json={"detail": "deleted"})
+    with patch("portal.app.httpx.AsyncClient", return_value=mock):
+        response = client.get(
+            "/workspace/api/workspace/example",
+            headers={"Authorization": "Bearer fixture-scope"},
+        )
+    assert response.status_code == 410
+    assert response.headers["cache-control"] == "no-store"
+    assert mock.get.call_args.kwargs["headers"] == {
+        "authorization": "Bearer fixture-scope"
+    }
+
+
+def test_workspace_action_forwards_only_named_bounded_operation():
+    mock = AsyncMock(spec=httpx.AsyncClient)
+    mock.__aenter__.return_value = mock
+    mock.request.return_value = httpx.Response(
+        409, json={"detail": "revision conflict"}
+    )
+    with patch("portal.app.httpx.AsyncClient", return_value=mock):
+        response = client.post(
+            "/workspace/action/workspace/example/actions",
+            json={"action": "render", "expected_revision": "stale"},
+        )
+    assert response.status_code == 409
+    assert mock.request.call_args.args[0] == "POST"
+    assert mock.request.call_args.args[1].endswith(
+        "/experimental/research/v1/workspace/example/actions"
+    )
+    assert (
+        client.post(
+            "/workspace/action/workspace/example/actions", content="x" * 8193
+        ).status_code
+        == 413
+    )

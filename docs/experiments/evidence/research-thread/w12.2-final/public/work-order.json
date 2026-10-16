@@ -1,0 +1,384 @@
+{
+  "items": [
+    {
+      "arm": "treatment",
+      "case_id": "changed-limit",
+      "position": 0,
+      "repetition": 1,
+      "trial_id": "changed-limit-r1-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "changed-limit",
+      "position": 1,
+      "repetition": 1,
+      "trial_id": "changed-limit-r1-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "rotated-link",
+      "position": 2,
+      "repetition": 1,
+      "trial_id": "rotated-link-r1-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "rotated-link",
+      "position": 3,
+      "repetition": 1,
+      "trial_id": "rotated-link-r1-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "historical-support",
+      "position": 4,
+      "repetition": 1,
+      "trial_id": "historical-support-r1-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "historical-support",
+      "position": 5,
+      "repetition": 1,
+      "trial_id": "historical-support-r1-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "live-contradiction",
+      "position": 6,
+      "repetition": 1,
+      "trial_id": "live-contradiction-r1-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "live-contradiction",
+      "position": 7,
+      "repetition": 1,
+      "trial_id": "live-contradiction-r1-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "syndicated-copy",
+      "position": 8,
+      "repetition": 1,
+      "trial_id": "syndicated-copy-r1-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "syndicated-copy",
+      "position": 9,
+      "repetition": 1,
+      "trial_id": "syndicated-copy-r1-control"
+    },
+    {
+      "arm": "control",
+      "case_id": "near-match-products",
+      "position": 10,
+      "repetition": 1,
+      "trial_id": "near-match-products-r1-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "near-match-products",
+      "position": 11,
+      "repetition": 1,
+      "trial_id": "near-match-products-r1-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "stable-anchor",
+      "position": 12,
+      "repetition": 1,
+      "trial_id": "stable-anchor-r1-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "stable-anchor",
+      "position": 13,
+      "repetition": 1,
+      "trial_id": "stable-anchor-r1-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "later-resolution",
+      "position": 14,
+      "repetition": 1,
+      "trial_id": "later-resolution-r1-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "later-resolution",
+      "position": 15,
+      "repetition": 1,
+      "trial_id": "later-resolution-r1-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "renamed-feature",
+      "position": 16,
+      "repetition": 1,
+      "trial_id": "renamed-feature-r1-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "renamed-feature",
+      "position": 17,
+      "repetition": 1,
+      "trial_id": "renamed-feature-r1-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "syndicated-copy",
+      "position": 18,
+      "repetition": 2,
+      "trial_id": "syndicated-copy-r2-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "syndicated-copy",
+      "position": 19,
+      "repetition": 2,
+      "trial_id": "syndicated-copy-r2-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "rotated-link",
+      "position": 20,
+      "repetition": 2,
+      "trial_id": "rotated-link-r2-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "rotated-link",
+      "position": 21,
+      "repetition": 2,
+      "trial_id": "rotated-link-r2-treatment"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "near-match-products",
+      "position": 22,
+      "repetition": 2,
+      "trial_id": "near-match-products-r2-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "near-match-products",
+      "position": 23,
+      "repetition": 2,
+      "trial_id": "near-match-products-r2-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "later-resolution",
+      "position": 24,
+      "repetition": 2,
+      "trial_id": "later-resolution-r2-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "later-resolution",
+      "position": 25,
+      "repetition": 2,
+      "trial_id": "later-resolution-r2-control"
+    },
+    {
+      "arm": "control",
+      "case_id": "historical-support",
+      "position": 26,
+      "repetition": 2,
+      "trial_id": "historical-support-r2-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "historical-support",
+      "position": 27,
+      "repetition": 2,
+      "trial_id": "historical-support-r2-treatment"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "stable-anchor",
+      "position": 28,
+      "repetition": 2,
+      "trial_id": "stable-anchor-r2-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "stable-anchor",
+      "position": 29,
+      "repetition": 2,
+      "trial_id": "stable-anchor-r2-control"
+    },
+    {
+      "arm": "control",
+      "case_id": "live-contradiction",
+      "position": 30,
+      "repetition": 2,
+      "trial_id": "live-contradiction-r2-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "live-contradiction",
+      "position": 31,
+      "repetition": 2,
+      "trial_id": "live-contradiction-r2-treatment"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "renamed-feature",
+      "position": 32,
+      "repetition": 2,
+      "trial_id": "renamed-feature-r2-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "renamed-feature",
+      "position": 33,
+      "repetition": 2,
+      "trial_id": "renamed-feature-r2-control"
+    },
+    {
+      "arm": "control",
+      "case_id": "changed-limit",
+      "position": 34,
+      "repetition": 2,
+      "trial_id": "changed-limit-r2-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "changed-limit",
+      "position": 35,
+      "repetition": 2,
+      "trial_id": "changed-limit-r2-treatment"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "historical-support",
+      "position": 36,
+      "repetition": 3,
+      "trial_id": "historical-support-r3-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "historical-support",
+      "position": 37,
+      "repetition": 3,
+      "trial_id": "historical-support-r3-control"
+    },
+    {
+      "arm": "control",
+      "case_id": "stable-anchor",
+      "position": 38,
+      "repetition": 3,
+      "trial_id": "stable-anchor-r3-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "stable-anchor",
+      "position": 39,
+      "repetition": 3,
+      "trial_id": "stable-anchor-r3-treatment"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "syndicated-copy",
+      "position": 40,
+      "repetition": 3,
+      "trial_id": "syndicated-copy-r3-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "syndicated-copy",
+      "position": 41,
+      "repetition": 3,
+      "trial_id": "syndicated-copy-r3-control"
+    },
+    {
+      "arm": "control",
+      "case_id": "renamed-feature",
+      "position": 42,
+      "repetition": 3,
+      "trial_id": "renamed-feature-r3-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "renamed-feature",
+      "position": 43,
+      "repetition": 3,
+      "trial_id": "renamed-feature-r3-treatment"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "live-contradiction",
+      "position": 44,
+      "repetition": 3,
+      "trial_id": "live-contradiction-r3-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "live-contradiction",
+      "position": 45,
+      "repetition": 3,
+      "trial_id": "live-contradiction-r3-control"
+    },
+    {
+      "arm": "control",
+      "case_id": "later-resolution",
+      "position": 46,
+      "repetition": 3,
+      "trial_id": "later-resolution-r3-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "later-resolution",
+      "position": 47,
+      "repetition": 3,
+      "trial_id": "later-resolution-r3-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "near-match-products",
+      "position": 48,
+      "repetition": 3,
+      "trial_id": "near-match-products-r3-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "near-match-products",
+      "position": 49,
+      "repetition": 3,
+      "trial_id": "near-match-products-r3-treatment"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "changed-limit",
+      "position": 50,
+      "repetition": 3,
+      "trial_id": "changed-limit-r3-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "changed-limit",
+      "position": 51,
+      "repetition": 3,
+      "trial_id": "changed-limit-r3-control"
+    },
+    {
+      "arm": "treatment",
+      "case_id": "rotated-link",
+      "position": 52,
+      "repetition": 3,
+      "trial_id": "rotated-link-r3-treatment"
+    },
+    {
+      "arm": "control",
+      "case_id": "rotated-link",
+      "position": 53,
+      "repetition": 3,
+      "trial_id": "rotated-link-r3-control"
+    }
+  ],
+  "schema_version": "research-thread-work-order/1",
+  "seed": 20260919
+}

@@ -1,0 +1,813 @@
+{
+  "call_budget": {
+    "cases": 4,
+    "hard_max_total_requests": 11,
+    "incumbent_control_max_total_requests": 4,
+    "incumbent_control_model_alias": "free",
+    "incumbent_control_order": "one sequential request per frozen case after separate approval",
+    "no_retries": true,
+    "request_order": "case order; stage 1, stage 3, then stage 4 only when stage 3 binary argmax is yes",
+    "searches_dispatched": 0
+  },
+  "cases": [
+    {
+      "case_id": "slsa-replay-01",
+      "evaluation_only": {
+        "reference": {
+          "obligation_status": "met",
+          "provenance": "assistant-authored best effort; pending parent review; not independent gold",
+          "rationale": "The supplied schema excerpt names builder.id.",
+          "search_needed": "no"
+        },
+        "replay": {
+          "candidate_result_ids": [
+            "rank-04",
+            "rank-05",
+            "rank-06",
+            "rank-07",
+            "rank-08",
+            "rank-09",
+            "rank-10",
+            "rank-11",
+            "rank-12",
+            "rank-13",
+            "rank-14",
+            "rank-15",
+            "rank-16",
+            "rank-17",
+            "rank-18",
+            "rank-19",
+            "rank-20"
+          ],
+          "evaluator_only_passages": [],
+          "expected_contribution_summary": "No follow-up is needed to close this already met field-identification obligation.",
+          "expected_distinct_page_contribution": []
+        },
+        "stage1_yes_reference": true,
+        "stage3_yes_reference": false,
+        "stage4_yes_reference_if_reached": null
+      },
+      "frozen_request_sha256": {
+        "stage1_sufficiency": "fafec4358c809a44090b31dacafa3024604bb0f0aba9e28614faf69ecfa885fa",
+        "stage3_hypothesis_review": "73b5176ceef502c23ca5048193b1d29cbc52b1109b2d130e537410b710838e92",
+        "stage4_addressability_if_stage3_positive": "d9753febc5302b32f93686f598c4a8370df81619bd3e8b211c34546e02b58ea3"
+      },
+      "incumbent_gap_control": {
+        "context_scope": "same exact first-pass excerpt; SourceArtifact.to_document projection",
+        "context_sha256": "98c8a9a2622a6bc4ef2fe9480bcd27207aaa95bcc90efaac1d596249a12ebe01",
+        "prompt_sha256": "5cf1b1ea276948802597fc21edf1d6ac603cb50d613d4c7472685075b9527e91",
+        "requested_model_alias": "free",
+        "system_prompt": "You are a research gap analyzer.",
+        "user_prompt": "Original research query: \"In the supplied SLSA provenance v0.1 schema, which field identifies the builder?\"\n\nAnalyze the following research context and identify specific topics, angles, or aspects of the original query that are NOT adequately covered by the gathered sources. Focus on what's missing or thin, not what's present. Return a JSON array of topic strings (max 5) that would make good follow-up search queries. Return [] if you're satisfied with coverage.\n\nContext:\nSource: https://slsa.dev/spec/v0.1/provenance (domain: slsa.dev)\n\n\"builder\": {\n      \"id\": \"<URI>\"\n    }"
+      },
+      "research_agent_proposal": {
+        "absence_scope": "supplied_material_only",
+        "context": "builder field in the supplied schema excerpt",
+        "hypothesis_id": "slsa-replay-01-gap-1",
+        "kind": "missing_information",
+        "proposition": "The supplied excerpt does not name a field for builder identity.",
+        "source_spans": [
+          {
+            "context": "builder field in the supplied schema excerpt",
+            "end_byte": 2272,
+            "quote": "\"builder\": {\n      \"id\": \"<URI>\"\n    }",
+            "source_id": "rank-01",
+            "source_sha256": "cff0e37881762abf7782268bc7afd371cfd29cf3ad59f2a82974fb078de134f9",
+            "start_byte": 2234,
+            "subject": "SLSA provenance builder identity field",
+            "version": "SLSA provenance v0.1"
+          }
+        ],
+        "specific_information": "the builder identity field name in the v0.1 provenance schema",
+        "subject": "SLSA provenance builder identity field",
+        "version": "SLSA provenance v0.1"
+      },
+      "state": {
+        "first_pass": {
+          "acquisition_status": "complete",
+          "coverage": {
+            "acquired_source_ids": [
+              "rank-01"
+            ],
+            "omitted_source_ids": [],
+            "omitted_text_within_sources": true,
+            "presented_source_ids": [
+              "rank-01"
+            ],
+            "scope": "bounded_excerpts_only"
+          },
+          "sources": [
+            {
+              "excerpt_end_byte": 2272,
+              "excerpt_start_byte": 2234,
+              "fetch_status": "success",
+              "source_id": "rank-01",
+              "source_sha256": "cff0e37881762abf7782268bc7afd371cfd29cf3ad59f2a82974fb078de134f9",
+              "supplied_text": "\"builder\": {\n      \"id\": \"<URI>\"\n    }",
+              "text_scope": "excerpt",
+              "title": "SLSA • Provenance",
+              "url": "https://slsa.dev/spec/v0.1/provenance"
+            }
+          ]
+        },
+        "obligation": {
+          "id": "slsa-replay-01",
+          "scope": "bounded excerpt from the first three results of the frozen SLSA query",
+          "statement": "Identify the builder identity field in the supplied v0.1 schema excerpt."
+        },
+        "public_search_scope": {
+          "allowed_source_types": [
+            "public SLSA specification and FAQ pages",
+            "public technical explanations in the frozen result set"
+          ],
+          "excluded_scopes": [
+            "private deployment configuration",
+            "authenticated data",
+            "newly acquired search results"
+          ]
+        },
+        "research_question": "In the supplied SLSA provenance v0.1 schema, which field identifies the builder?"
+      },
+      "stratum": "met_false_gap_unnecessary_followup"
+    },
+    {
+      "case_id": "slsa-replay-02",
+      "evaluation_only": {
+        "reference": {
+          "obligation_status": "unmet",
+          "provenance": "assistant-authored best effort; pending parent review; not independent gold",
+          "rationale": "The first-pass overview describes SLSA and its Build Track but does not state a transitivity rule.",
+          "search_needed": "yes"
+        },
+        "replay": {
+          "candidate_result_ids": [
+            "rank-04",
+            "rank-05",
+            "rank-06",
+            "rank-07",
+            "rank-08",
+            "rank-09",
+            "rank-10",
+            "rank-11",
+            "rank-12",
+            "rank-13",
+            "rank-14",
+            "rank-15",
+            "rank-16",
+            "rank-17",
+            "rank-18",
+            "rank-19",
+            "rank-20"
+          ],
+          "evaluator_only_passages": [
+            {
+              "end_byte": 174,
+              "quote": "SLSA Build levels only cover the trustworthiness of a single build, with no\nrequirements about the build levels of transitive dependencies.",
+              "result_id": "rank-07",
+              "source_sha256": "e71d58bd856b74553103fc27e667536a73593816661e7cb89a76e2e6aba5b07e",
+              "start_byte": 35,
+              "title": "SLSA • Frequently asked questions",
+              "url": "https://slsa.dev/spec/v1.1/faq"
+            },
+            {
+              "end_byte": 15050,
+              "quote": "SLSA advocates for evaluating each software artefact independently without endorsing transitive trust.",
+              "result_id": "rank-12",
+              "source_sha256": "d80602ed8e23ced2fc59c7da6ba3255a141793154f8fc0bbb3225651855186a2",
+              "start_byte": 14948,
+              "title": "Implementing SLSA Build Integrity Framework for Software Supply Chain Security - SoftwareSeni",
+              "url": "https://www.softwareseni.com/implementing-slsa-build-integrity-framework-for-software-supply-chain-security/"
+            }
+          ],
+          "expected_contribution_summary": "The hidden result pool includes official FAQ guidance and a separate public explanation directly addressing independent artifact ratings.",
+          "expected_distinct_page_contribution": [
+            "rank-07",
+            "rank-12"
+          ]
+        },
+        "stage1_yes_reference": false,
+        "stage3_yes_reference": true,
+        "stage4_yes_reference_if_reached": true
+      },
+      "frozen_request_sha256": {
+        "stage1_sufficiency": "4892181ca21a574a5079cc4f8938fb5f06f936247fe3416322ccb751131ccfbe",
+        "stage3_hypothesis_review": "740f64fda9937ff4e41793f388f16a6be0e60aac7c9221073e2cbec5ceb31eed",
+        "stage4_addressability_if_stage3_positive": "47cf0aeeb8841ef9e21e8ce9463541778aea668a25b25ec843e17046910c67d6"
+      },
+      "incumbent_gap_control": {
+        "context_scope": "same exact first-pass excerpt; SourceArtifact.to_document projection",
+        "context_sha256": "3ef8fff08119e98ffadff6016d4af6bdc04faf9c462145163e23ba96e1de92b2",
+        "prompt_sha256": "ade89dade9bb6bb0df0403f6f72550035d8c0699643e76ed70861056016369d2",
+        "requested_model_alias": "free",
+        "system_prompt": "You are a research gap analyzer.",
+        "user_prompt": "Original research query: \"Does SLSA Build assurance for an artifact require its transitive dependencies to meet the same Build level?\"\n\nAnalyze the following research context and identify specific topics, angles, or aspects of the original query that are NOT adequately covered by the gathered sources. Focus on what's missing or thin, not what's present. Return a JSON array of topic strings (max 5) that would make good follow-up search queries. Return [] if you're satisfied with coverage.\n\nContext:\nSource: https://www.encryptionconsulting.com/slsa-build-provenance-and-signing-in-ci-cd-pipelines/ (domain: www.encryptionconsulting.com)\n\nthe Build Track defines three distinct levels of increasing security."
+      },
+      "research_agent_proposal": {
+        "absence_scope": "supplied_material_only",
+        "context": "whether artifact-level Build assurance imposes levels on dependency artifacts",
+        "hypothesis_id": "slsa-replay-02-gap-1",
+        "kind": "missing_information",
+        "proposition": "The supplied first-pass excerpt does not state whether SLSA Build level requirements apply transitively to dependencies.",
+        "source_spans": [
+          {
+            "context": "whether artifact-level Build assurance imposes levels on dependency artifacts",
+            "end_byte": 6351,
+            "quote": "the Build Track defines three distinct levels of increasing security.",
+            "source_id": "rank-02",
+            "source_sha256": "7f7803620a3b06924e9a5e0953b8a36f40dcf59168523e68ef4289e423d28e1a",
+            "start_byte": 6282,
+            "subject": "SLSA Build assurance transitivity",
+            "version": "SLSA framework overview in the acquired search snapshot"
+          }
+        ],
+        "specific_information": "whether SLSA Build-level requirements extend to an artifact's transitive dependencies",
+        "subject": "SLSA Build assurance transitivity",
+        "version": "SLSA framework overview in the acquired search snapshot"
+      },
+      "state": {
+        "first_pass": {
+          "acquisition_status": "complete",
+          "coverage": {
+            "acquired_source_ids": [
+              "rank-02"
+            ],
+            "omitted_source_ids": [],
+            "omitted_text_within_sources": true,
+            "presented_source_ids": [
+              "rank-02"
+            ],
+            "scope": "bounded_excerpts_only"
+          },
+          "sources": [
+            {
+              "excerpt_end_byte": 6351,
+              "excerpt_start_byte": 6282,
+              "fetch_status": "success",
+              "source_id": "rank-02",
+              "source_sha256": "7f7803620a3b06924e9a5e0953b8a36f40dcf59168523e68ef4289e423d28e1a",
+              "supplied_text": "the Build Track defines three distinct levels of increasing security.",
+              "text_scope": "excerpt",
+              "title": "SLSA Build Provenance and Signing in CI/CD Pipelines",
+              "url": "https://www.encryptionconsulting.com/slsa-build-provenance-and-signing-in-ci-cd-pipelines/"
+            }
+          ]
+        },
+        "obligation": {
+          "id": "slsa-replay-02",
+          "scope": "bounded excerpt from the first three results of the frozen SLSA query",
+          "statement": "Determine whether SLSA Build assurance is required transitively across dependency artifacts."
+        },
+        "public_search_scope": {
+          "allowed_source_types": [
+            "public SLSA specification and FAQ pages",
+            "public technical explanations in the frozen result set"
+          ],
+          "excluded_scopes": [
+            "private deployment configuration",
+            "authenticated data",
+            "newly acquired search results"
+          ]
+        },
+        "research_question": "Does SLSA Build assurance for an artifact require its transitive dependencies to meet the same Build level?"
+      },
+      "stratum": "unmet_public_transitivity_rule"
+    },
+    {
+      "case_id": "slsa-replay-03",
+      "evaluation_only": {
+        "reference": {
+          "obligation_status": "unmet",
+          "provenance": "assistant-authored best effort; pending parent review; not independent gold",
+          "rationale": "The first pass contains a secondary assertion but no official v1.0 levels page, so its version-specific enumeration is not authoritatively established.",
+          "search_needed": "yes"
+        },
+        "replay": {
+          "candidate_result_ids": [
+            "rank-04",
+            "rank-05",
+            "rank-06",
+            "rank-07",
+            "rank-08",
+            "rank-09",
+            "rank-10",
+            "rank-11",
+            "rank-12",
+            "rank-13",
+            "rank-14",
+            "rank-15",
+            "rank-16",
+            "rank-17",
+            "rank-18",
+            "rank-19",
+            "rank-20"
+          ],
+          "evaluator_only_passages": [
+            {
+              "end_byte": 926,
+              "quote": "Build L0",
+              "result_id": "rank-11",
+              "source_sha256": "a0f8f1479cd4d62d65c3620426ac4052cbde7b96320a99b42b5065e463626d5b",
+              "start_byte": 918,
+              "title": "SLSA • Security levels",
+              "url": "https://slsa.dev/spec/v1.0/levels"
+            },
+            {
+              "end_byte": 969,
+              "quote": "Build L1",
+              "result_id": "rank-11",
+              "source_sha256": "a0f8f1479cd4d62d65c3620426ac4052cbde7b96320a99b42b5065e463626d5b",
+              "start_byte": 961,
+              "title": "SLSA • Security levels",
+              "url": "https://slsa.dev/spec/v1.0/levels"
+            },
+            {
+              "end_byte": 1068,
+              "quote": "Build L2",
+              "result_id": "rank-11",
+              "source_sha256": "a0f8f1479cd4d62d65c3620426ac4052cbde7b96320a99b42b5065e463626d5b",
+              "start_byte": 1060,
+              "title": "SLSA • Security levels",
+              "url": "https://slsa.dev/spec/v1.0/levels"
+            },
+            {
+              "end_byte": 1180,
+              "quote": "Build L3",
+              "result_id": "rank-11",
+              "source_sha256": "a0f8f1479cd4d62d65c3620426ac4052cbde7b96320a99b42b5065e463626d5b",
+              "start_byte": 1172,
+              "title": "SLSA • Security levels",
+              "url": "https://slsa.dev/spec/v1.0/levels"
+            }
+          ],
+          "expected_contribution_summary": "The hidden pool contains the official v1.0 levels page, whose table supplies the authoritative labels Build L0 through Build L3. The secondary excerpt's count of four levels is compatible with that list; this is an authority/completeness check, not a contradiction.",
+          "expected_distinct_page_contribution": [
+            "rank-11"
+          ]
+        },
+        "stage1_yes_reference": false,
+        "stage3_yes_reference": true,
+        "stage4_yes_reference_if_reached": true
+      },
+      "frozen_request_sha256": {
+        "stage1_sufficiency": "8aa16af702997330264b82078d1535291cab1bef853df66d1e7a51a45185c7bc",
+        "stage3_hypothesis_review": "c601671f1049c1f860c5a30dfa12e60d35c533580f2ebcb577ba992a1239a187",
+        "stage4_addressability_if_stage3_positive": "6795cf314a38a55878af50f8716a23cbb6237c7f6dc42fc5ff77698a825f1be8"
+      },
+      "incumbent_gap_control": {
+        "context_scope": "same exact first-pass excerpt; SourceArtifact.to_document projection",
+        "context_sha256": "be03878c002c367839cb29db91e8d7dc59bb9fcb708a6d1f7ea261dee22ca694",
+        "prompt_sha256": "d88f9aa56600992a1af8d66d5d18a2fddc7874b0f2b93e168171882e5e90999b",
+        "requested_model_alias": "free",
+        "system_prompt": "You are a research gap analyzer.",
+        "user_prompt": "Original research query: \"Which Build-level labels does the official SLSA v1.0 levels page enumerate?\"\n\nAnalyze the following research context and identify specific topics, angles, or aspects of the original query that are NOT adequately covered by the gathered sources. Focus on what's missing or thin, not what's present. Return a JSON array of topic strings (max 5) that would make good follow-up search queries. Return [] if you're satisfied with coverage.\n\nContext:\nSource: https://secure-pipelines.com/ci-cd-security/artifact-provenance-attestations-slsa-in-toto/ (domain: secure-pipelines.com)\n\nSLSA v1.0 defines four build levels, each building on the previous:"
+      },
+      "research_agent_proposal": {
+        "absence_scope": "supplied_material_only",
+        "context": "official specification enumeration, checked against a secondary page",
+        "hypothesis_id": "slsa-replay-03-gap-1",
+        "kind": "missing_information",
+        "proposition": "The supplied first-pass excerpt lacks the official SLSA v1.0 Build-level enumeration needed to verify the secondary claim.",
+        "source_spans": [
+          {
+            "context": "official specification enumeration, checked against a secondary page",
+            "end_byte": 4230,
+            "quote": "SLSA v1.0 defines four build levels, each building on the previous:",
+            "source_id": "rank-03",
+            "source_sha256": "1f8ecd99838c2f402c3f9309df53367986f632351580eab42168c3b6acd1b9ef",
+            "start_byte": 4163,
+            "subject": "SLSA v1.0 Build-track level enumeration",
+            "version": "SLSA v1.0"
+          }
+        ],
+        "specific_information": "the official SLSA v1.0 Build-track level labels",
+        "subject": "SLSA v1.0 Build-track level enumeration",
+        "version": "SLSA v1.0"
+      },
+      "state": {
+        "first_pass": {
+          "acquisition_status": "complete",
+          "coverage": {
+            "acquired_source_ids": [
+              "rank-03"
+            ],
+            "omitted_source_ids": [],
+            "omitted_text_within_sources": true,
+            "presented_source_ids": [
+              "rank-03"
+            ],
+            "scope": "bounded_excerpts_only"
+          },
+          "sources": [
+            {
+              "excerpt_end_byte": 4230,
+              "excerpt_start_byte": 4163,
+              "fetch_status": "success",
+              "source_id": "rank-03",
+              "source_sha256": "1f8ecd99838c2f402c3f9309df53367986f632351580eab42168c3b6acd1b9ef",
+              "supplied_text": "SLSA v1.0 defines four build levels, each building on the previous:",
+              "text_scope": "excerpt",
+              "title": "Artifact Provenance and Attestations: From SLSA to in-toto | Secure Pipelines",
+              "url": "https://secure-pipelines.com/ci-cd-security/artifact-provenance-attestations-slsa-in-toto/"
+            }
+          ]
+        },
+        "obligation": {
+          "id": "slsa-replay-03",
+          "scope": "bounded excerpt from the first three results of the frozen SLSA query",
+          "statement": "Verify the official SLSA v1.0 Build-track level enumeration against the retrieved secondary claim."
+        },
+        "public_search_scope": {
+          "allowed_source_types": [
+            "public SLSA specification and FAQ pages",
+            "public technical explanations in the frozen result set"
+          ],
+          "excluded_scopes": [
+            "private deployment configuration",
+            "authenticated data",
+            "newly acquired search results"
+          ]
+        },
+        "research_question": "Which Build-level labels does the official SLSA v1.0 levels page enumerate?"
+      },
+      "stratum": "unmet_authority_check_label_completeness"
+    },
+    {
+      "case_id": "slsa-replay-04",
+      "evaluation_only": {
+        "reference": {
+          "obligation_status": "unanswerable",
+          "provenance": "assistant-authored best effort; pending parent review; not independent gold",
+          "rationale": "The requested setting is private deployment state not identified in the public first-pass excerpt or bounded public corpus.",
+          "search_needed": "uncertain"
+        },
+        "replay": {
+          "candidate_result_ids": [
+            "rank-04",
+            "rank-05",
+            "rank-06",
+            "rank-07",
+            "rank-08",
+            "rank-09",
+            "rank-10",
+            "rank-11",
+            "rank-12",
+            "rank-13",
+            "rank-14",
+            "rank-15",
+            "rank-16",
+            "rank-17",
+            "rank-18",
+            "rank-19",
+            "rank-20"
+          ],
+          "evaluator_only_passages": [
+            {
+              "end_byte": 9689,
+              "quote": "Store credentials in a secure vault, rotate them regularly, and enforce MFA and RBAC for systems that publish or sign artifacts.",
+              "result_id": "rank-13",
+              "source_sha256": "51230725e10a6b6c87ab5c960296419c6e20a2176737f4b4052e3752cee281fb",
+              "start_byte": 9561,
+              "title": "What is The SLSA Framework? Supply-chain Levels for Software Artifacts | Wiz",
+              "url": "https://www.wiz.io/academy/application-security/slsa-framework"
+            },
+            {
+              "end_byte": 17502,
+              "quote": "Protect signing keys with hardware security modules, implement strong access controls, rotate keys regularly, and maintain detailed audit logs of signing operations.",
+              "result_id": "rank-16",
+              "source_sha256": "15e04952c4607ccda5187bce5c1eb394225504f30c190679fc2f1fc6b5ee43ba",
+              "start_byte": 17337,
+              "title": "What is Build Provenance? Definition & Explanation for SLSA Compliance | Kusari",
+              "url": "https://www.kusari.dev/learning-center/build-provenance/"
+            }
+          ],
+          "expected_contribution_summary": "The bounded public result set contains general key-management advice but no value for a particular private deployment.",
+          "expected_distinct_page_contribution": []
+        },
+        "stage1_yes_reference": false,
+        "stage3_yes_reference": true,
+        "stage4_yes_reference_if_reached": false
+      },
+      "frozen_request_sha256": {
+        "stage1_sufficiency": "c2602110cc16d6117f89468ff99830b909d44d7e75cf419867d02374936d8207",
+        "stage3_hypothesis_review": "41b86c918b5bdbb5eb186c9dfaef87b924eb35470f36f1bbe83b846ee0f2bae3",
+        "stage4_addressability_if_stage3_positive": "bdea9dff2a117c0c2d21e24b88906a5557790c5439714d6973c1dc518953ea07"
+      },
+      "incumbent_gap_control": {
+        "context_scope": "same exact first-pass excerpt; SourceArtifact.to_document projection",
+        "context_sha256": "98c8a9a2622a6bc4ef2fe9480bcd27207aaa95bcc90efaac1d596249a12ebe01",
+        "prompt_sha256": "3e77abdfdc97fb4905b2aac79a3c9596c51bba3bcdc90a8e1ec3ea83733be243",
+        "requested_model_alias": "free",
+        "system_prompt": "You are a research gap analyzer.",
+        "user_prompt": "Original research query: \"What exact signing-key rotation interval is configured in a particular organization's private SLSA deployment?\"\n\nAnalyze the following research context and identify specific topics, angles, or aspects of the original query that are NOT adequately covered by the gathered sources. Focus on what's missing or thin, not what's present. Return a JSON array of topic strings (max 5) that would make good follow-up search queries. Return [] if you're satisfied with coverage.\n\nContext:\nSource: https://slsa.dev/spec/v0.1/provenance (domain: slsa.dev)\n\n\"builder\": {\n      \"id\": \"<URI>\"\n    }"
+      },
+      "research_agent_proposal": {
+        "absence_scope": "supplied_material_only",
+        "context": "deployment-specific operational configuration excluded from public sources",
+        "hypothesis_id": "slsa-replay-04-gap-1",
+        "kind": "missing_information",
+        "proposition": "The supplied public first-pass excerpt does not contain the private deployment's configured signing-key rotation interval.",
+        "source_spans": [
+          {
+            "context": "deployment-specific operational configuration excluded from public sources",
+            "end_byte": 2272,
+            "quote": "\"builder\": {\n      \"id\": \"<URI>\"\n    }",
+            "source_id": "rank-01",
+            "source_sha256": "cff0e37881762abf7782268bc7afd371cfd29cf3ad59f2a82974fb078de134f9",
+            "start_byte": 2234,
+            "subject": "private deployment signing-key rotation interval",
+            "version": "the unspecified organization's private deployment"
+          }
+        ],
+        "specific_information": "the exact key rotation interval configured for one particular private SLSA deployment",
+        "subject": "private deployment signing-key rotation interval",
+        "version": "the unspecified organization's private deployment"
+      },
+      "state": {
+        "first_pass": {
+          "acquisition_status": "complete",
+          "coverage": {
+            "acquired_source_ids": [
+              "rank-01"
+            ],
+            "omitted_source_ids": [],
+            "omitted_text_within_sources": true,
+            "presented_source_ids": [
+              "rank-01"
+            ],
+            "scope": "bounded_excerpts_only"
+          },
+          "sources": [
+            {
+              "excerpt_end_byte": 2272,
+              "excerpt_start_byte": 2234,
+              "fetch_status": "success",
+              "source_id": "rank-01",
+              "source_sha256": "cff0e37881762abf7782268bc7afd371cfd29cf3ad59f2a82974fb078de134f9",
+              "supplied_text": "\"builder\": {\n      \"id\": \"<URI>\"\n    }",
+              "text_scope": "excerpt",
+              "title": "SLSA • Provenance",
+              "url": "https://slsa.dev/spec/v0.1/provenance"
+            }
+          ]
+        },
+        "obligation": {
+          "id": "slsa-replay-04",
+          "scope": "bounded excerpt from the first three results of the frozen SLSA query",
+          "statement": "Determine an organization-specific private signing-key rotation interval."
+        },
+        "public_search_scope": {
+          "allowed_source_types": [
+            "public SLSA specification and FAQ pages",
+            "public technical explanations in the frozen result set"
+          ],
+          "excluded_scopes": [
+            "private deployment configuration",
+            "authenticated data",
+            "newly acquired search results"
+          ]
+        },
+        "research_question": "What exact signing-key rotation interval is configured in a particular organization's private SLSA deployment?"
+      },
+      "stratum": "unanswerable_private_deployment_value"
+    }
+  ],
+  "contract": "continuation-evidence-gap-addressability/2",
+  "corpus": {
+    "acquired_pages": 20,
+    "acquisition_index_sha256": "9b80549f55c9116e736b275d77b3260e08f65e75dfbac87352db4a00eb8c7dea",
+    "acquisition_index_snapshot_sha256": "8c94ecf1e09a5e005fc7692b29bc0519233d64a7a5d057eb246428b025b14904",
+    "evaluator_only_replay_ranks": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20
+    ],
+    "first_pass_result_ranks": [
+      1,
+      2,
+      3
+    ],
+    "query": "software supply chain provenance SLSA reproducible builds attestations verification",
+    "replay_scope": "fixed already-acquired public result set; this is offline replay, not a fresh search or live retrieval evaluation",
+    "search_snapshot_sha256": "8c94ecf1e09a5e005fc7692b29bc0519233d64a7a5d057eb246428b025b14904",
+    "source_pages": [
+      {
+        "markdown_file": "01-9456a94c9ff2.md",
+        "markdown_sha256": "cff0e37881762abf7782268bc7afd371cfd29cf3ad59f2a82974fb078de134f9",
+        "rank": 1,
+        "receipt_sha256": "a7ebe9471937f85a8defdffb20668098aa3d74e590322b18aa0890ba5c3ba316",
+        "result_id": "rank-01",
+        "status": "response",
+        "title": "SLSA • Provenance",
+        "url": "https://slsa.dev/spec/v0.1/provenance"
+      },
+      {
+        "markdown_file": "02-0a74bcc7412f.md",
+        "markdown_sha256": "7f7803620a3b06924e9a5e0953b8a36f40dcf59168523e68ef4289e423d28e1a",
+        "rank": 2,
+        "receipt_sha256": "5937db58cc5fe9b0f6edb0cb54ad29616f3cfd749c3b8e7c0ed7d08d7570b87d",
+        "result_id": "rank-02",
+        "status": "response",
+        "title": "SLSA Build Provenance and Signing in CI/CD Pipelines",
+        "url": "https://www.encryptionconsulting.com/slsa-build-provenance-and-signing-in-ci-cd-pipelines/"
+      },
+      {
+        "markdown_file": "03-044dc2ec93ad.md",
+        "markdown_sha256": "1f8ecd99838c2f402c3f9309df53367986f632351580eab42168c3b6acd1b9ef",
+        "rank": 3,
+        "receipt_sha256": "bb9b746d6dc7f38cddbbbcd223b69a1979b182d8afc73466c164888755431fe3",
+        "result_id": "rank-03",
+        "status": "response",
+        "title": "Artifact Provenance and Attestations: From SLSA to in-toto | Secure Pipelines",
+        "url": "https://secure-pipelines.com/ci-cd-security/artifact-provenance-attestations-slsa-in-toto/"
+      },
+      {
+        "markdown_file": "04-44658d99dba7.md",
+        "markdown_sha256": "8c79f2fb8b70c62ab6729fe7424059c5287bb48dc39bf6282f170c3bdcfbf91d",
+        "rank": 4,
+        "receipt_sha256": "1f906d775d83fb18de373a7304d7df46ad6b6e4cbd488ea2222f245e7b26be7c",
+        "result_id": "rank-04",
+        "status": "response",
+        "title": "SLSA and Provenance: Your SBOM Says What's Inside, This Says Where It Came From - ostering.com",
+        "url": "https://www.ostering.com/slsa-and-provenance/"
+      },
+      {
+        "markdown_file": "05-21575f2f06d1.md",
+        "markdown_sha256": "a25a8f8529b2a0d50c203838fd508758f51e9e1a7c3fe1ea8a6aa5c299eef0e9",
+        "rank": 5,
+        "receipt_sha256": "e22b54f7c777915dcdfb4fad5cf07a4eda3f2621361a036c3505a88132480ec9",
+        "result_id": "rank-05",
+        "status": "response",
+        "title": "SLSA (Supply-chain Levels for Software Artifacts) What is it? Definition, Explanation | Kusari®",
+        "url": "https://www.kusari.dev/learning-center/slsa-supply-chain-levels-for-software-artifacts/"
+      },
+      {
+        "markdown_file": "06-1a3b10432f93.md",
+        "markdown_sha256": "c01b0fd3d7043867b13396b4e05a3b1d05a5cd2b59695bf40b7fb50ab1ca5424",
+        "rank": 6,
+        "receipt_sha256": "854ae2756a5e51f72bf15f6d5071376c75b466b242ff2182ddece1e632480510",
+        "result_id": "rank-06",
+        "status": "response",
+        "title": "SLSA Build Provenance: Verifying Supply Chain Integrity from Source to Deployment",
+        "url": "https://www.systemshardening.com/articles/cicd/slsa-build-provenance/"
+      },
+      {
+        "markdown_file": "07-805347f28035.md",
+        "markdown_sha256": "e71d58bd856b74553103fc27e667536a73593816661e7cb89a76e2e6aba5b07e",
+        "rank": 7,
+        "receipt_sha256": "874cacf1f84895e68b858a4eb894f87e96924bda808d6cde079db84c526270cd",
+        "result_id": "rank-07",
+        "status": "response",
+        "title": "SLSA • Frequently asked questions",
+        "url": "https://slsa.dev/spec/v1.1/faq"
+      },
+      {
+        "markdown_file": "08-0b0aa2a565c5.md",
+        "markdown_sha256": "54d1396d218176f09455db3699f3ca4a4d310d5a73178fc7caf7c4a5663c0c15",
+        "rank": 8,
+        "receipt_sha256": "e399b0b2fe03ddb19673fad37fd80f32d94b61dd345f85a81d2bf7f573ed994a",
+        "result_id": "rank-08",
+        "status": "response",
+        "title": "Software Supply Chain Security Beyond SBOMs: Sigstore, SLSA, and Build Provenance | AquilaX",
+        "url": "https://aquilax.ai/blog/supply-chain-artifact-signing-slsa"
+      },
+      {
+        "markdown_file": "09-c6c7b381c896.md",
+        "markdown_sha256": "9c26a4dc42af365b533d12f2524dcba43519e8ae9a265a921de22fec509f032c",
+        "rank": 9,
+        "receipt_sha256": "cbb2fa060161ee9986748878ff253e6650985855c9b5ef405e2e5f0e6eb3264c",
+        "result_id": "rank-09",
+        "status": "response",
+        "title": "SLSA • Build: Provenance",
+        "url": "https://slsa.dev/spec/draft/build-provenance"
+      },
+      {
+        "markdown_file": "10-93dcdfc47482.md",
+        "markdown_sha256": "7e20ef71fc63331296dc62bd688efc6b3d7445248a92b51250707bbbb291d0d2",
+        "rank": 10,
+        "receipt_sha256": "40ba6064eca6f5dd4d02928a30f5fe614ad9a14fbdaa1fc7ff407b45716600a4",
+        "result_id": "rank-10",
+        "status": "response",
+        "title": "Supply-chain Levels for Software Artifacts (SLSA) | GitLab Docs",
+        "url": "https://docs.gitlab.com/ci/pipeline_security/slsa/"
+      },
+      {
+        "markdown_file": "11-28ff687197f5.md",
+        "markdown_sha256": "a0f8f1479cd4d62d65c3620426ac4052cbde7b96320a99b42b5065e463626d5b",
+        "rank": 11,
+        "receipt_sha256": "f28641cc6ddeede2207b424a719a029db595d40829b79e18040635fb9f5d27ea",
+        "result_id": "rank-11",
+        "status": "response",
+        "title": "SLSA • Security levels",
+        "url": "https://slsa.dev/spec/v1.0/levels"
+      },
+      {
+        "markdown_file": "12-92ddd96716ea.md",
+        "markdown_sha256": "d80602ed8e23ced2fc59c7da6ba3255a141793154f8fc0bbb3225651855186a2",
+        "rank": 12,
+        "receipt_sha256": "c77c3aa5ef7ba8635bc25d978247c268224fb27a0a96df900ed0b6cb281999a6",
+        "result_id": "rank-12",
+        "status": "response",
+        "title": "Implementing SLSA Build Integrity Framework for Software Supply Chain Security - SoftwareSeni",
+        "url": "https://www.softwareseni.com/implementing-slsa-build-integrity-framework-for-software-supply-chain-security/"
+      },
+      {
+        "markdown_file": "13-f28cc2ceec89.md",
+        "markdown_sha256": "51230725e10a6b6c87ab5c960296419c6e20a2176737f4b4052e3752cee281fb",
+        "rank": 13,
+        "receipt_sha256": "6afceec6096fcad58a98d185a42fb754d31f0dbd0434db9493eb52961b8d5d45",
+        "result_id": "rank-13",
+        "status": "response",
+        "title": "What is The SLSA Framework? Supply-chain Levels for Software Artifacts | Wiz",
+        "url": "https://www.wiz.io/academy/application-security/slsa-framework"
+      },
+      {
+        "markdown_file": "14-def33f059ec0.md",
+        "markdown_sha256": "045d2347003ef6ce2dc7212312ed20eaf26842b18ca755e990a8f1b9974fc2bc",
+        "rank": 14,
+        "receipt_sha256": "c78077202d04617e970ab3b86397e8e29c74002360eff2954c6f24aa3ade8e7d",
+        "result_id": "rank-14",
+        "status": "response",
+        "title": "What is the SLSA framework? A guide to SLSA levels and supply chain security | Cloudsmith",
+        "url": "https://cloudsmith.com/blog/slsa-a-route-to-tamper-proof-builds-and-secure-software-provenance"
+      },
+      {
+        "markdown_file": "15-a1d110bd27b2.md",
+        "markdown_sha256": "948b2dce1d2a4037d526c60ac52e536a9aba558e9dca4029ad29e77ca3cf0248",
+        "rank": 15,
+        "receipt_sha256": "ac249c600721f6161befc411498d2e850ef182ee8ecefa6e3b127fb193f6bba2",
+        "result_id": "rank-15",
+        "status": "response",
+        "title": "Overview | Harness Developer Hub",
+        "url": "https://developer.harness.io/docs/software-supply-chain-assurance/artifact-security/slsa/overview/"
+      },
+      {
+        "markdown_file": "16-a4fb63aea5fc.md",
+        "markdown_sha256": "15e04952c4607ccda5187bce5c1eb394225504f30c190679fc2f1fc6b5ee43ba",
+        "rank": 16,
+        "receipt_sha256": "92d09cbd344c31015bdda0ab6ff6611c356dbf2d41c1573054ddefe19b15cb15",
+        "result_id": "rank-16",
+        "status": "response",
+        "title": "What is Build Provenance? Definition & Explanation for SLSA Compliance | Kusari",
+        "url": "https://www.kusari.dev/learning-center/build-provenance/"
+      },
+      {
+        "markdown_file": "17-a1b7580ebf6a.md",
+        "markdown_sha256": "d0c453696e4e8c30658fedb2ee031a69002b27ce508c3758be676a2600b1bace",
+        "rank": 17,
+        "receipt_sha256": "24bacf0381def99e7cf43d1134c56c385fada5d2a5f0b839babc7309ec2a1335",
+        "result_id": "rank-17",
+        "status": "response",
+        "title": "What is the SLSA Framework? | JFrog",
+        "url": "https://jfrog.com/learn/grc/slsa-framework/"
+      },
+      {
+        "markdown_file": "18-c3db36cf15fd.md",
+        "markdown_sha256": "0c232e45473ca8d69a14faf5a04fc73501003f6da6976a30ea113ef1e633dc03",
+        "rank": 18,
+        "receipt_sha256": "2f0ea922b09f9c56bdd6b851e7788cb35bb49140a2eb3336981429e12b0133a0",
+        "result_id": "rank-18",
+        "status": "response",
+        "title": "SLSA (Supply-chain Levels for Software Artifacts) | Ry Walker Research | Ry Walker",
+        "url": "https://rywalker.com/research/slsa"
+      },
+      {
+        "markdown_file": "19-f3089c41db80.md",
+        "markdown_sha256": "03dcc79e0c3b0f3976d93c6fd2d95a68be031eb2f1412a084ec3ebe57c62cba0",
+        "rank": 19,
+        "receipt_sha256": "987967ec3e635d1a77172b4351a660904ca6aa3a1ce32f5ad37bb36bad3901ff",
+        "result_id": "rank-19",
+        "status": "response",
+        "title": "Deep Dive Into SLSA Provenance and Software Attestation",
+        "url": "https://www.legitsecurity.com/blog/slsa-provenance-blog-series-part-2-deeper-dive-into-slsa-provenance"
+      },
+      {
+        "markdown_file": "20-525c09735960.md",
+        "markdown_sha256": "4e24f133938cef568d8552b7e5eb3bf2aa2992c464c3d9b501b32e51b0748b88",
+        "rank": 20,
+        "receipt_sha256": "67ceccfd8bd45e67b00847f7f2ecbca2cbc79699c38045078809fcf9ce421696",
+        "result_id": "rank-20",
+        "status": "response",
+        "title": "SLSA • Supply-chain Levels for Software Artifacts",
+        "url": "https://slsa.dev/"
+      }
+    ]
+  },
+  "label_note": "Assistant-authored labels are best-effort and not independent gold. Parent review is requested before any calls.",
+  "model": "jev-1.13.0",
+  "schema_version": "jev-slsa-replay-pilot/2",
+  "study_id": "jev-slsa-deterministic-replay-2026-10-03"
+}

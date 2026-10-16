@@ -1,0 +1,63 @@
+{
+  "case_manifest_sha256": "9c3d0e7668ed623c84456536aa52bd717477ccb43b48d5b393593a3f4a538c89",
+  "cases": [
+    {
+      "automatic_fetch_suppression_authorized": false,
+      "case_id": "w11-entity-live-cve",
+      "engine_scope_sha256": "67c1d9627b34dcd604ee979567daad98c8be1cb1b5c6a54e4378ed6b9119b0d1",
+      "entities": [
+        {
+          "conflicting_fields": [],
+          "entity_id_sha256": "e841ef091463b26b93b09fbc393f24a1ac850234bc6cdc40b2ce9d970f5f8864",
+          "member_count": 1,
+          "namespace": "cve",
+          "unresolved": false
+        }
+      ],
+      "entity_count": 1,
+      "flat_snapshot_unchanged": true,
+      "hard_gate_passed": true,
+      "potential_repeated_acquisitions": 0,
+      "query_sha256": "4d6345c2e46edd5e769ff0476ce7b367e31a1b892f01689b26e183e173534365",
+      "relationship_types": [],
+      "relationships_valid": true,
+      "result_conservation_passed": true,
+      "result_count": 1
+    },
+    {
+      "automatic_fetch_suppression_authorized": false,
+      "case_id": "w11-entity-live-package",
+      "engine_scope_sha256": "80033284a5ef281b24bfac11e3a0582f7e386083fd6d5ffeb6f821ef92d6c5a0",
+      "entities": [
+        {
+          "conflicting_fields": [],
+          "entity_id_sha256": "d08aea6f9a33f197d0fcae1c0b1b8416b99080a62b15c5f3cd66afecbe61fbbd",
+          "member_count": 1,
+          "namespace": "pypi",
+          "unresolved": false
+        },
+        {
+          "conflicting_fields": [],
+          "entity_id_sha256": "e7678a750c3f9213655464cc5deae501cc74ecd1cb3fa6232dd74cdddad7f11a",
+          "member_count": 1,
+          "namespace": "github_repository",
+          "unresolved": false
+        }
+      ],
+      "entity_count": 2,
+      "flat_snapshot_unchanged": true,
+      "hard_gate_passed": true,
+      "potential_repeated_acquisitions": 0,
+      "query_sha256": "c3aac36efe8db784baeddbf440fdf1cf12540dfc204e3dcc16313df8436bcb1b",
+      "relationship_types": [
+        "candidate_repository"
+      ],
+      "relationships_valid": true,
+      "result_conservation_passed": true,
+      "result_count": 1
+    }
+  ],
+  "hard_gate_passed": true,
+  "interpretation": "Entity identity is an organizational view. It does not establish source independence, corroboration, ownership, applicability, or verification.",
+  "schema_version": "enterprise-evaluation/w11-entity-projection/1"
+}

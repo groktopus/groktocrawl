@@ -1,0 +1,62 @@
+{
+  "answer": {
+    "answer": "The supplied documentation answers only the naming question, not the configuration question. Per the Northstar 3 guide, 'Northstar 3 calls pre-deployment controls policy checks' [northstar-policy-old]. This is the sole documented fact: it establishes the terminology Northstar 3 uses for pre-deployment controls, but it does not describe how policy checks are configured — no configuration mechanisms (e.g., config files, UI settings, APIs, policy definitions), parameters, or procedures appear in the supplied snapshot. Additionally, only the snapshot labeled 'northstar-policy-old' (describing Northstar 3) was supplied; no newer Northstar policy documentation was provided, so it cannot be confirmed whether this terminology or any configuration approach is current or has since changed. How policy checks are configured in Northstar therefore remains unresolved on the basis of the supplied sources.",
+    "change_events": [
+      "No change events are documented in the supplied snapshots; only one snapshot (northstar-policy-old, a Northstar 3 guide) was provided."
+    ],
+    "citations": [
+      "northstar-policy-old"
+    ],
+    "current_truths": [
+      "The supplied Northstar 3 guide states that Northstar 3 calls pre-deployment controls 'policy checks' [northstar-policy-old].",
+      "No supplied source describes how policy checks are configured in Northstar; no configuration mechanisms, tools, files, UI steps, APIs, or parameters are documented [northstar-policy-old]."
+    ],
+    "historical_truths": [
+      "The only supplied snapshot documents Northstar 3 specifically and is labeled 'old'; no earlier or superseding Northstar policy documentation was supplied, so no prior state or subsequent change can be established [northstar-policy-old]."
+    ],
+    "unresolved": [
+      "How policy checks are configured in Northstar — including any configuration surfaces, tools, file formats, or procedures — is not answered by the supplied sources.",
+      "Whether the 'policy checks' terminology and any related configuration approach remain current beyond Northstar 3 cannot be verified; the output contract references a 'northstar-policy-new' snapshot, but its content was not supplied.",
+      "The scope of 'pre-deployment controls' that Northstar 3 groups under 'policy checks' is not defined in the supplied source."
+    ]
+  },
+  "case_id": "renamed-feature",
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "84db7778e9da14241786f5a691d8fc62da389b9d10ce3433907c8f8b4e8ac6d8",
+    "finish_reason": "stop",
+    "latency_ms": 31288.482,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "9cdcd4e72d19fad7b2503e24d6e226a8e156b0db379156e46417418b81e90098",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 3446,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 2960
+      },
+      "cost": 0.00178705,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.001723,
+        "upstream_inference_cost": 0.00178705,
+        "upstream_inference_prompt_cost": 6.405e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 427,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 3873
+    }
+  },
+  "schema_version": "research-thread-initial/1",
+  "status": "completed"
+}

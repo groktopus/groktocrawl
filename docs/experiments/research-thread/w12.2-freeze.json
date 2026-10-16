@@ -1,0 +1,48 @@
+{
+  "schema_version": "research-thread-experiment-freeze/1",
+  "status": "frozen_before_measurement",
+  "source_revision": "3ee907f3064e58a16ecb6d7aeb6b5b2032b2777e",
+  "seed": 20260919,
+  "case_count": 9,
+  "repetitions": 3,
+  "initial_root_calls": 9,
+  "followup_trial_calls": 54,
+  "blind_grade_calls": 54,
+  "measured_call_ceiling": 117,
+  "model_route": "general",
+  "endpoint_origin": "https://research-provider.example/",
+  "concurrency": 5,
+  "maximum_authorized_concurrency": 10,
+  "transport_attempt_limit": 3,
+  "reasoning_effort": {
+    "initial_and_followup": "low",
+    "blind_grader": "minimal"
+  },
+  "maximum_completion_tokens": {
+    "initial_and_followup": 10000,
+    "blind_grader": 20000
+  },
+  "failure_guardrail_per_lane": 0.1,
+  "source_equivalence": "both arms receive the exact same initial and follow-up snapshots; treatment alone receives explicit prior-root organization",
+  "decision_gates": {
+    "quality_effect_points": 10,
+    "minimum_passing_repetitions": 2,
+    "minimum_latency_reduction_percent": 25,
+    "maximum_no_change_regression_points": 2,
+    "maximum_false_merges": 0,
+    "maximum_stale_current_leaks": 0,
+    "maximum_lost_histories": 0
+  },
+  "files": {
+    "agent-svc/agent/experimental/research_thread.py": "19a1d736cf757cce4bef266dacb233a6e218ef9d084331210d8f53bb6fe7b70f",
+    "agent-svc/agent/tests/test_research_thread.py": "6e148ceda0b60777ede63b48376a95e2a2f63bb61449d78ada325f3c0eb0b40d",
+    "docs/experiments/research-thread/w12.2-protocol.md": "fe7c6bbe89e5cbefcfed067b6c2c68f71efc8704892e3d27ebb5eda0a19ab559",
+    "docs/experiments/research-thread/w12.2-experiment-brief.md": "b7f103e06ccbaa6b7cd64c8ab110dee72882c4be73bc89d9a3a95771ae2ded57",
+    "docs/experiments/research-thread/w12.2-cases.json": "af33310c49599a90b72792726d2f91b9e82a850a52d61afa5bb3f183b5649ece",
+    "docs/experiments/research-thread/w12.2-work-order.json": "e4df62cd79b29a77fd52c0e3c2b89b99976cdfdf79ee5843eaeeac5092855c07",
+    "scripts/run_w12_thread_experiment.py": "29cbb80435a13dac5c82710695b92c9bb307b13ddbe9ca09891c6c1fea6c6196",
+    "scripts/grade_w12_thread_experiment.py": "1ac252cb345ba4392bd7655b67cd283c490563f18c3c6d9ed69c719420b35b19",
+    "scripts/analyze_w12_thread_experiment.py": "e4d295497ffd620757597110fe583f6f0448ead53e3fa4a5a7bc51cae83b2265",
+    "uv.lock": "4c383538479287eedaf4ffde5f2044f29972897a256e07f9b57fa3d1bc42648a"
+  }
+}

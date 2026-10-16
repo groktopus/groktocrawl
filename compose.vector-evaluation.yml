@@ -1,0 +1,103 @@
+# Independent opt-in vector comparison; never combine with the inherited stack.
+services:
+  vector-eval-postgres:
+    image: pgvector/pgvector:pg17
+    profiles: [vector-eval]
+    environment:
+      POSTGRES_DB: vector_eval
+      POSTGRES_USER: vector_eval
+      POSTGRES_PASSWORD: ${VECTOR_EVAL_POSTGRES_PASSWORD:?Set VECTOR_EVAL_POSTGRES_PASSWORD to a private value}
+    ports:
+      - target: 5432
+        published: "${VECTOR_EVAL_POSTGRES_PORT:-15432}"
+        host_ip: 127.0.0.1
+    volumes:
+      - vector_eval_postgres_data:/var/lib/postgresql/data
+    networks: [vector_eval_private]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    mem_limit: 1g
+    cpus: 1.0
+    pids_limit: 128
+
+  vector-eval-qdrant:
+    image: qdrant/qdrant:v1.18.2
+    platform: linux/amd64
+    profiles: [vector-eval]
+    ports:
+      - target: 6333
+        published: "${VECTOR_EVAL_QDRANT_PORT:-16333}"
+        host_ip: 127.0.0.1
+    volumes:
+      - vector_eval_qdrant_data:/qdrant/storage
+    networks: [vector_eval_private]
+    healthcheck:
+      test:
+        - CMD
+        - bash
+        - -c
+        - >-
+          exec 3<>/dev/tcp/127.0.0.1/6333 &&
+          printf 'GET /readyz HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 &&
+          IFS= read -r status <&3 && [[ "$${status}" == *200* ]]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    mem_limit: 1g
+    cpus: 1.0
+    pids_limit: 128
+
+  vector-restore-postgres:
+    image: pgvector/pgvector:pg17
+    profiles: [vector-restore]
+    environment:
+      POSTGRES_DB: vector_restore
+      POSTGRES_USER: vector_eval
+      POSTGRES_PASSWORD: ${VECTOR_EVAL_POSTGRES_PASSWORD:?Set VECTOR_EVAL_POSTGRES_PASSWORD to a private value}
+    volumes:
+      - vector_restore_postgres_data:/var/lib/postgresql/data
+    networks: [vector_eval_private]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    mem_limit: 1g
+    cpus: 1.0
+    pids_limit: 128
+
+  vector-restore-qdrant:
+    image: qdrant/qdrant:v1.18.2
+    platform: linux/amd64
+    profiles: [vector-restore]
+    volumes:
+      - vector_restore_qdrant_data:/qdrant/storage
+    networks: [vector_eval_private]
+    healthcheck:
+      test:
+        - CMD
+        - bash
+        - -c
+        - >-
+          exec 3<>/dev/tcp/127.0.0.1/6333 &&
+          printf 'GET /readyz HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 &&
+          IFS= read -r status <&3 && [[ "$${status}" == *200* ]]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    mem_limit: 1g
+    cpus: 1.0
+    pids_limit: 128
+
+volumes:
+  vector_eval_postgres_data:
+  vector_eval_qdrant_data:
+  vector_restore_postgres_data:
+  vector_restore_qdrant_data:
+
+networks:
+  vector_eval_private:
+    internal: true

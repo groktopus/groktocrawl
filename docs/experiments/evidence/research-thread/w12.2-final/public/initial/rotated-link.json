@@ -1,0 +1,60 @@
+{
+  "answer": {
+    "answer": "According to the only supplied snapshot (grove-g12-old), Grove advisory G-12 reported that versions before 4.2 were affected. The snapshot does not specify which product these versions belong to, whether 4.2 or later versions are affected, or whether the advisory has been updated since; no other snapshots were provided to resolve these points.",
+    "change_events": [],
+    "citations": [
+      "grove-g12-old"
+    ],
+    "current_truths": [
+      "The supplied snapshot (grove-g12-old) states that Grove advisory G-12 reported that versions before 4.2 were affected."
+    ],
+    "historical_truths": [
+      "As captured in snapshot grove-g12-old, advisory G-12's report was that versions before 4.2 were affected."
+    ],
+    "unresolved": [
+      "The snapshot does not identify which product or software the 'versions before 4.2' refers to.",
+      "The snapshot does not state whether version 4.2 or later versions are affected.",
+      "No updated or superseding snapshot was supplied, so it cannot be confirmed whether advisory G-12 has since been revised, updated, or withdrawn.",
+      "The snapshot provides no details on severity, remediation, or publication date of advisory G-12."
+    ]
+  },
+  "case_id": "rotated-link",
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "4ac4e77388beb944ec07ec1022c0b3a51da74d2b0018abe73aa08251c22b4279",
+    "finish_reason": "stop",
+    "latency_ms": 11732.654,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "8ea3c019b1c4a1071f71b8a4d49044af85b42d937d449b9db333b02bf7e747d0",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 928,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 649
+      },
+      "cost": 0.00052955,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000464,
+        "upstream_inference_cost": 0.00052955,
+        "upstream_inference_prompt_cost": 6.555e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 437,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1365
+    }
+  },
+  "schema_version": "research-thread-initial/1",
+  "status": "completed"
+}

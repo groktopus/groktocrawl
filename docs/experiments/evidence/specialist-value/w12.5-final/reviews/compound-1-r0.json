@@ -1,0 +1,124 @@
+{
+  "case_id": "compound-1",
+  "control_artifact": {
+    "admitted_evidence": [
+      {
+        "canonical_source_id": "canonical-compound-1-generalist-compound-1-scope",
+        "derivative": false,
+        "evidence_id": "compound-1-generalist-compound-1-scope",
+        "obligation_id": "compound-1-scope",
+        "publisher_id": "publisher-compound-1-generalist",
+        "source_id": "source-compound-1-generalist-compound-1-scope",
+        "span": "Pinned supports evidence for compound-1-scope in compound-1.",
+        "stance": "supports"
+      }
+    ],
+    "conflicting_obligation_ids": [],
+    "covered_obligation_ids": [
+      "compound-1-scope"
+    ],
+    "handoff_failures": [],
+    "rejected_evidence": {},
+    "total_calls": 2
+  },
+  "control_calls": 2,
+  "preferred": "treatment",
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "9318fb7cb0b486ff2b0a20dfc29dc71ca3734818f02d58078a9c6c9b4827e95b",
+    "finish_reason": "stop",
+    "latency_ms": 5141.131,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "faeb32b9a892bd4ff384e5b1bf866f085cb3e4ef006780f927d7def3ecd390ad",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 105,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 1
+      },
+      "cost": 0.00010375,
+      "cost_details": {
+        "upstream_inference_completions_cost": 3.675e-05,
+        "upstream_inference_cost": 0.00010375,
+        "upstream_inference_prompt_cost": 6.7e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 670,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 775
+    }
+  },
+  "repetition": 0,
+  "schema_version": "specialist-value-review/1",
+  "scores": {
+    "control": {
+      "reason": "Covers 1 of 3 obligations; pinned, non-derivative evidence bound to sources; no conflicts or failures.",
+      "trustworthiness": 1,
+      "usefulness": 0
+    },
+    "treatment": {
+      "reason": "Covers all 3 obligations with exact source-bound, non-derivative evidence per obligation; no conflicts or failures to report.",
+      "trustworthiness": 1,
+      "usefulness": 1
+    }
+  },
+  "separable": true,
+  "status": "completed",
+  "stratum": "compound",
+  "treatment_artifact": {
+    "admitted_evidence": [
+      {
+        "canonical_source_id": "canonical-compound-1-discovery-compound-1-scope",
+        "derivative": false,
+        "evidence_id": "compound-1-discovery-compound-1-scope",
+        "obligation_id": "compound-1-scope",
+        "publisher_id": "publisher-compound-1-discovery",
+        "source_id": "source-compound-1-discovery-compound-1-scope",
+        "span": "Pinned supports evidence for compound-1-scope in compound-1.",
+        "stance": "supports"
+      },
+      {
+        "canonical_source_id": "canonical-compound-1-authority-compound-1-authority",
+        "derivative": false,
+        "evidence_id": "compound-1-authority-compound-1-authority",
+        "obligation_id": "compound-1-authority",
+        "publisher_id": "publisher-compound-1-authority",
+        "source_id": "source-compound-1-authority-compound-1-authority",
+        "span": "Pinned supports evidence for compound-1-authority in compound-1.",
+        "stance": "supports"
+      },
+      {
+        "canonical_source_id": "canonical-compound-1-risk-compound-1-risk",
+        "derivative": false,
+        "evidence_id": "compound-1-risk-compound-1-risk",
+        "obligation_id": "compound-1-risk",
+        "publisher_id": "publisher-compound-1-risk",
+        "source_id": "source-compound-1-risk-compound-1-risk",
+        "span": "Pinned supports evidence for compound-1-risk in compound-1.",
+        "stance": "supports"
+      }
+    ],
+    "conflicting_obligation_ids": [],
+    "covered_obligation_ids": [
+      "compound-1-authority",
+      "compound-1-risk",
+      "compound-1-scope"
+    ],
+    "handoff_failures": [],
+    "rejected_evidence": {},
+    "total_calls": 2
+  },
+  "treatment_calls": 3,
+  "trial_id": "compound-1-r0"
+}

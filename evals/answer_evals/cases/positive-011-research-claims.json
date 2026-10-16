@@ -1,6 +1,6 @@
 {
   "citation_style": "inline",
-  "content_hash": "sha256:f01bc35560059c6c22ab97b5ce9b2ecc2f035b0ab3538fa87338e27839087e5a",
+  "content_hash": "sha256:cc0d5f5974219a118bc80b6f86d7738c9b5cad4862878c5c6e804ca2484b71f5",
   "expected": {
     "abstain_expected": false,
     "abstain_qualifier": null,
@@ -32,7 +32,7 @@
   "query": "Summarize the pricing claims on the fixture site.",
   "retrieval_mode": "keyword",
   "search_fixture": {
-    "fixture_version": "v2",
+    "fixture_version": "v3",
     "scenario": "partial-degraded",
     "scenario_version": "v1",
     "service": "slopsearx-fixture"

@@ -59,7 +59,7 @@ def _case(**overrides) -> dict:
             "service": "slopsearx-fixture",
             "scenario": "healthy",
             "scenario_version": "v1",
-            "fixture_version": "v2",
+            "fixture_version": "v3",
         },
         "llm_fixture": {
             "service": "llm-svc",

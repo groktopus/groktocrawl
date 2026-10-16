@@ -1,0 +1,168 @@
+{
+  "captured_at": "2026-09-11T21:38:49.303019+00:00",
+  "configuration_sha256": "e4995ad273449aac341088c3789d164f433cf1d4320265019282bc4342bc5a6b",
+  "issues": [],
+  "probes": {
+    "config_get": {
+      "content_type": "application/json",
+      "json_type": "dict",
+      "keys": [
+        "autocomplete",
+        "brand",
+        "categories",
+        "category_engines",
+        "default_locale",
+        "default_theme",
+        "engines",
+        "instance_name",
+        "locales",
+        "plugins",
+        "safe_search",
+        "version"
+      ],
+      "name": "config_get",
+      "response_bytes": 34760,
+      "response_sha256": "ce47f708be54691cdeed63de1307c5ebb7d6a71742bdbb59eb2a4f48bc350a15",
+      "status": 200
+    },
+    "health_get": {
+      "content_type": "application/json",
+      "json_type": "dict",
+      "keys": [
+        "engines",
+        "status",
+        "valkey_connected",
+        "version"
+      ],
+      "name": "health_get",
+      "response_bytes": 12330,
+      "response_sha256": "6d530a47359b427856dae9d56e4db311107adfa705b698dce617cac4a20bf670",
+      "status": 200
+    },
+    "healthz_get": {
+      "content_type": "text/plain",
+      "name": "healthz_get",
+      "response_bytes": 2,
+      "response_sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+      "status": 200
+    },
+    "invalid_pageno_get": {
+      "content_type": "application/json",
+      "json_type": "dict",
+      "keys": [
+        "error",
+        "field",
+        "message"
+      ],
+      "name": "invalid_pageno_get",
+      "response_bytes": 83,
+      "response_sha256": "f07b151c34edc0290a37effa85fb5b93b102750d36ba2dba40e597b31befa8c7",
+      "status": 400
+    },
+    "root_html_get": {
+      "content_type": "text/html",
+      "name": "root_html_get",
+      "response_bytes": 21147,
+      "response_sha256": "71f08127e58a759cc23ecdc3e20a145a79835b8ab0d46124179afaa3bc1f7a79",
+      "status": 200
+    },
+    "root_json_get": {
+      "content_type": "application/json",
+      "json_type": "dict",
+      "keys": [
+        "answers",
+        "corrections",
+        "engines",
+        "infoboxes",
+        "meta",
+        "number_of_results",
+        "query",
+        "results",
+        "suggestions",
+        "unresponsive_engines"
+      ],
+      "name": "root_json_get",
+      "response_bytes": 396,
+      "response_sha256": "c6a12411e87c7add2e0a67334f4d19a0eafc07063335bb12578538deaa3eb0c3",
+      "result_count": 0,
+      "status": 200
+    },
+    "root_json_post": {
+      "content_type": "application/json",
+      "json_type": "dict",
+      "keys": [
+        "answers",
+        "corrections",
+        "engines",
+        "infoboxes",
+        "meta",
+        "number_of_results",
+        "query",
+        "results",
+        "suggestions",
+        "unresponsive_engines"
+      ],
+      "name": "root_json_post",
+      "response_bytes": 396,
+      "response_sha256": "c6a12411e87c7add2e0a67334f4d19a0eafc07063335bb12578538deaa3eb0c3",
+      "result_count": 0,
+      "status": 200
+    },
+    "search_json_get": {
+      "content_type": "application/json",
+      "json_type": "dict",
+      "keys": [
+        "answers",
+        "corrections",
+        "engines",
+        "infoboxes",
+        "meta",
+        "number_of_results",
+        "query",
+        "results",
+        "suggestions",
+        "unresponsive_engines"
+      ],
+      "name": "search_json_get",
+      "response_bytes": 396,
+      "response_sha256": "c6a12411e87c7add2e0a67334f4d19a0eafc07063335bb12578538deaa3eb0c3",
+      "result_count": 0,
+      "status": 200
+    },
+    "search_json_post": {
+      "content_type": "application/json",
+      "json_type": "dict",
+      "keys": [
+        "answers",
+        "corrections",
+        "engines",
+        "infoboxes",
+        "meta",
+        "number_of_results",
+        "query",
+        "results",
+        "suggestions",
+        "unresponsive_engines"
+      ],
+      "name": "search_json_post",
+      "response_bytes": 396,
+      "response_sha256": "c6a12411e87c7add2e0a67334f4d19a0eafc07063335bb12578538deaa3eb0c3",
+      "result_count": 0,
+      "status": 200
+    }
+  },
+  "query_scope": {
+    "engines": [
+      "wikipedia"
+    ],
+    "result_content_retained": false
+  },
+  "schema_version": "enterprise-evaluation/w11-http-compatibility/1",
+  "slopsearx": {
+    "image_digest": "sha256:4cd9c04ae4ef2f154a104cd95cf2219d603e461c9449f4392ce562b0541dd2d3",
+    "source_revision": "edeba9ef9311adf19ce3f1b6060257ef1b54c2f9",
+    "version": "0.5.0"
+  },
+  "target_label": "isolated-research-only-before",
+  "valid": true
+}

@@ -1,0 +1,502 @@
+{
+  "cases": [
+    {
+      "after_commit_parent_and_path_verified_via_github_api": true,
+      "after_commit_parent_sha": "25872257ae7da42996a6ad91b06d4c7f540749d3",
+      "after_excerpt_lines": [
+        [
+          109,
+          115
+        ],
+        [
+          128,
+          133
+        ]
+      ],
+      "after_excerpt_sha256": "8dcf5d1f368fd3430e939d3d4b1f07a10ef78ff0165ea712c2bc501269c4f0f1",
+      "after_sha256": "22efaee0c0933b123215f94aef15242e51bd904be5b3bf8bb655941ba23b3c29",
+      "after_source_sha": "9a4597563cb937f5f1f154fe440889d97208aa77",
+      "before_excerpt_lines": [
+        [
+          109,
+          115
+        ],
+        [
+          128,
+          133
+        ]
+      ],
+      "before_excerpt_sha256": "2247cdf9f6fa6f4cae2e0125a2be0c55e5d21768605bc0704266575768c500cc",
+      "before_sha256": "a46dceffb059aee875588c9da64b15dbd3bce7983a287cb96cc91c5b2d665aa5",
+      "before_source_sha": "25872257ae7da42996a6ad91b06d4c7f540749d3",
+      "blind_review_status": "pending parent review",
+      "case_id": "k8s-status-v121-to-v122",
+      "diff_sha256": "69381ebef6310c5be6b4b1a5add0223ae8646f183262a004d756c0ad5d34a0c6",
+      "input_sha256": "2434c3cc96bf1b2199a28257d43830b46f02591e06d51a6f4affefb8a27e3f4a",
+      "label_provenance": "best-effort assistant assessment before any Jev outcome; not independent gold",
+      "monitor_intent": "Notify me when EndpointSlice Serving or Terminating condition maturity changes in Kubernetes, because this affects which behavior I can rely on for clusters using these conditions.",
+      "path": "content/en/docs/concepts/services-networking/endpoint-slices.md",
+      "raw_after_url": "https://raw.githubusercontent.com/kubernetes/website/9a4597563cb937f5f1f154fe440889d97208aa77/content/en/docs/concepts/services-networking/endpoint-slices.md",
+      "raw_before_url": "https://raw.githubusercontent.com/kubernetes/website/25872257ae7da42996a6ad91b06d4c7f540749d3/content/en/docs/concepts/services-networking/endpoint-slices.md",
+      "reference_label": "material",
+      "reference_rationale": "The feature-state annotations move both conditions from v1.20 alpha to v1.22 beta, a direct version-specific support-status change.",
+      "repo": "kubernetes/website",
+      "repository_license_spdx": "CC-BY-4.0",
+      "same_diff_group": null,
+      "source_pair_id": "k8s-status",
+      "split": "calibration",
+      "stratum": "feature-status/version"
+    },
+    {
+      "after_commit_parent_and_path_verified_via_github_api": true,
+      "after_commit_parent_sha": "9e160e87b4bfbee57204ba58751cfc778d4ce016",
+      "after_excerpt_lines": [
+        [
+          73,
+          82
+        ],
+        [
+          86,
+          95
+        ],
+        [
+          97,
+          110
+        ],
+        [
+          112,
+          117
+        ]
+      ],
+      "after_excerpt_sha256": "2723f44e40389c3dda04c5abef9e4c4c85e1615c79bdbf50f6684344f9e8d7a8",
+      "after_sha256": "fd5b3e5561288b3b057144985a7245808b004877ab7e0a1c70586bda59b5c93a",
+      "after_source_sha": "649bda2cbda386043d3e2af07fcb84806243c828",
+      "before_excerpt_lines": [
+        [
+          74,
+          84
+        ],
+        [
+          88,
+          98
+        ],
+        [
+          100,
+          117
+        ],
+        [
+          119,
+          125
+        ]
+      ],
+      "before_excerpt_sha256": "6df66c96e832c04bb974f8a437c5b4e4449a78e88e0ae112fc462c682b65a842",
+      "before_sha256": "e0a1b072067f64182f398062718e48189d9dad5bdc149f0dca845fb486aff9bd",
+      "before_source_sha": "9e160e87b4bfbee57204ba58751cfc778d4ce016",
+      "blind_review_status": "pending parent review",
+      "case_id": "k8s-address-types-and-conditions",
+      "diff_sha256": "2143be9c6f5238c8e97653bdd43287ed52c381946ec53d653f2dac19ae57e57d",
+      "input_sha256": "4adf9ed8d8e86b8b3a7537fa0eac87f9424e8097dd433f26d8b10683dc768483",
+      "label_provenance": "best-effort assistant assessment before any Jev outcome; not independent gold",
+      "monitor_intent": "I maintain a Kubernetes EndpointSlice consumer. Alert me when address-type support or ready/serving/terminating condition semantics change, including removals and compatibility behavior.",
+      "path": "content/en/docs/concepts/services-networking/endpoint-slices.md",
+      "raw_after_url": "https://raw.githubusercontent.com/kubernetes/website/649bda2cbda386043d3e2af07fcb84806243c828/content/en/docs/concepts/services-networking/endpoint-slices.md",
+      "raw_before_url": "https://raw.githubusercontent.com/kubernetes/website/9e160e87b4bfbee57204ba58751cfc778d4ce016/content/en/docs/concepts/services-networking/endpoint-slices.md",
+      "reference_label": "material",
+      "reference_rationale": "The revision removes FQDN from supported address types and substantially revises condition behavior and compatibility text.",
+      "repo": "kubernetes/website",
+      "repository_license_spdx": "CC-BY-4.0",
+      "same_diff_group": null,
+      "source_pair_id": "k8s-removal",
+      "split": "calibration",
+      "stratum": "semantic-removal/behavior"
+    },
+    {
+      "after_commit_parent_and_path_verified_via_github_api": true,
+      "after_commit_parent_sha": "98724294bd36fd1f7330b95d2efa40575c7dd082",
+      "after_excerpt_lines": [
+        [
+          7,
+          7
+        ],
+        [
+          13,
+          16
+        ],
+        [
+          19,
+          25
+        ]
+      ],
+      "after_excerpt_sha256": "d2def1ff22389e664f62efde6120480a4f567dd5c7a107eeeb8b6991ac174bd6",
+      "after_sha256": "300545297ba62514fa4449831ff02da01fb5fb5183c042810c73abfb34b39f0a",
+      "after_source_sha": "5fadc4a1b30559723ab52e18e678b46a092de848",
+      "before_excerpt_lines": [
+        [
+          7,
+          7
+        ],
+        [
+          13,
+          16
+        ]
+      ],
+      "before_excerpt_sha256": "031dab46f387feb9bb20a787bc5a31ac8ec1b2c860ee9ad7ad93e917345f9f86",
+      "before_sha256": "62d571b9d5da9118f330ef07dc28379d076500dd0b5e5ca5c9af2e1a8bc0b2e2",
+      "before_source_sha": "98724294bd36fd1f7330b95d2efa40575c7dd082",
+      "blind_review_status": "pending parent review",
+      "case_id": "k8s-nonpod-endpoint-qualification",
+      "diff_sha256": "b92b897f580fbc9ba7490edf597cf63d0fa3f3eb1d7ba4404a4ad6bfc4d518b9",
+      "input_sha256": "155688703a4373e3261a55de93c2d3052c56f5bbd7be2190a155ca37d5e90148",
+      "label_provenance": "best-effort assistant assessment before any Jev outcome; not independent gold",
+      "monitor_intent": "Keep me informed about EndpointSlice documentation changes that may affect workload networking in our clusters. Our use of manually managed non-Pod endpoints is unknown.",
+      "path": "content/en/docs/reference/glossary/endpoint-slice.md",
+      "raw_after_url": "https://raw.githubusercontent.com/kubernetes/website/5fadc4a1b30559723ab52e18e678b46a092de848/content/en/docs/reference/glossary/endpoint-slice.md",
+      "raw_before_url": "https://raw.githubusercontent.com/kubernetes/website/98724294bd36fd1f7330b95d2efa40575c7dd082/content/en/docs/reference/glossary/endpoint-slice.md",
+      "reference_label": "uncertain",
+      "reference_rationale": "The new “usually, but not always” qualifier changes the stated endpoint scope, but whether that edge case affects these clusters is unknown from the frozen intent. The label is intentionally ambiguous and excluded from binary scoring.",
+      "repo": "kubernetes/website",
+      "repository_license_spdx": "CC-BY-4.0",
+      "same_diff_group": null,
+      "source_pair_id": "k8s-qualifier",
+      "split": "calibration",
+      "stratum": "qualification/ambiguous"
+    },
+    {
+      "after_commit_parent_and_path_verified_via_github_api": true,
+      "after_commit_parent_sha": "0e33f9a64407541d855d44b562e92e6c07f0af44",
+      "after_excerpt_lines": [
+        [
+          8,
+          12
+        ],
+        [
+          20,
+          23
+        ],
+        [
+          41,
+          43
+        ],
+        [
+          248,
+          248
+        ]
+      ],
+      "after_excerpt_sha256": "d71fd232b0af7110fe7fc396181862c23220e47eed6040103972f87791423e1a",
+      "after_sha256": "b17e893a7162704bc1c840444cb6df804cbe4e6f54b0a797a7732fe1caab14bc",
+      "after_source_sha": "d536e46dbdb49175da7c711a4b39df56b6a263de",
+      "before_excerpt_lines": [
+        [
+          8,
+          12
+        ],
+        [
+          20,
+          23
+        ],
+        [
+          41,
+          43
+        ],
+        [
+          248,
+          248
+        ]
+      ],
+      "before_excerpt_sha256": "8ffa6345bff15ecda6d552fa44694cbe815b4c86b22eb28cd0a38872f0537e54",
+      "before_sha256": "a4dd1f5240d904338af65c4ec48bb6a85bf199703215997e03df21bbfb21d25a",
+      "before_source_sha": "0e33f9a64407541d855d44b562e92e6c07f0af44",
+      "blind_review_status": "pending parent review",
+      "case_id": "k8s-private-registry-formatting",
+      "diff_sha256": "f421d1387de749fc8139d2ea69e73df61797d211193a9e0368387974263ed173",
+      "input_sha256": "57cf904000fa5a313e221f95f55f92b58a12d0ed6b0313039dfb8ed311036dae",
+      "label_provenance": "best-effort assistant assessment before any Jev outcome; not independent gold",
+      "monitor_intent": "I use Kubernetes private-registry image-pull instructions. Notify me only when prerequisites, commands, supported behavior, or operational steps change; ignore whitespace and formatting cleanup.",
+      "path": "content/en/docs/tasks/configure-pod-container/pull-image-private-registry.md",
+      "raw_after_url": "https://raw.githubusercontent.com/kubernetes/website/d536e46dbdb49175da7c711a4b39df56b6a263de/content/en/docs/tasks/configure-pod-container/pull-image-private-registry.md",
+      "raw_before_url": "https://raw.githubusercontent.com/kubernetes/website/0e33f9a64407541d855d44b562e92e6c07f0af44/content/en/docs/tasks/configure-pod-container/pull-image-private-registry.md",
+      "reference_label": "immaterial",
+      "reference_rationale": "The diff changes trailing whitespace only and adds no substantive wording or procedural step.",
+      "repo": "kubernetes/website",
+      "repository_license_spdx": "CC-BY-4.0",
+      "same_diff_group": null,
+      "source_pair_id": "k8s-format",
+      "split": "calibration",
+      "stratum": "formatting-only"
+    },
+    {
+      "after_commit_parent_and_path_verified_via_github_api": true,
+      "after_commit_parent_sha": "a844747b07bbbe1019ee493afb2f3696b6bb41b5",
+      "after_excerpt_lines": [
+        [
+          53,
+          67
+        ]
+      ],
+      "after_excerpt_sha256": "9f50699970cbeb2081efe45bf59de4ee5dd8120d3ff49ed4e7232138906285c3",
+      "after_sha256": "83aad82845e6fb2f9aa2a97184ff2e98b7e0297f5f455ac12e96bd1b3345a776",
+      "after_source_sha": "f815f740381dcf797d8aa67b9a0eabf4869bc790",
+      "before_excerpt_lines": [
+        [
+          53,
+          61
+        ]
+      ],
+      "before_excerpt_sha256": "b29fdee52c5fdf0f0ef0c9c1c033b393338cfcdedf85e8f604616abdcc0a1438",
+      "before_sha256": "f1edca3f6aad9b7705df8c27e26b3c1e968673dbe0ab43914c64965a62537364",
+      "before_source_sha": "a844747b07bbbe1019ee493afb2f3696b6bb41b5",
+      "blind_review_status": "pending parent review",
+      "case_id": "python-sysmonitoring-lifecycle",
+      "diff_sha256": "016504d4849755dceeb583dc7e39dda8ab3b2f6c566a59c6053feda6c12a4cd1",
+      "input_sha256": "180b7963f775a25cf127203f58108c1c28218488cf7c185475f706d4204baf0a",
+      "label_provenance": "best-effort assistant assessment before any Jev outcome; not independent gold",
+      "monitor_intent": "Track Python sys.monitoring tool-ID lifecycle behavior. Alert me if clear_tool_id or free_tool_id semantics change, including version-specific behavior.",
+      "path": "Doc/library/sys.monitoring.rst",
+      "raw_after_url": "https://raw.githubusercontent.com/python/cpython/f815f740381dcf797d8aa67b9a0eabf4869bc790/Doc/library/sys.monitoring.rst",
+      "raw_before_url": "https://raw.githubusercontent.com/python/cpython/a844747b07bbbe1019ee493afb2f3696b6bb41b5/Doc/library/sys.monitoring.rst",
+      "reference_label": "material",
+      "reference_rationale": "The revision documents clear_tool_id as added in Python 3.14 and changes free_tool_id to call it, including prior behavior.",
+      "repo": "python/cpython",
+      "repository_license_spdx": "NOASSERTION",
+      "same_diff_group": null,
+      "source_pair_id": "python-monitoring",
+      "split": "validation",
+      "stratum": "versioned-behavior/date"
+    },
+    {
+      "after_commit_parent_and_path_verified_via_github_api": true,
+      "after_commit_parent_sha": "170d85a37deb77a1711ab86288a33fda5c0a381a",
+      "after_excerpt_lines": [
+        [
+          50,
+          53
+        ]
+      ],
+      "after_excerpt_sha256": "06c97480175dc9a1dfeb68b2d80de0179e22b50ee3177b4d999eab0d4412f0d0",
+      "after_sha256": "ff251c651287d06fb987be5cbe40ef57b929f2f3e6e4c260325b1984a420b019",
+      "after_source_sha": "bdf0105291061f9c89b2a3d4af4f465c54c8874a",
+      "before_excerpt_lines": [
+        [
+          50,
+          53
+        ]
+      ],
+      "before_excerpt_sha256": "15a596896ff311a872f1e1518c17d406437cb15c1b3fe264f86723cd26ffc6f7",
+      "before_sha256": "0c50ffeb29401493c72f83d7958728ece891cd034a63df3251fc2d8c38699e26",
+      "before_source_sha": "170d85a37deb77a1711ab86288a33fda5c0a381a",
+      "blind_review_status": "pending parent review",
+      "case_id": "python-cmdline-leading-whitespace",
+      "diff_sha256": "66da66a8beb553e72a954c43eae35d05fc3c51cf447aab9469b82dbcfa7a48a4",
+      "input_sha256": "19a4470d705c3b461661f2f78dcb90ee845cea4ad78bc03b9c69c90c7f1900f6",
+      "label_provenance": "best-effort assistant assessment before any Jev outcome; not independent gold",
+      "monitor_intent": "Track Python -c execution semantics, especially whether leading whitespace is significant in the supplied Python statements.",
+      "path": "Doc/using/cmdline.rst",
+      "raw_after_url": "https://raw.githubusercontent.com/python/cpython/bdf0105291061f9c89b2a3d4af4f465c54c8874a/Doc/using/cmdline.rst",
+      "raw_before_url": "https://raw.githubusercontent.com/python/cpython/170d85a37deb77a1711ab86288a33fda5c0a381a/Doc/using/cmdline.rst",
+      "reference_label": "material",
+      "reference_rationale": "The revision removes the prior claim that leading whitespace is significant, a direct correction to the monitored behavior.",
+      "repo": "python/cpython",
+      "repository_license_spdx": "NOASSERTION",
+      "same_diff_group": null,
+      "source_pair_id": "python-cmdline",
+      "split": "validation",
+      "stratum": "factual-correction/removal"
+    },
+    {
+      "after_commit_parent_and_path_verified_via_github_api": true,
+      "after_commit_parent_sha": "b529ddf789f79cace95db56691e52b455077dbd5",
+      "after_excerpt_lines": [
+        [
+          142,
+          160
+        ]
+      ],
+      "after_excerpt_sha256": "2e6c397b3d22924ceed0dd0b513dcb2be0a51e049f4fae1b5c0d2cc76837cadc",
+      "after_sha256": "47424f39f84dc04f3fadff93ff0c6970c4817f4e97c0fbb54bdb9911e93df691",
+      "after_source_sha": "aab0126a88618835d6ffe00d75d26a5711246aab",
+      "before_excerpt_lines": [
+        [
+          142,
+          155
+        ]
+      ],
+      "before_excerpt_sha256": "cb4f5d673e72be6656d07e4cd3e8625ad4aa3d04c5172f81843f19e4d9da4388",
+      "before_sha256": "c7d082cbd62451b5d23914762c325f846872e2bb08ea5c08991175a3312a805e",
+      "before_source_sha": "b529ddf789f79cace95db56691e52b455077dbd5",
+      "blind_review_status": "pending parent review",
+      "case_id": "cosign-airgap-trust-root",
+      "diff_sha256": "501b7ab48acae2f924d91f4727a65d6bea8dadfb2a9e6fc7f4ff412e60a368dc",
+      "input_sha256": "2b708479e0e57114bd6652dff6ce41b51dc2fc431357e07ca65d1bfdd30f97d0",
+      "label_provenance": "best-effort assistant assessment before any Jev outcome; not independent gold",
+      "monitor_intent": "I maintain air-gapped Cosign verification procedures. Alert me when offline verification or public-good TUF trusted-root retrieval/update requirements change.",
+      "path": "README.md",
+      "raw_after_url": "https://raw.githubusercontent.com/sigstore/cosign/aab0126a88618835d6ffe00d75d26a5711246aab/README.md",
+      "raw_before_url": "https://raw.githubusercontent.com/sigstore/cosign/b529ddf789f79cace95db56691e52b455077dbd5/README.md",
+      "reference_label": "material",
+      "reference_rationale": "The revision adds a warning that most workflows request keys from TUF, and that air-gapped users must retrieve and keep the trusted root current when bypassing TUF.",
+      "repo": "sigstore/cosign",
+      "repository_license_spdx": "Apache-2.0",
+      "same_diff_group": null,
+      "source_pair_id": "cosign-offline",
+      "split": "validation",
+      "stratum": "operational-security-qualification"
+    },
+    {
+      "after_commit_parent_and_path_verified_via_github_api": true,
+      "after_commit_parent_sha": "39037f1c76986c6ba1ca36aa06064186c1f6a553",
+      "after_excerpt_lines": [
+        [
+          26,
+          28
+        ]
+      ],
+      "after_excerpt_sha256": "1fd5f4d605bd30259277b4674e17957ad4ff5f733a55d7b95e12da9766b0f1fe",
+      "after_sha256": "d7d9f949783cb02c0fe780fe3a68c87e43cd2aebc8639f0822b20ce57949670f",
+      "after_source_sha": "69ac287e39078a8bfa6632e39b504ed93e023639",
+      "before_excerpt_lines": [
+        [
+          26,
+          28
+        ]
+      ],
+      "before_excerpt_sha256": "00197168fddda6cb8c3e428b78cf3ee40bd41de656a675cdc5a32c4cdaab0ef5",
+      "before_sha256": "b7adc8494040172cdd057fc1cc73126fab0ae2421b4014cbdf4da0ba8176d017",
+      "before_source_sha": "39037f1c76986c6ba1ca36aa06064186c1f6a553",
+      "blind_review_status": "pending parent review",
+      "case_id": "cosign-community-invite-intent",
+      "diff_sha256": "dc5886574aacc53f7a15fc3f2a25ffec64452e6e7e00c9b2319e56dc47bdc892",
+      "input_sha256": "db44d82994874c78f197438c9540f301d38fc734c373737301f86c56e3842374",
+      "label_provenance": "best-effort assistant assessment before any Jev outcome; not independent gold",
+      "monitor_intent": "I help contributors join the Sigstore community. Notify me when the README’s Sigstore Slack invite URL changes so I can verify the current onboarding link.",
+      "path": "README.md",
+      "raw_after_url": "https://raw.githubusercontent.com/sigstore/cosign/69ac287e39078a8bfa6632e39b504ed93e023639/README.md",
+      "raw_before_url": "https://raw.githubusercontent.com/sigstore/cosign/39037f1c76986c6ba1ca36aa06064186c1f6a553/README.md",
+      "reference_label": "material",
+      "reference_rationale": "The exact same README line changes the Slack invite URL, directly relevant to maintaining contributor onboarding.",
+      "repo": "sigstore/cosign",
+      "repository_license_spdx": "Apache-2.0",
+      "same_diff_group": "cosign-invite-intent-pair",
+      "source_pair_id": "cosign-link",
+      "split": "validation",
+      "stratum": "same-diff-intent-positive"
+    },
+    {
+      "after_commit_parent_and_path_verified_via_github_api": true,
+      "after_commit_parent_sha": "39037f1c76986c6ba1ca36aa06064186c1f6a553",
+      "after_excerpt_lines": [
+        [
+          26,
+          28
+        ]
+      ],
+      "after_excerpt_sha256": "1fd5f4d605bd30259277b4674e17957ad4ff5f733a55d7b95e12da9766b0f1fe",
+      "after_sha256": "d7d9f949783cb02c0fe780fe3a68c87e43cd2aebc8639f0822b20ce57949670f",
+      "after_source_sha": "69ac287e39078a8bfa6632e39b504ed93e023639",
+      "before_excerpt_lines": [
+        [
+          26,
+          28
+        ]
+      ],
+      "before_excerpt_sha256": "00197168fddda6cb8c3e428b78cf3ee40bd41de656a675cdc5a32c4cdaab0ef5",
+      "before_sha256": "b7adc8494040172cdd057fc1cc73126fab0ae2421b4014cbdf4da0ba8176d017",
+      "before_source_sha": "39037f1c76986c6ba1ca36aa06064186c1f6a553",
+      "blind_review_status": "pending parent review",
+      "case_id": "cosign-community-invite-crypto-intent",
+      "diff_sha256": "dc5886574aacc53f7a15fc3f2a25ffec64452e6e7e00c9b2319e56dc47bdc892",
+      "input_sha256": "c4577707da6619dcbf63526b8d70dc05261e3b4a2aa42168cc87f7dc71d74bec",
+      "label_provenance": "best-effort assistant assessment before any Jev outcome; not independent gold",
+      "monitor_intent": "I monitor Cosign’s signature-verification behavior and cryptographic assumptions only; community onboarding and Slack invite changes are outside this intent.",
+      "path": "README.md",
+      "raw_after_url": "https://raw.githubusercontent.com/sigstore/cosign/69ac287e39078a8bfa6632e39b504ed93e023639/README.md",
+      "raw_before_url": "https://raw.githubusercontent.com/sigstore/cosign/39037f1c76986c6ba1ca36aa06064186c1f6a553/README.md",
+      "reference_label": "immaterial",
+      "reference_rationale": "The same invite-only README diff does not affect signature verification behavior or cryptographic assumptions.",
+      "repo": "sigstore/cosign",
+      "repository_license_spdx": "Apache-2.0",
+      "same_diff_group": "cosign-invite-intent-pair",
+      "source_pair_id": "cosign-link",
+      "split": "validation",
+      "stratum": "same-diff-intent-negative"
+    },
+    {
+      "after_commit_parent_and_path_verified_via_github_api": true,
+      "after_commit_parent_sha": "cd8d3cd68c9468843e3c2e99d7c3841e3698035a",
+      "after_excerpt_lines": [
+        [
+          4,
+          7
+        ]
+      ],
+      "after_excerpt_sha256": "3eb7ba87511e2e13338a23182284c1c5dcbb295aa029354ec5940fbbb9733b93",
+      "after_sha256": "77284dc28831964676ce0f1a0ccb1013ce847e1faa63dd5cc0115e585429cc8e",
+      "after_source_sha": "fbdd10071f6eecd2f9374d11789b6779a1d78d24",
+      "before_excerpt_lines": [
+        [
+          4,
+          7
+        ]
+      ],
+      "before_excerpt_sha256": "a8f3442cfd42913a71e7098e3eb30ca3fbdaddf39f46e9627f265058a05cb9f9",
+      "before_sha256": "66c00b94e3393c5cd473cc179f5a023b74fbf811625b344e36c826f00c919097",
+      "before_source_sha": "cd8d3cd68c9468843e3c2e99d7c3841e3698035a",
+      "blind_review_status": "pending parent review",
+      "case_id": "k8s-nav-weight-content-intent",
+      "diff_sha256": "883c6fce4460b8eeb3704d48695cfe6ed04353f9dc5aeb82114bb3bbd28c5362",
+      "input_sha256": "265f5befeb2d07fbafe462e0cd30c57d7827eb6619a1ca2f4357d8d28810cbf9",
+      "label_provenance": "best-effort assistant assessment before any Jev outcome; not independent gold",
+      "monitor_intent": "Monitor EndpointSlice technical behavior and supported features. Do not notify me for menu-order metadata alone unless page content changes.",
+      "path": "content/en/docs/concepts/services-networking/endpoint-slices.md",
+      "raw_after_url": "https://raw.githubusercontent.com/kubernetes/website/fbdd10071f6eecd2f9374d11789b6779a1d78d24/content/en/docs/concepts/services-networking/endpoint-slices.md",
+      "raw_before_url": "https://raw.githubusercontent.com/kubernetes/website/cd8d3cd68c9468843e3c2e99d7c3841e3698035a/content/en/docs/concepts/services-networking/endpoint-slices.md",
+      "reference_label": "immaterial",
+      "reference_rationale": "Only the documentation weight metadata changes from 45 to 60; the page body and technical content are byte-identical.",
+      "repo": "kubernetes/website",
+      "repository_license_spdx": "CC-BY-4.0",
+      "same_diff_group": "k8s-nav-intent-pair",
+      "source_pair_id": "k8s-nav",
+      "split": "validation",
+      "stratum": "navigation-churn"
+    },
+    {
+      "after_commit_parent_and_path_verified_via_github_api": true,
+      "after_commit_parent_sha": "cd8d3cd68c9468843e3c2e99d7c3841e3698035a",
+      "after_excerpt_lines": [
+        [
+          4,
+          7
+        ]
+      ],
+      "after_excerpt_sha256": "3eb7ba87511e2e13338a23182284c1c5dcbb295aa029354ec5940fbbb9733b93",
+      "after_sha256": "77284dc28831964676ce0f1a0ccb1013ce847e1faa63dd5cc0115e585429cc8e",
+      "after_source_sha": "fbdd10071f6eecd2f9374d11789b6779a1d78d24",
+      "before_excerpt_lines": [
+        [
+          4,
+          7
+        ]
+      ],
+      "before_excerpt_sha256": "a8f3442cfd42913a71e7098e3eb30ca3fbdaddf39f46e9627f265058a05cb9f9",
+      "before_sha256": "66c00b94e3393c5cd473cc179f5a023b74fbf811625b344e36c826f00c919097",
+      "before_source_sha": "cd8d3cd68c9468843e3c2e99d7c3841e3698035a",
+      "blind_review_status": "pending parent review",
+      "case_id": "k8s-nav-weight-navigation-intent",
+      "diff_sha256": "883c6fce4460b8eeb3704d48695cfe6ed04353f9dc5aeb82114bb3bbd28c5362",
+      "input_sha256": "56cbc5596e6bdf52605e989c3043a0e8f502f498b9124343a279da09366bb257",
+      "label_provenance": "best-effort assistant assessment before any Jev outcome; not independent gold",
+      "monitor_intent": "I curate Kubernetes documentation navigation. Notify me when EndpointSlice’s navigation weight or menu ordering changes, even if the page body is unchanged.",
+      "path": "content/en/docs/concepts/services-networking/endpoint-slices.md",
+      "raw_after_url": "https://raw.githubusercontent.com/kubernetes/website/fbdd10071f6eecd2f9374d11789b6779a1d78d24/content/en/docs/concepts/services-networking/endpoint-slices.md",
+      "raw_before_url": "https://raw.githubusercontent.com/kubernetes/website/cd8d3cd68c9468843e3c2e99d7c3841e3698035a/content/en/docs/concepts/services-networking/endpoint-slices.md",
+      "reference_label": "material",
+      "reference_rationale": "The same weight-only revision directly changes the navigation metadata covered by this intent.",
+      "repo": "kubernetes/website",
+      "repository_license_spdx": "CC-BY-4.0",
+      "same_diff_group": "k8s-nav-intent-pair",
+      "source_pair_id": "k8s-nav",
+      "split": "validation",
+      "stratum": "same-diff-navigation-intent"
+    }
+  ],
+  "format": "jev-change-case-registry/1"
+}

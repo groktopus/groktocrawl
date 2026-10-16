@@ -1,0 +1,71 @@
+{
+  "answer": {
+    "answer": "Atlas Runner's supported concurrency changed once in the supplied record: version 1.0 supported up to 8 concurrent jobs, and version 1.1 raised that limit from 8 to 16 concurrent jobs (atlas-release-1, atlas-release-2). Both snapshots carry the same subject_id (atlas-runner) and lineage_id (atlas-release), so they describe the same product lineage; identity is based on these explicit identifiers, not name similarity. As of the most recent supplied snapshot (the 1.1 release notes), the current supported limit is 16 concurrent jobs (atlas-release-2). The 8-job figure remains historically valid as a statement about version 1.0 specifically (atlas-release-1). Unresolved: no snapshots after 1.1 exist in the record, so any later changes to the limit are unknown; no release dates are provided, so chronology rests on version numbering alone; and nothing indicates whether the limit varies by configuration or edition.",
+    "change_events": [
+      "Atlas Runner 1.1 raised the supported concurrency limit from 8 concurrent jobs (the limit in version 1.0) to 16 concurrent jobs. [atlas-release-1][atlas-release-2]"
+    ],
+    "citations": [
+      "atlas-release-1",
+      "atlas-release-2"
+    ],
+    "current_truths": [
+      "Per the latest supplied snapshot (Atlas Runner 1.1 release notes), Atlas Runner supports up to 16 concurrent jobs. [atlas-release-2]"
+    ],
+    "historical_truths": [
+      "Atlas Runner 1.0 supported up to 8 concurrent jobs. [atlas-release-1]",
+      "Atlas Runner 1.1 raised the supported limit from 8 to 16 concurrent jobs. [atlas-release-2]"
+    ],
+    "unresolved": [
+      "No snapshots after version 1.1 are supplied, so whether any later release changed the concurrency limit is unknown.",
+      "The snapshots contain no release dates; the ordering of the 8-to-16 change is inferred only from the version numbers 1.0 and 1.1 in the titles.",
+      "It is not stated whether version 1.1 is the latest release of Atlas Runner.",
+      "The sources do not indicate whether the 16-job limit depends on configuration, hardware, edition, or other conditions."
+    ]
+  },
+  "arm": "control",
+  "case_id": "changed-limit",
+  "completed_at": "2026-09-19T07:47:55.504138+00:00",
+  "position": 1,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "d89ca64f3c747a2a6baab240cece7e0c0b5c4b1047eea6df1d9675ef30b9cf48",
+    "finish_reason": "stop",
+    "latency_ms": 16200.761,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "f1b020f2085612bf28cfdc1d1eac3d2931b884b3561e58abc89a0139d5fb3b1d",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 1306,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 869
+      },
+      "cost": 0.0007328,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000653,
+        "upstream_inference_cost": 0.0007328,
+        "upstream_inference_prompt_cost": 7.98e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 532,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1838
+    }
+  },
+  "repetition": 1,
+  "schema_version": "research-thread-trial/1",
+  "started_at": "2026-09-19T07:47:39.302238+00:00",
+  "status": "completed",
+  "stratum": "changed",
+  "trial_id": "changed-limit-r1-control"
+}

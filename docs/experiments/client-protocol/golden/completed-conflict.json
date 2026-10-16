@@ -1,0 +1,35 @@
+{
+  "name": "completed-conflict",
+  "events": [
+    {
+      "protocol_version": "research/1",
+      "run_id": "run-price-001",
+      "sequence": 1,
+      "event": "accepted",
+      "state": "accepted"
+    },
+    {
+      "protocol_version": "research/1",
+      "run_id": "run-price-001",
+      "sequence": 2,
+      "event": "progress",
+      "state": "running",
+      "stage": "verification"
+    },
+    {
+      "protocol_version": "research/1",
+      "run_id": "run-price-001",
+      "sequence": 3,
+      "event": "done",
+      "state": "completed",
+      "result": {
+        "research_id": "research-price-001",
+        "artifact_set_id": "set-price-001",
+        "answer_coverage": "partial",
+        "stop_reason": "unresolved_conflict"
+      }
+    }
+  ],
+  "replay_after": "run-price-001:1",
+  "replay_sequences": [2, 3]
+}

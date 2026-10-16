@@ -42,8 +42,11 @@ import os
 import re
 import time
 
-import httpx
+# Keep this module alias as the established adapter test patch seam. Production
+# requests still go through source_httpx_client().
+import httpx  # noqa: F401
 
+from ..source_http import source_httpx_client
 from .base import AdapterContext, AdapterError, AdapterResult, SiteAdapter, adapter
 
 logger = logging.getLogger(__name__)
@@ -401,7 +404,7 @@ async def _fetch_raw_content(url: str, ctx: AdapterContext) -> dict | None:
     Returns {markdown, source, metadata} or None on failure.
     """
     try:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=30) as client:
+        async with source_httpx_client(follow_redirects=True, timeout=30) as client:
             resp = await client.get(
                 url,
                 headers={
@@ -447,7 +450,7 @@ async def _fetch_via_contents_api(
     headers = _api_headers()
 
     try:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
+        async with source_httpx_client(follow_redirects=True, timeout=15) as client:
             resp = await client.get(url, params=params, headers=headers)
             if resp.status_code != 200:
                 logger.debug(
@@ -548,7 +551,7 @@ async def _fetch_readme(owner: str, repo: str) -> dict | None:
     headers = _api_headers()
 
     try:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
+        async with source_httpx_client(follow_redirects=True, timeout=15) as client:
             resp = await client.get(url, headers=headers)
             if resp.status_code == 404:
                 logger.debug("No README for %s/%s", owner, repo)
@@ -621,7 +624,7 @@ async def _fetch_raw_readme(owner: str, repo: str, branches: list[str]) -> dict 
 
     try:
         async with asyncio.timeout(RAW_README_DEADLINE_SECONDS):
-            async with httpx.AsyncClient(
+            async with source_httpx_client(
                 follow_redirects=True, timeout=RAW_README_REQUEST_TIMEOUT_SECONDS
             ) as client:
                 for branch, filename in probe_plan:
@@ -673,7 +676,7 @@ async def _fetch_repo_metadata(owner: str, repo: str) -> dict | None:
     headers = _api_headers()
 
     try:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
+        async with source_httpx_client(follow_redirects=True, timeout=15) as client:
             resp = await client.get(url, headers=headers)
             if resp.status_code != 200:
                 return None

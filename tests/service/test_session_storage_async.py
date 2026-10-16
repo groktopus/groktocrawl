@@ -223,6 +223,13 @@ async def test_search_step_commits_refs_as_one_storage_batch(store, monkeypatch)
                         "url": f"https://example.test/{i}",
                         "title": f"Source {i}",
                         "description": "summary",
+                        "engine": "images",
+                        "engines": ["images", "brave"],
+                        "media": {
+                            "media_type": "image",
+                            "url": "https://example.test/full.jpg",
+                            "width": 640,
+                        },
                     }
                     for i in range(20)
                 ],
@@ -236,6 +243,12 @@ async def test_search_step_commits_refs_as_one_storage_batch(store, monkeypatch)
     before = len(store.redis.commands)
     outcome = await manager._step_search(session_id, {"query": "batch"}, "unused")
 
+    assert outcome["top_refs"][0]["media"]["width"] == 640
+    refs = await store.aget_refs(session_id)
+    assert refs["ref_1_1"]["media"]["url"] == "https://example.test/full.jpg"
+    assert refs["ref_1_1"]["engines"] == ["brave", "images"]
+    other_session = await store.acreate()
+    assert await store.aget_refs(other_session) == {}
     assert outcome["ref_count"] == 20
     assert len(await store.aget_refs(session_id)) == 20
     committed = store.redis.commands[before:]

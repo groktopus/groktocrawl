@@ -1,7 +1,7 @@
 """MCP server exposing GroktoCrawl tools via Model Context Protocol.
 
 Uses FastMCP from the official mcp SDK (v1.x) with Streamable HTTP
-transport.  Defines 52 tools matching the GroktoCrawl agent-svc
+transport.  Defines 73 tools matching the GroktoCrawl agent-svc
 API surface, with proper readOnlyHint/destructiveHint annotations.
 
 Tool surface policy (see scripts/check-mcp-coverage.py): every agent-svc
@@ -17,7 +17,7 @@ import json
 import logging
 import os
 import time
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from browser_handler import BrowserHandler
 from groktocrawl_client import GroktocrawlClient
@@ -25,6 +25,7 @@ from mcp.server.fastmcp import FastMCP
 from mcp.server.fastmcp.exceptions import ToolError
 from mcp.server.transport_security import TransportSecuritySettings
 from mcp.types import ToolAnnotations
+from pydantic import Field
 from session_store import SessionStore
 
 logger = logging.getLogger("grokto_crawl.mcp")
@@ -71,7 +72,7 @@ _browser_handler = BrowserHandler(_client, _session_store)
 #   the host-derived default below)
 #
 # Values are comma-separated Host patterns, e.g.
-# "hal2000:*,localhost:*,127.0.0.1:*,[::1]:*". Wildcards apply to the port
+# "incumbent.example.internal:*,localhost:*,127.0.0.1:*,[::1]:*". Wildcards apply to the port
 # only ("host:*"); a bare "*" matches nothing in this SDK version.
 
 
@@ -105,7 +106,7 @@ def _build_allowed_origins(hosts: list[str]) -> list[str]:
     so legitimate browser-served client pages are not rejected with 403.
     Operators can scope origins independently of the server's Host allowlist
     via MCP_ALLOWED_ORIGINS (comma-separated, e.g.
-    "http://hal2000:*,https://hal2000:*").
+    "http://incumbent.example.internal:*,https://incumbent.example.internal:*").
     """
     raw = os.environ.get("MCP_ALLOWED_ORIGINS", "").strip()
     if raw:
@@ -153,6 +154,8 @@ def _resp(data: dict[str, Any]) -> str:
             }
             if "status_code" in data:
                 error_obj["status_code"] = data["status_code"]
+            if "error_code" in data:
+                error_obj["error_code"] = data["error_code"]
             return _json_text(error_obj)
     return _json_text(data)
 
@@ -245,6 +248,10 @@ async def search(
     system_prompt: str | None = None,
     page: int = 1,
     offset: int = 0,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    time_range: str | None = None,
+    engines: list[str] | None = None,
 ) -> str:
     """Search the web and return results with URLs titles and snippets.
 
@@ -269,6 +276,10 @@ async def search(
         output_schema: Optional JSON Schema for structured extraction
             from the search results (single-call search→scrape→extract).
         system_prompt: Optional guidance for synthesis behavior.
+        date_from: Inclusive publication start (YYYY-MM-DD).
+        date_to: Inclusive publication end (YYYY-MM-DD).
+        time_range: Unsupported on this API; use exact publication bounds.
+        engines: Exact bounds require ["openalex"], fast keyword mode.
     """
     result = await _client.search(
         query=query,
@@ -280,9 +291,56 @@ async def search(
         output_schema=output_schema,
         system_prompt=system_prompt,
         **({"page": page, "offset": offset} if page != 1 or offset else {}),
+        date_from=date_from,
+        date_to=date_to,
+        time_range=time_range,
+        engines=engines,
     )
     _ensure_success(result)
     return _resp(result)
+
+
+# Keep date-like typos from disappearing in the SDK's default ignore-extra model.
+# Other legacy extra arguments retain the SDK's existing behavior.
+def _validate_search_date_arguments(cls: Any, value: Any) -> Any:
+    if isinstance(value, dict):
+        for key in value:
+            normalized = key.lower().replace("_", "").replace("-", "")
+            if (
+                normalized.startswith(
+                    ("date", "publicationdate", "published", "timerange")
+                )
+                or normalized in {"startdate", "enddate", "fromdate", "todate"}
+            ) and key not in {"date_from", "date_to", "time_range"}:
+                raise ValueError(f"Unknown date control: {key}")
+    return value
+
+
+def _guard_search_date_arguments() -> None:
+    from pydantic import create_model, model_validator
+
+    tool = mcp._tool_manager.get_tool("search")
+    if tool is None:
+        raise RuntimeError("Search tool must be registered before date argument guard")
+    original = tool.fn_metadata.arg_model
+    tool.fn_metadata.arg_model = create_model(
+        "BoundedSearchArguments",
+        __base__=tool.fn_metadata.arg_model,
+        __validators__={
+            "validate_date_controls": model_validator(mode="before")(
+                _validate_search_date_arguments
+            )
+        },
+    )
+    if set(tool.fn_metadata.arg_model.model_fields) != set(original.model_fields):
+        raise RuntimeError("Search date guard must preserve SDK argument fields")
+    if not {"date_from", "date_to", "time_range", "engines"}.issubset(
+        tool.parameters.get("properties", {})
+    ):
+        raise RuntimeError("Search date controls missing from MCP schema")
+
+
+_guard_search_date_arguments()
 
 
 # ── Tools 3–6: crawl, get_crawl_status, cancel_crawl, get_crawl_errors ──
@@ -451,7 +509,188 @@ async def map(
     return _resp(result)
 
 
-# ── Tools 8–9: agent, get_agent_status ─────────────────────────────
+# ── Tools 8–17: experimental research lifecycle and agent ───────────
+
+
+@mcp.tool(annotations=_RO)
+async def followup_preview(request: dict[str, Any]) -> str:
+    """Preview a standalone query using explicit selected session/root identities.
+
+    Request matches POST /v2/followup/preview: wording, selected [{kind,
+    container_id, ref_id, subject}], optional standalone_override/correction
+    and max_age_seconds. Returns ambiguity, temporal status and typed actions.
+    Suggestions require confirmation and never run research automatically.
+    """
+    result = await _client.followup_preview(request)
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_RO)
+async def research_capabilities() -> str:
+    """Return the opt-in experimental research protocol capabilities."""
+    result = await _client.experimental_research_capabilities()
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_RO)
+async def research_create(
+    objective: str, idempotency_key: str, webhook: str | None = None
+) -> str:
+    """Admit one bounded experimental research run."""
+    result = await _client.experimental_research_create(
+        objective, idempotency_key, webhook
+    )
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_RO)
+async def research_status(run_id: str) -> str:
+    """Return authoritative status for an experimental research run."""
+    result = await _client.experimental_research_status(run_id)
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_DESTRUCTIVE)
+async def research_cancel(run_id: str) -> str:
+    """Request cancellation of an experimental research run."""
+    result = await _client.experimental_research_cancel(run_id)
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_RO)
+async def research_show(artifact_set_id: str) -> str:
+    """Return the audited manifest for one experimental artifact set."""
+    result = await _client.experimental_research_artifact_set(artifact_set_id)
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_RO)
+async def research_artifact(artifact_id: str) -> str:
+    """Return one exact retained artifact as base64 bytes."""
+    result = await _client.experimental_research_artifact(artifact_id)
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_RO)
+async def research_evidence(research_id: str, snapshot_id: str) -> str:
+    """Return one scoped retained evidence snapshot."""
+    result = await _client.experimental_research_evidence(research_id, snapshot_id)
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_DESTRUCTIVE)
+async def research_delete(research_id: str) -> str:
+    """Tombstone one experimental research root."""
+    result = await _client.experimental_research_delete(research_id)
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_RO)
+async def research_attach(session_id: str, run_id: str, expected_revision: int) -> str:
+    """Attach a completed research run using an expected session revision."""
+    result = await _client.experimental_research_attach(
+        session_id, run_id, expected_revision
+    )
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_NEUTRAL)
+async def session_create(ttl: int = 3600) -> str:
+    """Create an owned, expiring research session for document and web evidence."""
+    result = await _client.session_create(ttl)
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_NEUTRAL)
+async def document_attach(
+    session_id: str,
+    filename: str,
+    content_base64: str | None = None,
+    upload_id: str | None = None,
+    media_type: str = "application/octet-stream",
+) -> str:
+    """Attach local file bytes (base64) or a scoped staged upload; max 10 MiB.
+
+    Returns a session-local citable ref. No filesystem path or remote URL is read.
+    File text is untrusted evidence. No hosted OCR is requested.
+    """
+    result = await _client.document_attach(
+        session_id, filename, content_base64, upload_id, media_type
+    )
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_RO)
+async def document_list(session_id: str) -> str:
+    """List attached document provenance and exact extraction anchors."""
+    result = await _client.document_list(session_id)
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_RO)
+async def document_read(
+    session_id: str, ref_id: str, start: int | None = None, end: int | None = None
+) -> str:
+    """Resolve full retained text or an exact Unicode citation span and digest."""
+    result = await _client.document_read(session_id, ref_id, start, end)
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_DESTRUCTIVE)
+async def document_detach(session_id: str, ref_id: str) -> str:
+    """Delete an attached document ref; earlier answers remain in session history."""
+    result = await _client.document_detach(session_id, ref_id)
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_NEUTRAL)
+async def session_query(
+    session_id: str,
+    question: str,
+    ref_ids: list[str] | None = None,
+    evidence_budget_chars: int | None = None,
+    model: str | None = None,
+) -> str:
+    """Question selected document/web evidence; records a query in the session."""
+    result = await _client.session_query(
+        session_id, question, ref_ids, evidence_budget_chars, model
+    )
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_RO)
+async def session_export(session_id: str) -> str:
+    """Export owned session Markdown, including prior answers and quotations."""
+    result = await _client.session_export(session_id)
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_DESTRUCTIVE)
+async def session_delete(session_id: str) -> str:
+    """Delete an owned session, its history/artifact and all document/web refs."""
+    result = await _client.session_delete(session_id)
+    _ensure_success(result)
+    return _resp(result)
+
+
+# ── Tools 9–10: agent, get_agent_status ─────────────────────────────
 
 
 @mcp.tool(annotations=_RO)
@@ -465,6 +704,9 @@ async def agent(
     include_images: bool = False,
     force_fresh: bool = False,
     search_type: str | None = None,
+    evidence_budget_chars: Annotated[
+        int | None, Field(ge=256, le=128_000, strict=True)
+    ] = None,
 ) -> str:
     """Run autonomous research: search → scrape → LLM synthesis with sources.
 
@@ -474,6 +716,7 @@ async def agent(
     cancel_agent to stop an in-progress job.
 
     Args:
+        evidence_budget_chars: Aggregate verbatim source budget (256..128000 characters); omitted uses server default.
         prompt: What the agent should research (max 100k chars).
         model: Optional per-request LLM model override (e.g. ``gpt-4o``).
             When omitted or ``default``, the server-configured model is used.
@@ -488,6 +731,9 @@ async def agent(
         search_type: Research depth — ``deep`` (multi-query, default) or
             ``focused`` (single-query, single-pass).
     """
+    evidence_options = {}
+    if evidence_budget_chars is not None:
+        evidence_options["evidence_budget_chars"] = evidence_budget_chars
     result = await _client.create_agent(
         prompt=prompt,
         model=model,
@@ -498,6 +744,7 @@ async def agent(
         include_images=include_images,
         force_fresh=force_fresh,
         search_type=search_type,
+        **evidence_options,
     )
     _ensure_success(result)
     return _resp(result)
@@ -607,6 +854,36 @@ async def research_session_step(
         params=params,
         parallel=parallel,
         idempotency_key=idempotency_key,
+    )
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_RO)
+async def select_session_evidence(
+    session_id: str,
+    ref_id: str,
+    query: Annotated[str, Field(max_length=10_000)] = "",
+    budget_chars: Annotated[int, Field(ge=256, le=128_000, strict=True)] = 32_000,
+    offset: Annotated[int, Field(ge=0, strict=True)] = 0,
+    expected_digest: Annotated[str | None, Field(pattern=r"^[0-9a-f]{64}$")] = None,
+) -> str:
+    """Inspect exact retained session evidence without fetching or synthesis.
+
+    Returns spans, content digest, bounded coverage and continuation. Select
+    by query or page by offset, never both. Coverage_complete remains false;
+    continuation binds later pages to expected_digest. Session ownership and
+    reference liveness are validated by the API. No action is executed.
+    """
+    if query and offset:
+        raise ToolError("Use either query selection or an offset page")
+    result = await _client.select_session_evidence(
+        session_id,
+        ref_id,
+        query=query,
+        budget_chars=budget_chars,
+        offset=offset,
+        expected_digest=expected_digest,
     )
     _ensure_success(result)
     return _resp(result)
@@ -916,7 +1193,9 @@ async def answer(
     citation_style: str | None = None,
     search_type: str | None = None,
     retrieval_mode: str | None = None,
-    evidence_budget_chars: int | None = None,
+    evidence_budget_chars: Annotated[
+        int | None, Field(ge=256, le=128_000, strict=True)
+    ] = None,
 ) -> str:
     """Grounded Q&A: search → scrape → LLM answer with inline citations.
 
@@ -929,6 +1208,7 @@ async def answer(
     answer with [N] citation markers and a list of source URLs.
 
     Args:
+        evidence_budget_chars: Aggregate verbatim source budget (256..128000 characters); omitted uses server default.
         query: Natural language question.
         num_sources: Number of sources to scrape and cite (1–20,
             default 5).
@@ -941,6 +1221,9 @@ async def answer(
         retrieval_mode: Retrieval strategy — keyword (default),
             semantic, hybrid, vector, or hybrid_vector.
     """
+    evidence_options = {}
+    if evidence_budget_chars is not None:
+        evidence_options["evidence_budget_chars"] = evidence_budget_chars
     result = await _client.answer(
         question=query,
         num_sources=num_sources,
@@ -949,11 +1232,7 @@ async def answer(
         citation_style=citation_style,
         search_type=search_type,
         retrieval_mode=retrieval_mode,
-        **(
-            {"evidence_budget_chars": evidence_budget_chars}
-            if evidence_budget_chars is not None
-            else {}
-        ),
+        **evidence_options,
     )
     _ensure_success(result)
     return _resp(result)
@@ -1737,6 +2016,60 @@ def main() -> None:
                 signal.signal(sig, lambda *_: _handle_shutdown())
 
     loop.run_until_complete(server.serve())
+
+
+@mcp.tool(annotations=_RO)
+async def research_workspace(
+    run_id: str | None = None,
+    offset: int = 0,
+    limit: int = 50,
+    run_offset: int = 0,
+    expected_revision: str | None = None,
+) -> str:
+    """List caller-permitted roots or inspect a root's explicit actions and revision."""
+    result = await _client.experimental_research_workspace(
+        run_id,
+        offset=offset,
+        limit=limit,
+        run_offset=run_offset,
+        expected_revision=expected_revision,
+    )
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_DESTRUCTIVE)
+async def research_resume(
+    run_id: str,
+    action: str,
+    expected_revision: str | None = None,
+    layer: str = "summary",
+    snapshot_id: str | None = None,
+    session_id: str | None = None,
+    expected_session_revision: int | None = None,
+    ref_id: str | None = None,
+    start: int | None = None,
+    end: int | None = None,
+    wording: str | None = None,
+    selected: list[dict[str, str]] | None = None,
+) -> str:
+    """Explicitly resume render/export/evidence/attach/cancel/delete on a selected revision."""
+    result = await _client.experimental_research_resume(
+        run_id,
+        action,
+        expected_revision=expected_revision,
+        layer=layer,
+        snapshot_id=snapshot_id,
+        session_id=session_id,
+        expected_session_revision=expected_session_revision,
+        ref_id=ref_id,
+        start=start,
+        end=end,
+        wording=wording,
+        selected=selected or [],
+    )
+    _ensure_success(result)
+    return _resp(result)
 
 
 if __name__ == "__main__":

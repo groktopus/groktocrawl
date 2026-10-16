@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-db92a1db2c9b5ef158ea",
+  "case_id": "later-resolution",
+  "completed_at": "2026-09-19T09:13:23.088654+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 100,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "The candidate correctly answers yes: fern-faq-new supports the current truth that Fern CI retains build logs for 30 days, and the change event fully captures publication of the previously missing period. The old snapshot's lack of a specified period is preserved strictly as historical, with no stale-current leakage, no lost history, and no merge of build-log retention with other data (the candidate explicitly limits the published period to build logs). All factual claims, including absence claims about source scope and effective date, are verifiable against the supplied sources, so unsupported_claims is 0. The sole defect is the unresolved list: the reference records nothing unresolved, while the candidate invents three peripheral questions (retention for non-build-log data, effective date, retention clock start), so unresolved_accuracy earns no credit. Usefulness remains high given the direct answer, dual citations, and clear historical framing.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 0,
+    "unsupported_claims": 0,
+    "usefulness": 95
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "fd2fa28e83c8c3a8d911974291ff332dbbab0234e7955af7c76969395721d8a6",
+    "finish_reason": "stop",
+    "latency_ms": 27856.432,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "d93eb1a85fcadb448c9f1db7dfa030d407e948e67fbe759ad816c2b3db530264",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 2906,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 2643
+      },
+      "cost": 0.00159655,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.001453,
+        "upstream_inference_cost": 0.00159655,
+        "upstream_inference_prompt_cost": 0.00014355
+      },
+      "is_byok": false,
+      "prompt_tokens": 957,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 3863
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:12:55.231618+00:00",
+  "status": "completed",
+  "trial_id": "later-resolution-r2-control"
+}

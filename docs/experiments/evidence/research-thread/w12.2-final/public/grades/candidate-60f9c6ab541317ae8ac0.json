@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-60f9c6ab541317ae8ac0",
+  "case_id": "rotated-link",
+  "completed_at": "2026-09-19T09:25:15.820671+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 100,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "The candidate correctly captures the change (URL no longer serves the advisory), preserves the historical G-12 snapshot content as historical, and does not leak it as current. The core unresolved point (current advisory status cannot be established) is present, but the candidate invents several peripheral unresolved questions (reason for unavailability, product identity, possible new URL) not grounded in the reference, lowering unresolved_accuracy. No false merges, no stale-current leakage, no lost history, and all claims are supported by the two snapshots.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 60,
+    "unsupported_claims": 0,
+    "usefulness": 90
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "9bc4a3ed4b6bffcb872dae9297e61ee2b5be42cd657006c62e34b058b18ecd62",
+    "finish_reason": "stop",
+    "latency_ms": 15451.926,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "b22bf9f953bb3af23c3691029efc59f17db97605368509f948f7f60c905d4459",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 232,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 54
+      },
+      "cost": 0.0001336,
+      "cost_details": {
+        "upstream_inference_completions_cost": 5.8e-05,
+        "upstream_inference_cost": 0.0001336,
+        "upstream_inference_prompt_cost": 7.56e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 1008,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1240
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:25:00.367571+00:00",
+  "status": "completed",
+  "trial_id": "rotated-link-r3-treatment"
+}

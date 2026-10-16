@@ -1,0 +1,136 @@
+{
+  "case_id": "conflict-2",
+  "control_artifact": {
+    "admitted_evidence": [
+      {
+        "canonical_source_id": "canonical-conflict-2-generalist-conflict-2-scope",
+        "derivative": false,
+        "evidence_id": "conflict-2-generalist-conflict-2-scope",
+        "obligation_id": "conflict-2-scope",
+        "publisher_id": "publisher-conflict-2-generalist",
+        "source_id": "source-conflict-2-generalist-conflict-2-scope",
+        "span": "Pinned supports evidence for conflict-2-scope in conflict-2.",
+        "stance": "supports"
+      }
+    ],
+    "conflicting_obligation_ids": [],
+    "covered_obligation_ids": [
+      "conflict-2-scope"
+    ],
+    "handoff_failures": [],
+    "rejected_evidence": {},
+    "total_calls": 2
+  },
+  "control_calls": 2,
+  "preferred": "treatment",
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "962523cbee46289cc4a153b5b87bcb5c5298865afaa40fd0a8c5074300e2fee0",
+    "finish_reason": "stop",
+    "latency_ms": 29661.869,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "ad5df87d206a950157a5ed680c46776535e10baaca11b77a4e115458b59411b7",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 267,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 35
+      },
+      "cost": 0.000127125,
+      "cost_details": {
+        "upstream_inference_completions_cost": 6.675e-05,
+        "upstream_inference_cost": 0.000127125,
+        "upstream_inference_prompt_cost": 6.0375e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 805,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1072
+    }
+  },
+  "repetition": 2,
+  "schema_version": "specialist-value-review/1",
+  "scores": {
+    "control": {
+      "reason": "Artifact B covers only conflict-2-scope, leaving conflict-2-authority and conflict-2-risk uncovered. Its single supports item is source-bound and non-derivative, but it omits the known conflict on conflict-2-scope (no challenges evidence) and reports no failures despite incomplete coverage, hiding its failure state. Partial coverage and suppressed conflict reduce both scores.",
+      "trustworthiness": 0,
+      "usefulness": 0
+    },
+    "treatment": {
+      "reason": "Artifact A covers all three obligations (conflict-2-scope, conflict-2-authority, conflict-2-risk) with source-bound, non-derivative evidence. It preserves the conflict on conflict-2-scope by including both a supports and a challenges item from distinct publishers, and reports no unmet obligations or failures. This is complete obligation coverage with exact, pinned evidence and visible conflict state.",
+      "trustworthiness": 0,
+      "usefulness": 0
+    }
+  },
+  "separable": true,
+  "status": "completed",
+  "stratum": "contradiction",
+  "treatment_artifact": {
+    "admitted_evidence": [
+      {
+        "canonical_source_id": "canonical-conflict-2-discovery-conflict-2-scope",
+        "derivative": false,
+        "evidence_id": "conflict-2-discovery-conflict-2-scope",
+        "obligation_id": "conflict-2-scope",
+        "publisher_id": "publisher-conflict-2-discovery",
+        "source_id": "source-conflict-2-discovery-conflict-2-scope",
+        "span": "Pinned supports evidence for conflict-2-scope in conflict-2.",
+        "stance": "supports"
+      },
+      {
+        "canonical_source_id": "canonical-conflict-2-authority-conflict-2-authority",
+        "derivative": false,
+        "evidence_id": "conflict-2-authority-conflict-2-authority",
+        "obligation_id": "conflict-2-authority",
+        "publisher_id": "publisher-conflict-2-authority",
+        "source_id": "source-conflict-2-authority-conflict-2-authority",
+        "span": "Pinned supports evidence for conflict-2-authority in conflict-2.",
+        "stance": "supports"
+      },
+      {
+        "canonical_source_id": "canonical-conflict-2-risk-conflict-2-risk",
+        "derivative": false,
+        "evidence_id": "conflict-2-risk-conflict-2-risk",
+        "obligation_id": "conflict-2-risk",
+        "publisher_id": "publisher-conflict-2-risk",
+        "source_id": "source-conflict-2-risk-conflict-2-risk",
+        "span": "Pinned supports evidence for conflict-2-risk in conflict-2.",
+        "stance": "supports"
+      },
+      {
+        "canonical_source_id": "canonical-conflict-2-counter-conflict-2-scope",
+        "derivative": false,
+        "evidence_id": "conflict-2-counter-conflict-2-scope",
+        "obligation_id": "conflict-2-scope",
+        "publisher_id": "publisher-conflict-2-counter",
+        "source_id": "source-conflict-2-counter-conflict-2-scope",
+        "span": "Pinned challenges evidence for conflict-2-scope in conflict-2.",
+        "stance": "challenges"
+      }
+    ],
+    "conflicting_obligation_ids": [
+      "conflict-2-scope"
+    ],
+    "covered_obligation_ids": [
+      "conflict-2-authority",
+      "conflict-2-risk",
+      "conflict-2-scope"
+    ],
+    "handoff_failures": [],
+    "rejected_evidence": {},
+    "total_calls": 2
+  },
+  "treatment_calls": 3,
+  "trial_id": "conflict-2-r2"
+}

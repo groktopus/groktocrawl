@@ -26,6 +26,8 @@ def test_stack_readiness():
     )
     payload = _payload(response)
     assert payload.get("status") == "ok", f"stack readiness payload: {payload}"
+    assert payload.get("runtime", {}).get("model")
+    assert payload.get("runtime", {}).get("revision")
     print("stack readiness: status=ok")
 
 

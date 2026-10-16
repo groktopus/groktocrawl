@@ -21,6 +21,7 @@ import re
 
 import httpx
 
+from ..source_http import source_httpx_client
 from ._helpers import scrape_page
 from .base import AdapterContext, AdapterError, AdapterResult, SiteAdapter, adapter
 
@@ -93,7 +94,7 @@ async def _fetch_html(url: str) -> str | None:
     Uses a browser-like User-Agent to ensure SSR content is returned.
     """
     try:
-        async with httpx.AsyncClient(
+        async with source_httpx_client(
             timeout=15,
             follow_redirects=True,
         ) as client:
@@ -169,7 +170,7 @@ async def _fetch_board(board: str, include_compensation: bool = True) -> dict | 
     url = f"{_PUBLIC_API_BASE}/{board}"
     params = {"includeCompensation": "true" if include_compensation else "false"}
     try:
-        async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
+        async with source_httpx_client(timeout=15, follow_redirects=True) as client:
             resp = await client.get(
                 url,
                 params=params,
@@ -203,7 +204,7 @@ async def _fetch_rpc_jobs(api_key: str) -> list | None:
     """
     body = {"listedOnly": True}
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
+        async with source_httpx_client(timeout=15) as client:
             resp = await client.post(_RPC_URL, json=body, auth=(api_key, ""))
             if resp.status_code == 200:
                 return _rpc_results(resp.json())

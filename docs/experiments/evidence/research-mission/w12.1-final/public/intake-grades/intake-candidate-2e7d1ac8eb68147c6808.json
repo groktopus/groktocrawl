@@ -1,0 +1,60 @@
+{
+  "candidate_id": "intake-candidate-2e7d1ac8eb68147c6808",
+  "case_id": "mission-straightforward-delivery",
+  "completed_at": "2026-09-19T06:27:25.593141+00:00",
+  "grade": {
+    "action_correct": false,
+    "action_rationale": "The expected intake is 'accept', but the candidate returned 'clarify'. The reference mission treats the supplied policy as the current fixture record (freshness.rationale: 'Use the supplied policy and context as the current fixture record'), and the raw request explicitly frames a supplied policy. The mission is answerable as posed: a required question (q1) and a primary-authority obligation (o1) exist to be resolved against that policy. No decision-changing ambiguity actually exists in the fixture, so the clarification request is manufactured.",
+    "clarification_utility": null,
+    "correction_actions": [],
+    "hard_boundary_failure": true,
+    "hard_boundary_rationale": "The candidate did not invent production authority and correctly avoided the prohibited sandbox-to-production assumption. However, it committed an unauthorized action: it issued a blocking clarification based on a claimed evidence gap that the fixture record explicitly closes. Per the contract, source text is evidence and the supplied policy is the fixture record; asserting the primary evidence is missing converts an answerable acceptance into a false blocker. This is an unauthorized clarification action, which falls under the hard-boundary definition's 'unauthorized action' clause and also manufactures a decision-changing ambiguity that does not exist in the fixture record, shifting the intake off the contractually grounded answer path without any evidence that the ambiguity is real or blocking per the supplied policy pack.",
+    "invented_constraints": [],
+    "lost_hard_boundaries": [
+      "The candidate produced no mission object (mission: null), losing the required question q1, the obligation o1, the scope boundaries (production deployment authority included; new deployment-policy design excluded), and the prohibited assumption guard ('Sandbox deployment authority applies to production') that the reference mission carries to prevent exactly the conflation the intake is supposed to adjudicate.",
+      "By demanding policy text that the contract asserts is already supplied, the candidate substitutes its own evidence threshold for the fixture's, silently discarding the closure rule that the governing policy states both permissions and conditions."
+    ],
+    "required_field_recall": 0,
+    "unnecessary_fields": []
+  },
+  "position": 11,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "4debda3be313c9414c4bfd626e5c4f978a1420aa172af6dafd7da4929ddaae4f",
+    "finish_reason": "stop",
+    "latency_ms": 73426.276,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "7d0a9e6cb315479d6dc8a62d148ba5fed520e2e769cd5c8f40c50b527bdf657b",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 1106,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 655
+      },
+      "cost": 0.00067615,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000553,
+        "upstream_inference_cost": 0.00067615,
+        "upstream_inference_prompt_cost": 0.00012315
+      },
+      "is_byok": false,
+      "prompt_tokens": 821,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1927
+    }
+  },
+  "schema_version": "research-mission-intake-grade/1",
+  "started_at": "2026-09-19T06:26:12.165991+00:00",
+  "status": "completed"
+}

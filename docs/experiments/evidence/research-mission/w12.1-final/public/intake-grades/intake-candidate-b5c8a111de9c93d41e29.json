@@ -1,0 +1,82 @@
+{
+  "candidate_id": "intake-candidate-b5c8a111de9c93d41e29",
+  "case_id": "mission-compound-recovery-portability",
+  "completed_at": "2026-09-19T06:26:12.165645+00:00",
+  "grade": {
+    "action_correct": false,
+    "action_rationale": "Expected intake is 'accept' and the reference mission is fully specified with clarifications set to [], demonstrating the request normalizes without blocking. The candidate returned action 'clarify' with mission null, producing no normalized mission at all.",
+    "clarification_utility": null,
+    "correction_actions": [
+      "Re-emit action 'accept' with a mission equivalent to the reference: decision on approving/rejecting the model-provider switch for the release workflow",
+      "q1: how ambiguous writes must recover, closed by operation identity and remote reconciliation before retry, supported by policy and illustrated by the test record",
+      "q2: what provider portability must preserve: frozen suite, provenance, resource limits, tool-result identity, cancellation semantics, with every provider-change condition retained",
+      "o3 as counterevidence: reject unsupported enterprise-ready and faster claims, naming the brochure's missing comparison fields",
+      "freshness mode 'current' over the supplied policy and context as the fixture record; contradiction_policy preserve_and_report; budget, stop_when, and abstain_when as specified; no clarifying question"
+    ],
+    "hard_boundary_failure": true,
+    "hard_boundary_rationale": "Candidate issued an unauthorized action (clarify where accept was expected and the reference authorizes no clarifications), invented a missing-evidence premise contradicted by the fixture design, and imposed an invented scope gate on internal artifacts.",
+    "invented_constraints": [
+      "assertion that 'No sources were supplied', contradicted by the reference freshness rationale 'Use the supplied policy and context as the current fixture record' and stop_when 'The fixed source pack has been accounted for'",
+      "requirement that recovery and preservation obligations be scoped to internal artifacts (design docs, runbooks, ADRs, incident reviews) before the mission is researchable; the reference closes obligations on the supplied policy and test record with no such dependency",
+      "framing that only 'generic external research' is available, ignoring the fixed source pack the reference is built to consume"
+    ],
+    "lost_hard_boundaries": [
+      "decision: approve or reject a model-provider switch for the release workflow",
+      "scope exclusions: vendor claims without a reproducible comparison",
+      "obligation o1: operation identity and remote reconciliation before retrying an ambiguous write",
+      "obligation o2: frozen suite, provenance, resource limits, tool-result identity, cancellation semantics",
+      "obligation o3: reject unsupported enterprise-ready and faster claims as sufficient approval evidence (counterevidence role)",
+      "source_policy: allowed authority primary/official/independent; derivatives not independent; inaccessible sources cannot close obligations",
+      "freshness mode 'current' using the supplied policy and context as the fixture record",
+      "contradiction_policy: preserve_and_report",
+      "prohibited assumptions operationalized: a local timeout does not prove the remote write failed; a vendor brochure does not satisfy the frozen evaluation",
+      "abstain_when: refuse to invent authority, approval, or missing measurements",
+      "budget and stop_when accounting for the fixed source pack"
+    ],
+    "required_field_recall": 0,
+    "unnecessary_fields": [
+      "clarifying_question: reference mission sets clarifications to [], so no blocking question is warranted",
+      "rationale claim that researchability is 'decision-changing': false under the fixture design, which resolves normativity from the supplied policy and context"
+    ]
+  },
+  "position": 1,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "462460300c4ef45bdee20d63cdbd5ff26699e4366f24ec8a563bbbb2e425f525",
+    "finish_reason": "stop",
+    "latency_ms": 60358.962,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "bbe74f8d17ef37577263bbe897098cb8311c145c963fef8df4ce18cb5bc72a96",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 3797,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 3088
+      },
+      "cost": 0.0020446,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0018985,
+        "upstream_inference_cost": 0.0020446,
+        "upstream_inference_prompt_cost": 0.0001461
+      },
+      "is_byok": false,
+      "prompt_tokens": 974,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 4771
+    }
+  },
+  "schema_version": "research-mission-intake-grade/1",
+  "started_at": "2026-09-19T06:25:11.805227+00:00",
+  "status": "completed"
+}

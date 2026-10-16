@@ -1,0 +1,11 @@
+{
+  "phase": "write_failure",
+  "response": {
+    "body": {
+      "detail": "Vector index unavailable"
+    },
+    "digest": "3c3dd3c558a06f9eabd9be685680475fabe58bf4aaac8d906cc0fc00ac463032",
+    "elapsed_ms": 17.974,
+    "status": 503
+  }
+}

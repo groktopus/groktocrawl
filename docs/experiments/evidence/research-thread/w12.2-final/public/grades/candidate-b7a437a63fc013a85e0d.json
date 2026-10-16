@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-b7a437a63fc013a85e0d",
+  "case_id": "stable-anchor",
+  "completed_at": "2026-09-19T09:13:01.857140+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 100,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "Candidate correctly reports no change, SHA-256 current and historical, with proper citations. Unresolved items are mild speculative peripheral questions (algorithm enumeration, undocumented change), not grounded gaps. Minor unsupported claim: references a 'prior thread' currency question not present in evidence.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 75,
+    "unsupported_claims": 1,
+    "usefulness": 90
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "3e196ff3a52db3f37e637e6659098b8dd6171127c763ca69afb367ba5ec3a210",
+    "finish_reason": "stop",
+    "latency_ms": 6624.461,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "b1810baffd585ff3dce984a72e1263d144d982e0e44612461e8afb55793517ea",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 128,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 1
+      },
+      "cost": 0.0001501,
+      "cost_details": {
+        "upstream_inference_completions_cost": 4.48e-05,
+        "upstream_inference_cost": 0.0001501,
+        "upstream_inference_prompt_cost": 0.0001053
+      },
+      "is_byok": false,
+      "prompt_tokens": 1053,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1181
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:12:55.231507+00:00",
+  "status": "completed",
+  "trial_id": "stable-anchor-r2-treatment"
+}

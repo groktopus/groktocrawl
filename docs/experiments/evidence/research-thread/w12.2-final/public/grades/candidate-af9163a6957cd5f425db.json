@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-af9163a6957cd5f425db",
+  "case_id": "live-contradiction",
+  "completed_at": "2026-09-19T09:14:11.676071+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 90,
+    "current_accuracy": 60,
+    "false_merge": false,
+    "historical_preservation": 70,
+    "lost_history": false,
+    "rationale": "Candidate correctly identifies the contradiction and refuses to resolve it, matching the reference's prohibition on selecting one source. Change accuracy is high: it correctly notes only the incident contradicts the claim. However, it lists the documentation's exactly-once description as a current truth, whereas the reference treats it as historical — a stale-current leak. Historical preservation is partial: the incident is kept historical, but the doc claim is not framed as a past description. Unresolved accuracy is moderate: the core contested-guarantee point is captured, but several invented peripheral questions (remediation, downstream dedup, scope details) dilute it. No false merges, no lost history, no unsupported factual claims; citations are accurate.",
+    "stale_current_leak": true,
+    "unresolved_accuracy": 60,
+    "unsupported_claims": 0,
+    "usefulness": 85
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "7122ef796013552a3bea252c056e546a4a933b94a710924f5f106e73bed739d2",
+    "finish_reason": "stop",
+    "latency_ms": 7908.639,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "5f78aba27fc6c3860178fe434d945778ac0334b02dccb314330e3b3ee5cb9183",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 323,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 105
+      },
+      "cost": 0.00047514,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0001938,
+        "upstream_inference_cost": 0.00047514,
+        "upstream_inference_prompt_cost": 0.00028134
+      },
+      "is_byok": false,
+      "prompt_tokens": 1563,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1886
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:14:03.766032+00:00",
+  "status": "completed",
+  "trial_id": "live-contradiction-r1-control"
+}

@@ -10,6 +10,7 @@ Shares the same key prefix (cf:clearance:) and TTL (1500s).
 import contextlib
 import json
 import logging
+import os
 import time
 from urllib.parse import urlparse
 
@@ -39,6 +40,15 @@ async def get_client():
     db = _cs_settings.valkey_db
 
     try:
+        rpc_socket = os.environ.get("VALKEY_RPC_SOCKET")
+        if rpc_socket:
+            from .valkey_control import ValkeyControlClient
+
+            _redis_client = ValkeyControlClient(rpc_socket)
+            await _redis_client.ping()
+            logger.info("Connected to restricted Valkey control socket for cookies")
+            return _redis_client
+
         import redis.asyncio as aioredis
 
         _redis_client = aioredis.Redis(

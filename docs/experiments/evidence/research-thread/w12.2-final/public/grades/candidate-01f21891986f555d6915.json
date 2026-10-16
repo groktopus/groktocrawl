@@ -1,0 +1,13 @@
+{
+  "candidate_id": "candidate-01f21891986f555d6915",
+  "case_id": "live-contradiction",
+  "completed_at": "2026-09-19T09:27:04.252703+00:00",
+  "error": "timed out",
+  "error_type": "ReadTimeout",
+  "invalid_completions": [],
+  "receipt": null,
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:17:03.015398+00:00",
+  "status": "failed",
+  "trial_id": "live-contradiction-r1-treatment"
+}

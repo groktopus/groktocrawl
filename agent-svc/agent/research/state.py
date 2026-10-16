@@ -7,6 +7,7 @@ result, and evidence bodies and does not invent gap, budget, or artifact identif
 from collections.abc import Mapping
 from typing import Any, TypedDict, cast
 
+from ..search_metadata import search_metadata
 from .events import ResearchEvent
 
 
@@ -18,6 +19,9 @@ class CompactSource(TypedDict, total=False):
     relevance: str
     source: str
     chars: int
+    engine: str
+    engines: list[str]
+    media: dict[str, Any]
 
 
 class ResearchPlanState(TypedDict):
@@ -154,6 +158,13 @@ def _compact_source(source: Mapping[str, Any]) -> CompactSource:
         for field in ("url", "title", "relevance", "source", "chars")
         if field in source
     }
+    compact.update(
+        {
+            key: value
+            for key, value in search_metadata(dict(source)).items()
+            if key != "type"
+        }
+    )
     if "char_count" in source:
         compact["chars"] = source["char_count"]
     return cast(CompactSource, compact)

@@ -1,0 +1,110 @@
+{
+  "arm": "control",
+  "case_id": "mission-unanswerable-cost",
+  "completed_at": "2026-09-19T05:51:32.961290+00:00",
+  "position": 1,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "ff80808bf2ecd4a411a3abd19219c4fd43f0d69f1806f66f3059df99f4138de5",
+    "finish_reason": "stop",
+    "latency_ms": 26300.187,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "0ad78377d7c513df6ef601c91301be1ca062b17f35b90e7581c555d3eb75598b",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 3482,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 2824
+      },
+      "cost": 0.0018418,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.001741,
+        "upstream_inference_cost": 0.0018418,
+        "upstream_inference_prompt_cost": 0.0001008
+      },
+      "is_byok": false,
+      "prompt_tokens": 672,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 4154
+    }
+  },
+  "repetition": 2,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Decision support — Does the packet prove a ≥20% total-cost reduction from agent-assisted delivery? (Fictional Aster Enterprise fixture, fictional data; not real-world guidance.)",
+    "candidate_id": "candidate-0f8365cd02a5b59399ee",
+    "citations": [
+      "measurement-policy",
+      "measurement-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "text": "The packet does not quantify a causal total-cost change of at least 20%; the threshold is not established by the supplied evidence.",
+        "uncertainty": "No material uncertainty that the packet lacks the required measurement; the direction and magnitude of any real cost effect remain unmeasured, not merely unproven."
+      },
+      {
+        "source_ids": [
+          "measurement-context"
+        ],
+        "text": "The only quantitative datum in the packet is 40 accepted pull requests in one month, reported with no task mix, control group, reviewer hours, failure count, or provider costs.",
+        "uncertainty": "None regarding packet contents; any underlying cost effect of the pilot is unmeasured."
+      },
+      {
+        "source_ids": [
+          "measurement-policy"
+        ],
+        "text": "The supplied measurement policy requires evaluation via matched tasks, quality gates, human review time, rework, elapsed lead time, and total cost; it requires counting failed or abandoned tasks and explicitly disallows inferring causal benefit from accepted-PR counts.",
+        "uncertainty": "None; the policy text is explicit."
+      },
+      {
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "text": "The required matched comparison with complete cost and failure accounting is absent: no comparable baseline and no total-cost numerator or denominator exist in the packet, so the implementation-evidence obligation is unresolved.",
+        "uncertainty": "The absence is certain within the supplied pack; closure would require new measurement (matched tasks, review hours, rework, failures, provider cost), not interpretation of existing text."
+      },
+      {
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "text": "Contradiction preserved: the pilot note's headline metric (accepted PRs) is the same metric the measurement policy disallows as a causal or cost proxy, and the pilot note contains none of the policy's required measurements; no supplied source reconciles this tension.",
+        "uncertainty": "The contradiction is unresolved within the packet and is reported as supplied."
+      },
+      {
+        "source_ids": [
+          "measurement-policy"
+        ],
+        "text": "Using accepted pull requests as a cost proxy is excluded from this analysis, consistent with the decision request and with the supplied policy's prohibition on inferring causal benefit from accepted-PR counts.",
+        "uncertainty": "None."
+      },
+      {
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "text": "Bounded abstention applies: the evidence cannot support the requested decision, and an affirmative answer would require inventing missing measurements (baseline, cost accounting, failure counts, provider costs).",
+        "uncertainty": "None regarding the abstention itself; the underlying cost effect is unmeasured and left unresolved."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:51:06.659291+00:00",
+  "status": "completed",
+  "trial_id": "mission-unanswerable-cost-r2-control"
+}

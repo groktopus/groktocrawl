@@ -2,7 +2,7 @@
 """Verify every expressible agent-svc API endpoint has an MCP tool.
 
 Reads agent-svc/agent/routes/*.py for ``@router.*`` decorators and
-cross-references each ``/v2`` path against the tool surface in
+cross-references each expressible API path against the tool surface in
 mcp-svc/mcp_server.py.  Exits non-zero if a non-exempted endpoint has
 no MCP tool, so the MCP surface cannot silently drift behind the API
 (the way the CLI surface is guarded by check-cli-coverage.py).
@@ -30,6 +30,9 @@ MCP_SERVER = REPO_ROOT / "mcp-svc" / "mcp_server.py"
 # Backlog entries mirror the CLI coverage exemptions in check-cli-coverage.py.
 EXEMPT: dict[str, str] = {
     "POST /v1/search": "Legacy v1 endpoint — superseded by /v2/search.",
+    "POST /v2/parse/upload-url": (
+        "Two-phase upload flow — reserves an upload; the parse tool handles transfer."
+    ),
     "PUT /v2/parse/upload/{upload_id}": (
         "Two-phase upload flow — internal plumbing; POST /v2/parse covers parsing."
     ),
@@ -44,6 +47,8 @@ EXEMPT: dict[str, str] = {
 # Map each expressible API path to the MCP tool that covers it.
 PATH_TO_MCP_TOOL: dict[str, str] = {
     "GET /v2/activity": "get_activity",
+    "GET /v2/session/{session_id}/evidence/{ref_id}": "select_session_evidence",
+    "POST /v2/followup/preview": "followup_preview",
     "POST /v2/agent": "agent",
     "GET /v2/agent/{job_id}": "get_agent_status",
     "DELETE /v2/agent/{job_id}": "cancel_agent",
@@ -95,11 +100,25 @@ PATH_TO_MCP_TOOL: dict[str, str] = {
     "POST /v2/session/{session_id}/export": "export_research_session",
     "DELETE /v2/session/{session_id}": "delete_research_session",
     "POST /v2/session/{session_id}/resolve": "resolve_research_session",
+    "POST /v2/session/{session_id}/documents": "document_attach",
+    "GET /v2/session/{session_id}/documents": "document_list",
+    "GET /v2/session/{session_id}/documents/{ref_id}": "document_read",
+    "DELETE /v2/session/{session_id}/documents/{ref_id}": "document_detach",
+    "GET /experimental/research/v1/capabilities": "research_capabilities",
+    "POST /experimental/research/v1/runs": "research_create",
+    "GET /experimental/research/v1/runs/{run_id}": "research_status",
+    "GET /experimental/research/v1/runs/{run_id}/events": "research_status",
+    "POST /experimental/research/v1/runs/{run_id}/cancel": "research_cancel",
+    "GET /experimental/research/v1/artifact-sets/{artifact_set_id}": "research_show",
+    "GET /experimental/research/v1/artifacts/{artifact_id}": "research_artifact",
+    "GET /experimental/research/v1/research/{research_id}/evidence/{snapshot_id}": "research_evidence",
+    "DELETE /experimental/research/v1/research/{research_id}": "research_delete",
+    "POST /experimental/research/v1/sessions/{session_id}/attachments": "research_attach",
 }
 
 
 def extract_api_endpoints() -> list[str]:
-    """Return all ``METHOD /v2/...`` paths found across routes/."""
+    """Return all expressible versioned and experimental paths in routes/."""
     if not API_DIR.is_dir():
         print(f"ERROR: Routes directory not found: {API_DIR}")
         sys.exit(1)
@@ -114,7 +133,7 @@ def extract_api_endpoints() -> list[str]:
             text,
         ):
             method, path = m.group(1).upper(), m.group(2)
-            if path.startswith("/v2/"):
+            if path.startswith("/v2/") or path.startswith("/experimental/"):
                 endpoints.append(f"{method} {path}")
             elif path.startswith("/v1/"):
                 endpoints.append(f"{method} {path}")

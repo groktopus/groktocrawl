@@ -1,0 +1,10 @@
+{
+  "base_url_origin": "https://research-provider.example/",
+  "concurrency": 5,
+  "model_route": "general",
+  "schema_version": "research-mission-adjudication-manifest/1",
+  "selection_sha256": "c380f74ddb04c4f4efda898973dcd9da157c5ce739b4fe2fc168dc5c0d78e10d",
+  "source_revision": "a636c03f960b9c9e2e6abb8e336b91bc669a8f28",
+  "started_at": "2026-09-19T06:46:02.017202+00:00",
+  "work_order_sha256": "2c0db6a86f5c384c2732fd429174ed07079d03a55747967ddf1291e6bf073388"
+}

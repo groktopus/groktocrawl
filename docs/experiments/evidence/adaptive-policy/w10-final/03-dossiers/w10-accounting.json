@@ -1,0 +1,695 @@
+{
+  "complete": true,
+  "completion_gates": {
+    "all_records_completed": true,
+    "expected_record_count": true,
+    "frozen_summary_complete": true,
+    "frozen_summary_schema": true,
+    "no_missing_accounting_fields": true,
+    "one_private_acquisition_file_per_record": true,
+    "summary_counts_match_records": true
+  },
+  "dispositions": {
+    "acquisition_status": {
+      "acquired": 3595,
+      "not_selected": 2416,
+      "unavailable": 725
+    },
+    "admission_reason": {
+      "admitted_claim_value": 19,
+      "admitted_independent_publisher": 389,
+      "admitted_quality_gain": 47,
+      "admitted_within_source_limit": 2876,
+      "derivative_publisher": 157,
+      "irrelevant": 107,
+      "not_selected_for_acquisition": 2416,
+      "source_limit": 580,
+      "unavailable": 145
+    },
+    "proposal_reason": {
+      "admitted": 199,
+      "duplicate_intent": 8,
+      "policy_has_no_proposal_gate": 190,
+      "stopped_after_prior_round": 43
+    },
+    "terminal_stop_reason": {
+      "all_gaps_closed": 404,
+      "fixed_query_complete": 19,
+      "no_followup_proposed": 7,
+      "no_marginal_gain": 20,
+      "planner_claimed_complete": 20,
+      "proposal_exhausted": 12,
+      "search_limit": 36,
+      "source_limit": 12,
+      "time_limit": 10
+    }
+  },
+  "inputs": {
+    "case_file_sha256": [
+      "6761705e14ea1b535a8debdd0e54c6be14d8a42608c6f3606e6e445290aa21d6",
+      "d1306c2c54ad6995fe84e0199a94f57c6c765e1f1977017c3bb3e471417a01f3"
+    ],
+    "private_acquisition_manifest": {
+      "canonical_manifest_sha256": "a52e16ccf64e1fc71272d3d37ac444ade5beb7c4288b23dbdc86a94eaca3eebb",
+      "files": 540
+    },
+    "summary_sha256": "7bc5592931f33eb09f2c4a90bcddaaad1e662a3499b7441f27615b8da3f9f575"
+  },
+  "missing_accounting": {},
+  "redaction": "No query text, URL, title, excerpt, model response, private path, or credential is included.",
+  "schema_version": "enterprise-evaluation/w10-public-accounting/1",
+  "totals": {
+    "acquired_candidates": 3595,
+    "admitted_candidates": 3331,
+    "candidate_records": 6736,
+    "completed_trials": 540,
+    "excluded_candidates": 3405,
+    "executed_queries": 929,
+    "expected_trials": 540,
+    "failed_trials": 0,
+    "observed_trials": 540,
+    "search_result_sightings": 7370,
+    "source_to_claim_links": 5133
+  },
+  "variation": {
+    "by_challenge_type": {
+      "ambiguous-entity": {
+        "admitted": {
+          "count": 90,
+          "max": 8,
+          "median": 7.0,
+          "min": 2
+        },
+        "completed": 90,
+        "elapsed_ms": {
+          "count": 90,
+          "max": 143751.704,
+          "median": 57107.619000000006,
+          "min": 37405.887
+        },
+        "failed": 0,
+        "model_calls": {
+          "count": 90,
+          "max": 3,
+          "median": 2.0,
+          "min": 1
+        },
+        "precision": {
+          "count": 90,
+          "max": 1.0,
+          "median": 0.5982142857142857,
+          "min": 0.0
+        },
+        "searches": {
+          "count": 90,
+          "max": 3,
+          "median": 1.0,
+          "min": 1
+        },
+        "trials": 90,
+        "weighted_closure": {
+          "count": 90,
+          "max": 1.0,
+          "median": 1.0,
+          "min": 0.0
+        }
+      },
+      "contradiction": {
+        "admitted": {
+          "count": 30,
+          "max": 8,
+          "median": 7.0,
+          "min": 5
+        },
+        "completed": 30,
+        "elapsed_ms": {
+          "count": 30,
+          "max": 118009.377,
+          "median": 60911.693,
+          "min": 42380.457
+        },
+        "failed": 0,
+        "model_calls": {
+          "count": 30,
+          "max": 3,
+          "median": 2.0,
+          "min": 1
+        },
+        "precision": {
+          "count": 30,
+          "max": 1.0,
+          "median": 0.5982142857142857,
+          "min": 0.0
+        },
+        "searches": {
+          "count": 30,
+          "max": 3,
+          "median": 2.0,
+          "min": 1
+        },
+        "trials": 30,
+        "weighted_closure": {
+          "count": 30,
+          "max": 1.0,
+          "median": 0.5714285714285714,
+          "min": 0.0
+        }
+      },
+      "entity_ambiguity": {
+        "admitted": {
+          "count": 30,
+          "max": 6,
+          "median": 5.0,
+          "min": 3
+        },
+        "completed": 30,
+        "elapsed_ms": {
+          "count": 30,
+          "max": 100889.793,
+          "median": 66406.0815,
+          "min": 43009.532
+        },
+        "failed": 0,
+        "model_calls": {
+          "count": 30,
+          "max": 3,
+          "median": 2.0,
+          "min": 1
+        },
+        "precision": {
+          "count": 30,
+          "max": 1.0,
+          "median": 1.0,
+          "min": 0.0
+        },
+        "searches": {
+          "count": 30,
+          "max": 3,
+          "median": 1.0,
+          "min": 1
+        },
+        "trials": 30,
+        "weighted_closure": {
+          "count": 30,
+          "max": 1.0,
+          "median": 0.6666666666666666,
+          "min": 0.0
+        }
+      },
+      "long-tail": {
+        "admitted": {
+          "count": 90,
+          "max": 8,
+          "median": 7.0,
+          "min": 0
+        },
+        "completed": 90,
+        "elapsed_ms": {
+          "count": 90,
+          "max": 175412.906,
+          "median": 58682.8165,
+          "min": 33269.199
+        },
+        "failed": 0,
+        "model_calls": {
+          "count": 90,
+          "max": 3,
+          "median": 2.0,
+          "min": 1
+        },
+        "precision": {
+          "count": 89,
+          "max": 1.0,
+          "median": 0.25,
+          "min": 0.0
+        },
+        "searches": {
+          "count": 90,
+          "max": 3,
+          "median": 1.0,
+          "min": 1
+        },
+        "trials": 90,
+        "weighted_closure": {
+          "count": 90,
+          "max": 1.0,
+          "median": 1.0,
+          "min": 0.0
+        }
+      },
+      "missing_primary": {
+        "admitted": {
+          "count": 30,
+          "max": 8,
+          "median": 6.0,
+          "min": 2
+        },
+        "completed": 30,
+        "elapsed_ms": {
+          "count": 30,
+          "max": 101620.323,
+          "median": 64386.985,
+          "min": 41782.775
+        },
+        "failed": 0,
+        "model_calls": {
+          "count": 30,
+          "max": 3,
+          "median": 2.0,
+          "min": 1
+        },
+        "precision": {
+          "count": 30,
+          "max": 1.0,
+          "median": 0.30952380952380953,
+          "min": 0.0
+        },
+        "searches": {
+          "count": 30,
+          "max": 3,
+          "median": 3.0,
+          "min": 1
+        },
+        "trials": 30,
+        "weighted_closure": {
+          "count": 30,
+          "max": 1.0,
+          "median": 1.0,
+          "min": 0.0
+        }
+      },
+      "publisher_independence": {
+        "admitted": {
+          "count": 30,
+          "max": 7,
+          "median": 6.0,
+          "min": 2
+        },
+        "completed": 30,
+        "elapsed_ms": {
+          "count": 30,
+          "max": 99786.565,
+          "median": 59235.9845,
+          "min": 41500.024
+        },
+        "failed": 0,
+        "model_calls": {
+          "count": 30,
+          "max": 3,
+          "median": 2.0,
+          "min": 1
+        },
+        "precision": {
+          "count": 30,
+          "max": 1.0,
+          "median": 0.775,
+          "min": 0.0
+        },
+        "searches": {
+          "count": 30,
+          "max": 3,
+          "median": 2.0,
+          "min": 1
+        },
+        "trials": 30,
+        "weighted_closure": {
+          "count": 30,
+          "max": 1.0,
+          "median": 1.0,
+          "min": 0.0
+        }
+      },
+      "recent/as-of-sensitive": {
+        "admitted": {
+          "count": 90,
+          "max": 8,
+          "median": 6.0,
+          "min": 1
+        },
+        "completed": 90,
+        "elapsed_ms": {
+          "count": 90,
+          "max": 136802.239,
+          "median": 51619.065,
+          "min": 35333.279
+        },
+        "failed": 0,
+        "model_calls": {
+          "count": 90,
+          "max": 3,
+          "median": 2.0,
+          "min": 1
+        },
+        "precision": {
+          "count": 90,
+          "max": 1.0,
+          "median": 0.7571428571428571,
+          "min": 0.0
+        },
+        "searches": {
+          "count": 90,
+          "max": 3,
+          "median": 1.0,
+          "min": 1
+        },
+        "trials": 90,
+        "weighted_closure": {
+          "count": 90,
+          "max": 1.0,
+          "median": 1.0,
+          "min": 0.0
+        }
+      },
+      "stale_evidence": {
+        "admitted": {
+          "count": 30,
+          "max": 8,
+          "median": 7.0,
+          "min": 5
+        },
+        "completed": 30,
+        "elapsed_ms": {
+          "count": 30,
+          "max": 127877.729,
+          "median": 55885.0035,
+          "min": 41081.419
+        },
+        "failed": 0,
+        "model_calls": {
+          "count": 30,
+          "max": 3,
+          "median": 2.0,
+          "min": 1
+        },
+        "precision": {
+          "count": 30,
+          "max": 1.0,
+          "median": 0.8333333333333334,
+          "min": 0.0
+        },
+        "searches": {
+          "count": 30,
+          "max": 3,
+          "median": 2.0,
+          "min": 1
+        },
+        "trials": 30,
+        "weighted_closure": {
+          "count": 30,
+          "max": 1.0,
+          "median": 1.0,
+          "min": 0.0
+        }
+      },
+      "terminology-shift": {
+        "admitted": {
+          "count": 90,
+          "max": 8,
+          "median": 6.0,
+          "min": 1
+        },
+        "completed": 90,
+        "elapsed_ms": {
+          "count": 90,
+          "max": 138035.219,
+          "median": 62397.036,
+          "min": 31974.454
+        },
+        "failed": 0,
+        "model_calls": {
+          "count": 90,
+          "max": 3,
+          "median": 2.0,
+          "min": 1
+        },
+        "precision": {
+          "count": 90,
+          "max": 1.0,
+          "median": 0.6,
+          "min": 0.0
+        },
+        "searches": {
+          "count": 90,
+          "max": 3,
+          "median": 1.0,
+          "min": 1
+        },
+        "trials": 90,
+        "weighted_closure": {
+          "count": 90,
+          "max": 1.0,
+          "median": 1.0,
+          "min": 0.0
+        }
+      },
+      "unsupported_claim": {
+        "admitted": {
+          "count": 30,
+          "max": 8,
+          "median": 8.0,
+          "min": 1
+        },
+        "completed": 30,
+        "elapsed_ms": {
+          "count": 30,
+          "max": 173850.321,
+          "median": 58763.894,
+          "min": 42516.577
+        },
+        "failed": 0,
+        "model_calls": {
+          "count": 30,
+          "max": 3,
+          "median": 2.0,
+          "min": 1
+        },
+        "precision": {
+          "count": 30,
+          "max": 1.0,
+          "median": 0.07142857142857142,
+          "min": 0.0
+        },
+        "searches": {
+          "count": 30,
+          "max": 3,
+          "median": 3.0,
+          "min": 1
+        },
+        "trials": 30,
+        "weighted_closure": {
+          "count": 30,
+          "max": 1.0,
+          "median": 0.0,
+          "min": 0.0
+        }
+      }
+    },
+    "by_policy": {
+      "fixed": {
+        "admitted": {
+          "count": 108,
+          "max": 8,
+          "median": 7.0,
+          "min": 5
+        },
+        "completed": 108,
+        "elapsed_ms": {
+          "count": 108,
+          "max": 102672.737,
+          "median": 48666.9405,
+          "min": 31974.454
+        },
+        "failed": 0,
+        "model_calls": {
+          "count": 108,
+          "max": 1,
+          "median": 1.0,
+          "min": 1
+        },
+        "precision": {
+          "count": 108,
+          "max": 1.0,
+          "median": 0.6458333333333333,
+          "min": 0.0
+        },
+        "searches": {
+          "count": 108,
+          "max": 1,
+          "median": 1.0,
+          "min": 1
+        },
+        "trials": 108,
+        "weighted_closure": {
+          "count": 108,
+          "max": 1.0,
+          "median": 1.0,
+          "min": 0.0
+        }
+      },
+      "full": {
+        "admitted": {
+          "count": 108,
+          "max": 8,
+          "median": 5.0,
+          "min": 0
+        },
+        "completed": 108,
+        "elapsed_ms": {
+          "count": 108,
+          "max": 173850.321,
+          "median": 84974.536,
+          "min": 34276.006
+        },
+        "failed": 0,
+        "model_calls": {
+          "count": 108,
+          "max": 3,
+          "median": 3.0,
+          "min": 2
+        },
+        "precision": {
+          "count": 107,
+          "max": 1.0,
+          "median": 0.8333333333333334,
+          "min": 0.0
+        },
+        "searches": {
+          "count": 108,
+          "max": 2,
+          "median": 2.0,
+          "min": 1
+        },
+        "trials": 108,
+        "weighted_closure": {
+          "count": 108,
+          "max": 1.0,
+          "median": 0.41666666666666663,
+          "min": 0.0
+        }
+      },
+      "gap": {
+        "admitted": {
+          "count": 108,
+          "max": 8,
+          "median": 7.0,
+          "min": 4
+        },
+        "completed": 108,
+        "elapsed_ms": {
+          "count": 108,
+          "max": 118217.821,
+          "median": 60063.293000000005,
+          "min": 34708.229
+        },
+        "failed": 0,
+        "model_calls": {
+          "count": 108,
+          "max": 2,
+          "median": 2.0,
+          "min": 2
+        },
+        "precision": {
+          "count": 108,
+          "max": 1.0,
+          "median": 0.6666666666666666,
+          "min": 0.0
+        },
+        "searches": {
+          "count": 108,
+          "max": 3,
+          "median": 2.0,
+          "min": 1
+        },
+        "trials": 108,
+        "weighted_closure": {
+          "count": 108,
+          "max": 1.0,
+          "median": 1.0,
+          "min": 0.0
+        }
+      },
+      "gated": {
+        "admitted": {
+          "count": 108,
+          "max": 8,
+          "median": 7.0,
+          "min": 4
+        },
+        "completed": 108,
+        "elapsed_ms": {
+          "count": 108,
+          "max": 128170.273,
+          "median": 56202.015,
+          "min": 37250.993
+        },
+        "failed": 0,
+        "model_calls": {
+          "count": 108,
+          "max": 2,
+          "median": 2.0,
+          "min": 2
+        },
+        "precision": {
+          "count": 108,
+          "max": 1.0,
+          "median": 0.4,
+          "min": 0.0
+        },
+        "searches": {
+          "count": 108,
+          "max": 3,
+          "median": 2.0,
+          "min": 1
+        },
+        "trials": 108,
+        "weighted_closure": {
+          "count": 108,
+          "max": 1.0,
+          "median": 1.0,
+          "min": 0.0
+        }
+      },
+      "unconstrained": {
+        "admitted": {
+          "count": 108,
+          "max": 8,
+          "median": 7.0,
+          "min": 4
+        },
+        "completed": 108,
+        "elapsed_ms": {
+          "count": 108,
+          "max": 175412.906,
+          "median": 58425.128,
+          "min": 37368.289
+        },
+        "failed": 0,
+        "model_calls": {
+          "count": 108,
+          "max": 2,
+          "median": 2.0,
+          "min": 2
+        },
+        "precision": {
+          "count": 108,
+          "max": 1.0,
+          "median": 0.5357142857142857,
+          "min": 0.0
+        },
+        "searches": {
+          "count": 108,
+          "max": 3,
+          "median": 1.0,
+          "min": 1
+        },
+        "trials": 108,
+        "weighted_closure": {
+          "count": 108,
+          "max": 1.0,
+          "median": 1.0,
+          "min": 0.0
+        }
+      }
+    }
+  }
+}

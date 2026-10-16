@@ -1,0 +1,68 @@
+{
+  "answer": {
+    "answer": "No change is evidenced. Both supplied snapshots for the same subject (subject_id: iris-build, lineage_id: iris-checksum) state that Iris Build records SHA-256 checksums for artifacts: the earlier guide (iris-checksum-old) and the current guide (iris-checksum-new) are identical on this point. Therefore, the checksum algorithm was SHA-256 historically and remains SHA-256 currently, with no observed change. Caveat: only two snapshots were provided and no intermediate snapshots exist, so a change that occurred and reverted between the two snapshots cannot be excluded from the evidence alone; however, nothing in the supplied sources indicates any change.",
+    "change_events": [
+      "No change to the artifact checksum algorithm is evidenced: both the earlier guide (iris-checksum-old) and the current guide (iris-checksum-new) record SHA-256 as the checksum algorithm for Iris Build artifacts."
+    ],
+    "citations": [
+      "iris-checksum-old",
+      "iris-checksum-new"
+    ],
+    "current_truths": [
+      "Per the current guide snapshot (iris-checksum-new), Iris Build records SHA-256 checksums for artifacts."
+    ],
+    "historical_truths": [
+      "Per the earlier guide snapshot (iris-checksum-old), Iris Build recorded SHA-256 checksums for artifacts."
+    ],
+    "unresolved": [
+      "No intermediate snapshots between iris-checksum-old and iris-checksum-new were supplied, so any transient change to the checksum algorithm between these two snapshots cannot be fully ruled out, although both endpoints record SHA-256.",
+      "The supplied snapshots do not state whether SHA-256 is the only checksum algorithm used or whether additional algorithms exist alongside it."
+    ]
+  },
+  "arm": "control",
+  "case_id": "stable-anchor",
+  "completed_at": "2026-09-19T07:50:02.590089+00:00",
+  "position": 29,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "20af1e787a442c1375aa13ba5e9de197385b16f2d89e4a5cf3ab4d2738283be0",
+    "finish_reason": "stop",
+    "latency_ms": 9780.912,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "17c3dc5ab39baf9ff6f2c59060691fe6f56d6426c43022de43e25608612c4a3b",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 702,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 433
+      },
+      "cost": 0.0004266,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000351,
+        "upstream_inference_cost": 0.0004266,
+        "upstream_inference_prompt_cost": 7.56e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 504,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1206
+    }
+  },
+  "repetition": 2,
+  "schema_version": "research-thread-trial/1",
+  "started_at": "2026-09-19T07:49:52.807970+00:00",
+  "status": "completed",
+  "stratum": "no_change",
+  "trial_id": "stable-anchor-r2-control"
+}

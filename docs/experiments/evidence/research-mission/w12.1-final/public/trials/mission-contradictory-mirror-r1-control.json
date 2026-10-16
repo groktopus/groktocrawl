@@ -1,0 +1,90 @@
+{
+  "arm": "control",
+  "case_id": "mission-contradictory-mirror",
+  "completed_at": "2026-09-19T05:44:21.250539+00:00",
+  "position": 1,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "c63d51b952ef1e43f9885719ffa8d736a6c13dd9075635d4486c11f0dd3a2537",
+    "finish_reason": "stop",
+    "latency_ms": 7383.009,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "6986e29513a416bd93be047810b46f3f06066977a56846f03be6b50560a7ce70",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 559,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0.000516624,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0003354,
+        "upstream_inference_cost": 0.000516624,
+        "upstream_inference_prompt_cost": 0.000181224
+      },
+      "is_byok": false,
+      "prompt_tokens": 1058,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 64,
+        "video_tokens": 0
+      },
+      "total_tokens": 1617
+    }
+  },
+  "repetition": 1,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "**Decision-support answer: Does the mirror provide independent corroboration for deployment authority?**\n\n**No.** The mirror (`delivery-mirror`) is textually identical to the governing policy (`delivery-policy`) and shares its lineage. It is a duplicate rendering of the same policy, not a second independent publisher. Per the evidence rules, derivative sources do not count as independent, and identical text must be treated as duplicate evidence rather than independent corroboration. The minimum of 1 independent publisher is met only by the primary policy itself.\n\n**Deployment authorization (governing conditions, stated without expansion):**\n- The agent may open a pull request after tests pass.\n- Production deployment requires approval by the service owner **and** a recorded rollback plan.\n\n**Context note:** A sandbox experiment permitted automatic deployment to disposable test environments only; it did not authorize production deployment. This does not expand or alter the production conditions above.\n\n**Contradictions:** None identified among the supplied sources; the mirror matches the policy verbatim, and the context is consistent with the policy's limits.\n\n**Unresolved limits:** The supplied pack cannot establish (a) who the service owner is for any given service, (b) whether any specific production deployment has actually received approval or has a recorded rollback plan, or (c) any approval records beyond this fixture. No independent third-party publisher corroborates the policy. Unsupported obligations remain unresolved.",
+    "candidate_id": "candidate-3fdc9e36202396dacf2f",
+    "citations": [
+      "delivery-policy",
+      "delivery-mirror",
+      "delivery-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-mirror"
+        ],
+        "text": "The mirror is textually identical to the governing policy and shares its lineage, making it duplicate evidence rather than independent corroboration.",
+        "uncertainty": "No material uncertainty; identity is verbatim in the supplied pack."
+      },
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-mirror"
+        ],
+        "text": "Production deployment requires approval by the service owner and a recorded rollback plan; the agent may open a pull request after tests pass.",
+        "uncertainty": "Conditions are stated without expansion; no approval records are supplied."
+      },
+      {
+        "source_ids": [
+          "delivery-context"
+        ],
+        "text": "A sandbox experiment allowed automatic deployment only to disposable test environments and did not authorize production deployment.",
+        "uncertainty": "Context does not establish any production authority."
+      },
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-mirror",
+          "delivery-context"
+        ],
+        "text": "Only one independent publisher (the primary policy) exists in the supplied pack; derivative sources do not count as independent.",
+        "uncertainty": "The pack cannot establish any additional independent corroboration; this remains unresolved."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:44:13.866611+00:00",
+  "status": "completed",
+  "trial_id": "mission-contradictory-mirror-r1-control"
+}

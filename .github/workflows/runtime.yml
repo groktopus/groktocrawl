@@ -1,0 +1,1405 @@
+# Research storage and protected-capture validation, called by the main runtime gate.
+name: Research Runtime CI
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: runtime-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    name: Classify runtime changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      requires_full_runtime: ${{ steps.classify.outputs.requires_full_runtime }}
+      requires_twin_contracts: ${{ steps.classify.outputs.requires_twin_contracts }}
+      twin_test_selection: ${{ steps.classify.outputs.twin_test_selection }}
+      changed_paths_json: ${{ steps.classify.outputs.changed_paths_json }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Classify changed paths
+        id: classify
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            git diff-tree --root --no-commit-id --name-only -r "$HEAD_SHA" > changed-paths.txt
+          elif [ "$EVENT_NAME" = "pull_request" ]; then
+            base=$(git merge-base "$BASE_SHA" "$HEAD_SHA")
+            git diff --name-only "$base" "$HEAD_SHA" > changed-paths.txt
+          else
+            git diff --name-only "$BASE_SHA" "$HEAD_SHA" > changed-paths.txt
+          fi
+          echo "requires_full_runtime=$(python3 scripts/classify_ci_changes.py < changed-paths.txt)" >> "$GITHUB_OUTPUT"
+          echo "requires_twin_contracts=$(python3 scripts/classify_ci_changes.py --requires-twin-contracts < changed-paths.txt)" >> "$GITHUB_OUTPUT"
+          echo "twin_test_selection=$(python3 scripts/classify_ci_changes.py --twin-test-selection < changed-paths.txt)" >> "$GITHUB_OUTPUT"
+          python3 -c 'import json; print("changed_paths_json=" + json.dumps(open("changed-paths.txt").read().splitlines()))' >> "$GITHUB_OUTPUT"
+
+  twin-contracts:
+    name: Twin Contracts
+    needs: changes
+    if: >-
+      always() && needs.changes.result == 'success' &&
+      needs.changes.outputs.requires_twin_contracts == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v7
+      - name: Install locked twin dependencies
+        run: uv sync --locked --no-dev --group fast-tests
+      - name: Run hermetic twin contracts
+        id: twin_tests
+        env:
+          HTTP_PROXY: http://127.0.0.1:9
+          HTTPS_PROXY: http://127.0.0.1:9
+          ALL_PROXY: http://127.0.0.1:9
+          NO_PROXY: localhost,127.0.0.1,::1
+          TWIN_SOCKET_GUARD: "1"
+          TWIN_SELECTION: ${{ needs.changes.outputs.twin_test_selection }}
+          RUNTIME_SELECTION: ${{ needs.changes.outputs.requires_full_runtime }}
+          PYTHONPATH: .:agent-svc:scraper-svc:llm-svc:slopsearx-fixture
+          QA_OUTCOME_PATH: twin-out/qa-outcomes.json
+        run: |
+          mkdir -p twin-out
+          # Validate the checked-in scenario/version contract before replay/parity.
+          uv run --no-sync python -c "from llm_svc.app import SCHEMA_VERSION as LLM_SCHEMA; from slopsearx_fixture.app import SCHEMA_VERSION as SEARCH_SCHEMA; assert isinstance(LLM_SCHEMA, str) and isinstance(SEARCH_SCHEMA, str) and LLM_SCHEMA and SEARCH_SCHEMA"
+          case "$TWIN_SELECTION" in
+            search) tests="tests/service/test_slopsearx_fixture.py tests/service/test_searxng_client.py" ;;
+            llm) tests="tests/service/test_llm_fixture_contract.py tests/service/test_llm.py" ;;
+            all) tests="tests/service/test_llm_fixture_contract.py tests/service/test_slopsearx_fixture.py tests/service/test_research_adapter_parity.py tests/service/test_searxng_client.py" ;;
+            none) tests="" ;;
+            *) echo "unknown twin selection: $TWIN_SELECTION"; exit 1 ;;
+          esac
+          if [ -n "$tests" ]; then
+             uv run --no-sync python -m pytest $tests -q --no-cov -o addopts= --disable-socket --allow-hosts=127.0.0.1,localhost,::1 --junitxml=twin-out/twin-tests.xml
+          fi
+           uv run --no-sync python -m pytest tests/service/test_twin_contract.py tests/service/test_twin_network_isolation.py tests/service/test_workflow_contract.py -q --no-cov -o addopts= --disable-socket --allow-hosts=127.0.0.1,localhost,::1 --junitxml=twin-out/twin-contract-tests.xml
+      - name: Validate twin provenance
+        if: always()
+        env:
+          TWIN_SELECTION: ${{ needs.changes.outputs.twin_test_selection }}
+          RUNTIME_SELECTION: ${{ needs.changes.outputs.requires_full_runtime }}
+          TWIN_TEST_OUTCOME: ${{ steps.twin_tests.outcome }}
+          TWIN_RESULT: ${{ steps.twin_tests.outcome == 'success' && 'success' || 'failure' }}
+          TWIN_FAILURE_SOURCE: ${{ steps.twin_tests.outcome == 'success' && 'none' || 'twin' }}
+          TWIN_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          TWIN_EVENT_KIND: ${{ github.event_name }}
+          TWIN_EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          TWIN_EXECUTION_MODE: hosted
+        run: |
+          uv run --no-sync python scripts/twin_provenance.py --output twin-out --changed-paths-from-event
+          uv run --no-sync python -m jsonschema -i twin-out/twin-evidence.json provenance/twin-evidence.schema.json
+      - name: Upload twin outcomes and provenance
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: research-hosted-twin-contracts
+          path: twin-out/
+          if-no-files-found: error
+      - name: Fail after publishing twin evidence
+        if: always() && steps.twin_tests.outcome != 'success'
+        run: exit 1
+
+  integration-tests:
+    name: Integration Tests
+    needs: changes
+    if: >-
+      needs.changes.outputs.requires_full_runtime == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      COMPOSE_FILE: docker-compose.yml:docker-compose.ci.yml
+      COMPOSE_PROJECT_NAME: groktocrawl-x-ci
+      COMPOSE_PARALLEL_LIMIT: "2"
+      AGENT_PORT: "18080"
+      SCRAPER_HOST_PORT: "18001"
+      SLOPSEARX_HOST_PORT: "18081"
+      PORTAL_HOST_PORT: "18082"
+      SEMANTIC_HOST_PORT: "18003"
+      LLM_HOST_PORT: "18011"
+      TEST_SITE_HOST_PORT: "18005"
+      TIER3_HOST_PORT: "18006"
+      SLOPSEARX_FIXTURE_HOST_PORT: "18083"
+      AGENT_FIXTURE_HOST_PORT: "18084"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Configure hosted-runner Docker Hub cache
+        run: python3 scripts/configure_ci_dockerhub_mirror.py
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v7
+      - name: Install locked fast-test environment
+        run: uv sync --locked --no-dev --group fast-tests
+
+      - name: Set up .env
+        run: |
+          cp .env.sample .env
+          echo "TWIN_RUN_ID=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> .env
+          echo "DURABLE_RESEARCH_REDIS_URL=redis://valkey:6379/15" >> .env
+          echo "LLM_BASE_URL=http://llm-svc:8011/v1?run_id=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> .env
+          echo "LLM_MODEL=fixture-model" >> .env
+          echo "CAPTCHA_VISION_BASE_URL=http://llm-svc:8011/v1" >> .env
+          echo "CAPTCHA_VISION_API_KEY=fixture-only" >> .env
+          echo "CAPTCHA_VISION_MODEL=fixture-model" >> .env
+          echo "SCRAPER_PRIVATE_URL_ALLOWLIST=test-site,tier3-fixture" >> .env
+          # Gutenberg digital twin (#581): point the gutenberg adapter's
+          # EPUB/plain-text downloads and Gutendex enrichment at the
+          # deterministic test-site fixture so the integration lane never
+          # depends on third-party uptime.
+          echo "ADAPTER_GUTENBERG_CACHE_BASE=http://test-site:8000" >> .env
+          echo "ADAPTER_GUTENDEX_API_BASE=http://test-site:8000" >> .env
+          echo "AGENT_SEARCH_RATE_LIMIT=1000/1s" >> .env
+          # mcp-svc DNS-rebinding allowlist: include the compose service name
+          # so the integration lane exercises a real non-loopback Host path.
+          echo "MCP_ALLOWED_HOSTS=localhost:*,127.0.0.1:*,[::1]:*,mcp-svc:*" >> .env
+          # slopsearx-mcp is an opt-in profile-gated companion; it is not run in
+          # the integration lane, so no token is needed here.
+
+      - name: Prefetch verified public image fixtures
+        run: >-
+          python3 scripts/ci_public_image_prefetch.py
+          --group runtime
+          --profile indexing
+          --profile fixture
+          --receipt runtime-public-image-prefetch.json
+        timeout-minutes: 10
+
+      - name: Upload runtime public-image prefetch receipt
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: runtime-public-image-prefetch
+          path: runtime-public-image-prefetch.json
+          if-no-files-found: warn
+
+      - name: Build all application and fixture images from checkout
+        run: docker compose --profile indexing --profile fixture build
+        timeout-minutes: 25
+
+      - name: Build and probe the capture gateway image
+        timeout-minutes: 10
+        run: |
+          image="capture-egress-ci:${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          container="capture-egress-ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          cleanup_gateway() {
+            docker stop --time 2 "$container" >/dev/null 2>&1 || true
+            docker rm "$container" >/dev/null 2>&1 || true
+          }
+          trap cleanup_gateway EXIT
+          docker build -f capture-egress-svc/Dockerfile -t "$image" .
+          docker run -d --network none --name "$container" "$image"
+          docker exec -i "$container" python - < tests/integration/capture_egress_image_probe.py
+
+      - name: Start the Docker stack
+        run: docker compose --profile indexing --profile fixture up -d --no-build --pull never
+        timeout-minutes: 10
+
+      - name: Wait for services to be healthy
+        run: |
+          # Quoted heredoc: bash passes the payload to python verbatim, so the
+          # dynamically allocated port is read from the environment instead of
+          # interpolated by the shell.
+          python3 - <<'PY'
+          import os
+          import time
+          import urllib.request
+
+          url = f"http://localhost:{os.environ['AGENT_PORT']}/health"
+          deadline = time.time() + 180
+          while time.time() < deadline:
+              try:
+                  r = urllib.request.urlopen(url, timeout=5)
+                  if r.status == 200:
+                      print('Stack healthy')
+                      break
+              except Exception:
+                  pass
+              time.sleep(3)
+          else:
+              raise RuntimeError('Timed out waiting for stack')
+          PY
+
+      - name: Wait for semantic-svc
+        run: |
+          # First check from host that the API is alive. Quoted heredoc: bash
+          # passes the payload to python verbatim, so the dynamically allocated
+          # port is read from the environment instead of interpolated by the
+          # shell.
+          python3 - <<'PY'
+          import os
+          import time
+          import urllib.error
+          import urllib.request
+
+          url = f"http://localhost:{os.environ['SEMANTIC_HOST_PORT']}/health"
+          deadline = time.time() + 300
+          while time.time() < deadline:
+              try:
+                  r = urllib.request.urlopen(url, timeout=5)
+                  data = r.read().decode()
+                  if r.status == 200 and '"ok"' in data:
+                      print('semantic-svc healthy on host')
+                      break
+              except urllib.error.HTTPError as e:
+                  print(f'  waiting ({e.code})...')
+              except Exception:
+                  pass
+              time.sleep(3)
+          else:
+              raise RuntimeError('Timed out waiting for semantic-svc on host')
+          PY
+          # Verify Qdrant is reachable from inside agent-svc (where tests run).
+          # Service-DNS URL stays literal: no host-port interpolation needed.
+          python3 - <<'PY'
+          import subprocess
+          import time
+
+          deadline = time.time() + 60
+          while time.time() < deadline:
+              r = subprocess.run(
+                  ['docker', 'compose', 'exec', '-T', 'agent-svc',
+                   'python3', '-c',
+                   'import urllib.request; u=urllib.request.urlopen("http://semantic-svc:8003/index/stats", timeout=5); print(u.status)'],
+                  capture_output=True, text=True, timeout=10
+              )
+              if r.returncode == 0 and '200' in r.stdout:
+                  print('Qdrant ready from agent-svc')
+                  break
+              print(f'  waiting from agent-svc (rc={r.returncode}): {r.stdout[:80]}')
+              time.sleep(5)
+          else:
+              raise RuntimeError('Timed out waiting for Qdrant from agent-svc')
+          PY
+
+      - name: Wait for tier3-fixture
+        run: |
+          # Quoted heredoc: bash passes the payload to python verbatim, so the
+          # dynamically allocated port is read from the environment instead of
+          # interpolated by the shell.
+          python3 - <<'PY'
+          import os
+          import time
+          import urllib.request
+
+          url = f"http://localhost:{os.environ['TIER3_HOST_PORT']}/health"
+          deadline = time.time() + 30
+          while time.time() < deadline:
+              try:
+                  r = urllib.request.urlopen(url, timeout=5)
+                  if r.status == 200:
+                      print('tier3-fixture healthy')
+                      break
+              except Exception:
+                  pass
+              time.sleep(2)
+          else:
+              raise RuntimeError('Timed out waiting for tier3-fixture')
+          PY
+
+      - name: Wait for test-site
+        run: |
+          # Quoted heredoc: bash passes the payload to python verbatim, so the
+          # dynamically allocated port is read from the environment instead of
+          # interpolated by the shell.
+          python3 - <<'PY'
+          import os
+          import time
+          import urllib.request
+
+          url = f"http://localhost:{os.environ['TEST_SITE_HOST_PORT']}/health"
+          deadline = time.time() + 60
+          while time.time() < deadline:
+              try:
+                  r = urllib.request.urlopen(url, timeout=5)
+                  if r.status == 200:
+                      print('test-site healthy')
+                      break
+              except Exception:
+                  pass
+              time.sleep(2)
+          else:
+              raise RuntimeError('Timed out waiting for test-site')
+          PY
+
+      - name: Wait for slopsearx-fixture
+        run: |
+          # Quoted heredoc: bash passes the payload to python verbatim, so the
+          # dynamically allocated port is read from the environment instead of
+          # interpolated by the shell.
+          python3 - <<'PY'
+          import os
+          import time
+          import urllib.request
+
+          url = f"http://localhost:{os.environ['SLOPSEARX_FIXTURE_HOST_PORT']}/health"
+          deadline = time.time() + 60
+          while time.time() < deadline:
+              try:
+                  r = urllib.request.urlopen(url, timeout=5)
+                  if r.status == 200:
+                      print('slopsearx-fixture healthy')
+                      break
+              except Exception:
+                  pass
+              time.sleep(2)
+          else:
+              raise RuntimeError('Timed out waiting for slopsearx-fixture')
+          PY
+
+      - name: Wait for agent-svc-fixture
+        run: |
+          # Quoted heredoc: bash passes the payload to python verbatim, so the
+          # dynamically allocated port is read from the environment instead of
+          # interpolated by the shell.
+          python3 - <<'PY'
+          import os
+          import time
+          import urllib.request
+
+          url = f"http://localhost:{os.environ['AGENT_FIXTURE_HOST_PORT']}/health"
+          deadline = time.time() + 120
+          while time.time() < deadline:
+              try:
+                  r = urllib.request.urlopen(url, timeout=5)
+                  if r.status == 200:
+                      print('agent-svc-fixture healthy')
+                      break
+              except Exception:
+                  pass
+              time.sleep(3)
+          else:
+              raise RuntimeError('Timed out waiting for agent-svc-fixture')
+          PY
+
+      - name: Reset isolated test state
+        run: |
+          docker compose exec -T valkey valkey-cli -n 0 FLUSHDB
+          docker compose exec -T valkey valkey-cli -n 1 FLUSHDB
+          # Quoted heredocs: bash passes each payload to python verbatim, so the
+          # dynamically allocated ports and the run id are read from the
+          # environment instead of interpolated by the shell.
+          run_id="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" python3 - <<'PY'
+          import os
+          import urllib.request
+
+          base_url = f"http://localhost:{os.environ['LLM_HOST_PORT']}/diagnostics/reset"
+          urllib.request.urlopen(
+              f"{base_url}?run_id={os.environ['run_id']}", data=b"", timeout=5
+          )
+          PY
+          run_id="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" python3 - <<'PY'
+          import os
+          import urllib.request
+
+          base_url = f"http://localhost:{os.environ['SLOPSEARX_FIXTURE_HOST_PORT']}/ledger/reset"
+          urllib.request.urlopen(
+              f"{base_url}?run_id={os.environ['run_id']}", data=b"", timeout=5
+          )
+          PY
+
+      - name: Copy test files and source directories
+        run: |
+          mkdir -p coverage
+          svc=$(docker compose ps -q agent-svc)
+          # Copy full tests/ directory and root Compose contract input
+          docker compose exec -T agent-svc mkdir -p /app/tests
+          docker cp tests/. "$svc":/app/tests/
+          docker compose exec -T agent-svc mkdir -p /app/w6-fixtures
+          docker cp groktocrawl "$svc":/app/w6-fixtures/groktocrawl
+          docker cp docker-compose.yml "$svc":/app/docker-compose.yml
+          docker cp .env.sample "$svc":/app/.env.sample
+          docker cp groktocrawl "$svc":/app/groktocrawl
+          docker compose exec -T agent-svc mkdir -p /app/scripts
+          docker cp scripts/classify_ci_changes.py "$svc":/app/scripts/classify_ci_changes.py
+          docker cp scripts/coverage_gate.py "$svc":/app/scripts/coverage_gate.py
+          # Service tests exercise these executable policy/maintenance seams.
+          for script in ci_fork_pr_guard.py enforce-branch-protection.py reconcile-jobs.py; do
+            docker cp "scripts/$script" "$svc:/app/scripts/$script"
+          done
+          # Copy the stdlib benchmark harness so tests/service/test_benchmark_harness.py
+          # can import the benchmark helpers inside the container.
+          docker compose exec -T agent-svc mkdir -p /app/benchmarks
+          docker cp benchmarks/. "$svc":/app/benchmarks/
+          docker compose exec -T agent-svc mkdir -p /app/.github/workflows
+          docker cp .github/workflows/docker.yml "$svc":/app/.github/workflows/docker.yml
+          docker cp .github/workflows/. "$svc":/app/.github/workflows/
+          docker cp docker-compose.ci.yml "$svc":/app/docker-compose.ci.yml
+          # Include the protected-profile inputs read by service contract tests.
+          docker cp compose.experimental-candidate.yml "$svc":/app/compose.experimental-candidate.yml
+          docker cp compose.protected-flare-ci.yml "$svc":/app/compose.protected-flare-ci.yml
+          docker cp compose.protected-capture-ci.yml "$svc":/app/compose.protected-capture-ci.yml
+          docker cp compose.protected-capture-lab.yml "$svc":/app/compose.protected-capture-lab.yml
+          # Refresh the baked agent package at the path Python imports from /app.
+          docker compose exec -T agent-svc mkdir -p /app/agent
+          docker cp agent-svc/agent/. "$svc":/app/agent/
+          # Copy the remaining service packages under their repository paths.
+          for pkg in scraper-svc/scraper parse-svc/parse_svc portal-svc/portal browser-svc/browser_svc llm-svc/llm_svc slopsearx-fixture/slopsearx_fixture common; do
+            docker compose exec -T agent-svc mkdir -p "/app/$pkg"
+            docker cp "$pkg/." "$svc:/app/$pkg/"
+          done
+          # Copy mcp-svc package + its tests under /app/mcp-svc
+          docker compose exec -T agent-svc mkdir -p /app/mcp-svc
+          docker cp mcp-svc/. "$svc:/app/mcp-svc/"
+
+      - name: Install critical test dependencies
+        run: |
+          uv export --locked --only-group fast-tests --no-dev --no-emit-project --no-emit-workspace --no-header --format requirements.txt --output-file runtime-test-requirements.txt
+          svc=$(docker compose ps -q agent-svc)
+          docker cp runtime-test-requirements.txt "$svc:/tmp/runtime-test-requirements.txt"
+          docker compose exec -T agent-svc python3 -m pip install --require-hashes -r /tmp/runtime-test-requirements.txt -q
+
+      - name: Verify LLM fixture contract and agent routing
+        run: |
+          docker compose exec -T agent-svc python3 -c "
+          import os
+          assert os.environ['LLM_BASE_URL'].startswith('http://llm-svc:8011/v1?run_id='), os.environ.get('LLM_BASE_URL')
+          print('agent LLM routing verified')
+          "
+          docker compose exec -T agent-svc python3 -c "
+          import json, urllib.request
+          endpoint = 'http://llm-svc:8011/v1/chat/completions'
+          def chat(messages, response_format=None):
+              body = {'model': 'fixture-model', 'messages': messages}
+              if response_format:
+                  body['response_format'] = response_format
+              request = urllib.request.Request(endpoint, data=json.dumps(body).encode(), headers={'Content-Type': 'application/json'})
+              return json.load(urllib.request.urlopen(request, timeout=10))['choices'][0]['message']['content']
+          citation = chat([
+              {'role': 'system', 'content': 'Cite sources by their URL whenever you use information.'},
+              {'role': 'user', 'content': 'explain REST API authentication methods'},
+          ])
+          # The fixture emits the raw marker; the targeted integration test below
+          # verifies agent post-processing resolves it to [1](url).
+          assert '[1]' in citation, citation
+          schema = {'type': 'object', 'properties': {'comparison': {'type': 'object', 'properties': {'pros': {'type': 'array', 'items': {'type': 'string'}}}}}}
+          structured = chat([
+              {'role': 'system', 'content': 'MUST respond with valid JSON matching this schema:' + json.dumps(schema)},
+              {'role': 'user', 'content': 'compare'},
+          ], {'type': 'json_object'})
+          assert json.loads(structured) == {'comparison': {'pros': ['value', 'value']}}, structured
+          print('LLM fixture citation and schema contracts verified')
+          "
+
+      - name: Run targeted source-backed agent contracts
+        run: |
+          docker compose exec -T agent-svc env \
+            PYTHONPATH=/app/agent-svc:/app/scraper-svc:/app/llm-svc:/app/parse-svc:/app/portal-svc:/app/browser-svc:/app \
+            QA_OUTCOME_PATH=/app/qa-outcomes-targeted.json \
+            TEST_SITE_BASE_URL=http://test-site:8000 \
+            python3 -m pytest /app/tests/integration/test_stack.py \
+              -k 'test_cross_endpoint_compact_citations_resolvable or test_cross_plan_agent_structured_output_val_cross_005 or test_session_search_zero_results_val_ses_085 or test_cross_concurrent_session_isolation_val_cross_018' \
+              --no-cov -o 'addopts=' -p no:cacheprovider -q
+        timeout-minutes: 5
+
+      - name: Run narrow grounded-answer eval (in-process + HTTP smoke)
+        # Bounded, hermetic pre-merge eval (issue #570): the narrow selection runs
+        # the real answer/research pipeline in-process against the deterministic
+        # twins (no live egress; endpoint-host allowlist enforced by the harness),
+        # then one default-scenario /v2/answer smoke runs over the real route on
+        # agent-svc-fixture. Gated by the runtime/twin classifier; all PR code runs on an ephemeral hosted runner.
+        if: >-
+          needs.changes.outputs.requires_twin_contracts == 'true' ||
+          needs.changes.outputs.requires_full_runtime == 'true'
+        env:
+          PYTHONPATH: agent-svc:scraper-svc:llm-svc:slopsearx-fixture:parse-svc:portal-svc:browser-svc:semantic-svc:.
+        run: |
+          uv run --no-sync python3 scripts/run_answer_evals.py --selection narrow \
+            --output-dir eval-out/narrow \
+            --http-smoke "http://127.0.0.1:${AGENT_FIXTURE_HOST_PORT}"
+        timeout-minutes: 5
+
+      - name: Upload answer-evals provenance
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: research-answer-evals-provenance
+          path: eval-out/
+          if-no-files-found: warn
+
+      - name: Critical journey smoke
+        run: |
+          docker compose exec -T agent-svc mkdir -p /app/coverage
+          set +e
+          docker compose exec -T agent-svc env \
+            QA_OUTCOME_PATH=/app/qa-outcomes-critical.json \
+            TWIN_RUN_ID=${{ github.run_id }}-${{ github.run_attempt }} \
+            AGENT_BASE_URL=http://agent-svc-fixture:8080 \
+            PYTHONPATH=/app/agent-svc:/app/scraper-svc:/app/llm-svc:/app/parse-svc:/app/portal-svc:/app/browser-svc:/app \
+            SCRAPER_BASE_URL=http://scraper-svc:8001 \
+            SEARCH_BASE_URL=http://slopsearx-fixture:8080 \
+            LLM_BASE_URL=http://llm-svc:8011/v1?run_id=${{ github.run_id }}-${{ github.run_attempt }} \
+            TEST_SITE_BASE_URL=http://test-site:8000 \
+            TIER3_FIXTURE_BASE_URL=http://tier3-fixture:8000 \
+            SEMANTIC_BASE_URL=http://semantic-svc:8003 \
+            python3 -m pytest /app/tests/integration/test_critical_journey.py -vv -rA -m 'not external' \
+              --cov=/app/agent \
+              --cov=/app/scraper-svc/scraper \
+              --cov=/app/parse-svc/parse_svc \
+              --cov=/app/portal-svc/portal \
+              --cov=/app/browser-svc/browser_svc \
+              --cov=/app/common \
+              --cov-report=xml:/app/coverage/critical.xml \
+              --cov-report=json:/app/coverage/critical.json \
+              --cov-report=term-missing \
+              --cov-fail-under=0
+          pytest_status=$?
+          svc=$(docker compose ps -q agent-svc)
+          docker cp "$svc:/app/qa-outcomes-critical.json" qa-outcomes-critical.json || true
+          docker cp "$svc:/app/qa-outcomes-critical.md" qa-outcomes-critical.md || true
+          docker cp "$svc:/app/coverage/." coverage/ || true
+          if [ "$pytest_status" -ne 0 ]; then
+            docker compose logs --tail 50 test-site scraper-svc || true
+          fi
+          exit "$pytest_status"
+        timeout-minutes: 20
+
+      - name: Run CAPTCHA runtime probe
+        run: docker compose exec -T scraper-svc python - < tests/integration/captcha_runtime_probe.py
+
+      - name: Run integration tests
+        run: |
+          uv export --locked --only-group fast-tests --no-dev --no-emit-project --no-emit-workspace --no-header --format requirements.txt --output-file runtime-test-requirements.txt
+          svc=$(docker compose ps -q agent-svc)
+          docker cp runtime-test-requirements.txt "$svc:/tmp/runtime-test-requirements.txt"
+          docker compose exec -T agent-svc python3 -m pip install --require-hashes -r /tmp/runtime-test-requirements.txt -q
+          docker compose exec -T agent-svc mkdir -p /app/coverage
+          set +e
+          docker compose exec -T agent-svc env \
+            QA_OUTCOME_PATH=/app/qa-outcomes-integration.json \
+            PYTHONPATH=/app/agent-svc:/app/scraper-svc:/app/llm-svc:/app/parse-svc:/app/portal-svc:/app/browser-svc:/app \
+            SCRAPER_BASE_URL=http://scraper-svc:8001 \
+            SEARCH_BASE_URL=http://slopsearx:8080 \
+            LLM_BASE_URL=http://llm-svc:8011/v1?run_id=${{ github.run_id }}-${{ github.run_attempt }} \
+            TEST_SITE_BASE_URL=http://test-site:8000 \
+            TIER3_FIXTURE_BASE_URL=http://tier3-fixture:8000 \
+            SEMANTIC_BASE_URL=http://semantic-svc:8003 \
+            python3 -m pytest /app/tests/integration/ /app/tests/service/ --timeout=120 --ignore-glob='*observability*' --ignore=/app/tests/integration/test_critical_journey.py -m 'not external' \
+            --ignore=/app/tests/service/test_twin_contract.py \
+            --ignore=/app/tests/service/test_twin_network_isolation.py \
+            --ignore=/app/tests/service/test_workflow_contract.py \
+            --ignore=/app/tests/service/test_answer_evals.py \
+              --cov=/app/agent \
+              --cov=/app/scraper-svc/scraper \
+              --cov=/app/parse-svc/parse_svc \
+              --cov=/app/portal-svc/portal \
+              --cov=/app/browser-svc/browser_svc \
+              --cov=/app/common \
+              --cov-report=xml:/app/coverage/integration.xml \
+              --cov-report=json:/app/coverage/integration.json \
+              --cov-report=term-missing \
+              --cov-fail-under=0
+          pytest_status=$?
+          svc=$(docker compose ps -q agent-svc)
+          docker cp "$svc:/app/qa-outcomes-integration.json" qa-outcomes-integration.json || true
+          docker cp "$svc:/app/qa-outcomes-integration.md" qa-outcomes-integration.md || true
+          docker cp "$svc:/app/coverage/." coverage/ || true
+          exit "$pytest_status"
+        # Keep five minutes for coverage/QA report collection after the full suite.
+        timeout-minutes: 25
+
+      - name: Run mcp-svc integration tests (Host-header / transport security)
+        run: |
+          set +e
+          docker compose exec -T agent-svc env \
+            MCP_URL=http://mcp-svc:8002/mcp \
+            AGENT_URL=http://agent-svc:8080 \
+            MCP_TEST_ALLOWED_HOST=mcp-svc:8002 \
+            MCP_TEST_DISALLOWED_HOST=not-allowed.invalid:8002 \
+            python3 -m pytest /app/mcp-svc/tests/test_integration.py \
+              -k "TestHostHeaderTransportSecurity" -vv -rA -m 'not external'
+          pytest_status=$?
+          exit "$pytest_status"
+        timeout-minutes: 10
+
+      - name: Check changed-line coverage
+        id: coverage_gate
+        env:
+          COVERAGE_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          COVERAGE_HEAD_SHA: ${{ github.sha }}
+        run: |
+          if [ "$COVERAGE_BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            echo "Changed-line coverage skipped: no prior commit exists for this ref."
+            exit 0
+          fi
+          python3 scripts/coverage_gate.py \
+            --coverage-json coverage/critical.json \
+            --coverage-json coverage/integration.json \
+            --base-sha "$COVERAGE_BASE_SHA" \
+            --head-sha "$COVERAGE_HEAD_SHA" \
+            --summary-path coverage/docker-risk-summary.md
+
+      - name: Publish integration outcome summary
+        if: always()
+        run: cat qa-outcomes-*.md >> "$GITHUB_STEP_SUMMARY" || true
+
+      - name: Capture sanitized LLM fixture diagnostics
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.request
+          allowed = {"request_id", "schema_version", "fixture_version", "scenario", "scenario_version", "run_id", "status", "classification", "model", "stream"}
+          try:
+              run_id = f"{os.environ.get('GITHUB_RUN_ID', 'local')}-{os.environ.get('GITHUB_RUN_ATTEMPT', '1')}"
+              with urllib.request.urlopen(f"http://localhost:{os.environ['LLM_HOST_PORT']}/diagnostics?run_id={run_id}", timeout=5) as response:
+                  payload = json.load(response)
+              entries = [{key: value for key, value in entry.items() if key in allowed} for entry in payload.get("entries", [])]
+              output = {"schema_version": payload.get("schema_version"), "fixture_version": payload.get("fixture_version"), "entries": entries}
+          except Exception as exc:
+              output = {"error": "diagnostics unavailable", "classification": type(exc).__name__}
+          with open("llm-fixture-diagnostics.json", "w") as file:
+              json.dump(output, file, indent=2)
+          PY
+
+      - name: Capture sanitized search fixture ledger
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.request
+          run_id = f"{os.environ.get('GITHUB_RUN_ID', 'local')}-{os.environ.get('GITHUB_RUN_ATTEMPT', '1')}"
+          try:
+              with urllib.request.urlopen(f"http://localhost:{os.environ['SLOPSEARX_FIXTURE_HOST_PORT']}/ledger?run_id={run_id}", timeout=5) as response:
+                  payload = json.load(response)
+              allowed = {"request_id", "scenario", "schema_version", "fixture_version", "status", "classification", "categories", "page", "result_count", "run_id"}
+              output = {"schema_version": payload.get("schema_version"), "fixture_version": payload.get("fixture_version"), "entries": [{key: value for key, value in entry.items() if key in allowed} for entry in payload.get("entries", [])]}
+          except Exception as exc:
+              output = {"error": "search ledger unavailable", "classification": type(exc).__name__}
+          with open("search-fixture-ledger.json", "w") as file:
+              json.dump(output, file, indent=2)
+          PY
+
+      - name: Write Compose twin evidence manifest
+        if: always()
+        env:
+          TWIN_SELECTION: ${{ needs.changes.outputs.twin_test_selection }}
+          RUNTIME_SELECTION: ${{ needs.changes.outputs.requires_full_runtime }}
+          TWIN_RESULT: ${{ job.status }}
+          TWIN_FAILURE_SOURCE: ${{ job.status == 'success' && 'none' || 'implementation' }}
+          TWIN_TEST_OUTCOME: ${{ job.status }}
+          TWIN_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          TWIN_EVENT_KIND: ${{ github.event_name }}
+          TWIN_EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          TWIN_EXECUTION_MODE: compose
+          TWIN_REQUIRE_IMAGES: "1"
+          TWIN_RECORD_IMAGES: "1"
+          TWIN_SEARCH_BACKEND: fixture
+          TWIN_BUILT_FROM_CHECKOUT: llm-svc,slopsearx-fixture,agent-svc-fixture,test-site,tier3-fixture,slopsearx,agent-svc,scraper-svc,browser-svc,semantic-svc,parse-svc,portal-svc,mcp-svc
+          TWIN_TESTS: '["tests/integration/test_stack.py::test_cross_endpoint_compact_citations_resolvable","tests/integration/test_stack.py::test_cross_plan_agent_structured_output_val_cross_005","tests/integration/test_critical_journey.py","tests/integration/","tests/service/","tests/integration/test_twin_failure_injection.py","mcp-svc/tests/test_integration.py::TestHostHeaderTransportSecurity"]'
+          TWIN_EXCLUDED_TESTS: '["tests/service/test_twin_contract.py","tests/service/test_twin_network_isolation.py","tests/service/test_workflow_contract.py","tests/service/test_answer_evals.py"]'
+          TWIN_CHECKS: scenario-version-precheck,manifest-validation
+        run: |
+          uv run --no-sync python scripts/twin_provenance.py --output twin-compose-out --changed-paths-from-event
+          uv run --no-sync python -m jsonschema -i twin-compose-out/twin-evidence.json provenance/twin-evidence.schema.json
+
+      - name: Publish coverage summary
+        if: always()
+        run: |
+          if [ -f coverage/docker-risk-summary.md ]; then
+            cat coverage/docker-risk-summary.md >> "$GITHUB_STEP_SUMMARY"
+          elif [ "${{ steps.coverage_gate.outcome }}" = "success" ] && { [ -f coverage/critical.json ] || [ -f coverage/integration.json ]; }; then
+            echo "Changed-line coverage comparison skipped: no prior commit exists for this ref." >> "$GITHUB_STEP_SUMMARY"
+          elif [ "${{ steps.coverage_gate.outcome }}" = "skipped" ]; then
+            echo "Changed-line coverage comparison did not run because an earlier test step failed." >> "$GITHUB_STEP_SUMMARY"
+          elif [ "${{ steps.coverage_gate.outcome }}" != "success" ]; then
+            echo "Changed-line coverage gate failed before writing its summary." >> "$GITHUB_STEP_SUMMARY"
+          elif [ ! -f coverage/critical.json ] && [ ! -f coverage/integration.json ]; then
+            echo "Changed-line coverage report unavailable; coverage JSON files are missing from the workspace." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload integration outcome reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: research-integration-test-outcomes
+          path: qa-outcomes-*
+          if-no-files-found: warn
+
+      - name: Upload LLM fixture diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: research-llm-fixture-diagnostics
+          path: llm-fixture-diagnostics.json
+          if-no-files-found: warn
+
+      - name: Upload search fixture ledger and twin manifest
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: research-search-fixture-ledger-and-twin-provenance
+          path: |
+            search-fixture-ledger.json
+            twin-compose-out/twin-evidence.json
+          if-no-files-found: warn
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: research-integration-test-coverage
+          path: coverage/*
+          if-no-files-found: warn
+
+      - name: Collect diagnostics on failure
+        if: failure()
+        run: |
+          report="$GITHUB_WORKSPACE/integration-test-diagnostics.txt"
+          {
+            echo "Integration test failure diagnostics"
+            echo "Collected at: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo
+            echo "=== docker compose ps -a ==="
+            docker compose ps -a || true
+            echo
+            echo "=== listening TCP sockets ==="
+            ss -ltnp || netstat -tlnp || true
+            echo
+            echo "=== all containers with ports ==="
+            docker ps --format '{{.Names}}\t{{.Ports}}' || true
+            echo
+            echo "=== docker stats --no-stream ==="
+            docker stats --no-stream || true
+            echo
+            echo "=== host memory ==="
+            free -h || vm_stat || true
+            echo
+            echo "=== host filesystem ==="
+            df -h || true
+            echo
+            echo "=== project container state ==="
+            docker ps -aq --filter "name=groktocrawl" | while read -r container; do
+              docker inspect --format \
+                'Name={{.Name}} Status={{.State.Status}} ExitCode={{.State.ExitCode}} FinishedAt={{.State.FinishedAt}} Error={{.State.Error}} OOMKilled={{.State.OOMKilled}}' \
+                "$container" || true
+            done || true
+            echo
+            echo "=== docker compose logs (last 50 lines) ==="
+            docker compose logs --tail 50 || true
+          } > "$report" 2>&1 || true
+
+      - name: Upload integration test diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: research-integration-test-diagnostics
+          path: integration-test-diagnostics.txt
+          if-no-files-found: warn
+
+      - name: Tear down stack
+        if: always()
+        run: docker compose --profile indexing --profile fixture down --volumes --remove-orphans --timeout 30
+
+  protected-browser-profile:
+    name: Protected Browser Egress Profile
+    needs: changes
+    if: >-
+      always() && needs.changes.result == 'success' &&
+      needs.changes.outputs.requires_full_runtime == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      COMPOSE_FILE: compose.experimental-candidate.yml
+      COMPOSE_PROJECT_NAME: protected-browser-${{ github.run_id }}-${{ github.run_attempt }}
+      CANDIDATE_POSTGRES_PASSWORD_FILE: /tmp/protected-browser-password-${{ github.run_id }}-${{ github.run_attempt }}
+      CANDIDATE_API_KEY: ci-only-api-key
+      LLM_BASE_URL: http://llm.invalid/v1
+      LLM_API_KEY: ci-only-llm-key
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Create isolated Compose secret placeholder
+        run: |
+          umask 077
+          printf 'ci-only-password\n' > "$CANDIDATE_POSTGRES_PASSWORD_FILE"
+          docker compose config --quiet
+      - name: Build and start only the protected browser dependency graph
+        run: >-
+          docker compose up --build --detach --wait
+          candidate-browser-controller
+      - name: Verify renderer network boundary from the controller API
+        run: >-
+          docker compose exec -T --user 10002:20000 candidate-browser-controller python -
+          < tests/integration/browser_capture_boundary_probe.py
+      - name: Verify renderer firewall and privilege drop in its namespace
+        run: >-
+          docker compose exec -T candidate-browser-renderer python -
+          < tests/integration/browser_renderer_isolation_probe.py
+      - name: Collect bounded protected-profile startup diagnostics
+        if: failure()
+        run: |
+          docker compose ps -a
+          docker compose logs --no-color --tail=100 \
+            candidate-capture-egress candidate-browser-renderer \
+            candidate-browser-controller candidate-valkey
+          renderer_id="$(docker compose ps -q candidate-browser-renderer)"
+          if [ -n "$renderer_id" ]; then
+            docker inspect --format '{{.Name}} health={{json .State.Health}}' "$renderer_id"
+          fi
+      - name: Tear down protected browser profile
+        if: always()
+        run: |
+          docker compose down --volumes --remove-orphans --timeout 10
+
+  protected-flare-profile:
+    name: Protected FlareSolverr Egress Profile
+    needs: changes
+    if: >-
+      always() && needs.changes.result == 'success' &&
+      needs.changes.outputs.requires_full_runtime == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      COMPOSE_FILE: compose.experimental-candidate.yml:compose.protected-flare-ci.yml
+      COMPOSE_PROFILES: protected-flare
+      COMPOSE_PROJECT_NAME: protected-flare-${{ github.run_id }}-${{ github.run_attempt }}
+      CANDIDATE_POSTGRES_PASSWORD_FILE: /tmp/protected-flare-password-${{ github.run_id }}-${{ github.run_attempt }}
+      CANDIDATE_API_KEY: ci-only-api-key
+      LLM_BASE_URL: http://llm.invalid/v1
+      LLM_API_KEY: ci-only-llm-key
+      CANDIDATE_IMAGE_TAG: ci-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Create isolated Compose secret placeholder
+        run: |
+          umask 077
+          printf 'ci-only-password\n' > "$CANDIDATE_POSTGRES_PASSWORD_FILE"
+          docker compose --profile protected-flare config --quiet
+      - name: Build and start protected Flare and local-origin fixture
+        run: >-
+          docker compose --profile protected-flare up --build --detach --wait
+          candidate-scraper candidate-flare-control candidate-flare-test-origin
+      - name: Exercise upstream Flare GET, POST, session, cookie, redirect and page boundary
+        run: >-
+          docker compose --profile protected-flare exec -T --user 10001:20000 candidate-scraper python -
+          < tests/integration/protected_flare_api_probe.py
+      - name: Verify the Flare network namespace has no TCP API listener
+        run: >-
+          docker compose --profile protected-flare exec -T
+          candidate-flare-renderer python -
+          < tests/integration/protected_flare_renderer_probe.py
+      - name: Collect bounded protected Flare startup diagnostics
+        if: failure()
+        run: |
+          docker compose --profile protected-flare ps -a
+          docker compose --profile protected-flare logs --no-color --tail=100 \
+            candidate-capture-egress candidate-flare-renderer candidate-flare-control \
+            candidate-flare-test-origin candidate-scraper-socket-init \
+            candidate-flare-control-socket-init
+          scraper_id=$(docker compose ps -q candidate-scraper)
+          if [ -n "$scraper_id" ]; then
+            docker inspect --format '{{.Name}} health={{json .State.Health}}' "$scraper_id"
+          fi
+      - name: Tear down protected Flare profile
+        if: always()
+        run: |
+          docker compose --profile protected-flare down --volumes --remove-orphans --timeout 10
+
+  protected-capture-composition:
+    name: Protected Capture Boundary Composition
+    needs: changes
+    if: >-
+      always() && needs.changes.result == 'success' &&
+      needs.changes.outputs.requires_full_runtime == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      COMPOSE_FILE: compose.experimental-candidate.yml:compose.protected-flare-ci.yml:compose.protected-capture-ci.yml
+      COMPOSE_PROFILES: protected-flare,protected-capture
+      COMPOSE_PROJECT_NAME: protected-capture-${{ github.run_id }}-${{ github.run_attempt }}
+      CANDIDATE_POSTGRES_PASSWORD_FILE: /tmp/protected-capture-password-${{ github.run_id }}-${{ github.run_attempt }}
+      CANDIDATE_API_KEY: ci-only-api-key
+      LLM_BASE_URL: http://candidate-llm:8011/v1
+      LLM_API_KEY: ci-only-llm-key
+      CANDIDATE_IMAGE_TAG: ci-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Create isolated Compose secret placeholder and validate topology
+        run: |
+          umask 077
+          printf 'ci-only-password\n' > "$CANDIDATE_POSTGRES_PASSWORD_FILE"
+          docker compose config --quiet
+      - name: Build and start the isolated service composition
+        run: >-
+          docker compose up --build --detach --wait
+          candidate-scraper candidate-private-sentinel candidate-capture-peer-sentinel
+          candidate-host-bridge-sentinel candidate-llm
+          candidate-scraper-ingress candidate-flare-test-origin candidate-flare-control
+      - name: Snapshot append-only sentinel evidence before controls
+        run: |
+          baseline="$(docker compose exec -T candidate-private-sentinel python /probe/sentinel_ledger.py snapshot)"
+          printf 'SENTINEL_LEDGER_BASELINE=%s\n' "$baseline" >> "$GITHUB_ENV"
+      - name: Verify private sentinel response positive control
+        run: |
+          nonce="$(docker compose exec -T candidate-private-sentinel python -c 'import os, uuid; from urllib.request import urlopen; nonce=uuid.uuid4().hex; host=os.environ["SENTINEL_BIND_HOST"]; r=urlopen(f"http://{host}:19001/positive-control/{nonce}", timeout=2); body=r.read(128); assert r.status == 200 and r.headers.get("Content-Type") == "text/plain" and r.headers.get("Access-Control-Allow-Origin") == "*" and body == f"PRIVATE_SENTINEL_RESPONSE_V1:{nonce}".encode(); print(nonce)')"
+          [[ "$nonce" =~ ^[0-9a-f]{32}$ ]]
+          printf 'PRIVATE_SENTINEL_POSITIVE_NONCE=%s\n' "$nonce" >> "$GITHUB_ENV"
+      - name: Verify host bridge sentinel positive viability before denial probes
+        run: |
+          nonce="$(docker compose exec -T candidate-capture-egress python /probe/host_bridge_sentinel.py)"
+          [[ "$nonce" =~ ^[0-9a-f]{32}$ ]]
+          printf 'HOST_BRIDGE_POSITIVE_NONCE=%s\n' "$nonce" >> "$GITHUB_ENV"
+      - name: Verify the fixed agent-to-scraper HTTP ingress bridge
+        run: >-
+          docker compose exec -T candidate-private-sentinel
+          python /probe/scraper_ingress_boundary_probe.py
+      - name: Verify unrelated egress services cannot reach the model gateway
+        run: >-
+          docker compose exec -T candidate-capture-egress python -c
+          "import socket; s=socket.socket(); s.settimeout(1); r=s.connect_ex(('172.31.254.34',8080)); s.close(); assert r != 0, 'unexpected model gateway reachability'"
+      - name: Verify direct scraper network denial and fixed model/source brokers
+        run: >-
+          docker compose exec -T --user 10001:20000 candidate-scraper python -
+          < tests/integration/scraper_egress_boundary_probe.py
+      - name: Verify the Flare control API through its permissioned socket
+        run: >-
+          docker compose exec -T --user 10001:20000 candidate-scraper python -
+          < tests/integration/protected_flare_api_probe.py
+      - name: Verify hostile JavaScript did not reach the private sentinel
+        if: always()
+        run: |
+          docker compose exec -T candidate-private-sentinel python /probe/sentinel_ledger.py verify "$SENTINEL_LEDGER_BASELINE" "$PRIVATE_SENTINEL_POSITIVE_NONCE" "$HOST_BRIDGE_POSITIVE_NONCE"
+      - name: Collect bounded composition diagnostics
+        if: failure()
+        run: |
+          docker compose ps -a
+          docker compose logs --no-color --tail=100 candidate-capture-egress candidate-model-egress \
+            candidate-scraper candidate-scraper-ingress candidate-scraper-state-control \
+            candidate-scraper-model-control candidate-browser-renderer \
+            candidate-browser-controller candidate-flare-renderer candidate-flare-control \
+            candidate-scraper-socket-init candidate-flare-control-socket-init \
+            candidate-private-sentinel candidate-llm
+          scraper_id=$(docker compose ps -q candidate-scraper)
+          if [ -n "$scraper_id" ]; then
+            docker inspect --format '{{.Name}} health={{json .State.Health}}' "$scraper_id"
+          fi
+      - name: Tear down protected capture composition
+        if: always()
+        run: |
+          docker compose down --volumes --remove-orphans --timeout 15
+
+  research-storage:
+    name: PostgreSQL Storage Probes
+    needs: changes
+    if: >-
+      always() && needs.changes.result == 'success' &&
+      needs.changes.outputs.requires_full_runtime == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      COMPOSE_FILE: compose.research-storage.yml
+      COMPOSE_PROFILES: storage
+      COMPOSE_PROJECT_NAME: research-ci-${{ github.run_id }}-${{ github.run_attempt }}
+      RESEARCH_POSTGRES_PASSWORD_FILE: /tmp/research-postgres-password-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Configure hosted-runner Docker Hub cache
+        run: python3 scripts/configure_ci_dockerhub_mirror.py
+      - name: Validate isolated replacement candidate definition
+        run: |
+          umask 077
+          printf 'ci-only-password\n' > /tmp/candidate-postgres-password
+          CANDIDATE_POSTGRES_PASSWORD_FILE=/tmp/candidate-postgres-password \
+          CANDIDATE_API_KEY=ci-only-api-key \
+          LLM_BASE_URL=http://llm.invalid/v1 \
+          LLM_API_KEY=ci-only-llm-key \
+            docker compose -f compose.experimental-candidate.yml config --quiet
+      - name: Create ephemeral database credential
+        run: |
+          umask 077
+          openssl rand -hex 32 > "$RESEARCH_POSTGRES_PASSWORD_FILE"
+          echo "RESEARCH_PROBE_UID=$(id -u)" >> "$GITHUB_ENV"
+      - name: Resolve and start isolated database
+        run: |
+          python3 scripts/ci_public_image_prefetch.py --group storage --profile storage --receipt storage-public-image-prefetch.json
+          docker compose config --quiet
+          docker compose config --services
+          docker compose up -d --wait --pull never research-postgres
+      - name: Upload storage public-image prefetch receipt
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: storage-public-image-prefetch
+          path: storage-public-image-prefetch.json
+          if-no-files-found: warn
+      - name: Probe commits and independent connections
+        run: |
+          docker compose run --rm storage-probe write
+          docker compose run --rm storage-probe read
+      - name: Recreate database container and verify retained bytes
+        run: |
+          docker compose up -d --force-recreate --wait --pull never research-postgres
+          docker compose run --rm storage-probe read
+          docker compose images
+          docker compose run --rm storage-probe cleanup
+      - name: Exercise retained-source application adapter
+        run: docker compose run --build --rm storage-adapter
+      - name: Exercise durable human-guidance ownership
+        run: |
+          docker compose up -d --wait --pull never research-valkey
+          docker compose run --rm -T storage-adapter guidance-owner > guidance-owner-result.json
+          cat guidance-owner-result.json >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload durable guidance ownership evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: durable-guidance-owner-result
+          path: guidance-owner-result.json
+          if-no-files-found: error
+      - name: Exercise pgvector shadow adapter in the retained store
+        run: docker compose run --rm storage-adapter shadow
+      - name: Back up schema one and exercise retained revisions
+        run: |
+          set -eu
+          umask 077
+          migration_dir=$(mktemp -d)
+          docker compose run --rm -T storage-adapter source-state > "$migration_dir/before.json"
+          docker compose exec -T research-postgres pg_dump -U research_owner -d research_experiment --no-owner --no-privileges > "$migration_dir/schema-one.sql"
+          docker compose run --rm -T storage-adapter revision
+          docker compose exec -T research-postgres createdb -U research_owner research_pre_revision_restore
+          docker compose exec -T research-postgres psql -X -U research_owner -d research_pre_revision_restore --set=ON_ERROR_STOP=1 --single-transaction < "$migration_dir/schema-one.sql"
+          docker compose run --rm -T -e PGDATABASE=research_pre_revision_restore storage-adapter source-state > "$migration_dir/restored.json"
+          diff -u "$migration_dir/before.json" "$migration_dir/restored.json"
+      - name: Back up schema two and exercise retained publications
+        run: |
+          set -euo pipefail
+          umask 077
+          migration_dir=$(mktemp -d "$RUNNER_TEMP/publication-migration.XXXXXX")
+          chmod 700 "$migration_dir"
+          docker compose run --rm -T storage-adapter source-state > "$migration_dir/sources-before.json"
+          docker compose run --rm -T storage-adapter revision-state > "$migration_dir/revisions-before.json"
+          docker compose exec -T research-postgres pg_dump -U research_owner -d research_experiment --no-owner --no-privileges > "$migration_dir/schema-two.sql"
+          docker compose run --rm -T storage-adapter publication
+          docker compose exec -T research-postgres createdb -U research_owner research_pre_publication_restore
+          docker compose exec -T research-postgres psql -X -U research_owner -d research_pre_publication_restore --set=ON_ERROR_STOP=1 --single-transaction < "$migration_dir/schema-two.sql"
+          docker compose run --rm -T -e PGDATABASE=research_pre_publication_restore storage-adapter source-state > "$migration_dir/sources-restored.json"
+          docker compose run --rm -T -e PGDATABASE=research_pre_publication_restore storage-adapter revision-state > "$migration_dir/revisions-restored.json"
+          cmp "$migration_dir/sources-before.json" "$migration_dir/sources-restored.json"
+          cmp "$migration_dir/revisions-before.json" "$migration_dir/revisions-restored.json"
+      - name: Back up schema three and exercise historical rerenders
+        run: |
+          set -euo pipefail
+          umask 077
+          migration_dir=$(mktemp -d "$RUNNER_TEMP/rerender-migration.XXXXXX")
+          for kind in source revision publication; do
+            docker compose run --rm -T storage-adapter "$kind-state" > "$migration_dir/$kind-before.json"
+          done
+          docker compose exec -T research-postgres pg_dump -U research_owner -d research_experiment --no-owner --no-privileges > "$migration_dir/schema-three.sql"
+          docker compose run --rm -T storage-adapter rerender
+          docker compose exec -T research-postgres createdb -U research_owner research_pre_rerender_restore
+          docker compose exec -T research-postgres psql -X -U research_owner -d research_pre_rerender_restore --set=ON_ERROR_STOP=1 --single-transaction < "$migration_dir/schema-three.sql"
+          for kind in source revision publication; do
+            docker compose run --rm -T -e PGDATABASE=research_pre_rerender_restore storage-adapter "$kind-state" > "$migration_dir/$kind-restored.json"
+            cmp "$migration_dir/$kind-before.json" "$migration_dir/$kind-restored.json"
+          done
+      - name: Exercise bounded artifact export and offline validation
+        run: docker compose run --rm -T storage-adapter export
+      - name: Back up schema four and exercise scoped imports
+        run: |
+          set -euo pipefail
+          umask 077
+          migration_dir=$(mktemp -d "$RUNNER_TEMP/import-migration.XXXXXX")
+          for kind in source revision publication; do
+            docker compose run --rm -T storage-adapter "$kind-state" > "$migration_dir/$kind-before.json"
+          done
+          docker compose exec -T research-postgres pg_dump -U research_owner -d research_experiment --no-owner --no-privileges > "$migration_dir/schema-four.sql"
+          docker compose run --rm -T storage-adapter import
+          docker compose exec -T research-postgres createdb -U research_owner research_pre_import_restore
+          docker compose exec -T research-postgres psql -X -U research_owner -d research_pre_import_restore --set=ON_ERROR_STOP=1 --single-transaction < "$migration_dir/schema-four.sql"
+          for kind in source revision publication; do
+            docker compose run --rm -T -e PGDATABASE=research_pre_import_restore storage-adapter "$kind-state" > "$migration_dir/$kind-restored.json"
+            cmp "$migration_dir/$kind-before.json" "$migration_dir/$kind-restored.json"
+          done
+      - name: Back up schema five and exercise expiry collection
+        run: |
+          set -euo pipefail
+          umask 077
+          migration_dir=$(mktemp -d "$RUNNER_TEMP/expiry-migration.XXXXXX")
+          for kind in source revision publication import; do
+            docker compose run --rm -T storage-adapter "$kind-state" > "$migration_dir/$kind-before.json"
+          done
+          docker compose exec -T research-postgres pg_dump -U research_owner -d research_experiment --no-owner --no-privileges > "$migration_dir/schema-five.sql"
+          docker compose run --rm -T storage-adapter expiry
+          docker compose exec -T research-postgres createdb -U research_owner research_pre_expiry_restore
+          docker compose exec -T research-postgres psql -X -U research_owner -d research_pre_expiry_restore --set=ON_ERROR_STOP=1 --single-transaction < "$migration_dir/schema-five.sql"
+          for kind in source revision publication import; do
+            docker compose run --rm -T -e PGDATABASE=research_pre_expiry_restore storage-adapter "$kind-state" > "$migration_dir/$kind-restored.json"
+            cmp "$migration_dir/$kind-before.json" "$migration_dir/$kind-restored.json"
+          done
+      - name: Back up schema six and exercise complete research histories
+        run: |
+          set -euo pipefail
+          umask 077
+          migration_dir=$(mktemp -d "$RUNNER_TEMP/research-migration.XXXXXX")
+          for kind in source revision publication import; do
+            docker compose run --rm -T storage-adapter "$kind-state" > "$migration_dir/$kind-before.json"
+          done
+          docker compose exec -T research-postgres pg_dump -U research_owner -d research_experiment --no-owner --no-privileges > "$migration_dir/schema-six.sql"
+          docker compose run --rm -T storage-adapter research
+          docker compose exec -T research-postgres createdb -U research_owner research_pre_complete_restore
+          docker compose exec -T research-postgres psql -X -U research_owner -d research_pre_complete_restore --set=ON_ERROR_STOP=1 --single-transaction < "$migration_dir/schema-six.sql"
+          for kind in source revision publication import; do
+            docker compose run --rm -T -e PGDATABASE=research_pre_complete_restore storage-adapter "$kind-state" > "$migration_dir/$kind-restored.json"
+            cmp "$migration_dir/$kind-before.json" "$migration_dir/$kind-restored.json"
+          done
+      - name: Back up schema seven and exercise complete research publications
+        run: |
+          set -euo pipefail
+          umask 077
+          migration_dir=$(mktemp -d "$RUNNER_TEMP/complete-publication-migration.XXXXXX")
+          for kind in source revision publication import research; do
+            docker compose run --rm -T storage-adapter "$kind-state" > "$migration_dir/$kind-before.json"
+          done
+          docker compose exec -T research-postgres pg_dump -U research_owner -d research_experiment --no-owner --no-privileges > "$migration_dir/schema-seven.sql"
+          docker compose run --rm -T storage-adapter research-publication
+          docker compose exec -T research-postgres createdb -U research_owner research_pre_complete_publication_restore
+          docker compose exec -T research-postgres psql -X -U research_owner -d research_pre_complete_publication_restore --set=ON_ERROR_STOP=1 --single-transaction < "$migration_dir/schema-seven.sql"
+          for kind in source revision publication import research; do
+            docker compose run --rm -T -e PGDATABASE=research_pre_complete_publication_restore storage-adapter "$kind-state" > "$migration_dir/$kind-restored.json"
+            cmp "$migration_dir/$kind-before.json" "$migration_dir/$kind-restored.json"
+          done
+
+      - name: Exercise complete research export snapshots
+        run: docker compose run --rm -T storage-adapter research-export
+
+      - name: Back up schema eight and exercise complete research imports
+        run: |
+          set -euo pipefail
+          umask 077
+          migration_dir=$(mktemp -d "$RUNNER_TEMP/complete-import-migration.XXXXXX")
+          for kind in source revision publication import research research-publication; do
+            docker compose run --rm -T storage-adapter "$kind-state" > "$migration_dir/$kind-before.json"
+          done
+          docker compose exec -T research-postgres pg_dump -U research_owner -d research_experiment --no-owner --no-privileges > "$migration_dir/schema-eight.sql"
+          docker compose run --rm -T storage-adapter research-import
+          docker compose exec -T research-postgres createdb -U research_owner research_pre_complete_import_restore
+          docker compose exec -T research-postgres psql -X -U research_owner -d research_pre_complete_import_restore --set=ON_ERROR_STOP=1 --single-transaction < "$migration_dir/schema-eight.sql"
+          for kind in source revision publication import research research-publication; do
+            docker compose run --rm -T -e PGDATABASE=research_pre_complete_import_restore storage-adapter "$kind-state" > "$migration_dir/$kind-restored.json"
+            cmp "$migration_dir/$kind-before.json" "$migration_dir/$kind-restored.json"
+          done
+
+      - name: Back up schema nine and exercise consolidated journey storage
+        run: |
+          set -euo pipefail
+          umask 077
+          migration_dir=$(mktemp -d "$RUNNER_TEMP/consolidated-migration.XXXXXX")
+          for kind in source revision publication import research research-publication; do
+            docker compose run --rm -T storage-adapter "$kind-state" > "$migration_dir/$kind-before.json"
+          done
+          docker compose exec -T research-postgres pg_dump -U research_owner -d research_experiment --no-owner --no-privileges > "$migration_dir/schema-nine.sql"
+          docker compose run --rm -T storage-adapter consolidated
+          docker compose exec -T research-postgres createdb -U research_owner research_pre_consolidated_restore
+          docker compose exec -T research-postgres psql -X -U research_owner -d research_pre_consolidated_restore --set=ON_ERROR_STOP=1 --single-transaction < "$migration_dir/schema-nine.sql"
+          for kind in source revision publication import research research-publication; do
+            docker compose run --rm -T -e PGDATABASE=research_pre_consolidated_restore storage-adapter "$kind-state" > "$migration_dir/$kind-restored.json"
+            cmp "$migration_dir/$kind-before.json" "$migration_dir/$kind-restored.json"
+          done
+
+      - name: Verify bounded storage connection admission
+        run: docker compose run --rm -T storage-adapter admission
+
+      - name: Rehearse backup restore and post-backup deletion
+        run: |
+          set -eu
+          umask 077
+          restore_dir=$(mktemp -d)
+          docker compose run --rm -T storage-adapter restore-seed
+          started=$SECONDS
+          docker compose exec -T research-postgres pg_dump -U research_owner -d research_experiment --no-owner --no-privileges > "$restore_dir/backup.sql"
+          dump_seconds=$((SECONDS - started))
+          docker compose run --rm -T storage-adapter restore-delete > "$restore_dir/deletions.json"
+          docker compose exec -T research-postgres createdb -U research_owner research_restore_probe
+          started=$SECONDS
+          docker compose exec -T research-postgres psql -X -U research_owner -d research_restore_probe --set=ON_ERROR_STOP=1 --single-transaction < "$restore_dir/backup.sql"
+          restore_seconds=$((SECONDS - started))
+          # A successful SQL restore remains quarantined without current deletions.
+          if docker compose run --rm -T -e PGDATABASE=research_restore_probe storage-adapter restore-verify < /dev/null; then
+            echo 'Restore incorrectly accepted missing deletion history' >&2
+            exit 1
+          fi
+          printf '%s' '{"schema_version":"fixture-deletion-inventory/1","deleted":[]}' > "$restore_dir/incomplete.json"
+          if docker compose run --rm -T -e PGDATABASE=research_restore_probe storage-adapter restore-verify < "$restore_dir/incomplete.json"; then
+            echo 'Restore incorrectly accepted incomplete deletion history' >&2
+            exit 1
+          fi
+          docker compose run --rm -T -e PGDATABASE=research_restore_probe storage-adapter restore-verify < "$restore_dir/deletions.json" > restore-result.json
+          echo "Dump seconds: $dump_seconds; restore seconds: $restore_seconds; backup bytes: $(wc -c < "$restore_dir/backup.sql")" >> "$GITHUB_STEP_SUMMARY"
+          cat restore-result.json >> "$GITHUB_STEP_SUMMARY"
+          # A corrupt dump must fail before the database is considered usable.
+          cp "$restore_dir/backup.sql" "$restore_dir/corrupt.sql"
+          printf '\nTHIS IS NOT VALID SQL;\n' >> "$restore_dir/corrupt.sql"
+          docker compose exec -T research-postgres createdb -U research_owner research_corrupt_restore
+          if docker compose exec -T research-postgres psql -X -U research_owner -d research_corrupt_restore --set=ON_ERROR_STOP=1 --single-transaction < "$restore_dir/corrupt.sql"; then
+            echo 'Corrupt restore unexpectedly succeeded' >&2
+            exit 1
+          fi
+          docker compose exec -T research-postgres dropdb -U research_owner research_corrupt_restore
+          # A process interruption is represented by a deliberately truncated
+          # restore. It may exit cleanly after valid statements, but it must not
+          # pass the same authoritative deletion/retention verification.
+          docker compose exec -T research-postgres createdb -U research_owner research_interrupted_restore
+          set +e
+          head -n 32 "$restore_dir/backup.sql" | docker compose exec -T research-postgres psql -X -U research_owner -d research_interrupted_restore --set=ON_ERROR_STOP=1 --single-transaction
+          interrupted_status=$?
+          set -e
+          if docker compose run --rm -T -e PGDATABASE=research_interrupted_restore storage-adapter restore-verify < "$restore_dir/deletions.json"; then
+            echo 'Interrupted restore unexpectedly passed authoritative verification' >&2
+            exit 1
+          fi
+          docker compose exec -T research-postgres dropdb -U research_owner research_interrupted_restore
+          cat > restore-failure-controls.json <<EOF
+          {"schema_version":"fixture-restore-failure-controls/1","corrupt_restore_rejected":true,"interrupted_restore_rejected":true,"interrupted_psql_status":$interrupted_status}
+          EOF
+      - name: Upload bounded restore result
+        uses: actions/upload-artifact@v7
+        with:
+          name: source-storage-restore-result
+          path: restore-result.json
+          if-no-files-found: error
+      - name: Upload restore failure controls
+        uses: actions/upload-artifact@v7
+        with:
+          name: source-storage-restore-failure-controls
+          path: restore-failure-controls.json
+          if-no-files-found: error
+      - name: Rehearse consolidated restore and post-backup deletion
+        run: |
+          set -euo pipefail
+          umask 077
+          restore_dir=$(mktemp -d "$RUNNER_TEMP/consolidated-restore.XXXXXX")
+          docker compose run --rm -T storage-adapter consolidated-restore-seed > "$restore_dir/seed.json"
+          docker compose exec -T research-postgres pg_dump -U research_owner -d research_experiment --no-owner --no-privileges > "$restore_dir/backup.sql"
+          docker compose run --rm -T storage-adapter consolidated-restore-delete < "$restore_dir/seed.json" > "$restore_dir/current.json"
+          docker compose exec -T research-postgres createdb -U research_owner research_consolidated_restore
+          docker compose exec -T research-postgres psql -X -U research_owner -d research_consolidated_restore --set=ON_ERROR_STOP=1 --single-transaction < "$restore_dir/backup.sql"
+          if docker compose run --rm -T -e PGDATABASE=research_consolidated_restore storage-adapter consolidated-restore-verify < /dev/null; then
+            echo 'Consolidated restore accepted missing deletion history' >&2
+            exit 1
+          fi
+          if docker compose run --rm -T -e PGDATABASE=research_consolidated_restore storage-adapter consolidated-restore-verify < "$restore_dir/seed.json"; then
+            echo 'Consolidated restore accepted stale deletion history' >&2
+            exit 1
+          fi
+          docker compose run --rm -T -e PGDATABASE=research_consolidated_restore storage-adapter consolidated-restore-verify < "$restore_dir/current.json" > consolidated-restore-result.json
+          cat consolidated-restore-result.json >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload consolidated restore result
+        uses: actions/upload-artifact@v7
+        with:
+          name: consolidated-storage-restore-result
+          path: consolidated-restore-result.json
+          if-no-files-found: error
+      - name: Measure declared retained-storage capacity
+        timeout-minutes: 22
+        run: python3 tests/storage/run_capacity_probe.py
+      - name: Upload capacity evidence including failures
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: retained-storage-capacity-result
+          path: capacity-results/
+          if-no-files-found: warn
+      - name: Exercise atomic PostgreSQL artifact authority
+        run: docker compose run --rm -T storage-adapter artifact-authority
+      - name: Rehearse combined PostgreSQL and Valkey authority restore
+        run: |
+          set -eu
+          restore_dir=$(mktemp -d "$RUNNER_TEMP/combined-authority.XXXXXX")
+          docker compose up -d --wait research-valkey
+          docker compose run --rm -T storage-adapter combined-authority-seed > "$restore_dir/seed.json"
+          docker compose exec -T research-postgres pg_dump -U research_owner -d research_experiment --no-owner --no-privileges > "$restore_dir/backup.sql"
+          docker compose exec -T research-postgres createdb -U research_owner research_combined_authority_restore
+          docker compose exec -T research-postgres psql -X -U research_owner -d research_combined_authority_restore --set=ON_ERROR_STOP=1 --single-transaction < "$restore_dir/backup.sql"
+          docker compose run --rm -T \
+            -e PGDATABASE=research_combined_authority_restore \
+            -e RESTORE_VALKEY_URL=redis://research-valkey:6379/14 \
+            storage-adapter combined-authority-verify \
+            < "$restore_dir/seed.json" > combined-authority-restore-result.json
+          cat combined-authority-restore-result.json >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload combined authority restore result
+        uses: actions/upload-artifact@v7
+        with:
+          name: combined-authority-restore-result
+          path: combined-authority-restore-result.json
+          if-no-files-found: error
+      - name: Stop isolated project while preserving volume
+        if: always()
+        run: docker compose down --timeout 30
+
+  runtime-gate:
+    name: Research Runtime Gate
+    needs:
+      - changes
+      - twin-contracts
+      - integration-tests
+      - research-storage
+      - protected-browser-profile
+      - protected-flare-profile
+      - protected-capture-composition
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require successful selected validation
+        env:
+          CLASSIFICATION: ${{ needs.changes.result }}
+          RUNTIME_REQUIRED: ${{ needs.changes.outputs.requires_full_runtime }}
+          TWIN_REQUIRED: ${{ needs.changes.outputs.requires_twin_contracts }}
+          RUNTIME_RESULT: ${{ needs.integration-tests.result }}
+          BROWSER_PROFILE_RESULT: ${{ needs.protected-browser-profile.result }}
+          PROTECTED_FLARE_RESULT: ${{ needs.protected-flare-profile.result }}
+          PROTECTED_CAPTURE_RESULT: ${{ needs.protected-capture-composition.result }}
+          TWIN_RESULT: ${{ needs.twin-contracts.result }}
+          STORAGE_RESULT: ${{ needs.research-storage.result }}
+        run: |
+          set -eu
+          test "$CLASSIFICATION" = success
+          for required in "$RUNTIME_REQUIRED" "$TWIN_REQUIRED"; do
+            case "$required" in true|false) ;; *) exit 1 ;; esac
+          done
+          if [ "$RUNTIME_REQUIRED" = true ]; then
+            test "$RUNTIME_RESULT" = success
+            test "$STORAGE_RESULT" = success
+            test "$BROWSER_PROFILE_RESULT" = success
+            test "$PROTECTED_FLARE_RESULT" = success
+            test "$PROTECTED_CAPTURE_RESULT" = success
+          else
+            echo "Runtime integration not required for this documentation-only change."
+          fi
+          if [ "$TWIN_REQUIRED" = true ]; then
+            test "$TWIN_RESULT" = success
+          fi

@@ -1,0 +1,65 @@
+{
+  "answer": {
+    "answer": "Yes. The updated Fern CI FAQ now specifies that Fern CI retains build logs for 30 days [fern-faq-new]. Previously, the FAQ stated that the retention period was not specified [fern-faq-old]; that earlier statement remains historically valid but has been superseded by the new 30-day figure.",
+    "change_events": [
+      "The Fern CI FAQ was updated to state that Fern CI retains build logs for 30 days, replacing the earlier statement that the retention period was not specified [fern-faq-old, fern-faq-new]."
+    ],
+    "citations": [
+      "fern-faq-old",
+      "fern-faq-new"
+    ],
+    "current_truths": [
+      "Fern CI retains build logs for 30 days [fern-faq-new]."
+    ],
+    "historical_truths": [
+      "An earlier version of the Fern CI FAQ stated that the build-log retention period was not specified [fern-faq-old]."
+    ],
+    "unresolved": []
+  },
+  "arm": "treatment",
+  "case_id": "later-resolution",
+  "completed_at": "2026-09-19T07:49:00.333213+00:00",
+  "position": 15,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "4ac99621715fe85299b6cd597a37e387a2f5935afdd7bd777980591d28869e61",
+    "finish_reason": "stop",
+    "latency_ms": 18963.767,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "d85d892533d488a3f4c6ae97f3ac3ad81056bfd89251223faa22607f0b2b2ba6",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 192,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0.00010875,
+      "cost_details": {
+        "upstream_inference_completions_cost": 4.8e-05,
+        "upstream_inference_cost": 0.00010875,
+        "upstream_inference_prompt_cost": 6.075e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 810,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1002
+    }
+  },
+  "repetition": 1,
+  "schema_version": "research-thread-trial/1",
+  "started_at": "2026-09-19T07:48:41.368353+00:00",
+  "status": "completed",
+  "stratum": "resolved",
+  "trial_id": "later-resolution-r1-treatment"
+}

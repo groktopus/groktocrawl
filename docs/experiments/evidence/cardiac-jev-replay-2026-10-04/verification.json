@@ -1,0 +1,17 @@
+{
+  "status": "passed",
+  "requests": 28,
+  "qualified_responses": 28,
+  "strict_qualifying_responses": 27,
+  "preserved_initial_rejection": [
+    {
+      "request_id": "W0-first40-original",
+      "question_id": "c21"
+    }
+  ],
+  "new_searches": 0,
+  "new_page_fetches": 0,
+  "input_tokens": 305576,
+  "output_tokens": 24660,
+  "note": "Zero searches/fetches reflects the frozen-only runner; labels are not independently verified."
+}

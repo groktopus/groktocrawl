@@ -1,7 +1,7 @@
 """Final-only synthesis ordering, evidence, errors, and cancellation."""
 
 import asyncio
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from agent.llm import ProviderOutputError
@@ -121,3 +121,22 @@ async def test_no_gap_generates_once_without_followup_search():
         await run_research(prompt="q", llm_model="fixture")
     assert all_clients[0].search.await_count == 2
     all_clients[-1].generate.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_focused_search_skips_gap_planning_and_second_acquisition():
+    all_clients = clients()
+    searxng, scraper, llm = all_clients
+    gap_planning = AsyncMock(return_value=["gap"])
+    with (
+        _patch_research_clients(*all_clients),
+        patch("agent.research.loop._detect_gaps", new=gap_planning),
+    ):
+        await run_research(
+            prompt="question", llm_model="fixture", search_type="focused"
+        )
+
+    gap_planning.assert_not_awaited()
+    assert [call.args[0] for call in searxng.search.await_args_list] == ["first-a"]
+    assert len(scraper.calls) == 1
+    llm.generate.assert_awaited_once()

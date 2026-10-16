@@ -1,0 +1,66 @@
+{
+  "candidate_id": "intake-candidate-c73fd0f4097b140ec75b",
+  "case_id": "mission-unanswerable-cost",
+  "completed_at": "2026-09-19T06:32:36.225355+00:00",
+  "grade": {
+    "action_correct": false,
+    "action_rationale": "The reference mission is 'mission-unanswerable-cost', which prescribes accepting the request and resolving it through bounded abstention: obligation o2 explicitly requires abstaining because the accepted-PR count lacks the required measurements, and 'acceptable_uncertainty' instructs the agent to state what the supplied evidence cannot establish. The candidate instead selected 'clarify' and withheld the mission. This substitution is an unhelpful clarification: the mission itself already resolves the ambiguity the candidate raises, defining the decision (whether the packet proves a >=20% total-cost reduction), the scope (matched task cost, human review, rework, failures, provider cost; exclude the accepted-PR proxy), and the required o2 abstention path. The candidate's questions about which pilot, metric definition, baseline, and external verifiability are answered by the mission's own structure and are not blocking under this fixture.",
+    "clarification_utility": 1,
+    "correction_actions": [
+      "Return action 'accept' with a mission matching the reference: decision on whether the packet proves a >=20% total-cost reduction, q1 on quantified causal total-cost change, o1 requiring matched comparison with complete cost and failure accounting, o2 requiring bounded abstention naming the missing measurements, and scope excluding accepted-PR counts as a cost proxy."
+    ],
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "No invented authority, silent scope broadening, freshness loss, or unauthorized action is present; the failure is a wrong action and mission withholding, judged under semantic accuracy rather than the hard-boundary definition.",
+    "invented_constraints": [
+      "External verifiability of underlying data: the candidate demands externally verifiable data; the source policy sets minimum_independent_publishers at 0 and does not impose an external-verifiability requirement.",
+      "Baseline/metric-definition gap as a clarification blocker: the mission's o1 already specifies the closure requirement (comparable baseline and total-cost numerator/denominator) and o2 the abstention outcome; treating this as an unresolvable blocking ambiguity invents a stop condition the mission does not contain."
+    ],
+    "lost_hard_boundaries": [
+      "The entire mission object (decision, questions q1, obligations o1/o2, scope include/exclude, bounded-abstain closure rules) was withheld, so the binding instruction to boundedly abstain and name the missing data would be lost."
+    ],
+    "required_field_recall": 0,
+    "unnecessary_fields": [
+      "The multi-part clarifying question elaborating internal vs. published pilot scenarios adds scope the reference mission does not request."
+    ]
+  },
+  "position": 28,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "8146e30f76cbdace177971f65c6fbe4b50c7afdf7ca38e58ea16809a7c0bdba8",
+    "finish_reason": "stop",
+    "latency_ms": 72950.506,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "809f89d5410394dbd979af0dae86ea9befb0c0cc2038731a2d8c1070fc48ba77",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 1068,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 488
+      },
+      "cost": 0.00067365,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000534,
+        "upstream_inference_cost": 0.00067365,
+        "upstream_inference_prompt_cost": 0.00013965
+      },
+      "is_byok": false,
+      "prompt_tokens": 931,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1999
+    }
+  },
+  "schema_version": "research-mission-intake-grade/1",
+  "started_at": "2026-09-19T06:31:23.274037+00:00",
+  "status": "completed"
+}

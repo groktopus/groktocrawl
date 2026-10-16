@@ -1,0 +1,215 @@
+{
+  "case_id": "mission-straightforward-security",
+  "completed_at": "2026-09-19T06:02:49.480261+00:00",
+  "position": 2,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "9518825b7c74e5639af216bed2f016656d07453884400122717871ec6f574e90",
+    "finish_reason": "stop",
+    "latency_ms": 111770.403,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "8173e4118427680b11d9a3a2d57d8a2666bb2abb4f39606e969d46b8aee4193e",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 10107,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 7941
+      },
+      "cost": 0.0053622,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0050535,
+        "upstream_inference_cost": 0.0053622,
+        "upstream_inference_prompt_cost": 0.0003087
+      },
+      "is_byok": false,
+      "prompt_tokens": 2058,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 12165
+    }
+  },
+  "repetition": 1,
+  "result": {
+    "action": "ready",
+    "clarifying_question": null,
+    "mission": {
+      "abstain_when": [
+        "The request shifts to issuing, granting, or configuring real credentials or permissions in a live system.",
+        "Only the enterprise's internal, non-public policy could answer and no public evidence is obtainable.",
+        "No primary, official, or independent source is accessible within the budget.",
+        "The request changes to targeting a third party's systems rather than informing the enterprise's own grant policy."
+      ],
+      "acceptable_uncertainty": "Vendor-specific token defaults may conflict; report per-platform differences, mark single-source claims as uncorroborated, and preserve contradictions rather than forcing a single answer.",
+      "audience": "Enterprise platform engineering, security engineering, and IAM teams designing build-agent access policy for an agentic software factory.",
+      "budget": {
+        "max_elapsed_seconds": 300,
+        "max_model_calls": 6,
+        "max_searches": 4,
+        "max_sources": 10
+      },
+      "clarifications": [
+        {
+          "blocking": false,
+          "clarification_id": "cl.platform-stack",
+          "question": "Which CI/CD platform(s) does the factory run (for example GitHub Actions, GitLab CI, Jenkins, Tekton), so implementation evidence can target them?",
+          "trigger": "When implementation-evidence obligations cannot be closed vendor-neutrally within the search budget."
+        },
+        {
+          "blocking": false,
+          "clarification_id": "cl.agent-class",
+          "question": "Should 'build agent' include AI/agentic automation that performs or triggers builds, or only classic CI runners?",
+          "trigger": "When sources treat agent classes differently and the distinction changes the permission guidance."
+        }
+      ],
+      "contradiction_policy": "preserve_and_report",
+      "decision": "Determine, from authoritative industry and vendor guidance, which credential types and write permissions may be granted to build agents (CI/CD runners and agentic automation that performs or triggers builds) in an enterprise software factory, so the enterprise platform/security team can draft a least-privilege credential grant policy. This mission informs that policy decision; it does not itself authorize, issue, grant, or configure any credential or permission.",
+      "freshness": {
+        "as_of": null,
+        "mode": "current",
+        "rationale": "Token-scoping models and federation guidance for build platforms change frequently; prefer official documentation current at research time and record publication or update dates."
+      },
+      "mission_id": "build-agent-credential-scope",
+      "obligations": [
+        {
+          "closure_rule": "Closed when at least two independent authoritative sources state credential-type guidance for build/CI identities; otherwise remains open.",
+          "description": "Establish the recognized credential types for build identities and the guidance preference between long-lived and short-lived/federated credentials.",
+          "evidence_role": "primary_authority",
+          "obligation_id": "ob1.credential-types",
+          "question_id": "q1.credential-types",
+          "weight": 5
+        },
+        {
+          "closure_rule": "Closed when guidance from at least two independent sources enumerates permissible and prohibited write scopes.",
+          "description": "Determine least-privilege write-permission boundaries for build agents across source control, registries, and deployment targets.",
+          "evidence_role": "primary_authority",
+          "obligation_id": "ob2.write-permissions",
+          "question_id": "q2.write-permissions",
+          "weight": 5
+        },
+        {
+          "closure_rule": "Closed when at least two independent sources describe such controls; single-source items are reported as uncorroborated.",
+          "description": "Collect control guidance that binds or constrains credentials to build agents.",
+          "evidence_role": "independent_corroboration",
+          "obligation_id": "ob3.isolation-controls",
+          "question_id": "q3.isolation-controls",
+          "weight": 4
+        },
+        {
+          "closure_rule": "Closed when at least one framework document is cited with its build-credential provisions located and paraphrased.",
+          "description": "Capture specific framework provisions on build credentials and permissions.",
+          "evidence_role": "primary_authority",
+          "obligation_id": "ob4.framework-guidance",
+          "question_id": "q4.framework-guidance",
+          "weight": 4
+        },
+        {
+          "closure_rule": "Closed with official implementation evidence from at least two distinct platforms; gaps are reported, not assumed.",
+          "description": "Document implemented token and permission models from major CI/CD platforms' official documentation.",
+          "evidence_role": "implementation_evidence",
+          "obligation_id": "ob5.platform-implementations",
+          "question_id": "q5.platform-implementations",
+          "weight": 3
+        },
+        {
+          "closure_rule": "Closed when at least one such source is captured, or absence is reported after the planned searches.",
+          "description": "Find documented incidents or attack-path analyses involving over-privileged build agents.",
+          "evidence_role": "counterevidence",
+          "obligation_id": "ob6.overprivilege-failures",
+          "question_id": "q6.overprivilege-failures",
+          "weight": 3
+        },
+        {
+          "closure_rule": "Closed when at least one relevant source is found or the gap is explicitly reported.",
+          "description": "Note any guidance addressing credentials for AI/agentic automation that performs or triggers builds, as distinct from classic CI runners.",
+          "evidence_role": "context",
+          "obligation_id": "ob7.agentic-context",
+          "question_id": "q1.credential-types",
+          "weight": 2
+        }
+      ],
+      "questions": [
+        {
+          "question_id": "q1.credential-types",
+          "required": true,
+          "text": "Which credential types may be granted to build agents (long-lived secrets, API keys, scoped tokens, short-lived tokens, OIDC/federated or vault-issued dynamic credentials), and what does authoritative guidance prefer?"
+        },
+        {
+          "question_id": "q2.write-permissions",
+          "required": true,
+          "text": "Which write permissions may build agents hold over source control, artifact/package registries, and deployment environments under least-privilege guidance, and which writes are advised against?"
+        },
+        {
+          "question_id": "q3.isolation-controls",
+          "required": true,
+          "text": "Which isolation and binding controls (ephemeral runners, secret masking, network egress limits, workload identity) are recommended to constrain build-agent credentials?"
+        },
+        {
+          "question_id": "q4.framework-guidance",
+          "required": true,
+          "text": "What do supply-chain and secure-development frameworks (candidates: SLSA, NIST SP 800-218 SSDF, OWASP guidance) require or recommend about build-platform credentials and permissions?"
+        },
+        {
+          "question_id": "q5.platform-implementations",
+          "required": true,
+          "text": "How do major CI/CD platforms document token scoping and permission models for their build agents/runners?"
+        },
+        {
+          "question_id": "q6.overprivilege-failures",
+          "required": false,
+          "text": "What documented incidents or attack-path analyses illustrate harm from over-privileged build agents?"
+        }
+      ],
+      "schema_version": "research-mission/1",
+      "scope": {
+        "exclude": [
+          "Issuing, granting, rotating, or configuring any actual credential or permission in any system.",
+          "The enterprise's internal, non-public policy documents or entitlement decisions.",
+          "Human developer or end-user access entitlements unrelated to build agents.",
+          "Vendor marketing claims without documented technical basis.",
+          "Procurement, pricing, or product selection between CI/CD vendors."
+        ],
+        "include": [
+          "Credential types for machine/build identities: long-lived secrets, API keys, scoped tokens, short-lived tokens, OIDC/federated credentials, vault-issued dynamic credentials.",
+          "Write-permission models for build agents across source control, artifact/package registries, and deployment environments.",
+          "Least-privilege and just-in-time access principles applied to build/CI systems.",
+          "Isolation and binding controls for build-agent credentials: ephemeral runners, secret masking, network egress limits, workload identity.",
+          "Supply-chain and secure-development framework guidance on build-platform credentials (candidates: SLSA, NIST SP 800-218 SSDF, OWASP).",
+          "Implementation evidence from major CI/CD platforms' documented token and permission models (candidates: GitHub Actions, GitLab CI, Jenkins, Tekton).",
+          "Documented failure modes and attack paths arising from over-privileged build agents."
+        ]
+      },
+      "source_policy": {
+        "allowed_authority": [
+          "primary",
+          "official",
+          "independent"
+        ],
+        "derivative_sources_count_as_independent": false,
+        "inaccessible_sources_can_close_obligations": false,
+        "minimum_independent_publishers": 3
+      },
+      "stop_when": [
+        "Credential-type guidance for build identities is established by at least two independent authoritative sources.",
+        "Write-permission boundaries across source control, registries, and deployment targets are documented from at least two independent sources.",
+        "Implementation evidence from at least two major CI/CD platforms is captured.",
+        "Framework provisions and any over-privilege failure evidence are captured, or their absence is reported.",
+        "The budget (searches, sources, model calls, or elapsed time) is exhausted."
+      ]
+    },
+    "rationale": "The request is a researchable security-architecture question about which credentials and write permissions build agents may receive; it is normalized into a mission that informs the enterprise's own grant decision without itself granting anything (mission_is_not_permission). The ambiguities that could change the answer — which CI/CD stack applies and whether 'build agent' includes AI-driven automation — are resolved by inclusive scoping plus non-blocking clarification rules rather than by guessing a narrow interpretation, so no blocking clarification is required. Research is appropriate; abstention is not warranted."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:00:57.682299+00:00",
+  "status": "completed",
+  "trial_id": "mission-straightforward-security-intake-r1"
+}

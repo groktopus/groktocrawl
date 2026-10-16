@@ -1,0 +1,52 @@
+{
+  "case_id": "mission-ambiguous-productive",
+  "completed_at": "2026-09-19T06:07:36.868316+00:00",
+  "position": 8,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "806e375e61d7beda16b8e8e71c3917442ff6272d83e98455a945cab0249381e1",
+    "finish_reason": "stop",
+    "latency_ms": 6294.073,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "57e07aa5225ba419e0d662efd115b96ca55dacf6c4915e3647b255e0715c75c4",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 167,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 37
+      },
+      "cost": 9.991e-05,
+      "cost_details": {
+        "upstream_inference_completions_cost": 5.845e-05,
+        "upstream_inference_cost": 9.991e-05,
+        "upstream_inference_prompt_cost": 4.146e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 2053,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 2048,
+        "video_tokens": 0
+      },
+      "total_tokens": 2220
+    }
+  },
+  "repetition": 3,
+  "result": {
+    "action": "clarify",
+    "clarifying_question": "What decision will this answer inform, and how do you define 'productive' for the coding agents (e.g., merged PR throughput, cycle time, quality/rework rates, developer-reported time savings) over what evaluation period?",
+    "mission": null,
+    "rationale": "The request is answerable in principle, but 'productive' is undefined and the intended decision is unstated; without these, the mission's scope, questions, evidence roles, and closure rules would be guesses. A single blocking clarification resolves the decision-changing ambiguity; no facts or findings are asserted, and research has not begun."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:07:30.568350+00:00",
+  "status": "completed",
+  "trial_id": "mission-ambiguous-productive-intake-r3"
+}

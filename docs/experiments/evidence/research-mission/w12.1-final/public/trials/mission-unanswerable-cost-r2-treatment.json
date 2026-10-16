@@ -1,0 +1,13 @@
+{
+  "arm": "treatment",
+  "case_id": "mission-unanswerable-cost",
+  "error": "model completion is not a final research result",
+  "error_type": "ValueError",
+  "failed_at": "2026-09-19T05:53:50.074799+00:00",
+  "position": 2,
+  "repetition": 2,
+  "schema_version": "research-mission-downstream-trial/1",
+  "started_at": "2026-09-19T05:51:14.407909+00:00",
+  "status": "failed",
+  "trial_id": "mission-unanswerable-cost-r2-treatment"
+}

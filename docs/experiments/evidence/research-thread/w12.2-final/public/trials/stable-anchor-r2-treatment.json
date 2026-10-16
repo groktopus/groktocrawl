@@ -1,0 +1,67 @@
+{
+  "answer": {
+    "answer": "No change is documented. Both supplied snapshots for subject iris-build (lineage iris-checksum) — the older snapshot [iris-checksum-old] and the newer snapshot [iris-checksum-new] — state identically that 'Iris Build records SHA-256 checksums for artifacts.' The documented checksum algorithm is therefore SHA-256 in both revisions, and nothing in the supplied evidence indicates any change between them. This also resolves the currency question left open in the prior thread: the newer snapshot independently corroborates that SHA-256 remains the documented algorithm, so the earlier SHA-256 claim stands as both historically valid and current. Caveat: the snapshots contain no explicit change-history or continuity statements and do not enumerate all supported algorithms, so the 'no change' conclusion is established by consistency across the two snapshots rather than by an explicit declaration; an undocumented change cannot be conclusively ruled out, but on the supplied evidence the artifact checksum algorithm is unchanged at SHA-256.",
+    "change_events": [],
+    "citations": [
+      "iris-checksum-old",
+      "iris-checksum-new"
+    ],
+    "current_truths": [
+      "Iris Build records SHA-256 checksums for artifacts, per the current snapshot [iris-checksum-new].",
+      "The documented artifact checksum algorithm is SHA-256 and is identical in both the older and newer snapshots, so the documented algorithm is unchanged as of the latest supplied evidence [iris-checksum-old, iris-checksum-new]."
+    ],
+    "historical_truths": [
+      "The older snapshot documented that Iris Build records SHA-256 checksums for artifacts; this claim remains valid and is corroborated, not superseded, by the newer snapshot [iris-checksum-old, iris-checksum-new]."
+    ],
+    "unresolved": [
+      "The snapshots state only that SHA-256 checksums are recorded; they do not enumerate all supported algorithms or explicitly affirm that no other algorithm was ever used, so an undocumented historical change cannot be conclusively excluded.",
+      "Neither snapshot includes explicit change-history, version, or continuity statements; the 'no change' conclusion rests on the consistency of the two snapshots rather than an explicit declaration that the algorithm never changed."
+    ]
+  },
+  "arm": "treatment",
+  "case_id": "stable-anchor",
+  "completed_at": "2026-09-19T07:50:20.488256+00:00",
+  "position": 28,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "3b1e2cbf0238b9af298e346be48381482abb76960197c2d0491e687207841ce6",
+    "finish_reason": "stop",
+    "latency_ms": 31938.213,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "fd55a4419d8d8288f2b6ce2ba5ea6fee34a4afb72c23eb4f7a79211e64e72ec7",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 3018,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 3137
+      },
+      "cost": 0.00164235,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.001509,
+        "upstream_inference_cost": 0.00164235,
+        "upstream_inference_prompt_cost": 0.00013335
+      },
+      "is_byok": false,
+      "prompt_tokens": 889,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 3907
+    }
+  },
+  "repetition": 2,
+  "schema_version": "research-thread-trial/1",
+  "started_at": "2026-09-19T07:49:48.549298+00:00",
+  "status": "completed",
+  "stratum": "no_change",
+  "trial_id": "stable-anchor-r2-treatment"
+}

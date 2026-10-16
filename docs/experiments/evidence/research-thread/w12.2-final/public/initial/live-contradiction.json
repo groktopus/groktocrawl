@@ -1,0 +1,57 @@
+{
+  "answer": {
+    "answer": "Delta Queue documents exactly-once delivery, per its documentation (snapshot delta-doc). This is a documented claim only: the supplied sources do not independently verify that the guarantee holds in practice, and no operational or incident evidence was provided to confirm or qualify it.",
+    "change_events": [],
+    "citations": [
+      "delta-doc"
+    ],
+    "current_truths": [
+      "Delta Queue's documentation describes exactly-once delivery (snapshot delta-doc)."
+    ],
+    "historical_truths": [],
+    "unresolved": [
+      "The supplied snapshot only shows that the documentation claims exactly-once delivery; no source verifies that this guarantee holds in actual operation.",
+      "No incident or operational source (e.g., delta-incident) was supplied, so the reliability of the documented guarantee cannot be assessed.",
+      "The snapshot does not specify the scope or conditions of the exactly-once guarantee (e.g., which delivery modes or configurations it applies to)."
+    ]
+  },
+  "case_id": "live-contradiction",
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "27536ee5a497703252623a9b2141d88a3c06c7c4b87e4641d00c40895dcb5b2a",
+    "finish_reason": "stop",
+    "latency_ms": 10314.422,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "89ff0fbc104eba0db5411dd7e5ff3d1076e0096d4286c9f1e1553632afa2d27e",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 434,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 249
+      },
+      "cost": 0.0002794,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000217,
+        "upstream_inference_cost": 0.0002794,
+        "upstream_inference_prompt_cost": 6.24e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 416,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 850
+    }
+  },
+  "schema_version": "research-thread-initial/1",
+  "status": "completed"
+}

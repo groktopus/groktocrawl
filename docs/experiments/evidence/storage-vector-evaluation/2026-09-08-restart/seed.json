@@ -1,0 +1,215 @@
+{
+  "candidates": [
+    {
+      "errors": [],
+      "gates": {
+        "deleted_doc_absent": true,
+        "provider_ok": true,
+        "scope_alpha-x": true,
+        "scope_alpha-y": true,
+        "scope_beta-x": true,
+        "scope_beta-z": true,
+        "top_k_alpha-x": true,
+        "top_k_alpha-y": true,
+        "top_k_beta-x": true,
+        "top_k_beta-z": true
+      },
+      "name": "qdrant",
+      "ok": true,
+      "searches": [
+        {
+          "query_id": "alpha-x",
+          "results": [
+            {
+              "id": "doc-001",
+              "score": 1.0
+            },
+            {
+              "id": "doc-002",
+              "score": 0.9938837
+            },
+            {
+              "id": "doc-003",
+              "score": 0.0
+            }
+          ],
+          "scope": "alpha"
+        },
+        {
+          "query_id": "alpha-y",
+          "results": [
+            {
+              "id": "doc-003",
+              "score": 1.0
+            },
+            {
+              "id": "doc-002",
+              "score": 0.11043153
+            },
+            {
+              "id": "doc-001",
+              "score": 0.0
+            }
+          ],
+          "scope": "alpha"
+        },
+        {
+          "query_id": "beta-x",
+          "results": [
+            {
+              "id": "doc-004",
+              "score": 1.0
+            },
+            {
+              "id": "doc-005",
+              "score": 0.0
+            },
+            {
+              "id": "doc-006",
+              "score": 0.0
+            }
+          ],
+          "scope": "beta"
+        },
+        {
+          "query_id": "beta-z",
+          "results": [
+            {
+              "id": "doc-005",
+              "score": 1.0
+            },
+            {
+              "id": "doc-004",
+              "score": 0.0
+            },
+            {
+              "id": "doc-006",
+              "score": 0.0
+            }
+          ],
+          "scope": "beta"
+        }
+      ]
+    },
+    {
+      "errors": [],
+      "gates": {
+        "deleted_doc_absent": true,
+        "provider_ok": true,
+        "scope_alpha-x": true,
+        "scope_alpha-y": true,
+        "scope_beta-x": true,
+        "scope_beta-z": true,
+        "top_k_alpha-x": true,
+        "top_k_alpha-y": true,
+        "top_k_beta-x": true,
+        "top_k_beta-z": true
+      },
+      "name": "pgvector",
+      "ok": true,
+      "searches": [
+        {
+          "query_id": "alpha-x",
+          "results": [
+            {
+              "id": "doc-001",
+              "score": 1.0
+            },
+            {
+              "id": "doc-002",
+              "score": 0.9938837488013375
+            },
+            {
+              "id": "doc-003",
+              "score": 0.0
+            }
+          ],
+          "scope": "alpha"
+        },
+        {
+          "query_id": "alpha-y",
+          "results": [
+            {
+              "id": "doc-003",
+              "score": 1.0
+            },
+            {
+              "id": "doc-002",
+              "score": 0.11043153221558755
+            },
+            {
+              "id": "doc-001",
+              "score": 0.0
+            }
+          ],
+          "scope": "alpha"
+        },
+        {
+          "query_id": "beta-x",
+          "results": [
+            {
+              "id": "doc-004",
+              "score": 1.0
+            },
+            {
+              "id": "doc-005",
+              "score": 0.0
+            },
+            {
+              "id": "doc-006",
+              "score": 0.0
+            }
+          ],
+          "scope": "beta"
+        },
+        {
+          "query_id": "beta-z",
+          "results": [
+            {
+              "id": "doc-005",
+              "score": 1.0
+            },
+            {
+              "id": "doc-004",
+              "score": 0.0
+            },
+            {
+              "id": "doc-006",
+              "score": 0.0
+            }
+          ],
+          "scope": "beta"
+        }
+      ]
+    }
+  ],
+  "created_at": "2026-09-08T10:17:31.574604+00:00",
+  "decision": "evaluation_only",
+  "expected_restart": false,
+  "manifest": {
+    "corpus_sha256": "5817c09ae7b94803b760a3003b967a5a223264dc265f5caf9b773d0da33462b7",
+    "dimension": 3,
+    "distance": "cosine",
+    "duplicate_replay_count": 2,
+    "embedding_model": "fixture-vector-3d-v1",
+    "query_count": 4,
+    "random_seed": 0,
+    "record_count": 6,
+    "schema_version": "vector-store-evaluation/3",
+    "scopes": [
+      "alpha",
+      "beta"
+    ],
+    "workloads": [
+      "bulk_upsert",
+      "duplicate_replay",
+      "filtered_search",
+      "delete"
+    ]
+  },
+  "phase": "seed",
+  "production_change": false,
+  "qdrant_removal": false,
+  "run_id": "restart-34214606635",
+  "schema_version": "vector-store-restart-evaluation/1"
+}

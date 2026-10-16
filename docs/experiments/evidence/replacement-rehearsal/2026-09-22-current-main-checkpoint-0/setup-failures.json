@@ -1,0 +1,20 @@
+{
+  "schema_version": "w9-checkpoint-setup-failures/1",
+  "attempts": [
+    {
+      "started_at": "2026-09-22T16:38:09.336198Z",
+      "failed_at": "2026-09-22T16:42:16.344295Z",
+      "failed_step": "repository_cli_scrape",
+      "cause": "isolated_runner_missing_requests_dependency",
+      "product_api_scrape_status": "passed_before_cli_step"
+    },
+    {
+      "started_at": "2026-09-22T16:44:01.005749Z",
+      "failed_at": "2026-09-22T16:45:32.411149Z",
+      "failed_step": "repository_cli_scrape",
+      "cause": "isolated_runner_missing_requests_dependency",
+      "product_api_scrape_status": "passed_before_cli_step"
+    }
+  ],
+  "resolution": "preflight_both_httpx_and_requests_before_product_calls"
+}

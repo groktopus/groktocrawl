@@ -1,0 +1,94 @@
+{
+  "candidate_id": "candidate-cd3f93c5c180c9ea9644",
+  "case_id": "mission-compound-recovery-portability",
+  "completed_at": "2026-09-19T06:58:00.889234+00:00",
+  "grade": {
+    "appropriate_abstention": "yes",
+    "decision_usefulness": 5,
+    "decision_usefulness_rationale": "The answer supports a defensible decision (reject approval / unresolved pending required evidence) with all policy conditions mapped to the supplied record, and identifies exactly which artifacts are missing for the switch to be reconsidered.",
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "No invented authority or measurements; prohibited assumptions avoided (explicitly states a local timeout does not prove failure and brochure claims are insufficient); uncertainties are disclosed rather than resolved by assumption.",
+    "obligation_grades": {
+      "o1": {
+        "rationale": "The answer correctly states the policy requirement (record operation identity before external write; reconcile remote state before retry) and ties the controlled-test divergence to the ambiguous-write case. It honestly flags that the test record does not show the reconciliation was actually performed.",
+        "source_ids": [
+          "reliability-policy",
+          "reliability-context"
+        ],
+        "status": "closed"
+      },
+      "o2": {
+        "rationale": "All required conditions are retained: frozen task suite, provenance checks, declared resource limits, tool-result identities, cancellation semantics. The answer correctly notes adapter compliance by the new provider is unresolved.",
+        "source_ids": [
+          "platform-policy",
+          "platform-context"
+        ],
+        "status": "closed"
+      },
+      "o3": {
+        "rationale": "The brochure's missing comparison fields (workload, version pins, error distribution, review methodology) are named, and the claims are explicitly rejected as sufficient approval evidence.",
+        "source_ids": [
+          "platform-context"
+        ],
+        "status": "closed"
+      }
+    },
+    "scope_violations": [],
+    "supported_material_claims": 8,
+    "total_material_claims": 8
+  },
+  "position": 16,
+  "reasons": [
+    "high_weight_obligation_not_closed"
+  ],
+  "receipt": {
+    "attempt": 3,
+    "envelope_sha256": "f433375b59ced0a729c00596c7b00d23def67f7ad719b67ca5bf424253c986e4",
+    "finish_reason": "stop",
+    "latency_ms": 626105.645,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "64fdb8acbd998de668f312dbe7399b6c5c882748921e1612cc83442b787714b1",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [
+      {
+        "attempt": 1,
+        "error_type": "ReadTimeout",
+        "latency_ms": 300134.576
+      },
+      {
+        "attempt": 2,
+        "error_type": "ReadTimeout",
+        "latency_ms": 300110.282
+      }
+    ],
+    "usage": {
+      "completion_tokens": 408,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 24
+      },
+      "cost": 0.0003293,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0001428,
+        "upstream_inference_cost": 0.0003293,
+        "upstream_inference_prompt_cost": 0.0001865
+      },
+      "is_byok": false,
+      "prompt_tokens": 1865,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 2273
+    }
+  },
+  "schema_version": "research-mission-adjudication/1",
+  "started_at": "2026-09-19T06:47:34.782692+00:00",
+  "status": "completed"
+}

@@ -1,0 +1,554 @@
+{
+  "schema_version": "research-preflight/1",
+  "status": "w1_complete_candidate_b_rejected_successor_design_open",
+  "comparison_authorized": true,
+  "issue": 13,
+  "scope": "magnus919/groktocrawl-x only",
+  "decision_owner": "Magnus Hedemark",
+  "external_provider_budget_usd": 0,
+  "arms": {
+    "A": {
+      "status": "paired_comparison_complete_reference_retained",
+      "upstream_commit": "34b4975bc7baaf25510ed34029b957f95b59de70",
+      "policy": "incumbent answer policy at pinned upstream commit",
+      "compatible_comparison_fixture_commit": null,
+      "commit": "34b4975bc7baaf25510ed34029b957f95b59de70"
+    },
+    "B": {
+      "status": "paired_comparison_complete_operationally_rejected",
+      "commit": "36f999514cf0dc8eb3164c4cac50a7ba0002618f",
+      "policy": "evidence-first research construction with deterministic structural/conflict verification and model-reviewed assessment, semantic support, and freshness",
+      "policy_version": "real-research-pilot/3",
+      "runtime": "typed imperative reference",
+      "evidence": "docs/experiments/evidence/w1-candidate/2026-09-10-deterministic-checks/README.md",
+      "scope": "candidate core only; live search acquisition remains outside this freeze"
+    },
+    "C": {
+      "status": "runtime_comparison_complete_not_a_quality_arm",
+      "commit": "62e8c99",
+      "policy": "fixture-policy/1 shared with imperative runtime",
+      "runtime": "LangGraph comparison adapter",
+      "runtime_version": "langgraph==0.6.11",
+      "disposition": "not recommended; optional comparison adapter only",
+      "report": "docs/experiments/runtime-comparison/report.md"
+    }
+  },
+  "existing_regression_evidence": {
+    "commit": "280761304f4d0eb58ee1680d7f7adced559ef0a1",
+    "run_id": "local-1-1788578735",
+    "timestamp": "2026-09-05T03:25:36.393683+00:00",
+    "suite": "answer-evals-v1",
+    "selection": "broad",
+    "baseline_match": true,
+    "total": 12,
+    "passed": 11,
+    "expected_negative_control_failures": [
+      "negative-005-answer-miscited"
+    ],
+    "negative_or_abstention_fraction": 0.3333333333333333,
+    "llm_fixture": "v2",
+    "search_fixture": "v3",
+    "record_baseline": false,
+    "claim_scope": "deterministic current-fork regression only; not an A/B/C comparison, semantic quality, or recovery proof",
+    "cases": [
+      {
+        "case_id": "boundary-004-answer-compact",
+        "outcome": "pass",
+        "request_hash": "sha256:336418bf99361e7e64915899a289033cd77cf44dbeb9b164dc436ed5b97a0619",
+        "grader_results": {
+          "check_protocol": true,
+          "check_sources_present": true,
+          "check_citation_shape": true,
+          "check_citation_support": true,
+          "check_required_claims": true,
+          "check_prohibited_claims": true,
+          "check_abstention": true,
+          "check_citation_integrity": true
+        }
+      },
+      {
+        "case_id": "boundary-009-answer-server-error",
+        "outcome": "pass",
+        "request_hash": "sha256:9ec18213a9c480754d325e7e48d05f68b7a7d6c6701fd8179295fbcb0adb098c",
+        "grader_results": {
+          "check_protocol": true
+        }
+      },
+      {
+        "case_id": "boundary-010-answer-rate-limit",
+        "outcome": "pass",
+        "request_hash": "sha256:d9e1784e59af28bd200c1e3b8c4190b3648dcf184a4f18081a34fdb45dbb152c",
+        "grader_results": {
+          "check_protocol": true
+        }
+      },
+      {
+        "case_id": "boundary-012-research-multi-source",
+        "outcome": "pass",
+        "request_hash": "sha256:37751a2706aae9a700a7d0e451b7bd85f0844a81214093d6720892afdc2944fd",
+        "grader_results": {
+          "check_protocol": true,
+          "check_sources_present": true,
+          "check_citation_shape": true,
+          "check_citation_support": true,
+          "check_required_claims": true,
+          "check_prohibited_claims": true,
+          "check_abstention": true,
+          "check_citation_integrity": true
+        }
+      },
+      {
+        "case_id": "negative-005-answer-miscited",
+        "outcome": "fail",
+        "request_hash": "sha256:a7a1255004d12f4e9e833a8527a574fe7897777cd30bfd9ea76e5e27a0fe20f8",
+        "grader_results": {
+          "check_protocol": true,
+          "check_sources_present": true,
+          "check_citation_shape": true,
+          "check_citation_support": false,
+          "check_required_claims": true,
+          "check_prohibited_claims": true,
+          "check_abstention": true,
+          "check_citation_integrity": true
+        }
+      },
+      {
+        "case_id": "negative-006-answer-empty-search",
+        "outcome": "pass",
+        "request_hash": "sha256:97ef3f1be00da2b2ff17b61d8331d17a12a9bdf9db4966bbf5a11ffd7091ba2c",
+        "grader_results": {
+          "check_protocol": true,
+          "check_abstention": true,
+          "check_required_claims": true,
+          "check_prohibited_claims": true
+        }
+      },
+      {
+        "case_id": "negative-007-answer-contradictory",
+        "outcome": "pass",
+        "request_hash": "sha256:33f70a5a71dd779984ddfde6bc556217bf798f185351dd3a9e9131aeb2f87705",
+        "grader_results": {
+          "check_protocol": true,
+          "check_abstention": true,
+          "check_required_claims": true,
+          "check_prohibited_claims": true
+        }
+      },
+      {
+        "case_id": "negative-008-research-contradictory",
+        "outcome": "pass",
+        "request_hash": "sha256:87ea85c29eddcdb944118863a690d4bf997ef5f8e3a46304d6743f3c656c8693",
+        "grader_results": {
+          "check_protocol": true,
+          "check_abstention": true,
+          "check_required_claims": true,
+          "check_prohibited_claims": true
+        }
+      },
+      {
+        "case_id": "positive-001-answer-grounded",
+        "outcome": "pass",
+        "request_hash": "sha256:7aea75f4cb0af916e3f2b6fedc9aac5a4b5e83a788e6f8d466ac9c26d66236f3",
+        "grader_results": {
+          "check_protocol": true,
+          "check_sources_present": true,
+          "check_citation_shape": true,
+          "check_citation_support": true,
+          "check_required_claims": true,
+          "check_prohibited_claims": true,
+          "check_abstention": true,
+          "check_citation_integrity": true
+        }
+      },
+      {
+        "case_id": "positive-002-answer-claims",
+        "outcome": "pass",
+        "request_hash": "sha256:8380c01453b2b188a0d93f088b5db045a2d89921c7e3495b6c78101f4622bcc2",
+        "grader_results": {
+          "check_protocol": true,
+          "check_sources_present": true,
+          "check_citation_shape": true,
+          "check_citation_support": true,
+          "check_required_claims": true,
+          "check_prohibited_claims": true,
+          "check_abstention": true,
+          "check_citation_integrity": true
+        }
+      },
+      {
+        "case_id": "positive-003-research-grounded",
+        "outcome": "pass",
+        "request_hash": "sha256:a32eb7e40cad631773d3ac1074d8d5f3ed4915d63f549c0f208dce3660c0d53c",
+        "grader_results": {
+          "check_protocol": true,
+          "check_sources_present": true,
+          "check_citation_shape": true,
+          "check_citation_support": true,
+          "check_required_claims": true,
+          "check_prohibited_claims": true,
+          "check_abstention": true,
+          "check_citation_integrity": true
+        }
+      },
+      {
+        "case_id": "positive-011-research-claims",
+        "outcome": "pass",
+        "request_hash": "sha256:484961245c61c36f036b9c0cd577854808b812610516642c8f968fd4d1a5de9c",
+        "grader_results": {
+          "check_protocol": true,
+          "check_sources_present": true,
+          "check_citation_shape": true,
+          "check_citation_support": true,
+          "check_required_claims": true,
+          "check_prohibited_claims": true,
+          "check_abstention": true,
+          "check_citation_integrity": true
+        }
+      }
+    ]
+  },
+  "file_pins": [
+    {
+      "path": "evals/answer_evals/manifest.json",
+      "sha256": "a0ef11861adb1e2d100147b56c29128bb13e5b97d46a37dc3c7250554dff41ce"
+    },
+    {
+      "path": "evals/answer_evals/baselines/broad.json",
+      "sha256": "76ccafcb1dbe4d1e5819a006d308760418e1a6bf6c70ff5aa3296e377ffa3732"
+    },
+    {
+      "path": "uv.lock",
+      "sha256": "4c383538479287eedaf4ffde5f2044f29972897a256e07f9b57fa3d1bc42648a"
+    },
+    {
+      "path": "scripts/run_answer_evals.py",
+      "sha256": "8885f97df82c93441b22a032ec5484ff919a3638c804ff1dca43a9d77de3cb24"
+    },
+    {
+      "path": "evals/answer_evals/__init__.py",
+      "sha256": "3c8dacf6cb7c4c5c8ea2f8c070af7e93d739e4eeac03f9c47f155b139d7946ac"
+    },
+    {
+      "path": "evals/answer_evals/grading.py",
+      "sha256": "7f9536493ee28b3b8df82d725e8880ad88b61e6c6a4aae6c00cb6d0290bfd03e"
+    },
+    {
+      "path": "evals/answer_evals/harness.py",
+      "sha256": "3056219aed20bf18609719934ee11c4679308c27d31d2d079ebaf42914b57129"
+    },
+    {
+      "path": "evals/answer_evals/provenance.py",
+      "sha256": "4933c21fe371343ce801b402d6895b4ded4df5402ac1e81d8c018bbfa4168200"
+    },
+    {
+      "path": "evals/answer_evals/routing.py",
+      "sha256": "850f4eb978405f6707aa2915bb11c3e6dccf993923958e4ad18a5bf271d0a95a"
+    },
+    {
+      "path": "evals/answer_evals/cases/boundary-004-answer-compact.json",
+      "sha256": "e6b2ac67690265ea6239997297245c70ed8990e6dad46dfe6999facae573b3b0"
+    },
+    {
+      "path": "evals/answer_evals/cases/boundary-009-answer-server-error.json",
+      "sha256": "e82b526c51ca199075360c753c54fa2c59174c6a2e305cd408279b4953bfa920"
+    },
+    {
+      "path": "evals/answer_evals/cases/boundary-010-answer-rate-limit.json",
+      "sha256": "cf2be7db145b8e2934bf832ed3cfd4a2ad38e55420bdd683f134ee56607bcf31"
+    },
+    {
+      "path": "evals/answer_evals/cases/boundary-012-research-multi-source.json",
+      "sha256": "1f027379d2b2a483dce7640b632a7a86f4768721d39caff1bd3478e94f7d5306"
+    },
+    {
+      "path": "evals/answer_evals/cases/negative-005-answer-miscited.json",
+      "sha256": "14ceb5e85a0511c75a2f09f56d1465813af63dffa4da149933c8ee413d4fd538"
+    },
+    {
+      "path": "evals/answer_evals/cases/negative-006-answer-empty-search.json",
+      "sha256": "c7b05c275740b00a21c1de523f6f01b9cc1e1b28fed10b53cdda5e96a819956a"
+    },
+    {
+      "path": "evals/answer_evals/cases/negative-007-answer-contradictory.json",
+      "sha256": "77736c146766068748e10497e2780961e43892da815889265dde234b83c440a2"
+    },
+    {
+      "path": "evals/answer_evals/cases/negative-008-research-contradictory.json",
+      "sha256": "8c911cdd34cf6230103e994c0e5be179f7a6d4755fb077ea37b689e712f4b7d7"
+    },
+    {
+      "path": "evals/answer_evals/cases/positive-001-answer-grounded.json",
+      "sha256": "a7bf2ad1451e8924d55e71e7c22793e455bfe4c4e35c031bfdab28991a25ea01"
+    },
+    {
+      "path": "evals/answer_evals/cases/positive-002-answer-claims.json",
+      "sha256": "3d80724e164cc2d292446ad28af44784138b99b0619d7b5ef06d91fb7c1c563f"
+    },
+    {
+      "path": "evals/answer_evals/cases/positive-003-research-grounded.json",
+      "sha256": "97fc9c848885a28b8b18a077e47ba4aabba906c9a979709153fb1b64e46fe79f"
+    },
+    {
+      "path": "evals/answer_evals/cases/positive-011-research-claims.json",
+      "sha256": "3ee5bd75ece3133a8488101297957d565770304c51971b97f0ed332bfe832462"
+    }
+  ],
+  "comparison_preflight": {
+    "development_corpus": {
+      "path": "docs/experiments/enterprise-evaluation/corpus.json",
+      "sha256": "d3d1821b54783fa831247ea66f362c4a0abacb733c1532ccdb4267be8a7076af",
+      "held_out_eligible": false
+    },
+    "held_out_corpus": {
+      "status": "replacement_packet_isolation_approved",
+      "cases": 30,
+      "corpus_sha256": "sha256:99857f4484492e787adc62aab81189551f66ebcc3c9cd42f5bfdf7dcdc6dc796",
+      "post_review_access_log_sha256": "sha256:d6b31f8e034981e5c6a308b3d79da69a3afcc93e28e000d9ad899f935ad82107",
+      "held_out_eligible_for_future_candidate": true,
+      "replacement_packet": "docs/experiments/enterprise-evaluation/w1-replacement-packet-2026-09-10.md",
+      "adverse_or_abstention_cases": 11,
+      "topic_categories": 8,
+      "template_families": 30,
+      "access_log_sha256": "sha256:0f459327ffd3ced393ee653030ca5664ea985b228db10a2d947ddb9f9dc288dd",
+      "validation_sha256": "sha256:72aa09aa66df518151e5ef3b111fdbf78e39508c9e827390f18389bb58a51885",
+      "approval_sha256": "sha256:946baaf7a32f8faf18d9ccdea8fd829ea1acb0a11738a4ebd81ff932cd04bad2"
+    },
+    "required_question_denominators": {
+      "cases": 30,
+      "required_subquestions": 85,
+      "adverse_or_abstention_cases": 6,
+      "failed_or_empty_outcomes_retained": 2
+    },
+    "semantic_rubric": "docs/experiments/enterprise-evaluation/README.md#review-rubric-and-record",
+    "primary_reviewer": {
+      "name": "Codex implementation agent",
+      "kind": "ai",
+      "status": "complete_provisional",
+      "review_sha256": "sha256:33523098685f45b6d38fdc4df884b3e3273b7c8625486ce9ce16b61b42136800",
+      "report": "docs/experiments/enterprise-evaluation/w1-incumbent-semantic-review-2026-09-09.md"
+    },
+    "adjudicating_reviewer": {
+      "name": "Magnus Hedemark",
+      "kind": "human",
+      "status": "incumbent_critical_finding_accepted; future_candidate_disagreements_require_adjudication"
+    },
+    "hardware_and_limits": {
+      "runner_host": "current local macOS arm64 host",
+      "inference_route": "home-lab LiteLLM local alias on inference.example.internal",
+      "comparison_rule": "same runner host, service state, model route, and cache policy for paired arms; record exact versions at execution",
+      "cold_warm_policy": "quality study uses fresh independent calls; no response reuse; provider cache-token counts retained when reported"
+    },
+    "paired_order_and_seeds": {
+      "seed": 20260909,
+      "order": "shuffle arm order within every case and trial; retain the generated schedule before dispatch",
+      "provider_seed": "record support or absence; do not simulate determinism"
+    },
+    "quality_regression_bounds": {
+      "status": "accepted_for_w1_paired_ab_comparison",
+      "hard_critical_findings_allowed": 0,
+      "paired_95pct_interval_must_not_show_regression": [
+        "strict_support",
+        "required_coverage",
+        "citation_correctness"
+      ],
+      "maximum_point_regression": 0.02,
+      "improvement_claim_requires": {
+        "minimum_point_gain": 0.05,
+        "minimum_metrics_meeting_gain": 2
+      }
+    },
+    "latency_regression_bounds": {
+      "status": "accepted_for_w1_paired_ab_comparison",
+      "p50_ms_max": 8030,
+      "p95_ms_max": 10354,
+      "multiplier_over_incumbent": 1.25
+    },
+    "resource_regression_bounds": {
+      "status": "accepted_for_w1_paired_ab_comparison",
+      "maximum_per_question_median_multiplier": 3.0,
+      "exception_requires": "established paired quality improvement and explicit final acceptance"
+    },
+    "per_operation_and_run_budgets": {
+      "answer_timeout_seconds": 30,
+      "retries_per_scored_call": 0,
+      "maximum_source_cards_per_case": 3,
+      "maximum_total_tokens_per_call": 6000,
+      "external_provider_budget_usd": 0,
+      "stop_mechanism": "runner refuses dispatch after any call, token, time, route, or case-accounting ceiling and retains the stopped outcome",
+      "maximum_calls_by_arm": {
+        "A": 150,
+        "B": 300
+      },
+      "maximum_calls_series": 450
+    },
+    "sample_uncertainty_plan": {
+      "status": "accepted_for_w1_paired_ab_comparison",
+      "trials_per_case_per_arm": 5,
+      "resamples": 10000,
+      "unit": "paired question",
+      "report_topic_families_separately": true
+    },
+    "recovery_timing_and_retention_limits": null
+  },
+  "missing_value_rule": "null means unresolved and blocks the applicable comparison; never default to permissive values",
+  "proposed_protocol_minima": {
+    "runtime_repetitions_per_workload": 30,
+    "negative_case_fraction": 0.2,
+    "quality_held_out_questions": 30,
+    "stochastic_trials_per_question_per_arm": 5,
+    "source": "ADR-0070; proposed, not a completed or approved series"
+  },
+  "hard_invariant_allowed_violations": 0,
+  "evaluation_design": {
+    "status": "w1_paired_ab_execution_authorized",
+    "domain": "enterprise agentic engineering/software factories",
+    "packet": "docs/experiments/enterprise-evaluation/README.md",
+    "manifest": "docs/experiments/enterprise-evaluation/manifest.json",
+    "separate_ai_reviewer": "Hermes via local one-shot CLI",
+    "human_calibration_and_adjudication": "Magnus; 12 exposed calibration cases human-confirmed in docs/experiments/enterprise-evaluation/calibration/human-confirmation.json; no held-out labels",
+    "held_out_status": "Fresh 30-case replacement packet is isolation-approved and eligible; raw contents remain private",
+    "numerical_performance_bounds": "Accepted for W1 A/B execution; see w1-incumbent-semantic-review-2026-09-09.md",
+    "independent_ai_review_status": "local-only Hermes route timed out; two fallback-routed outputs excluded before scoring"
+  },
+  "storage_exploration": {
+    "status": "approved_bounded_experimental_exploration",
+    "decision_url": "https://github.com/magnus919/groktocrawl-x/issues/47#issuecomment-5553962512",
+    "adr": "0071",
+    "postgres_exploration_authorized": true,
+    "vector_backend_selected": false,
+    "qdrant_removal_authorized": false,
+    "comparison_authorized": false,
+    "production_adoption": false
+  },
+  "consolidated_format": {
+    "status": "accepted_bounded_experimental_implementation",
+    "adr": "0075",
+    "decision_url": "https://github.com/magnus919/groktocrawl-x/issues/92",
+    "accepted_at": "2026-09-06",
+    "format_frozen": false,
+    "implementation_complete": false,
+    "initial_canonical_byte_limit": 1048576,
+    "legacy_readers_preserved": true,
+    "comparison_authorized": false,
+    "production_adoption": false
+  },
+  "held_out_packet": {
+    "status": "replacement_packet_isolation_approved",
+    "cases": 30,
+    "adverse_or_abstention_cases": 11,
+    "topic_categories": 8,
+    "template_families": 30,
+    "corpus_sha256": "sha256:99857f4484492e787adc62aab81189551f66ebcc3c9cd42f5bfdf7dcdc6dc796",
+    "access_log_sha256": "sha256:0f459327ffd3ced393ee653030ca5664ea985b228db10a2d947ddb9f9dc288dd",
+    "validator_status": "candidate_validation_passed",
+    "approval_record": "private approval.json; sanitized summary docs/experiments/enterprise-evaluation/w1-replacement-packet-2026-09-10.md",
+    "comparison_authorized": true,
+    "production_adoption": false,
+    "held_out_eligible_for_future_candidate": true,
+    "replacement_packet_required": false,
+    "validation_sha256": "sha256:72aa09aa66df518151e5ef3b111fdbf78e39508c9e827390f18389bb58a51885",
+    "approval_sha256": "sha256:946baaf7a32f8faf18d9ccdea8fd829ea1acb0a11738a4ebd81ff932cd04bad2"
+  },
+  "baseline_observation": {
+    "status": "incumbent_answer_run_complete",
+    "arm": "A",
+    "commit": "34b4975bc7baaf25510ed34029b957f95b59de70",
+    "model_alias": "local",
+    "external_provider_budget_usd": 0,
+    "cases_attempted": 30,
+    "valid_answers": 29,
+    "malformed_or_failed_answers": 1,
+    "prompt_tokens": 5944,
+    "completion_tokens": 2444,
+    "total_tokens": 8388,
+    "answer_latency_ms": {
+      "p50": 6424,
+      "p95": 8283
+    },
+    "quality_score": {
+      "status": "primary_review_complete_provisional",
+      "strict_support": {
+        "numerator": 54,
+        "denominator": 77,
+        "rate": 0.7012987013
+      },
+      "required_coverage": {
+        "credit": 62.0,
+        "denominator": 85,
+        "rate": 0.7294117647
+      },
+      "citation_correctness": {
+        "numerator": 54,
+        "denominator": 77,
+        "rate": 0.7012987013
+      },
+      "critical_findings": 1,
+      "ready_to_use_cases": 10,
+      "needs_fix_cases": 15,
+      "do_not_use_cases": 5,
+      "report": "docs/experiments/enterprise-evaluation/w1-incumbent-semantic-review-2026-09-09.md"
+    },
+    "comparison_authorized": true,
+    "production_adoption": false,
+    "source": "docs/experiments/enterprise-evaluation/w1-baseline-inputs-2026-09-08.md"
+  },
+  "remaining_gate_summary": [
+    "design and evaluate a leaner evidence-first successor candidate"
+  ],
+  "authorized_scope": [
+    "A",
+    "B"
+  ],
+  "comparison_authorization": {
+    "decision_owner": "Magnus Hedemark",
+    "record": "docs/experiments/enterprise-evaluation/w1-comparison-authorization-2026-09-10.md",
+    "private_record_sha256": "sha256:119e8e18338e1ac5a6206646caaa964a2e77d139f3abe04933740fe92596a324",
+    "production_adoption": false,
+    "mainline_replacement": false,
+    "call_budget_amendment_sha256": "sha256:f0fe18cfca535d3bb1652e5eb21d6d72f57e5140167c97bde4cd1fdc926bf8ec"
+  },
+  "comparison_execution": {
+    "status": "complete_candidate_b_failed_operational_gates",
+    "record": "docs/experiments/enterprise-evaluation/w1-comparison-outcome-2026-09-10.md",
+    "private_manifest_sha256": "sha256:81c796f90df768a96e1f3fa5201196a40e5c10ac08719777d8fce753476cc14a",
+    "schedule_sha256": "sha256:8d3d0f4fef37a7610ab1718c9eb248078b76b2cdbdddfa2c01eac120630b496a",
+    "results_sha256": "sha256:b2c633a69280f3f587d66fbfe5a08b0fd460f355faa285212290a4c436873604",
+    "receipts_sha256": "sha256:b8783595c21de3e9afff2cc738d1bba534fd83db473ba8b966f74b92d640ca2d",
+    "attempts": 300,
+    "arm_a_completed": 77,
+    "arm_b_completed": 39,
+    "arm_a_p50_ms": 2189,
+    "arm_a_p95_ms": 3202,
+    "arm_b_p50_ms": 17570,
+    "arm_b_p95_ms": 22367,
+    "arm_a_reported_tokens": 49387,
+    "arm_b_reported_tokens": 777108,
+    "candidate_b_operational_gate": "fail",
+    "semantic_learning_review": {
+      "status": "complete_human_adjudicated",
+      "record": "docs/experiments/enterprise-evaluation/w1-semantic-learning-review-2026-09-10.md",
+      "private_review_sha256": "sha256:854c09da48d2fdd7177b65951b2e125417c46daee7a9a1eec54ced563e289bfe",
+      "private_summary_sha256": "sha256:cc7e0016bd1dc35e44bf310cbf0c9e22328c1f59f59d6d50d2a7daf4a239c4f2",
+      "arm_a_full_study_coverage": 0.4166666667,
+      "arm_b_full_study_coverage": 0.2133333333,
+      "arm_a_completed_support": 0.8353413655,
+      "arm_b_completed_support": 0.652892562,
+      "arm_a_completed_citation_correctness": 0.8762886598,
+      "arm_b_completed_citation_correctness": 0.7068965517,
+      "automated_critical_flags": {
+        "A": 13,
+        "B": 10
+      },
+      "implementation_review_upheld_critical_flags": {
+        "A": 0,
+        "B": 0
+      },
+      "human_adjudication": "approved_zero_upheld_critical_flags",
+      "adjudicated_by": "Magnus Hedemark",
+      "adjudicated_on": "2026-09-10"
+    },
+    "scored_adoption_decision": "candidate_b_rejected_before_semantic_adoption_gate",
+    "production_adoption": false,
+    "mainline_replacement": false
+  }
+}

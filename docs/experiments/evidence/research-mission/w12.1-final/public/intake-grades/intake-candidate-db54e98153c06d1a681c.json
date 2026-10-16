@@ -1,0 +1,72 @@
+{
+  "candidate_id": "intake-candidate-db54e98153c06d1a681c",
+  "case_id": "mission-straightforward-security",
+  "completed_at": "2026-09-19T06:32:56.546380+00:00",
+  "grade": {
+    "action_correct": true,
+    "action_rationale": "Expected intake is accept; the candidate returned action 'ready' with no blocking clarification. The raw request is a researchable security-architecture question, and the candidate correctly treats it as research informing the enterprise's own grant decision rather than a live credentialing action. The accept/ready match itself is correct.",
+    "clarification_utility": null,
+    "correction_actions": [
+      "Collapse scope to the reference's four include items (source access, credential lifetime, production writes, secret handling) and the single exclusion (release identity redesign).",
+      "Restore the two reference obligations verbatim in substance: (1) read-only source access plus short-lived scoped credentials, closed by the primary policy; (2) production writes retained by the separately approved release identity plus exclusion of raw secrets from prompts/logs.",
+      "Restore minimum_independent_publishers to 0 and single-source closure rules so the supplied primary policy can close obligations.",
+      "Add the release-identity separation as an explicit hard boundary/prohibited assumption: deployment and production writes stay with the separately approved release identity and are never reassigned to the build agent.",
+      "Remove the two clarifications and obligations ob3-ob7, or demote them to optional context that cannot expand the decision."
+    ],
+    "hard_boundary_failure": true,
+    "hard_boundary_rationale": "Silent scope broadening is present (invented obligations, questions, and include items), and a named hard boundary is lost: the separately approved release identity's exclusive hold on production writes, protected by the prohibited assumption, is replaced by an open-ended survey of write permissions the agent may hold over deployment environments.",
+    "invented_constraints": [],
+    "lost_hard_boundaries": [
+      "Production-write separation lost: the reference obligation o2 hard-codes that production writes remain with the separately approved release identity, and the prohibited assumption explicitly forbids conflating release identity with agent identity. The candidate's q2/ob2 instead researches 'which write permissions may build agents hold over ... deployment environments,' which invites exactly that conflation and could license deployment writes for the agent rather than keeping them separate.",
+      "Secret-handling boundary dropped: the reference scope includes 'secret handling' and o2 requires excluding raw secrets from prompts or logs. The candidate mentions secret masking only as one option inside an isolation-controls survey; the explicit raw-secret exclusion boundary is not carried into scope or obligations.",
+      "Closure feasibility boundary changed: the reference sets minimum_independent_publishers to 0 and closes both obligations on the single supplied primary policy ('The primary policy states both controls'). The candidate raises the bar to 3 independent publishers and requires >=2 independent sources to close ob1 and ob2, making the mission's core obligations potentially unclosable against the fixture's single primary policy even when adequately evidenced."
+    ],
+    "required_field_recall": 0,
+    "unnecessary_fields": [
+      "Obligation bloat: 7 obligations vs. the reference's 2. ob4 (SLSA/NIST SSDF/OWASP framework provisions), ob5 (per-platform token models), ob6 (documented incidents/attack paths), and ob7 (agentic-vs-classic-runner distinction) are all invented scope absent from the request and the reference mission.",
+      "Question bloat: 6 questions vs. the reference's 1 required question covering the entire answer ('What access is allowed for the build agent and what remains separate?').",
+      "Scope broadening: scope.include adds failure modes, framework guidance, platform implementation evidence, and isolation-control taxonomies (ephemeral runners, egress limits) not present in the reference's four include items (source access, credential lifetime, production writes, secret handling). This constitutes silent scope broadening under the supplied hard_boundary_definition.",
+      "Unhelpful clarifications: the reference specifies clarifications: []. cl.agent-class introduces an agentic/classic-runner ambiguity the request does not raise, and cl.platform-stack pushes toward vendor-specific evidence the reference does not need for a vendor-neutral boundary answer. Both add fields without improving the core answer."
+    ]
+  },
+  "position": 26,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "74f21e80588e11fa2c114ea1285b3eed8ef4b9eee71672a88840e252bcf81088",
+    "finish_reason": "stop",
+    "latency_ms": 141443.483,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "93080571559d3c711331c3d70aa8f8bcb302a7c14b5056a7277f3ecbf880df60",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 2831,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 1961
+      },
+      "cost": 0.00181075,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0014155,
+        "upstream_inference_cost": 0.00181075,
+        "upstream_inference_prompt_cost": 0.00039525
+      },
+      "is_byok": false,
+      "prompt_tokens": 2635,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 5466
+    }
+  },
+  "schema_version": "research-mission-intake-grade/1",
+  "started_at": "2026-09-19T06:30:35.100827+00:00",
+  "status": "completed"
+}

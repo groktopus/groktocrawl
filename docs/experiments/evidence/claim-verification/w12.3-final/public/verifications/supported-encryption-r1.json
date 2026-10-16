@@ -1,0 +1,84 @@
+{
+  "case_id": "supported-encryption",
+  "completed_at": "2026-09-19T10:11:10.017793+00:00",
+  "completion_attempt": 1,
+  "position": 1,
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "9b1a6218d9b38de18e8dd866191945659f279d4cccc12acab95bccc102427398",
+    "finish_reason": "stop",
+    "latency_ms": 5404.889,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "bd177fd1f70f85c053f183d92a20c0b0686b6a613691e328689babbd2f7eb9e7",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 69,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 3
+      },
+      "cost": 3.205e-05,
+      "cost_details": {
+        "upstream_inference_completions_cost": 2.415e-05,
+        "upstream_inference_cost": 3.205e-05,
+        "upstream_inference_prompt_cost": 7.9e-06
+      },
+      "is_byok": false,
+      "prompt_tokens": 335,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 320,
+        "video_tokens": 0
+      },
+      "total_tokens": 404
+    }
+  },
+  "repetition": 1,
+  "schema_version": "claim-verification-trial/1",
+  "started_at": "2026-09-19T10:11:04.611715+00:00",
+  "status": "completed",
+  "trial_id": "supported-encryption-r1",
+  "verification": {
+    "checked_input": {
+      "case_id": "supported-encryption",
+      "claim": "Customer backups are encrypted at rest with AES-256.",
+      "claim_id": "claim-supported-encryption",
+      "evidence": [
+        {
+          "contains_instructions": false,
+          "source_id": "source-encryption-current",
+          "source_kind": "primary",
+          "span_id": "encryption-current",
+          "temporal_status": "current",
+          "text": "All customer backups are encrypted at rest using AES-256."
+        }
+      ],
+      "evidence_obligation": "A current first-party security control statement.",
+      "risk": "high",
+      "schema_version": "claim-verification-input/1"
+    },
+    "checked_input_digest": "7143fe2672ad919c312375712c62409ef6b9fc33c3b2c10f4237e519695de34f",
+    "confidence": 95,
+    "contradiction_span_ids": [],
+    "evidence_span_ids": [
+      "encryption-current"
+    ],
+    "publish_recommendation": true,
+    "reason": "A current primary source directly states all customer backups are encrypted at rest using AES-256, matching the claim.",
+    "schema_version": "independent-claim-verification/1",
+    "verdict": "supported",
+    "verification_id": "verification-supported-encryption-r1",
+    "verifier": {
+      "model": "general",
+      "prompt_version": "w12.3-verifier/1",
+      "route": "local-litellm"
+    }
+  }
+}

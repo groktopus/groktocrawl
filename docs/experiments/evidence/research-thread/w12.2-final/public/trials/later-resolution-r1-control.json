@@ -1,0 +1,69 @@
+{
+  "answer": {
+    "answer": "Yes. Fern CI has now published its retention period: the updated FAQ states that Fern CI retains build logs for 30 days (fern-faq-new). This supersedes the earlier FAQ snapshot, which stated that the build-log retention period was not specified (fern-faq-old). Both snapshots belong to the same FAQ lineage for subject fern-ci, so the newer statement is treated as current and the older statement as historically valid but superseded. Note that the published period is specific to build logs; no retention information for other data types is provided, and no effective date for the 30-day policy is given.",
+    "change_events": [
+      "Fern CI's FAQ changed from stating that the build-log retention period was not specified to stating that build logs are retained for 30 days (fern-faq-old -> fern-faq-new, same lineage fern-faq, same subject fern-ci)."
+    ],
+    "citations": [
+      "fern-faq-old",
+      "fern-faq-new"
+    ],
+    "current_truths": [
+      "Fern CI retains build logs for 30 days, per the updated FAQ (fern-faq-new).",
+      "Fern CI's retention period for build logs is now published in its FAQ (fern-faq-new)."
+    ],
+    "historical_truths": [
+      "At the time of the earlier FAQ snapshot, Fern CI's build-log retention period was not specified (fern-faq-old)."
+    ],
+    "unresolved": [
+      "The 30-day retention statement covers build logs only; no retention period is published for other data types (fern-faq-new).",
+      "No effective date or timestamp for the 30-day retention policy is provided in the snapshots, so the exact point at which the policy took effect cannot be determined (fern-faq-new)."
+    ]
+  },
+  "arm": "control",
+  "case_id": "later-resolution",
+  "completed_at": "2026-09-19T07:48:41.368195+00:00",
+  "position": 14,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "2fde1075af1a1cdf79a6c070fab1852332446039e4bcf9ea3a435c0aa1acdec5",
+    "finish_reason": "stop",
+    "latency_ms": 14333.325,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "2d7c9025a96b01b6dfa097d885225e9ecc32248672e02accae023433968d243e",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 781,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 491
+      },
+      "cost": 0.0004655,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0003905,
+        "upstream_inference_cost": 0.0004655,
+        "upstream_inference_prompt_cost": 7.5e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 500,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1281
+    }
+  },
+  "repetition": 1,
+  "schema_version": "research-thread-trial/1",
+  "started_at": "2026-09-19T07:48:27.028700+00:00",
+  "status": "completed",
+  "stratum": "resolved",
+  "trial_id": "later-resolution-r1-control"
+}

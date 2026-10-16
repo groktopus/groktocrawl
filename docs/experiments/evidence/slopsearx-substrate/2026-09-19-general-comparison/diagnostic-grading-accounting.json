@@ -1,0 +1,83 @@
+{
+  "attempted": 11,
+  "completed": 5,
+  "disposition": "abandoned_noncredible",
+  "error_types": {
+    "KeyError": 1,
+    "RuntimeError": 4,
+    "ValueError": 1
+  },
+  "expected_trials": 72,
+  "failed": 6,
+  "reason": "Provider timeouts, null content, and schema-incomplete responses made the post-hard-gate diagnostic non-credible.",
+  "records": [
+    {
+      "arm": "flat_http",
+      "error_type": null,
+      "record_sha256": "e12ef6d803fd45f12ee139f22d588d3488b002053521541c752ca0c8b6a36acd",
+      "status": "completed"
+    },
+    {
+      "arm": "recorded_continuation",
+      "error_type": "RuntimeError",
+      "record_sha256": "159c5d894fe07891a304c4381ee4c8aa68c8ff67c7efef412b4a3fba1b47880a",
+      "status": "failed"
+    },
+    {
+      "arm": "recorded_continuation",
+      "error_type": "ValueError",
+      "record_sha256": "83875e5c6e2db768e6872d950f9213d6a53dccfc350c609f38dfd2f1a9422939",
+      "status": "failed"
+    },
+    {
+      "arm": "flat_http",
+      "error_type": null,
+      "record_sha256": "1ed0285d8b957b33ac5fc680206b03a774add906c8e346a08b905394a905a8ad",
+      "status": "completed"
+    },
+    {
+      "arm": "flat_http",
+      "error_type": "RuntimeError",
+      "record_sha256": "fbd1cc3cfc4d5af2b228d8999affc9eeb3cda7f9c8c4486b2e532a9094a0abfc",
+      "status": "failed"
+    },
+    {
+      "arm": "recorded_continuation",
+      "error_type": "RuntimeError",
+      "record_sha256": "1853acc41903ec7b997a28aaa012950eabbb0f165144015f3b932ea6a00c4076",
+      "status": "failed"
+    },
+    {
+      "arm": "flat_http",
+      "error_type": "RuntimeError",
+      "record_sha256": "1abc444dca0dd63284c77ab672a8beb0e392cb0206fc253e7bdba27973fa8042",
+      "status": "failed"
+    },
+    {
+      "arm": "flat_http",
+      "error_type": null,
+      "record_sha256": "b6d311387ecf46373bf21685cd73340c90ee2f3d38a0b25fdcda96dfcb2546f6",
+      "status": "completed"
+    },
+    {
+      "arm": "recorded_continuation",
+      "error_type": null,
+      "record_sha256": "d63d4fd3c4d30df12bea48f75114eb96cc927ce536e49f7eb80463474d4a5efa",
+      "status": "completed"
+    },
+    {
+      "arm": "recorded_continuation",
+      "error_type": null,
+      "record_sha256": "79fdc9b3be28391e63b77ad4efc2022f393e8ea8011a66d670860f51e49416bf",
+      "status": "completed"
+    },
+    {
+      "arm": "recorded_continuation",
+      "error_type": "KeyError",
+      "record_sha256": "2a66f57c9e430204526fe5f2a3af2c82a73514dc9944e733bcd49ce22eee522d",
+      "status": "failed"
+    }
+  ],
+  "schema_version": "enterprise-evaluation/w11-diagnostic-grading-accounting/1",
+  "unattempted": 61
+}

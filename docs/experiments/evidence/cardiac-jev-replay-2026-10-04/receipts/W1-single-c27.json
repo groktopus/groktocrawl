@@ -1,0 +1,48 @@
+{
+  "id": "W1-single-c27",
+  "pool": "singleton",
+  "order": "original",
+  "wording": "W1",
+  "kind": "singleton",
+  "candidate_ids": [
+    "c27"
+  ],
+  "request_bytes": 1877,
+  "request_sha256": "6291fd8c6890ac489fe2e4a25ad7691d269e8ee5a1b2dc695cbc0bca3b41cb21",
+  "status": "valid",
+  "started_at": "2026-10-04T03:25:08.020925+00:00",
+  "model": "jev-1.13.0",
+  "answers": {
+    "c27_evidence": {
+      "type": "score",
+      "score": 1.01,
+      "confidence": 0.99,
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.99,
+        "2": 0.01,
+        "3": 0.0
+      }
+    },
+    "c27_fetch": {
+      "type": "choice",
+      "choice": "fetch",
+      "confidence": 0.64,
+      "probabilities": {
+        "skip": 0.04,
+        "maybe": 0.21,
+        "fetch": 0.75
+      }
+    }
+  },
+  "validation_errors": [],
+  "validation_protocol": "v2-rounding-feasibility",
+  "usage": {
+    "input_tokens": 702,
+    "output_tokens": 59
+  },
+  "provider_ms": 162.52228314988315,
+  "total_ms": 487.849,
+  "error": null,
+  "http_status": null
+}

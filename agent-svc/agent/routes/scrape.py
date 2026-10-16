@@ -74,12 +74,18 @@ async def scrape(request: Request, body: ScrapeRequest) -> ScrapeResponse:
                 images=[ImageData(**img) for img in scraper_data.get("images", [])]
                 if scraper_data.get("images")
                 else None,
+                recovery=scraper_data.get("recovery"),
             ),
             warning=result.get("warning"),
         )
     if result.get("error_code") == "CAPTCHA_UNRESOLVED":
         raise CaptchaError(
             detail=result.get("error", "CAPTCHA challenge could not be resolved"),
+            details=result.get("details") or result.get("barrier"),
+        )
+    if result.get("error_code") == "BARRIER_DETECTED":
+        raise BarrierDetectedError(
+            detail=result.get("error", "Barrier or challenge could not be resolved"),
             details=result.get("details") or result.get("barrier"),
         )
     raise ScrapeError(detail=result.get("error", "Scrape failed"))

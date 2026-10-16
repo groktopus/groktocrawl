@@ -1,0 +1,86 @@
+{
+  "schema_version": "canary-error-evidence/1",
+  "date": "2026-09-05",
+  "passed_tests": 30,
+  "scope": "callback_error_detail_containment",
+  "full_catalog_execution": false,
+  "input_files_sha256": {
+    "tests/unit/test_controller_canary.py": "95704d0c2b3fc7410d9580ae6b3d79536c30312170bb129ba6b84667bf9f9e7f",
+    "tests/unit/test_scripted_controller.py": "77fb2963fdbf990e6400860200d813e2dc0a030cebe3cd5b06e469008ebde552",
+    "agent-svc/agent/experimental/controller.py": "cf63c64ba8262bc4f756f5a2a87561e65ba6fcc250fdb195fc2a67eb06b9e68f"
+  },
+  "traces": [
+    {
+      "variant": "runtime",
+      "callback_calls": [
+        "work"
+      ],
+      "canary_sha256": "0d554f9c70816c5b7e3fe72792c650e55ea9c75221b3b1697cfde6956a7f9522",
+      "outcome": "failed",
+      "reason": "operation_failed",
+      "returned_sha256": "067cc1f5cec72f5d83432b8e8220d5313d8bacee5c87cace5427df33e24a43de",
+      "observed_surfaces": [
+        "returned_record",
+        "stdout",
+        "stderr",
+        "python_logs"
+      ],
+      "canary_found": false,
+      "external_write_surface": "not_present"
+    },
+    {
+      "variant": "chained",
+      "callback_calls": [
+        "work"
+      ],
+      "canary_sha256": "0d554f9c70816c5b7e3fe72792c650e55ea9c75221b3b1697cfde6956a7f9522",
+      "outcome": "failed",
+      "reason": "operation_failed",
+      "returned_sha256": "067cc1f5cec72f5d83432b8e8220d5313d8bacee5c87cace5427df33e24a43de",
+      "observed_surfaces": [
+        "returned_record",
+        "stdout",
+        "stderr",
+        "python_logs"
+      ],
+      "canary_found": false,
+      "external_write_surface": "not_present"
+    },
+    {
+      "variant": "validation",
+      "callback_calls": [
+        "work"
+      ],
+      "canary_sha256": "0d554f9c70816c5b7e3fe72792c650e55ea9c75221b3b1697cfde6956a7f9522",
+      "outcome": "failed",
+      "reason": "operation_failed",
+      "returned_sha256": "067cc1f5cec72f5d83432b8e8220d5313d8bacee5c87cace5427df33e24a43de",
+      "observed_surfaces": [
+        "returned_record",
+        "stdout",
+        "stderr",
+        "python_logs"
+      ],
+      "canary_found": false,
+      "external_write_surface": "not_present"
+    },
+    {
+      "variant": "control",
+      "callback_calls": [
+        "work"
+      ],
+      "canary_sha256": "0d554f9c70816c5b7e3fe72792c650e55ea9c75221b3b1697cfde6956a7f9522",
+      "outcome": "completed",
+      "reason": "coverage_satisfied",
+      "returned_sha256": "155b474d8ad3421baa80205ec405c5c609f13e3d33c09cc0fb37849d2de40843",
+      "observed_surfaces": [
+        "returned_record",
+        "stdout",
+        "stderr",
+        "python_logs"
+      ],
+      "canary_found": false,
+      "external_write_surface": "not_present"
+    }
+  ]
+}

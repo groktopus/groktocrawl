@@ -1,0 +1,124 @@
+{
+  "case_id": "temporal-2",
+  "control_artifact": {
+    "admitted_evidence": [
+      {
+        "canonical_source_id": "canonical-temporal-2-generalist-temporal-2-scope",
+        "derivative": false,
+        "evidence_id": "temporal-2-generalist-temporal-2-scope",
+        "obligation_id": "temporal-2-scope",
+        "publisher_id": "publisher-temporal-2-generalist",
+        "source_id": "source-temporal-2-generalist-temporal-2-scope",
+        "span": "Pinned supports evidence for temporal-2-scope in temporal-2.",
+        "stance": "supports"
+      }
+    ],
+    "conflicting_obligation_ids": [],
+    "covered_obligation_ids": [
+      "temporal-2-scope"
+    ],
+    "handoff_failures": [],
+    "rejected_evidence": {},
+    "total_calls": 2
+  },
+  "control_calls": 2,
+  "preferred": "treatment",
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "48398dc887a083ae3385cd0d94a69bfbe363c5612a4cacd53b21fce71b930963",
+    "finish_reason": "stop",
+    "latency_ms": 24800.405,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "767e077e35c16a5d75e98a75064a1bcdfeac6ff2870aa797ce4c01146452fcb0",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 2889,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 2856
+      },
+      "cost": 0.00154725,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0014445,
+        "upstream_inference_cost": 0.00154725,
+        "upstream_inference_prompt_cost": 0.00010275
+      },
+      "is_byok": false,
+      "prompt_tokens": 685,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 3574
+    }
+  },
+  "repetition": 2,
+  "schema_version": "specialist-value-review/1",
+  "scores": {
+    "control": {
+      "reason": "Covers only temporal-2-scope (1 of 3 obligations); temporal-2-authority and temporal-2-risk are entirely absent. Its single evidence item is pinned, non-derivative, and source-bound with an exact span, so it is trustworthy for the portion it covers; conflicts and failures fields are present and empty, and the coverage gap is visible via covered_obligations. Usefulness is capped by one-third coverage; no trustworthiness penalty applies because the supplied evidence contains no conflict to preserve and no unreported failure.",
+      "trustworthiness": 1,
+      "usefulness": 0
+    },
+    "treatment": {
+      "reason": "Covers all 3 required obligations (temporal-2-scope, temporal-2-authority, temporal-2-risk). Each obligation is backed by exactly one pinned, non-derivative evidence item bound to a distinct source_id/canonical_source_id with an exact span. No conflicts exist in the supplied evidence, so none needed preserving; the conflicts field is explicitly present and empty. The failures field is explicitly present and empty, making the failure state visible. All stances are 'supports'; per instructions, this agreement is not treated as verification of truth, but no conflicting evidence exists to preserve. Full score on both axes.",
+      "trustworthiness": 1,
+      "usefulness": 1
+    }
+  },
+  "separable": true,
+  "status": "completed",
+  "stratum": "temporal",
+  "treatment_artifact": {
+    "admitted_evidence": [
+      {
+        "canonical_source_id": "canonical-temporal-2-discovery-temporal-2-scope",
+        "derivative": false,
+        "evidence_id": "temporal-2-discovery-temporal-2-scope",
+        "obligation_id": "temporal-2-scope",
+        "publisher_id": "publisher-temporal-2-discovery",
+        "source_id": "source-temporal-2-discovery-temporal-2-scope",
+        "span": "Pinned supports evidence for temporal-2-scope in temporal-2.",
+        "stance": "supports"
+      },
+      {
+        "canonical_source_id": "canonical-temporal-2-authority-temporal-2-authority",
+        "derivative": false,
+        "evidence_id": "temporal-2-authority-temporal-2-authority",
+        "obligation_id": "temporal-2-authority",
+        "publisher_id": "publisher-temporal-2-authority",
+        "source_id": "source-temporal-2-authority-temporal-2-authority",
+        "span": "Pinned supports evidence for temporal-2-authority in temporal-2.",
+        "stance": "supports"
+      },
+      {
+        "canonical_source_id": "canonical-temporal-2-risk-temporal-2-risk",
+        "derivative": false,
+        "evidence_id": "temporal-2-risk-temporal-2-risk",
+        "obligation_id": "temporal-2-risk",
+        "publisher_id": "publisher-temporal-2-risk",
+        "source_id": "source-temporal-2-risk-temporal-2-risk",
+        "span": "Pinned supports evidence for temporal-2-risk in temporal-2.",
+        "stance": "supports"
+      }
+    ],
+    "conflicting_obligation_ids": [],
+    "covered_obligation_ids": [
+      "temporal-2-authority",
+      "temporal-2-risk",
+      "temporal-2-scope"
+    ],
+    "handoff_failures": [],
+    "rejected_evidence": {},
+    "total_calls": 2
+  },
+  "treatment_calls": 3,
+  "trial_id": "temporal-2-r2"
+}

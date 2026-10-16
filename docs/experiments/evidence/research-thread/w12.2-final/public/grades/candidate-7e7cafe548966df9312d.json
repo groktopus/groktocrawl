@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-7e7cafe548966df9312d",
+  "case_id": "stable-anchor",
+  "completed_at": "2026-09-19T09:14:48.517068+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 100,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "Both snapshots share one subject/lineage and state identical SHA-256 checksums, so the candidate's 'no change' conclusion matches the reference's empty change_events and heeds the prohibited merge (no change invented merely because a new snapshot exists). SHA-256 is correctly stated as current (iris-checksum-new) and correctly preserved as historical (iris-checksum-old), with no stale-current leakage and no lost history. All factual claims are grounded in the supplied source texts or their metadata, so unsupported_claims is 0. The only defect is the unresolved section: the reference lists nothing unresolved, but the candidate invented two peripheral unresolved items (temporal ordering resting on labels; a possible undocumented intermediate change), earning no credit there and adding minor noise that slightly reduces usefulness.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 0,
+    "unsupported_claims": 0,
+    "usefulness": 95
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "a41d678d1527db60ad5750e855c32db8feea4fdf309190c3ec9ba903d3efd8d6",
+    "finish_reason": "stop",
+    "latency_ms": 82716.991,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "77865bac1b197b3e4c25308cb43fbb693d1738b2ae0e618612f6648f7897beed",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 7257,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 7026
+      },
+      "cost": 0.00376755,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0036285,
+        "upstream_inference_cost": 0.00376755,
+        "upstream_inference_prompt_cost": 0.00013905
+      },
+      "is_byok": false,
+      "prompt_tokens": 927,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 8184
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:13:25.798871+00:00",
+  "status": "completed",
+  "trial_id": "stable-anchor-r3-control"
+}

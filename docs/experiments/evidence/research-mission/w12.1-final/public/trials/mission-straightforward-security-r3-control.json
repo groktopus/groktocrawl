@@ -1,0 +1,92 @@
+{
+  "arm": "control",
+  "case_id": "mission-straightforward-security",
+  "completed_at": "2026-09-19T05:55:24.145625+00:00",
+  "position": 2,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "569cd29b3964cb201df09074373e4d020abba66d58be1f6d06c2bbfda8d4c4c8",
+    "finish_reason": "stop",
+    "latency_ms": 30495.67,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "346f8220ee9897c5f43655c5e72c99c0dce009f6a631abffbfed3e02f082bcdc",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 461,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 5
+      },
+      "cost": 0.000325,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0002305,
+        "upstream_inference_cost": 0.000325,
+        "upstream_inference_prompt_cost": 9.45e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 630,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1091
+    }
+  },
+  "repetition": 3,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Build agent credential and write boundary (per supplied policy fixture only)**Allowed for the build agent:**- Read-only access to source code.- Short-lived, scoped credentials only.**Kept separate from the build agent:**- Production configuration writes. These require a **separate release identity**, and only **after approval**.- Raw secrets must never enter prompts or logs.**Context note (preserved limitation, not a contradiction of policy):**- An onboarding guide labels the release identity an *agent identity*, but it grants no additional privileges and delegates authorization to the security policy. Treat the policy as the authority; the guide's naming is descriptive and does not expand the release identity's rights.**Unresolved limits:**- The supplied sources do not specify credential scopes, rotation intervals, approval workflow mechanics, or enforcement mechanisms beyond the stated boundaries. Configuration specifics should be raised with the policy owner; this answer cannot invent them.",
+    "candidate_id": "candidate-36b2ac99f8d65ce59647",
+    "citations": [
+      "security-policy",
+      "security-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "security-policy"
+        ],
+        "text": "Build agents receive read-only source access.",
+        "uncertainty": "No material uncertainty; stated directly in the primary policy."
+      },
+      {
+        "source_ids": [
+          "security-policy"
+        ],
+        "text": "Build agents receive short-lived scoped credentials.",
+        "uncertainty": "Credential scope details and rotation intervals are not specified in the supplied sources."
+      },
+      {
+        "source_ids": [
+          "security-policy"
+        ],
+        "text": "Production configuration writes are performed by a separate release identity, only after approval.",
+        "uncertainty": "No material uncertainty on the boundary; approval workflow mechanics are not specified."
+      },
+      {
+        "source_ids": [
+          "security-policy"
+        ],
+        "text": "Raw secrets must not enter prompts or logs.",
+        "uncertainty": "No material uncertainty; stated directly in the primary policy."
+      },
+      {
+        "source_ids": [
+          "security-context"
+        ],
+        "text": "The onboarding guide calls the release identity an agent identity, but grants it no additional privileges and delegates authorization to the security policy.",
+        "uncertainty": "Terminology differs from the policy framing but does not contradict the policy's privilege boundaries; no material uncertainty on privileges."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:54:53.649325+00:00",
+  "status": "completed",
+  "trial_id": "mission-straightforward-security-r3-control"
+}

@@ -1,0 +1,157 @@
+name: Vector Store Backup Evaluation
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Optional stable identifier for the isolated backup run
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  evaluate:
+    name: Restore vector data into fresh targets
+    runs-on: ubuntu-latest
+    env:
+      COMPOSE_PROJECT_NAME: groktocrawl-x-vector-backup-${{ github.run_id }}
+      VECTOR_EVAL_POSTGRES_PASSWORD: vector-backup-${{ github.run_id }}-${{ github.run_attempt }}
+      VECTOR_EVAL_RUN_ID: ${{ inputs.run_id || format('backup-{0}', github.run_id) }}
+    steps:
+      - name: Check out fork
+        uses: actions/checkout@v5
+
+      - name: Validate isolated Compose file
+        run: docker compose -f compose.vector-evaluation.yml --profile vector-eval --profile vector-restore config --quiet
+
+      - name: Start source vector services
+        run: docker compose -f compose.vector-evaluation.yml --profile vector-eval up -d --wait vector-eval-qdrant vector-eval-postgres
+
+      - name: Create private evaluation runner
+        run: |
+          mkdir -p vector-backup-out
+          qdrant_container=$(docker compose -f compose.vector-evaluation.yml --profile vector-eval ps -q vector-eval-qdrant)
+          eval_network=$(docker inspect "$qdrant_container" --format '{{range $name, $_ := .NetworkSettings.Networks}}{{$name}}{{end}}')
+          echo "::add-mask::$VECTOR_EVAL_POSTGRES_PASSWORD"
+          runner=$(docker run -d --network bridge \
+            -e VECTOR_EVAL_POSTGRES_PASSWORD \
+            -e VECTOR_EVAL_RUN_ID \
+            -v "$GITHUB_WORKSPACE:/workspace:ro" \
+            -v "$GITHUB_WORKSPACE/vector-backup-out:/out" \
+            -w /workspace python:3.12-slim sleep 1200)
+          echo "$runner" > runner-id
+          docker network connect "$eval_network" "$runner"
+          echo "RUNNER_ID=$runner" >> "$GITHUB_ENV"
+
+      - name: Seed source providers
+        run: |
+          docker exec "$RUNNER_ID" sh -ceu '
+            python -m pip install --disable-pip-version-check --no-cache-dir \
+              "psycopg[binary]==3.3.5" "qdrant-client>=1.13.0,<1.20.0"
+            python scripts/run_vector_store_backup_evaluation.py \
+              --phase seed \
+              --qdrant-url http://vector-eval-qdrant:6333 \
+              --postgres-dsn "postgresql://vector_eval:${VECTOR_EVAL_POSTGRES_PASSWORD}@vector-eval-postgres:5432/vector_eval" \
+              --run-id "$VECTOR_EVAL_RUN_ID" \
+              --allow-isolated-database \
+              --backup-dir /out \
+              --output /out/seed.json
+          '
+
+      - name: Create provider-native backups
+        run: |
+          docker exec "$RUNNER_ID" sh -ceu '
+            python scripts/run_vector_store_backup_evaluation.py \
+              --phase backup \
+              --qdrant-url http://vector-eval-qdrant:6333 \
+              --postgres-dsn "postgresql://vector_eval:${VECTOR_EVAL_POSTGRES_PASSWORD}@vector-eval-postgres:5432/vector_eval" \
+              --run-id "$VECTOR_EVAL_RUN_ID" \
+              --allow-isolated-database \
+              --backup-dir /out \
+              --output /out/backup.json
+          '
+          docker compose -f compose.vector-evaluation.yml exec -T vector-eval-postgres \
+            pg_dump -U vector_eval -d vector_eval --format=custom --no-owner --no-acl \
+            > vector-backup-out/postgres.dump
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          dump = Path("vector-backup-out/postgres.dump")
+          metadata = {"provider": "postgresql", "path": str(dump), "bytes": dump.stat().st_size, "sha256": hashlib.sha256(dump.read_bytes()).hexdigest()}
+          Path("vector-backup-out/postgres-backup-metadata.json").write_text(json.dumps(metadata, indent=2, sort_keys=True) + "\n")
+          PY
+
+      - name: Write deletion authority manifest
+        run: |
+          cat > vector-backup-out/deletion-manifest.json <<'JSON'
+          {"delete": ["doc-001"]}
+          JSON
+
+      - name: Start fresh restore targets
+        run: docker compose -f compose.vector-evaluation.yml --profile vector-eval --profile vector-restore up -d --wait vector-restore-qdrant vector-restore-postgres
+
+      - name: Restore PostgreSQL backup into fresh target
+        run: |
+          docker compose -f compose.vector-evaluation.yml exec -T vector-restore-postgres \
+            psql -U vector_eval -d vector_restore -c 'CREATE EXTENSION IF NOT EXISTS vector'
+          restore_started=$(date +%s%3N)
+          docker compose -f compose.vector-evaluation.yml exec -T vector-restore-postgres \
+            pg_restore -U vector_eval -d vector_restore --no-owner --no-acl < vector-backup-out/postgres.dump
+          restore_finished=$(date +%s%3N)
+          python - <<PY
+          import json
+          from pathlib import Path
+          metadata = {"provider": "postgresql", "duration_ms": int("$restore_finished") - int("$restore_started")}
+          Path("vector-backup-out/postgres-restore-metadata.json").write_text(json.dumps(metadata, indent=2, sort_keys=True) + "\n")
+          PY
+
+      - name: Upload Qdrant backup and verify both targets
+        run: |
+          docker exec "$RUNNER_ID" sh -ceu '
+            python scripts/run_vector_store_backup_evaluation.py \
+              --phase restore-verify \
+              --qdrant-url http://vector-eval-qdrant:6333 \
+              --target-qdrant-url http://vector-restore-qdrant:6333 \
+              --postgres-dsn "postgresql://vector_eval:${VECTOR_EVAL_POSTGRES_PASSWORD}@vector-eval-postgres:5432/vector_eval" \
+              --target-postgres-dsn "postgresql://vector_eval:${VECTOR_EVAL_POSTGRES_PASSWORD}@vector-restore-postgres:5432/vector_restore" \
+              --run-id "$VECTOR_EVAL_RUN_ID" \
+              --allow-isolated-database \
+              --backup-dir /out \
+              --deletion-manifest /out/deletion-manifest.json \
+              --output /out/restore-verify.json
+          '
+
+      - name: Enforce backup and restore gates
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          backup = json.loads(Path("vector-backup-out/backup.json").read_text())
+          verify = json.loads(Path("vector-backup-out/restore-verify.json").read_text())
+          postgres_backup = json.loads(Path("vector-backup-out/postgres-backup-metadata.json").read_text())
+          postgres_restore = json.loads(Path("vector-backup-out/postgres-restore-metadata.json").read_text())
+          assert backup["qdrant_backup"]["bytes"] > 0
+          assert postgres_backup["bytes"] > 0
+          assert postgres_restore["duration_ms"] >= 0
+          assert verify["gates"] is True
+          for candidate in verify["candidates"]:
+              assert candidate["ok"], candidate
+              assert all(candidate["gates"].values()), candidate
+          print("backup and restore gates passed for", [c["name"] for c in verify["candidates"]])
+          PY
+
+      - name: Upload backup and restore evidence
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: vector-store-backup-evaluation-${{ github.run_id }}
+          path: vector-backup-out/
+          if-no-files-found: warn
+
+      - name: Stop isolated vector services
+        if: always()
+        run: |
+          docker rm -f "$RUNNER_ID" >/dev/null 2>&1 || true
+          docker compose -f compose.vector-evaluation.yml --profile vector-eval --profile vector-restore down --volumes --remove-orphans --timeout 30

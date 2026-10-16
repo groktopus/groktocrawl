@@ -1,0 +1,107 @@
+{
+  "design": {
+    "arms": [
+      "flat_http",
+      "recorded_continuation"
+    ],
+    "bootstrap_samples": 10000,
+    "bootstrap_unit": "case",
+    "case_count": 12,
+    "noninferiority_margins": {
+      "admitted_source_precision": -0.05,
+      "weighted_claim_closure": -0.02
+    },
+    "pair_count": 36,
+    "repetitions": 3,
+    "result_limit_per_search": 8,
+    "trial_count": 72,
+    "work_order_seed": 11052026
+  },
+  "evaluation_source_commit": "b4407e4784a1894bbb70b4a03d85f23525f295f2",
+  "frozen_at": "2026-09-19T01:41:22.348378+00:00",
+  "groktocrawl": {
+    "image_digests": {
+      "agent": "sha256:092d7ac8f8c4c04bfbaef0a4a109543d40f1afb9ed5c27df434a472349aec205",
+      "scraper": "sha256:b23c3776717771d6b72566cd8a0d41788f7598f47244778c0d7edbfa4d847715"
+    },
+    "source_commit": "6b46bc9a3f44a1571ad68d5453fef90edc99466b"
+  },
+  "input_sha256": {
+    "analysis_plan": "d823ed589ae9e1710610531fc3c5e7b89950c53335b7928fbd0ced44093818c3",
+    "arm_manifest": "98bf3ede6353cedde0d1056947ebadeb797428dbc553f36d9802fcdc7f7b3911",
+    "grader": "11ce9245d761b35483b4cc95a7e6c15615405fbc20cb38d5f55ea58f066def7f",
+    "http_compatibility_before": "cf834f9be25403e4da7bb9804fd1cf7a3ed1064152115fec0337b826d901b9e0",
+    "preflight": "06a3858de9e32dc4b43fe1c287329fd86d11a056df67430c9bed5a41eb3113c4",
+    "protocol": "3ada9f36ee6bffa031c5a9c44d3f7ca819da6801398aecc3616dd20a2406753e",
+    "quality_summarizer": "a92ce2d949f08599e427dd5f3d35939ee6b255d5cc62e8dcb6d1b52155d3a889",
+    "retrieval_runner": "fb27a9177614611e214af36186056ad320e61b8b124ce76b9902f13eb700281c",
+    "retrieval_summarizer": "7230ed9de8af306fc62b1030245358dd4fad59f936ae3b8a2c1239a1ed20924c",
+    "scope_equivalence": "a43fd10f41accba24d706557c5c0dd476057cbb3f8eea03372c732132976933f",
+    "work_order": "6a7a7443c0e88f2793207524fa37095957fd8768bec2fc4bdbea6f650895b466"
+  },
+  "limits": {
+    "admitted_results": 576,
+    "distinct_queries": 108,
+    "elapsed_seconds": 25920,
+    "engine_attempts": 7560,
+    "interpretation": "Experiment-wide upper bounds. Elapsed time covers retrieval and grading phases; stored bytes allow 5 MiB for each public and private checkpoint.",
+    "model_calls": 72,
+    "search_attempts": 1080,
+    "stored_bytes": 754974720
+  },
+  "model_route": "general",
+  "public_artifact": true,
+  "schema_version": "enterprise-evaluation/w11-general-freeze/1",
+  "slopsearx": {
+    "configuration_sha256": "a52f0ec1d2be8ee493e27a800399b6331f883e66e53b3fc13fddcf582bef2638",
+    "enabled_grants": [
+      "research"
+    ],
+    "engine_names": [
+      "brave",
+      "duckduckgo",
+      "google",
+      "hackernews",
+      "reddit",
+      "stackexchange",
+      "wikipedia"
+    ],
+    "engine_scope_sha256": "552d0a8e54100ffed23f23474d8aa8eabcb63c6ed43060cd3c3427d56869f6eb",
+    "image_digest": "sha256:4cd9c04ae4ef2f154a104cd95cf2219d603e461c9449f4392ce562b0541dd2d3",
+    "operator_bounds": {
+      "job_default_deadline_seconds": 600,
+      "job_lease_ttl_seconds": 60,
+      "job_max_concurrent_jobs": 1,
+      "job_max_engines_per_query": 10,
+      "job_max_queries": 20,
+      "job_max_results": 500,
+      "job_poll_interval_seconds": 1.0,
+      "max_query_length": 500,
+      "max_results": 50,
+      "snapshot_ttl_seconds": 3600
+    },
+    "source_revision": "edeba9ef9311adf19ce3f1b6060257ef1b54c2f9",
+    "version": "0.5.0"
+  },
+  "time_handling": {
+    "case_as_of_values_sha256": "39d5942c9596f56550f49fb5effd2843e7889c21109f246a6b1bfb11abc6eade",
+    "clock": "UTC",
+    "rule": "Use each case's frozen as_of value; do not move it to the execution date.",
+    "run_date": "2026-09-19"
+  },
+  "w10_control": {
+    "cases_sha256": "6761705e14ea1b535a8debdd0e54c6be14d8a42608c6f3606e6e445290aa21d6",
+    "outcome": "keep_fixed_retrieval",
+    "policy_by_challenge_type": {
+      "contradiction": "fixed",
+      "entity_ambiguity": "fixed",
+      "missing_primary": "fixed",
+      "publisher_independence": "fixed",
+      "stale_evidence": "fixed",
+      "unsupported_claim": "fixed"
+    },
+    "selected_challenge_types": [],
+    "w10_run_manifest_sha256": "a2009fc1fb84cf662b8db6a61130ed5675d530cb97528f3895b7344b60e156e8",
+    "w10_selection_sha256": "76e41947210917d7ea55de797c7bef90d25663d57a8ad36b50d358cb91300671"
+  }
+}

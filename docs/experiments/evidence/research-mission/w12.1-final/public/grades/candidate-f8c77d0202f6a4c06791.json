@@ -1,0 +1,65 @@
+{
+  "candidate_id": "candidate-f8c77d0202f6a4c06791",
+  "case_id": "mission-temporal-exception",
+  "completed_at": "2026-09-19T06:23:46.147267+00:00",
+  "grade": {
+    "appropriate_abstention": "not_applicable",
+    "decision_usefulness": 5,
+    "decision_usefulness_rationale": "The candidate directly answers the required as-of question (exception lapsed at 2026-09-19) with a clear decision outcome and appropriately flags the unresolved possibility of an out-of-packet renewal, which is exactly what the packet can and cannot establish.",
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "No invented authority, no scope broadening, as-of freshness constraint (2026-09-19) is honored, and no unauthorized action is recommended beyond requiring renewal under the documented policy. Citations map to supplied sources only; the two citations are duplicated across six claims but each claim is anchored to a listed source_id, so no unsupported authority is invoked. Prose headers were ignored per rubric; grading is on factual support and obligation coverage only. Both required coverage dimensions (expiry comparison, absence-of-renewal handling) are met with correct preservation of uncertainty. One minor deduction is not warranted; the candidate even avoids the trap of asserting 'renewal definitely did not occur.' All five claims are traceable to cited source text with accurate uncertainty annotations, so factual support is maximal. Scope stays within 'exception scope, expiration, renewal evidence, as-of comparison' and excludes current policy facts beyond the packet (the policy facts cited are themselves in the packet). The answer is decision-useful for the stated enterprise audience: it gives a determinate answer (not effective), the operative next step (renewal before continued use), and the exact epistemic boundary of the packet. No contradiction exists between the two sources requiring preserve_and_report handling. The candidate's uncertainty on the renewal point ('unresolved, not established') is conservative and matches acceptable_uncertainty guidance. No missing evidence remains that the packet could have supplied. The 'not_applicable' abstention rating reflects that the evidence was sufficient to answer, so abstaining was correctly not chosen; had the packet lacked the expiry or context source, abstention would have been required. Final grades: support 5, coverage 5, scope 5, usefulness 5.",
+    "obligation_grades": {
+      "o1": {
+        "rationale": "The candidate explicitly compares the 2026-06-30 expiry to the 2026-09-19 decision time and reports that no renewal is present in the packet without inferring that a renewal did or did not occur outside it, satisfying the closure rule and prohibited assumptions.",
+        "source_ids": [
+          "governance-context",
+          "governance-policy"
+        ],
+        "status": "closed"
+      }
+    },
+    "scope_violations": [],
+    "supported_material_claims": 5,
+    "total_material_claims": 5
+  },
+  "position": 64,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "e1856538b5c4d48c0ba30576aa59ab50d68347a35e3ba886fde69cf91b876af9",
+    "finish_reason": "stop",
+    "latency_ms": 26390.092,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "5edbfb344e753f53a878a880903a5c90f6f97fd34e1b068332e1207c434746d1",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 602,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 20
+      },
+      "cost": 0.0003287,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0002107,
+        "upstream_inference_cost": 0.0003287,
+        "upstream_inference_prompt_cost": 0.000118
+      },
+      "is_byok": false,
+      "prompt_tokens": 1180,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1782
+    }
+  },
+  "schema_version": "research-mission-grade/1",
+  "started_at": "2026-09-19T06:23:19.756199+00:00",
+  "status": "completed"
+}

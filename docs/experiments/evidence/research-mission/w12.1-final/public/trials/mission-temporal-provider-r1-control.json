@@ -1,0 +1,86 @@
+{
+  "arm": "control",
+  "case_id": "mission-temporal-provider",
+  "completed_at": "2026-09-19T05:44:58.147790+00:00",
+  "position": 2,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "69fd88a9bcb90b49667476ac4752f19c47da1989b3bb8757201a6805991ccd8a",
+    "finish_reason": "stop",
+    "latency_ms": 18732.908,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "87bbf17ed63d662a2fdc0a9b306b67216257909b1d56f3a6f2672f7ef51c19ac",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 482,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 6
+      },
+      "cost": 0.0003367,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000241,
+        "upstream_inference_cost": 0.0003367,
+        "upstream_inference_prompt_cost": 9.57e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 638,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1120
+    }
+  },
+  "repetition": 1,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Recommendation: Do not approve the provider switch — evidence packet fails the change gate (unresolved pending new evidence, as of 2026-09-19T00:00:00Z [platform-policy, platform-context])**The supplied packet does not satisfy the enterprise provider-change gate.** The policy requires, for every production model change: (1) evaluation on the same frozen task suite, (2) provenance checks, and (3) declared resource limits. The vendor note supplies none of these: it contains no comparison workload, no version pins, no error distribution, and no review methodology [platform-context].### Gate-by-gate comparison| Required control | Vendor evidence | Status || --- | --- | --- || Frozen task suite evaluation | No comparison workload supplied | Missing — unresolved || Provenance checks | Not referenced | Missing — unresolved || Declared resource limits | Not stated | Missing — unresolved || Version pins | Not supplied | Missing — unresolved || Error distribution / review methodology | Absent | Missing — unresolved || Tool-result identity preservation | Not evidenced | Missing — unresolved || Cancellation semantics | Not evidenced | Missing — unresolved |### Contradiction preservedThe vendor brochure asserts the model is ",
+    "candidate_id": "candidate-c4517df3b187594cabbc",
+    "citations": [
+      "platform-policy",
+      "platform-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "platform-policy"
+        ],
+        "text": "Every production model change requires the same frozen task suite, provenance checks, and declared resource limits, per platform policy.",
+        "uncertainty": "No material uncertainty; the requirement is stated in the supplied policy source."
+      },
+      {
+        "source_ids": [
+          "platform-policy"
+        ],
+        "text": "Provider adapters must preserve tool-result identities and cancellation semantics.",
+        "uncertainty": "No material uncertainty as to the requirement; vendor compliance is unevidenced."
+      },
+      {
+        "source_ids": [
+          "platform-context"
+        ],
+        "text": "The vendor brochure claims the model is enterprise ready and faster but supplies no comparison workload, version pins, error distribution, or review methodology.",
+        "uncertainty": "No independent verification exists; the brochure is vendor-authored and unverified."
+      },
+      {
+        "source_ids": [
+          "platform-policy",
+          "platform-context"
+        ],
+        "text": "The provider-change gate is not satisfied on the current evidence, so approval remains unresolved/rejected.",
+        "uncertainty": "This decision is time-bound; a future packet containing frozen-suite results, provenance, version pins, resource limits, and identity/cancellation evidence could change it."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:44:39.414021+00:00",
+  "status": "completed",
+  "trial_id": "mission-temporal-provider-r1-control"
+}

@@ -1,0 +1,3 @@
+# These are real parser fixtures, not UTF-8 source files.
+*.pdf binary
+*.docx binary

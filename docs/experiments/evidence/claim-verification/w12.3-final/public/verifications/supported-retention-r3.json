@@ -1,0 +1,84 @@
+{
+  "case_id": "supported-retention",
+  "completed_at": "2026-09-19T10:10:28.265312+00:00",
+  "completion_attempt": 1,
+  "position": 24,
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "64c2588d9075503a366da375e2d599ec2e2cfd25a11cf28109edb01226905b58",
+    "finish_reason": "stop",
+    "latency_ms": 6931.321,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "655e6d5baf46f6a2a332a68a65a8e9510504f1056b508662b779423496ca7940",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 63,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 1
+      },
+      "cost": 3.969e-05,
+      "cost_details": {
+        "upstream_inference_completions_cost": 2.205e-05,
+        "upstream_inference_cost": 3.969e-05,
+        "upstream_inference_prompt_cost": 1.764e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 330,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 192,
+        "video_tokens": 0
+      },
+      "total_tokens": 393
+    }
+  },
+  "repetition": 3,
+  "schema_version": "claim-verification-trial/1",
+  "started_at": "2026-09-19T10:10:21.333114+00:00",
+  "status": "completed",
+  "trial_id": "supported-retention-r3",
+  "verification": {
+    "checked_input": {
+      "case_id": "supported-retention",
+      "claim": "Build logs are retained for 30 days.",
+      "claim_id": "claim-supported-retention",
+      "evidence": [
+        {
+          "contains_instructions": false,
+          "source_id": "source-retention-current",
+          "source_kind": "primary",
+          "span_id": "retention-current",
+          "temporal_status": "current",
+          "text": "Build logs are retained for 30 days."
+        }
+      ],
+      "evidence_obligation": "A current first-party retention statement.",
+      "risk": "low",
+      "schema_version": "claim-verification-input/1"
+    },
+    "checked_input_digest": "1e55b89f35cfedc565a8f68d0c052cd39d54746f76868009360539f1fe26c7be",
+    "confidence": 95,
+    "contradiction_span_ids": [],
+    "evidence_span_ids": [
+      "retention-current"
+    ],
+    "publish_recommendation": true,
+    "reason": "A current first-party retention statement directly states build logs are retained for 30 days.",
+    "schema_version": "independent-claim-verification/1",
+    "verdict": "supported",
+    "verification_id": "verification-supported-retention-r3",
+    "verifier": {
+      "model": "general",
+      "prompt_version": "w12.3-verifier/1",
+      "route": "local-litellm"
+    }
+  }
+}

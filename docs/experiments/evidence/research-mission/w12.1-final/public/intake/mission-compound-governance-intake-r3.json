@@ -1,0 +1,52 @@
+{
+  "case_id": "mission-compound-governance",
+  "completed_at": "2026-09-19T06:07:05.809961+00:00",
+  "position": 5,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "54620f3a00b785e24d7d75ef87cb35cdf592458c6adb45e3e9fa63795fd8d994",
+    "finish_reason": "stop",
+    "latency_ms": 8805.006,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "3fbc48ac9b1a7e3c4fbac8ede754c4863a817ea6223852471d95afa36b4f92d9",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 185,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 38
+      },
+      "cost": 0.00010801,
+      "cost_details": {
+        "upstream_inference_completions_cost": 6.475e-05,
+        "upstream_inference_cost": 0.00010801,
+        "upstream_inference_prompt_cost": 4.326e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 2071,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 2048,
+        "video_tokens": 0
+      },
+      "total_tokens": 2256
+    }
+  },
+  "repetition": 3,
+  "result": {
+    "action": "clarify",
+    "clarifying_question": "Your request asks me to summarize the high-risk-change rule and assess the documented exception 'today,' but no source packet, policy document, or referenced material was supplied. Can you provide the packet text (or a citable pointer to it) containing the high-risk-change rule and the exception you want assessed?",
+    "mission": null,
+    "rationale": "The request depends entirely on an unspecified packet of sources; without its contents, summarizing the rule or assessing the exception would require inventing authority and findings. Supplying the packet is a blocking, decision-changing prerequisite, not something I can resolve by guessing. Research itself is appropriate once the packet is provided."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:06:56.998224+00:00",
+  "status": "completed",
+  "trial_id": "mission-compound-governance-intake-r3"
+}

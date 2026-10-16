@@ -4,6 +4,8 @@
 - Deciders: GroktoCrawl maintainers
 - Date: 2026-08-15
 
+- Research-substrate scope: Existing cache behavior remains unchanged. The opt-in research-substrate scope follows [ADR-0069](0069-adopt-bounded-research-substrate.md); the former experiment decision records are preserved in the [provenance archive](experimental/groktocrawl-x/README.md).
+
 ## Context
 
 Research memory (ADR-0041) can substitute a complete synthesized answer for the live search, scrape, and LLM pipeline. Replay eligibility originally depended on semantic prompt similarity plus an optional user scope. That does not prove compatibility with response-affecting request constraints such as explicit URLs, output schema, model choice, research depth, image collection, citation style, or URL-constraint strictness.

@@ -1,0 +1,65 @@
+{
+  "candidate_id": "candidate-04313c0811eb26123121",
+  "case_id": "live-contradiction",
+  "completed_at": "2026-09-19T09:24:55.305979+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 50,
+    "current_accuracy": 90,
+    "false_merge": false,
+    "historical_preservation": 90,
+    "lost_history": false,
+    "rationale": "The candidate correctly refuses to reconcile the contradiction by picking one source, preserves the documentation's exactly-once claim as historical ('has described'), and leaves the guarantee contested, matching the reference's empty current truths and contested unresolved item. It misses the reference change event: its change_events field asserts no change events can be established (conflating change with timestamped system change), whereas the incident report introducing contradictory evidence is itself the change; the tension is captured only as a static current truth. No stale-current leak, since the candidate never states the guarantee currently holds and explicitly frames the doc claim as unverified. No false merge or lost history. One unsupported characterization: the guidance calls DQ-17 a 'recorded violation' while the candidate's own unresolved list concedes it may be a documented exception. Unresolved extras (temporal order, remediation, conditionality) are grounded in source gaps, not invented peripherals.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 90,
+    "unsupported_claims": 1,
+    "usefulness": 90
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 2,
+    "envelope_sha256": "05ac9aa73d0ae2795e34de8833d159925866f426eaa87cfd91fb9b9d312ea923",
+    "finish_reason": "stop",
+    "latency_ms": 389626.644,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "81daf4e09fa2e5ad976a6252c4608c049332618adc4f06f809c398f16503f1f9",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [
+      {
+        "attempt": 1,
+        "error_type": "ReadTimeout",
+        "latency_ms": 300122.721
+      }
+    ],
+    "usage": {
+      "completion_tokens": 9371,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 11525
+      },
+      "cost": 0.0048772,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0046855,
+        "upstream_inference_cost": 0.0048772,
+        "upstream_inference_prompt_cost": 0.0001917
+      },
+      "is_byok": false,
+      "prompt_tokens": 1278,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 10649
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:18:25.675970+00:00",
+  "status": "completed",
+  "trial_id": "live-contradiction-r2-control"
+}

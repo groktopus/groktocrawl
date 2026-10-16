@@ -1,0 +1,349 @@
+{
+  "created_at": "2026-09-08T22:48:03.240319+00:00",
+  "decision": "evaluation_only",
+  "manifest": {
+    "corpus_family": "deterministic synthetic scale corpus",
+    "dimension": 3,
+    "distance": "cosine",
+    "embedding_model": "fixture-vector-3d-v1",
+    "operations": 80,
+    "random_seed": 0,
+    "sizes": [
+      100,
+      500,
+      1000
+    ],
+    "workers": 4
+  },
+  "ok": true,
+  "production_change": false,
+  "provider": "pgvector",
+  "qdrant_removal": false,
+  "resource_suffixes": [
+    "size_100",
+    "size_500",
+    "size_1000"
+  ],
+  "run_id": "scale-native-bulk-repeated-r1-round-3",
+  "schema_version": "vector-store-scale-evaluation/1",
+  "sizes": [
+    {
+      "bulk_upsert_ms": 30.378661000000307,
+      "duplicate_replay_ms": 0.5955590000041866,
+      "errors": [],
+      "mixed_load": {
+        "errors": [],
+        "failed_operations": 0,
+        "latency_summary_ms": {
+          "search": {
+            "mean": 0.4697311000008142,
+            "p50": 0.32177399999966383,
+            "p95": 1.7371530000076518,
+            "p99": 2.062691999995536
+          },
+          "upsert": {
+            "mean": 0.7706447499955971,
+            "p50": 0.4846749999956046,
+            "p95": 1.5442679999893016,
+            "p99": 5.414936999997622
+          }
+        },
+        "ok": true,
+        "operations": 80,
+        "successful_operations": 80,
+        "throughput_ops_s": 3128.1618873824827,
+        "workers": 4
+      },
+      "ok": true,
+      "queries": [
+        {
+          "query_id": "query-scope-0",
+          "results": [
+            {
+              "id": "scale-00000",
+              "score": 1.0
+            },
+            {
+              "id": "scale-00064",
+              "score": 0.9964046775223223
+            },
+            {
+              "id": "scale-00044",
+              "score": 0.9961590168570886
+            }
+          ]
+        },
+        {
+          "query_id": "query-scope-1",
+          "results": [
+            {
+              "id": "scale-00001",
+              "score": 1.0
+            },
+            {
+              "id": "scale-00045",
+              "score": 0.9844602043765849
+            },
+            {
+              "id": "scale-00073",
+              "score": 0.9835464055403
+            }
+          ]
+        },
+        {
+          "query_id": "query-scope-2",
+          "results": [
+            {
+              "id": "scale-00002",
+              "score": 1.0
+            },
+            {
+              "id": "scale-00090",
+              "score": 0.9876598119735718
+            },
+            {
+              "id": "scale-00038",
+              "score": 0.9799278974533081
+            }
+          ]
+        },
+        {
+          "query_id": "query-scope-3",
+          "results": [
+            {
+              "id": "scale-00003",
+              "score": 1.0
+            },
+            {
+              "id": "scale-00067",
+              "score": 0.9960582553165636
+            },
+            {
+              "id": "scale-00091",
+              "score": 0.9869594272064997
+            }
+          ]
+        }
+      ],
+      "search_latency_ms": {
+        "mean": 0.29932899999707274,
+        "p50": 0.1982520000041177,
+        "p95": 0.6411759999878086,
+        "p99": 0.6411759999878086
+      },
+      "size": 100
+    },
+    {
+      "bulk_upsert_ms": 72.03448699999626,
+      "duplicate_replay_ms": 42.51199000000838,
+      "errors": [],
+      "mixed_load": {
+        "errors": [],
+        "failed_operations": 0,
+        "latency_summary_ms": {
+          "search": {
+            "mean": 0.3601634666665632,
+            "p50": 0.2570089999949232,
+            "p95": 0.7802209999994147,
+            "p99": 1.8983200000093348
+          },
+          "upsert": {
+            "mean": 2.120387800000856,
+            "p50": 0.3094970000034891,
+            "p95": 1.4035299999903827,
+            "p99": 35.13854300000219
+          }
+        },
+        "ok": true,
+        "operations": 80,
+        "successful_operations": 80,
+        "throughput_ops_s": 1506.9853669459567,
+        "workers": 4
+      },
+      "ok": true,
+      "queries": [
+        {
+          "query_id": "query-scope-0",
+          "results": [
+            {
+              "id": "scale-00000",
+              "score": 1.0
+            },
+            {
+              "id": "scale-00404",
+              "score": 1.0
+            },
+            {
+              "id": "scale-00296",
+              "score": 0.9984138309482886
+            }
+          ]
+        },
+        {
+          "query_id": "query-scope-1",
+          "results": [
+            {
+              "id": "scale-00001",
+              "score": 1.0
+            },
+            {
+              "id": "scale-00405",
+              "score": 1.0
+            },
+            {
+              "id": "scale-00305",
+              "score": 0.9999869763847289
+            }
+          ]
+        },
+        {
+          "query_id": "query-scope-2",
+          "results": [
+            {
+              "id": "scale-00002",
+              "score": 1.0
+            },
+            {
+              "id": "scale-00406",
+              "score": 1.0
+            },
+            {
+              "id": "scale-00102",
+              "score": 0.9999869763847289
+            }
+          ]
+        },
+        {
+          "query_id": "query-scope-3",
+          "results": [
+            {
+              "id": "scale-00003",
+              "score": 1.0
+            },
+            {
+              "id": "scale-00407",
+              "score": 1.0
+            },
+            {
+              "id": "scale-00067",
+              "score": 0.9960582553165636
+            }
+          ]
+        }
+      ],
+      "search_latency_ms": {
+        "mean": 0.39009299999648306,
+        "p50": 0.2775689999907627,
+        "p95": 0.7911069999977371,
+        "p99": 0.7911069999977371
+      },
+      "size": 500
+    },
+    {
+      "bulk_upsert_ms": 115.56967500000326,
+      "duplicate_replay_ms": 5.089276999996173,
+      "errors": [],
+      "mixed_load": {
+        "errors": [],
+        "failed_operations": 0,
+        "latency_summary_ms": {
+          "search": {
+            "mean": 0.5523651833331181,
+            "p50": 0.41611299999999574,
+            "p95": 1.6015620000047193,
+            "p99": 3.280678999999509
+          },
+          "upsert": {
+            "mean": 6.7851296999982935,
+            "p50": 0.29192000000932694,
+            "p95": 45.49974599999018,
+            "p99": 81.46574900000303
+          }
+        },
+        "ok": true,
+        "operations": 80,
+        "successful_operations": 80,
+        "throughput_ops_s": 554.4106552017757,
+        "workers": 4
+      },
+      "ok": true,
+      "queries": [
+        {
+          "query_id": "query-scope-0",
+          "results": [
+            {
+              "id": "scale-00000",
+              "score": 1.0
+            },
+            {
+              "id": "scale-00404",
+              "score": 1.0
+            },
+            {
+              "id": "scale-00808",
+              "score": 1.0
+            }
+          ]
+        },
+        {
+          "query_id": "query-scope-1",
+          "results": [
+            {
+              "id": "scale-00001",
+              "score": 1.0
+            },
+            {
+              "id": "scale-00405",
+              "score": 1.0
+            },
+            {
+              "id": "scale-00809",
+              "score": 1.0
+            }
+          ]
+        },
+        {
+          "query_id": "query-scope-2",
+          "results": [
+            {
+              "id": "scale-00002",
+              "score": 1.0
+            },
+            {
+              "id": "scale-00406",
+              "score": 1.0
+            },
+            {
+              "id": "scale-00810",
+              "score": 1.0
+            }
+          ]
+        },
+        {
+          "query_id": "query-scope-3",
+          "results": [
+            {
+              "id": "scale-00003",
+              "score": 1.0
+            },
+            {
+              "id": "scale-00407",
+              "score": 1.0
+            },
+            {
+              "id": "scale-00811",
+              "score": 1.0
+            }
+          ]
+        }
+      ],
+      "search_latency_ms": {
+        "mean": 0.40722049999430965,
+        "p50": 0.2831069999871261,
+        "p95": 0.8103250000033313,
+        "p99": 0.8103250000033313
+      },
+      "size": 1000
+    }
+  ]
+}

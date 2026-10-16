@@ -120,7 +120,7 @@ running. Until the org-level steps above are applied:
 - Treat any red "Detect fork PR modifying GitHub workflows" step as a
   security-relevant signal, and review who authored the PR before touching
   the runner host.
-- The runner host (`saru`) must assume hostile input from PR-triggered jobs:
+- The runner host (`deployment.example.internal`) must assume hostile input from PR-triggered jobs:
   keep the CI fixture compose project isolated, never store long-lived
   secrets in the runner environment beyond the ephemeral `GITHUB_TOKEN`.
 

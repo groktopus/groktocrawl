@@ -34,8 +34,9 @@ import logging
 import math
 import os
 import time
+from collections.abc import Callable
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import inference as inference_module
 import numpy as np
@@ -56,6 +57,7 @@ from models import (
     RerankResult,
 )
 from qdrant_client import QdrantClient, models
+from shadow_pgvector import PgvectorShadowStore, ShadowConfig
 
 if TYPE_CHECKING:
     from sentence_transformers import CrossEncoder, SentenceTransformer
@@ -153,6 +155,7 @@ async def lifespan(app: FastAPI):
     _embed_model = None
     _rerank_model = None
     await _inference_manager.shutdown()
+    _shadow_store.close()
 
 
 app = FastAPI(title="semantic-svc", lifespan=lifespan)
@@ -216,6 +219,114 @@ QDRANT_QUERY_TIMEOUT = float(os.getenv("QDRANT_QUERY_TIMEOUT", "10"))
 QDRANT_CLIENT_TIMEOUT = math.ceil(
     float(os.getenv("QDRANT_CLIENT_TIMEOUT", str(QDRANT_QUERY_TIMEOUT)))
 )
+SHADOW_CONFIG = ShadowConfig.from_env()
+_shadow_store = PgvectorShadowStore(SHADOW_CONFIG, EMBED_DIM)
+
+
+async def _run_shadow_operation(operation: str, function: Callable[[], Any]) -> Any:
+    """Run a bounded shadow operation without changing Qdrant outcomes."""
+    if not SHADOW_CONFIG.enabled:
+        return None
+    outcome = "success"
+    try:
+
+        def execute() -> Any:
+            _shadow_store.ensure_schema()
+            return function()
+
+        return await asyncio.wait_for(
+            asyncio.to_thread(execute), timeout=SHADOW_CONFIG.timeout_seconds
+        )
+    except Exception:
+        outcome = "failure"
+        logger.warning("pgvector shadow %s failed", operation, exc_info=True)
+        return None
+    finally:
+        METRICS.counter(
+            "groktocrawl_pgvector_shadow_operations_total",
+            "Pgvector shadow operations by type and outcome",
+            ["operation", "outcome"],
+        ).inc({"operation": operation, "outcome": outcome})
+
+
+async def _run_required_pgvector_operation(
+    operation: str, function: Callable[[], Any]
+) -> Any:
+    """Run a bounded pgvector serving operation or return a stable 503."""
+    outcome = "success"
+    try:
+
+        def execute() -> Any:
+            _shadow_store.ensure_schema()
+            return function()
+
+        return await asyncio.wait_for(
+            asyncio.to_thread(execute), timeout=SHADOW_CONFIG.timeout_seconds
+        )
+    except Exception:
+        outcome = "failure"
+        logger.exception("pgvector serving %s failed", operation)
+        raise HTTPException(503, "Vector index unavailable")
+    finally:
+        METRICS.counter(
+            "groktocrawl_pgvector_serving_operations_total",
+            "Pgvector serving operations by type and outcome",
+            ["operation", "outcome"],
+        ).inc({"operation": operation, "outcome": outcome})
+
+
+def _schedule_shadow_operation(operation: str, function: Callable[[], Any]) -> None:
+    """Schedule fail-open shadow work under the service task tracker."""
+    if not SHADOW_CONFIG.enabled:
+        return
+    scheduled_at = time.monotonic()
+    METRICS.counter(
+        "groktocrawl_pgvector_shadow_scheduled_total",
+        "Pgvector shadow operations scheduled after authoritative completion",
+        ["operation"],
+    ).inc({"operation": operation})
+    METRICS.gauge(
+        "groktocrawl_pgvector_shadow_inflight",
+        "Pgvector shadow operations waiting or running",
+        ["operation"],
+    ).inc({"operation": operation})
+    app.state.task_tracker.create_background_task(
+        _run_scheduled_shadow_operation(operation, function, scheduled_at)
+    )
+
+
+async def _run_scheduled_shadow_operation(
+    operation: str, function: Callable[[], Any], scheduled_at: float
+) -> Any:
+    """Measure authority-to-shadow completion lag without retaining content."""
+    try:
+        return await _run_shadow_operation(operation, function)
+    finally:
+        elapsed = time.monotonic() - scheduled_at
+        METRICS.histogram(
+            "groktocrawl_pgvector_shadow_completion_lag_seconds",
+            "Time from authoritative completion until a shadow attempt finishes",
+            ["operation"],
+        ).observe({"operation": operation}, elapsed)
+        METRICS.counter(
+            "groktocrawl_pgvector_shadow_completed_total",
+            "Pgvector shadow attempts completed after scheduling",
+            ["operation"],
+        ).inc({"operation": operation})
+        METRICS.gauge(
+            "groktocrawl_pgvector_shadow_inflight",
+            "Pgvector shadow operations waiting or running",
+            ["operation"],
+        ).dec({"operation": operation})
+
+
+def _create_background_task(coro) -> asyncio.Task:
+    """Track route background work when the application lifespan is active."""
+    tracker = getattr(app.state, "task_tracker", None)
+    if tracker is not None:
+        return tracker.create_background_task(coro)
+    return asyncio.create_task(coro)
+
 
 # ── Migration state (in-memory, lost on restart) ──────────────────
 # For restart-surviving state, store in Valkey or a known Qdrant point.
@@ -316,6 +427,16 @@ def _is_qdrant_ready() -> bool:
         if temporary_client:
             with contextlib.suppress(Exception):
                 client.close()
+    return True
+
+
+def _is_pgvector_ready() -> bool:
+    """Return whether the configured pgvector store is reachable."""
+    try:
+        _shadow_store.ensure_schema()
+        _shadow_store.count(model=_get_active_model())
+    except Exception:
+        return False
     return True
 
 
@@ -450,17 +571,41 @@ async def metrics_middleware(request: Request, call_next):
 
 
 @app.get("/health")
-async def health():
+async def health() -> dict[str, str]:
+    """Report liveness and component detail without failing legacy probes."""
+    return await _readiness_payload()
+
+
+async def _readiness_payload() -> dict[str, str]:
     if not _models_ready:
         return {"status": "starting", "models": "loading"}
 
     loop = asyncio.get_running_loop()
+    if SHADOW_CONFIG.serving:
+        pgvector_ready, qdrant_ready = await asyncio.gather(
+            loop.run_in_executor(None, _is_pgvector_ready),
+            loop.run_in_executor(None, _is_qdrant_ready),
+        )
+        return {
+            "status": "ok" if pgvector_ready else "starting",
+            "models": "loaded",
+            "vector_store": "pgvector",
+            "pgvector": "ready" if pgvector_ready else "unavailable",
+            "qdrant": "rollback_ready" if qdrant_ready else "unavailable",
+        }
     qdrant_ready = await loop.run_in_executor(None, _is_qdrant_ready)
     return {
         "status": "ok" if qdrant_ready else "starting",
         "models": "loaded",
         "qdrant": "ready" if qdrant_ready else "unavailable",
     }
+
+
+@app.get("/ready")
+async def readiness() -> JSONResponse:
+    """Return a failing HTTP status while the active serving path is unavailable."""
+    payload = await _readiness_payload()
+    return JSONResponse(payload, status_code=200 if payload["status"] == "ok" else 503)
 
 
 @app.post("/embed", response_model=EmbedResponse)

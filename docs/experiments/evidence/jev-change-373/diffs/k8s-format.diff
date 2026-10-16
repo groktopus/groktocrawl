@@ -1,0 +1,40 @@
+--- before
++++ after
+@@ -6,8 +6,8 @@
+ <!-- overview -->
+ 
+ This page shows how to create a Pod that uses a
+-{{< glossary_tooltip text="Secret" term_id="secret" >}} to pull an image 
+-from a private container image registry or repository. There are many private 
++{{< glossary_tooltip text="Secret" term_id="secret" >}} to pull an image
++from a private container image registry or repository. There are many private
+ registries in use. This task uses [Docker Hub](https://www.docker.com/products/docker-hub)
+ as an example registry.
+ 
+@@ -19,8 +19,8 @@
+ 
+ * To do this exercise, you need the `docker` command line tool, and a
+   [Docker ID](https://docs.docker.com/docker-id/) for which you know the password.
+-* If you are using a different private container registry, you need the command 
+-  line tool for that registry and any login information for the registry. 
++* If you are using a different private container registry, you need the command
++  line tool for that registry and any login information for the registry.
+ 
+ <!-- steps -->
+ 
+@@ -39,7 +39,7 @@
+ or the password for your Docker ID).
+ 
+ The login process creates or updates a `config.json` file that holds an authorization token.
+-Review [how Kubernetes interprets this file](/docs/concepts/containers/images#config-json). 
++Review [how Kubernetes interprets this file](/docs/concepts/containers/images#config-json).
+ 
+ View the `config.json` file:
+ 
+@@ -245,4 +245,4 @@
+ * Learn more about [using a private registry](/docs/concepts/containers/images/#using-a-private-registry).
+ * Learn more about [adding image pull secrets to a service account](/docs/tasks/configure-pod-container/configure-service-account/#add-imagepullsecrets-to-a-service-account).
+ * See [kubectl create secret docker-registry](/docs/reference/generated/kubectl/kubectl-commands/#-em-secret-docker-registry-em-).
+-* See the `imagePullSecrets` field within the [container definitions](/docs/reference/kubernetes-api/workload-resources/pod-v1/#containers) of a Pod
++* See the `imagePullSecrets` field within the [container definitions](/docs/reference/kubernetes-api/workload-resources/pod-v1/#containers) of a Pod
+[EOF newline state: before=absent; after=absent]

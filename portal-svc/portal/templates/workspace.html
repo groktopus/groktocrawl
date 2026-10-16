@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Research workspace</title>
+<style>body{max-width:70rem;margin:2rem auto;font:16px system-ui;padding:1rem}button{margin:.3rem}pre{white-space:pre-wrap;overflow-wrap:anywhere}section{border:1px solid #888;padding:1rem}label{display:block;margin:.5rem}</style>
+<h1>Retained research workspace</h1>
+<p>Independent roots. Server retention and permissions apply. Experimental capabilities may be unavailable.</p>
+<button id="reload">Reload roots</button><button id="more" disabled>Load next bounded page</button><p id="status" role="status"></p>
+<section id="roots"></section>
+<section>
+<h2>Selected root</h2><pre id="detail"></pre><div id="actions"></div><div id="citations"></div>
+<label>Explicit session <input id="session" maxlength="200"></label>
+<label>Experimental attachment revision <input id="sessionRevision" type="number" min="0" value="0"></label>
+<button id="attach" disabled>Attach selected root</button><button id="documents" disabled>Inspect session documents</button>
+<div id="documentChoices"></div>
+<label>Selected evidence subject <input id="subject" maxlength="160"></label>
+<label>Follow-up wording <input id="wording" maxlength="4000"></label>
+<button id="preview" disabled>Preview explicit follow-up</button>
+<button id="cancel" disabled>Cancel selected run</button><button id="delete" disabled>Delete selected root</button>
+<pre id="artifact"></pre>
+</section>
+<script>
+const $=id=>document.getElementById(id);
+let selected=null, selectedEvidence=null, generation=0, nextPage=null;
+function clearSelection(){selected=null;selectedEvidence=null;for(const id of ['detail','artifact'])$(id).textContent='';for(const id of ['actions','citations','documentChoices'])$(id).replaceChildren();for(const id of ['attach','documents','preview','cancel','delete'])$(id).disabled=true;}
+async function read(path){const response=await fetch('/workspace/api/'+path,{cache:'no-store'});if(!response.ok)throw Error(response.status+' '+await response.text());return response.headers.get('content-type').includes('json')?response.json():response.text();}
+function fail(error,version){if(version!==generation)return;clearSelection();$('status').textContent=error.message;}
+async function named(name,body={}){const root=selected,version=generation;if(!root)return;const response=await fetch('/workspace/action/workspace/'+encodeURIComponent(root.run_id)+'/actions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:name,expected_revision:root.revision,...body})});if(!response.ok)throw Error(response.status+' '+await response.text());const result=await response.json();if(version!==generation)return null;return result;}
+async function select(id){const version=++generation;clearSelection();history.replaceState(null,'','#'+encodeURIComponent(id));try{const root=await read('workspace/'+encodeURIComponent(id));if(version!==generation)return;selected=root;$('detail').textContent=JSON.stringify(root,null,2);$('delete').disabled=false;$('cancel').disabled=!root.actions.cancel;$('attach').disabled=!root.actions.attach?.available;$('documents').disabled=!root.document_context.available;$('preview').disabled=!root.actions.followup_preview?.available;
+for(const [name,action] of Object.entries(root.actions||{})){if(action.method!=='GET'||!action.url)continue;const button=document.createElement('button');button.textContent=name;button.onclick=async()=>{try{const result=await read(action.url.split('/v1/')[1]);if(version!==generation)return;$('artifact').textContent=typeof result==='string'?result:JSON.stringify(result,null,2);if(name.startsWith('export_')&&typeof result==='string'){const anchor=document.createElement('a');const objectURL=URL.createObjectURL(new Blob([result],{type:'text/markdown'}));anchor.href=objectURL;anchor.download=name.slice(7)+'.md';anchor.click();URL.revokeObjectURL(objectURL);}}catch(error){fail(error,version);}};$('actions').append(button);}
+for(const evidence of root.evidence||[]){const button=document.createElement('button');button.textContent='Evidence '+evidence.evidence_id+' ['+evidence.start+':'+evidence.end+']';button.onclick=async()=>{try{const source=await named('request_evidence',{snapshot_id:evidence.snapshot_id});if(source===null||version!==generation)return;const quote=[...source.body].slice(evidence.start,evidence.end).join('');const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(quote)))).map(value=>value.toString(16).padStart(2,'0')).join('');if(digest!==evidence.quote_digest)throw Error('Citation digest mismatch');if(version!==generation)return;selectedEvidence={kind:'root',container_id:root.research_id,ref_id:evidence.snapshot_id};$('artifact').textContent=quote+'\nQuote digest: '+digest+'\nSource digest: '+source.content_digest;}catch(error){fail(error,version);}};$('citations').append(button);}
+}catch(error){fail(error,version);}}
+function appendRoots(result){for(const root of result.items){let button=[...$('roots').children].find(button=>button.dataset.runId===root.run_id);if(!button){button=document.createElement('button');button.dataset.runId=root.run_id;$('roots').append(button);}button.textContent=root.objective+' ('+root.state+')';button.onclick=()=>select(root.run_id);}nextPage=result.next_offset!==null||result.next_run_offset!=null?{offset:result.next_offset||0,run_offset:result.next_run_offset||0}:null;$('more').disabled=!nextPage;}
+async function reload(){const version=++generation;clearSelection();$('roots').replaceChildren();$('more').disabled=true;nextPage=null;try{const result=await read('workspace');if(version!==generation)return;$('status').textContent='Stage: '+result.capabilities.implementation_stage+'; recovery: '+result.capabilities.recovery_mode;appendRoots(result);if(location.hash)await select(decodeURIComponent(location.hash.slice(1)));}catch(error){fail(error,version);}}
+async function mutate(name,body){const version=generation;try{const result=await named(name,body);if(result===null||version!==generation)return;$('status').textContent='Action completed: '+name;await reload();}catch(error){fail(error,version);}}
+$('attach').onclick=()=>mutate('attach',{session_id:$('session').value,expected_session_revision:Number($('sessionRevision').value)});
+$('cancel').onclick=()=>mutate('cancel');
+$('delete').onclick=()=>{if(selected&&confirm('Delete this retained research root and evidence?'))mutate('delete');};
+$('documents').onclick=async()=>{const version=generation,session=$('session').value;try{const result=await named('documents',{session_id:session});if(result===null||version!==generation)return;$('documentChoices').replaceChildren();for(const attachment of result.documents){const button=document.createElement('button');button.textContent=attachment.filename+' '+attachment.ref_id;button.onclick=async()=>{try{const source=await named('document_evidence',{session_id:session,ref_id:attachment.ref_id});if(source===null||version!==generation)return;selectedEvidence={kind:'session',container_id:session,ref_id:attachment.ref_id};$('artifact').textContent=source.markdown+'\nQuote digest: '+source.quote_digest;}catch(error){fail(error,version);}};$('documentChoices').append(button);}}catch(error){fail(error,version);}};
+$('preview').onclick=async()=>{const version=generation;try{if(!selectedEvidence||!$('subject').value)throw Error('Select cited evidence and name its subject first.');const result=await named('followup_preview',{wording:$('wording').value,selected:[{...selectedEvidence,subject:$('subject').value}]});if(result===null||version!==generation)return;$('artifact').textContent=JSON.stringify(result,null,2);}catch(error){if(version===generation)$('status').textContent=error.message;}};
+$('more').onclick=async()=>{const version=generation,page=nextPage;if(!page)return;try{const result=await read('workspace?'+new URLSearchParams(page));if(version!==generation)return;appendRoots(result);}catch(error){fail(error,version);$('roots').replaceChildren();$('more').disabled=true;}};$('reload').onclick=reload;reload();
+</script>
+</html>

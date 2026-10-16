@@ -1,0 +1,74 @@
+{
+  "answer": {
+    "answer": "No. The supplied snapshots do not show that Harbor Agent gained offline mode. The Harbor Agent guide states that 'Harbor Agent requires a network connection' [harbor-agent-doc], and no supplied snapshot documents any offline mode for the subject harbor-agent. The only offline capability in the supplied material belongs to a distinct subject, Harbor Agent Cloud (subject_id harbor-agent-cloud), whose guide states it 'added an offline export mode' [harbor-cloud-doc]. Because identity must not be inferred from name similarity, this change cannot be attributed to Harbor Agent. What changed: Harbor Agent Cloud gained an offline export mode [harbor-cloud-doc]; no change is documented for Harbor Agent itself [harbor-agent-doc]. What is current: Harbor Agent requires a network connection [harbor-agent-doc]; Harbor Agent Cloud has an offline export mode [harbor-cloud-doc]. What remains historically valid: the earlier finding (context) that Harbor Agent lacks a documented offline mode rested solely on harbor-agent-doc, whose text is unchanged and remains the standing documented state for that subject [harbor-agent-doc]. Unresolved: whether Harbor Agent itself gains offline mode, the timing of the Cloud change relative to the Harbor Agent snapshot, whether the Cloud offline export mode relates to Harbor Agent at all, and whether that export mode amounts to a general offline mode — none of these are addressed by the supplied snapshots.",
+    "change_events": [
+      "Harbor Agent Cloud (subject harbor-agent-cloud) added an offline export mode, per its guide [harbor-cloud-doc].",
+      "No change event is documented for Harbor Agent (subject harbor-agent) in the supplied snapshots; its guide continues to state a network-connection requirement [harbor-agent-doc]."
+    ],
+    "citations": [
+      "harbor-agent-doc",
+      "harbor-cloud-doc"
+    ],
+    "current_truths": [
+      "Harbor Agent requires a network connection [harbor-agent-doc].",
+      "Harbor Agent Cloud has an offline export mode [harbor-cloud-doc].",
+      "No supplied snapshot documents an offline mode for Harbor Agent (subject harbor-agent) [harbor-agent-doc]."
+    ],
+    "historical_truths": [
+      "The documented network-connection requirement for Harbor Agent (harbor-agent-doc) is not superseded by any supplied snapshot and remains the standing documented state for that subject [harbor-agent-doc].",
+      "The prior thread's conclusion that Harbor Agent lacks a documented offline mode was based solely on harbor-agent-doc; that snapshot's text is unchanged in the current supply, so that finding remains supported [harbor-agent-doc]."
+    ],
+    "unresolved": [
+      "Whether Harbor Agent (subject harbor-agent) itself has gained or will gain an offline mode is not addressed by any supplied snapshot [harbor-agent-doc].",
+      "The timing of Harbor Agent Cloud's offline export mode addition relative to the harbor-agent-doc snapshot is unknown; no dates or version identifiers are supplied [harbor-cloud-doc].",
+      "Any relationship between Harbor Agent and Harbor Agent Cloud (e.g., whether the Cloud offline export mode applies to or carries over to Harbor Agent) is not documented in the supplied snapshots [harbor-agent-doc][harbor-cloud-doc].",
+      "Whether the 'offline export mode' in Harbor Agent Cloud constitutes a broader offline operating mode is not specified in the supplied text [harbor-cloud-doc]."
+    ]
+  },
+  "arm": "treatment",
+  "case_id": "near-match-products",
+  "completed_at": "2026-09-19T07:48:42.696458+00:00",
+  "position": 11,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "9338e51f18cd9de052c86c3f79ea9952b0fddf7bbdc18dfc03684b68452995d5",
+    "finish_reason": "stop",
+    "latency_ms": 20749.768,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "ef7788fd7c40ac9d054d47372ab30230fd0a1907c1353dfb7747bf850a28b76a",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 3186,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 2485
+      },
+      "cost": 0.0017265,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.001593,
+        "upstream_inference_cost": 0.0017265,
+        "upstream_inference_prompt_cost": 0.0001335
+      },
+      "is_byok": false,
+      "prompt_tokens": 890,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 4076
+    }
+  },
+  "repetition": 1,
+  "schema_version": "research-thread-trial/1",
+  "started_at": "2026-09-19T07:48:21.946069+00:00",
+  "status": "completed",
+  "stratum": "near_match",
+  "trial_id": "near-match-products-r1-treatment"
+}

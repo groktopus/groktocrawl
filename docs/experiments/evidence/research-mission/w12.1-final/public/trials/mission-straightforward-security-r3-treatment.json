@@ -1,0 +1,100 @@
+{
+  "arm": "treatment",
+  "case_id": "mission-straightforward-security",
+  "completed_at": "2026-09-19T05:56:23.512617+00:00",
+  "position": 1,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "484ee2e637ca861485c95615506385199e3ecd990bb2277ecaf32c9e815dbfa1",
+    "finish_reason": "stop",
+    "latency_ms": 95313.369,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "074a43ff366f00dc8f100aca5a0ef09b9fff5f2e15d870959d0756b9a279f59b",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 5622,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 6003
+      },
+      "cost": 0.0029406,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.002811,
+        "upstream_inference_cost": 0.0029406,
+        "upstream_inference_prompt_cost": 0.0001296
+      },
+      "is_byok": false,
+      "prompt_tokens": 864,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 6486
+    }
+  },
+  "repetition": 3,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "### Decision support: build agent credential and write boundary (q1: allowed access vs. what stays separate)**Configuration stated by the supplied policy record (security-policy):**| Boundary element | Stated control ||---|---|| Source access | Build agents receive **read-only** source access || Credentials | **Short-lived, scoped** credentials for build agents || Production writes | Reserved for a **separate release identity**, permitted only **after approval** — not a build-agent capability || Secret handling | **Raw secrets must not enter prompts or logs** |**Terminology tension (preserved and reported):** An onboarding guide (security-context) calls the release identity an 'agent identity,' but grants it no additional privileges and delegates authorization to the security policy. The policy's boundary therefore stands; the label nonetheless risks blurring the distinction the policy draws between build agents (read-only) and the release identity (approved production writes). Treat the policy as controlling.**Limits of the supplied evidence:**- No credential lifetime values, scope definitions, or issuance/rotation mechanics are supplied.- The approval workflow for production writes (approvers, process) is not described.- Enforcement, detection, or redaction mechanisms for the secrets-in-prompts/logs prohibition are not described.- Findings rest solely on the two supplied sources; no independent corroboration is included.- Release identity redesign is out of scope for this decision.**Obligation closure:** o1 supported (security-policy states both build-agent controls); o2 supported (security-policy states the separate approved release identity and the secret boundary; security-context defers authorization to the policy).",
+    "candidate_id": "candidate-0371416dceb7b9a1aa12",
+    "citations": [
+      "security-policy",
+      "security-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "security-policy"
+        ],
+        "text": "The supplied policy supports configuring the build agent with read-only source access and short-lived scoped credentials, with production configuration writes held by a separate release identity only after approval and raw secrets excluded from prompts and logs.",
+        "uncertainty": "Supported as stated by the primary policy; operational parameters (credential TTL values, scope definitions, approval workflow, enforcement tooling) are not supplied."
+      },
+      {
+        "source_ids": [
+          "security-policy"
+        ],
+        "text": "Build agents receive read-only source access.",
+        "uncertainty": "No material uncertainty that the control is stated; the policy does not specify which sources or scopes are covered."
+      },
+      {
+        "source_ids": [
+          "security-policy"
+        ],
+        "text": "Build agent credentials are short-lived and scoped.",
+        "uncertainty": "The control is stated, but the policy does not define a maximum lifetime, scope dimensions, or issuance and rotation mechanics."
+      },
+      {
+        "source_ids": [
+          "security-policy",
+          "security-context"
+        ],
+        "text": "Production configuration writes are reserved for a separate release identity and are permitted only after approval.",
+        "uncertainty": "Approval mechanics and approver roles are not specified; the context confirms the release identity gains no additional privileges and defers authorization to the policy."
+      },
+      {
+        "source_ids": [
+          "security-policy"
+        ],
+        "text": "Raw secrets must not enter prompts or logs.",
+        "uncertainty": "The prohibition is stated; enforcement, detection, and redaction mechanisms are not described."
+      },
+      {
+        "source_ids": [
+          "security-context"
+        ],
+        "text": "An onboarding guide labels the release identity an 'agent identity' but grants it no additional privileges and delegates authorization to the security policy.",
+        "uncertainty": "This is a terminology tension with the policy's build-agent versus release-identity distinction, preserved and reported; because the context defers authorization to the policy, no substantive contradiction remains."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:54:48.197985+00:00",
+  "status": "completed",
+  "trial_id": "mission-straightforward-security-r3-treatment"
+}

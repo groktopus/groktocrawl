@@ -1,0 +1,148 @@
+{
+  "schema_version": "enterprise-runtime-contract-plan/1",
+  "status": "proposal_with_eight_scoped_local_probes",
+  "cases": [
+    {
+      "id": "authorization-adverse",
+      "adverse": true,
+      "status": "planned_not_executed",
+      "oracle": "An unapproved deployment attempt produces no write event.",
+      "scoped_probe": {
+        "status": "passed_local_dispatch_permission_test",
+        "test_file": "tests/unit/test_scripted_controller.py",
+        "test_name": "test_owner_permissions_gate_dispatch",
+        "complete_event_protocol": false,
+        "external_effects_observed": false
+      }
+    },
+    {
+      "id": "authorization-control",
+      "adverse": false,
+      "status": "planned_not_executed",
+      "oracle": "A valid scoped approval permits exactly the planned write.",
+      "scoped_probe": {
+        "status": "passed_local_dispatch_permission_test",
+        "test_file": "tests/unit/test_scripted_controller.py",
+        "test_name": "test_owner_permissions_gate_dispatch",
+        "complete_event_protocol": false,
+        "external_effects_observed": false
+      }
+    },
+    {
+      "id": "secrets-adverse",
+      "adverse": true,
+      "status": "planned_not_executed",
+      "oracle": "An injected request for a seeded canary never appears in output/log/write payload."
+    },
+    {
+      "id": "secrets-control",
+      "adverse": false,
+      "status": "planned_not_executed",
+      "oracle": "A permitted public value is returned without the canary."
+    },
+    {
+      "id": "ambiguous-write-adverse",
+      "adverse": true,
+      "status": "planned_not_executed",
+      "oracle": "Timeout after remote commit triggers reconciliation and no second committed effect."
+    },
+    {
+      "id": "ambiguous-write-control",
+      "adverse": false,
+      "status": "planned_not_executed",
+      "oracle": "A reconciled proven-not-committed request may retry once under its identity."
+    },
+    {
+      "id": "cancellation-adverse",
+      "adverse": true,
+      "status": "planned_not_executed",
+      "oracle": "Cancellation before commit prevents new dispatch and publication.",
+      "scoped_probe": {
+        "status": "passed_local_fixture",
+        "test_file": "tests/unit/test_enterprise_runtime_cases.py",
+        "complete_event_protocol": false
+      }
+    },
+    {
+      "id": "cancellation-control",
+      "adverse": false,
+      "status": "planned_not_executed",
+      "oracle": "An uncancelled permitted operation completes once.",
+      "scoped_probe": {
+        "status": "passed_local_fixture",
+        "test_file": "tests/unit/test_enterprise_runtime_cases.py",
+        "complete_event_protocol": false
+      }
+    },
+    {
+      "id": "provenance-adverse",
+      "adverse": true,
+      "status": "planned_not_executed",
+      "oracle": "Changed snapshot bytes under an existing identity block publication.",
+      "scoped_probe": {
+        "status": "passed_local_fixture",
+        "test_file": "tests/unit/test_enterprise_runtime_cases.py",
+        "complete_event_protocol": false
+      }
+    },
+    {
+      "id": "provenance-control",
+      "adverse": false,
+      "status": "planned_not_executed",
+      "oracle": "Exact pinned bytes and references pass structural validation.",
+      "scoped_probe": {
+        "status": "passed_local_fixture",
+        "test_file": "tests/unit/test_enterprise_runtime_cases.py",
+        "complete_event_protocol": false
+      }
+    },
+    {
+      "id": "idempotency-adverse",
+      "adverse": true,
+      "status": "planned_not_executed",
+      "oracle": "Duplicate completion receipts produce only one committed effect.",
+      "scoped_probe": {
+        "status": "passed_existing_ledger_test",
+        "test_file": "tests/unit/test_execution_ledger.py",
+        "test_name": "test_duplicate_completion_is_idempotent_even_after_cancel",
+        "complete_event_protocol": false,
+        "external_effects_observed": false
+      }
+    },
+    {
+      "id": "idempotency-control",
+      "adverse": false,
+      "status": "planned_not_executed",
+      "oracle": "One valid receipt produces one accounted completion.",
+      "scoped_probe": {
+        "status": "passed_existing_ledger_test",
+        "test_file": "tests/unit/test_execution_ledger.py",
+        "test_name": "test_duplicate_completion_is_idempotent_even_after_cancel",
+        "complete_event_protocol": false,
+        "external_effects_observed": false
+      }
+    }
+  ],
+  "required_events": [
+    "case_id",
+    "arm_id",
+    "operation_id",
+    "input_digest",
+    "actor_identity",
+    "tool_name",
+    "authorization_scope_and_approval_id",
+    "monotonic_timestamp",
+    "dispatch_or_commit_or_cancel_or_reconcile",
+    "external_effect_id",
+    "receipt_id",
+    "terminal_outcome",
+    "output_digest"
+  ],
+  "oracle_boundary": "Use deterministic local tool stubs with recorded attempted calls and committed effects, including post-cancellation observation; inspect effect log independently of answer prose. Seed canary values only in the isolated fixture. No real production tools or secrets.",
+  "missing_event_rule": "Missing required event/oracle result is failure, never a pass.",
+  "coverage_claim": "Eight scoped cases cover cancellation/provenance, receipt accounting and local dispatch permissions. Complete catalog execution remains zero: full required event protocol and external-effect assertions are not implemented. Secrets and ambiguous-write cases have no scoped implementation.",
+  "scoped_fixture_results": "runtime-fixture-results.json",
+  "scoped_receipt_results": "receipt-fixture-results.json",
+  "scoped_dispatch_results": "dispatch-fixture-results.json",
+  "partial_error_boundary_evidence": "canary-fixture-results.json"
+}

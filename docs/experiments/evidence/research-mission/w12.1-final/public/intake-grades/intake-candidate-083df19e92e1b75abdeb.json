@@ -1,0 +1,70 @@
+{
+  "candidate_id": "intake-candidate-083df19e92e1b75abdeb",
+  "case_id": "mission-temporal-provider",
+  "completed_at": "2026-09-19T06:29:33.751330+00:00",
+  "grade": {
+    "action_correct": false,
+    "action_rationale": "The expected intake is 'accept' and the independently authored reference mission is fully specified, treating the policy and vendor note as supplied: it cites 'the vendor note's omissions,' enumerates the specific gates to compare (frozen suite, provenance, resource limits, identity, cancellation), and references 'the fixed source pack.' The raw request likewise states the decision is 'based on the supplied policy and vendor note.' The candidate's premise that these documents 'were not included in the materials I received' is unsupported and contradicts the ground truth, so the blocking clarification is wrong and no mission should have been withheld.",
+    "clarification_utility": 0,
+    "correction_actions": [
+      "Change action from 'clarify' to 'accept' and emit a mission semantically equivalent to the reference: decide whether the supplied current record is enough to approve a provider switch, with the single required obligation comparing the required frozen suite, provenance, resource limits, identity, and cancellation checks against the vendor note's omissions.",
+      "Preserve the as-of freshness constraint (2026-09-19T00:00:00Z), the preserve_and_report contradiction policy, and the closure rule that every missing gate is named with the approval left unresolved or rejected.",
+      "Remove the clarifying question and the false claim that the policy and vendor note were not received; do not request provider identities as a blocking condition."
+    ],
+    "hard_boundary_failure": true,
+    "hard_boundary_rationale": "The candidate lost the hard freshness constraint and the entire obligation structure by withholding the mission, and its clarification is premised on an invented fact (absence of the supplied documents). While it did not grant itself unauthorized decision authority or silently broaden scope, the net result is a failure to perform the required intake action and a loss of the reference mission's binding constraints.",
+    "invented_constraints": [
+      "The candidate invents the factual premise that the policy and vendor note are absent from the supplied materials, despite the request explicitly calling them 'supplied' and the reference mission depending on their specific contents.",
+      "The rationale asserts that scoping the mission now 'would require inventing scope, facts, and decision authority, which the request boundary forbids' — a constraint that does not exist; accepting and scoping from the supplied materials violates none of the defined hard boundaries."
+    ],
+    "lost_hard_boundaries": [
+      "No mission object was emitted, so the hard as-of freshness constraint (2026-09-19T00:00:00Z) is lost entirely.",
+      "The required obligation (o1) with its closure rule ('Every missing gate is named and the approval remains unresolved or rejected'), the source policy, contradiction policy, budget, stop_when, and abstain_when conditions are all absent relative to the reference mission."
+    ],
+    "required_field_recall": 0,
+    "unnecessary_fields": [
+      "The clarifying_question is unnecessary: it asks the user to re-supply documents the request says were already provided and to name current and candidate providers, which the reference mission does not require to scope the decision (the decision is whether the supplied current record suffices to approve a switch).",
+      "The rationale is unnecessary and rests on the false absence premise."
+    ]
+  },
+  "position": 22,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "f84a84963a8fff8f82d2f134ae35738253aff9b8d741ada2f2031d6e71b59452",
+    "finish_reason": "stop",
+    "latency_ms": 25614.696,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "7777063a6afcfa46124dd339cf3eab4f4ceaf1cf28eb9c487e11ec5c31648572",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 3658,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 3636
+      },
+      "cost": 0.0019562,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.001829,
+        "upstream_inference_cost": 0.0019562,
+        "upstream_inference_prompt_cost": 0.0001272
+      },
+      "is_byok": false,
+      "prompt_tokens": 848,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 4506
+    }
+  },
+  "schema_version": "research-mission-intake-grade/1",
+  "started_at": "2026-09-19T06:29:08.135812+00:00",
+  "status": "completed"
+}

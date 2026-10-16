@@ -73,7 +73,7 @@ def _now() -> str:
 
 def _git(*args: str) -> str:
     try:
-        return subprocess.check_output(["git", *args], text=True).strip()
+        return subprocess.check_output(["git", *args], cwd=ROOT, text=True).strip()
     except (OSError, subprocess.CalledProcessError):
         return "unavailable"
 
@@ -93,14 +93,68 @@ def _known_repo_path(path: str) -> bool:
         return Path(path).exists()
 
 
-def _actual_changed_paths(mode: str) -> list[str] | None:
-    if mode == "live":
-        return []
+def _is_sha(value: str) -> bool:
+    return len(value) == 40 and all(char in "0123456789abcdef" for char in value)
+
+
+def _event_diff_identity(mode: str) -> tuple[list[str] | None, dict[str, str]]:
+    """Recompute changed paths from event SHAs, not the mutable PR merge ref."""
+    checked_out_sha = _git("rev-parse", "HEAD")
+    event_kind = os.environ.get(
+        "TWIN_EVENT_KIND", os.environ.get("GITHUB_EVENT_NAME", "local")
+    )
     base_sha = os.environ.get("TWIN_BASE_SHA", "")
-    if len(base_sha) != 40 or any(char not in "0123456789abcdef" for char in base_sha):
-        return None
+    head_sha = os.environ.get("TWIN_EVENT_HEAD_SHA", "")
+    if event_kind == "local" and not head_sha:
+        head_sha = checked_out_sha
+
+    identity = {
+        "event": event_kind,
+        "base_sha": base_sha if _is_sha(base_sha) else "unavailable",
+        "head_sha": head_sha if _is_sha(head_sha) else "unavailable",
+        "comparison_base_sha": "unavailable",
+        "checked_out_sha": checked_out_sha
+        if _is_sha(checked_out_sha)
+        else "unavailable",
+    }
+    if mode == "live":
+        return [], identity
+    if not _is_sha(base_sha) or not _is_sha(head_sha):
+        return None, identity
+
     try:
-        if base_sha == "0" * 40:
+        if event_kind in {"pull_request", "pull_request_target"}:
+            if (
+                subprocess.run(
+                    ["git", "merge-base", "--is-ancestor", head_sha, checked_out_sha],
+                    cwd=ROOT,
+                    check=False,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                ).returncode
+                != 0
+            ):
+                return None, identity
+            # The checked-out PR merge ref may be regenerated against a newer
+            # base than the event payload. Classify the immutable event head
+            # against its merge base with the immutable event base instead.
+            comparison_base = subprocess.check_output(
+                ["git", "merge-base", base_sha, head_sha],
+                cwd=ROOT,
+                text=True,
+            ).strip()
+            if not _is_sha(comparison_base):
+                return None, identity
+            identity["comparison_base_sha"] = comparison_base
+            output = subprocess.check_output(
+                ["git", "diff", "--name-only", comparison_base, head_sha],
+                cwd=ROOT,
+                text=True,
+            )
+        elif head_sha != checked_out_sha:
+            return None, identity
+        elif base_sha == "0" * 40:
+            identity["comparison_base_sha"] = base_sha
             output = subprocess.check_output(
                 [
                     "git",
@@ -109,20 +163,25 @@ def _actual_changed_paths(mode: str) -> list[str] | None:
                     "--no-commit-id",
                     "--name-only",
                     "-r",
-                    "HEAD",
+                    head_sha,
                 ],
                 cwd=ROOT,
                 text=True,
             )
         else:
+            identity["comparison_base_sha"] = base_sha
             output = subprocess.check_output(
-                ["git", "diff", "--name-only", base_sha, "HEAD"],
+                ["git", "diff", "--name-only", base_sha, head_sha],
                 cwd=ROOT,
                 text=True,
             )
     except (OSError, subprocess.CalledProcessError):
-        return None
-    return sorted(line for line in output.splitlines() if line)
+        return None, identity
+    return sorted(line for line in output.splitlines() if line), identity
+
+
+def _actual_changed_paths(mode: str) -> list[str] | None:
+    return _event_diff_identity(mode)[0]
 
 
 def _digest(path: Path) -> str:
@@ -483,7 +542,11 @@ def _valid_calibration_artifact(calibration: object) -> bool:
     return True
 
 
-def build_manifest(output: Path, inputs: list[str] | None = None) -> dict[str, object]:
+def build_manifest(
+    output: Path,
+    inputs: list[str] | None = None,
+    event_diff: dict[str, str] | None = None,
+) -> dict[str, object]:
     corpus = Path("provenance/twin-corpus.json")
     corpus_data = json.loads(corpus.read_text()) if corpus.exists() else {}
     started = os.environ.get("TWIN_STARTED_AT", _now())
@@ -533,6 +596,7 @@ def build_manifest(output: Path, inputs: list[str] | None = None) -> dict[str, o
             "event": os.environ.get("GITHUB_EVENT_NAME", "local"),
             "ref": os.environ.get("GITHUB_REF", "local"),
         },
+        "event_diff": event_diff or _event_diff_identity(mode)[1],
         "selection": {
             "inputs": inputs or [],
             "twin": os.environ.get("TWIN_SELECTION", "all"),
@@ -695,14 +759,36 @@ def build_manifest(output: Path, inputs: list[str] | None = None) -> dict[str, o
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--changed-paths-json", default="[]")
+    changed_paths = parser.add_mutually_exclusive_group()
+    changed_paths.add_argument("--changed-paths-json", default="[]")
+    changed_paths.add_argument(
+        "--changed-paths-from-event",
+        action="store_true",
+        help="Derive paths from the verified immutable event SHAs without passing the diff through env or argv",
+    )
     parser.add_argument("--calibration-artifact", type=Path)
     args = parser.parse_args()
     if args.calibration_artifact:
         os.environ["TWIN_CALIBRATION_ARTIFACT"] = str(args.calibration_artifact)
     invalid = False
+    search_backend = os.environ.get("TWIN_SEARCH_BACKEND", "live")
+    if search_backend not in {"live", "fixture"}:
+        invalid = True
+        os.environ["TWIN_RESULT"] = "failure"
+        os.environ["TWIN_FAILURE_SOURCE"] = "harness"
+        os.environ["TWIN_FAILURE_DETAIL"] = "unknown search backend"
+    required_digests = REQUIRED_REPO_DIGEST_IMAGES.copy()
+    required_checkout = REQUIRED_CHECKOUT_IMAGES.copy()
+    if search_backend == "fixture":
+        required_digests.remove("slopsearx")
+        required_checkout.add("slopsearx")
+    actual_paths, event_diff = _event_diff_identity(_execution_mode())
     try:
-        paths = json.loads(args.changed_paths_json)
+        paths = (
+            actual_paths
+            if args.changed_paths_from_event
+            else json.loads(args.changed_paths_json)
+        )
         if not isinstance(paths, list) or not all(
             isinstance(path, str) for path in paths
         ):
@@ -712,13 +798,19 @@ def main() -> int:
         invalid = True
         os.environ["TWIN_RESULT"] = "failure"
         os.environ["TWIN_FAILURE_SOURCE"] = "harness"
-    invalid_paths = [path for path in paths if not _known_repo_path(path)]
+    # Git-derived paths are authoritative and may name deleted files, which
+    # no longer appear in the checked-out index. Explicit caller input still
+    # receives the existing repository-path and exact-diff checks below.
+    invalid_paths = (
+        []
+        if args.changed_paths_from_event
+        else [path for path in paths if not _known_repo_path(path)]
+    )
     if invalid_paths:
         invalid = True
         os.environ["TWIN_RESULT"] = "failure"
         os.environ["TWIN_FAILURE_SOURCE"] = "harness"
         os.environ["TWIN_FAILURE_DETAIL"] = "invalid changed paths"
-    actual_paths = _actual_changed_paths(_execution_mode())
     if actual_paths is None or sorted(paths) != actual_paths:
         invalid = True
         os.environ["TWIN_RESULT"] = "failure"
@@ -726,7 +818,7 @@ def main() -> int:
         os.environ["TWIN_FAILURE_DETAIL"] = (
             "changed paths do not match checked-out event diff"
         )
-    manifest = build_manifest(args.output, paths)
+    manifest = build_manifest(args.output, paths, event_diff)
     if cast(dict[str, object], manifest["outcome"])["result"] == "failure":
         invalid = True
     if (
@@ -738,16 +830,13 @@ def main() -> int:
             str(record["name"])
             for record in images
             if record["id"] == "unavailable"
-            or (
-                record["name"] in REQUIRED_REPO_DIGEST_IMAGES
-                and not record["repo_digest"]
-            )
+            or (record["name"] in required_digests and not record["repo_digest"])
         ]
         checkout_sha = _git("rev-parse", "HEAD")
         missing.extend(
             str(record["name"])
             for record in images
-            if record["name"] in REQUIRED_CHECKOUT_IMAGES
+            if record["name"] in required_checkout
             and (
                 not record["built_from_checkout"]
                 or record["source_sha"] != checkout_sha

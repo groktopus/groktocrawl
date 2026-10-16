@@ -1,0 +1,98 @@
+{
+  "arm": "control",
+  "case_id": "mission-contradictory-mirror",
+  "completed_at": "2026-09-19T05:54:08.733049+00:00",
+  "position": 1,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "ad393ebb2ca00253074d7fa127ebbc68c650c4c1b8824f809fd70e0e0ddcdfef",
+    "finish_reason": "stop",
+    "latency_ms": 7636.233,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "e6621cfd0f8559051996655bff3ecd34d5c4a8a240fc1b089d3821638837da4d",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 510,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 4
+      },
+      "cost": 0.000348984,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000306,
+        "upstream_inference_cost": 0.000348984,
+        "upstream_inference_prompt_cost": 4.2984e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 1058,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 1024,
+        "video_tokens": 0
+      },
+      "total_tokens": 1568
+    }
+  },
+  "repetition": 3,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "**Decision support: Does the mirror add independent evidence for deployment authority?**\n\n**No.** The mirror (`delivery-mirror`) is textually identical to the policy (`delivery-policy`) and shares its lineage. It is a duplicate rendering of the same policy, not a second independent publisher. Counting it as a second authority would double-count a single source; the minimum of 1 independent publisher is met by the policy alone, and the mirror adds no evidentiary weight.\n\n**Deployment authorization (per the governing policy, stated without expansion):**\n- The agent may open a pull request after tests pass.\n- Production deployment requires approval by the service owner **and** a recorded rollback plan.\n\n**Context note:** A sandbox experiment permitted automatic deployment to disposable test environments only; it did not authorize production deployment. This is consistent with, not contradictory to, the policy.\n\n**Contradictions:** None found between the supplied sources.\n\n**Unresolved limits:** The supplied pack cannot establish who the service owner is, what form the rollback plan must take, or whether any specific production deployment has been approved. Those remain unresolved and require evidence outside this fixture.",
+    "candidate_id": "candidate-1821585f6149309279c6",
+    "citations": [
+      "delivery-policy",
+      "delivery-mirror",
+      "delivery-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-mirror"
+        ],
+        "text": "The mirror is textually identical to the policy and shares its lineage, making it duplicate evidence rather than independent corroboration.",
+        "uncertainty": "No material uncertainty; identity is evident from the supplied texts, though provenance metadata beyond the pack is unavailable."
+      },
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-mirror"
+        ],
+        "text": "The agent may open a pull request after tests pass.",
+        "uncertainty": "No material uncertainty; stated directly in the governing policy."
+      },
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-mirror"
+        ],
+        "text": "Production deployment requires approval by the service owner and a recorded rollback plan.",
+        "uncertainty": "No material uncertainty as to the condition itself; the pack does not identify the service owner or rollback plan format."
+      },
+      {
+        "source_ids": [
+          "delivery-context"
+        ],
+        "text": "The sandbox experiment authorized automatic deployment only to disposable test environments and did not authorize production deployment.",
+        "uncertainty": "No material uncertainty; consistent with the policy, no contradiction."
+      },
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-mirror",
+          "delivery-context"
+        ],
+        "text": "No contradictions exist among the supplied sources.",
+        "uncertainty": "Limited to the supplied pack; external sources were not available."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:54:01.096069+00:00",
+  "status": "completed",
+  "trial_id": "mission-contradictory-mirror-r3-control"
+}

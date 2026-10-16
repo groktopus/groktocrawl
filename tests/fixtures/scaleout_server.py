@@ -7,7 +7,7 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-slots = threading.BoundedSemaphore(4)
+slots = threading.BoundedSemaphore(16)
 
 
 class Handler(BaseHTTPRequestHandler):

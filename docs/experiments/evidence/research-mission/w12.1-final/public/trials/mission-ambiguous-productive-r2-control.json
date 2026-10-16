@@ -1,0 +1,87 @@
+{
+  "arm": "control",
+  "case_id": "mission-ambiguous-productive",
+  "completed_at": "2026-09-19T05:49:20.976580+00:00",
+  "position": 2,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "8ab4c5694e8e1f315322a98433f43d4b1f3aa1c09ce0c99accaf2b686e0ed183",
+    "finish_reason": "stop",
+    "latency_ms": 25268.526,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "dcb25f57d8b213c159fe8cef771c709198b6ea4a19b0284c5581b6f6184385a2",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 1068,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 5
+      },
+      "cost": 0.0004149,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0003738,
+        "upstream_inference_cost": 0.0004149,
+        "upstream_inference_prompt_cost": 4.11e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 667,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 320,
+        "video_tokens": 0
+      },
+      "total_tokens": 1735
+    }
+  },
+  "repetition": 2,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Decision-support answer: Which productivity outcome and comparison should drive the decision? (Fixture: Aster Enterprise, FICTIONAL ASTER ENTERPRISE FIXTURE labels on both sources; treated as the current record per instructions, not as real-world measurements.)### Declared outcome (per policy, [measurement-policy])The decision-relevant outcome is **agent-assisted delivery evaluated on matched tasks**, measured as a composite that must include:- **Quality gates** (pass/fail against defined quality criteria)- **Human review time**- **Rework** (post-acceptance corrections)- **Elapsed lead time**- **Total cost**, and **counting failed or abandoned tasks**The policy explicitly prohibits inferring causal benefit from accepted-PR counts ([measurement-policy]).### Required comparisonPer the policy, the comparison must be **matched tasks** — equivalent task classes assessed with and without agent assistance (or otherwise matched), under a declared **accounting boundary** covering reviewer hours, failure counts, and provider costs ([measurement-policy]).### What the pilot note provides — and why it cannot drive the decisionThe pilot note reports only **40 accepted pull requests in one month**, with **no task mix, control group, reviewer hours, failure count, or provider costs** ([measurement-context]). This fails every element of the declared outcome: no quality-gate results, no review-time or rework data, no lead time, no cost, no failed/abandoned task counts, and no matched baseline.### Missing elements that must be exposed before any conclusion (obligation, role=implementation_evidence, weight=5)The following are **unresolved** on the supplied record:- **Outcome definition in practice**: the pilot measures only accepted-PR volume; the policy-required composite outcome (quality, review time, rework, lead time, cost, failures) was not measured.- **Baseline / matched comparison**: no control group or matched-task comparison exists.- **Task mix**: unknown; 40 PRs cannot be interpreted without knowing task classes and difficulty.- **Accounting boundary**: reviewer hours and provider costs are absent, so total cost is unknown.- **Time horizon**: one month is the only period stated; no declared evaluation window or horizon consistent with the policy's matched-task design.Contradiction note: the pilot's implicit framing (accepted PRs = productivity) directly conflicts with the policy's explicit prohibition on inferring causal benefit from accepted-PR counts. The contradiction is preserved: the policy governs; the pilot note does not satisfy it ([measurement-policy] vs. [measurement-context]).### Clarifying question (blocking)Since **Productive** is undefined in the pilot and the accepted-PR count lacks a comparison, the blocking question stands:**Which outcome, baseline, task class, and time period should define 'productive'?**### Decision recommendation**Abstain from concluding agent productivity** on the current record. The decision should be driven by the policy-defined composite outcome on matched tasks with a declared accounting boundary; the supplied pilot supplies none of these. Until a matched comparison with quality, review-time, rework, lead-time, cost, and failure accounting exists, the 40-PR figure is not evidence of productivity and cannot support the decision.### Limits of the supplied evidence- The source pack is a fictional fixture; it establishes the **required measurement design** but contains **no real measurements**.- No independent publishers are available or required (minimum: 0); both sources are internal fixture records.- The evidence cannot establish whether agent assistance produced any benefit; that obligation remains **unresolved** until the declared outcome, matched comparison, and accounting boundary are implemented.",
+    "candidate_id": "candidate-7f8ed75cf101292b4514",
+    "citations": [
+      "measurement-policy",
+      "measurement-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "measurement-policy"
+        ],
+        "text": "Productivity must be evaluated with matched tasks including quality gates, human review time, rework, elapsed lead time, total cost, and counting of failed or abandoned tasks; causal benefit must not be inferred from accepted-PR counts.",
+        "uncertainty": "No material uncertainty as policy text; it is a fixture policy, not a real-world measurement."
+      },
+      {
+        "source_ids": [
+          "measurement-context"
+        ],
+        "text": "The pilot reports 40 accepted pull requests in one month with no task mix, control group, reviewer hours, failure count, or provider costs.",
+        "uncertainty": "Fixture data only; no independent verification available."
+      },
+      {
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "text": "The pilot's accepted-PR framing conflicts with the policy's prohibition on inferring causal benefit from accepted-PR counts; the contradiction is preserved and resolved in favor of the policy.",
+        "uncertainty": "The supplied evidence cannot resolve which measurement practice was actually used in the pilot beyond what the note reports."
+      },
+      {
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "text": "Outcome definition, baseline/matched comparison, task mix, accounting boundary (reviewer hours, provider costs), and evaluation time horizon are all missing; the productivity-benefit obligation remains unresolved.",
+        "uncertainty": "These gaps cannot be filled from the supplied sources; no inference is made."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:48:55.707578+00:00",
+  "status": "completed",
+  "trial_id": "mission-ambiguous-productive-r2-control"
+}

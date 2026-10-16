@@ -1,0 +1,52 @@
+{
+  "case_id": "mission-unanswerable-cost",
+  "completed_at": "2026-09-19T06:06:10.168382+00:00",
+  "position": 9,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "624a7f691748ccf7edd60d861d6bda1ba43c8dae5f918bcc409ef63bc1b2415c",
+    "finish_reason": "stop",
+    "latency_ms": 53321.141,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "8c9a98cae85f2c9ab3d0b761c235b9e76581cf8594b6728374bbbb877c15fb24",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 4029,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 4807
+      },
+      "cost": 0.0023238,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0020145,
+        "upstream_inference_cost": 0.0023238,
+        "upstream_inference_prompt_cost": 0.0003093
+      },
+      "is_byok": false,
+      "prompt_tokens": 2062,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 6091
+    }
+  },
+  "repetition": 2,
+  "result": {
+    "action": "clarify",
+    "clarifying_question": "Which specific agent pilot does 'the agent pilot' refer to — your organization's internal pilot or a named published enterprise pilot (which company/vendor and time period) — and, if it is internal, how is 'total delivery cost' defined, against what pre-pilot baseline, and is any of the underlying data externally verifiable?",
+    "mission": null,
+    "rationale": "The request contains a decision-changing ambiguity that cannot be resolved without guessing: the definite referent 'the agent pilot' (an internal pilot, a named published case study, or agent pilots in general) implies entirely different scopes, research questions, source types, and stop conditions, and 'total delivery cost' has no supplied definition or baseline. Resolving either by assumption would invent scope, which the boundary forbids. No sources were supplied and none are cited, so no factual claim or finding is asserted here. Research itself is appropriate once the pilot and metric are identified, so the correct action is one blocking clarification rather than abstention; the mission object is withheld until the referent is known rather than fabricated."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:05:16.836251+00:00",
+  "status": "completed",
+  "trial_id": "mission-unanswerable-cost-intake-r2"
+}

@@ -1,11 +1,9 @@
 """Proxy configuration for HTTP and Playwright requests.
 
-SCRAPER_PROXY_URL is an opt-in env var for residential/mobile IP rotation.
-When set, httpx requests (Tiers 1-2) and Playwright browser contexts (Tier 3)
-route through the proxy. Playwright uses context-level proxy assignment
-(browser.new_context(proxy=...)) for job isolation.
-If the proxy is unreachable, the scrape retries without proxy and logs a WARN.
-Unset or empty = no proxy (default).
+SCRAPER_PROXY_URL is the compatibility-mode operator proxy for curl fetches
+and Playwright browser contexts. Playwright uses context-level proxy
+assignment (browser.new_context(proxy=...)) for job isolation. Protected source
+HTTPX and curl routing is configured separately by source_http.py.
 """
 
 import logging

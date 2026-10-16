@@ -228,6 +228,7 @@ class CrawlResult:
     errors: list[dict] = field(default_factory=list)
     robots_blocked: list[dict] = field(default_factory=list)
     filtered_out: list[dict] = field(default_factory=list)
+    outcome_summary: dict = field(default_factory=dict)
 
 
 # ── Exceptions ──────────────────────────────────────────────────
@@ -716,6 +717,8 @@ class CrawlEngine:
                                 completed=len(self._pages),
                                 errors=self._errors,
                                 robots_blocked=self._robots_blocked,
+                                filtered_out=self._filtered_out,
+                                outcome_summary=self._outcome_summary(),
                             )
                             return result_obj
                         except Exception as exc:
@@ -754,6 +757,7 @@ class CrawlEngine:
                 errors=self._errors,
                 robots_blocked=self._robots_blocked,
                 filtered_out=self._filtered_out,
+                outcome_summary=self._outcome_summary(),
             )
         finally:
             # Deterministic teardown on success, cooperative cancel, and
@@ -814,10 +818,9 @@ class CrawlEngine:
             self.options.exclude_paths,
             self.options.regex_on_full_url,
         ):
-            if self.options.verbose:
-                filter_reason = self._get_filter_reason(filter_url)
-                if filter_reason:
-                    self._filtered_out.append(filter_reason)
+            filter_reason = self._get_filter_reason(filter_url)
+            if filter_reason:
+                self._filtered_out.append(filter_reason)
             logger.debug("Skipping URL excluded by path filter: %s", url)
             return None
 
@@ -835,6 +838,37 @@ class CrawlEngine:
         )
         self._pending_tasks.add(task)
         return task
+
+    def _outcome_summary(self) -> dict[str, object]:
+        """Explain what happened to discovered URLs, including empty crawls."""
+        error_types = [str(item.get("error_type", "")) for item in self._errors]
+        counts = {
+            "discovered": len(self._seen) + len(self._queue),
+            "filtered": len(self._filtered_out),
+            "robots_blocked": len(self._robots_blocked),
+            "fetch_failed": sum(
+                value in {"timeout", "dns_error", "http_error", "scrape_error", "cache_miss"}
+                for value in error_types
+            ),
+            "barrier_rejected": error_types.count("barrier_detected"),
+            "duplicate": sum(value.startswith("duplicate_") for value in error_types),
+            "retained": len(self._pages),
+        }
+        reason = None
+        if not self._pages:
+            if counts["filtered"]:
+                reason = "all_urls_filtered"
+            elif counts["robots_blocked"]:
+                reason = "all_urls_robots_blocked"
+            elif counts["barrier_rejected"]:
+                reason = "all_pages_barrier_rejected"
+            elif counts["duplicate"]:
+                reason = "all_pages_duplicates"
+            elif counts["fetch_failed"]:
+                reason = "all_fetches_failed"
+            else:
+                reason = "no_pages_discovered"
+        return {"reason": reason, "counts": counts}
 
     async def _scrape_url(
         self,

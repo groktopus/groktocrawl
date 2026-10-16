@@ -1,0 +1,20 @@
+{
+  "schema_version": "pgvector-application-serving-cutover/1",
+  "date": "2026-09-09",
+  "host": "inference.example.internal",
+  "scope": "isolated home-lab experimental deployment",
+  "corpus": "deterministic pilot.invalid documents only",
+  "application_merge": "5739674",
+  "vector_store_modes": ["qdrant", "pgvector"],
+  "workload": {
+    "pinned_results": 6,
+    "concurrent_writes": 240,
+    "immediate_searches": 240,
+    "steady_searches": 120,
+    "concurrency": 4,
+    "retained_artifact_tests": 40
+  },
+  "faults": ["qdrant unavailable", "postgresql unavailable"],
+  "secrets_retained": false,
+  "production_changed": false
+}

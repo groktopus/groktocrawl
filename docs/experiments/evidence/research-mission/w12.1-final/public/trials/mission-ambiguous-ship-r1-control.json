@@ -1,0 +1,101 @@
+{
+  "arm": "control",
+  "case_id": "mission-ambiguous-ship",
+  "completed_at": "2026-09-19T05:46:20.713084+00:00",
+  "position": 2,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "ddb7f5c71d3ebefc73870ccb8498233729a5edf2c4eacb3b72c9ed15280c0e2b",
+    "finish_reason": "stop",
+    "latency_ms": 57039.319,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "a57c5fdd80dbbf226e8d745a013d6f9a76c9ce309d2b7bbc1cdf8b458f7904b8",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 4738,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 3724
+      },
+      "cost": 0.002462,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.002369,
+        "upstream_inference_cost": 0.002462,
+        "upstream_inference_prompt_cost": 9.3e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 620,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 5358
+    }
+  },
+  "repetition": 1,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "### Blocking clarification required first (unresolved — decision abstained pending answer)  |  **Do you mean opening pull requests, deploying a disposable test environment, or deploying production?**  |  The word 'ship' does not identify the target action or environment, and the supplied record contains no statement of requester intent. Choosing a meaning would require assuming the requester's environment, which the evidence cannot support. The selection decision is therefore **abstained**; the required three-way separation is provided below so the decision closes immediately once you answer.  |  ### The three materially different meanings of 'ship' and their authorization boundaries  |  | # | Shipping action | Target | Authorization boundary as recorded | Source |  | |---|---|---|---|---|  | | 1 | Open a pull request | Code review; no environment change | Permitted after tests pass; no additional approval stated | delivery-policy |  | | 2 | Automatic deployment | Disposable test environments only | Allowed under the sandbox experiment; scope bounded to disposable test environments | delivery-context |  | | 3 | Production deployment | Production | Requires service-owner approval **and** a recorded rollback plan; the sandbox experiment explicitly did **not** authorize it | delivery-policy; delivery-context |  |  |  | These are not interchangeable: (1) is self-service conditional on tests passing, (2) is automatic but confined to disposable environments, and (3) is gated behind owner approval plus a documented rollback plan. Treating 'ship' as any one of them without confirmation would under- or over-state the approval actually required.  |  ### Contradictions  |  No material contradiction was found between the two supplied sources. The sandbox experiment's allowance is explicitly bounded — it *did not authorize production deployment* — which is consistent with, and preserves, the policy's production approval gate. The boundary is reported as recorded, not reconciled away.  |  ### Unresolved limits (what the supplied evidence cannot establish)  |  - **Requester intent:** which of the three actions 'ship' refers to cannot be established from the supplied record; the blocking clarification above remains open.  |  - **Sandbox allowance scope:** whether automatic deployment to disposable test environments remains authorized beyond the sandbox experiment, and by whom, is not stated.  |  - **Undefined terms:** the 'tests pass' criteria, the identity of the service owner, and the required rollback-plan record format are not specified.  |  ### Decision  |  **Abstain from selecting a meaning of 'ship'.** The supplied record fully supports separating the three actions and their approval requirements, but it cannot support deciding which one the requester intends without inventing intent, authority, or approval. Answer the clarification question to close the decision.",
+    "candidate_id": "candidate-53a9c9a49d58073ca711",
+    "citations": [
+      "delivery-policy",
+      "delivery-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "delivery-policy"
+        ],
+        "text": "The agent may open a pull request after tests pass; the supplied policy states no additional approval for pull-request creation.",
+        "uncertainty": "The policy does not define the 'tests pass' criteria or any review step for pull requests; the stated authorization boundary itself carries no material uncertainty."
+      },
+      {
+        "source_ids": [
+          "delivery-policy"
+        ],
+        "text": "Production deployment requires approval by the service owner and a recorded rollback plan.",
+        "uncertainty": "The source does not identify who holds the service-owner role or the required rollback-plan record format; the approval requirement itself is stated without material uncertainty."
+      },
+      {
+        "source_ids": [
+          "delivery-context"
+        ],
+        "text": "A sandbox experiment allowed automatic deployment to disposable test environments.",
+        "uncertainty": "The source does not state the experiment's duration, current status, or authorizing party; the allowance is materially bounded to disposable test environments."
+      },
+      {
+        "source_ids": [
+          "delivery-context"
+        ],
+        "text": "The sandbox experiment did not authorize production deployment.",
+        "uncertainty": "No material uncertainty; the production exclusion is stated explicitly."
+      },
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-context"
+        ],
+        "text": "The supplied record defines three distinct shipping actions with different authorization boundaries — pull request after tests pass, automatic deployment to disposable test environments only, and production deployment gated by service-owner approval plus a recorded rollback plan — and does not state which action a requester means by 'ship'.",
+        "uncertainty": "Requester intent cannot be established from the supplied evidence; the blocking clarification (Do you mean opening pull requests, deploying a disposable test environment, or deploying production?) remains unresolved."
+      },
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-context"
+        ],
+        "text": "No material contradiction exists between the supplied policy and context: the sandbox allowance is explicitly bounded to disposable test environments and did not authorize production deployment, consistent with the policy's production approval requirement.",
+        "uncertainty": "No material uncertainty; both sources were checked and are complementary rather than conflicting."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:45:23.671222+00:00",
+  "status": "completed",
+  "trial_id": "mission-ambiguous-ship-r1-control"
+}

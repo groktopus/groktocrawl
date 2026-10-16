@@ -1,0 +1,69 @@
+{
+  "schema_version": "runtime-comparison-manifest/1",
+  "status": "current_workflow_reference_selected_future_substrate_open",
+  "scope": "magnus919/groktocrawl-x only",
+  "issue": 110,
+  "adr": "0073",
+  "policy_version": "fixture-policy/1",
+  "runtimes": [
+    {
+      "id": "imperative",
+      "implementation": "agent.experimental.runtime_comparison.ImperativeRuntime",
+      "persistence": "none"
+    },
+    {
+      "id": "graph-candidate",
+      "implementation": "agent.experimental.runtime_comparison.LangGraphRuntime",
+      "implementation_status": "implemented and measured as an optional adapter; production adoption is not recommended",
+      "framework": "LangGraph",
+      "dependency": {
+        "name": "langgraph",
+        "specifier": "==0.6.11",
+        "version": "0.6.11",
+        "exact_version_required_before_measurement": true
+      },
+      "persistence": "none"
+    }
+  ],
+  "fixture_lane": {
+    "external_provider_budget_usd": 0,
+    "scripted_inputs": true,
+    "quality_claim_authorized": false
+  },
+  "measurement": {
+    "paired_repetitions": 30,
+    "cold_runs": 90,
+    "warm_runs": 90,
+    "baseline_frozen": false,
+    "seed": 20260908,
+    "workloads": ["serial", "fanout_join", "wide_join"],
+    "conformance_failures": 0,
+    "evidence": "docs/experiments/evidence/runtime-comparison/2026-09-08/",
+    "reason": "Repeated cold/warm observations are recorded with zero conformance failures; the imperative runtime remains the current-workflow reference while issue 245 evaluates LangGraph's future-facing research capabilities",
+    "additional_measurement": {
+      "date": "2026-09-09",
+      "seed": 20260909,
+      "evidence": "docs/experiments/evidence/runtime-comparison/2026-09-09/",
+      "paired_repetitions": 30,
+      "cold_runs": 90,
+      "warm_runs": 90,
+      "conformance_failures": 0,
+      "quality_claim_authorized": false,
+      "production_adoption": false
+    }
+  },
+  "recommendation": {
+    "runtime": "imperative current-workflow reference",
+    "langgraph_disposition": "retain candidate adapter and evaluate future capabilities in issue 245",
+    "basis": "equivalent current-workflow conformance with measurable overhead; persistence, interrupts, adaptive planning, subgraphs, recovery, and state forks remain untested",
+    "review_required": true
+  },
+  "hard_invariants": [
+    "stable operation identity and input digest",
+    "reserved budget bounds every dispatch",
+    "duplicate receipts are idempotent",
+    "conflicting or over-budget receipts fail closed",
+    "cancellation prevents late completion",
+    "terminal accounting is explicit"
+  ]
+}

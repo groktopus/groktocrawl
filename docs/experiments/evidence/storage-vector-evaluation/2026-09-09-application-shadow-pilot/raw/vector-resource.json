@@ -1,0 +1,22 @@
+{
+  "elapsed_seconds": 4.102,
+  "failures": [],
+  "index": {
+    "count": 30,
+    "max_ms": 110.516,
+    "median_ms": 65.71,
+    "min_ms": 50.473,
+    "p95_ms": 99.061
+  },
+  "monotonic_end": 62664.010732197,
+  "monotonic_start": 62659.908703362,
+  "search": {
+    "count": 30,
+    "max_ms": 92.154,
+    "median_ms": 61.384,
+    "min_ms": 47.299,
+    "p95_ms": 87.739
+  },
+  "utc_end": "2026-09-09T07:42:46.150844+00:00",
+  "utc_start": "2026-09-09T07:42:42.048805+00:00"
+}

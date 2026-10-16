@@ -13,6 +13,7 @@ from app import (
     EMBED_DIM,
     EMBED_MODEL_NAME,
     MAX_DOCS,
+    SHADOW_CONFIG,
     _ensure_qdrant,
     _get_active_model,
     _get_embed_model,
@@ -20,6 +21,9 @@ from app import (
     _migration,
     _named_vector_name,
     _now_iso,
+    _run_required_pgvector_operation,
+    _schedule_shadow_operation,
+    _shadow_store,
     _url_hash,
     run_inference,
 )
@@ -39,16 +43,34 @@ from retention import (
     _compute_retention_score,
     _evict_if_needed,
 )
+from shadow_pgvector import ShadowRecord
 
 logger = logging.getLogger(__name__)
 
 router_index = APIRouter()
 
 
+def _write_qdrant_rollback_copy(operation: str, function):
+    """Require the rollback copy while pgvector is serving requests."""
+    try:
+        return function()
+    except Exception as exc:
+        if not SHADOW_CONFIG.serving:
+            raise
+        logger.exception(
+            "Qdrant rollback %s failed while pgvector is serving", operation
+        )
+        raise HTTPException(
+            503, "Qdrant rollback store is unavailable — please retry"
+        ) from exc
+
+
 # ── Payload building ──────────────────────────────────────────────
 
 
-def _build_index_payload(url: str, title: str, existing_payload: dict | None) -> dict:
+def _build_index_payload(
+    url: str, title: str, existing_payload: dict | None, content: str = ""
+) -> dict:
     """Build enriched payload for a new or updated index entry."""
     now = _now_iso()
     domain_category = _compute_domain_category(url)
@@ -82,6 +104,7 @@ def _build_index_payload(url: str, title: str, existing_payload: dict | None) ->
     payload = {
         "url": url,
         "title": title,
+        "content_excerpt": " ".join(content.split())[:500],
         "domain_category": domain_category,
         "first_indexed_at": first_indexed,
         "last_indexed_at": now,
@@ -159,7 +182,7 @@ async def index_page(body: IndexRequest):
     )
 
     # Build enriched payload
-    payload = _build_index_payload(body.url, body.title, existing_payload)
+    payload = _build_index_payload(body.url, body.title, existing_payload, body.content)
 
     # Build vector dict: at minimum the active named vector
     active_nv = _get_active_model()
@@ -191,16 +214,34 @@ async def index_page(body: IndexRequest):
             except Exception as e:
                 logger.warning("Dual-write embed failed for target model: %s", e)
 
-    qdrant.upsert(
-        collection_name=COLLECTION_NAME,
-        points=[
-            models.PointStruct(
-                id=point_id,
-                vector=vectors,
-                payload=payload,
-            )
-        ],
+    _write_qdrant_rollback_copy(
+        "upsert",
+        lambda: qdrant.upsert(
+            collection_name=COLLECTION_NAME,
+            points=[
+                models.PointStruct(
+                    id=point_id,
+                    vector=vectors,
+                    payload=payload,
+                )
+            ],
+        ),
     )
+
+    def shadow_write():
+        return _shadow_store.upsert(
+            point_id=point_id,
+            url=body.url,
+            title=body.title,
+            vector=embedding,
+            model=active_nv,
+            payload=payload,
+        )
+
+    if SHADOW_CONFIG.serving:
+        await _run_required_pgvector_operation("upsert", shadow_write)
+    else:
+        _schedule_shadow_operation("upsert", shadow_write)
 
     await _evict_if_needed(qdrant)
 
@@ -258,6 +299,7 @@ async def index_batch(body: IndexBatchRequest):
                 )
 
     points = []
+    shadow_records: list[ShadowRecord] = []
     for page, embedding in zip(body.pages, embeddings, strict=False):
         point_id = _url_hash(page.url)
         existing_payload = None
@@ -277,7 +319,9 @@ async def index_batch(body: IndexBatchRequest):
                 exc_info=True,
             )
 
-        payload = _build_index_payload(page.url, page.title, existing_payload)
+        payload = _build_index_payload(
+            page.url, page.title, existing_payload, page.content
+        )
         vectors: dict[str, list[float]] = {active_nv: embedding}
 
         # Dual-write support: use pre-loaded (globally cached) target model
@@ -305,9 +349,30 @@ async def index_batch(body: IndexBatchRequest):
                 payload=payload,
             )
         )
+        shadow_records.append(
+            ShadowRecord(
+                point_id=point_id,
+                url=page.url,
+                title=page.title,
+                vector=embedding,
+                model=active_nv,
+                payload=payload,
+            )
+        )
 
     # Single batch upsert via Qdrant gRPC
-    qdrant.upsert(collection_name=COLLECTION_NAME, points=points)
+    _write_qdrant_rollback_copy(
+        "upsert_batch",
+        lambda: qdrant.upsert(collection_name=COLLECTION_NAME, points=points),
+    )
+
+    def shadow_batch_write():
+        return _shadow_store.upsert_many(shadow_records)
+
+    if SHADOW_CONFIG.serving:
+        await _run_required_pgvector_operation("upsert_batch", shadow_batch_write)
+    else:
+        _schedule_shadow_operation("upsert_batch", shadow_batch_write)
 
     METRICS.counter(
         "groktocrawl_index_batch_pages_total",
@@ -323,18 +388,29 @@ async def index_batch(body: IndexBatchRequest):
 async def delete_index(url_hash: int):
     """Remove a page from the vector index by URL hash."""
     qdrant = await _ensure_qdrant()
+    if SHADOW_CONFIG.serving:
+        await _run_required_pgvector_operation(
+            "delete", lambda: _shadow_store.delete(url_hash)
+        )
     qdrant.delete(
         COLLECTION_NAME,
         points_selector=models.PointIdsList(points=[url_hash]),
     )
+    if not SHADOW_CONFIG.serving:
+        _schedule_shadow_operation("delete", lambda: _shadow_store.delete(url_hash))
     return {"status": "deleted"}
 
 
 @router_index.get("/stats", response_model=IndexStatsResponse)
 async def index_stats():
     """Return index size and configuration."""
-    qdrant = await _ensure_qdrant()
-    count = qdrant.count(COLLECTION_NAME).count
+    if SHADOW_CONFIG.serving:
+        count = await _run_required_pgvector_operation(
+            "count", lambda: _shadow_store.count(model=_get_active_model())
+        )
+    else:
+        qdrant = await _ensure_qdrant()
+        count = qdrant.count(COLLECTION_NAME).count
     METRICS.gauge(
         "groktocrawl_index_docs_total", "Current document count in the vector index"
     ).set(value=float(count))
@@ -344,8 +420,13 @@ async def index_stats():
 @router_index.get("/model", response_model=ModelInfoResponse)
 async def index_model():
     """Return current embedding model config and migration state."""
-    qdrant = await _ensure_qdrant()
-    count = qdrant.count(COLLECTION_NAME).count
+    if SHADOW_CONFIG.serving:
+        count = await _run_required_pgvector_operation(
+            "count", lambda: _shadow_store.count(model=_get_active_model())
+        )
+    else:
+        qdrant = await _ensure_qdrant()
+        count = qdrant.count(COLLECTION_NAME).count
     return ModelInfoResponse(
         current_model=EMBED_MODEL_NAME,
         current_dim=EMBED_DIM,

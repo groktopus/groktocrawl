@@ -1,0 +1,78 @@
+{
+  "pgvector": {
+    "all_gates_passed": true,
+    "provider": "pgvector",
+    "run_id": "storage-fault-20260908",
+    "scenarios": [
+      {
+        "gate": true,
+        "name": "write-timeout",
+        "observed": "failed"
+      },
+      {
+        "gate": true,
+        "name": "partial-write",
+        "observed": "failed"
+      },
+      {
+        "gate": true,
+        "name": "malformed-search",
+        "observed": "rejected"
+      },
+      {
+        "gate": true,
+        "name": "interrupted-restore",
+        "observed": "failed"
+      },
+      {
+        "gate": true,
+        "name": "interrupted-migration",
+        "observed": "failed"
+      },
+      {
+        "gate": true,
+        "name": "cleanup-timeout",
+        "observed": "failed"
+      }
+    ],
+    "sha256": "32cb3ea79a4ba3cba267e79df9e9540b40ac581d05ab494071806cfd80fb1d9c"
+  },
+  "qdrant": {
+    "all_gates_passed": true,
+    "provider": "qdrant",
+    "run_id": "storage-fault-20260908",
+    "scenarios": [
+      {
+        "gate": true,
+        "name": "write-timeout",
+        "observed": "failed"
+      },
+      {
+        "gate": true,
+        "name": "partial-write",
+        "observed": "failed"
+      },
+      {
+        "gate": true,
+        "name": "malformed-search",
+        "observed": "rejected"
+      },
+      {
+        "gate": true,
+        "name": "interrupted-restore",
+        "observed": "failed"
+      },
+      {
+        "gate": true,
+        "name": "interrupted-migration",
+        "observed": "failed"
+      },
+      {
+        "gate": true,
+        "name": "cleanup-timeout",
+        "observed": "failed"
+      }
+    ],
+    "sha256": "a9e140834cdf9441506c8d2df334af86c9eae0dda93b143d393b55162bd569b1"
+  }
+}

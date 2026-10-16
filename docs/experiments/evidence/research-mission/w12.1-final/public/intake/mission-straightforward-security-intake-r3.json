@@ -1,0 +1,191 @@
+{
+  "case_id": "mission-straightforward-security",
+  "completed_at": "2026-09-19T06:10:46.191972+00:00",
+  "position": 12,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "86cb84eae2ddafc0de46a5653823375dee4d7106af2b514f3745072c1a759f7b",
+    "finish_reason": "stop",
+    "latency_ms": 159530.244,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "cc5319a1ab82a4a4dd9d32f64d317cb0c62126b4ad0d87c1657aecf57c097465",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 11024,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 9242
+      },
+      "cost": 0.0058207,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.005512,
+        "upstream_inference_cost": 0.0058207,
+        "upstream_inference_prompt_cost": 0.0003087
+      },
+      "is_byok": false,
+      "prompt_tokens": 2058,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 13082
+    }
+  },
+  "repetition": 3,
+  "result": {
+    "action": "ready",
+    "clarifying_question": null,
+    "mission": {
+      "abstain_when": [
+        "The request shifts to issuing, approving, or provisioning actual credentials or permissions, which is authorization rather than research.",
+        "The requester confirms that 'may' refers to internal entitlement policy that external sources cannot adjudicate.",
+        "No accessible primary, official, or independent sources on build-agent credential guidance exist, leaving required obligations unclosable."
+      ],
+      "acceptable_uncertainty": "Principle-level least-privilege guidance is expected to converge across sources; platform-specific defaults may legitimately differ, and unresolved conflicts must be reported as contradictions rather than averaged into one recommendation.",
+      "audience": "Enterprise platform engineering, security engineering, and governance leads responsible for the agentic software factory",
+      "budget": {
+        "max_elapsed_seconds": 300,
+        "max_model_calls": 6,
+        "max_searches": 4,
+        "max_sources": 10
+      },
+      "clarifications": [
+        {
+          "blocking": false,
+          "clarification_id": "clarif.platform-narrowing",
+          "question": "If the factory standardizes on a specific CI or build platform, should platform-specific obligations be narrowed to that platform?",
+          "trigger": "The requester names a specific build platform or vendor during research."
+        },
+        {
+          "blocking": true,
+          "clarification_id": "clarif.meaning-of-may",
+          "question": "Is 'may' intended as external best-practice and standards evidence, or as an interpretation of internal entitlement policy that external research cannot adjudicate?",
+          "trigger": "Evidence or requester input suggests the intended answer depends on internal policy rather than public sources."
+        }
+      ],
+      "contradiction_policy": "preserve_and_report",
+      "decision": "Determine, from external evidence, what credential types and write permissions are documented as allowable for build agents in an enterprise agentic engineering software factory, in order to inform a least-privilege credential and authorization design or policy review. The mission reports evidence only; it grants, approves, and provisions nothing.",
+      "freshness": {
+        "as_of": null,
+        "mode": "current",
+        "rationale": "Platform credential features and security guidance change frequently; use current official documentation and record version or publication dates for standards and vendor docs."
+      },
+      "mission_id": "build-agent-credential-permission-posture",
+      "obligations": [
+        {
+          "closure_rule": "Closed when at least two primary or official vendor sources document build-agent credential options, or when coverage gaps are explicitly reported.",
+          "description": "Capture primary or official vendor documentation on credential options available to build agents on the platforms in scope.",
+          "evidence_role": "primary_authority",
+          "obligation_id": "ob.vendor-credential-docs",
+          "question_id": "q1.credential-types",
+          "weight": 5
+        },
+        {
+          "closure_rule": "Closed when applicable standards requirements are extracted with citations, or when sources show no applicable standards guidance and that absence is reported.",
+          "description": "Capture supply-chain and build-integrity standards guidance (e.g., SLSA, NIST SSDF) bearing on build isolation, credentials, and provenance, if present in sources.",
+          "evidence_role": "primary_authority",
+          "obligation_id": "ob.standards-build-security",
+          "question_id": "q4.agentic-and-provenance",
+          "weight": 5
+        },
+        {
+          "closure_rule": "Closed when at least two independent publishers address build-agent write-permission scope, or the gap is reported.",
+          "description": "Corroborate least-privilege write-permission guidance for build agents with independent industry sources (e.g., OWASP, CNCF, recognized security publishers).",
+          "evidence_role": "independent_corroboration",
+          "obligation_id": "ob.independent-corroboration",
+          "question_id": "q2.write-permission-scope",
+          "weight": 4
+        },
+        {
+          "closure_rule": "Closed when each control found in sources is supported by at least one primary, official, or independent source, and unsupported controls are flagged.",
+          "description": "Document implementation evidence for controls that bound build-agent grants: ephemeral identities, token scoping, environment protection, audit logging.",
+          "evidence_role": "implementation_evidence",
+          "obligation_id": "ob.bounding-controls-evidence",
+          "question_id": "q3.bounding-controls",
+          "weight": 4
+        },
+        {
+          "closure_rule": "Closed when at least one counterevidence item is captured, or the search is documented as finding none.",
+          "description": "Seek documented incidents or arguments showing harms from over-granted build credentials, and any credible cases where broader grants are argued necessary.",
+          "evidence_role": "counterevidence",
+          "obligation_id": "ob.counterevidence-incidents",
+          "question_id": "q2.write-permission-scope",
+          "weight": 3
+        },
+        {
+          "closure_rule": "Closed when at least one primary or official and one independent source address machine identity for automated builds, or a gap is reported.",
+          "description": "Capture evidence on workload or machine identity patterns (e.g., OIDC federation) as applied to automated or agent-triggered build execution.",
+          "evidence_role": "implementation_evidence",
+          "obligation_id": "ob.machine-identity-evidence",
+          "question_id": "q4.agentic-and-provenance",
+          "weight": 3
+        }
+      ],
+      "questions": [
+        {
+          "question_id": "q1.credential-types",
+          "required": true,
+          "text": "What credential types do authoritative sources document or recommend for build agents, and how do long-lived secrets compare with short-lived or federated credentials?"
+        },
+        {
+          "question_id": "q2.write-permission-scope",
+          "required": true,
+          "text": "What write permissions (repository push, registry publish, deployment rights) do authoritative sources treat as allowable for build agents under least privilege?"
+        },
+        {
+          "question_id": "q3.bounding-controls",
+          "required": true,
+          "text": "What controls do sources describe for bounding build-agent grants, such as ephemeral identities, scoping, environment protection, and auditing?"
+        },
+        {
+          "question_id": "q4.agentic-and-provenance",
+          "required": true,
+          "text": "How do agentic or autonomous build triggers and supply-chain provenance requirements affect the credential and write-permission envelope for build agents?"
+        }
+      ],
+      "schema_version": "research-mission/1",
+      "scope": {
+        "exclude": [
+          "Issuing, approving, provisioning, or configuring any actual credential or permission; the mission conveys no authority",
+          "Interpretation of the requester's internal policy or entitlement documents, which external sources cannot adjudicate",
+          "Vendor or product selection, procurement comparison, or pricing",
+          "Credential and permission posture of non-build agents (e.g., interactive coding assistants) except where a source explicitly covers build execution"
+        ],
+        "include": [
+          "Credential types documented for build agents: long-lived secrets, short-lived tokens, OIDC or workload-identity federation, deploy keys, and certificates",
+          "Write permissions relevant to build agents: source repository push, artifact/package/container registry publish, and deployment or environment write rights",
+          "Controls that bound such grants: ephemeral per-run identities, token lifetime and audience scoping, environment protection, and audit or provenance requirements",
+          "Guidance addressing agentic or autonomous build triggering, machine identity, and build provenance in supply-chain frameworks",
+          "Cross-platform build-executor guidance from primary vendors and standards bodies for hosted and self-hosted build execution"
+        ]
+      },
+      "source_policy": {
+        "allowed_authority": [
+          "primary",
+          "official",
+          "independent"
+        ],
+        "derivative_sources_count_as_independent": false,
+        "inaccessible_sources_can_close_obligations": false,
+        "minimum_independent_publishers": 2
+      },
+      "stop_when": [
+        "Every required question has closure per its obligations under the source policy, with contradictions preserved and reported.",
+        "The 4-search and 10-source budget is exhausted; report findings plus explicit gaps.",
+        "Sources converge on principle-level guidance plus platform-specific examples for credentials and write permissions."
+      ]
+    },
+    "rationale": "The request is a researchable security-architecture question about the allowable credential and write-permission envelope for build agents, so research is appropriate and abstention does not apply. Its residual ambiguities — which build platform, how broadly 'write permissions' reaches, and whether 'may' means external best practice or internal entitlement — are resolved without guessing by scoping the mission inclusively across platforms and permission types, explicitly excluding internal-policy adjudication and any granting of authority, and embedding clarification rules that narrow or halt the mission if intent points to internal policy. The mission is a caller-reviewed boundary that reports evidence only; it grants no permissions, asserts no source findings, and sets budget to the contract's hard limits."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:08:06.655372+00:00",
+  "status": "completed",
+  "trial_id": "mission-straightforward-security-intake-r3"
+}

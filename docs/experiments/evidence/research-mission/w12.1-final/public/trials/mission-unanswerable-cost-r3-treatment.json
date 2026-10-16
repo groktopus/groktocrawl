@@ -1,0 +1,101 @@
+{
+  "arm": "treatment",
+  "case_id": "mission-unanswerable-cost",
+  "completed_at": "2026-09-19T05:55:35.264420+00:00",
+  "position": 1,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "f32fdd53395abc310f3b61fa1f78daedecdce9e2dad2115bf59bd624874ec96a",
+    "finish_reason": "stop",
+    "latency_ms": 58212.784,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "646b769f9e63c5970f4e2ff0ba436738781631e89f6952a55466894434a87c46",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 4409,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 4085
+      },
+      "cost": 0.00223333,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0022045,
+        "upstream_inference_cost": 0.00223333,
+        "upstream_inference_prompt_cost": 2.883e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 909,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 896,
+        "video_tokens": 0
+      },
+      "total_tokens": 5318
+    }
+  },
+  "repetition": 3,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Decision: Not proven — the packet does not establish a ≥20% total-cost reduction**Bottom line:** The packet contains no cost measurements at all. Its only quantitative datum is a pilot note reporting **40 accepted pull requests in one month** [measurement-context], and the packet's own measurement policy **explicitly prohibits inferring causal benefit from accepted-PR counts** [measurement-policy]. No baseline, no total-cost numerator or denominator, and no matched comparison exist in the packet, so a causal cost reduction of at least 20% is neither demonstrated nor estimable.**What the packet contains**- A measurement policy specifying the required evaluation design: matched tasks, quality gates, human review time, rework, elapsed lead time, and total cost, with failed or abandoned tasks counted [measurement-policy].- A pilot note reporting 40 accepted PRs in one month, explicitly lacking task mix, control group, reviewer hours, failure count, and provider costs [measurement-context].**Why the threshold cannot be assessed**- None of the policy-required measures (including total cost and failure counting) appear in the pilot record [measurement-policy, measurement-context].- The sole reported metric is inadmissible for this decision under the packet's own rules [measurement-policy].**Preserved tension:** The pilot's headline figure (accepted PRs) is the only number available, yet the policy bars using it for causal benefit claims. This is a methodological conflict within the packet rather than a factual contradiction; the context note does not itself assert a cost benefit.**Unresolved limits**- No cost figure in either direction can be computed from the packet; the ≥20% claim is untested, not disproven.- The 40-PR figure has no stated denominator (tasks attempted), no failure or abandonment count, and covers a single month.- Any cost claim would require a new matched, policy-conformant evaluation before it can support a decision.**Recommended action:** Do not record or communicate a 20% cost reduction as established. Treat the threshold as unresolved pending a matched evaluation per the packet's measurement policy.",
+    "candidate_id": "candidate-5186e0846aa9a50a972a",
+    "citations": [
+      "measurement-policy",
+      "measurement-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "measurement-context"
+        ],
+        "text": "The packet's only quantitative delivery datum is a pilot note reporting 40 accepted pull requests in one month.",
+        "uncertainty": "No material uncertainty; stated directly in the source."
+      },
+      {
+        "source_ids": [
+          "measurement-context"
+        ],
+        "text": "The pilot note provides no task mix, control group, reviewer hours, failure count, or provider costs.",
+        "uncertainty": "No material uncertainty; the source explicitly lists these omissions."
+      },
+      {
+        "source_ids": [
+          "measurement-policy"
+        ],
+        "text": "The measurement policy requires matched tasks, quality gates, human review time, rework, elapsed lead time, and total cost, and requires counting failed or abandoned tasks.",
+        "uncertainty": "No material uncertainty; the policy text states these requirements."
+      },
+      {
+        "source_ids": [
+          "measurement-policy"
+        ],
+        "text": "The measurement policy explicitly prohibits inferring causal benefit from accepted-PR counts.",
+        "uncertainty": "No material uncertainty; the prohibition is explicit."
+      },
+      {
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "text": "The packet contains no total-cost numerator, denominator, or comparable baseline, so it cannot quantify any total-cost change, including a causal reduction of at least 20%.",
+        "uncertainty": "No cost estimate in either direction can be derived from the packet; the threshold is untested, not disproven."
+      },
+      {
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "text": "The packet's sole reported metric (accepted PRs) is inadmissible under the packet's own policy as a basis for a causal cost claim, creating a methodological tension between the pilot record and the policy.",
+        "uncertainty": "Reported as a methodological tension, not a factual contradiction; the context note does not itself claim a cost benefit."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:54:37.050774+00:00",
+  "status": "completed",
+  "trial_id": "mission-unanswerable-cost-r3-treatment"
+}

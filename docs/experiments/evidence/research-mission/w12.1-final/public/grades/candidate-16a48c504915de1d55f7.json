@@ -1,0 +1,80 @@
+{
+  "candidate_id": "candidate-16a48c504915de1d55f7",
+  "case_id": "mission-compound-recovery-portability",
+  "completed_at": "2026-09-19T06:25:03.296454+00:00",
+  "grade": {
+    "appropriate_abstention": "not_applicable",
+    "decision_usefulness": 3,
+    "decision_usefulness_rationale": "The candidate reaches the record-supported decision (reject, not abstain) and explains why approval would require invented measurements. However, the answer body degenerates into dozens of identical repetitions of a single abstention sentence, which materially degrades readability and usefulness for the audience, even though the underlying claims and citations are correct. Per rubric, visible structure and prose style are not rewarded, so repetition neither adds support nor falsifies claims — it only reduces usefulness.",
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "No invented authority, no scope broadening, no freshness violation, no unauthorized action. The candidate does not claim compliant evidence exists; it explicitly notes the record cannot establish whether the vendor could comply. The reject decision is supported: the platform policy's conditions are unmet on the current record, and o3 directs rejection of unsupported claims as approval evidence. Citing the answer rather than the repetition, factual support is complete across all three obligations.",
+    "obligation_grades": {
+      "o1": {
+        "rationale": "The candidate's claim accurately restates the policy: record operation identity before the external write, reconcile remote state before retrying after ambiguous completion, and a local checkpoint alone does not prove the external write failed. The reliability-context source illustrates the sequence. No prohibited assumption (local timeout proves remote failure) appears.",
+        "source_ids": [
+          "reliability-policy",
+          "reliability-context"
+        ],
+        "status": "closed"
+      },
+      "o2": {
+        "rationale": "The candidate enumerates every provider-change condition retained: frozen task suite, provenance checks, declared resource limits, tool-result identity, and cancellation semantics.",
+        "source_ids": [
+          "platform-policy"
+        ],
+        "status": "closed"
+      },
+      "o3": {
+        "rationale": "The candidate names the brochure's missing comparison fields (workload, version pins, error distribution, review methodology) and treats enterprise-ready/faster claims as insufficient approval evidence.",
+        "source_ids": [
+          "platform-context",
+          "platform-policy"
+        ],
+        "status": "closed"
+      }
+    },
+    "scope_violations": [],
+    "supported_material_claims": 5,
+    "total_material_claims": 5
+  },
+  "position": 72,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "e6bb6d9efc1180dd459f09315971766be1b726b3b346dadd04332e76dc3a4a72",
+    "finish_reason": "stop",
+    "latency_ms": 42455.256,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "882f9eeffd40edbe79e38e9dbc509cead6283e51cda7be18d4feb7b1e86ae839",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 589,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 67
+      },
+      "cost": 0.00069795,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.00020615,
+        "upstream_inference_cost": 0.00069795,
+        "upstream_inference_prompt_cost": 0.0004918
+      },
+      "is_byok": false,
+      "prompt_tokens": 4918,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 5507
+    }
+  },
+  "schema_version": "research-mission-grade/1",
+  "started_at": "2026-09-19T06:24:20.839829+00:00",
+  "status": "completed"
+}

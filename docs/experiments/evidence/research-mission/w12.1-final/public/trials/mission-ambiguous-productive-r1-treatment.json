@@ -1,0 +1,86 @@
+{
+  "arm": "treatment",
+  "case_id": "mission-ambiguous-productive",
+  "completed_at": "2026-09-19T05:45:23.670980+00:00",
+  "position": 2,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "bd2b8320595a227e3f1506f843e2df6a9ef3e7d66bcb566fd402eb91816c30b3",
+    "finish_reason": "stop",
+    "latency_ms": 30279.215,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "30eb549d59bf75cf99d4ff409dc7246cb7cee92ef02be6e1ad4c948333a93929",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 977,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 5
+      },
+      "cost": 0.00040135,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.00034195,
+        "upstream_inference_cost": 0.00040135,
+        "upstream_inference_prompt_cost": 5.94e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 850,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 320,
+        "video_tokens": 0
+      },
+      "total_tokens": 1827
+    }
+  },
+  "repetition": 1,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "**Decision-support answer** (uses only the supplied fixture sources; no external evidence available or permitted here — the evidence pack is explicitly fictional, so this is a measurement-design recommendation, not a productivity verdict.)---### Q1: Which productivity outcome and comparison should drive the decision?**Outcome to use:** Evaluate agent-assisted delivery with matched tasks and measure quality-gate pass rate, human review time, rework, elapsed lead time, and total cost — and count failed or abandoned tasks. Do not infer causal benefit from accepted-PR counts. [measurement-policy]**Comparison to use:** Matched tasks, i.e., a control or matched baseline, not a raw monthly count.**Time horizon:** The policy does not specify a required horizon; the pilot covers one month, which is not established as sufficient. [measurement-context]**Accounting boundary:** Include reviewer hours, failed/abandoned work, and provider costs — the pilot note omits all of these. [measurement-policy] [measurement-context]---### Why the pilot's 40 accepted PRs cannot drive the decisionThe pilot reports 40 accepted pull requests in one month with **no task mix, no control group, no reviewer hours, no failure count, and no provider costs** [measurement-context]. Per the policy, accepted-PR counts must not be treated as causal evidence of productivity benefit [measurement-policy].---### Missing elements exposed (Obligation o1)- **Outcome:** defined by policy (quality, review time, rework, lead time, cost, failed work), but none of these are measured in the pilot. [measurement-policy] [measurement-context]- **Baseline/comparison:** absent — no control group or matched-task comparison exists in the supplied evidence. [measurement-context]- **Task mix:** absent. [measurement-context]- **Time horizon:** one month reported; adequacy undetermined by the policy. [measurement-context]**Status: unresolved.** The supplied sources define the required measurement framework but contain no baseline, task mix, or horizon data sufficient to close the decision.---### Limits (unresolved)- All sources are fictional fixture records; they establish policy, not empirical productivity.- The pilot's single-month, single-metric note cannot support a productivity or cost conclusion.- A blocking clarification remains: productive is undefined without a chosen outcome, baseline, task class, and time period (c1).**Recommendation:** Re-run the pilot with matched tasks, control group, full accounting of review hours, failures/rework, and provider costs before judging agent productivity. Do not make a go/no-go decision on accepted-PR counts.",
+    "candidate_id": "candidate-15d8528f90f25b42da7f",
+    "citations": [
+      "measurement-policy",
+      "measurement-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "measurement-policy"
+        ],
+        "text": "Productivity should be evaluated via matched tasks with quality gates, human review time, rework, lead time, total cost, and counted failed/abandoned tasks.",
+        "uncertainty": "None for the policy text itself; no empirical measurements exist yet."
+      },
+      {
+        "source_ids": [
+          "measurement-policy"
+        ],
+        "text": "Causal benefit must not be inferred from accepted-PR counts.",
+        "uncertainty": "None."
+      },
+      {
+        "source_ids": [
+          "measurement-context"
+        ],
+        "text": "The pilot reports 40 accepted PRs in one month with no task mix, control group, reviewer hours, failure count, or provider costs.",
+        "uncertainty": "No material uncertainty as a report of the note's contents; the note itself cannot support a productivity conclusion."
+      },
+      {
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "text": "The required baseline/comparison, task mix, and adequate time horizon are absent from the supplied evidence, so the productivity decision cannot be made.",
+        "uncertainty": "Unresolved by design: no supplied source supplies baseline or task-mix data; the one-month horizon's adequacy is not addressed by policy."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:44:53.391165+00:00",
+  "status": "completed",
+  "trial_id": "mission-ambiguous-productive-r1-treatment"
+}

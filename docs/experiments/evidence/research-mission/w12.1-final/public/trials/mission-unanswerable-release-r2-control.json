@@ -1,0 +1,103 @@
+{
+  "arm": "control",
+  "case_id": "mission-unanswerable-release",
+  "completed_at": "2026-09-19T05:47:35.512053+00:00",
+  "position": 2,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "cdbaad3c125069832dfab035f0131a11af7b69cabe5a4a88f32dc75dd5dfbad7",
+    "finish_reason": "stop",
+    "latency_ms": 9661.92,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "7a5e32f5d482351dec9fab84da8ac9aaad61f1a22395b5123aa1c1ee7545f11e",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 806,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 4
+      },
+      "cost": 0.000670584,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0004836,
+        "upstream_inference_cost": 0.000670584,
+        "upstream_inference_prompt_cost": 0.000186984
+      },
+      "is_byok": false,
+      "prompt_tokens": 1090,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 64,
+        "video_tokens": 0
+      },
+      "total_tokens": 1896
+    }
+  },
+  "repetition": 2,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "**Decision-support answer: Does the packet establish service-owner approval for the timed-out release?**\n\n**No — the packet does not establish service-owner approval, and we abstain on that determination.**\n\n1. **Approval requirement (policy).** The delivery policy states that production deployment requires approval by the service owner and a recorded rollback plan. The agent may open a pull request after tests pass, but that is a lower bar than deployment approval. [delivery-policy]\n\n2. **No approval record appears in the packet.** The supplied sources contain no approval record and no rollback plan. The retained evidence therefore cannot establish that service-owner approval was obtained, and we do not invent it. This obligation remains explicitly unresolved. [delivery-policy, reliability-context]\n\n3. **Remote completion is not approval.** The reliability context records that, during a controlled test, a worker timed out after submitting a release request and the remote service later reported the original request as completed. This establishes only that the remote write completed — it is not evidence of service-owner approval or of a recorded rollback plan. [reliability-context]\n\n4. **Ambiguous-write recovery obligations.** The reliability policy requires a worker to record operation identity before an external write and, after ambiguous completion, to reconcile remote state before retrying. It also warns that a local checkpoint alone does not prove the external write failed. The context's timeout-then-completed sequence is consistent with this ambiguity: the local timeout did not mean the write failed. [reliability-policy, reliability-context]\n\n**Unresolved limits:** The packet cannot establish (a) whether service-owner approval was granted, (b) whether a rollback plan was recorded, or (c) whether the worker recorded operation identity and reconciled remote state as the policy requires. No contradiction between sources was found; the policies and context are consistent, but the context documents a completed remote write that must not be conflated with approval.",
+    "candidate_id": "candidate-0b1e00cee43048ee30f6",
+    "citations": [
+      "delivery-policy",
+      "reliability-policy",
+      "reliability-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "delivery-policy"
+        ],
+        "text": "Production deployment requires approval by the service owner and a recorded rollback plan; opening a pull request after tests pass is permitted without that approval.",
+        "uncertainty": "No material uncertainty; stated directly in the delivery policy."
+      },
+      {
+        "source_ids": [
+          "delivery-policy",
+          "reliability-context"
+        ],
+        "text": "No approval record or rollback plan appears in the supplied packet, so service-owner approval cannot be established from the retained evidence.",
+        "uncertainty": "Explicitly unresolved: the absence of an approval record in the packet does not prove approval was absent in reality, only that it is not evidenced here."
+      },
+      {
+        "source_ids": [
+          "reliability-context"
+        ],
+        "text": "During a controlled test, a worker timed out after submitting a release request, and the remote service later reported the original request as completed.",
+        "uncertainty": "No material uncertainty about the recorded event; it establishes remote completion only, not approval."
+      },
+      {
+        "source_ids": [
+          "reliability-context",
+          "delivery-policy"
+        ],
+        "text": "Remote completion of the release request is not equivalent to service-owner approval or rollback planning.",
+        "uncertainty": "No material uncertainty; the packet contains no evidence linking remote completion to an approval decision."
+      },
+      {
+        "source_ids": [
+          "reliability-policy"
+        ],
+        "text": "The reliability policy requires recording operation identity before an external write, reconciling remote state before retrying after ambiguous completion, and warns that a local checkpoint alone does not prove the external write failed.",
+        "uncertainty": "No material uncertainty about the policy text; whether the worker complied is not evidenced in the packet."
+      },
+      {
+        "source_ids": [
+          "reliability-policy",
+          "reliability-context"
+        ],
+        "text": "The timeout-then-completed sequence in the context is consistent with the policy's warning that a local timeout/checkpoint does not prove the external write failed.",
+        "uncertainty": "Interpretive consistency claim; the packet does not document whether reconciliation actually occurred."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:47:25.849301+00:00",
+  "status": "completed",
+  "trial_id": "mission-unanswerable-release-r2-control"
+}

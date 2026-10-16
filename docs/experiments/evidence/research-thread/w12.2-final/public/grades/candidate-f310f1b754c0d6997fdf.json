@@ -1,0 +1,13 @@
+{
+  "candidate_id": "candidate-f310f1b754c0d6997fdf",
+  "case_id": "syndicated-copy",
+  "completed_at": "2026-09-19T09:25:36.287820+00:00",
+  "error": "timed out",
+  "error_type": "ReadTimeout",
+  "invalid_completions": [],
+  "receipt": null,
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:15:35.058200+00:00",
+  "status": "failed",
+  "trial_id": "syndicated-copy-r1-treatment"
+}

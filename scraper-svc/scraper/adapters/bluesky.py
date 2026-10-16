@@ -16,8 +16,11 @@ import logging
 import re
 from urllib.parse import urlparse
 
-import httpx
-
+from ..source_http import (
+    source_httpx_client,
+    trusted_control_base_url,
+    trusted_control_httpx_client,
+)
 from .base import AdapterContext, AdapterError, AdapterResult, SiteAdapter, adapter
 
 logger = logging.getLogger(__name__)
@@ -62,7 +65,7 @@ async def _resolve_did(handle: str) -> str | None:
     """
     url = f"{PUBLIC_API_URL}/xrpc/com.atproto.identity.resolveHandle?handle={handle}"
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
+        async with source_httpx_client(timeout=10) as client:
             resp = await client.get(url)
             if resp.status_code == 200:
                 return resp.json().get("did")
@@ -82,7 +85,7 @@ async def _fetch_post_thread(did: str, rkey: str) -> dict | None:
     at_uri = f"at://{did}/app.bsky.feed.post/{rkey}"
     url = f"{PUBLIC_API_URL}/xrpc/app.bsky.feed.getPostThread?uri={at_uri}&depth=1"
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
+        async with source_httpx_client(timeout=15) as client:
             resp = await client.get(url)
             if resp.status_code == 200:
                 return resp.json().get("thread")
@@ -320,10 +323,12 @@ async def _fetch_via_browser(url: str, ctx: AdapterContext) -> tuple[str, dict] 
 
     Returns ``(markdown, metadata)`` or ``None``.
     """
-    browser_svc_url = ctx.config.get("BROWSER_SVC_URL", "http://browser-svc:8012")
+    browser_svc_url = trusted_control_base_url(
+        ctx.config.get("BROWSER_SVC_URL", "http://browser-svc:8012"), "browser"
+    )
     session_id = None
     try:
-        async with httpx.AsyncClient(timeout=30) as client:
+        async with trusted_control_httpx_client(service="browser", timeout=30) as client:
             # Create session
             create_resp = await client.post(
                 f"{browser_svc_url}/browsers",
@@ -388,7 +393,7 @@ async def _fetch_via_browser(url: str, ctx: AdapterContext) -> tuple[str, dict] 
     finally:
         if session_id:
             try:
-                async with httpx.AsyncClient(timeout=5) as c:
+                async with trusted_control_httpx_client(service="browser", timeout=5) as c:
                     await c.delete(f"{browser_svc_url}/browsers/{session_id}")
             except Exception:
                 pass

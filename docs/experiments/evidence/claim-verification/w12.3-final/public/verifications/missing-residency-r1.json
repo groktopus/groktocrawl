@@ -1,0 +1,84 @@
+{
+  "case_id": "missing-residency",
+  "completed_at": "2026-09-19T10:10:22.447975+00:00",
+  "completion_attempt": 1,
+  "position": 5,
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "fe070f82f21b1a125f8d684552cbb93dcb090fc8d40865bab016664a45f6ba9d",
+    "finish_reason": "stop",
+    "latency_ms": 6819.071,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "23404a07832ab4851bebaea8cc5e5154ce9dd34a02da2b62e9695f8881f1b8b2",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 101,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 20
+      },
+      "cost": 6.855e-05,
+      "cost_details": {
+        "upstream_inference_completions_cost": 3.535e-05,
+        "upstream_inference_cost": 6.855e-05,
+        "upstream_inference_prompt_cost": 3.32e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 332,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 433
+    }
+  },
+  "repetition": 1,
+  "schema_version": "claim-verification-trial/1",
+  "started_at": "2026-09-19T10:10:15.627457+00:00",
+  "status": "completed",
+  "trial_id": "missing-residency-r1",
+  "verification": {
+    "checked_input": {
+      "case_id": "missing-residency",
+      "claim": "All EU customer data remains exclusively in Germany.",
+      "claim_id": "claim-missing-residency",
+      "evidence": [
+        {
+          "contains_instructions": false,
+          "source_id": "source-region-list",
+          "source_kind": "primary",
+          "span_id": "region-list",
+          "temporal_status": "current",
+          "text": "Customers may choose an EU region for primary workloads."
+        }
+      ],
+      "evidence_obligation": "A current, scope-specific data residency commitment.",
+      "risk": "high",
+      "schema_version": "claim-verification-input/1"
+    },
+    "checked_input_digest": "dd6f454a17b1356ce7c2d2a39fc3fed89a801cf29255059a8170dc8d3209e7a0",
+    "confidence": 0,
+    "contradiction_span_ids": [],
+    "evidence_span_ids": [
+      "region-list"
+    ],
+    "publish_recommendation": false,
+    "reason": "The only evidence states customers may choose an EU region for primary workloads; it does not specify Germany, does not address all data, and frames residency as optional rather than exclusive.",
+    "schema_version": "independent-claim-verification/1",
+    "verdict": "insufficient",
+    "verification_id": "verification-missing-residency-r1",
+    "verifier": {
+      "model": "general",
+      "prompt_version": "w12.3-verifier/1",
+      "route": "local-litellm"
+    }
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "arm": "treatment",
+  "case_id": "mission-straightforward-security",
+  "completed_at": "2026-09-19T05:48:34.285162+00:00",
+  "position": 2,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "6320ca2b9d1f20991eaa26a699d4f22673875c27b83c31bf9730a500a89a82cf",
+    "finish_reason": "stop",
+    "latency_ms": 21073.397,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "8ce808ed1ed7eaec30f1ade996de86b9a42578b956b605719402efd88f04e3b6",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 472,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 6
+      },
+      "cost": 0.00018504,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0001652,
+        "upstream_inference_cost": 0.00018504,
+        "upstream_inference_prompt_cost": 1.984e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 864,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 832,
+        "video_tokens": 0
+      },
+      "total_tokens": 1336
+    }
+  },
+  "repetition": 2,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Build agent credential and write boundary (per supplied policy fixture — Aster Enterprise, fictional record; not real-world guidance; not approval to implement anything else beyond the cited policy text on production writes via the release identity... per policy: no production writes here — see below)",
+    "candidate_id": "candidate-b11c4753d77beb17270e",
+    "citations": [
+      "security-policy",
+      "security-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "security-policy"
+        ],
+        "text": "Build agents receive read-only source access.",
+        "uncertainty": "No material uncertainty for the supplied fixture; the policy states this directly."
+      },
+      {
+        "source_ids": [
+          "security-policy"
+        ],
+        "text": "Build agents receive short-lived scoped credentials.",
+        "uncertainty": "The policy states this directly; it does not specify exact credential lifetimes or scopes."
+      },
+      {
+        "source_ids": [
+          "security-policy"
+        ],
+        "text": "Production configuration writes require a separate release identity acting after approval.",
+        "uncertainty": "No material uncertainty; the approval process itself is not detailed in the supplied sources."
+      },
+      {
+        "source_ids": [
+          "security-policy"
+        ],
+        "text": "Raw secrets must not enter prompts or logs.",
+        "uncertainty": "No material uncertainty; enforcement mechanisms are not specified."
+      },
+      {
+        "source_ids": [
+          "security-context",
+          "security-policy"
+        ],
+        "text": "An onboarding guide calls the release identity an 'agent identity,' but grants it no additional privileges and defers authorization to the security policy — a naming contradiction resolved in favor of the policy.",
+        "uncertainty": "The supplied evidence cannot establish whether the onboarding guide has been corrected or superseded."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:48:13.211310+00:00",
+  "status": "completed",
+  "trial_id": "mission-straightforward-security-r2-treatment"
+}

@@ -1,0 +1,70 @@
+{
+  "answer": {
+    "answer": "Yes. The updated Fern CI FAQ snapshot states that Fern CI retains build logs for 30 days [fern-faq-new], whereas the earlier FAQ snapshot explicitly stated that the build-log retention period was not specified [fern-faq-old]. Both snapshots carry the same subject_id (fern-ci) and the same lineage_id (fern-faq), so the newer snapshot is an update to the same FAQ document for the same subject; this identity rests on the explicit subject identifiers, not on name similarity. Current state: Fern CI has now published a build-log retention period of 30 days [fern-faq-new]. Historically valid: the FAQ previously stated that no retention period was specified [fern-faq-old]. Remaining gaps: the snapshots provide no effective date for the change, and no retention information beyond build logs is supplied.",
+    "change_events": [
+      "The Fern CI FAQ changed from explicitly stating that the build-log retention period is not specified to stating that Fern CI retains build logs for 30 days [fern-faq-old, fern-faq-new]."
+    ],
+    "citations": [
+      "fern-faq-old",
+      "fern-faq-new"
+    ],
+    "current_truths": [
+      "Fern CI retains build logs for 30 days, per the updated FAQ snapshot [fern-faq-new].",
+      "Fern CI has published a build-log retention period in its FAQ [fern-faq-new]."
+    ],
+    "historical_truths": [
+      "The earlier Fern CI FAQ snapshot explicitly stated that the build-log retention period was not specified [fern-faq-old]."
+    ],
+    "unresolved": [
+      "The snapshots provide no effective date for the updated 30-day build-log retention policy [fern-faq-new].",
+      "The snapshots carry no timestamps; the sequencing of the two FAQ states is indicated only by the snapshot identifiers fern-faq-old and fern-faq-new.",
+      "Whether any retention period applies to Fern CI data other than build logs is not addressed in the supplied snapshots [fern-faq-new]."
+    ]
+  },
+  "arm": "treatment",
+  "case_id": "later-resolution",
+  "completed_at": "2026-09-19T07:50:11.946615+00:00",
+  "position": 24,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "35ad1779e52397a021fd822af6d469f346bfdd563f824c35d2adeefbc22e58f2",
+    "finish_reason": "stop",
+    "latency_ms": 57259.293,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "bc1ee30d9158a45866c920fea2f0ed27302668843b566a523506d4c8d51046b7",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 2288,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 2121
+      },
+      "cost": 0.0012655,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.001144,
+        "upstream_inference_cost": 0.0012655,
+        "upstream_inference_prompt_cost": 0.0001215
+      },
+      "is_byok": false,
+      "prompt_tokens": 810,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 3098
+    }
+  },
+  "repetition": 2,
+  "schema_version": "research-thread-trial/1",
+  "started_at": "2026-09-19T07:49:14.686545+00:00",
+  "status": "completed",
+  "stratum": "resolved",
+  "trial_id": "later-resolution-r2-treatment"
+}

@@ -1,0 +1,76 @@
+{
+  "candidate_id": "intake-candidate-fe7457cf916f30120f12",
+  "case_id": "mission-straightforward-security",
+  "completed_at": "2026-09-19T06:32:43.494699+00:00",
+  "grade": {
+    "action_correct": true,
+    "action_rationale": "Candidate action 'ready' matches expected intake 'accept'; the request is answerable without escalation or refusal.",
+    "clarification_utility": 2,
+    "correction_actions": [
+      "Restore source_policy.minimum_independent_publishers to 0 and closure rules that let the supplied primary policy close both obligations.",
+      "Collapse to the reference's two obligations: (1) read-only source access plus short-lived scoped credentials; (2) production writes retained by the separately approved release identity plus exclusion of raw secrets from prompts/logs.",
+      "Reinstate scope.include items 'secret handling' and the production-writes/release-identity separation; reinstate prohibited_assumptions ('Calling a release identity an agent identity transfers its privileges.').",
+      "Remove the embedded blocking clarification and the invented platform-survey, standards-corroboration, incident-counterevidence, and agentic-gap obligations; restore the reference stop_when wording allowing explicit unresolved status once the fixed source pack is accounted for.",
+      "Re-anchor freshness rationale and acceptable_uncertainty to the supplied policy/context as the current fixture record."
+    ],
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "No invented authority, unauthorized action, or loss of the freshness constraint: the candidate explicitly disclaims granting, issuing, or configuring credentials, treats internal policy as the binding authority for any final 'may', preserves freshness mode 'current' with as_of null, and keeps budget, contradiction_policy, schema_version, allowed_authority, and the derivative/inaccessible-source flags intact. The failure mode is scope invention and boundary loss, not authority invention.",
+    "invented_constraints": [
+      "source_policy.minimum_independent_publishers raised from 0 to 2: the reference deliberately allows the primary policy alone to close both obligations; the candidate makes two-publisher corroboration a closure and stop condition, changing what can close obligations under the identical budget (4 searches / 10 sources).",
+      "Obligation set expanded from 2 policy-reading obligations to 6, adding a multi-platform CI/CD vendor-documentation survey (ob.credential-mechanisms, ob.platform-write-controls), standards corroboration (ob.least-privilege-corroboration), incident/attack-path counterevidence (ob.over-privilege-counterevidence), and agentic-executor gap analysis (ob.agentic-guidance-gaps). None of these exist in the reference; the reference closes both obligations with 'The primary policy states both controls.'",
+      "Evidence model inverted: the reference treats the supplied policy/context as the fixture record (freshness rationale; stop_when 'fixed source pack has been accounted for'), while the candidate demands external official vendor documentation and explicitly excludes 'Determining what this enterprise's internal policy... currently permit' - the very determination the reference mission performs.",
+      "stop_when adds a 'draft least-privilege profile' deliverable and pre-names candidate sources (NIST SSDF, OWASP, CIS, SLSA) inside scope; the reference has no profile deliverable and no pre-named sources.",
+      "A blocking clarification (build-platform-identification) is embedded where the reference has clarifications: []; the platform question only becomes necessary because of the candidate's invented multi-platform scope, and its 'blocking: true' status is in tension with action 'ready' and clarifying_question null."
+    ],
+    "lost_hard_boundaries": [
+      "Secret-handling scope dropped: reference includes 'secret handling' and obligation o2 requires excluding raw secrets from prompts or logs; the candidate has no matching include item or obligation. Its exclusion of 'handling... actual credentials, tokens, or secrets' is an action fence, not this research dimension.",
+      "Release-identity separation weakened: reference o2 affirmatively keeps production writes with the separately approved release identity, and prohibited_assumptions bars 'Calling a release identity an agent identity transfers its privileges.' The candidate omits prohibited_assumptions entirely and preserves the separation only implicitly via deployment-target 'should not hold' phrasing and a release-governance exclusion.",
+      "Reference stop_when allowance that obligations may end 'explicitly unresolved' once the fixed pack is accounted for is replaced by closure-rule satisfaction or budget exhaustion with a profile deliverable.",
+      "acceptable_uncertainty re-centered from 'what the supplied evidence cannot establish' to platform-generic conditionality and internal-policy checks, consistent with the shifted (divergent) evidence model."
+    ],
+    "required_field_recall": 0,
+    "unnecessary_fields": [
+      "Four of six obligations, five of six questions, the counterevidence and context evidence roles, the profile deliverable in stop_when, the pre-named standards sources in scope.include, and the embedded blocking clarification are all superfluous relative to the reference's two-obligation, one-question, no-clarification mission."
+    ]
+  },
+  "position": 29,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "ee4a85b67f616b13c38d23c1b1d501ecc689902a511da5b458ce9da4394fa364",
+    "finish_reason": "stop",
+    "latency_ms": 68549.324,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "c556375dadae89df1ca557f26598374029a12cad5a6256311cd263bc151e4d09",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 11341,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 10320
+      },
+      "cost": 0.0060704,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0056705,
+        "upstream_inference_cost": 0.0060704,
+        "upstream_inference_prompt_cost": 0.0003999
+      },
+      "is_byok": false,
+      "prompt_tokens": 2666,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 14007
+    }
+  },
+  "schema_version": "research-mission-intake-grade/1",
+  "started_at": "2026-09-19T06:31:34.943505+00:00",
+  "status": "completed"
+}

@@ -1,0 +1,52 @@
+{
+  "case_id": "mission-temporal-provider",
+  "completed_at": "2026-09-19T06:06:25.063010+00:00",
+  "position": 2,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "a5f25e81b22d2a4a1353fee7215327a7287d4758b096150f930d5d036e60a4bf",
+    "finish_reason": "stop",
+    "latency_ms": 14886.301,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "c9a35857326642390a4275c1fa59da060ee636868dd6ffcc965db10118952167",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 2614,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 3040
+      },
+      "cost": 0.00161615,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.001307,
+        "upstream_inference_cost": 0.00161615,
+        "upstream_inference_prompt_cost": 0.00030915
+      },
+      "is_byok": false,
+      "prompt_tokens": 2061,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 4675
+    }
+  },
+  "repetition": 3,
+  "result": {
+    "action": "clarify",
+    "clarifying_question": "Your request makes the switch decision conditional on 'the supplied policy and vendor note,' but neither document is present in the materials provided. Can you supply the actual policy text (including its criteria or conditions for switching providers) and the vendor note (including which current and candidate providers it concerns), or point to where they can be retrieved, so the mission can be scoped to their real contents rather than assumptions?",
+    "mission": null,
+    "rationale": "The request explicitly conditions the decision on two documents — a policy and a vendor note — that were referenced but not actually supplied. Those documents would govern the mission: the policy supplies the decision criteria (the governing authority) and the vendor note supplies the triggering claims (the key facts). Emitting a 'ready' mission now would require inventing that authority, inventing the vendor note's findings, and guessing the identity of the current and candidate providers and the migration scope — all of which the contract forbids. Research on a provider-switch decision in an enterprise agentic software factory is itself appropriate, so abstention is not warranted; but this decision-changing ambiguity cannot be resolved without guessing, so one blocking clarification is issued and no mission is scoped until the referenced inputs are actually provided."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:06:10.168714+00:00",
+  "status": "completed",
+  "trial_id": "mission-temporal-provider-intake-r3"
+}

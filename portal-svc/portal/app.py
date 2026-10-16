@@ -3,9 +3,10 @@
 import json
 import logging
 import os
+import re
 
 import httpx
-from fastapi import FastAPI, Form, Request
+from fastapi import FastAPI, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, PlainTextResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 
@@ -170,3 +171,82 @@ async def ask_deep(query: str = Form(...)):
             yield b"event: error\ndata: Service unavailable\n\n"
 
     return StreamingResponse(proxy_deep_stream(), media_type="text/event-stream")
+
+
+@app.get("/workspace", response_class=HTMLResponse)
+async def workspace_page(request: Request):
+    """Thin retained-root browser; no browser persistence of private content."""
+    return templates.TemplateResponse(request=request, name="workspace.html")
+
+
+@app.get("/workspace/api/{path:path}")
+async def workspace_proxy(path: str, request: Request):
+    """Allow only named read operations; forward caller authorization, never URLs."""
+    if not re.fullmatch(
+        r"(?:capabilities|workspace(?:/[a-zA-Z0-9-]+)?|artifact-sets/[a-zA-Z0-9-]+|artifacts/[a-zA-Z0-9-]+|research/[a-zA-Z0-9-]+/evidence/[a-zA-Z0-9-]+)",
+        path,
+    ):
+        return PlainTextResponse("Unknown workspace operation", status_code=404)
+    headers = {
+        key: request.headers[key]
+        for key in ("authorization", "x-api-key", "x-groktocrawl-api-key")
+        if key in request.headers
+    }
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response = await client.get(
+            f"{BASE}/experimental/research/v1/{path}",
+            headers=headers,
+            params=request.query_params,
+        )
+    from fastapi.responses import Response
+
+    return Response(
+        response.content,
+        status_code=response.status_code,
+        media_type=response.headers.get("content-type", "application/json"),
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+@app.api_route("/workspace/action/{path:path}", methods=["POST", "DELETE"])
+async def workspace_action(path: str, request: Request):
+    """Proxy explicitly selected actions with no arbitrary destination or method."""
+    allowed = {
+        "POST": r"workspace/[a-zA-Z0-9-]+/actions",
+        "DELETE": r"research/[a-zA-Z0-9-]+",
+    }
+    if not re.fullmatch(allowed[request.method], path):
+        raise HTTPException(status_code=404, detail="Unknown workspace action")
+    origin = request.headers.get("origin")
+    if origin is not None and origin != str(request.base_url).rstrip("/"):
+        raise HTTPException(status_code=403, detail="Foreign workspace origin")
+    if int(request.headers.get("content-length", "0")) > 8192:
+        raise HTTPException(status_code=413, detail="Workspace action too large")
+    body = await request.body()
+    if len(body) > 8192:
+        raise HTTPException(status_code=413, detail="Workspace action too large")
+    headers = {
+        key: request.headers[key]
+        for key in (
+            "authorization",
+            "x-api-key",
+            "x-groktocrawl-api-key",
+            "content-type",
+        )
+        if key in request.headers
+    }
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response = await client.request(
+            request.method,
+            f"{BASE}/experimental/research/v1/{path}",
+            headers=headers,
+            content=body,
+        )
+    from fastapi.responses import Response
+
+    return Response(
+        response.content,
+        status_code=response.status_code,
+        media_type=response.headers.get("content-type", "application/json"),
+        headers={"Cache-Control": "no-store"},
+    )

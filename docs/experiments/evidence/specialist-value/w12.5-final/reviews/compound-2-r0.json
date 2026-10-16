@@ -1,0 +1,124 @@
+{
+  "case_id": "compound-2",
+  "control_artifact": {
+    "admitted_evidence": [
+      {
+        "canonical_source_id": "canonical-compound-2-generalist-compound-2-scope",
+        "derivative": false,
+        "evidence_id": "compound-2-generalist-compound-2-scope",
+        "obligation_id": "compound-2-scope",
+        "publisher_id": "publisher-compound-2-generalist",
+        "source_id": "source-compound-2-generalist-compound-2-scope",
+        "span": "Pinned supports evidence for compound-2-scope in compound-2.",
+        "stance": "supports"
+      }
+    ],
+    "conflicting_obligation_ids": [],
+    "covered_obligation_ids": [
+      "compound-2-scope"
+    ],
+    "handoff_failures": [],
+    "rejected_evidence": {},
+    "total_calls": 2
+  },
+  "control_calls": 2,
+  "preferred": "treatment",
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "4c697121a651060b5c2d34b151d7844f49a07573c6a0c8991dafb06556034304",
+    "finish_reason": "stop",
+    "latency_ms": 83568.442,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "6c5069eef0c1f773806a4afa41b0b0cb3ceff07204e1292a14878a85345b14b2",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 2995,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 2710
+      },
+      "cost": 0.001598,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0014975,
+        "upstream_inference_cost": 0.001598,
+        "upstream_inference_prompt_cost": 0.0001005
+      },
+      "is_byok": false,
+      "prompt_tokens": 670,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 3665
+    }
+  },
+  "repetition": 0,
+  "schema_version": "specialist-value-review/1",
+  "scores": {
+    "control": {
+      "reason": "Incomplete obligation coverage: only compound-2-scope is addressed; compound-2-authority and compound-2-risk have no evidence at all. The single item present is pinned and non-derivative, so what is claimed is source-bound, but the artifact reports an empty failures list despite missing two of three obligations, leaving its incomplete state undisclosed rather than visibly flagged. No conflicts exist in the supplied evidence to preserve. Its overlap with Artifact A on compound-2-scope was not credited as corroboration.",
+      "trustworthiness": 0,
+      "usefulness": 0
+    },
+    "treatment": {
+      "reason": "Complete obligation coverage: compound-2-scope, compound-2-authority, and compound-2-risk each have exactly one pinned, non-derivative evidence item bound to its own source_id and canonical_source_id, with no padding or redundancy. The supplied evidence contains no conflicts and no failed verifications, so the empty conflicts and failures lists are consistent with the record rather than concealment. Agreement with Artifact B on compound-2-scope was not treated as additional proof of truth; each item stands on its own source binding.",
+      "trustworthiness": 1,
+      "usefulness": 1
+    }
+  },
+  "separable": true,
+  "status": "completed",
+  "stratum": "compound",
+  "treatment_artifact": {
+    "admitted_evidence": [
+      {
+        "canonical_source_id": "canonical-compound-2-discovery-compound-2-scope",
+        "derivative": false,
+        "evidence_id": "compound-2-discovery-compound-2-scope",
+        "obligation_id": "compound-2-scope",
+        "publisher_id": "publisher-compound-2-discovery",
+        "source_id": "source-compound-2-discovery-compound-2-scope",
+        "span": "Pinned supports evidence for compound-2-scope in compound-2.",
+        "stance": "supports"
+      },
+      {
+        "canonical_source_id": "canonical-compound-2-authority-compound-2-authority",
+        "derivative": false,
+        "evidence_id": "compound-2-authority-compound-2-authority",
+        "obligation_id": "compound-2-authority",
+        "publisher_id": "publisher-compound-2-authority",
+        "source_id": "source-compound-2-authority-compound-2-authority",
+        "span": "Pinned supports evidence for compound-2-authority in compound-2.",
+        "stance": "supports"
+      },
+      {
+        "canonical_source_id": "canonical-compound-2-risk-compound-2-risk",
+        "derivative": false,
+        "evidence_id": "compound-2-risk-compound-2-risk",
+        "obligation_id": "compound-2-risk",
+        "publisher_id": "publisher-compound-2-risk",
+        "source_id": "source-compound-2-risk-compound-2-risk",
+        "span": "Pinned supports evidence for compound-2-risk in compound-2.",
+        "stance": "supports"
+      }
+    ],
+    "conflicting_obligation_ids": [],
+    "covered_obligation_ids": [
+      "compound-2-authority",
+      "compound-2-risk",
+      "compound-2-scope"
+    ],
+    "handoff_failures": [],
+    "rejected_evidence": {},
+    "total_calls": 2
+  },
+  "treatment_calls": 3,
+  "trial_id": "compound-2-r0"
+}

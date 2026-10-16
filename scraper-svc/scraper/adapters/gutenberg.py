@@ -27,6 +27,7 @@ from typing import Any
 
 import httpx
 
+from ..source_http import source_httpx_client
 from .base import AdapterContext, AdapterError, AdapterResult, SiteAdapter, adapter
 
 logger = logging.getLogger(__name__)
@@ -282,7 +283,7 @@ async def _fetch_epub(book_id: str) -> bytes | None:
     """
     epub_url = _epub_url(book_id)
     try:
-        async with httpx.AsyncClient(
+        async with source_httpx_client(
             timeout=30,
             follow_redirects=True,
             headers={
@@ -351,7 +352,7 @@ async def _fetch_plain_text(book_id: str) -> str | None:
     """
     txt_url = _txt_url(book_id)
     try:
-        async with httpx.AsyncClient(
+        async with source_httpx_client(
             timeout=30,
             follow_redirects=True,
             headers={
@@ -386,7 +387,7 @@ async def _fetch_gutendex_metadata(book_id: str) -> dict[str, Any] | None:
     """
     url = f"{_gutendex_base() or 'https://gutendex.com'}/books/{book_id}"
     try:
-        async with httpx.AsyncClient(
+        async with source_httpx_client(
             timeout=3,
             follow_redirects=True,
         ) as client:

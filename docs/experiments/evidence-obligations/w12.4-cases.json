@@ -1,0 +1,925 @@
+{
+  "schema_version": "obligation-replay-corpus/1",
+  "cases": [
+    {
+      "case_id": "easy-1",
+      "stratum": "easy_stop",
+      "question": "Frozen easy stop research question easy-1.",
+      "obligations": [
+        {
+          "obligation_id": "easy-1-obligation",
+          "kind": "support",
+          "importance": 2,
+          "closure_rule": "Acquire the pinned evidence for support.",
+          "required_candidate_ids": [
+            "easy-1-initial"
+          ]
+        }
+      ],
+      "queries": [
+        {
+          "query_id": "easy-1-q0",
+          "purpose": "initial",
+          "obligation_id": null,
+          "candidate_ids": [
+            "easy-1-initial"
+          ]
+        },
+        {
+          "query_id": "easy-1-q1",
+          "purpose": "generic",
+          "obligation_id": null,
+          "candidate_ids": [
+            "easy-1-generic"
+          ]
+        },
+        {
+          "query_id": "easy-1-q2",
+          "purpose": "obligation",
+          "obligation_id": "easy-1-obligation",
+          "candidate_ids": [
+            "easy-1-answer"
+          ]
+        }
+      ],
+      "candidates": [
+        {
+          "candidate_id": "easy-1-initial",
+          "query_id": "easy-1-q0",
+          "canonical_id": "easy-1-initial",
+          "publisher_id": "easy-1-initial-publisher",
+          "closes_obligation_ids": [
+            "easy-1-obligation"
+          ],
+          "acquired": true,
+          "derivative": false,
+          "material": true
+        },
+        {
+          "candidate_id": "easy-1-generic",
+          "query_id": "easy-1-q1",
+          "canonical_id": "easy-1-generic",
+          "publisher_id": "easy-1-initial-publisher",
+          "closes_obligation_ids": [],
+          "acquired": true,
+          "derivative": true,
+          "material": false
+        },
+        {
+          "candidate_id": "easy-1-answer",
+          "query_id": "easy-1-q2",
+          "canonical_id": "easy-1-targeted",
+          "publisher_id": "easy-1-authority",
+          "closes_obligation_ids": [
+            "easy-1-obligation"
+          ],
+          "acquired": true,
+          "derivative": false,
+          "material": true
+        }
+      ]
+    },
+    {
+      "case_id": "easy-2",
+      "stratum": "easy_stop",
+      "question": "Frozen easy stop research question easy-2.",
+      "obligations": [
+        {
+          "obligation_id": "easy-2-obligation",
+          "kind": "support",
+          "importance": 2,
+          "closure_rule": "Acquire the pinned evidence for support.",
+          "required_candidate_ids": [
+            "easy-2-initial"
+          ]
+        }
+      ],
+      "queries": [
+        {
+          "query_id": "easy-2-q0",
+          "purpose": "initial",
+          "obligation_id": null,
+          "candidate_ids": [
+            "easy-2-initial"
+          ]
+        },
+        {
+          "query_id": "easy-2-q1",
+          "purpose": "generic",
+          "obligation_id": null,
+          "candidate_ids": [
+            "easy-2-generic"
+          ]
+        },
+        {
+          "query_id": "easy-2-q2",
+          "purpose": "obligation",
+          "obligation_id": "easy-2-obligation",
+          "candidate_ids": [
+            "easy-2-answer"
+          ]
+        }
+      ],
+      "candidates": [
+        {
+          "candidate_id": "easy-2-initial",
+          "query_id": "easy-2-q0",
+          "canonical_id": "easy-2-initial",
+          "publisher_id": "easy-2-initial-publisher",
+          "closes_obligation_ids": [
+            "easy-2-obligation"
+          ],
+          "acquired": true,
+          "derivative": false,
+          "material": true
+        },
+        {
+          "candidate_id": "easy-2-generic",
+          "query_id": "easy-2-q1",
+          "canonical_id": "easy-2-generic",
+          "publisher_id": "easy-2-initial-publisher",
+          "closes_obligation_ids": [],
+          "acquired": true,
+          "derivative": true,
+          "material": false
+        },
+        {
+          "candidate_id": "easy-2-answer",
+          "query_id": "easy-2-q2",
+          "canonical_id": "easy-2-targeted",
+          "publisher_id": "easy-2-authority",
+          "closes_obligation_ids": [
+            "easy-2-obligation"
+          ],
+          "acquired": true,
+          "derivative": false,
+          "material": true
+        }
+      ]
+    },
+    {
+      "case_id": "primary-1",
+      "stratum": "missing_primary",
+      "question": "Frozen missing primary research question primary-1.",
+      "obligations": [
+        {
+          "obligation_id": "primary-1-obligation",
+          "kind": "primary_source",
+          "importance": 3,
+          "closure_rule": "Acquire the pinned evidence for primary_source.",
+          "required_candidate_ids": [
+            "primary-1-answer"
+          ]
+        }
+      ],
+      "queries": [
+        {
+          "query_id": "primary-1-q0",
+          "purpose": "initial",
+          "obligation_id": null,
+          "candidate_ids": [
+            "primary-1-initial"
+          ]
+        },
+        {
+          "query_id": "primary-1-q1",
+          "purpose": "generic",
+          "obligation_id": null,
+          "candidate_ids": [
+            "primary-1-generic"
+          ]
+        },
+        {
+          "query_id": "primary-1-q2",
+          "purpose": "obligation",
+          "obligation_id": "primary-1-obligation",
+          "candidate_ids": [
+            "primary-1-answer"
+          ]
+        }
+      ],
+      "candidates": [
+        {
+          "candidate_id": "primary-1-initial",
+          "query_id": "primary-1-q0",
+          "canonical_id": "primary-1-initial",
+          "publisher_id": "primary-1-initial-publisher",
+          "closes_obligation_ids": [],
+          "acquired": true,
+          "derivative": false,
+          "material": false
+        },
+        {
+          "candidate_id": "primary-1-generic",
+          "query_id": "primary-1-q1",
+          "canonical_id": "primary-1-generic",
+          "publisher_id": "primary-1-initial-publisher",
+          "closes_obligation_ids": [],
+          "acquired": true,
+          "derivative": true,
+          "material": false
+        },
+        {
+          "candidate_id": "primary-1-answer",
+          "query_id": "primary-1-q2",
+          "canonical_id": "primary-1-targeted",
+          "publisher_id": "primary-1-authority",
+          "closes_obligation_ids": [
+            "primary-1-obligation"
+          ],
+          "acquired": true,
+          "derivative": false,
+          "material": true
+        }
+      ]
+    },
+    {
+      "case_id": "primary-2",
+      "stratum": "missing_primary",
+      "question": "Frozen missing primary research question primary-2.",
+      "obligations": [
+        {
+          "obligation_id": "primary-2-obligation",
+          "kind": "primary_source",
+          "importance": 3,
+          "closure_rule": "Acquire the pinned evidence for primary_source.",
+          "required_candidate_ids": [
+            "primary-2-answer"
+          ]
+        }
+      ],
+      "queries": [
+        {
+          "query_id": "primary-2-q0",
+          "purpose": "initial",
+          "obligation_id": null,
+          "candidate_ids": [
+            "primary-2-initial"
+          ]
+        },
+        {
+          "query_id": "primary-2-q1",
+          "purpose": "generic",
+          "obligation_id": null,
+          "candidate_ids": [
+            "primary-2-generic"
+          ]
+        },
+        {
+          "query_id": "primary-2-q2",
+          "purpose": "obligation",
+          "obligation_id": "primary-2-obligation",
+          "candidate_ids": [
+            "primary-2-answer"
+          ]
+        }
+      ],
+      "candidates": [
+        {
+          "candidate_id": "primary-2-initial",
+          "query_id": "primary-2-q0",
+          "canonical_id": "primary-2-initial",
+          "publisher_id": "primary-2-initial-publisher",
+          "closes_obligation_ids": [],
+          "acquired": true,
+          "derivative": false,
+          "material": false
+        },
+        {
+          "candidate_id": "primary-2-generic",
+          "query_id": "primary-2-q1",
+          "canonical_id": "primary-2-generic",
+          "publisher_id": "primary-2-initial-publisher",
+          "closes_obligation_ids": [
+            "primary-2-obligation"
+          ],
+          "acquired": true,
+          "derivative": false,
+          "material": true
+        },
+        {
+          "candidate_id": "primary-2-answer",
+          "query_id": "primary-2-q2",
+          "canonical_id": "primary-2-targeted",
+          "publisher_id": "primary-2-authority",
+          "closes_obligation_ids": [
+            "primary-2-obligation"
+          ],
+          "acquired": true,
+          "derivative": false,
+          "material": true
+        }
+      ]
+    },
+    {
+      "case_id": "fresh-1",
+      "stratum": "stale",
+      "question": "Frozen stale research question fresh-1.",
+      "obligations": [
+        {
+          "obligation_id": "fresh-1-obligation",
+          "kind": "freshness",
+          "importance": 3,
+          "closure_rule": "Acquire the pinned evidence for freshness.",
+          "required_candidate_ids": [
+            "fresh-1-answer"
+          ]
+        }
+      ],
+      "queries": [
+        {
+          "query_id": "fresh-1-q0",
+          "purpose": "initial",
+          "obligation_id": null,
+          "candidate_ids": [
+            "fresh-1-initial"
+          ]
+        },
+        {
+          "query_id": "fresh-1-q1",
+          "purpose": "generic",
+          "obligation_id": null,
+          "candidate_ids": [
+            "fresh-1-generic"
+          ]
+        },
+        {
+          "query_id": "fresh-1-q2",
+          "purpose": "obligation",
+          "obligation_id": "fresh-1-obligation",
+          "candidate_ids": [
+            "fresh-1-answer"
+          ]
+        }
+      ],
+      "candidates": [
+        {
+          "candidate_id": "fresh-1-initial",
+          "query_id": "fresh-1-q0",
+          "canonical_id": "fresh-1-initial",
+          "publisher_id": "fresh-1-initial-publisher",
+          "closes_obligation_ids": [],
+          "acquired": true,
+          "derivative": false,
+          "material": false
+        },
+        {
+          "candidate_id": "fresh-1-generic",
+          "query_id": "fresh-1-q1",
+          "canonical_id": "fresh-1-generic",
+          "publisher_id": "fresh-1-initial-publisher",
+          "closes_obligation_ids": [],
+          "acquired": true,
+          "derivative": true,
+          "material": false
+        },
+        {
+          "candidate_id": "fresh-1-answer",
+          "query_id": "fresh-1-q2",
+          "canonical_id": "fresh-1-targeted",
+          "publisher_id": "fresh-1-authority",
+          "closes_obligation_ids": [
+            "fresh-1-obligation"
+          ],
+          "acquired": true,
+          "derivative": false,
+          "material": true
+        }
+      ]
+    },
+    {
+      "case_id": "independent-1",
+      "stratum": "source_duplication",
+      "question": "Frozen source duplication research question independent-1.",
+      "obligations": [
+        {
+          "obligation_id": "independent-1-obligation",
+          "kind": "independence",
+          "importance": 3,
+          "closure_rule": "Acquire the pinned evidence for independence.",
+          "required_candidate_ids": [
+            "independent-1-answer"
+          ]
+        }
+      ],
+      "queries": [
+        {
+          "query_id": "independent-1-q0",
+          "purpose": "initial",
+          "obligation_id": null,
+          "candidate_ids": [
+            "independent-1-initial"
+          ]
+        },
+        {
+          "query_id": "independent-1-q1",
+          "purpose": "generic",
+          "obligation_id": null,
+          "candidate_ids": [
+            "independent-1-generic"
+          ]
+        },
+        {
+          "query_id": "independent-1-q2",
+          "purpose": "obligation",
+          "obligation_id": "independent-1-obligation",
+          "candidate_ids": [
+            "independent-1-answer"
+          ]
+        }
+      ],
+      "candidates": [
+        {
+          "candidate_id": "independent-1-initial",
+          "query_id": "independent-1-q0",
+          "canonical_id": "independent-1-initial",
+          "publisher_id": "independent-1-initial-publisher",
+          "closes_obligation_ids": [],
+          "acquired": true,
+          "derivative": false,
+          "material": false
+        },
+        {
+          "candidate_id": "independent-1-generic",
+          "query_id": "independent-1-q1",
+          "canonical_id": "independent-1-generic",
+          "publisher_id": "independent-1-initial-publisher",
+          "closes_obligation_ids": [],
+          "acquired": true,
+          "derivative": true,
+          "material": false
+        },
+        {
+          "candidate_id": "independent-1-answer",
+          "query_id": "independent-1-q2",
+          "canonical_id": "independent-1-targeted",
+          "publisher_id": "independent-1-authority",
+          "closes_obligation_ids": [
+            "independent-1-obligation"
+          ],
+          "acquired": true,
+          "derivative": false,
+          "material": true
+        }
+      ]
+    },
+    {
+      "case_id": "independent-2",
+      "stratum": "source_duplication",
+      "question": "Frozen source duplication research question independent-2.",
+      "obligations": [
+        {
+          "obligation_id": "independent-2-obligation",
+          "kind": "independence",
+          "importance": 3,
+          "closure_rule": "Acquire the pinned evidence for independence.",
+          "required_candidate_ids": [
+            "independent-2-answer"
+          ]
+        }
+      ],
+      "queries": [
+        {
+          "query_id": "independent-2-q0",
+          "purpose": "initial",
+          "obligation_id": null,
+          "candidate_ids": [
+            "independent-2-initial"
+          ]
+        },
+        {
+          "query_id": "independent-2-q1",
+          "purpose": "generic",
+          "obligation_id": null,
+          "candidate_ids": [
+            "independent-2-generic"
+          ]
+        },
+        {
+          "query_id": "independent-2-q2",
+          "purpose": "obligation",
+          "obligation_id": "independent-2-obligation",
+          "candidate_ids": [
+            "independent-2-answer"
+          ]
+        }
+      ],
+      "candidates": [
+        {
+          "candidate_id": "independent-2-initial",
+          "query_id": "independent-2-q0",
+          "canonical_id": "independent-2-initial",
+          "publisher_id": "independent-2-initial-publisher",
+          "closes_obligation_ids": [],
+          "acquired": true,
+          "derivative": false,
+          "material": false
+        },
+        {
+          "candidate_id": "independent-2-generic",
+          "query_id": "independent-2-q1",
+          "canonical_id": "independent-2-generic",
+          "publisher_id": "independent-2-initial-publisher",
+          "closes_obligation_ids": [
+            "independent-2-obligation"
+          ],
+          "acquired": true,
+          "derivative": false,
+          "material": true
+        },
+        {
+          "candidate_id": "independent-2-answer",
+          "query_id": "independent-2-q2",
+          "canonical_id": "independent-2-targeted",
+          "publisher_id": "independent-2-authority",
+          "closes_obligation_ids": [
+            "independent-2-obligation"
+          ],
+          "acquired": true,
+          "derivative": false,
+          "material": true
+        }
+      ]
+    },
+    {
+      "case_id": "conflict-1",
+      "stratum": "contradiction",
+      "question": "Frozen contradiction research question conflict-1.",
+      "obligations": [
+        {
+          "obligation_id": "conflict-1-obligation",
+          "kind": "contradiction",
+          "importance": 3,
+          "closure_rule": "Acquire the pinned evidence for contradiction.",
+          "required_candidate_ids": [
+            "conflict-1-answer"
+          ]
+        }
+      ],
+      "queries": [
+        {
+          "query_id": "conflict-1-q0",
+          "purpose": "initial",
+          "obligation_id": null,
+          "candidate_ids": [
+            "conflict-1-initial"
+          ]
+        },
+        {
+          "query_id": "conflict-1-q1",
+          "purpose": "generic",
+          "obligation_id": null,
+          "candidate_ids": [
+            "conflict-1-generic"
+          ]
+        },
+        {
+          "query_id": "conflict-1-q2",
+          "purpose": "obligation",
+          "obligation_id": "conflict-1-obligation",
+          "candidate_ids": [
+            "conflict-1-answer"
+          ]
+        }
+      ],
+      "candidates": [
+        {
+          "candidate_id": "conflict-1-initial",
+          "query_id": "conflict-1-q0",
+          "canonical_id": "conflict-1-initial",
+          "publisher_id": "conflict-1-initial-publisher",
+          "closes_obligation_ids": [],
+          "acquired": true,
+          "derivative": false,
+          "material": false
+        },
+        {
+          "candidate_id": "conflict-1-generic",
+          "query_id": "conflict-1-q1",
+          "canonical_id": "conflict-1-generic",
+          "publisher_id": "conflict-1-initial-publisher",
+          "closes_obligation_ids": [],
+          "acquired": true,
+          "derivative": true,
+          "material": false
+        },
+        {
+          "candidate_id": "conflict-1-answer",
+          "query_id": "conflict-1-q2",
+          "canonical_id": "conflict-1-targeted",
+          "publisher_id": "conflict-1-authority",
+          "closes_obligation_ids": [
+            "conflict-1-obligation"
+          ],
+          "acquired": true,
+          "derivative": false,
+          "material": true
+        }
+      ]
+    },
+    {
+      "case_id": "conflict-2",
+      "stratum": "contradiction",
+      "question": "Frozen contradiction research question conflict-2.",
+      "obligations": [
+        {
+          "obligation_id": "conflict-2-obligation",
+          "kind": "contradiction",
+          "importance": 3,
+          "closure_rule": "Acquire the pinned evidence for contradiction.",
+          "required_candidate_ids": [
+            "conflict-2-answer"
+          ]
+        }
+      ],
+      "queries": [
+        {
+          "query_id": "conflict-2-q0",
+          "purpose": "initial",
+          "obligation_id": null,
+          "candidate_ids": [
+            "conflict-2-initial"
+          ]
+        },
+        {
+          "query_id": "conflict-2-q1",
+          "purpose": "generic",
+          "obligation_id": null,
+          "candidate_ids": [
+            "conflict-2-generic"
+          ]
+        },
+        {
+          "query_id": "conflict-2-q2",
+          "purpose": "obligation",
+          "obligation_id": "conflict-2-obligation",
+          "candidate_ids": [
+            "conflict-2-answer"
+          ]
+        }
+      ],
+      "candidates": [
+        {
+          "candidate_id": "conflict-2-initial",
+          "query_id": "conflict-2-q0",
+          "canonical_id": "conflict-2-initial",
+          "publisher_id": "conflict-2-initial-publisher",
+          "closes_obligation_ids": [],
+          "acquired": true,
+          "derivative": false,
+          "material": false
+        },
+        {
+          "candidate_id": "conflict-2-generic",
+          "query_id": "conflict-2-q1",
+          "canonical_id": "conflict-2-generic",
+          "publisher_id": "conflict-2-initial-publisher",
+          "closes_obligation_ids": [],
+          "acquired": true,
+          "derivative": true,
+          "material": false
+        },
+        {
+          "candidate_id": "conflict-2-answer",
+          "query_id": "conflict-2-q2",
+          "canonical_id": "conflict-2-targeted",
+          "publisher_id": "conflict-2-authority",
+          "closes_obligation_ids": [
+            "conflict-2-obligation"
+          ],
+          "acquired": true,
+          "derivative": false,
+          "material": true
+        }
+      ]
+    },
+    {
+      "case_id": "entity-1",
+      "stratum": "entity_identity",
+      "question": "Frozen entity identity research question entity-1.",
+      "obligations": [
+        {
+          "obligation_id": "entity-1-obligation",
+          "kind": "entity_identity",
+          "importance": 3,
+          "closure_rule": "Acquire the pinned evidence for entity_identity.",
+          "required_candidate_ids": [
+            "entity-1-answer"
+          ]
+        }
+      ],
+      "queries": [
+        {
+          "query_id": "entity-1-q0",
+          "purpose": "initial",
+          "obligation_id": null,
+          "candidate_ids": [
+            "entity-1-initial"
+          ]
+        },
+        {
+          "query_id": "entity-1-q1",
+          "purpose": "generic",
+          "obligation_id": null,
+          "candidate_ids": [
+            "entity-1-generic"
+          ]
+        },
+        {
+          "query_id": "entity-1-q2",
+          "purpose": "obligation",
+          "obligation_id": "entity-1-obligation",
+          "candidate_ids": [
+            "entity-1-answer"
+          ]
+        }
+      ],
+      "candidates": [
+        {
+          "candidate_id": "entity-1-initial",
+          "query_id": "entity-1-q0",
+          "canonical_id": "entity-1-initial",
+          "publisher_id": "entity-1-initial-publisher",
+          "closes_obligation_ids": [],
+          "acquired": true,
+          "derivative": false,
+          "material": false
+        },
+        {
+          "candidate_id": "entity-1-generic",
+          "query_id": "entity-1-q1",
+          "canonical_id": "entity-1-generic",
+          "publisher_id": "entity-1-initial-publisher",
+          "closes_obligation_ids": [],
+          "acquired": true,
+          "derivative": true,
+          "material": false
+        },
+        {
+          "candidate_id": "entity-1-answer",
+          "query_id": "entity-1-q2",
+          "canonical_id": "entity-1-targeted",
+          "publisher_id": "entity-1-authority",
+          "closes_obligation_ids": [
+            "entity-1-obligation"
+          ],
+          "acquired": true,
+          "derivative": false,
+          "material": true
+        }
+      ]
+    },
+    {
+      "case_id": "low-rank-1",
+      "stratum": "low_rank",
+      "question": "Frozen low rank research question low-rank-1.",
+      "obligations": [
+        {
+          "obligation_id": "low-rank-1-obligation",
+          "kind": "support",
+          "importance": 3,
+          "closure_rule": "Acquire the pinned evidence for support.",
+          "required_candidate_ids": [
+            "low-rank-1-answer"
+          ]
+        }
+      ],
+      "queries": [
+        {
+          "query_id": "low-rank-1-q0",
+          "purpose": "initial",
+          "obligation_id": null,
+          "candidate_ids": [
+            "low-rank-1-initial"
+          ]
+        },
+        {
+          "query_id": "low-rank-1-q1",
+          "purpose": "generic",
+          "obligation_id": null,
+          "candidate_ids": [
+            "low-rank-1-generic"
+          ]
+        },
+        {
+          "query_id": "low-rank-1-q2",
+          "purpose": "obligation",
+          "obligation_id": "low-rank-1-obligation",
+          "candidate_ids": [
+            "low-rank-1-answer"
+          ]
+        }
+      ],
+      "candidates": [
+        {
+          "candidate_id": "low-rank-1-initial",
+          "query_id": "low-rank-1-q0",
+          "canonical_id": "low-rank-1-initial",
+          "publisher_id": "low-rank-1-initial-publisher",
+          "closes_obligation_ids": [],
+          "acquired": true,
+          "derivative": false,
+          "material": false
+        },
+        {
+          "candidate_id": "low-rank-1-generic",
+          "query_id": "low-rank-1-q1",
+          "canonical_id": "low-rank-1-generic",
+          "publisher_id": "low-rank-1-initial-publisher",
+          "closes_obligation_ids": [
+            "low-rank-1-obligation"
+          ],
+          "acquired": true,
+          "derivative": false,
+          "material": true
+        },
+        {
+          "candidate_id": "low-rank-1-answer",
+          "query_id": "low-rank-1-q2",
+          "canonical_id": "low-rank-1-targeted",
+          "publisher_id": "low-rank-1-authority",
+          "closes_obligation_ids": [
+            "low-rank-1-obligation"
+          ],
+          "acquired": true,
+          "derivative": false,
+          "material": true
+        }
+      ]
+    },
+    {
+      "case_id": "unknown-1",
+      "stratum": "unanswerable",
+      "question": "Frozen unanswerable research question unknown-1.",
+      "obligations": [
+        {
+          "obligation_id": "unknown-1-obligation",
+          "kind": "support",
+          "importance": 3,
+          "closure_rule": "Acquire the pinned evidence for support.",
+          "required_candidate_ids": [
+            "unknown-1-answer"
+          ]
+        }
+      ],
+      "queries": [
+        {
+          "query_id": "unknown-1-q0",
+          "purpose": "initial",
+          "obligation_id": null,
+          "candidate_ids": [
+            "unknown-1-initial"
+          ]
+        },
+        {
+          "query_id": "unknown-1-q1",
+          "purpose": "generic",
+          "obligation_id": null,
+          "candidate_ids": [
+            "unknown-1-generic"
+          ]
+        },
+        {
+          "query_id": "unknown-1-q2",
+          "purpose": "obligation",
+          "obligation_id": "unknown-1-obligation",
+          "candidate_ids": [
+            "unknown-1-answer"
+          ]
+        }
+      ],
+      "candidates": [
+        {
+          "candidate_id": "unknown-1-initial",
+          "query_id": "unknown-1-q0",
+          "canonical_id": "unknown-1-initial",
+          "publisher_id": "unknown-1-initial-publisher",
+          "closes_obligation_ids": [],
+          "acquired": true,
+          "derivative": false,
+          "material": false
+        },
+        {
+          "candidate_id": "unknown-1-generic",
+          "query_id": "unknown-1-q1",
+          "canonical_id": "unknown-1-generic",
+          "publisher_id": "unknown-1-initial-publisher",
+          "closes_obligation_ids": [],
+          "acquired": true,
+          "derivative": true,
+          "material": false
+        },
+        {
+          "candidate_id": "unknown-1-answer",
+          "query_id": "unknown-1-q2",
+          "canonical_id": "unknown-1-targeted",
+          "publisher_id": "unknown-1-authority",
+          "closes_obligation_ids": [],
+          "acquired": false,
+          "derivative": false,
+          "material": false
+        }
+      ]
+    }
+  ]
+}

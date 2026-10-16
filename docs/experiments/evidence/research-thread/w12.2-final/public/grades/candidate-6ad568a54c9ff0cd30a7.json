@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-6ad568a54c9ff0cd30a7",
+  "case_id": "syndicated-copy",
+  "completed_at": "2026-09-19T09:13:41.530849+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 50,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 50,
+    "lost_history": false,
+    "rationale": "The candidate correctly answers 'No': birch-press is BirchDB's self-reported claim, and birch-news-copy is verbatim syndication, so the candidate properly refuses to count the derivative copy as independent corroboration (no false merge; prohibited merge avoided). The current truth (BirchDB states it passed, self-reported) is captured fully and accurately. Deductions: the change event 'a derivative copy became available' is omitted from change_events and only implicit in prose (half credit), and historical_truths duplicates the still-current claim as if past, misclassifying it where the reference has no historical truths. The unresolved entry correctly states no independent confirmation exists, but glosses Cedar as 'the auditor,' which the sources do not establish ('Cedar security audit' only) — one minor unsupported claim. No superseded evidence was stated as current and no valid history was omitted.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 90,
+    "unsupported_claims": 1,
+    "usefulness": 90
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "c8713d9d2c8700c7d6bcebc54d9206a3065912fa05888e9a631c7380beec3bba",
+    "finish_reason": "stop",
+    "latency_ms": 57641.844,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "5aaea338dcff6c08509961d12bb205e5a7f7dd75adbb857a9762a4af46000c33",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 6000,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 5734
+      },
+      "cost": 0.00311985,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.003,
+        "upstream_inference_cost": 0.00311985,
+        "upstream_inference_prompt_cost": 0.00011985
+      },
+      "is_byok": false,
+      "prompt_tokens": 799,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 6799
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:12:43.885912+00:00",
+  "status": "completed",
+  "trial_id": "syndicated-copy-r3-control"
+}

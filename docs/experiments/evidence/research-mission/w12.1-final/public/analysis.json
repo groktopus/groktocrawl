@@ -1,0 +1,769 @@
+{
+  "disposition": "reject",
+  "gates": {
+    "anchor_regression": false,
+    "hard_boundary": true,
+    "operational": true,
+    "target_effect": false
+  },
+  "intake": {
+    "action_accuracy": 0.4,
+    "grade_count": 35,
+    "hard_boundary_failures": 11,
+    "mean_required_field_recall": 2.942857142857143,
+    "total_correction_actions": 94
+  },
+  "operations": {
+    "control": {
+      "hard_boundary_failures": 0,
+      "p95_latency_ms": 323629.3,
+      "total_cost": 0.043599735
+    },
+    "cost_increase": 0.11440952565422702,
+    "latency_increase": -0.2968812218176784,
+    "treatment": {
+      "hard_boundary_failures": 0,
+      "p95_latency_ms": 227549.838,
+      "total_cost": 0.04858796
+    }
+  },
+  "paired_case_repetitions": [
+    {
+      "case_id": "mission-straightforward-delivery",
+      "coverage_change": 0.0,
+      "decision_usefulness_change": 0,
+      "repetition": 1,
+      "scope_violation_change": 0,
+      "stratum": "straightforward"
+    },
+    {
+      "case_id": "mission-straightforward-delivery",
+      "coverage_change": 0.0,
+      "decision_usefulness_change": 4,
+      "repetition": 2,
+      "scope_violation_change": 0,
+      "stratum": "straightforward"
+    },
+    {
+      "case_id": "mission-straightforward-delivery",
+      "coverage_change": 0.0,
+      "decision_usefulness_change": 0,
+      "repetition": 3,
+      "scope_violation_change": 0,
+      "stratum": "straightforward"
+    },
+    {
+      "case_id": "mission-straightforward-security",
+      "coverage_change": 0.0,
+      "decision_usefulness_change": 0,
+      "repetition": 1,
+      "scope_violation_change": 0,
+      "stratum": "straightforward"
+    },
+    {
+      "case_id": "mission-straightforward-security",
+      "coverage_change": 0.0,
+      "decision_usefulness_change": -1,
+      "repetition": 2,
+      "scope_violation_change": 0,
+      "stratum": "straightforward"
+    },
+    {
+      "case_id": "mission-straightforward-security",
+      "coverage_change": 0.0,
+      "decision_usefulness_change": 0,
+      "repetition": 3,
+      "scope_violation_change": 0,
+      "stratum": "straightforward"
+    },
+    {
+      "case_id": "mission-ambiguous-ship",
+      "coverage_change": 0.0,
+      "decision_usefulness_change": -5,
+      "repetition": 1,
+      "scope_violation_change": 0,
+      "stratum": "ambiguous"
+    },
+    {
+      "case_id": "mission-ambiguous-ship",
+      "coverage_change": 0.0,
+      "decision_usefulness_change": 4,
+      "repetition": 2,
+      "scope_violation_change": 0,
+      "stratum": "ambiguous"
+    },
+    {
+      "case_id": "mission-ambiguous-ship",
+      "coverage_change": 0.0,
+      "decision_usefulness_change": 0,
+      "repetition": 3,
+      "scope_violation_change": 0,
+      "stratum": "ambiguous"
+    },
+    {
+      "case_id": "mission-ambiguous-productive",
+      "coverage_change": -0.5,
+      "decision_usefulness_change": -1,
+      "repetition": 1,
+      "scope_violation_change": 0,
+      "stratum": "ambiguous"
+    },
+    {
+      "case_id": "mission-ambiguous-productive",
+      "coverage_change": 0.0,
+      "decision_usefulness_change": -5,
+      "repetition": 2,
+      "scope_violation_change": 0,
+      "stratum": "ambiguous"
+    },
+    {
+      "case_id": "mission-ambiguous-productive",
+      "coverage_change": -0.5,
+      "decision_usefulness_change": -1,
+      "repetition": 3,
+      "scope_violation_change": 0,
+      "stratum": "ambiguous"
+    },
+    {
+      "case_id": "mission-compound-governance",
+      "coverage_change": 0.0,
+      "decision_usefulness_change": 0,
+      "repetition": 1,
+      "scope_violation_change": 0,
+      "stratum": "compound"
+    },
+    {
+      "case_id": "mission-compound-governance",
+      "coverage_change": 0.0,
+      "decision_usefulness_change": 0,
+      "repetition": 2,
+      "scope_violation_change": 0,
+      "stratum": "compound"
+    },
+    {
+      "case_id": "mission-compound-governance",
+      "coverage_change": 0.0,
+      "decision_usefulness_change": 0,
+      "repetition": 3,
+      "scope_violation_change": 0,
+      "stratum": "compound"
+    },
+    {
+      "case_id": "mission-compound-recovery-portability",
+      "coverage_change": 0.0,
+      "decision_usefulness_change": 3,
+      "repetition": 1,
+      "scope_violation_change": 0,
+      "stratum": "compound"
+    },
+    {
+      "case_id": "mission-compound-recovery-portability",
+      "coverage_change": 1.0,
+      "decision_usefulness_change": -1,
+      "repetition": 2,
+      "scope_violation_change": -1,
+      "stratum": "compound"
+    },
+    {
+      "case_id": "mission-compound-recovery-portability",
+      "coverage_change": 0.0,
+      "decision_usefulness_change": 0,
+      "repetition": 3,
+      "scope_violation_change": 0,
+      "stratum": "compound"
+    },
+    {
+      "case_id": "mission-temporal-exception",
+      "coverage_change": 0.0,
+      "decision_usefulness_change": 0,
+      "repetition": 2,
+      "scope_violation_change": 0,
+      "stratum": "temporal"
+    },
+    {
+      "case_id": "mission-temporal-exception",
+      "coverage_change": 0.0,
+      "decision_usefulness_change": 0,
+      "repetition": 3,
+      "scope_violation_change": 0,
+      "stratum": "temporal"
+    },
+    {
+      "case_id": "mission-temporal-provider",
+      "coverage_change": 0.0,
+      "decision_usefulness_change": -4,
+      "repetition": 1,
+      "scope_violation_change": 0,
+      "stratum": "temporal"
+    },
+    {
+      "case_id": "mission-temporal-provider",
+      "coverage_change": 0.0,
+      "decision_usefulness_change": -5,
+      "repetition": 2,
+      "scope_violation_change": -3,
+      "stratum": "temporal"
+    },
+    {
+      "case_id": "mission-temporal-provider",
+      "coverage_change": 0.0,
+      "decision_usefulness_change": -5,
+      "repetition": 3,
+      "scope_violation_change": 0,
+      "stratum": "temporal"
+    },
+    {
+      "case_id": "mission-contradictory-mirror",
+      "coverage_change": 0.0,
+      "decision_usefulness_change": -1,
+      "repetition": 1,
+      "scope_violation_change": 0,
+      "stratum": "contradictory_source"
+    },
+    {
+      "case_id": "mission-contradictory-mirror",
+      "coverage_change": 0.0,
+      "decision_usefulness_change": -86,
+      "repetition": 2,
+      "scope_violation_change": 0,
+      "stratum": "contradictory_source"
+    },
+    {
+      "case_id": "mission-contradictory-mirror",
+      "coverage_change": 0.0,
+      "decision_usefulness_change": 90,
+      "repetition": 3,
+      "scope_violation_change": 0,
+      "stratum": "contradictory_source"
+    },
+    {
+      "case_id": "mission-contradictory-hostile",
+      "coverage_change": 0.0,
+      "decision_usefulness_change": 0,
+      "repetition": 2,
+      "scope_violation_change": 0,
+      "stratum": "contradictory_source"
+    },
+    {
+      "case_id": "mission-contradictory-hostile",
+      "coverage_change": 0.0,
+      "decision_usefulness_change": 5,
+      "repetition": 3,
+      "scope_violation_change": 0,
+      "stratum": "contradictory_source"
+    },
+    {
+      "case_id": "mission-unanswerable-cost",
+      "coverage_change": -0.25,
+      "decision_usefulness_change": -3,
+      "repetition": 1,
+      "scope_violation_change": 0,
+      "stratum": "unanswerable"
+    },
+    {
+      "case_id": "mission-unanswerable-cost",
+      "coverage_change": -0.25,
+      "decision_usefulness_change": 0,
+      "repetition": 3,
+      "scope_violation_change": 0,
+      "stratum": "unanswerable"
+    },
+    {
+      "case_id": "mission-unanswerable-release",
+      "coverage_change": 0.0,
+      "decision_usefulness_change": -4,
+      "repetition": 1,
+      "scope_violation_change": 0,
+      "stratum": "unanswerable"
+    },
+    {
+      "case_id": "mission-unanswerable-release",
+      "coverage_change": 0.0,
+      "decision_usefulness_change": 0,
+      "repetition": 2,
+      "scope_violation_change": 0,
+      "stratum": "unanswerable"
+    }
+  ],
+  "repetition_gates": [
+    {
+      "control": {
+        "coverage": 1.0,
+        "scope_violations": 0.0
+      },
+      "coverage_gain": -0.125,
+      "passes": false,
+      "repetition": 1,
+      "scope_violation_relative_reduction": 0.0,
+      "treatment": {
+        "coverage": 0.875,
+        "scope_violations": 0.0
+      }
+    },
+    {
+      "control": {
+        "coverage": 0.75,
+        "scope_violations": 1.0
+      },
+      "coverage_gain": 0.25,
+      "passes": true,
+      "repetition": 2,
+      "scope_violation_relative_reduction": 1.0,
+      "treatment": {
+        "coverage": 1.0,
+        "scope_violations": 0.0
+      }
+    },
+    {
+      "control": {
+        "coverage": 1.0,
+        "scope_violations": 0.0
+      },
+      "coverage_gain": -0.125,
+      "passes": false,
+      "repetition": 3,
+      "scope_violation_relative_reduction": 0.0,
+      "treatment": {
+        "coverage": 0.875,
+        "scope_violations": 0.0
+      }
+    }
+  ],
+  "schema_version": "research-mission-analysis/1",
+  "sensitivity": {
+    "adjudicated_grades": {
+      "count": 20,
+      "repetition_gates": [
+        {
+          "control": {
+            "coverage": 1.0,
+            "scope_violations": 0.0
+          },
+          "coverage_gain": 0.0,
+          "passes": false,
+          "repetition": 1,
+          "scope_violation_relative_reduction": 0.0,
+          "treatment": {
+            "coverage": 1.0,
+            "scope_violations": 0.0
+          }
+        },
+        {
+          "control": {
+            "coverage": 1.0,
+            "scope_violations": 0.0
+          },
+          "coverage_gain": 0.0,
+          "passes": false,
+          "repetition": 2,
+          "scope_violation_relative_reduction": 0.0,
+          "treatment": {
+            "coverage": 1.0,
+            "scope_violations": 0.0
+          }
+        },
+        {
+          "control": {
+            "coverage": 1.0,
+            "scope_violations": 0.0
+          },
+          "coverage_gain": 0.0,
+          "passes": false,
+          "repetition": 3,
+          "scope_violation_relative_reduction": 0.0,
+          "treatment": {
+            "coverage": 1.0,
+            "scope_violations": 0.0
+          }
+        }
+      ]
+    },
+    "clarification_operations": {
+      "clarification": {
+        "count": 26,
+        "p95_latency_ms": 116613.203,
+        "total_cost": 0.02819984
+      },
+      "without_clarification": {
+        "count": 10,
+        "p95_latency_ms": 290809.272,
+        "total_cost": 0.05431193
+      }
+    },
+    "equal_obligation_weights": [
+      {
+        "control": {
+          "coverage": 1.0,
+          "scope_violations": 0.0
+        },
+        "coverage_gain": -0.125,
+        "passes": false,
+        "repetition": 1,
+        "scope_violation_relative_reduction": 0.0,
+        "treatment": {
+          "coverage": 0.875,
+          "scope_violations": 0.0
+        }
+      },
+      {
+        "control": {
+          "coverage": 0.75,
+          "scope_violations": 1.0
+        },
+        "coverage_gain": 0.25,
+        "passes": true,
+        "repetition": 2,
+        "scope_violation_relative_reduction": 1.0,
+        "treatment": {
+          "coverage": 1.0,
+          "scope_violations": 0.0
+        }
+      },
+      {
+        "control": {
+          "coverage": 1.0,
+          "scope_violations": 0.0
+        },
+        "coverage_gain": -0.125,
+        "passes": false,
+        "repetition": 3,
+        "scope_violation_relative_reduction": 0.0,
+        "treatment": {
+          "coverage": 0.875,
+          "scope_violations": 0.0
+        }
+      }
+    ],
+    "failed_trials": {
+      "count": 5,
+      "missing_case_repetition_gates": [
+        {
+          "control": {
+            "coverage": 1.0,
+            "scope_violations": 0.0
+          },
+          "coverage_gain": -0.125,
+          "passes": false,
+          "repetition": 1,
+          "scope_violation_relative_reduction": 0.0,
+          "treatment": {
+            "coverage": 0.875,
+            "scope_violations": 0.0
+          }
+        },
+        {
+          "control": {
+            "coverage": 0.75,
+            "scope_violations": 1.0
+          },
+          "coverage_gain": 0.25,
+          "passes": true,
+          "repetition": 2,
+          "scope_violation_relative_reduction": 1.0,
+          "treatment": {
+            "coverage": 1.0,
+            "scope_violations": 0.0
+          }
+        },
+        {
+          "control": {
+            "coverage": 1.0,
+            "scope_violations": 0.0
+          },
+          "coverage_gain": -0.125,
+          "passes": false,
+          "repetition": 3,
+          "scope_violation_relative_reduction": 0.0,
+          "treatment": {
+            "coverage": 0.875,
+            "scope_violations": 0.0
+          }
+        }
+      ],
+      "worst_case_repetition_gates": [
+        {
+          "control": {
+            "coverage": 1.0,
+            "scope_violations": 0.0
+          },
+          "coverage_gain": -0.125,
+          "passes": false,
+          "repetition": 1,
+          "scope_violation_relative_reduction": 0.0,
+          "treatment": {
+            "coverage": 0.875,
+            "scope_violations": 0.0
+          }
+        },
+        {
+          "control": {
+            "coverage": 0.75,
+            "scope_violations": 1.0
+          },
+          "coverage_gain": 0.25,
+          "passes": true,
+          "repetition": 2,
+          "scope_violation_relative_reduction": 1.0,
+          "treatment": {
+            "coverage": 1.0,
+            "scope_violations": 0.0
+          }
+        },
+        {
+          "control": {
+            "coverage": 1.0,
+            "scope_violations": 0.0
+          },
+          "coverage_gain": -0.125,
+          "passes": false,
+          "repetition": 3,
+          "scope_violation_relative_reduction": 0.0,
+          "treatment": {
+            "coverage": 0.875,
+            "scope_violations": 0.0
+          }
+        }
+      ],
+      "worst_case_rule": "missing treatment gets zero coverage, one scope violation, usefulness zero, and a hard-boundary failure; missing control gets full coverage, no scope violation, and usefulness 100"
+    },
+    "leave_one_case_out": [
+      {
+        "omitted_case_id": "mission-ambiguous-productive",
+        "repetition_gates": [
+          {
+            "control": {
+              "coverage": 1.0,
+              "scope_violations": 0.0
+            },
+            "coverage_gain": 0.0,
+            "passes": false,
+            "repetition": 1,
+            "scope_violation_relative_reduction": 0.0,
+            "treatment": {
+              "coverage": 1.0,
+              "scope_violations": 0.0
+            }
+          },
+          {
+            "control": {
+              "coverage": 1.0,
+              "scope_violations": 0.0
+            },
+            "coverage_gain": 0.0,
+            "passes": false,
+            "repetition": 2,
+            "scope_violation_relative_reduction": 0.0,
+            "treatment": {
+              "coverage": 1.0,
+              "scope_violations": 0.0
+            }
+          },
+          {
+            "control": {
+              "coverage": 1.0,
+              "scope_violations": 0.0
+            },
+            "coverage_gain": 0.0,
+            "passes": false,
+            "repetition": 3,
+            "scope_violation_relative_reduction": 0.0,
+            "treatment": {
+              "coverage": 1.0,
+              "scope_violations": 0.0
+            }
+          }
+        ],
+        "stratum": "ambiguous"
+      },
+      {
+        "omitted_case_id": "mission-ambiguous-ship",
+        "repetition_gates": [
+          {
+            "control": {
+              "coverage": 1.0,
+              "scope_violations": 0.0
+            },
+            "coverage_gain": -0.5,
+            "passes": false,
+            "repetition": 1,
+            "scope_violation_relative_reduction": 0.0,
+            "treatment": {
+              "coverage": 0.5,
+              "scope_violations": 0.0
+            }
+          },
+          {
+            "control": {
+              "coverage": 1.0,
+              "scope_violations": 0.0
+            },
+            "coverage_gain": 0.0,
+            "passes": false,
+            "repetition": 2,
+            "scope_violation_relative_reduction": 0.0,
+            "treatment": {
+              "coverage": 1.0,
+              "scope_violations": 0.0
+            }
+          },
+          {
+            "control": {
+              "coverage": 1.0,
+              "scope_violations": 0.0
+            },
+            "coverage_gain": -0.5,
+            "passes": false,
+            "repetition": 3,
+            "scope_violation_relative_reduction": 0.0,
+            "treatment": {
+              "coverage": 0.5,
+              "scope_violations": 0.0
+            }
+          }
+        ],
+        "stratum": "ambiguous"
+      },
+      {
+        "omitted_case_id": "mission-compound-governance",
+        "repetition_gates": [
+          {
+            "control": {
+              "coverage": 1.0,
+              "scope_violations": 0.0
+            },
+            "coverage_gain": 0.0,
+            "passes": false,
+            "repetition": 1,
+            "scope_violation_relative_reduction": 0.0,
+            "treatment": {
+              "coverage": 1.0,
+              "scope_violations": 0.0
+            }
+          },
+          {
+            "control": {
+              "coverage": 0.0,
+              "scope_violations": 1.0
+            },
+            "coverage_gain": 1.0,
+            "passes": true,
+            "repetition": 2,
+            "scope_violation_relative_reduction": 1.0,
+            "treatment": {
+              "coverage": 1.0,
+              "scope_violations": 0.0
+            }
+          },
+          {
+            "control": {
+              "coverage": 1.0,
+              "scope_violations": 0.0
+            },
+            "coverage_gain": 0.0,
+            "passes": false,
+            "repetition": 3,
+            "scope_violation_relative_reduction": 0.0,
+            "treatment": {
+              "coverage": 1.0,
+              "scope_violations": 0.0
+            }
+          }
+        ],
+        "stratum": "compound"
+      },
+      {
+        "omitted_case_id": "mission-compound-recovery-portability",
+        "repetition_gates": [
+          {
+            "control": {
+              "coverage": 1.0,
+              "scope_violations": 0.0
+            },
+            "coverage_gain": 0.0,
+            "passes": false,
+            "repetition": 1,
+            "scope_violation_relative_reduction": 0.0,
+            "treatment": {
+              "coverage": 1.0,
+              "scope_violations": 0.0
+            }
+          },
+          {
+            "control": {
+              "coverage": 1.0,
+              "scope_violations": 0.0
+            },
+            "coverage_gain": 0.0,
+            "passes": false,
+            "repetition": 2,
+            "scope_violation_relative_reduction": 0.0,
+            "treatment": {
+              "coverage": 1.0,
+              "scope_violations": 0.0
+            }
+          },
+          {
+            "control": {
+              "coverage": 1.0,
+              "scope_violations": 0.0
+            },
+            "coverage_gain": 0.0,
+            "passes": false,
+            "repetition": 3,
+            "scope_violation_relative_reduction": 0.0,
+            "treatment": {
+              "coverage": 1.0,
+              "scope_violations": 0.0
+            }
+          }
+        ],
+        "stratum": "compound"
+      }
+    ],
+    "partial_grades_counted_open": [
+      {
+        "control": {
+          "coverage": 1.0,
+          "scope_violations": 0.0
+        },
+        "coverage_gain": -0.25,
+        "passes": false,
+        "repetition": 1,
+        "scope_violation_relative_reduction": 0.0,
+        "treatment": {
+          "coverage": 0.75,
+          "scope_violations": 0.0
+        }
+      },
+      {
+        "control": {
+          "coverage": 0.75,
+          "scope_violations": 1.0
+        },
+        "coverage_gain": 0.25,
+        "passes": true,
+        "repetition": 2,
+        "scope_violation_relative_reduction": 1.0,
+        "treatment": {
+          "coverage": 1.0,
+          "scope_violations": 0.0
+        }
+      },
+      {
+        "control": {
+          "coverage": 1.0,
+          "scope_violations": 0.0
+        },
+        "coverage_gain": -0.25,
+        "passes": false,
+        "repetition": 3,
+        "scope_violation_relative_reduction": 0.0,
+        "treatment": {
+          "coverage": 0.75,
+          "scope_violations": 0.0
+        }
+      }
+    ]
+  },
+  "trial_count": 68
+}

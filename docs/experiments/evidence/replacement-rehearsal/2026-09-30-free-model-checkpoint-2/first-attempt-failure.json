@@ -1,0 +1,11 @@
+{
+  "checkpoint": 2,
+  "error": "Compatibility suite received HTTP 503 from /v2/agent; candidate logs recorded LLM health-check timeout.",
+  "error_type": "CalledProcessError",
+  "failed_at": "2026-09-30T19:37:04.399531+00:00",
+  "publication_sanitization": "w9-public-failure/1",
+  "schema_version": "w9-operational-checkpoint-failure/1",
+  "source_receipt_sha256": "08735f488434f3ef9a7e1a1b464727ad629493a50ee07fa5c781f9e2eb6e6b0a",
+  "started_at": "2026-09-30T19:34:06.598546+00:00",
+  "successful_operations": 0
+}

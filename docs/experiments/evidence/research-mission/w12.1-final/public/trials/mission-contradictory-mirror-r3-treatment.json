@@ -1,0 +1,98 @@
+{
+  "arm": "treatment",
+  "case_id": "mission-contradictory-mirror",
+  "completed_at": "2026-09-19T05:54:21.576345+00:00",
+  "position": 2,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "2459d6587f893e48fc44c93db36fc5ab7e8212014fa298c2d095d7b486eb21b5",
+    "finish_reason": "stop",
+    "latency_ms": 18367.319,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "495d24b26c994b92259a33000f0375782c5bfb86d4d2ff5ba87e79a5e55b90e8",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 1161,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 65
+      },
+      "cost": 0.00071955,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0005805,
+        "upstream_inference_cost": 0.00071955,
+        "upstream_inference_prompt_cost": 0.00013905
+      },
+      "is_byok": false,
+      "prompt_tokens": 927,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 2088
+    }
+  },
+  "repetition": 3,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Decision-support answer: Does the mirror add independent evidence for deployment authority? — **No** (conservative read of the supplied pack only) ### 1. The mirror is a duplicate, not independent corroboration The source titled **delivery-mirror** carries text that is identical, line for line, to **delivery-policy** (both state that the agent may open a pull request after tests pass and that production deployment requires service-owner approval plus a recorded rollback plan). Under the mission's source policy, derivative sources do not count as independent publishers, and the scope explicitly excludes counting duplicate text as a second authority. The mirror therefore adds **zero evidentiary weight** for deployment authority: it is the same content under a second identifier, not a second publisher confirming the same fact. The closure rule for o1 requires evaluating the *source relationship*, not the number of URLs — the relationship here is verbatim duplication. ### 2. The governing policy conditions stand on the primary source alone The operative deployment conditions come from **delivery-policy** as the primary authority: - The agent **may open a pull request after tests pass**. - **Production deployment requires approval by the service owner** and a **recorded rollback plan**. These conditions are stated without expansion: nothing in the supplied pack adds, waives, or extends them. ### 3. The sandbox context does not authorize production deployment **delivery-context** records that a sandbox experiment permitted *automatic deployment to disposable test environments only*, and explicitly states it did **not** authorize production deployment. This is consistent with the policy and reinforces that no automatic or self-service production path exists in the supplied record. ### 4. Contradictions and unresolved limits - **No contradiction found** among the three sources; the mirror agrees with the policy because it *is* the policy text, and the context is consistent with it. - **Unresolved limits:** the supplied pack cannot establish (a) who the service owner is for any given service, (b) the format or storage location of the required rollback plan, (c) whether any independent publisher (outside this pack) corroborates the policy, and (d) any approval workflow details beyond the two stated conditions. These gaps are left unresolved rather than filled by inference. ### Bottom line The mirror adds **no independent evidence** for deployment authority. Production deployment authority rests solely on the primary policy: service-owner approval plus a recorded rollback plan, with pull requests permitted only after tests pass, and no production authorization arising from the sandbox experiment.",
+    "candidate_id": "candidate-d515e1349ad9ebb2a152",
+    "citations": [
+      "delivery-policy",
+      "delivery-mirror",
+      "delivery-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-mirror"
+        ],
+        "text": "The mirror (delivery-mirror) contains text identical to the primary policy (delivery-policy), making it a duplicate rather than an independent publisher.",
+        "uncertainty": "No material uncertainty: the two texts are verbatim identical in the supplied pack; no independent publisher status can be attributed to the mirror."
+      },
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-mirror"
+        ],
+        "text": "The agent may open a pull request after tests pass.",
+        "uncertainty": "No material uncertainty as to the stated condition; the mirror adds no independent weight because it duplicates the primary source."
+      },
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-mirror"
+        ],
+        "text": "Production deployment requires approval by the service owner and a recorded rollback plan.",
+        "uncertainty": "The conditions are stated without expansion; the pack does not identify the service owner, the rollback-plan format, or the approval workflow."
+      },
+      {
+        "source_ids": [
+          "delivery-context"
+        ],
+        "text": "A sandbox experiment allowed automatic deployment to disposable test environments only and did not authorize production deployment.",
+        "uncertainty": "No material uncertainty: the context explicitly disclaims production authorization; it establishes no production deployment path."
+      },
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-mirror",
+          "delivery-context"
+        ],
+        "text": "No independent corroboration of the deployment policy exists within the supplied pack; the minimum independent publisher requirement is met only by the primary policy itself.",
+        "uncertainty": "The pack cannot establish whether any independent publisher outside the supplied sources corroborates the policy; that remains unresolved."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:54:03.208499+00:00",
+  "status": "completed",
+  "trial_id": "mission-contradictory-mirror-r3-treatment"
+}

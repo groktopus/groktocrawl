@@ -1,0 +1,114 @@
+{
+  "arm": "treatment",
+  "case_id": "mission-contradictory-mirror",
+  "completed_at": "2026-09-19T05:44:39.413747+00:00",
+  "position": 2,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "32ccdf853b481f28a46c786ea9d8c5f4a6823008010a6800378c4ceadd66e6a0",
+    "finish_reason": "stop",
+    "latency_ms": 24736.76,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "d7b5b24de6ef591629cf4ae9e944680e9de137b1b8a1e2c7d78703fea614571e",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 4209,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 4066
+      },
+      "cost": 0.0022434,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0021045,
+        "upstream_inference_cost": 0.0022434,
+        "upstream_inference_prompt_cost": 0.0001389
+      },
+      "is_byok": false,
+      "prompt_tokens": 926,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 5135
+    }
+  },
+  "repetition": 1,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Decision: the mirror adds no independent evidence for deployment authority (q1: No.) `delivery-mirror` is a verbatim duplicate of `delivery-policy` and is explicitly labeled a mirror. It is a derivative copy of the same record, not a second independent publisher. Under the source policy, derivative sources do not count as independent, so the evidence base contains **one** authority, not two. Counting the mirror as corroboration would inflate confidence without adding evidentiary weight — the source relationship (identical content plus mirror label) was evaluated, not the number of URLs. ### Governing conditions (stated without expansion) - An agent **may open a pull request after tests pass** — a code-integration permission, not deployment authorization. - **Production deployment requires both:** (1) approval by the service owner and (2) a recorded rollback plan. - The context record confirms the boundary: a sandbox experiment allowed automatic deployment **only to disposable test environments** and did not authorize production deployment. ### Contradiction check (preserve and report) No substantive contradiction exists among the three sources: the policy and its mirror are identical, and the context is consistent with the policy. The only evidentiary issue is **duplication**, which is preserved and reported here rather than resolved by counting a second URL as a second authority. ### Unresolved limits The supplied pack cannot establish: the identity of the service owner; how approval is recorded; the required form or location of the rollback plan; whether any specific production deployment has been approved; or the mirror's upstream provenance beyond its label and identical text. No approval event or measurement is present in the evidence.",
+    "candidate_id": "candidate-ebd57cb5a0d5c905b765",
+    "citations": [
+      "delivery-policy",
+      "delivery-mirror",
+      "delivery-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-mirror"
+        ],
+        "text": "The mirror is a verbatim duplicate of the governing policy and is explicitly labeled a mirror; it is a derivative copy, not an independent publisher.",
+        "uncertainty": "The pack provides no provenance metadata beyond the mirror label and the identical text; the duplicate classification rests on those two signals."
+      },
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-mirror"
+        ],
+        "text": "The mirror adds no independent corroboration for deployment authority; the evidence base contains a single authority (the policy), which satisfies the minimum of one independent publisher but does not provide two.",
+        "uncertainty": "No material uncertainty beyond the provenance limit noted above."
+      },
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-mirror"
+        ],
+        "text": "Production deployment requires approval by the service owner and a recorded rollback plan; these conditions are stated without expansion.",
+        "uncertainty": "None; the conditions are stated directly in the policy and restated identically in the mirror."
+      },
+      {
+        "source_ids": [
+          "delivery-policy"
+        ],
+        "text": "The agent may open a pull request after tests pass; this permission does not itself authorize production deployment.",
+        "uncertainty": "None within the pack; the policy grants only the pull-request permission."
+      },
+      {
+        "source_ids": [
+          "delivery-context"
+        ],
+        "text": "A sandbox experiment permitted automatic deployment only to disposable test environments and did not authorize production deployment.",
+        "uncertainty": "None within the pack; the context does not further define the experiment's scope."
+      },
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-mirror",
+          "delivery-context"
+        ],
+        "text": "No substantive contradiction exists among the three sources; the only evidentiary issue is duplication, which is preserved and reported rather than counted as a second authority.",
+        "uncertainty": "None."
+      },
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-mirror",
+          "delivery-context"
+        ],
+        "text": "The pack cannot establish the service owner's identity, the approval recording mechanism, the required form or location of the rollback plan, whether any specific production deployment was approved, or the mirror's upstream provenance.",
+        "uncertainty": "These items are absent from the supplied evidence and remain unresolved; no approval event or measurement is present."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:44:14.675621+00:00",
+  "status": "completed",
+  "trial_id": "mission-contradictory-mirror-r1-treatment"
+}

@@ -1,0 +1,95 @@
+{
+  "case_id": "contradicted-delivery",
+  "completed_at": "2026-09-19T10:10:38.650511+00:00",
+  "completion_attempt": 1,
+  "position": 30,
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "a0fddfafcbc401bac46791db5f2919d2410834d139e5cc4042d347d0d167fa19",
+    "finish_reason": "stop",
+    "latency_ms": 14523.807,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "e95e1dede5bb56c87e93f0a5b0b5328475a08832ae1004568812341c9129759c",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 943,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 1060
+      },
+      "cost": 0.0005297,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0004715,
+        "upstream_inference_cost": 0.0005297,
+        "upstream_inference_prompt_cost": 5.82e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 388,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1331
+    }
+  },
+  "repetition": 3,
+  "schema_version": "claim-verification-trial/1",
+  "started_at": "2026-09-19T10:10:24.124631+00:00",
+  "status": "completed",
+  "trial_id": "contradicted-delivery-r3",
+  "verification": {
+    "checked_input": {
+      "case_id": "contradicted-delivery",
+      "claim": "The event API guarantees exactly-once delivery.",
+      "claim_id": "claim-contradicted-delivery",
+      "evidence": [
+        {
+          "contains_instructions": false,
+          "source_id": "source-delivery-doc",
+          "source_kind": "primary",
+          "span_id": "delivery-doc",
+          "temporal_status": "current",
+          "text": "The event API provides exactly-once delivery."
+        },
+        {
+          "contains_instructions": false,
+          "source_id": "source-delivery-incident",
+          "source_kind": "primary",
+          "span_id": "delivery-incident",
+          "temporal_status": "current",
+          "text": "Incident DQ-17 caused duplicate delivery for acknowledged events."
+        }
+      ],
+      "evidence_obligation": "Current operational evidence consistent with the documentation.",
+      "risk": "high",
+      "schema_version": "claim-verification-input/1"
+    },
+    "checked_input_digest": "c255f9bac69992e6b44ced5d3f34dbe5955aa623ed66f83e2613b20d5ec7e173",
+    "confidence": 90,
+    "contradiction_span_ids": [
+      "delivery-incident"
+    ],
+    "evidence_span_ids": [
+      "delivery-doc",
+      "delivery-incident"
+    ],
+    "publish_recommendation": false,
+    "reason": "The documentation (delivery-doc) asserts exactly-once delivery, but current operational evidence (delivery-incident) records that incident DQ-17 caused duplicate delivery for acknowledged events, directly conflicting with the claimed guarantee. The evidence obligation requires operational evidence consistent with the documentation, and it is not.",
+    "schema_version": "independent-claim-verification/1",
+    "verdict": "contradicted",
+    "verification_id": "verification-contradicted-delivery-r3",
+    "verifier": {
+      "model": "general",
+      "prompt_version": "w12.3-verifier/1",
+      "route": "local-litellm"
+    }
+  }
+}

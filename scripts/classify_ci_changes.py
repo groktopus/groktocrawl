@@ -35,6 +35,10 @@ RUNTIME_SERVICES = (
     "mcp-svc",
 )
 
+# Images used by the protected deployment override, validated in the required
+# research-runtime workflow rather than the base Compose service-local lane.
+PROTECTED_IMAGE_SERVICES = ("capture-egress-svc", "flare-control", "flare-protected")
+
 # Paths whose change affects every service image.
 _CROSS_CUTTING_PATHS = ("docker-compose.yml",)
 _COMMON_PREFIX = "common/"
@@ -51,6 +55,8 @@ _TWIN_EXACT_PATHS = frozenset(
     {
         "docker-compose.yml",
         ".github/workflows/docker.yml",
+        ".github/workflows/runtime.yml",
+        "docker-compose.ci.yml",
         ".github/workflows/live-calibration.yml",
     }
 )

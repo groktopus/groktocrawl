@@ -1,0 +1,8 @@
+{
+  "case_id": "simple-2",
+  "error": "'preferred'",
+  "error_type": "KeyError",
+  "repetition": 1,
+  "status": "failed",
+  "trial_id": "simple-2-r1"
+}

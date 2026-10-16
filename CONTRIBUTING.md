@@ -255,3 +255,8 @@ A pull request template is available at `.github/PULL_REQUEST_TEMPLATE.md`. Fill
 ## License
 
 By contributing, you agree that your contributions will be licensed under the MIT License.
+
+
+## Experimental research changes
+
+Research-substrate changes in `agent-svc/agent/experimental/` must preserve the existing public interfaces and behavior by default. Read [ADR-0069](docs/adr/0069-adopt-bounded-research-substrate.md) before changing execution, evidence, knowledge, or artifact persistence. Document feature gates and schema versions, include explicit migration and rollback behavior when state changes, and keep experimental capabilities clearly labeled until their separate promotion checks are complete. The [GroktoCrawl X ADR archive](docs/adr/experimental/groktocrawl-x/README.md) preserves historical decisions; use the mainline ADR index for current decisions.

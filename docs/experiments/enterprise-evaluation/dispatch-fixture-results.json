@@ -1,0 +1,251 @@
+{
+  "schema_version": "scoped-dispatch-evidence/1",
+  "scope": "trusted_local_owner_no_external_effects",
+  "date": "2026-09-05",
+  "passed_tests": 76,
+  "full_catalog_execution": false,
+  "input_files_sha256": {
+    "agent-svc/agent/experimental/controller.py": "cf63c64ba8262bc4f756f5a2a87561e65ba6fcc250fdb195fc2a67eb06b9e68f",
+    "tests/unit/test_scripted_controller.py": "77fb2963fdbf990e6400860200d813e2dc0a030cebe3cd5b06e469008ebde552"
+  },
+  "traces": [
+    {
+      "variant": "matching",
+      "calls": [
+        "acquire",
+        "publish"
+      ],
+      "outcome": "completed",
+      "reason": "coverage_satisfied",
+      "accounting": {
+        "run_id": "run1",
+        "policy_version": "fixture/1",
+        "revision": 5,
+        "state": "completed",
+        "limit": {
+          "searches": 0,
+          "sources": 3,
+          "tokens": 0,
+          "cost_microusd": 0
+        },
+        "max_operations": 2,
+        "spent": {
+          "searches": 0,
+          "sources": 2,
+          "tokens": 0,
+          "cost_microusd": 0
+        },
+        "reserved": {
+          "searches": 0,
+          "sources": 0,
+          "tokens": 0,
+          "cost_microusd": 0
+        },
+        "operations": [
+          {
+            "operation_id": "op0",
+            "input_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "reserved": {
+              "searches": 0,
+              "sources": 1,
+              "tokens": 0,
+              "cost_microusd": 0
+            },
+            "state": "completed",
+            "output_id": "snapshot-ref",
+            "actual": {
+              "searches": 0,
+              "sources": 1,
+              "tokens": 0,
+              "cost_microusd": 0
+            }
+          },
+          {
+            "operation_id": "op1",
+            "input_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "reserved": {
+              "searches": 0,
+              "sources": 1,
+              "tokens": 0,
+              "cost_microusd": 0
+            },
+            "state": "completed",
+            "output_id": "set1",
+            "actual": {
+              "searches": 0,
+              "sources": 1,
+              "tokens": 0,
+              "cost_microusd": 0
+            }
+          }
+        ]
+      },
+      "scope": "trusted_local_owner_no_external_effects"
+    },
+    {
+      "variant": "empty",
+      "calls": [],
+      "outcome": "failed",
+      "reason": "operation_not_authorized",
+      "accounting": {
+        "run_id": "run1",
+        "policy_version": "fixture/1",
+        "revision": 1,
+        "state": "failed",
+        "limit": {
+          "searches": 0,
+          "sources": 3,
+          "tokens": 0,
+          "cost_microusd": 0
+        },
+        "max_operations": 2,
+        "spent": {
+          "searches": 0,
+          "sources": 0,
+          "tokens": 0,
+          "cost_microusd": 0
+        },
+        "reserved": {
+          "searches": 0,
+          "sources": 0,
+          "tokens": 0,
+          "cost_microusd": 0
+        },
+        "operations": []
+      },
+      "scope": "trusted_local_owner_no_external_effects"
+    },
+    {
+      "variant": "input",
+      "calls": [],
+      "outcome": "failed",
+      "reason": "operation_not_authorized",
+      "accounting": {
+        "run_id": "run1",
+        "policy_version": "fixture/1",
+        "revision": 1,
+        "state": "failed",
+        "limit": {
+          "searches": 0,
+          "sources": 3,
+          "tokens": 0,
+          "cost_microusd": 0
+        },
+        "max_operations": 2,
+        "spent": {
+          "searches": 0,
+          "sources": 0,
+          "tokens": 0,
+          "cost_microusd": 0
+        },
+        "reserved": {
+          "searches": 0,
+          "sources": 0,
+          "tokens": 0,
+          "cost_microusd": 0
+        },
+        "operations": []
+      },
+      "scope": "trusted_local_owner_no_external_effects"
+    },
+    {
+      "variant": "output",
+      "calls": [],
+      "outcome": "failed",
+      "reason": "operation_not_authorized",
+      "accounting": {
+        "run_id": "run1",
+        "policy_version": "fixture/1",
+        "revision": 1,
+        "state": "failed",
+        "limit": {
+          "searches": 0,
+          "sources": 3,
+          "tokens": 0,
+          "cost_microusd": 0
+        },
+        "max_operations": 2,
+        "spent": {
+          "searches": 0,
+          "sources": 0,
+          "tokens": 0,
+          "cost_microusd": 0
+        },
+        "reserved": {
+          "searches": 0,
+          "sources": 0,
+          "tokens": 0,
+          "cost_microusd": 0
+        },
+        "operations": []
+      },
+      "scope": "trusted_local_owner_no_external_effects"
+    },
+    {
+      "variant": "budget",
+      "calls": [],
+      "outcome": "failed",
+      "reason": "operation_not_authorized",
+      "accounting": {
+        "run_id": "run1",
+        "policy_version": "fixture/1",
+        "revision": 1,
+        "state": "failed",
+        "limit": {
+          "searches": 0,
+          "sources": 3,
+          "tokens": 0,
+          "cost_microusd": 0
+        },
+        "max_operations": 2,
+        "spent": {
+          "searches": 0,
+          "sources": 0,
+          "tokens": 0,
+          "cost_microusd": 0
+        },
+        "reserved": {
+          "searches": 0,
+          "sources": 0,
+          "tokens": 0,
+          "cost_microusd": 0
+        },
+        "operations": []
+      },
+      "scope": "trusted_local_owner_no_external_effects"
+    },
+    {
+      "variant": "identity",
+      "calls": [],
+      "outcome": "failed",
+      "reason": "operation_not_authorized",
+      "accounting": {
+        "run_id": "run1",
+        "policy_version": "fixture/1",
+        "revision": 1,
+        "state": "failed",
+        "limit": {
+          "searches": 0,
+          "sources": 3,
+          "tokens": 0,
+          "cost_microusd": 0
+        },
+        "max_operations": 2,
+        "spent": {
+          "searches": 0,
+          "sources": 0,
+          "tokens": 0,
+          "cost_microusd": 0
+        },
+        "reserved": {
+          "searches": 0,
+          "sources": 0,
+          "tokens": 0,
+          "cost_microusd": 0
+        },
+        "operations": []
+      },
+      "scope": "trusted_local_owner_no_external_effects"
+    }
+  ]
+}

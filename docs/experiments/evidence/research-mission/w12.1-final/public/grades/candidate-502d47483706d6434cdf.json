@@ -1,0 +1,65 @@
+{
+  "candidate_id": "candidate-502d47483706d6434cdf",
+  "case_id": "mission-temporal-provider",
+  "completed_at": "2026-09-19T06:22:24.327716+00:00",
+  "grade": {
+    "appropriate_abstention": "not_applicable",
+    "decision_usefulness": 0,
+    "decision_usefulness_rationale": "The candidate directly answers the decision question: the supplied record is not sufficient to approve the switch, and it enumerates exactly what is missing (frozen-suite run results, version pins, declared resource limits, adapter identity/cancellation conformance evidence, review methodology). It correctly time-binds the verdict to the 2026-09-19 as-of date per the freshness mode and notes re-evaluation is required. It states unresolved limits (whether the vendor could pass the gate is not established by the pack), which matches the acceptable_uncertainty standard. This is actionable for the stated audience.",
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "No invented authority: only the two supplied sources are cited and no external standards or measurements are introduced. No silent scope broadening: historical provider performance (excluded scope) is never invoked. Freshness constraint preserved: the verdict is explicitly as-of 2026-09-19. No unauthorized action: the candidate recommends rejection rather than approving a switch. The prohibited assumption ('enterprise ready and faster identifies a tested model version') is explicitly avoided — the candidate treats these claims as unverified marketing assertions with no version pins, which is exactly what platform-context states. The candidate's inference that the packet fails the gate is a valid deduction from the two sources, not an invented fact: the policy states the requirements and the context source states the brochure omits the corresponding evidence. The argument-from-silence on adapter identity/cancellation evidence is sound because the supplied brochure text contains no such evidence and the closure rule requires naming every missing gate. Minor nitpick only: the phrase 'single authoritative source' is a slight interpretive gloss on the two-source pack (platform-context is fixture context, not an independent authority), but this does not misstate any source content and does not affect the decision.",
+    "obligation_grades": {
+      "o1": {
+        "rationale": "Obligation fully satisfied. The candidate names every gate component from platform-policy as unmet: (1) frozen task suite (no comparison workload supplied), (2) provenance checks (no version pins), (3) declared resource limits (absent from vendor material), (4) tool-result identity preservation (no evidence supplied), (5) cancellation semantics (no evidence supplied). It additionally reports the brochure's stated omissions (error distribution, review methodology) as counterevidence against the 'enterprise ready'/'faster' claims. The closure rule is met: every missing gate is named and the approval is rejected ('Not approvable', 'reject approval pending...'). The counterevidence role is honored — the vendor note's omissions are used against approval, not ignored.",
+        "source_ids": [
+          "platform-policy",
+          "platform-context"
+        ],
+        "status": "closed"
+      }
+    },
+    "scope_violations": [],
+    "supported_material_claims": 5,
+    "total_material_claims": 5
+  },
+  "position": 47,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "83b0e37ac6e3806f0dfa4fcfaead1c464e82cc0e3f73c1012e091d7aef80181f",
+    "finish_reason": "stop",
+    "latency_ms": 47338.016,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "30f53e7f8372458e1521f6109970ad3f771ca235c0f41ab2239f901275087567",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 7219,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 8069
+      },
+      "cost": 0.00384245,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0036095,
+        "upstream_inference_cost": 0.00384245,
+        "upstream_inference_prompt_cost": 0.00023295
+      },
+      "is_byok": false,
+      "prompt_tokens": 1553,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 8772
+    }
+  },
+  "schema_version": "research-mission-grade/1",
+  "started_at": "2026-09-19T06:21:36.986591+00:00",
+  "status": "completed"
+}

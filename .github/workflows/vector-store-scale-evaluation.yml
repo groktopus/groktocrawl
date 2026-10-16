@@ -1,0 +1,182 @@
+name: Vector Store Scale Evaluation
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Optional stable identifier for this isolated scale run
+        required: false
+        type: string
+      sizes:
+        description: Comma-separated synthetic corpus sizes
+        required: false
+        default: 100,500,1000
+        type: string
+      rounds:
+        description: Paired repetitions against fresh provider resources
+        required: false
+        default: 3
+        type: number
+      dimension:
+        description: Vector dimension (1024 matches the inherited BGE-M3 default)
+        required: false
+        default: 3
+        type: number
+      batch_size:
+        description: Maximum records per provider bulk request
+        required: false
+        default: 1000
+        type: number
+      operations:
+        description: Mixed search/write operations per provider, size, and round
+        required: false
+        default: 80
+        type: number
+
+permissions:
+  contents: read
+
+jobs:
+  evaluate:
+    name: Measure bounded scale and mixed load
+    runs-on: ubuntu-latest
+    env:
+      COMPOSE_PROJECT_NAME: groktocrawl-x-vector-scale-${{ github.run_id }}
+      VECTOR_EVAL_POSTGRES_PASSWORD: vector-scale-${{ github.run_id }}-${{ github.run_attempt }}
+      VECTOR_EVAL_RUN_ID: ${{ inputs.run_id || format('scale-{0}', github.run_id) }}
+      VECTOR_EVAL_SIZES: ${{ inputs.sizes || '100,500,1000' }}
+      VECTOR_EVAL_ROUNDS: ${{ inputs.rounds || 3 }}
+      VECTOR_EVAL_DIMENSION: ${{ inputs.dimension || 3 }}
+      VECTOR_EVAL_BATCH_SIZE: ${{ inputs.batch_size || 1000 }}
+      VECTOR_EVAL_OPERATIONS: ${{ inputs.operations || 80 }}
+    steps:
+      - name: Check out fork
+        uses: actions/checkout@v5
+
+      - name: Validate isolated Compose file
+        run: docker compose -f compose.vector-evaluation.yml --profile vector-eval config --quiet
+
+      - name: Start isolated vector services
+        run: docker compose -f compose.vector-evaluation.yml --profile vector-eval up -d --wait vector-eval-qdrant vector-eval-postgres
+
+      - name: Create private evaluation runner
+        run: |
+          mkdir -p vector-scale-out
+          qdrant_container=$(docker compose -f compose.vector-evaluation.yml --profile vector-eval ps -q vector-eval-qdrant)
+          eval_network=$(docker inspect "$qdrant_container" --format '{{range $name, $_ := .NetworkSettings.Networks}}{{$name}}{{end}}')
+          echo "::add-mask::$VECTOR_EVAL_POSTGRES_PASSWORD"
+          runner=$(docker run -d --network bridge \
+            -e VECTOR_EVAL_POSTGRES_PASSWORD \
+            -e VECTOR_EVAL_RUN_ID \
+            -e VECTOR_EVAL_SIZES \
+            -e VECTOR_EVAL_ROUNDS \
+            -e VECTOR_EVAL_DIMENSION \
+            -e VECTOR_EVAL_BATCH_SIZE \
+            -e VECTOR_EVAL_OPERATIONS \
+            -v "$GITHUB_WORKSPACE:/workspace:ro" \
+            -v "$GITHUB_WORKSPACE/vector-scale-out:/out" \
+            -w /workspace python:3.12-slim sleep 2400)
+          echo "$runner" > runner-id
+          docker network connect "$eval_network" "$runner"
+          echo "RUNNER_ID=$runner" >> "$GITHUB_ENV"
+
+      - name: Run bounded scale and mixed-load probes
+        run: |
+          qdrant_container=$(docker compose -f compose.vector-evaluation.yml --profile vector-eval ps -q vector-eval-qdrant)
+          postgres_container=$(docker compose -f compose.vector-evaluation.yml --profile vector-eval ps -q vector-eval-postgres)
+          printf 'timestamp,container,cpu_percent,memory_usage,memory_percent,network_io,block_io,pids\n' \
+            > vector-scale-out/docker-stats-series.csv
+          printf 'timestamp,event,round,provider\n' > vector-scale-out/workload-phases.csv
+          (
+            while true; do
+              timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+              docker stats --no-stream --format '{{.Name}},{{.CPUPerc}},{{.MemUsage}},{{.MemPerc}},{{.NetIO}},{{.BlockIO}},{{.PIDs}}' \
+                "$postgres_container" "$qdrant_container" |
+                while IFS= read -r row; do
+                  printf '%s,%s\n' "$timestamp" "$row"
+                done
+              sleep 2
+            done
+          ) >> vector-scale-out/docker-stats-series.csv &
+          stats_pid=$!
+          trap 'kill "$stats_pid" >/dev/null 2>&1 || true; wait "$stats_pid" >/dev/null 2>&1 || true' EXIT
+          docker exec "$RUNNER_ID" sh -ceu '
+            python -m pip install --disable-pip-version-check --no-cache-dir \
+              "psycopg[binary]==3.3.5" "qdrant-client>=1.13.0,<1.20.0"
+            case "$VECTOR_EVAL_ROUNDS" in
+              ""|*[!0-9]*) echo "rounds must be an integer" >&2; exit 2 ;;
+            esac
+            [ "$VECTOR_EVAL_ROUNDS" -ge 1 ] && [ "$VECTOR_EVAL_ROUNDS" -le 10 ] || {
+              echo "rounds must be between 1 and 10" >&2
+              exit 2
+            }
+            for round in $(seq 1 "$VECTOR_EVAL_ROUNDS"); do
+              for provider in qdrant pgvector; do
+                printf "%s,start,%s,%s\n" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$round" "$provider" \
+                  >> /out/workload-phases.csv
+                python scripts/run_vector_store_scale_evaluation.py \
+                  --provider "$provider" \
+                  --qdrant-url http://vector-eval-qdrant:6333 \
+                  --postgres-dsn "postgresql://vector_eval:${VECTOR_EVAL_POSTGRES_PASSWORD}@vector-eval-postgres:5432/vector_eval" \
+                  --run-id "${VECTOR_EVAL_RUN_ID}-round-${round}" \
+                  --sizes "$VECTOR_EVAL_SIZES" \
+                  --workers 4 \
+                  --operations "$VECTOR_EVAL_OPERATIONS" \
+                  --dimension "$VECTOR_EVAL_DIMENSION" \
+                  --batch-size "$VECTOR_EVAL_BATCH_SIZE" \
+                  --allow-isolated-database \
+                  --output "/out/${provider}-round-${round}.json"
+                printf "%s,finish,%s,%s\n" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$round" "$provider" \
+                  >> /out/workload-phases.csv
+              done
+            done
+          '
+          kill "$stats_pid" >/dev/null 2>&1 || true
+          wait "$stats_pid" >/dev/null 2>&1 || true
+          trap - EXIT
+
+      - name: Capture isolated container resource snapshot
+        run: |
+          docker stats --no-stream --no-trunc \
+            $(docker compose -f compose.vector-evaluation.yml --profile vector-eval ps -q vector-eval-qdrant vector-eval-postgres) \
+            > vector-scale-out/docker-stats.txt
+
+      - name: Enforce scale and mixed-load gates
+        run: |
+          python - <<'PY'
+          import csv
+          import json
+          import os
+          from pathlib import Path
+          rounds = int(os.environ["VECTOR_EVAL_ROUNDS"])
+          for provider in ("qdrant", "pgvector"):
+              paths = sorted(Path("vector-scale-out").glob(f"{provider}-round-*.json"))
+              assert len(paths) == rounds, paths
+              for path in paths:
+                  result = json.loads(path.read_text())
+                  assert result["production_change"] is False
+                  assert result["qdrant_removal"] is False
+                  assert result["ok"] is True, result
+                  assert all(item["ok"] for item in result["sizes"]), result
+                  assert all(item["mixed_load"]["failed_operations"] == 0 for item in result["sizes"]), result
+          with Path("vector-scale-out/workload-phases.csv").open(newline="") as handle:
+              phases = list(csv.DictReader(handle))
+          assert len(phases) == rounds * 4, phases
+          assert {row["event"] for row in phases} == {"start", "finish"}, phases
+          assert {row["provider"] for row in phases} == {"qdrant", "pgvector"}, phases
+          print("scale and mixed-load gates passed")
+          PY
+
+      - name: Upload scale evidence
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: vector-store-scale-evaluation-${{ github.run_id }}
+          path: vector-scale-out/
+          if-no-files-found: warn
+
+      - name: Stop isolated vector services
+        if: always()
+        run: |
+          docker rm -f "$RUNNER_ID" >/dev/null 2>&1 || true
+          docker compose -f compose.vector-evaluation.yml --profile vector-eval down --volumes --remove-orphans --timeout 30

@@ -11,12 +11,20 @@ lives in ``fetch_quality.py``. Cache functions live in ``cache.py``.
 import asyncio
 import logging
 import os
+import re
 from urllib.parse import urlparse
 
 import httpx
 from curl_cffi import requests as curl_requests
 
 from .adapters.base import AdapterContext, get_registry
+from .barrier_recovery import (
+    attach_recovery,
+    browser_service_applicable,
+    flaresolverr_applicable,
+    new_recovery_receipt,
+    record_attempt,
+)
 from .cache import _check_cache, _is_binary_content_type, _set_cache
 from .fetch_quality import (
     QA_MIN_QUALITY_THRESHOLD,
@@ -37,20 +45,23 @@ from .fetch_tiers import (
 )
 from .proxy import _get_httpx_proxies, _redact_proxy_url
 from .settings import load_settings
+from .source_http import (
+    SourceDestinationPolicyUnavailableError,
+    capture_egress_proxy_url,
+    source_curl_options,
+)
 
 logger = logging.getLogger(__name__)
 
 _settings = load_settings()
 FLARE_SOLVERR_URL = _settings.flare_solverr_url
+_CVE_IDENTIFIER = re.compile(r"cve:CVE-\d{4}-\d{4,}\Z", re.IGNORECASE)
 
 # ── Proxy configuration ─────────────────────────────────────────
-# SCRAPER_PROXY_URL is an opt-in env var for residential/mobile IP rotation.
-# When set, httpx requests (Tiers 1-2) and Playwright browser contexts (Tier 3)
-# route through the proxy. Playwright uses context-level proxy assignment
-# (browser.new_context(proxy=...)) for job isolation.
-# If the proxy is unreachable, the scrape retries without proxy and logs a WARN.
-# Format: **************************
-# Unset or empty = no proxy (default).
+# SCRAPER_PROXY_URL preserves the compatibility-mode curl and browser proxy.
+# SCRAPER_CAPTURE_EGRESS_PROXY_URL instead forces source HTTPX and curl traffic
+# through the guarded gateway; source_http.py disables environment proxy lookup
+# and refuses nested browser/FlareSolverr source fetches in that mode.
 SCRAPER_PROXY_URL = _settings.scraper_proxy_url
 
 
@@ -63,6 +74,40 @@ def _private_url_allowlisted(url: str) -> bool:
         if host.strip()
     }
     return hostname in allowed
+
+
+async def _private_destination_error(
+    url: str, *, allow_adapter_identifier: bool = False
+) -> dict | None:
+    """Return the standard denial envelope for an unapproved private target.
+
+    CVE identifiers are adapter inputs rather than network destinations. Their
+    adapter patterns are intentionally allowed through; every URL-like target
+    is checked before adapter dispatch or any fetch tier.
+    """
+    if allow_adapter_identifier and _CVE_IDENTIFIER.fullmatch(url):
+        return None
+    if _private_url_allowlisted(url):
+        return None
+    try:
+        is_private, reason = await _is_private_url(url)
+    except SourceDestinationPolicyUnavailableError:
+        return {
+            "markdown": "",
+            "source": "blocked",
+            "url": url,
+            "error": "Destination validation is temporarily unavailable",
+            "error_code": "SOURCE_DESTINATION_VALIDATION_UNAVAILABLE",
+        }
+    if not is_private:
+        return None
+    return {
+        "markdown": "",
+        "source": "blocked",
+        "url": url,
+        "error": reason,
+        "error_code": "PRIVATE_URL_BLOCKED",
+    }
 
 
 async def _maybe_degrade(
@@ -193,6 +238,114 @@ async def _politeness_check_for_tier(url: str, tier_label: str) -> dict | None:
     return None
 
 
+async def _recover_from_barrier(
+    url: str,
+    initial_result: dict | None,
+    best_effort: list[dict],
+    *,
+    prior_cache_entry: dict | None = None,
+    cache_success: bool = False,
+    initial_strategy: str = "playwright",
+    allow_flaresolverr: bool = True,
+) -> dict:
+    """Exhaust applicable configured challenge countermeasures once.
+
+    Playwright (including its in-page CAPTCHA resolver) has already run when
+    this helper is called.  The remaining deterministic ladder is
+    FlareSolverr for Cloudflare/Turnstile, followed by a fresh browser-svc
+    session for interactive barriers.  Challenge content never enters the LLM
+    recovery tier.
+    """
+    receipt = new_recovery_receipt(initial_result, initial_strategy=initial_strategy)
+    terminal_result = initial_result
+
+    if allow_flaresolverr and flaresolverr_applicable(receipt):
+        blocked = await _politeness_check_for_tier(url, "barrier-flaresolverr")
+        if blocked:
+            return attach_recovery(blocked, receipt, recovered=False)
+        flare_result = await fetch_via_flaresolverr(url)
+        if flare_result is None:
+            record_attempt(receipt, "flaresolverr", "unavailable")
+        elif flare_result.get("barrier"):
+            if terminal_result is None or not terminal_result.get("error_code"):
+                terminal_result = flare_result
+            record_attempt(receipt, "flaresolverr", "barrier")
+        else:
+            accepted = await _maybe_degrade(
+                flare_result, "barrier-flaresolverr", best_effort
+            )
+            if accepted:
+                record_attempt(receipt, "flaresolverr", "success")
+                accepted = attach_recovery(accepted, receipt, recovered=True)
+                accepted = await _enrich_with_politeness(accepted, url)
+                if cache_success:
+                    await _set_cache(url, accepted, prior_entry=prior_cache_entry)
+                return accepted
+            record_attempt(receipt, "flaresolverr", "low_quality")
+    elif allow_flaresolverr:
+        record_attempt(
+            receipt,
+            "flaresolverr",
+            "skipped",
+            "not_applicable_to_classified_barrier",
+        )
+
+    if browser_service_applicable(receipt):
+        blocked = await _politeness_check_for_tier(url, "barrier-browser-svc")
+        if blocked:
+            return attach_recovery(blocked, receipt, recovered=False)
+        browser_result = await _fetch_via_browser_svc(url)
+        if browser_result is None:
+            record_attempt(receipt, "browser-svc", "unavailable")
+        elif browser_result.get("barrier"):
+            if terminal_result is None or not terminal_result.get("error_code"):
+                terminal_result = browser_result
+            record_attempt(receipt, "browser-svc", "barrier")
+        else:
+            accepted = await _maybe_degrade(
+                browser_result, "barrier-browser-svc", best_effort
+            )
+            if accepted:
+                record_attempt(receipt, "browser-svc", "success")
+                accepted = attach_recovery(accepted, receipt, recovered=True)
+                accepted = await _enrich_with_politeness(accepted, url)
+                if cache_success:
+                    await _set_cache(url, accepted, prior_entry=prior_cache_entry)
+                return accepted
+            record_attempt(receipt, "browser-svc", "low_quality")
+    else:
+        record_attempt(
+            receipt,
+            "browser-svc",
+            "skipped",
+            "not_applicable_to_classified_barrier",
+        )
+
+    # Build a fresh terminal envelope. Never return the original challenge
+    # markdown or HTML merely to preserve its classification.
+    terminal_source = (
+        (terminal_result or {}).get("source", "none")
+        if not (terminal_result or {}).get("raw_html_start")
+        else "none"
+    )
+    terminal_result = {
+        "error": (terminal_result or {}).get("error")
+        or f"Could not extract content from {url}",
+        "error_code": (terminal_result or {}).get("error_code") or "BARRIER_DETECTED",
+        "markdown": "",
+        "source": terminal_source,
+        "url": url,
+        **(
+            {"barrier": terminal_result["barrier"]}
+            if terminal_result and terminal_result.get("barrier")
+            else {}
+        ),
+    }
+
+    terminal_result = attach_recovery(terminal_result, receipt, recovered=False)
+    return await _enrich_with_politeness(terminal_result, url)
+
+
 async def _head_probe(url: str, client: httpx.AsyncClient) -> dict:
     """Send a lightweight HEAD request to detect routing signals.
 
@@ -302,8 +455,16 @@ async def smart_scrape(
 
     Returns a dict with keys: markdown, source, url, quality, error (optional).
     """
-    # Non-network identifiers (for example, cve:CVE-...) are handled by
-    # registered adapters before URL-level SSRF validation.
+    # Validate source destinations before adapters, which may perform their
+    # own HTTP requests and otherwise bypass the generic fetch guard. Opaque
+    # adapter identifiers (for example cve:CVE-...) are not network targets.
+    destination_error = await _private_destination_error(
+        url, allow_adapter_identifier=not force_browser
+    )
+    if destination_error:
+        logger.warning("Blocked private or internal scrape destination")
+        return destination_error
+
     if not force_browser:
         registry = get_registry()
         if registry._entries:
@@ -315,16 +476,14 @@ async def smart_scrape(
             if adapter_result:
                 logger.info("Adapter hit: %s for %s", adapter_result.source, url)
                 return adapter_result.to_dict()
-
-    if not _private_url_allowlisted(url):
-        is_private, reason = _is_private_url(url)
-        if is_private:
-            logger.warning("Blocked private or internal scrape destination")
-            return {
+        if _CVE_IDENTIFIER.fullmatch(url):
+            # Preserve the prior terminal behavior when no CVE adapter accepts
+            # an identifier; it must never fall through to an HTTP fetch tier.
+            return await _private_destination_error(url) or {
                 "markdown": "",
                 "source": "blocked",
                 "url": url,
-                "error": reason,
+                "error": "Unsupported non-network scrape identifier",
                 "error_code": "PRIVATE_URL_BLOCKED",
             }
 
@@ -347,11 +506,6 @@ async def smart_scrape(
             return blocked
 
         result = await fetch_via_playwright(url)
-        unresolved_captcha = (
-            result
-            if result and result.get("error_code") == "CAPTCHA_UNRESOLVED"
-            else None
-        )
         if result:
             # Barrier detection
             if "barrier" in result:
@@ -376,33 +530,8 @@ async def smart_scrape(
                     barrier.confidence,
                 )
 
-        # FlareSolverr is only applicable to Cloudflare/Turnstile, not generic CAPTCHA.
-        if result and result.get("error_code") == "CAPTCHA_UNRESOLVED":
-            if result.get("barrier", {}).get("provider") != "turnstile":
-                return await _enrich_with_politeness(result, url)
-        # Fall through to FlareSolverr
-        _proceed, blocked = await _politeness_check_and_delay(
-            url,
-            ignore_robots_txt=ignore_robots_txt,
-            robots_user_agent=robots_user_agent,
-            rate_limit=False,
-        )
-        if blocked:
-            return blocked
-        fs_result = await fetch_via_flaresolverr(url)
-        if fs_result:
-            if "barrier" in fs_result:
-                logger.warning("Barrier detected at force_browser Tier 3.5 for %s", url)
-                return fs_result
-            accepted = await _maybe_degrade(
-                fs_result, "tier35-flaresolverr", best_effort
-            )
-            if accepted:
-                accepted = await _enrich_with_politeness(accepted, url)
-                return accepted
-
-        if unresolved_captcha:
-            return await _enrich_with_politeness(unresolved_captcha, url)
+        if result is None or result.get("barrier"):
+            return await _recover_from_barrier(url, result, best_effort)
 
         # Return best effort or error
         if best_effort:
@@ -438,7 +567,7 @@ async def smart_scrape(
         )
 
     # Log proxy status for debugging (per-scrape proxy identity logging)
-    proxy_url = SCRAPER_PROXY_URL
+    proxy_url = capture_egress_proxy_url() or SCRAPER_PROXY_URL
     if proxy_url:
         logger.info("Proxy configured: %s", _redact_proxy_url(proxy_url))
     else:
@@ -454,7 +583,7 @@ async def smart_scrape(
                 "Chrome/131.0.0.0 Safari/537.36"
             ),
         },
-        proxy=_get_httpx_proxies(),
+        **source_curl_options(compatibility_proxy=_get_httpx_proxies()),
     ) as client:
         # Politeness check: robots.txt + rate limit (before any HTTP)
         _proceed, blocked = await _politeness_check_and_delay(
@@ -567,13 +696,6 @@ async def smart_scrape(
     if blocked:
         return blocked
     result = await fetch_via_playwright(url)
-    unresolved_captcha = (
-        result if result and result.get("error_code") == "CAPTCHA_UNRESOLVED" else None
-    )
-    if result and result.get("error_code") == "CAPTCHA_UNRESOLVED":
-        provider = result.get("barrier", {}).get("provider")
-        if provider != "turnstile":
-            return await _enrich_with_politeness(result, url)
     if result:
         # Barrier detection — if page IS a challenge/error, skip remaining tiers
         if "barrier" in result:
@@ -608,9 +730,17 @@ async def smart_scrape(
                 content_embedded,
             )
 
-    # Tier 3.5: FlareSolverr only for Cloudflare/Turnstile challenges.
-    # Always attempt FlareSolverr after Playwright — handles Cloudflare
-    # JS challenges that Playwright couldn't render.
+    if result is None or result.get("barrier"):
+        return await _recover_from_barrier(
+            url,
+            result,
+            best_effort,
+            prior_cache_entry=cached,
+            cache_success=True,
+        )
+
+    # Preserve the historical quality-recovery path for non-barrier browser
+    # output. Barrier recovery is centralized above and cannot reach the LLM.
     _proceed, blocked = await _politeness_check_and_delay(
         url,
         ignore_robots_txt=ignore_robots_txt,
@@ -619,25 +749,23 @@ async def smart_scrape(
     )
     if blocked:
         return blocked
-    can_use_flaresolverr = not result or result.get("barrier", {}).get("provider") in {
-        None,
-        "turnstile",
-    }
-    fs_result = await fetch_via_flaresolverr(url) if can_use_flaresolverr else None
+    fs_result = await fetch_via_flaresolverr(url)
     if fs_result:
         if "barrier" in fs_result:
-            logger.warning(
-                "Barrier detected at Tier 3.5 for %s, skipping remaining tiers", url
+            return await _recover_from_barrier(
+                url,
+                fs_result,
+                best_effort,
+                prior_cache_entry=cached,
+                cache_success=True,
+                initial_strategy="flaresolverr",
+                allow_flaresolverr=False,
             )
-            return fs_result
         accepted = await _maybe_degrade(fs_result, "tier35-flaresolverr", best_effort)
         if accepted:
             accepted = await _enrich_with_politeness(accepted, url)
             await _set_cache(url, accepted, prior_entry=cached)
             return accepted
-
-    if unresolved_captcha:
-        return await _enrich_with_politeness(unresolved_captcha, url)
 
     # Tier 4: LLM-assisted recovery when content looks suspicious
     if (

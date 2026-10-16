@@ -1,0 +1,45 @@
+test_before_commit_failure_and_lost_ack_are_reconcilable (__main__.LegacyRegressionTests.test_before_commit_failure_and_lost_ack_are_reconcilable) ... ok
+test_before_commit_rollback_and_lost_ack (__main__.LegacyRegressionTests.test_before_commit_rollback_and_lost_ack) ... ok
+test_byte_budget_rejection_does_not_mutate_root (__main__.LegacyRegressionTests.test_byte_budget_rejection_does_not_mutate_root) ... ok
+test_candidate_limit_and_expired_staging_reservations (__main__.LegacyRegressionTests.test_candidate_limit_and_expired_staging_reservations) ... ok
+test_collection_serializes_with_import_commit_and_deletion (__main__.LegacyRegressionTests.test_collection_serializes_with_import_commit_and_deletion) ... ok
+test_corrupt_reference_rejected_before_export (__main__.LegacyRegressionTests.test_corrupt_reference_rejected_before_export) ... ok
+test_current_origin_retention_clamps_without_renewal (__main__.LegacyRegressionTests.test_current_origin_retention_clamps_without_renewal) ... ok
+test_exact_offline_export_does_not_renew_or_charge (__main__.LegacyRegressionTests.test_exact_offline_export_does_not_renew_or_charge) ... ok
+test_expired_origin_collects_copies_and_preserves_receipts (__main__.LegacyRegressionTests.test_expired_origin_collects_copies_and_preserves_receipts) ... ok
+test_expired_recipient_preserves_origin_and_peer (__main__.LegacyRegressionTests.test_expired_recipient_preserves_origin_and_peer) ... ok
+test_import_commit_delete_race (__main__.LegacyRegressionTests.test_import_commit_delete_race) ... ok
+test_import_grant_delete_race (__main__.LegacyRegressionTests.test_import_grant_delete_race) ... ok
+test_import_roundtrip_receipt_and_native_write_rejection (__main__.LegacyRegressionTests.test_import_roundtrip_receipt_and_native_write_rejection) ... ok
+test_later_candidate_failure_preserves_prior_commit (__main__.LegacyRegressionTests.test_later_candidate_failure_preserves_prior_commit) ... ok
+test_opposing_scope_imports (__main__.LegacyRegressionTests.test_opposing_scope_imports) ... ok
+test_origin_deletion_purges_copies_and_pending_grants (__main__.LegacyRegressionTests.test_origin_deletion_purges_copies_and_pending_grants) ... ok
+test_origin_expiry_denies_grant_commit_and_reopen (__main__.LegacyRegressionTests.test_origin_expiry_denies_grant_commit_and_reopen) ... ok
+test_pending_expiry_cancel_and_completed_grant_expiry (__main__.LegacyRegressionTests.test_pending_expiry_cancel_and_completed_grant_expiry) ... ok
+test_recipient_delete_preserves_origin_and_peer (__main__.LegacyRegressionTests.test_recipient_delete_preserves_origin_and_peer) ... ok
+test_recipient_quota_race (__main__.LegacyRegressionTests.test_recipient_quota_race) ... ok
+test_schema_six_candidate_index_is_available (__main__.LegacyRegressionTests.test_schema_six_candidate_index_is_available) ... ok
+test_scope_context_expiry_and_deletion (__main__.LegacyRegressionTests.test_scope_context_expiry_and_deletion) ... ok
+test_selected_ancestry_and_historical_rerender (__main__.LegacyRegressionTests.test_selected_ancestry_and_historical_rerender) ... ok
+test_shared_blob_and_live_staging_survive_collection (__main__.LegacyRegressionTests.test_shared_blob_and_live_staging_survive_collection) ... ok
+test_stale_candidate_hint_preserves_real_writer_renewal (__main__.LegacyRegressionTests.test_stale_candidate_hint_preserves_real_writer_renewal) ... ok
+test_stale_generation_and_import_migration_refusal (__main__.LegacyRegressionTests.test_stale_generation_and_import_migration_refusal) ... ok
+test_twenty_grant_fanout_bound_and_cancelled_metadata (__main__.LegacyRegressionTests.test_twenty_grant_fanout_bound_and_cancelled_metadata) ... ok
+test_writer_holding_lock_renews_before_collector_ownership (__main__.LegacyRegressionTests.test_writer_holding_lock_renews_before_collector_ownership) ... ok
+test_wrong_bundle_context_and_absent_origin (__main__.LegacyRegressionTests.test_wrong_bundle_context_and_absent_origin) ... ok
+test_changed_verification_and_assessment_ids_rejected (__main__.ResearchStorageTests.test_changed_verification_and_assessment_ids_rejected) ... ok
+test_complete_root_successor_read_and_receipt (__main__.ResearchStorageTests.test_complete_root_successor_read_and_receipt) ... ok
+test_corrupt_source_ledger_denies_reopen (__main__.ResearchStorageTests.test_corrupt_source_ledger_denies_reopen) ... ok
+test_delete_and_expiry_purge_complete_payload_and_keep_receipt (__main__.ResearchStorageTests.test_delete_and_expiry_purge_complete_payload_and_keep_receipt) ... ok
+test_fault_before_commit_and_lost_ack (__main__.ResearchStorageTests.test_fault_before_commit_and_lost_ack) ... ok
+test_legacy_and_complete_roots_do_not_mix (__main__.ResearchStorageTests.test_legacy_and_complete_roots_do_not_mix) ... ok
+test_missing_source_and_wrong_scope_rejected (__main__.ResearchStorageTests.test_missing_source_and_wrong_scope_rejected) ... ok
+test_removed_question_id_cannot_return_with_changed_meaning (__main__.ResearchStorageTests.test_removed_question_id_cannot_return_with_changed_meaning) ... ok
+test_reservation_size_and_double_cancel (__main__.ResearchStorageTests.test_reservation_size_and_double_cancel) ... ok
+test_twenty_revisions_and_quota_are_bounded (__main__.ResearchStorageTests.test_twenty_revisions_and_quota_are_bounded) ... ok
+test_two_children_only_one_current_parent_wins (__main__.ResearchStorageTests.test_two_children_only_one_current_parent_wins) ... ok
+
+----------------------------------------------------------------------
+Ran 40 tests in 20.700s
+
+OK

@@ -1,0 +1,79 @@
+{
+  "arm": "treatment",
+  "case_id": "mission-compound-governance",
+  "completed_at": "2026-09-19T05:51:14.407132+00:00",
+  "position": 2,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "f8aba4badc43fdbedea8f123d05d6102cf742c41bd7ec70c17f720096d1554c3",
+    "finish_reason": "stop",
+    "latency_ms": 22660.792,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "58f8807ae982a20f1c9566c3c843de24162f744ccee1af59d68183572215c21a",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 532,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0.00042425,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000266,
+        "upstream_inference_cost": 0.00042425,
+        "upstream_inference_prompt_cost": 0.00015825
+      },
+      "is_byok": false,
+      "prompt_tokens": 1055,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1587
+    }
+  },
+  "repetition": 2,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "**Decision-support: Does the documented exception authorize a current high-risk change?** — **No.** As of 2026-09-19, the exception is expired and was scoped to low-risk pilot documentation only; it does not authorize any high-risk change. High-risk changes require a named human approver and an audit record, with the accountable owner, scope, and expiration identified in any exception, and the agent cannot approve its own exception. The supplied exception covered only low-risk documentation changes in the internal pilot until 2026-06-30, and no renewal appears in the bundle. The evidence cannot establish any approval or enforcement basis for a high-risk production change; that question remains unresolved pending a named human approver and new governance record.",
+    "candidate_id": "candidate-56c000c59f03caaeb864",
+    "citations": [
+      "governance-policy",
+      "governance-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "governance-policy"
+        ],
+        "text": "High-risk changes require a named human approver and an audit record, exceptions must identify scope, expiration, and accountable owner, and the agent cannot approve its own exception.",
+        "uncertainty": "No material uncertainty."
+      },
+      {
+        "source_ids": [
+          "governance-context"
+        ],
+        "text": "The signed exception covered only low-risk documentation changes in the internal pilot until 2026-06-30, and no renewal is present in the source bundle.",
+        "uncertainty": "The exception is expired as of the 2026-09-19 as-of date, so it provides no current authorization."
+      },
+      {
+        "source_ids": [
+          "governance-policy",
+          "governance-context"
+        ],
+        "text": "The packet cannot prove approval or enforcement for a high-risk production change; the exception never covered high-risk changes and has expired.",
+        "uncertainty": "No evidence of any renewal, extension, or alternative high-risk approval exists in the supplied sources."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:50:51.744724+00:00",
+  "status": "completed",
+  "trial_id": "mission-compound-governance-r2-treatment"
+}

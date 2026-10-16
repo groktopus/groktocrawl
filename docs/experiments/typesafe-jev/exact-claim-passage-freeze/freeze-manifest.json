@@ -1,0 +1,11 @@
+{
+  "calibration_count": 12,
+  "labels_sha256": "b478f92e46ea91c441a5904c3c744d5b8c1f2120e52cd7469533470167b215b8",
+  "model": "jev-1.13.0",
+  "packet_sha256": "2a2e2fba2f99230702beed7d1c6e886544cd9b9fc51f1f0a0df0506113d60d12",
+  "pair_count": 25,
+  "pair_input_digest": "0b48838b2cabf5726a0c996490672404c69581f6c8fd239875c35514ca1f5400",
+  "questions_digest": "681d53efe65dc6bef868043b7f602c047909458db5e1a74dfff1397fddf52015",
+  "schema_version": "exact-claim-passage-freeze/1",
+  "validation_count": 13
+}

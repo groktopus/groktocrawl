@@ -1,0 +1,65 @@
+{
+  "candidates": [
+    {
+      "gates": {
+        "deleted_doc_absent": true,
+        "provider_ok": true,
+        "scope_alpha-x": true,
+        "scope_alpha-y": true,
+        "scope_beta-x": true,
+        "scope_beta-z": true,
+        "top_k_alpha-x": true,
+        "top_k_alpha-y": true,
+        "top_k_beta-x": true,
+        "top_k_beta-z": true
+      },
+      "name": "qdrant",
+      "ok": true
+    },
+    {
+      "gates": {
+        "deleted_doc_absent": true,
+        "provider_ok": true,
+        "scope_alpha-x": true,
+        "scope_alpha-y": true,
+        "scope_beta-x": true,
+        "scope_beta-z": true,
+        "top_k_alpha-x": true,
+        "top_k_alpha-y": true,
+        "top_k_beta-x": true,
+        "top_k_beta-z": true
+      },
+      "name": "pgvector",
+      "ok": true
+    }
+  ],
+  "deletion_manifest": {
+    "delete": [
+      "doc-001"
+    ],
+    "sha256": "b94f38d51d9a93b4e09840478e778cea223ec90b16a036d4dac8319d8cdba58e"
+  },
+  "gates": true,
+  "postgres_backup": {
+    "bytes": 3527,
+    "path": "vector-backup-out/postgres.dump",
+    "provider": "postgresql",
+    "sha256": "8ad1cd408805ba6e9c2220c9d04911b14b11f0dcefc1e16b50cc3939b96a4b67"
+  },
+  "postgres_restore": {
+    "duration_ms": 133,
+    "provider": "postgresql"
+  },
+  "production_change": false,
+  "qdrant_backup": {
+    "bytes": 64512,
+    "duration_ms": 26.67,
+    "path": "/out/groktocrawl_x_backup_backup_34238404432.snapshot",
+    "provider": "qdrant",
+    "sha256": "499f529ba72df3b17a9cb4f25e5901e86bf8f9d66368949974a1357198d413e0",
+    "snapshot_name": "groktocrawl_x_backup_backup_34238404432-3081932921274263-2026-09-08-14-28-17.snapshot"
+  },
+  "qdrant_removal": false,
+  "schema_version": "vector-store-backup-evidence/1",
+  "workflow_run": 34238404432
+}

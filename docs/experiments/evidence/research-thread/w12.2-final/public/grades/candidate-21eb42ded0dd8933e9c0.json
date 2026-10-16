@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-21eb42ded0dd8933e9c0",
+  "case_id": "later-resolution",
+  "completed_at": "2026-09-19T09:13:22.491275+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 100,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "Candidate correctly identifies the change (retention period now published as 30 days), preserves the earlier 'not specified' state as historical, and cites both snapshots accurately. The first unresolved caveat (build-logs-only scope) is a reasonable inference from the source. However, the second unresolved item regarding a missing effective date is an invented peripheral question not supported by the reference or sources, which lowers the unresolved accuracy score and counts as one unsupported claim.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 60,
+    "unsupported_claims": 1,
+    "usefulness": 95
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "5ce057c67ecb07c936fb7a25ec9438a654b5f03c0ff18eef3259a28882def11a",
+    "finish_reason": "stop",
+    "latency_ms": 20633.106,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "2a5319800d56cc33ce18863d2d6f4747e26e560c5f4046c3cfaff355a17fc74a",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 231,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 68
+      },
+      "cost": 0.000261,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0001155,
+        "upstream_inference_cost": 0.000261,
+        "upstream_inference_prompt_cost": 0.0001455
+      },
+      "is_byok": false,
+      "prompt_tokens": 970,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1201
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:13:01.857716+00:00",
+  "status": "completed",
+  "trial_id": "later-resolution-r1-control"
+}

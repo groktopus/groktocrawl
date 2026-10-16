@@ -1,0 +1,291 @@
+{
+  "candidate": {
+    "after": {
+      "services": [
+        {
+          "cpu_percent_snapshot": 0.2,
+          "memory_mib": 54.62,
+          "pids": 2,
+          "service": "mcp"
+        },
+        {
+          "cpu_percent_snapshot": 0.14,
+          "memory_mib": 98.79,
+          "pids": 6,
+          "service": "agent"
+        },
+        {
+          "cpu_percent_snapshot": 0.12,
+          "memory_mib": 72.77,
+          "pids": 7,
+          "service": "scraper"
+        },
+        {
+          "cpu_percent_snapshot": 5.94,
+          "memory_mib": 1182.72,
+          "pids": 123,
+          "service": "semantic"
+        },
+        {
+          "cpu_percent_snapshot": 0.12,
+          "memory_mib": 39.25,
+          "pids": 5,
+          "service": "portal"
+        },
+        {
+          "cpu_percent_snapshot": 0.11,
+          "memory_mib": 45.22,
+          "pids": 5,
+          "service": "browser"
+        },
+        {
+          "cpu_percent_snapshot": 0.06,
+          "memory_mib": 57.41,
+          "pids": 16,
+          "service": "qdrant-rollback"
+        },
+        {
+          "cpu_percent_snapshot": 0.12,
+          "memory_mib": 69.54,
+          "pids": 5,
+          "service": "slopsearx"
+        },
+        {
+          "cpu_percent_snapshot": 0.27,
+          "memory_mib": 6.582,
+          "pids": 7,
+          "service": "valkey"
+        },
+        {
+          "cpu_percent_snapshot": 0.0,
+          "memory_mib": 71.69,
+          "pids": 7,
+          "service": "postgres"
+        }
+      ],
+      "total_memory_mib": 1698.592
+    },
+    "before": {
+      "services": [
+        {
+          "cpu_percent_snapshot": 0.23,
+          "memory_mib": 54.52,
+          "pids": 2,
+          "service": "mcp"
+        },
+        {
+          "cpu_percent_snapshot": 0.11,
+          "memory_mib": 93.53,
+          "pids": 6,
+          "service": "agent"
+        },
+        {
+          "cpu_percent_snapshot": 0.14,
+          "memory_mib": 69.04,
+          "pids": 7,
+          "service": "scraper"
+        },
+        {
+          "cpu_percent_snapshot": 0.13,
+          "memory_mib": 1179.648,
+          "pids": 123,
+          "service": "semantic"
+        },
+        {
+          "cpu_percent_snapshot": 0.12,
+          "memory_mib": 39.23,
+          "pids": 5,
+          "service": "portal"
+        },
+        {
+          "cpu_percent_snapshot": 0.12,
+          "memory_mib": 45.21,
+          "pids": 5,
+          "service": "browser"
+        },
+        {
+          "cpu_percent_snapshot": 3.2,
+          "memory_mib": 56.93,
+          "pids": 16,
+          "service": "qdrant-rollback"
+        },
+        {
+          "cpu_percent_snapshot": 0.14,
+          "memory_mib": 69.46,
+          "pids": 5,
+          "service": "slopsearx"
+        },
+        {
+          "cpu_percent_snapshot": 0.27,
+          "memory_mib": 6.625,
+          "pids": 7,
+          "service": "valkey"
+        },
+        {
+          "cpu_percent_snapshot": 4.41,
+          "memory_mib": 72.54,
+          "pids": 7,
+          "service": "postgres"
+        }
+      ],
+      "total_memory_mib": 1686.733
+    }
+  },
+  "incumbent": {
+    "after": {
+      "services": [
+        {
+          "cpu_percent_snapshot": 0.51,
+          "memory_mib": 30.09,
+          "pids": 5,
+          "service": "slopsearx"
+        },
+        {
+          "cpu_percent_snapshot": 0.68,
+          "memory_mib": 21.26,
+          "pids": 5,
+          "service": "slopsearx-mcp"
+        },
+        {
+          "cpu_percent_snapshot": 0.34,
+          "memory_mib": 7.215,
+          "pids": 7,
+          "service": "valkey"
+        },
+        {
+          "cpu_percent_snapshot": 0.22,
+          "memory_mib": 63.08,
+          "pids": 135,
+          "service": "mcp-svc"
+        },
+        {
+          "cpu_percent_snapshot": 0.0,
+          "memory_mib": 48.3,
+          "pids": 11,
+          "service": "ofelia"
+        },
+        {
+          "cpu_percent_snapshot": 4.39,
+          "memory_mib": 85.36,
+          "pids": 6,
+          "service": "agent-svc"
+        },
+        {
+          "cpu_percent_snapshot": 0.36,
+          "memory_mib": 9.816,
+          "pids": 19,
+          "service": "browser-svc"
+        },
+        {
+          "cpu_percent_snapshot": 0.28,
+          "memory_mib": 8.977,
+          "pids": 5,
+          "service": "portal-svc"
+        },
+        {
+          "cpu_percent_snapshot": 0.13,
+          "memory_mib": 2.078,
+          "pids": 5,
+          "service": "parse-svc"
+        },
+        {
+          "cpu_percent_snapshot": 0.35,
+          "memory_mib": 382.5,
+          "pids": 105,
+          "service": "scraper-svc"
+        },
+        {
+          "cpu_percent_snapshot": 208.15,
+          "memory_mib": 1317.888,
+          "pids": 49,
+          "service": "semantic-svc"
+        },
+        {
+          "cpu_percent_snapshot": 4.67,
+          "memory_mib": 18.82,
+          "pids": 28,
+          "service": "qdrant"
+        }
+      ],
+      "total_memory_mib": 1995.384
+    },
+    "before": {
+      "services": [
+        {
+          "cpu_percent_snapshot": 0.2,
+          "memory_mib": 30.92,
+          "pids": 5,
+          "service": "slopsearx"
+        },
+        {
+          "cpu_percent_snapshot": 0.61,
+          "memory_mib": 17.65,
+          "pids": 5,
+          "service": "slopsearx-mcp"
+        },
+        {
+          "cpu_percent_snapshot": 3.58,
+          "memory_mib": 6.613,
+          "pids": 7,
+          "service": "valkey"
+        },
+        {
+          "cpu_percent_snapshot": 0.23,
+          "memory_mib": 35.04,
+          "pids": 135,
+          "service": "mcp-svc"
+        },
+        {
+          "cpu_percent_snapshot": 0.0,
+          "memory_mib": 51.77,
+          "pids": 11,
+          "service": "ofelia"
+        },
+        {
+          "cpu_percent_snapshot": 0.15,
+          "memory_mib": 56.22,
+          "pids": 6,
+          "service": "agent-svc"
+        },
+        {
+          "cpu_percent_snapshot": 0.16,
+          "memory_mib": 9.812,
+          "pids": 19,
+          "service": "browser-svc"
+        },
+        {
+          "cpu_percent_snapshot": 0.16,
+          "memory_mib": 8.988,
+          "pids": 5,
+          "service": "portal-svc"
+        },
+        {
+          "cpu_percent_snapshot": 0.14,
+          "memory_mib": 2.082,
+          "pids": 5,
+          "service": "parse-svc"
+        },
+        {
+          "cpu_percent_snapshot": 0.34,
+          "memory_mib": 222.2,
+          "pids": 105,
+          "service": "scraper-svc"
+        },
+        {
+          "cpu_percent_snapshot": 0.14,
+          "memory_mib": 595.3,
+          "pids": 49,
+          "service": "semantic-svc"
+        },
+        {
+          "cpu_percent_snapshot": 0.06,
+          "memory_mib": 22.7,
+          "pids": 24,
+          "service": "qdrant"
+        }
+      ],
+      "total_memory_mib": 1059.295
+    }
+  },
+  "interpretation": "Point-in-time diagnostics on different-capacity hosts; unsuitable for causal performance or cost claims."
+}

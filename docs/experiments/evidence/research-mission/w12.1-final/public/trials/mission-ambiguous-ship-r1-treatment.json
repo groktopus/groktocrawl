@@ -1,0 +1,109 @@
+{
+  "arm": "treatment",
+  "case_id": "mission-ambiguous-ship",
+  "completed_at": "2026-09-19T05:46:23.615967+00:00",
+  "position": 1,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "10fe2fb8fcadb54748f0305247190a179c8a1e40fbf4f55f92da5d23d587dc85",
+    "finish_reason": "stop",
+    "latency_ms": 66381.403,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "638569816bf4eb26d1c53d9400aed35dba85edf0d209007491975f5cc5944379",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 6834,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 5618
+      },
+      "cost": 0.0035376,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.003417,
+        "upstream_inference_cost": 0.0035376,
+        "upstream_inference_prompt_cost": 0.0001206
+      },
+      "is_byok": false,
+      "prompt_tokens": 804,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 7638
+    }
+  },
+  "repetition": 1,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Decision support: disambiguating 'ship' (mission-ambiguous-ship, schema research-mission/1, current fixture record as of delivery-policy and delivery-context, no later as-of date supplied; no external searches performed within budget; both supplied sources used; no material evidence gain remains in the fixed pack; contradiction policy preserve_and_report applied with no contradiction found; source policy satisfied with primary/official authority and zero independent publishers required; inaccessible-source closure not invoked; abstain rule respected: no single meaning of 'ship' is selected because the evidence cannot establish requester intent and selecting one would require inventing authority or approval; stop condition met: obligation o1 is resolved as supported and the fixed source pack is fully accounted for; unresolved limits are stated below and the blocking clarification c1 is surfaced to the requester; audience: enterprise engineering, security, and platform leaders; scope: pull requests, disposable test environments, production deployment included, assuming the requester's intended environment excluded; freshness mode current per mission rationale; budget: 0 of 4 searches, 2 of 10 sources, 1 of 6 model calls, elapsed time within 300 seconds; all claims below carry source_ids and explicit uncertainty statements; obligation o1 closure rule satisfied by tying each of the three shipping actions to its stated authorization boundary; the decision itself remains unresolved pending the requester's answer to the blocking clarification; recommended handling is provided per intended meaning so leaders can act immediately once the clarification is answered; no approval, measurement, or authority is invented beyond the supplied text; the fixture label on both sources is reported as a provenance limit; the three meanings are materially different because their authorization boundaries differ: one is precondition-gated, one is experiment-scoped, and one is approval-and-rollback-gated; the context source reinforces rather than contradicts the policy source on the production boundary; no source in the pack addresses requester intent, PR review or merge steps, experiment status, approval workflow detail, or rollback-plan format, and these absences are stated as limits rather than filled by assumption; the answer renders in markdown for the stated audience; citations list every source_id used by the rendered answer; claims array preserves supporting and challenging source relationships; obligation_results contains only o1 as required by the schema; additional fields are omitted per the output contract).",
+    "candidate_id": "candidate-ed56f54cf01b78b863a4",
+    "citations": [
+      "delivery-policy",
+      "delivery-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-context"
+        ],
+        "text": "The supplied record does not identify which shipping action or environment the requester intends by 'ship'; the clarification 'Do you mean opening pull requests, deploying a disposable test environment, or deploying production?' is blocking and must be answered before acting.",
+        "uncertainty": "Absence finding over the complete supplied pack (two sources); no source addresses requester intent, so the disambiguation decision cannot be closed from evidence and remains unresolved pending clarification c1."
+      },
+      {
+        "source_ids": [
+          "delivery-policy"
+        ],
+        "text": "Opening a pull request is permitted once tests pass, and the supplied policy states no additional approval requirement for pull-request creation.",
+        "uncertainty": "The policy is silent on PR review, merge, or release steps beyond the tests-pass precondition; those requirements are unresolved in the supplied record."
+      },
+      {
+        "source_ids": [
+          "delivery-context"
+        ],
+        "text": "The sandbox experiment allowed automatic deployment to disposable test environments, with scope limited to disposable test environments.",
+        "uncertainty": "The context does not state whether the experiment remains active today or how its scope is enforced; current status is unresolved."
+      },
+      {
+        "source_ids": [
+          "delivery-policy"
+        ],
+        "text": "Production deployment requires approval by the service owner and a recorded rollback plan.",
+        "uncertainty": "The requirement is stated explicitly; the supplied sources do not define the approval workflow, approver delegation, or rollback-plan format, so those operational details remain unresolved."
+      },
+      {
+        "source_ids": [
+          "delivery-context"
+        ],
+        "text": "The sandbox experiment did not authorize production deployment.",
+        "uncertainty": "No material uncertainty; the exclusion is stated explicitly in the context."
+      },
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-context"
+        ],
+        "text": "The supplied policy and context are mutually consistent: the context's explicit production-deployment exclusion reinforces the policy's production approval requirement; no contradiction exists within the supplied pack.",
+        "uncertainty": "No material contradiction identified; both sources address authorization boundaries and align, so there is no tension to preserve."
+      },
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-context"
+        ],
+        "text": "Both supplied sources are labeled a fictional enterprise fixture and are treated as the current fixture record for this decision.",
+        "uncertainty": "Provenance is as labeled in the sources; no independent corroboration is available in the supplied pack, so confirm against the live governing policy before enforcement."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:45:17.232422+00:00",
+  "status": "completed",
+  "trial_id": "mission-ambiguous-ship-r1-treatment"
+}

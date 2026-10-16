@@ -1,0 +1,102 @@
+{
+  "case_id": "simple-1",
+  "control_artifact": {
+    "admitted_evidence": [
+      {
+        "canonical_source_id": "canonical-simple-1-generalist-simple-1-scope",
+        "derivative": false,
+        "evidence_id": "simple-1-generalist-simple-1-scope",
+        "obligation_id": "simple-1-scope",
+        "publisher_id": "publisher-simple-1-generalist",
+        "source_id": "source-simple-1-generalist-simple-1-scope",
+        "span": "Pinned supports evidence for simple-1-scope in simple-1.",
+        "stance": "supports"
+      }
+    ],
+    "conflicting_obligation_ids": [],
+    "covered_obligation_ids": [
+      "simple-1-scope"
+    ],
+    "handoff_failures": [],
+    "rejected_evidence": {},
+    "total_calls": 2
+  },
+  "control_calls": 2,
+  "preferred": "treatment",
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "dbbec667d3968ddde51d90cd06efeadfd6df5c5282a9af7d3f7ea681b591d8e6",
+    "finish_reason": "stop",
+    "latency_ms": 11363.328,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "01b4cf59717cb880a0b432f8ccb2935252750e811614c9888fa2b646e9494070",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 213,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 30
+      },
+      "cost": 0.00016845,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0001065,
+        "upstream_inference_cost": 0.00016845,
+        "upstream_inference_prompt_cost": 6.195e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 413,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 626
+    }
+  },
+  "repetition": 0,
+  "schema_version": "specialist-value-review/1",
+  "scores": {
+    "control": {
+      "reason": "Artifact A fully covers the single obligation simple-1-scope with non-derivative, supports-stance evidence bound to a source_id/canonical_source_id and publisher_id. No conflicts or failures exist to preserve; coverage is complete with no padding beyond the obligation.",
+      "trustworthiness": 1,
+      "usefulness": 1
+    },
+    "treatment": {
+      "reason": "Artifact B is identical to A: complete coverage of simple-1-scope via the same source-bound, non-derivative supports evidence. Its trustworthiness is earned independently by exact source binding and the visible (empty) conflict/failure state, not by agreement with A.",
+      "trustworthiness": 1,
+      "usefulness": 1
+    }
+  },
+  "separable": false,
+  "status": "completed",
+  "stratum": "simple",
+  "treatment_artifact": {
+    "admitted_evidence": [
+      {
+        "canonical_source_id": "canonical-simple-1-generalist-simple-1-scope",
+        "derivative": false,
+        "evidence_id": "simple-1-generalist-simple-1-scope",
+        "obligation_id": "simple-1-scope",
+        "publisher_id": "publisher-simple-1-generalist",
+        "source_id": "source-simple-1-generalist-simple-1-scope",
+        "span": "Pinned supports evidence for simple-1-scope in simple-1.",
+        "stance": "supports"
+      }
+    ],
+    "conflicting_obligation_ids": [],
+    "covered_obligation_ids": [
+      "simple-1-scope"
+    ],
+    "handoff_failures": [],
+    "rejected_evidence": {},
+    "total_calls": 2
+  },
+  "treatment_calls": 2,
+  "trial_id": "simple-1-r0"
+}

@@ -35,6 +35,7 @@ ResearchEvent = TypedDict(
         "source_details": NotRequired[list[dict[str, Any]]],
         "source_contents": NotRequired[dict[str, str]],
         "coverage": NotRequired[dict[str, Any]],
+        "evidence_coverage": NotRequired[dict[str, Any]],
         "latency_ms": NotRequired[int],
     },
     total=False,

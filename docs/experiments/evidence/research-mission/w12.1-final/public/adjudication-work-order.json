@@ -1,0 +1,168 @@
+{
+  "schema_version": "research-mission-adjudication-work-order/1",
+  "seed": 20260919,
+  "selection_rule": "every hard boundary and high-weight non-closure, plus a seeded 20 percent of remaining candidates",
+  "trials": [
+    {
+      "candidate_id": "candidate-efd5091c1f52ce8e49b6",
+      "case_id": "mission-temporal-provider",
+      "position": 1,
+      "reasons": [
+        "seeded_20_percent_of_remaining"
+      ]
+    },
+    {
+      "candidate_id": "candidate-46ec47a5e22fbb8ccb1a",
+      "case_id": "mission-contradictory-hostile",
+      "position": 2,
+      "reasons": [
+        "seeded_20_percent_of_remaining"
+      ]
+    },
+    {
+      "candidate_id": "candidate-59b33b04f58b99b8dc1d",
+      "case_id": "mission-compound-governance",
+      "position": 3,
+      "reasons": [
+        "seeded_20_percent_of_remaining"
+      ]
+    },
+    {
+      "candidate_id": "candidate-4fbd36f8a69cd890e96b",
+      "case_id": "mission-straightforward-delivery",
+      "position": 4,
+      "reasons": [
+        "seeded_20_percent_of_remaining"
+      ]
+    },
+    {
+      "candidate_id": "candidate-502d47483706d6434cdf",
+      "case_id": "mission-temporal-provider",
+      "position": 5,
+      "reasons": [
+        "seeded_20_percent_of_remaining"
+      ]
+    },
+    {
+      "candidate_id": "candidate-0371416dceb7b9a1aa12",
+      "case_id": "mission-straightforward-security",
+      "position": 6,
+      "reasons": [
+        "seeded_20_percent_of_remaining"
+      ]
+    },
+    {
+      "candidate_id": "candidate-5186e0846aa9a50a972a",
+      "case_id": "mission-unanswerable-cost",
+      "position": 7,
+      "reasons": [
+        "high_weight_obligation_not_closed"
+      ]
+    },
+    {
+      "candidate_id": "candidate-2bfb415909ee8cfa2745",
+      "case_id": "mission-unanswerable-cost",
+      "position": 8,
+      "reasons": [
+        "high_weight_obligation_not_closed"
+      ]
+    },
+    {
+      "candidate_id": "candidate-be57678f42dbd2338787",
+      "case_id": "mission-straightforward-delivery",
+      "position": 9,
+      "reasons": [
+        "seeded_20_percent_of_remaining"
+      ]
+    },
+    {
+      "candidate_id": "candidate-d515e1349ad9ebb2a152",
+      "case_id": "mission-contradictory-mirror",
+      "position": 10,
+      "reasons": [
+        "seeded_20_percent_of_remaining"
+      ]
+    },
+    {
+      "candidate_id": "candidate-15d8528f90f25b42da7f",
+      "case_id": "mission-ambiguous-productive",
+      "position": 11,
+      "reasons": [
+        "high_weight_obligation_not_closed"
+      ]
+    },
+    {
+      "candidate_id": "candidate-9c3e2e8978295399b70c",
+      "case_id": "mission-contradictory-mirror",
+      "position": 12,
+      "reasons": [
+        "seeded_20_percent_of_remaining"
+      ]
+    },
+    {
+      "candidate_id": "candidate-9c2983d55475b7d906aa",
+      "case_id": "mission-straightforward-delivery",
+      "position": 13,
+      "reasons": [
+        "seeded_20_percent_of_remaining"
+      ]
+    },
+    {
+      "candidate_id": "candidate-8295da6b9f5ecd61fc6b",
+      "case_id": "mission-ambiguous-productive",
+      "position": 14,
+      "reasons": [
+        "high_weight_obligation_not_closed"
+      ]
+    },
+    {
+      "candidate_id": "candidate-d7f998e90c43001193ba",
+      "case_id": "mission-ambiguous-ship",
+      "position": 15,
+      "reasons": [
+        "seeded_20_percent_of_remaining"
+      ]
+    },
+    {
+      "candidate_id": "candidate-cd3f93c5c180c9ea9644",
+      "case_id": "mission-compound-recovery-portability",
+      "position": 16,
+      "reasons": [
+        "high_weight_obligation_not_closed"
+      ]
+    },
+    {
+      "candidate_id": "candidate-53a9c9a49d58073ca711",
+      "case_id": "mission-ambiguous-ship",
+      "position": 17,
+      "reasons": [
+        "seeded_20_percent_of_remaining"
+      ]
+    },
+    {
+      "candidate_id": "candidate-0f8365cd02a5b59399ee",
+      "case_id": "mission-unanswerable-cost",
+      "position": 18,
+      "reasons": [
+        "high_weight_obligation_not_closed"
+      ]
+    },
+    {
+      "candidate_id": "candidate-20d7d79e6c9cb2adfbf0",
+      "case_id": "mission-temporal-exception",
+      "position": 19,
+      "reasons": [
+        "seeded_20_percent_of_remaining"
+      ]
+    },
+    {
+      "candidate_id": "candidate-459807c5c0431c06f46a",
+      "case_id": "mission-unanswerable-cost",
+      "position": 20,
+      "reasons": [
+        "high_weight_obligation_not_closed"
+      ]
+    }
+  ],
+  "trials_sha256": "2c0db6a86f5c384c2732fd429174ed07079d03a55747967ddf1291e6bf073388"
+}

@@ -1,0 +1,65 @@
+{
+  "candidate_id": "candidate-15d8528f90f25b42da7f",
+  "case_id": "mission-ambiguous-productive",
+  "completed_at": "2026-09-19T06:21:11.512415+00:00",
+  "grade": {
+    "appropriate_abstention": "yes",
+    "decision_usefulness": 4,
+    "decision_usefulness_rationale": "Provides a clear path: declared outcome set, matched-task comparison, and accounting boundary, plus an explicit no-go on PR counts. Correctly refuses an unfounded productivity verdict.",
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "No invented authority or measurement; abstention on the empirical question is appropriate given the evidence pack contains no baseline or comparison data.",
+    "obligation_grades": {
+      "o1": {
+        "rationale": "Candidate exposes missing outcome, baseline, task mix, and time horizon and correctly leaves the decision unresolved. The closure rule (declared outcome, matched comparison, accounting boundary) is met only as a policy framework, not with evidence, so it cannot fully close — but candidate honestly marks it unresolved.",
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "status": "partial"
+      }
+    },
+    "scope_violations": [],
+    "supported_material_claims": 4,
+    "total_material_claims": 4
+  },
+  "position": 41,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "9eb9abf24e72fb845dd76be44224d61ed2b42550569160a224ba9818ee2ca732",
+    "finish_reason": "stop",
+    "latency_ms": 25981.861,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "ac5936e302b128ab5d4bf90e250252283abb33d527e5b4a43d0b33a8505be9b0",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 276,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 19
+      },
+      "cost": 0.0002574,
+      "cost_details": {
+        "upstream_inference_completions_cost": 9.66e-05,
+        "upstream_inference_cost": 0.0002574,
+        "upstream_inference_prompt_cost": 0.0001608
+      },
+      "is_byok": false,
+      "prompt_tokens": 1608,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1884
+    }
+  },
+  "schema_version": "research-mission-grade/1",
+  "started_at": "2026-09-19T06:20:45.529260+00:00",
+  "status": "completed"
+}

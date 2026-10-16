@@ -143,6 +143,49 @@ class TestHealthReadiness:
         temporary_client.get_collections.assert_called_once_with()
         temporary_client.close.assert_called_once_with()
 
+    @pytest.mark.asyncio
+    async def test_ready_returns_503_when_qdrant_serving_store_is_down(
+        self, monkeypatch
+    ):
+        import json
+        from types import SimpleNamespace
+
+        import app
+
+        monkeypatch.setattr(app, "_models_ready", True)
+        monkeypatch.setattr(app, "SHADOW_CONFIG", SimpleNamespace(serving=False))
+        monkeypatch.setattr(app, "_is_qdrant_ready", lambda: False)
+
+        response = await app.readiness()
+
+        assert response.status_code == 503
+        assert json.loads(response.body) == {
+            "status": "starting",
+            "models": "loaded",
+            "qdrant": "unavailable",
+        }
+
+    @pytest.mark.asyncio
+    async def test_ready_uses_pgvector_as_serving_dependency(self, monkeypatch):
+        import json
+        from types import SimpleNamespace
+
+        import app
+
+        monkeypatch.setattr(app, "_models_ready", True)
+        monkeypatch.setattr(app, "SHADOW_CONFIG", SimpleNamespace(serving=True))
+        monkeypatch.setattr(app, "_is_pgvector_ready", lambda: False)
+        monkeypatch.setattr(app, "_is_qdrant_ready", lambda: True)
+
+        unavailable = await app.readiness()
+        assert unavailable.status_code == 503
+        assert json.loads(unavailable.body)["pgvector"] == "unavailable"
+
+        monkeypatch.setattr(app, "_is_pgvector_ready", lambda: True)
+        recovered = await app.readiness()
+        assert recovered.status_code == 200
+        assert json.loads(recovered.body)["pgvector"] == "ready"
+
 
 # ── Tests: _url_hash ──────────────────────────────────────────────
 
@@ -545,6 +588,7 @@ class TestBuildIndexPayload:
             "embedding_dim",
             "embedding_models",
             "retention_score",
+            "content_excerpt",
         }
         assert required_keys.issubset(payload.keys()), (
             f"Missing keys: {required_keys - payload.keys()}"
@@ -623,6 +667,14 @@ class TestBuildIndexPayload:
             "https://example.com/page", "My Custom Title", None
         )
         assert payload["title"] == "My Custom Title"
+
+    def test_payload_retains_bounded_content_excerpt(self):
+        payload = _build_index_payload(
+            "https://example.com/page", "Title", None, "  useful\n  content  " * 80
+        )
+
+        assert payload["content_excerpt"].startswith("useful content")
+        assert len(payload["content_excerpt"]) <= 500
 
 
 # ── Tests: Model schemas ───────────────────────────────────────────
@@ -959,7 +1011,8 @@ class TestSearchVectorQdrantBoundary:
         from models import VectorSearchRequest, VectorSearchResponse
 
         class _Hit:
-            def __init__(self, url, title, score):
+            def __init__(self, point_id, url, title, score):
+                self.id = point_id
                 self.payload = {"url": url, "title": title}
                 self.score = score
 
@@ -967,8 +1020,8 @@ class TestSearchVectorQdrantBoundary:
             def query_points(self, **kwargs):
                 class _Resp:
                     points = [
-                        _Hit("https://a.com", "A", 0.91),
-                        _Hit("https://b.com", "B", 0.82),
+                        _Hit(1, "https://a.com", "A", 0.91),
+                        _Hit(2, "https://b.com", "B", 0.82),
                     ]
 
                 return _Resp()
@@ -980,3 +1033,268 @@ class TestSearchVectorQdrantBoundary:
         assert isinstance(resp, VectorSearchResponse)
         assert [r.url for r in resp.results] == ["https://a.com", "https://b.com"]
         assert [r.score for r in resp.results] == [0.91, 0.82]
+
+    @pytest.mark.asyncio
+    async def test_shadow_comparison_is_scheduled_without_delaying_response(
+        self, monkeypatch
+    ):
+        """Enabled shadow mode captures comparison work after Qdrant succeeds."""
+        from types import SimpleNamespace
+
+        from models import VectorSearchRequest
+
+        class _Hit:
+            id = 1
+            payload = {"url": "https://a.com", "title": "A"}
+            score = 0.91
+
+        class _OkQdrant:
+            def query_points(self, **kwargs):
+                return SimpleNamespace(points=[_Hit()])
+
+        router_search = self._ready_router(monkeypatch, _OkQdrant())
+        scheduled = []
+
+        def _capture(coro):
+            scheduled.append(coro)
+
+        monkeypatch.setattr(
+            router_search,
+            "SHADOW_CONFIG",
+            SimpleNamespace(
+                enabled=True,
+                serving=False,
+                sample_rate=1,
+                score_tolerance=0.0001,
+            ),
+        )
+        monkeypatch.setattr(router_search, "_create_background_task", _capture)
+
+        response = await router_search.search_vector(
+            VectorSearchRequest(query="herbs", limit=5)
+        )
+
+        assert [result.url for result in response.results] == ["https://a.com"]
+        assert len(scheduled) == 2
+        for coro in scheduled:
+            coro.close()
+
+    @pytest.mark.asyncio
+    async def test_pgvector_serving_does_not_query_qdrant(self, monkeypatch):
+        """The cutover mode serves the required pgvector adapter result."""
+        from types import SimpleNamespace
+
+        from models import VectorSearchRequest
+        from shadow_pgvector import ShadowSearchResult
+
+        class _ForbiddenQdrant:
+            def query_points(self, **kwargs):
+                raise AssertionError("pgvector serving reached Qdrant")
+
+        router_search = self._ready_router(monkeypatch, _ForbiddenQdrant())
+
+        async def _serve(operation, function):
+            assert operation == "search"
+            return [ShadowSearchResult(1, "https://pg.example", "PG", 0.93)]
+
+        monkeypatch.setattr(
+            router_search,
+            "SHADOW_CONFIG",
+            SimpleNamespace(enabled=True, serving=True),
+        )
+        monkeypatch.setattr(router_search, "_run_required_pgvector_operation", _serve)
+
+        response = await router_search.search_vector(
+            VectorSearchRequest(query="herbs", limit=5)
+        )
+
+        assert [result.url for result in response.results] == ["https://pg.example"]
+        assert response.results[0].score == 0.93
+
+
+class TestPgvectorShadowIndexWiring:
+    @pytest.mark.asyncio
+    async def test_scheduled_shadow_operation_reports_completion_lag(self, monkeypatch):
+        """Expose shadow backlog and completion delay without request content."""
+        from types import SimpleNamespace
+
+        import app as app_module
+
+        scheduled = []
+
+        class _Tracker:
+            def create_background_task(self, coro):
+                scheduled.append(coro)
+
+        async def _run(operation, function):
+            assert operation == "unit_lag"
+            function()
+            return "done"
+
+        monkeypatch.setattr(app_module, "SHADOW_CONFIG", SimpleNamespace(enabled=True))
+        monkeypatch.setattr(
+            app_module.app.state, "task_tracker", _Tracker(), raising=False
+        )
+        monkeypatch.setattr(app_module, "_run_shadow_operation", _run)
+
+        app_module._schedule_shadow_operation("unit_lag", lambda: None)
+
+        assert len(scheduled) == 1
+        assert await scheduled[0] == "done"
+        metrics = app_module.METRICS.generate_openmetrics()
+        assert (
+            'groktocrawl_pgvector_shadow_scheduled_total{operation="unit_lag"} 1.0'
+            in metrics
+        )
+        assert (
+            'groktocrawl_pgvector_shadow_completed_total{operation="unit_lag"} 1.0'
+            in metrics
+        )
+        assert (
+            'groktocrawl_pgvector_shadow_inflight{operation="unit_lag"} 0.0' in metrics
+        )
+        assert (
+            'groktocrawl_pgvector_shadow_completion_lag_seconds_count{operation="unit_lag"} 1'
+            in metrics
+        )
+
+    @pytest.mark.asyncio
+    async def test_single_index_mirrors_only_after_qdrant_success(self, monkeypatch):
+        """The authoritative write completes before shadow work is scheduled."""
+        import app as app_module
+        import numpy as np
+        import router_index
+        from models import IndexRequest
+
+        events = []
+
+        class _Qdrant:
+            def retrieve(self, *args, **kwargs):
+                return []
+
+            def upsert(self, *args, **kwargs):
+                events.append("qdrant")
+
+        class _Model:
+            def encode(self, text, **kwargs):
+                return np.array([0.1, 0.2, 0.3])
+
+        def _schedule(operation, function):
+            events.append(operation)
+
+        monkeypatch.setattr(app_module, "_models_ready", True)
+        monkeypatch.setattr(router_index, "_ensure_qdrant", _async_return(_Qdrant()))
+        monkeypatch.setattr(router_index, "_get_embed_model", lambda: _Model())
+        monkeypatch.setattr(router_index, "_get_active_model", lambda: "v_bge-m3")
+        monkeypatch.setattr(router_index, "_schedule_shadow_operation", _schedule)
+        monkeypatch.setattr(router_index, "_evict_if_needed", _async_return(None))
+
+        response = await router_index.index_page(
+            IndexRequest(url="https://example.com", title="Example", content="body")
+        )
+
+        assert response.status == "indexed"
+        assert events == ["qdrant", "upsert"]
+
+    @pytest.mark.asyncio
+    async def test_pgvector_serving_waits_for_required_write(self, monkeypatch):
+        """Cutover mode acknowledges only after Qdrant and pgvector are updated."""
+        from types import SimpleNamespace
+
+        import app as app_module
+        import numpy as np
+        import router_index
+        from models import IndexRequest
+
+        events = []
+
+        class _Qdrant:
+            def retrieve(self, *args, **kwargs):
+                return []
+
+            def upsert(self, *args, **kwargs):
+                events.append("qdrant")
+
+        class _Model:
+            def encode(self, text, **kwargs):
+                return np.array([0.1, 0.2, 0.3])
+
+        class _Pgvector:
+            def upsert(self, **kwargs):
+                events.append("pgvector")
+
+        async def _required(operation, function):
+            events.append(operation)
+            function()
+
+        monkeypatch.setattr(app_module, "_models_ready", True)
+        monkeypatch.setattr(
+            router_index, "SHADOW_CONFIG", SimpleNamespace(serving=True)
+        )
+        monkeypatch.setattr(router_index, "_ensure_qdrant", _async_return(_Qdrant()))
+        monkeypatch.setattr(router_index, "_get_embed_model", lambda: _Model())
+        monkeypatch.setattr(router_index, "_get_active_model", lambda: "v_bge-m3")
+        monkeypatch.setattr(router_index, "_shadow_store", _Pgvector())
+        monkeypatch.setattr(router_index, "_run_required_pgvector_operation", _required)
+        monkeypatch.setattr(
+            router_index,
+            "_schedule_shadow_operation",
+            lambda *args: pytest.fail("serving write was scheduled"),
+        )
+        monkeypatch.setattr(router_index, "_evict_if_needed", _async_return(None))
+
+        response = await router_index.index_page(
+            IndexRequest(url="https://example.com", title="Example", content="body")
+        )
+
+        assert response.status == "indexed"
+        assert events == ["qdrant", "upsert", "pgvector"]
+
+    @pytest.mark.asyncio
+    async def test_pgvector_serving_rejects_write_when_rollback_store_is_down(
+        self, monkeypatch
+    ):
+        """A missing rollback copy is a stable retryable response, not a 500."""
+        from types import SimpleNamespace
+
+        import app as app_module
+        import numpy as np
+        import router_index
+        from fastapi import HTTPException
+        from models import IndexRequest
+
+        class _Qdrant:
+            def retrieve(self, *args, **kwargs):
+                return []
+
+            def upsert(self, *args, **kwargs):
+                raise ConnectionError("rollback store unavailable")
+
+        class _Model:
+            def encode(self, text, **kwargs):
+                return np.array([0.1, 0.2, 0.3])
+
+        class _Pgvector:
+            def upsert(self, **kwargs):
+                pytest.fail(
+                    "pgvector must not receive a write without its rollback copy"
+                )
+
+        monkeypatch.setattr(app_module, "_models_ready", True)
+        monkeypatch.setattr(
+            router_index, "SHADOW_CONFIG", SimpleNamespace(serving=True)
+        )
+        monkeypatch.setattr(router_index, "_ensure_qdrant", _async_return(_Qdrant()))
+        monkeypatch.setattr(router_index, "_get_embed_model", lambda: _Model())
+        monkeypatch.setattr(router_index, "_get_active_model", lambda: "v_bge-m3")
+        monkeypatch.setattr(router_index, "_shadow_store", _Pgvector())
+
+        with pytest.raises(HTTPException) as exc_info:
+            await router_index.index_page(
+                IndexRequest(url="https://example.com", title="Example", content="body")
+            )
+
+        assert exc_info.value.status_code == 503
+        assert exc_info.value.detail == (
+            "Qdrant rollback store is unavailable — please retry"
+        )

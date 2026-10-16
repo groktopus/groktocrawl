@@ -164,7 +164,8 @@ class TestFindSimilarHealthyContracts:
         first, second = body["data"]
         assert first["url"] == "https://a.com"
         assert first["description"] == "c" * 200  # truncated at 200 chars
-        assert second["description"] == ""  # no content key -> empty
+        assert second["description"] == "# Herbs"  # hydrated from the live page
+        assert second["metadata_complete"] is True
 
     def test_genuinely_empty_index_returns_success_with_empty_data(self, client):
         """A clean empty result is success, never an error (issue #588)."""
@@ -323,13 +324,43 @@ class TestFindSimilarWebModeRerank:
         # raw searxng order was Beta, Gamma, Alpha — Beta must be dropped.
         assert [r["title"] for r in results] == ["Alpha", "Gamma"]
 
-        # Mapping contract: dicts expose exactly url/title/description.
+        # Result semantics expose quality and provenance, not just transport success.
         for item in results:
-            assert set(item.keys()) == {"url", "title", "description"}
             assert item["url"].startswith("https://")
             assert item["description"].endswith("description")
+            assert 0.0 <= item["score"] <= 1.0
+            assert item["confidence"] in {"low", "medium", "high"}
+            assert item["metadata_complete"] is True
+            assert item["provenance"]["source"] == "web_search"
+        assert results[0]["raw_rank"] == 3
+        assert results[0]["rank"] == 1
 
         # Full pipeline ran: scrape -> search -> embed(query) -> embed(batch).
         assert len(semantic.embed_calls) == 2
         assert len(semantic.embed_calls[0]) == 1  # query markdown
         assert len(semantic.embed_calls[1]) == 3  # candidate descriptions
+
+    def test_web_query_skips_leading_browser_boilerplate(self):
+        from agent.research.similar import _web_query
+
+        query = _web_query(
+            "Python Success Stories",
+            "JavaScript is disabled. Enable JavaScript to continue.\n\n"
+            "Organizations describe how Python improved scientific computing.",
+        )
+
+        assert query.startswith("Python Success Stories")
+        assert "scientific computing" in query
+        assert "JavaScript" not in query
+
+    def test_sparse_vector_title_falls_back_to_heading_then_url(self):
+        from agent.research.similar import _fallback_title
+
+        assert (
+            _fallback_title("https://docs.example/guide", "# Useful Guide\n\nBody")
+            == "Useful Guide"
+        )
+        assert (
+            _fallback_title("https://docs.example/guides/setup", "plain body")
+            == "docs.example — guides / setup"
+        )

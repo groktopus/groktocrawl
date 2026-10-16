@@ -1,0 +1,34 @@
+{
+  "coverage": "complete",
+  "text": "On 2026-09-10, the bounded fixture completed one construction step and produced an answer with exact passage citations. [1]\n\nThe bounded fixture did not test live search, production traffic, restart recovery, or comparative answer quality. No production adoption decision was made. [1]",
+  "units": [
+    {
+      "unit_id": "unit-1",
+      "text": "On 2026-09-10, the bounded fixture completed one construction step and produced an answer with exact passage citations.",
+      "question_ids": [
+        "q-result"
+      ],
+      "citation_numbers": [
+        1
+      ]
+    },
+    {
+      "unit_id": "unit-2",
+      "text": "The bounded fixture did not test live search, production traffic, restart recovery, or comparative answer quality. No production adoption decision was made.",
+      "question_ids": [
+        "q-limit"
+      ],
+      "citation_numbers": [
+        1
+      ]
+    }
+  ],
+  "citations": [
+    {
+      "number": 1,
+      "passage_id": "passage-1-1",
+      "snapshot_id": "synthetic-note-v1"
+    }
+  ],
+  "missing_question_ids": []
+}

@@ -153,6 +153,38 @@ class TestClientAuthentication:
 
         assert "Authorization" not in request.call_args.kwargs["headers"]
 
+
+class TestSearchRetrievalContract:
+    """Search retrieval mode is consistent for sync and streaming requests."""
+
+    def test_search_parser_defines_retrieval_mode_for_streaming(self):
+        parser = _cli_ns["make_parser"]()
+        args = parser.parse_args(["search", "fixture", "--stream"])
+        assert args.retrieval_mode == "keyword"
+
+    def test_search_parser_accepts_explicit_retrieval_mode(self):
+        parser = _cli_ns["make_parser"]()
+        args = parser.parse_args(
+            ["search", "fixture", "--stream", "--retrieval-mode", "hybrid"]
+        )
+        assert args.retrieval_mode == "hybrid"
+
+    def test_sync_search_sends_retrieval_mode(self, client):
+        with patch.object(client, "_request", return_value={"data": {}}) as request:
+            client.search("fixture", retrieval_mode="semantic")
+        assert request.call_args.kwargs["json_data"]["retrieval_mode"] == "semantic"
+
+    def test_stream_search_uses_authenticated_retry_path(self, client):
+        response = MagicMock()
+        with patch.object(
+            client, "_post_stream_with_retry", return_value=response
+        ) as request:
+            result = client.search_stream("fixture", retrieval_mode="vector")
+        assert result == {"_stream": response}
+        data = request.call_args.args[1]
+        assert data["retrieval_mode"] == "vector"
+        assert data["stream"] is True
+
     def test_api_error_preserves_structured_captcha_body(self, client):
         response = MagicMock()
         response.status_code = 502
@@ -192,6 +224,46 @@ class TestClientAuthentication:
 
         assert exit_info.value.code == 1
         assert json.loads(capsys.readouterr().out)["error_code"] == "CAPTCHA_UNRESOLVED"
+
+    def test_experimental_capabilities_uses_unversioned_route(self, client):
+        """Experimental protocol discovery must not be sent under /v2."""
+        response = MagicMock()
+        response.status_code = 200
+        response.json.return_value = {
+            "protocol_version": "research/1",
+            "implementation_stage": "contract_and_golden_traces",
+            "recovery_mode": "not_advertised",
+            "operations": {},
+        }
+        response.headers = {}
+        response.url = "http://test-server:8080/experimental/research/v1/capabilities"
+
+        import requests as requests_module
+
+        with patch.object(requests_module, "request", return_value=response) as request:
+            result = client.experimental_research_capabilities()
+
+        assert result["protocol_version"] == "research/1"
+        assert request.call_args.kwargs["url"].endswith(
+            "/experimental/research/v1/capabilities"
+        )
+
+    def test_experimental_create_sends_idempotency_header(self, client):
+        response = MagicMock()
+        response.status_code = 202
+        response.json.return_value = {"run_id": "run-1", "state": "accepted"}
+        response.headers = {}
+        response.url = "http://test-server:8080/experimental/research/v1/runs"
+
+        import requests as requests_module
+
+        with patch.object(requests_module, "request", return_value=response) as request:
+            result = client.experimental_research_create(
+                "objective", idempotency_key="stable-key"
+            )
+
+        assert result["run_id"] == "run-1"
+        assert request.call_args.kwargs["headers"]["Idempotency-Key"] == "stable-key"
 
 
 class TestClientCrawl:
@@ -554,6 +626,11 @@ class TestCmdCrawl:
                 {"url": "http://example.com/page1", "markdown": "# Page 1"},
                 {"url": "http://example.com/page2", "markdown": "# Page 2"},
             ],
+            "outcomeSummary": {
+                "discovered": 2,
+                "retained": 2,
+                "reason": "completed",
+            },
         }
 
         original_json = _cli_ns["JSON_OUTPUT"]
@@ -569,6 +646,41 @@ class TestCmdCrawl:
         assert parsed["job_id"] == "job-json-test"
         assert parsed["status"] == "completed"
         assert len(parsed["pages"]) == 2
+        assert parsed["outcomeSummary"]["retained"] == 2
+
+    def test_cmd_crawl_prints_zero_page_reason(self):
+        """Human output explains a successful crawl that retained no pages."""
+        cmd_crawl = _cli_ns["cmd_crawl"]
+        mock_args = MagicMock(
+            url="http://example.com",
+            limit=1,
+            max_depth=1,
+            include_paths=None,
+            exclude_paths=None,
+            max_pages=None,
+            ignore_query_parameters=False,
+            dry_run=False,
+            no_poll=False,
+            format=None,
+            download_images=False,
+        )
+        mock_client = MagicMock()
+        mock_client.dry_run = False
+        mock_client.crawl.return_value = {"success": True, "id": "job-empty"}
+        mock_client.crawl_status.return_value = {
+            "status": "completed",
+            "data": [],
+            "outcomeSummary": {
+                "discovered": 3,
+                "retained": 0,
+                "reason": "all_urls_filtered",
+            },
+        }
+
+        stdout = _capture_stdout(cmd_crawl, mock_client, mock_args)
+
+        assert "0 pages" in stdout
+        assert "Outcome: all_urls_filtered" in stdout
 
     def test_cmd_crawl_polling_error_retry_limit(self):
         """cmd_crawl exits after max polling errors."""
@@ -927,15 +1039,30 @@ class TestCmdBatchScrape:
 class TestClientParseUpload:
     """Tests for direct and staged parse client requests."""
 
+    def test_request_parse_upload_uses_authenticated_client_request(self, client):
+        """Upload reservation uses the common authenticated request path."""
+        with patch.object(
+            client,
+            "_request",
+            return_value={"success": True, "upload_id": "reserved-1"},
+        ) as request:
+            result = client.request_parse_upload()
+
+        request.assert_called_once_with("POST", "/parse/upload-url")
+        assert result["upload_id"] == "reserved-1"
+
     def test_parse_file_sends_explicit_hosted_ocr_mode(self, client, tmp_path):
         """parse_file sends the opt-in OCR mode as multipart form data."""
         document = tmp_path / "scan.pdf"
         document.write_bytes(b"%PDF-1.4 fake scan")
 
-        def _fake_post(url, files=None, data=None, timeout=None):
+        client.api_key = "parse-test-key"
+
+        def _fake_post(url, files=None, data=None, headers=None, timeout=None):
             assert "/parse" in url
             assert files is not None
             assert data == {"ocr": "hosted"}
+            assert headers == {"Authorization": "Bearer parse-test-key"}
 
             class FakeResp:
                 status_code = 200
@@ -958,11 +1085,14 @@ class TestClientParseUpload:
     def test_parse_upload_file_sends_correct_data(self, client):
         """parse_upload_file sends PUT with correct URL, headers, and body."""
 
+        client.api_key = "parse-test-key"
+
         def _fake_put(url, data=None, headers=None, timeout=None):
             assert "/parse/upload/my-upload-1" in url
             assert headers["Content-Type"] == "application/pdf"
             # X-Filename should match the temp file's basename
             assert headers["X-Filename"].endswith(".pdf")
+            assert headers["Authorization"] == "Bearer parse-test-key"
             assert data == b"fake pdf content"
 
             class FakeResp:
@@ -993,9 +1123,12 @@ class TestClientParseUpload:
     def test_parse_with_upload_id_sends_form_field(self, client):
         """parse_with_upload_id sends POST with upload_id in form data."""
 
-        def _fake_post(url, data=None, timeout=None):
+        client.api_key = "parse-test-key"
+
+        def _fake_post(url, data=None, headers=None, timeout=None):
             assert "/parse" in url
             assert data == {"upload_id": "my-upload-2"}
+            assert headers == {"Authorization": "Bearer parse-test-key"}
 
             class FakeResp:
                 status_code = 200
@@ -1064,7 +1197,7 @@ class TestClientParseUpload:
         """parse_with_upload_id raises ApiError on 4xx response."""
         api_error_cls = _cli_ns["ApiError"]
 
-        def _fake_post(url, data=None, timeout=None):
+        def _fake_post(url, data=None, headers=None, timeout=None):
             class FakeResp:
                 status_code = 400
 
@@ -1109,6 +1242,35 @@ class TestCmdParseUpload:
             }
             cmd_parse_upload(mock_client, mock_args)
             mock_client.parse_upload_file.assert_called_once_with("up-1", tmp_path)
+        finally:
+            os.unlink(tmp_path)
+
+    def test_cmd_parse_upload_reserves_id_when_omitted(self):
+        """parse-upload completes the public reservation and upload sequence."""
+        cmd_parse_upload = _cli_ns["cmd_parse_upload"]
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(delete=False) as tmp:
+            tmp.write(b"hello")
+            tmp_path = tmp.name
+        try:
+            mock_args = MagicMock(upload_id=None, file=tmp_path)
+            mock_client = MagicMock(dry_run=False)
+            mock_client.request_parse_upload.return_value = {
+                "success": True,
+                "upload_id": "reserved-1",
+            }
+            mock_client.parse_upload_file.return_value = {
+                "status": "uploaded",
+                "upload_id": "reserved-1",
+            }
+
+            cmd_parse_upload(mock_client, mock_args)
+
+            mock_client.request_parse_upload.assert_called_once_with()
+            mock_client.parse_upload_file.assert_called_once_with(
+                "reserved-1", tmp_path
+            )
         finally:
             os.unlink(tmp_path)
 
@@ -1305,6 +1467,12 @@ class TestParseUploadParser:
         assert args.upload_id == "my-id"
         assert args.file == "/tmp/report.pdf"
         assert args.command == "parse-upload"
+
+    def test_parse_upload_id_is_optional(self):
+        """parse-upload can ask the server to generate its upload ID."""
+        parser = _cli_ns["make_parser"]()
+        args = parser.parse_args(["parse-upload", "--file", "/tmp/report.pdf"])
+        assert args.upload_id is None
 
     def test_parse_upload_file_required(self):
         """parse-upload --file is required."""
@@ -1588,6 +1756,87 @@ class TestImageSupport:
             retry=True,
         )
 
+
+def test_agent_json_stream_emits_one_result_with_sources(monkeypatch, capsys):
+    cmd_agent = _cli_ns["cmd_agent"]
+    events = [
+        {
+            "type": "sources",
+            "sources": ["https://example.test/a", "https://example.test/b"],
+        },
+        {"type": "token", "content": "First "},
+        {"type": "token", "content": "second."},
+        {
+            "type": "done",
+            "result": "First second.",
+            "evidence_coverage": {"selected": 2},
+        },
+    ]
+    response = MagicMock()
+    response.iter_lines.return_value = [
+        "data: " + json.dumps(event) for event in events
+    ] + ["data: [DONE]"]
+    client = MagicMock()
+    client.dry_run = False
+    client.create_agent_stream.return_value = {"_stream": response}
+    args = MagicMock()
+    args.prompt = "question"
+    args.urls = None
+    args.sync = False
+    args.no_poll = False
+    args.pyramid = False
+    args.output_dir = ""
+    args.include_images = False
+    args.search_type = "focused"
+
+    monkeypatch.setitem(_cli_ns, "JSON_OUTPUT", True)
+    cmd_agent(client, args)
+
+    output = capsys.readouterr().out
+    assert json.loads(output) == {
+        "result": "First second.",
+        "sources": ["https://example.test/a", "https://example.test/b"],
+        "evidence_coverage": {"selected": 2},
+    }
+
+
+def test_agent_json_stream_error_exits_nonzero_with_json(monkeypatch, capsys):
+    cmd_agent = _cli_ns["cmd_agent"]
+    response = MagicMock()
+    response.iter_lines.return_value = [
+        "data: "
+        + json.dumps(
+            {
+                "type": "error",
+                "content": "provider unavailable",
+                "classification": "non_retryable",
+            }
+        )
+    ]
+    client = MagicMock()
+    client.dry_run = False
+    client.create_agent_stream.return_value = {"_stream": response}
+    args = MagicMock()
+    args.prompt = "question"
+    args.urls = None
+    args.sync = False
+    args.no_poll = False
+    args.pyramid = False
+    args.output_dir = ""
+    args.include_images = False
+    args.search_type = "focused"
+
+    monkeypatch.setitem(_cli_ns, "JSON_OUTPUT", True)
+    with pytest.raises(SystemExit) as exc:
+        cmd_agent(client, args)
+
+    assert exc.value.code == 1
+    assert json.loads(capsys.readouterr().out) == {
+        "success": False,
+        "error": "provider unavailable",
+        "classification": "non_retryable",
+    }
+
     def test_search_type_images_in_choices(self):
         """search --search-type includes 'images' in choices."""
         make_parser = _cli_ns["make_parser"]
@@ -1604,3 +1853,315 @@ class TestImageSupport:
             if "--search-type" in action.option_strings:
                 assert "images" in action.choices
                 break
+
+
+def test_search_json_keeps_media_and_engine_attribution(monkeypatch):
+    media = {
+        "media_type": "video",
+        "url": "https://example.org/video.mp4",
+        "duration": 90,
+    }
+    row = {
+        "url": "https://example.org/watch",
+        "title": "Video",
+        "media": media,
+        "engines": ["brave", "videos"],
+    }
+    args = _cli_ns["make_parser"]().parse_args(["search", "fixture"])
+    client = MagicMock()
+    client.dry_run = False
+    client.search.return_value = {"success": True, "data": {"web": [row]}}
+    output = []
+    monkeypatch.setitem(_cli_ns, "JSON_OUTPUT", True)
+    monkeypatch.setitem(_cli_ns, "emit", lambda _text, data: output.append(data))
+    _cli_ns["cmd_search"](client, args)
+    assert output[0]["results"][0] == row
+
+
+class TestDocumentWorkflowCLI:
+    def test_query_passes_explicit_refs_model_and_evidence_budget(self, client, capsys):
+        parser = _cli_ns["make_parser"]()
+        args = parser.parse_args(
+            [
+                "document",
+                "query",
+                "session",
+                "Compare sources",
+                "--ref",
+                "doc_fixture",
+                "--ref",
+                "ref_1_2",
+                "--model",
+                "fixture",
+                "--evidence-budget-chars",
+                "32000",
+            ]
+        )
+        with patch.object(
+            client, "_request", return_value={"answer": "fixture"}
+        ) as request:
+            _cli_ns["cmd_document"](client, args)
+        assert request.call_args.args == ("POST", "/session/session/step")
+        assert request.call_args.kwargs["json_data"]["params"] == {
+            "question": "Compare sources",
+            "ref_ids": ["doc_fixture", "ref_1_2"],
+            "model": "fixture",
+            "evidence_budget_chars": 32000,
+        }
+
+    def test_local_document_bytes_use_api_auth_and_display_basename(
+        self, client, tmp_path
+    ):
+        filepath = tmp_path / "private-report.txt"
+        filepath.write_bytes(b"Private local bytes")
+        response = MagicMock(status_code=200)
+        response.json.return_value = {"ref_id": "doc_fixture"}
+        client.api_key = "fixture-key"
+        with patch("requests.post", return_value=response) as post:
+            assert (
+                client.document_attach("session", str(filepath))["ref_id"]
+                == "doc_fixture"
+            )
+        assert post.call_args.kwargs["files"]["file"] == (
+            "private-report.txt",
+            b"Private local bytes",
+            "text/plain",
+        )
+        assert post.call_args.kwargs["headers"] == {
+            "Authorization": "Bearer fixture-key"
+        }
+        assert post.call_args.args[0].endswith("/v2/session/session/documents")
+
+    def test_document_dry_run_never_opens_local_file(self):
+        client_cls = _cli_ns["Client"]
+        result = client_cls(server="http://fixture", dry_run=True).document_attach(
+            "session", "/nonexistent/private.pdf"
+        )
+        assert result["dry_run"] is True
+        assert result["url"] == "http://fixture/v2/session/session/documents"
+
+    def test_document_exact_span_and_lifecycle_actions(self, client):
+        parser = _cli_ns["make_parser"]()
+        for action, expected_method, suffix in (
+            ("show", "GET", "/documents/doc_fixture"),
+            ("detach", "DELETE", "/documents/doc_fixture"),
+            ("export-session", "POST", "/export"),
+            ("delete-session", "DELETE", ""),
+        ):
+            arguments = ["document", action, "session"]
+            if action in {"show", "detach"}:
+                arguments.append("doc_fixture")
+            if action == "show":
+                arguments += ["--start", "1", "--end", "4"]
+            with patch.object(
+                client, "_request", return_value={"success": True}
+            ) as request:
+                _cli_ns["cmd_document"](client, parser.parse_args(arguments))
+            assert request.call_args.args == (
+                expected_method,
+                "/session/session" + suffix,
+            )
+            if action == "show":
+                assert request.call_args.kwargs["params"] == {"start": 1, "end": 4}
+
+
+def test_search_forwards_date_controls(client):
+    parser = _cli_ns["make_parser"]()
+    args = parser.parse_args(
+        [
+            "search",
+            "paper",
+            "--date-from",
+            "2026-01-01",
+            "--date-to",
+            "2026-01-31",
+            "--engines",
+            "openalex",
+        ]
+    )
+    assert args.date_from == "2026-01-01" and args.engines == ["openalex"]
+    with patch.object(
+        client,
+        "_request",
+        return_value={
+            "success": True,
+            "date_filter": _bounded_cli_receipt(),
+            "data": {"web": []},
+        },
+    ) as request:
+        client.search(
+            "paper",
+            date_from=args.date_from,
+            date_to=args.date_to,
+            engines=args.engines,
+        )
+    body = request.call_args.kwargs["json_data"]
+    assert body["date_from"] == "2026-01-01"
+    assert body["date_to"] == "2026-01-31"
+    assert body["engines"] == ["openalex"]
+
+
+def test_search_stream_rejects_bounds_before_dispatch(client):
+    with patch.object(client, "_post_stream_with_retry") as request:
+        with pytest.raises(_cli_ns["ApiError"]):
+            client.search_stream("paper", date_from="2026-01-01", engines=["openalex"])
+    request.assert_not_called()
+
+
+def _bounded_cli_receipt():
+    bounds = {"date_from": "2026-01-01", "date_to": "2026-01-31"}
+    return {
+        "requested": {**bounds, "time_range": None},
+        "applied": bounds,
+        "status": "enforced",
+        "engines": ["openalex"],
+        "enforced_by": ["upstream:openalex"],
+        "reason": "audited",
+        "warnings": [],
+    }
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        {"success": True, "error": None, "data": {"web": []}},
+        {"success": True, "error": "legacy", "data": {"web": []}},
+        {
+            "success": True,
+            "error": "failure",
+            "date_filter": _bounded_cli_receipt(),
+            "data": {"web": []},
+        },
+        {"success": True, "data": {"web": []}},
+        {"success": True, "date_filter": {"status": "enforced"}, "data": {"web": []}},
+        {
+            "success": True,
+            "date_filter": _bounded_cli_receipt(),
+            "data": {"web": [{"publishedDate": "2025-01-01"}]},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_cli_receipt(),
+            "data": {"web": [{"publishedDate": None}]},
+        },
+        {"success": False, "date_filter": _bounded_cli_receipt(), "data": {"web": []}},
+        {
+            "success": True,
+            "date_filter": _bounded_cli_receipt() | {"status": "partially_enforced"},
+            "data": {"web": []},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_cli_receipt() | {"requested": {}},
+            "data": {"web": []},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_cli_receipt() | {"engines": ["brave"]},
+            "data": {"web": []},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_cli_receipt() | {"warnings": "bad"},
+            "data": {"web": []},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_cli_receipt() | {"reason": None},
+            "data": {"web": []},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_cli_receipt(),
+            "data": {"web": [{"publishedDate": "2026-02-30"}]},
+        },
+        {
+            "success": True,
+            "date_filter": _bounded_cli_receipt(),
+            "data": {"web": [{"publishedDate": "2026-01-01", "engine": "brave"}]},
+        },
+    ],
+)
+def test_bounded_cli_rejects_unproven_old_agent(client, response):
+    client._request = MagicMock(return_value=response)
+    with pytest.raises(_cli_ns["ApiError"]):
+        client.search(
+            "paper", date_from="2026-01-01", date_to="2026-01-31", engines=["openalex"]
+        )
+
+
+def test_bounded_cli_accepts_empty_with_exact_proof(client):
+    response = {
+        "success": True,
+        "date_filter": _bounded_cli_receipt(),
+        "data": {"web": []},
+    }
+    client._request = MagicMock(return_value=response)
+    assert (
+        client.search(
+            "paper", date_from="2026-01-01", date_to="2026-01-31", engines=["openalex"]
+        )
+        == response
+    )
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"date_from": "bad"},
+        {"date_to": "2025-01-01"},
+        {"engines": ["arxiv"]},
+        {"search_type": "deep"},
+        {"retrieval_mode": "vector"},
+        {"time_range": "week"},
+        {"contents": {}},
+        {"scrape": True},
+    ],
+)
+def test_bounded_cli_validates_before_dispatch(client, changes):
+    client._request = MagicMock()
+    with pytest.raises(_cli_ns["ApiError"]):
+        client.search(
+            "paper",
+            **(
+                {
+                    "date_from": "2026-01-01",
+                    "date_to": "2026-01-31",
+                    "engines": ["openalex"],
+                }
+                | changes
+            ),
+        )
+    client._request.assert_not_called()
+
+
+def test_bounded_cli_command_exits_on_old_agent(client):
+    args = _cli_ns["make_parser"]().parse_args(
+        ["search", "paper", "--date-from", "2026-01-01", "--engines", "openalex"]
+    )
+    client._request = MagicMock(return_value={"success": True, "data": {"web": []}})
+    with pytest.raises(SystemExit) as exc:
+        _cli_ns["cmd_search"](client, args)
+    assert exc.value.code != 0
+
+
+@pytest.mark.parametrize(
+    "bounds",
+    [
+        {"date_from": "2026-01-01", "date_to": None},
+        {"date_from": None, "date_to": "2026-01-01"},
+        {"date_from": "2026-01-01", "date_to": "2026-01-01"},
+    ],
+)
+def test_bounded_cli_accepts_inclusive_one_sided_results(client, bounds):
+    proof = _bounded_cli_receipt() | {
+        "requested": {**bounds, "time_range": None},
+        "applied": bounds,
+    }
+    response = {
+        "success": True,
+        "data": {"web": [{"publishedDate": "2026-01-01", "engine": "openalex"}]},
+        "date_filter": proof,
+    }
+    client._request = MagicMock(return_value=response)
+    assert client.search("paper", engines=["openalex"], **bounds) == response

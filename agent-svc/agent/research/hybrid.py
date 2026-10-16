@@ -72,6 +72,7 @@ from urllib.parse import urlparse
 from ..admission import get_admission
 from ..crawl_cache import CrawlCache
 from ..scraper_client import ScraperClient
+from ..search_metadata import search_metadata
 from ..searxng_client import SearchHealth, SearXNGClient
 from ..semantic_client import SemanticClient
 from ..settings import load_settings
@@ -187,6 +188,7 @@ def _collect_candidates(
             "url": url,
             "title": result.get("title", ""),
             "description": result.get("description", ""),
+            **search_metadata(result),
             "score": None,
             "retrieval": "web",
             "web_rank": rank,

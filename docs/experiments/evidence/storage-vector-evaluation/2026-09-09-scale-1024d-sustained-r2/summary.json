@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0",
+  "run_id": 34303200570,
+  "verdict": "bounded_pass",
+  "production_capacity_claim": false,
+  "provider_decision": null,
+  "qdrant_removal": false,
+  "workload": {
+    "records": 10000,
+    "dimension": 1024,
+    "batch_size": 1000,
+    "rounds": 3,
+    "mixed_operations_per_round": 5000,
+    "workers": 4
+  },
+  "correctness": {
+    "qdrant_successful_operations": 15000,
+    "qdrant_failed_operations": 0,
+    "pgvector_successful_operations": 15000,
+    "pgvector_failed_operations": 0
+  },
+  "median_observations": {
+    "qdrant": {
+      "bulk_upsert_ms": 8826.20,
+      "mixed_search_p50_ms": 15.64,
+      "mixed_search_p95_ms": 38.02,
+      "mixed_search_p99_ms": 54.88,
+      "mixed_upsert_p50_ms": 9.98,
+      "mixed_upsert_p95_ms": 25.89,
+      "mixed_upsert_p99_ms": 51.84,
+      "mixed_throughput_ops_s": 197.93,
+      "cpu_percent": 101.48,
+      "sampled_max_cpu_percent": 104.27,
+      "memory_mib": 240.40,
+      "sampled_max_memory_mib": 380.70,
+      "resource_samples": 29
+    },
+    "pgvector": {
+      "bulk_upsert_ms": 10172.83,
+      "mixed_search_p50_ms": 7.44,
+      "mixed_search_p95_ms": 96.97,
+      "mixed_search_p99_ms": 103.38,
+      "mixed_upsert_p50_ms": 2.91,
+      "mixed_upsert_p95_ms": 72.23,
+      "mixed_upsert_p99_ms": 75.76,
+      "mixed_throughput_ops_s": 116.38,
+      "cpu_percent": 99.48,
+      "sampled_max_cpu_percent": 100.40,
+      "memory_mib": 128.75,
+      "sampled_max_memory_mib": 189.70,
+      "resource_samples": 44
+    }
+  },
+  "limits": [
+    "isolated component workload",
+    "provider phases ran sequentially for 33-98 seconds",
+    "Qdrant always ran before pgvector",
+    "coarse Docker resource sampling",
+    "synthetic corpus and request mix",
+    "no end-to-end GroktoCrawl traffic"
+  ]
+}

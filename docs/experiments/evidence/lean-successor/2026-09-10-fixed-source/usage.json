@@ -1,0 +1,10 @@
+[
+  {
+    "requested_model": "local",
+    "status": "received",
+    "resolved_model": "local",
+    "input_tokens": 802,
+    "output_tokens": 315,
+    "raw_content_digest": "07fff5d18d4b8cc9a6c7ce9c4ce55e392602863375cbc5a9c552f40a97529048"
+  }
+]

@@ -1,0 +1,67 @@
+name: groktocrawl-x-capture-https
+
+# Opt-in inbound HTTPS edge for an explicitly configured experimental
+# candidate. Compose this after compose.experimental-candidate.yml and the
+# protected capture profile overlays required by ADR-0099.
+services:
+  # In this profile the TLS listener is the only host-published API path.
+  # Internal portal/MCP callers continue using candidate-agent on the private
+  # Compose network.
+  candidate-agent:
+    ports: !reset []
+  candidate-mcp:
+    ports: !reset []
+
+  candidate-capture-https:
+    image: haproxy:3.0-alpine@sha256:56b887da77428b7a6621e59e480cdbd330cc805c22d3cedb66ceea76ffdea2c6
+    restart: unless-stopped
+    user: "${CAPTURE_HTTPS_UID:-1000}:${CAPTURE_HTTPS_GID:-1000}"
+    entrypoint: [/bin/sh, -ec]
+    command:
+      - >-
+        test "$(id -u)" -ne 0;
+        test -r /run/secrets/capture_tls_certificate;
+        test -r /run/secrets/capture_tls_private_key;
+        test -r /run/secrets/capture_bearer_acl;
+        umask 077;
+        cat /run/secrets/capture_tls_certificate /run/secrets/capture_tls_private_key > /tmp/capture-server.pem;
+        exec haproxy -W -db -f /usr/local/etc/haproxy/capture-https.cfg
+    ports:
+      - "${CAPTURE_HTTPS_BIND_IP:-127.0.0.1}:${CAPTURE_HTTPS_HOST_PORT:-18443}:8443"
+    volumes:
+      - ./deploy/capture-https.cfg:/usr/local/etc/haproxy/capture-https.cfg:ro
+    secrets:
+      - capture_tls_certificate
+      - capture_tls_private_key
+      - capture_bearer_acl
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=1m,mode=0700,uid=${CAPTURE_HTTPS_UID:-1000},gid=${CAPTURE_HTTPS_GID:-1000}
+    # Docker does not publish host ports for containers attached only to an
+    # internal network. This dedicated bridge enables the explicit host
+    # mapping without joining the shared candidate service-egress network.
+    networks: [candidate_https_edge, candidate_private]
+    depends_on:
+      candidate-agent:
+        condition: service_healthy
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+    cpus: 0.5
+    pids_limit: 64
+    stop_grace_period: 10s
+
+secrets:
+  capture_tls_certificate:
+    file: ${CAPTURE_TLS_CERT_FILE:?Set an absolute path to the operator-provided TLS certificate chain}
+  capture_tls_private_key:
+    file: ${CAPTURE_TLS_KEY_FILE:?Set an absolute path to the operator-provided TLS private key}
+  capture_bearer_acl:
+    file: ${CAPTURE_BEARER_ACL_FILE:?Set an absolute path to the one-line 'Bearer <fresh API key>' file}
+
+networks:
+  candidate_https_edge:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.31.251.0/24

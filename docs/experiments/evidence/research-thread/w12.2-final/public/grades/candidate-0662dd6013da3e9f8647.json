@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-0662dd6013da3e9f8647",
+  "case_id": "rotated-link",
+  "completed_at": "2026-09-19T09:15:47.324149+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 100,
+    "current_accuracy": 90,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "The change event (G-12 URL now returning an unavailability notice) matches the reference exactly and is correctly cited. The historical truth — G-12 reported versions before 4.2 affected — is preserved explicitly as historical, not current, so no stale-current leakage or lost history. The candidate's single current truth (the URL is currently unavailable) is supported by grove-g12-gone, though it slightly extends the reference's empty current_truths list. Unresolved coverage is partially strong: the candidate correctly flags that the advisory's present-day status cannot be established, matching the reference's core unresolved item, but it invents two peripheral unresolved questions (why the page disappeared, whether content moved) not grounded in the reference, capping that score. No distinct subjects or capabilities were merged, and all factual claims trace to the supplied snapshots.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 60,
+    "unsupported_claims": 0,
+    "usefulness": 90
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "082febd3996313877cdcc1ce373408e7e318c579094468c5acb044be3cf69646",
+    "finish_reason": "stop",
+    "latency_ms": 43247.677,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "71c79bc060cc017fc65da0f469437e20c563c841acde728d4e9311ed4b0dacd1",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 883,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 637
+      },
+      "cost": 0.0005978,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0004415,
+        "upstream_inference_cost": 0.0005978,
+        "upstream_inference_prompt_cost": 0.0001563
+      },
+      "is_byok": false,
+      "prompt_tokens": 1042,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1925
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:15:04.075973+00:00",
+  "status": "completed",
+  "trial_id": "rotated-link-r2-control"
+}

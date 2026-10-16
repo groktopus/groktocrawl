@@ -1,0 +1,223 @@
+{
+  "schema_version": "research-mission-intake-work-order/1",
+  "seed": 20260919,
+  "trials": [
+    {
+      "case_id": "mission-compound-recovery-portability",
+      "position": 1,
+      "repetition": 1,
+      "trial_id": "mission-compound-recovery-portability-intake-r1"
+    },
+    {
+      "case_id": "mission-straightforward-security",
+      "position": 2,
+      "repetition": 1,
+      "trial_id": "mission-straightforward-security-intake-r1"
+    },
+    {
+      "case_id": "mission-contradictory-hostile",
+      "position": 3,
+      "repetition": 1,
+      "trial_id": "mission-contradictory-hostile-intake-r1"
+    },
+    {
+      "case_id": "mission-unanswerable-cost",
+      "position": 4,
+      "repetition": 1,
+      "trial_id": "mission-unanswerable-cost-intake-r1"
+    },
+    {
+      "case_id": "mission-straightforward-delivery",
+      "position": 5,
+      "repetition": 1,
+      "trial_id": "mission-straightforward-delivery-intake-r1"
+    },
+    {
+      "case_id": "mission-compound-governance",
+      "position": 6,
+      "repetition": 1,
+      "trial_id": "mission-compound-governance-intake-r1"
+    },
+    {
+      "case_id": "mission-contradictory-mirror",
+      "position": 7,
+      "repetition": 1,
+      "trial_id": "mission-contradictory-mirror-intake-r1"
+    },
+    {
+      "case_id": "mission-temporal-provider",
+      "position": 8,
+      "repetition": 1,
+      "trial_id": "mission-temporal-provider-intake-r1"
+    },
+    {
+      "case_id": "mission-ambiguous-productive",
+      "position": 9,
+      "repetition": 1,
+      "trial_id": "mission-ambiguous-productive-intake-r1"
+    },
+    {
+      "case_id": "mission-unanswerable-release",
+      "position": 10,
+      "repetition": 1,
+      "trial_id": "mission-unanswerable-release-intake-r1"
+    },
+    {
+      "case_id": "mission-ambiguous-ship",
+      "position": 11,
+      "repetition": 1,
+      "trial_id": "mission-ambiguous-ship-intake-r1"
+    },
+    {
+      "case_id": "mission-temporal-exception",
+      "position": 12,
+      "repetition": 1,
+      "trial_id": "mission-temporal-exception-intake-r1"
+    },
+    {
+      "case_id": "mission-unanswerable-release",
+      "position": 1,
+      "repetition": 2,
+      "trial_id": "mission-unanswerable-release-intake-r2"
+    },
+    {
+      "case_id": "mission-contradictory-mirror",
+      "position": 2,
+      "repetition": 2,
+      "trial_id": "mission-contradictory-mirror-intake-r2"
+    },
+    {
+      "case_id": "mission-compound-governance",
+      "position": 3,
+      "repetition": 2,
+      "trial_id": "mission-compound-governance-intake-r2"
+    },
+    {
+      "case_id": "mission-contradictory-hostile",
+      "position": 4,
+      "repetition": 2,
+      "trial_id": "mission-contradictory-hostile-intake-r2"
+    },
+    {
+      "case_id": "mission-straightforward-security",
+      "position": 5,
+      "repetition": 2,
+      "trial_id": "mission-straightforward-security-intake-r2"
+    },
+    {
+      "case_id": "mission-ambiguous-ship",
+      "position": 6,
+      "repetition": 2,
+      "trial_id": "mission-ambiguous-ship-intake-r2"
+    },
+    {
+      "case_id": "mission-straightforward-delivery",
+      "position": 7,
+      "repetition": 2,
+      "trial_id": "mission-straightforward-delivery-intake-r2"
+    },
+    {
+      "case_id": "mission-temporal-exception",
+      "position": 8,
+      "repetition": 2,
+      "trial_id": "mission-temporal-exception-intake-r2"
+    },
+    {
+      "case_id": "mission-unanswerable-cost",
+      "position": 9,
+      "repetition": 2,
+      "trial_id": "mission-unanswerable-cost-intake-r2"
+    },
+    {
+      "case_id": "mission-compound-recovery-portability",
+      "position": 10,
+      "repetition": 2,
+      "trial_id": "mission-compound-recovery-portability-intake-r2"
+    },
+    {
+      "case_id": "mission-temporal-provider",
+      "position": 11,
+      "repetition": 2,
+      "trial_id": "mission-temporal-provider-intake-r2"
+    },
+    {
+      "case_id": "mission-ambiguous-productive",
+      "position": 12,
+      "repetition": 2,
+      "trial_id": "mission-ambiguous-productive-intake-r2"
+    },
+    {
+      "case_id": "mission-ambiguous-ship",
+      "position": 1,
+      "repetition": 3,
+      "trial_id": "mission-ambiguous-ship-intake-r3"
+    },
+    {
+      "case_id": "mission-temporal-provider",
+      "position": 2,
+      "repetition": 3,
+      "trial_id": "mission-temporal-provider-intake-r3"
+    },
+    {
+      "case_id": "mission-unanswerable-cost",
+      "position": 3,
+      "repetition": 3,
+      "trial_id": "mission-unanswerable-cost-intake-r3"
+    },
+    {
+      "case_id": "mission-contradictory-hostile",
+      "position": 4,
+      "repetition": 3,
+      "trial_id": "mission-contradictory-hostile-intake-r3"
+    },
+    {
+      "case_id": "mission-compound-governance",
+      "position": 5,
+      "repetition": 3,
+      "trial_id": "mission-compound-governance-intake-r3"
+    },
+    {
+      "case_id": "mission-unanswerable-release",
+      "position": 6,
+      "repetition": 3,
+      "trial_id": "mission-unanswerable-release-intake-r3"
+    },
+    {
+      "case_id": "mission-contradictory-mirror",
+      "position": 7,
+      "repetition": 3,
+      "trial_id": "mission-contradictory-mirror-intake-r3"
+    },
+    {
+      "case_id": "mission-ambiguous-productive",
+      "position": 8,
+      "repetition": 3,
+      "trial_id": "mission-ambiguous-productive-intake-r3"
+    },
+    {
+      "case_id": "mission-straightforward-delivery",
+      "position": 9,
+      "repetition": 3,
+      "trial_id": "mission-straightforward-delivery-intake-r3"
+    },
+    {
+      "case_id": "mission-temporal-exception",
+      "position": 10,
+      "repetition": 3,
+      "trial_id": "mission-temporal-exception-intake-r3"
+    },
+    {
+      "case_id": "mission-compound-recovery-portability",
+      "position": 11,
+      "repetition": 3,
+      "trial_id": "mission-compound-recovery-portability-intake-r3"
+    },
+    {
+      "case_id": "mission-straightforward-security",
+      "position": 12,
+      "repetition": 3,
+      "trial_id": "mission-straightforward-security-intake-r3"
+    }
+  ],
+  "trials_sha256": "333540621af6c25f0babafadb0c8b6eccc23bc5b7a796e0eafab739d5f27dabb"
+}

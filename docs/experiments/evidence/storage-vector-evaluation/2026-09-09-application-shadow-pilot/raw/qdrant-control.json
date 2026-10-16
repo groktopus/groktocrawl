@@ -1,0 +1,40 @@
+{
+  "operations": [
+    {
+      "latency_ms": 96.11,
+      "name": "upsert_a",
+      "response_sha256": "91be664d2fdbfb14a0bb969ac1c02fc578247675ad6eb0b3b6d094bed298c147",
+      "status_code": 201
+    },
+    {
+      "latency_ms": 140.779,
+      "name": "upsert_batch",
+      "response_sha256": "2f6377adee52d14e2cb5b331912c3a33f29abf0d4c0d7ab2bc5ee95e03477d07",
+      "status_code": 201
+    },
+    {
+      "latency_ms": 89.307,
+      "name": "search_before_delete",
+      "response_sha256": "e4de60eb9d8752441951595b54588731af7e34800bf2eb3429dcb561936fec57",
+      "status_code": 200
+    },
+    {
+      "latency_ms": 6.991,
+      "name": "delete_a",
+      "response_sha256": "4df20f95e824b2af44a61642d88daaf041a392f1d38e2716b32ee0648f60b1bc",
+      "status_code": 200
+    },
+    {
+      "latency_ms": 69.682,
+      "name": "search_after_delete",
+      "response_sha256": "ebb552fc38aed225af47b6857b4ec3bc3da787f3d19f3adb23c52d7083e1dcb9",
+      "status_code": 200
+    },
+    {
+      "latency_ms": 43.825,
+      "name": "restore_a",
+      "response_sha256": "91be664d2fdbfb14a0bb969ac1c02fc578247675ad6eb0b3b6d094bed298c147",
+      "status_code": 201
+    }
+  ]
+}

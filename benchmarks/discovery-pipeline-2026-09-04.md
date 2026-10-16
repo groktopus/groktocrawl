@@ -5,7 +5,7 @@ pre-#622 gather barrier from `codex/perf-624-source-reuse`. Run it with:
 
 ```bash
 PYTHONPATH=agent-svc:scraper-svc:. \
-  /Volumes/tank01/magnus/git/groktocrawl/.venv/bin/python \
+  /path/to/groktocrawl/.venv/bin/python \
   benchmarks/discovery_pipeline_2026_09_04.py \
   --baseline-worktree /private/tmp/groktocrawl-perf-624 --runs 7 --json
 ```

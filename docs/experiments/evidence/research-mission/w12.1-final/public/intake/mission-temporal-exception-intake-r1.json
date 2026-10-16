@@ -1,0 +1,52 @@
+{
+  "case_id": "mission-temporal-exception",
+  "completed_at": "2026-09-19T06:02:54.448951+00:00",
+  "position": 12,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "bd3475ac784bff4fab6b3e8db1ecea5cce832e046cb8bc79b86dd0260ffcc5c8",
+    "finish_reason": "stop",
+    "latency_ms": 11563.89,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "95a28b404e20409831531bc86ac841f6d3d15d1942124bd0afa6dfe1266db202",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 187,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0.0004025,
+      "cost_details": {
+        "upstream_inference_completions_cost": 9.35e-05,
+        "upstream_inference_cost": 0.0004025,
+        "upstream_inference_prompt_cost": 0.000309
+      },
+      "is_byok": false,
+      "prompt_tokens": 2060,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 2247
+    }
+  },
+  "repetition": 1,
+  "result": {
+    "action": "clarify",
+    "clarifying_question": "Which documented exception do you mean — the specific policy, contract clause, or change-management provision (by name, document ID, or issuing body) that you believe authorizes the pilot change, and can you point to where that document is published or stored?",
+    "mission": null,
+    "rationale": "The request asks whether 'the documented exception' authorizes 'the pilot change,' but neither the exception nor the change is identified. No source text was supplied, so there is no evidence of any exception, any pilot change, or any authority governing them. Guessing which document or change is meant would risk inventing scope and authority, and the answer could differ entirely depending on which exception and which change are referenced. A single blocking clarification is required before a research mission can be bounded; research itself is not inappropriate here, only unanswerable as stated."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:02:42.878199+00:00",
+  "status": "completed",
+  "trial_id": "mission-temporal-exception-intake-r1"
+}

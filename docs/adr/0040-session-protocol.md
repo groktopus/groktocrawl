@@ -8,6 +8,8 @@ Technical Story: AI agents conducting research through GroktoCrawl need stateful
 where intermediate results accumulate server-side — the agent directs the research without
 carrying full page content in its context window.
 
+- Research-substrate scope: Existing session operations remain unchanged. The opt-in research-substrate scope follows [ADR-0069](0069-adopt-bounded-research-substrate.md); the former experiment decision records are preserved in the [provenance archive](experimental/groktocrawl-x/README.md).
+
 ## Context and Problem Statement
 
 Today's `POST /v2/agent` is a fire-and-forget call: the client submits a prompt, the server

@@ -30,6 +30,7 @@ async def stream_cached_artifact(
     age_hours: float | None = None,
     refresh_awaitable: Any = None,
     coverage: dict | None = None,
+    evidence_coverage: dict[str, Any] | None = None,
 ) -> Any:
     """Replay cached agent results as SSE token events.
 
@@ -69,6 +70,7 @@ async def stream_cached_artifact(
         "freshness": freshness,
         "similarity": similarity,
         "citation_style": citation_style.value,
+        "evidence_coverage": evidence_coverage or {},
     }
     if age_hours is not None:
         done_payload["age_hours"] = age_hours
@@ -98,6 +100,7 @@ async def stream_cached_artifact(
                 "memory_id": refreshed.get("research_memory_id", ""),
                 "freshness": "refreshed",
                 "age_hours": 0.0,
+                "evidence_coverage": refreshed.get("evidence_coverage", {}),
             }
             if citation_style == CitationStyle.compact:
                 refreshed_payload["sources_compact"] = refreshed.get(
@@ -127,6 +130,7 @@ async def stream_research_live(
     research_memory: Any = None,
     user_id: str | None = None,
     fingerprint: str | None = None,
+    evidence_budget_chars: int = 32_000,
 ) -> Any:
     """Orchestrate full research SSE pipeline for cache-miss or force-fresh.
 
@@ -154,6 +158,7 @@ async def stream_research_live(
         search_type=search_type,
         max_credits=max_credits,
         include_source_content=include_source_content,
+        evidence_budget_chars=evidence_budget_chars,
     ):
         if event["type"] in _content_events:
             timing.on_first_event()
@@ -187,6 +192,7 @@ async def stream_research_live(
                     latency_ms=event["latency_ms"],
                     user_id=user_id,
                     fingerprint=fingerprint,
+                    evidence_coverage=event.get("evidence_coverage", {}),
                 )
 
             done_payload: dict = {
@@ -194,6 +200,7 @@ async def stream_research_live(
                 "result": transformed_result,
                 "sources": event["sources"],
                 "latency_ms": event["latency_ms"],
+                "evidence_coverage": event.get("evidence_coverage", {}),
             }
             # Apply citation_style transformation (VAL-CC-008, VAL-CC-009)
             done_payload["citation_style"] = cs.value

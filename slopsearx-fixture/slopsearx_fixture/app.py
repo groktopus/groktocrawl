@@ -17,7 +17,7 @@ SCHEMA_VERSION: Literal["v1"] = "v1"
 MAX_DELAY_MS = 2_000
 MAX_LEDGER = 200
 FIXTURE_SITE_BASE_URL = os.getenv("FIXTURE_SITE_BASE_URL", "http://test-site:8000")
-FIXTURE_VERSION = "v2"
+FIXTURE_VERSION = "v3"
 RUN_ID_PATTERN = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 SCENARIOS = {
     "healthy",
@@ -218,7 +218,12 @@ def create_app(*, default_scenario: str = "healthy") -> FastAPI:
                 status_code=400,
                 detail=f"Unsupported scenario version: {scenario_version}",
             )
-        selected = scenario or state.default_scenario
+        # Explicit, fixture-only selection for callers whose public API carries
+        # a query but cannot forward the fixture's scenario query parameter.
+        query_scenario = None
+        if q.startswith("[fixture:") and "]" in q:
+            query_scenario = q[len("[fixture:") : q.index("]")]
+        selected = scenario or query_scenario or state.default_scenario
         if selected not in SCENARIOS:
             raise HTTPException(status_code=400, detail=f"Unknown scenario: {selected}")
         scenario_request = state.next_scenario_request(selected, q, run_id)

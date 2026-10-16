@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-d1bba02c8c45b10bae6c",
+  "case_id": "stable-anchor",
+  "completed_at": "2026-09-19T09:13:43.524216+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 100,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "The candidate correctly reports no evidenced change, mirrors the reference current and historical truths (SHA-256 in both snapshots), and avoids inventing a change. Citations are exact. The only flaw is the second unresolved item ('whether SHA-256 is the only algorithm'), an invented peripheral question not grounded in the sources; the first unresolved caveat about missing intermediates is reasonable and evidentiary. No false merges, no stale-current leakage, no lost history, and no unsupported factual claims.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 75,
+    "unsupported_claims": 0,
+    "usefulness": 95
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "6eb08905114ea22fa64f709b02f5a581e6dde3625976ac56f2d15bb63375a32c",
+    "finish_reason": "stop",
+    "latency_ms": 21032.45,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "d629ac65438390f493db90570cc16265f7ebf656a323e847d51ad224e43fbae9",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 251,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 80
+      },
+      "cost": 0.0002683,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0001255,
+        "upstream_inference_cost": 0.0002683,
+        "upstream_inference_prompt_cost": 0.0001428
+      },
+      "is_byok": false,
+      "prompt_tokens": 952,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1203
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:13:22.491433+00:00",
+  "status": "completed",
+  "trial_id": "stable-anchor-r2-control"
+}

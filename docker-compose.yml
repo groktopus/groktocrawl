@@ -9,6 +9,30 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+  research-postgres:
+    image: pgvector/pgvector@sha256:cf134a767f474095eeba57e0117be8e568e011a63f33fbf252f14c9b760f8e6f
+    restart: unless-stopped
+    profiles:
+      - durable-research
+    environment:
+      POSTGRES_DB: groktocrawl
+      POSTGRES_USER: groktocrawl
+      POSTGRES_PASSWORD_FILE: /run/secrets/research_postgres_password
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    secrets:
+      - research_postgres_password
+    volumes:
+      - research_postgres_data:/var/lib/postgresql/data
+      - ./agent-svc/agent/experimental/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    stop_grace_period: 30s
+    mem_limit: 2g
+    cpus: 2.0
+    pids_limit: 256
 
   slopsearx:
     image: ghcr.io/magnus919/slopsearx@sha256:0f89531014aa9692a555a8549d63f5e38a1f3d6fc56b6512f1af394574ba9c30
@@ -174,6 +198,7 @@ services:
       - cloakbrowser_cache:/root/.cloakbrowser
 
   browser-svc:
+    init: true
     mem_limit: 1500m
     cpus: 1.0
     pids_limit: 256
@@ -182,6 +207,12 @@ services:
       dockerfile: browser-svc/Dockerfile
     image: ghcr.io/groktopus/groktocrawl-browser
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8012/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 10
 
   flare-solverr:
     image: ghcr.io/flaresolverr/flaresolverr:latest
@@ -205,6 +236,17 @@ services:
     restart: unless-stopped
     profiles:
       - indexing
+      - durable-research
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        umask 077
+        password=$$(cat /run/secrets/research_postgres_password)
+        printf 'research-postgres:5432:groktocrawl:groktocrawl:%s\n' "$$password" > /tmp/postgres.pgpass
+        unset password
+        exec uvicorn app:app --host 0.0.0.0 --port 8003
+    secrets:
+      - research_postgres_password
     # SEMANTIC_HOST_PORT moves only the published HOST side; the container
     # stays on 8003 (see slopsearx note re: shared-host collisions).
     ports:
@@ -229,13 +271,25 @@ services:
       # own getenv default; bump both sides together.
       - QDRANT_QUERY_TIMEOUT=${QDRANT_QUERY_TIMEOUT:-10}
       - QDRANT_CLIENT_TIMEOUT=${QDRANT_CLIENT_TIMEOUT:-10}
+      # Optional fail-open comparison path. Qdrant remains authoritative;
+      # PostgreSQL receives mirrored writes and sampled search comparisons.
+      - VECTOR_STORE_MODE=${VECTOR_STORE_MODE:-qdrant}
+      - PGVECTOR_SHADOW_SAMPLE_RATE=${PGVECTOR_SHADOW_SAMPLE_RATE:-0.1}
+      - PGVECTOR_SHADOW_SCORE_TOLERANCE=${PGVECTOR_SHADOW_SCORE_TOLERANCE:-0.0001}
+      - PGVECTOR_SHADOW_TIMEOUT_SECONDS=${PGVECTOR_SHADOW_TIMEOUT_SECONDS:-2}
+      - PGVECTOR_SHADOW_DSN=${PGVECTOR_SHADOW_DSN:-postgresql://groktocrawl@research-postgres:5432/groktocrawl}
+      - PGVECTOR_SHADOW_BACKFILL_BATCH_SIZE=${PGVECTOR_SHADOW_BACKFILL_BATCH_SIZE:-256}
+      - PGPASSFILE=/tmp/postgres.pgpass
     volumes:
       - hf-cache:/root/.cache/huggingface
     depends_on:
       qdrant:
         condition: service_healthy
+      research-postgres:
+        condition: service_healthy
+        required: false
     healthcheck:
-      test: ["CMD", "python", "-c", "import json, urllib.request; response = urllib.request.urlopen('http://localhost:8003/health', timeout=5); assert json.load(response)['status'] == 'ok'"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8003/ready', timeout=5)"]
       interval: 10s
       timeout: 5s
       start_period: 30s
@@ -271,7 +325,19 @@ services:
     build:
       context: .
       dockerfile: agent-svc/Dockerfile
+      args:
+        GROKTOCRAWL_REVISION: ${GROKTOCRAWL_REVISION:-unknown}
     image: ghcr.io/groktopus/groktocrawl-agent
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        umask 077
+        password=$$(cat /run/secrets/research_postgres_password)
+        printf 'research-postgres:5432:groktocrawl:groktocrawl:%s\n' "$$password" > /tmp/postgres.pgpass
+        unset password
+        exec uvicorn agent.app:app --host 0.0.0.0 --port 8080
+    secrets:
+      - research_postgres_password
     restart: unless-stopped
     # AGENT_PORT moves only the published HOST side; the container stays on
     # 8080 (see slopsearx note re: shared-host port collisions).
@@ -286,11 +352,25 @@ services:
         condition: service_started
       scraper-svc:
         condition: service_started
+      research-postgres:
+        condition: service_healthy
+        required: false
     environment:
+      - DURABLE_RESEARCH_POSTGRES_DSN=${DURABLE_RESEARCH_POSTGRES_DSN:-postgresql://groktocrawl@research-postgres:5432/groktocrawl}
+      - DURABLE_RESEARCH_REDIS_URL=${DURABLE_RESEARCH_REDIS_URL:-redis://valkey:6379/2}
+      - PGPASSFILE=/tmp/postgres.pgpass
+      - FEATURE_EXPERIMENTAL_RESEARCH=${FEATURE_EXPERIMENTAL_RESEARCH:-false}
+      - FEATURE_EXPERIMENTAL_RESEARCH_RUNS=${FEATURE_EXPERIMENTAL_RESEARCH_RUNS:-false}
+      - FEATURE_EXPERIMENTAL_RESEARCH_DURABLE=${FEATURE_EXPERIMENTAL_RESEARCH_DURABLE:-false}
+      - FEATURE_EXPERIMENTAL_RESEARCH_POSTGRES_ARTIFACTS=${FEATURE_EXPERIMENTAL_RESEARCH_POSTGRES_ARTIFACTS:-false}
       - VALKEY_URL=${VALKEY_URL:-redis://valkey:6379/0}
       - SEARXNG_URL=${SEARXNG_URL:-http://slopsearx:8080}
+      - SLOPSEARX_PROVENANCE_PROFILE=${SLOPSEARX_PROVENANCE_PROFILE:-}
+      - SLOPSEARX_PROVENANCE_MCP_URL=${SLOPSEARX_PROVENANCE_MCP_URL:-}
+      - SLOPSEARX_PROVENANCE_TOKEN=${SLOPSEARX_PROVENANCE_TOKEN:-}
       - SCRAPER_URL=${SCRAPER_URL:-http://scraper-svc:8001}
       - SEMANTIC_URL=${SEMANTIC_URL:-http://semantic-svc:8003}
+      - SEMANTIC_CLIENT_TIMEOUT_SECONDS=${SEMANTIC_CLIENT_TIMEOUT_SECONDS:-60}
       - LLM_BASE_URL=${LLM_BASE_URL:-http://llm-svc:8011/v1}
       - HOST=0.0.0.0
       - PORT=8080
@@ -357,6 +437,12 @@ services:
       - "${PORTAL_HOST_PORT:-8082}:8081"
     environment:
       - AGENT_BASE_URL=http://agent-svc:8080
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8081/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      start_period: 5s
+      retries: 5
 
   parse-svc:
     build:
@@ -364,6 +450,12 @@ services:
       dockerfile: parse-svc/Dockerfile
     image: ghcr.io/groktopus/groktocrawl-parse
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8013/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      start_period: 5s
+      retries: 5
 
   mcp-svc:
     build:
@@ -385,7 +477,12 @@ services:
     restart: unless-stopped
     stop_grace_period: 35s
 
+secrets:
+  research_postgres_password:
+    file: ${DURABLE_RESEARCH_POSTGRES_PASSWORD_FILE:-/dev/null}
+
 volumes:
+  research_postgres_data:
   valkey_data:
   qdrant_data:
   hf-cache:

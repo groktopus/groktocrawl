@@ -1,0 +1,298 @@
+{
+  "cases": [
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w10-01-unsupported-1",
+      "challenge_type": "unsupported_claim",
+      "claims": [
+        {
+          "claim_id": "cycle_time",
+          "closure_rule": "A measured delivery-time effect with a defined baseline.",
+          "importance": 3
+        },
+        {
+          "claim_id": "escaped_defects",
+          "closure_rule": "A measured post-release quality effect from the same or comparable intervention.",
+          "importance": 3
+        },
+        {
+          "claim_id": "study_design",
+          "closure_rule": "Population, intervention, comparison, and limitations are reported.",
+          "importance": 2
+        }
+      ],
+      "query": "What controlled evidence shows that coding agents shorten enterprise delivery lead time without increasing escaped defects?",
+      "stratum": "challenge"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w10-02-unsupported-2",
+      "challenge_type": "unsupported_claim",
+      "claims": [
+        {
+          "claim_id": "comparative_value",
+          "closure_rule": "A direct or defensible comparison of autonomous and assistive workflows.",
+          "importance": 3
+        },
+        {
+          "claim_id": "quality_cost",
+          "closure_rule": "Quality, rework, or review cost is measured alongside output.",
+          "importance": 3
+        },
+        {
+          "claim_id": "context",
+          "closure_rule": "Repository and organizational setting are described.",
+          "importance": 1
+        }
+      ],
+      "query": "What evidence shows that autonomous issue-to-patch agents create value beyond code-completion assistants in enterprise repositories?",
+      "stratum": "challenge"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w10-03-contradiction-1",
+      "challenge_type": "contradiction",
+      "claims": [
+        {
+          "claim_id": "benefit",
+          "closure_rule": "Credible evidence for review-quality benefit.",
+          "importance": 2
+        },
+        {
+          "claim_id": "harm",
+          "closure_rule": "Credible evidence for noise, fatigue, or false positives.",
+          "importance": 2
+        },
+        {
+          "claim_id": "reconciliation",
+          "closure_rule": "Differences in task, population, metric, or conditions explain the disagreement.",
+          "importance": 3
+        }
+      ],
+      "query": "Do AI code-review agents improve review quality, or do they increase noise and reviewer fatigue?",
+      "stratum": "challenge"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w10-04-contradiction-2",
+      "challenge_type": "contradiction",
+      "claims": [
+        {
+          "claim_id": "autonomy_gain",
+          "closure_rule": "Evidence of throughput gain at higher autonomy.",
+          "importance": 2
+        },
+        {
+          "claim_id": "risk_cost",
+          "closure_rule": "Evidence of oversight, rollback, incident, or quality cost.",
+          "importance": 3
+        },
+        {
+          "claim_id": "boundary",
+          "closure_rule": "Conditions where autonomy helps or harms are explicit.",
+          "importance": 3
+        }
+      ],
+      "query": "Does increasing agent autonomy improve software-engineering throughput when humans still own production risk?",
+      "stratum": "challenge"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w10-05-freshness-1",
+      "challenge_type": "stale_evidence",
+      "claims": [
+        {
+          "claim_id": "current_practice",
+          "closure_rule": "A current primary or authoritative evaluation method.",
+          "importance": 3
+        },
+        {
+          "claim_id": "long_running",
+          "closure_rule": "The method covers multi-step or long-horizon work.",
+          "importance": 2
+        },
+        {
+          "claim_id": "regression",
+          "closure_rule": "Repeatable regression detection is described.",
+          "importance": 2
+        }
+      ],
+      "query": "As of September 2026, what current evaluation practices detect regressions in long-running software-engineering agents?",
+      "stratum": "challenge"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w10-06-freshness-2",
+      "challenge_type": "stale_evidence",
+      "claims": [
+        {
+          "claim_id": "current_controls",
+          "closure_rule": "Current primary or authoritative controls.",
+          "importance": 3
+        },
+        {
+          "claim_id": "repository_access",
+          "closure_rule": "Repository-write risks and controls.",
+          "importance": 2
+        },
+        {
+          "claim_id": "ci_access",
+          "closure_rule": "CI or execution risks and controls.",
+          "importance": 2
+        }
+      ],
+      "query": "As of September 2026, what current controls are recommended for enterprise deployment of coding agents with repository and CI access?",
+      "stratum": "challenge"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w10-07-primary-1",
+      "challenge_type": "missing_primary",
+      "claims": [
+        {
+          "claim_id": "primary_finding",
+          "closure_rule": "A DORA primary publication states the measured finding.",
+          "importance": 3
+        },
+        {
+          "claim_id": "measures",
+          "closure_rule": "Performance measures and sample are identified.",
+          "importance": 2
+        },
+        {
+          "claim_id": "limits",
+          "closure_rule": "Causal and generalization limits are explicit.",
+          "importance": 2
+        }
+      ],
+      "query": "What do primary DORA research publications actually establish about AI-assisted software development performance?",
+      "stratum": "challenge"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w10-08-primary-2",
+      "challenge_type": "missing_primary",
+      "claims": [
+        {
+          "claim_id": "benchmark_result",
+          "closure_rule": "Primary benchmark result and task definition.",
+          "importance": 2
+        },
+        {
+          "claim_id": "contamination",
+          "closure_rule": "Primary evidence or method addressing contamination.",
+          "importance": 3
+        },
+        {
+          "claim_id": "limits",
+          "closure_rule": "Benchmark-to-real-work limits are explicit.",
+          "importance": 2
+        }
+      ],
+      "query": "What do original SWE-bench publications and benchmark artifacts establish about agent performance and contamination risk?",
+      "stratum": "challenge"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w10-09-independence-1",
+      "challenge_type": "publisher_independence",
+      "claims": [
+        {
+          "claim_id": "vendor_claim",
+          "closure_rule": "The material vendor claim is identified.",
+          "importance": 1
+        },
+        {
+          "claim_id": "independent_result",
+          "closure_rule": "Evidence from a publisher independent of the vendor.",
+          "importance": 3
+        },
+        {
+          "claim_id": "comparability",
+          "closure_rule": "Outcome and setting are comparable enough to test the claim.",
+          "importance": 2
+        }
+      ],
+      "query": "What independently published evidence supports vendor claims that enterprise coding agents improve developer productivity?",
+      "stratum": "challenge"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w10-10-independence-2",
+      "challenge_type": "publisher_independence",
+      "claims": [
+        {
+          "claim_id": "multi_agent",
+          "closure_rule": "A measured multi-agent result.",
+          "importance": 2
+        },
+        {
+          "claim_id": "single_agent",
+          "closure_rule": "A matched single-agent comparator.",
+          "importance": 2
+        },
+        {
+          "claim_id": "independent_source",
+          "closure_rule": "At least one independent publisher or reproducible artifact.",
+          "importance": 3
+        }
+      ],
+      "query": "What independent evidence supports claims that multi-agent software development outperforms a single capable agent?",
+      "stratum": "challenge"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w10-11-identity-1",
+      "challenge_type": "entity_ambiguity",
+      "claims": [
+        {
+          "claim_id": "project",
+          "closure_rule": "The named project is identified from its primary artifact.",
+          "importance": 2
+        },
+        {
+          "claim_id": "paper",
+          "closure_rule": "The associated paper is identified and related correctly.",
+          "importance": 2
+        },
+        {
+          "claim_id": "generic_term",
+          "closure_rule": "The generic category is distinguished without conflation.",
+          "importance": 2
+        }
+      ],
+      "query": "How do the SWE-agent project, the SWE-agent research paper, and generic software-engineering agents differ?",
+      "stratum": "challenge"
+    },
+    {
+      "as_of": "2026-09-11",
+      "case_id": "w10-12-identity-2",
+      "challenge_type": "entity_ambiguity",
+      "claims": [
+        {
+          "claim_id": "current_product",
+          "closure_rule": "The current product is identified from a primary source.",
+          "importance": 2
+        },
+        {
+          "claim_id": "historical_model",
+          "closure_rule": "The historical model is separately identified.",
+          "importance": 2
+        },
+        {
+          "claim_id": "unrelated_entities",
+          "closure_rule": "At least one unrelated same-name entity is excluded or distinguished.",
+          "importance": 2
+        }
+      ],
+      "query": "How do OpenAI Codex, the historical OpenAI Codex model, and unrelated projects named Codex differ in software-engineering research?",
+      "stratum": "challenge"
+    }
+  ],
+  "domain": "agentic engineering software factory in the enterprise",
+  "schema_version": "enterprise-evaluation/w10-challenge-cases/1",
+  "w8_anchor": {
+    "cases": 24,
+    "corpus_sha256": "1dbe9ec940ffcf3cece28c9a2eb9755a6d227a651c697cc075a8e7c4b555cbbd"
+  }
+}

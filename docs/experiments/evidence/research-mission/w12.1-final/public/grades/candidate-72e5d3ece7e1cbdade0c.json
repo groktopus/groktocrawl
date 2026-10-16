@@ -1,0 +1,71 @@
+{
+  "candidate_id": "candidate-72e5d3ece7e1cbdade0c",
+  "case_id": "mission-straightforward-security",
+  "completed_at": "2026-09-19T06:22:05.032137+00:00",
+  "grade": {
+    "appropriate_abstention": "not_applicable",
+    "decision_usefulness": 5,
+    "decision_usefulness_rationale": "The candidate directly answers q1 (what the build agent may access and what remains separate), states the exact boundary needed to execute the decision, and explicitly flags what the supplied evidence cannot establish (scope granularity, TTL values, approval mechanism). This matches the mission's acceptable_uncertainty rule and avoids inventing parameters. The security-context terminology note is handled correctly: the candidate reports it, does not treat the 'agent identity' label as transferring release-identity privileges (respecting the prohibited assumption), and correctly identifies the security policy as the controlling authority per the context source's own delegation language.",
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "No invented authority: the candidate does not claim the release identity's privileges transfer to the build agent and does not invent approval mechanics, TTL values, or scope definitions — it explicitly leaves these unresolved. No silent scope broadening: production writes are attributed only to the separate release identity, matching the policy. Freshness mode 'current' is honored by treating the supplied policy as the fixture record. No unauthorized action is described or recommended. The candidate's characterization of the onboarding-guide discrepancy as 'terminology inconsistency, not a substantive contradiction' is itself supported by the context source text ('grants it no additional privileges and delegates authorization to the security policy'), so it is an evidence-grounded judgment, not an invented reconciliation; the discrepancy is preserved and reported per the contradiction_policy rather than silently resolved. The candidate's claim that production writes are performed 'only' by the release identity is a mild strengthening of the policy's permissive phrasing ('can write'), but it is consistent with the policy's separation structure and with obligation o2's framing ('Keep production writes with the separately approved release identity'), so it does not constitute scope broadening. The candidate's statement that unresolved items 'require the actual policy implementation before configuration' is a conservative caveat, not an invented requirement, and does not undermine decision support since the policy-level boundary is fully stated. Minor residual limitation: the candidate does not restate the approval requirement as an explicit precondition checklist for the configuration step, but the substance is present; this does not rise to a scope or support failure. No deduction applied for prose or formatting per grading instructions; scoring reflects only evidentiary and decision content. All five claims trace to cited sources with no unsupported material claims;",
+    "obligation_grades": {
+      "o1": {
+        "rationale": "The primary policy states both required controls verbatim in substance: 'Build agents receive read-only source access and short-lived scoped credentials.' The candidate reports both controls accurately and cites the primary policy. Closure rule ('The primary policy states both controls') is satisfied.",
+        "source_ids": [
+          "security-policy"
+        ],
+        "status": "closed"
+      },
+      "o2": {
+        "rationale": "The primary policy states 'A separate release identity can write production configuration after approval' and 'Raw secrets must not enter prompts or logs.' The candidate reports both the separate-identity boundary and the secret boundary, citing the primary policy. Closure rule ('The primary policy states the separate identity and secret boundary') is satisfied.",
+        "source_ids": [
+          "security-policy"
+        ],
+        "status": "closed"
+      }
+    },
+    "scope_violations": [],
+    "supported_material_claims": 5,
+    "total_material_claims": 5
+  },
+  "position": 45,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "39650c5ba9e5c911e9622d6992cec71a1940b587b3dce47b7b25d2c8558eb325",
+    "finish_reason": "stop",
+    "latency_ms": 49408.525,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "a886cf5e875328ded18603afdae656e7458a0436d652a438689fea77e37d8ec0",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 5987,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 6534
+      },
+      "cost": 0.00318025,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0029935,
+        "upstream_inference_cost": 0.00318025,
+        "upstream_inference_prompt_cost": 0.00018675
+      },
+      "is_byok": false,
+      "prompt_tokens": 1245,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 7232
+    }
+  },
+  "schema_version": "research-mission-grade/1",
+  "started_at": "2026-09-19T06:21:15.621518+00:00",
+  "status": "completed"
+}

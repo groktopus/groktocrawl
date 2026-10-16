@@ -1,0 +1,101 @@
+{
+  "arm": "control",
+  "case_id": "mission-straightforward-delivery",
+  "completed_at": "2026-09-19T05:50:21.110420+00:00",
+  "position": 1,
+  "receipt": {
+    "attempt": 2,
+    "envelope_sha256": "30ce0f7b3935ea1abc11057e770b1edd62b8cbf4adaeab0c8492224148b87169",
+    "finish_reason": "stop",
+    "latency_ms": 383963.353,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "7ef9cfc3f29c3d3e65aed506e456cc4810b4a38c9ea3f15746c4c2b0e472312a",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [
+      {
+        "attempt": 1,
+        "error_type": "ReadTimeout",
+        "latency_ms": 300212.564
+      }
+    ],
+    "usage": {
+      "completion_tokens": 4805,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 5421
+      },
+      "cost": 0.00248017,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0024025,
+        "upstream_inference_cost": 0.00248017,
+        "upstream_inference_prompt_cost": 7.767e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 569,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 64,
+        "video_tokens": 0
+      },
+      "total_tokens": 5374
+    }
+  },
+  "repetition": 1,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Decision support: release actions a build agent may perform (for enterprise engineering, security, and platform leaders)nn**Bottom line.** The build agent is authorized to open pull requests once tests pass. It does not hold unilateral production deployment authority: production deployment requires approval by the service owner and a recorded rollback plan. The only automated-deployment authorization on record (a sandbox experiment) was scoped to disposable test environments and explicitly did not authorize production deployment.nn### Authorized actions and conditionsnn- **Open a pull request — authorized.** Condition: tests must pass first. [delivery-policy]n- **Production deployment — not an agent-unilateral action.** Requires approval by the service owner and a recorded rollback plan. [delivery-policy]n- **Automatic deployment to disposable test environments — allowed only within a sandbox experiment.** That authorization did not extend to production. [delivery-context]nn### Pull-request permission vs. production deployment authority (primary obligation)nnThe governing policy grants pull-request creation to the agent as a conditional permission (u201cmay open a pull request after tests passu201d), whereas production deployment is framed as a restricted action defined by required conditions u2014 service owner approval plus a recorded rollback plan u2014 not as an agent-held permission. [delivery-policy] The context record corroborates this boundary: the sole automated-deployment authorization on record covered disposable test environments and u201cdid not authorize production deployment.u201d [delivery-context]nn### ContradictionsnnNone found. The two supplied sources are mutually consistent; the context reinforces the policy's production restriction rather than conflicting with it.nn### Unresolved limitsnn- **Deploying actor after approval.** The policy states necessary conditions for production deployment (owner approval, recorded rollback plan) but does not state whether the agent may execute the deployment once those conditions are met. This cannot be resolved from the supplied evidence.n- **Other release actions.** Merging pull requests, staging deployments, release tagging, and rollback execution are not addressed by the supplied record; no authorization for them can be inferred without inventing authority.n- **Test gate definition.** u201cTests passu201d is not defined (which suites, who verifies); the condition is reported as stated in the policy.n- **Standing status of the experiment allowance.** The context describes what the sandbox experiment allowed; whether that test-environment allowance persists as a standing authorization is not stated.nn### Guidance for the decisionnnTreat pull-request creation after tests pass as the agent's authorized release action. Do not treat production deployment as agent authority; it is gated on service owner approval and a recorded rollback plan per the governing policy, and the context confirms no automated path to production exists on record. Keep any test-environment automation strictly within disposable environments as described in the context.",
+    "candidate_id": "candidate-4fbd36f8a69cd890e96b",
+    "citations": [
+      "delivery-policy",
+      "delivery-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "delivery-policy"
+        ],
+        "text": "The build agent may open a pull request, conditional on tests passing.",
+        "uncertainty": "The policy does not define the test gate (which tests, who verifies); the permission itself is stated without material uncertainty."
+      },
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-context"
+        ],
+        "text": "Production deployment is not an agent-unilateral action: the governing policy requires service owner approval and a recorded rollback plan, and the context record states that the only automated-deployment authorization (a sandbox experiment) did not authorize production deployment.",
+        "uncertainty": "Whether the agent may execute a production deployment after owner approval and a recorded rollback plan exist is not stated; the deploying actor remains unresolved."
+      },
+      {
+        "source_ids": [
+          "delivery-context"
+        ],
+        "text": "A sandbox experiment allowed automatic deployment to disposable test environments only.",
+        "uncertainty": "Whether this test-environment allowance persists as a standing authorization is not stated in the supplied record."
+      },
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-context"
+        ],
+        "text": "The supplied policy and context are mutually consistent; no contradiction was found between them.",
+        "uncertainty": "No material uncertainty."
+      },
+      {
+        "source_ids": [
+          "delivery-policy",
+          "delivery-context"
+        ],
+        "text": "The supplied record does not address other release actions (e.g., merging pull requests, staging deployments, release tagging, rollback execution), so their authorization is unresolved.",
+        "uncertainty": "Explicitly unresolved; the supplied pack is silent and no authority can be inferred without invention."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:43:57.146018+00:00",
+  "status": "completed",
+  "trial_id": "mission-straightforward-delivery-r1-control"
+}

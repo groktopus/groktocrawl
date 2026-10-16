@@ -1,0 +1,55 @@
+{
+  "answer": {
+    "answer": "The supplied Fern CI FAQ does not specify a build-log retention period; it explicitly states that the retention period is not specified [fern-faq-old]. Therefore, the length of time Fern CI retains build logs cannot be determined from the available sources, and no other supplied snapshot addresses this question.",
+    "change_events": [],
+    "citations": [
+      "fern-faq-old"
+    ],
+    "current_truths": [
+      "The Fern CI FAQ explicitly states that the build-log retention period is not specified [fern-faq-old]."
+    ],
+    "historical_truths": [],
+    "unresolved": [
+      "The exact duration for which Fern CI retains build logs cannot be determined from the supplied sources [fern-faq-old]."
+    ]
+  },
+  "case_id": "later-resolution",
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "5cb092b0ca1d5df8a60ed12d3f97af8e7bc5652c3ca617fcfc66f7a151ee3702",
+    "finish_reason": "stop",
+    "latency_ms": 11997.71,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "2d7f1d65b9124588d153d1ea9f2e4dc515ba6aa4e6673c64ebee99ede8f2b1eb",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 430,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 271
+      },
+      "cost": 0.0002783,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000215,
+        "upstream_inference_cost": 0.0002783,
+        "upstream_inference_prompt_cost": 6.33e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 422,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 852
+    }
+  },
+  "schema_version": "research-thread-initial/1",
+  "status": "completed"
+}

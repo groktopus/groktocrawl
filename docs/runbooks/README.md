@@ -14,6 +14,7 @@ Owner: GroktoCrawl maintainers
 
 - [InterruptedJobs](interrupted-jobs.md) — identify and reconcile jobs stranded in `processing` after a restart
 - [ReleaseDependencyTriage](release-dependency-triage.md) — weekly routine for triaging dependabot, pip-audit, and release-please PRs
+- [Release Images](release-images.md) — promote verified published image indexes to stable and version tags
 
 ## Emergency Procedures
 
@@ -98,3 +99,7 @@ Qdrant ran out of memory. Restart with higher memory limit or reduce index size.
 - agent-svc metrics: `curl http://localhost:8080/metrics`
 - semantic-svc metrics: `curl http://localhost:8003/metrics`
 - Grafana dashboard: `docs/grafana/semantic-svc-dashboard.json`
+
+- [Browser/scraper resource study and limits](../experiments/memory-soak/results.md) — bounded post-repair evidence and retained operational limits.
+
+- [Model readiness probe outcomes](model-readiness.md) — streaming preflight uncertainty and failure classifications.

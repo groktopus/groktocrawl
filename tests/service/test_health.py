@@ -231,3 +231,28 @@ async def test_searxng_connection_failures(fallback, error):
         factory.return_value.__aenter__.return_value = client
         result = await check_searxng("http://search:8080")
     assert result["status"] == "down"
+
+
+@pytest.mark.asyncio
+async def test_browser_process_pressure_propagates_to_aggregate():
+    from agent.health import check_all
+
+    async def mock_get(url, **kwargs):
+        assert url.endswith("/health")
+        response = MagicMock()
+        response.status_code = 503 if "browser-svc" in url else 200
+        return response
+
+    with (
+        patch("httpx.AsyncClient") as client_class,
+        patch("agent.health.check_valkey", return_value={"status": "ok"}),
+    ):
+        client = AsyncMock()
+        client.get = mock_get
+        client_class.return_value.__aenter__.return_value = client
+        # Keep unrelated scraper root probe out of this contract.
+        with patch("agent.health.check_scraper", return_value={"status": "ok"}):
+            result = await check_all()
+    assert result["status"] == "degraded"
+    assert result["checks"]["browser"]["status"] == "degraded"
+    assert result["checks"]["browser"]["detail"] == "Browser returned HTTP 503"

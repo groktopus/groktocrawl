@@ -71,7 +71,7 @@ Adapters cover publishing and media, source code and GitHub social content, recr
 
 ## Semantic retrieval
 
-`semantic-svc` loads its embedding model during application lifespan and exposes embedding, reranking, index, migration, retention, and search routers. Qdrant persists named-vector collections. `agent-svc` treats indexing as best effort, so a semantic-service outage does not fail a scrape or crawl request.
+`semantic-svc` loads its embedding model during application lifespan and exposes embedding, reranking, index, migration, retention, and search routers. Qdrant persists named-vector collections. `GET /health` is the backward-compatible liveness and component-detail surface; `GET /ready` returns HTTP 503 until the models and configured serving vector store are available. Compose uses `/ready` for routing readiness. `agent-svc` treats indexing as best effort, so a semantic-service outage does not fail a scrape or crawl request.
 
 ## Performance telemetry
 

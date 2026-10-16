@@ -197,7 +197,7 @@ mcp:
   servers:
     groktocrawl:
       type: http
-      url: http://hal2000:8002
+      url: http://incumbent.example.internal:8002
 ```
 
 ### New CLI Features

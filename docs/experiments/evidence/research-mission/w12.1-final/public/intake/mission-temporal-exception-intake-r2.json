@@ -1,0 +1,52 @@
+{
+  "case_id": "mission-temporal-exception",
+  "completed_at": "2026-09-19T06:05:23.455465+00:00",
+  "position": 8,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "22760b7cf4404c79d14055f33b2db4d5101ae3d9d8826fa461968aab3eb7d902",
+    "finish_reason": "stop",
+    "latency_ms": 13131.135,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "60526a892cccc259981e66ca6cddfdc6b5f039692f17b7713fb782cb19486eea",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 179,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0.0003985,
+      "cost_details": {
+        "upstream_inference_completions_cost": 8.95e-05,
+        "upstream_inference_cost": 0.0003985,
+        "upstream_inference_prompt_cost": 0.000309
+      },
+      "is_byok": false,
+      "prompt_tokens": 2060,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 2239
+    }
+  },
+  "repetition": 2,
+  "result": {
+    "action": "clarify",
+    "clarifying_question": "Which documented exception do you mean, and where is it documented (e.g., a change-management policy, compliance framework, or internal governance document)? Also, what specific pilot change is being evaluated?",
+    "mission": null,
+    "rationale": "The request references 'the documented exception' and 'the pilot change' with definite articles, but no source text, document, or context identifying either is supplied. The domain (agentic engineering software factory in the enterprise) suggests change-management or governance context, but guessing which exception or which change is intended would risk producing a mission that researches the wrong thing entirely. Since the answer to whether an exception authorizes a change is decision-changing and cannot be resolved without knowing which exception and which change are at issue, a blocking clarification is required before normalizing into a research mission."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:05:10.317826+00:00",
+  "status": "completed",
+  "trial_id": "mission-temporal-exception-intake-r2"
+}

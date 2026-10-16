@@ -19,8 +19,16 @@ from common.middleware import add_request_id_middleware
 from common.stage_metrics import inc_counter, observe_elapsed
 
 from .cookie_store import close_client, get_client
-from .exceptions import BrowserError, CaptchaError, GroktoCrawlError, UpstreamError
-from .fetch import smart_scrape
+from .exceptions import (
+    BarrierDetectedError,
+    BrowserError,
+    CaptchaError,
+    DestinationValidationUnavailableError,
+    GroktoCrawlError,
+    InvalidRequestError,
+    UpstreamError,
+)
+from .fetch import _private_destination_error, smart_scrape
 from .meta import fetch_meta_tags
 
 setup_logging()
@@ -329,9 +337,33 @@ async def scrape(request: ScrapeRequest):
                 raise BrowserError(detail=result["error"])
             if result.get("error_code") == "CAPTCHA_UNRESOLVED":
                 raise CaptchaError(
-                    detail=result["error"], details=result.get("barrier")
+                    detail=result["error"],
+                    details={
+                        **(result.get("barrier") or {}),
+                        "recovery": result.get("recovery"),
+                    },
                 )
-            raise UpstreamError(detail=result["error"])
+            if result.get("error_code") == "BARRIER_DETECTED":
+                raise BarrierDetectedError(
+                    detail=result["error"],
+                    details={
+                        "barrier": result.get("barrier"),
+                        "recovery": result.get("recovery"),
+                    },
+                )
+            if result.get("error_code") == "SOURCE_DESTINATION_VALIDATION_UNAVAILABLE":
+                raise DestinationValidationUnavailableError(
+                    detail="Source destination validation is temporarily unavailable"
+                )
+            raise UpstreamError(
+                detail=result["error"],
+                details={
+                    "barrier": result.get("barrier"),
+                    "recovery": result.get("recovery"),
+                }
+                if result.get("barrier") or result.get("recovery")
+                else None,
+            )
         markdown = result.get("markdown", "")
         raw_html = result.get("raw_html_start", "")
 
@@ -443,6 +475,16 @@ async def scrape_meta(request: ScrapeRequest):
     Returns <title>, <meta name="description">, and
     <meta property="og:description"> without full page rendering.
     """
+    blocked = await _private_destination_error(request.url)
+    if blocked:
+        if blocked.get("error_code") == "SOURCE_DESTINATION_VALIDATION_UNAVAILABLE":
+            raise DestinationValidationUnavailableError(
+                detail="Source destination validation is temporarily unavailable"
+            )
+        raise InvalidRequestError(
+            detail=blocked["error"],
+            details={"error_code": blocked["error_code"]},
+        )
     try:
         result = await fetch_meta_tags(request.url)
         return MetaResponse(

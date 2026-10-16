@@ -1,0 +1,84 @@
+{
+  "case_id": "supported-patch",
+  "completed_at": "2026-09-19T10:10:46.825379+00:00",
+  "completion_attempt": 1,
+  "position": 27,
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "3ab6b4c535aa1dddb33943db9d21cb32ed54db05cf7c1737565792664623a8d6",
+    "finish_reason": "stop",
+    "latency_ms": 5902.416,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "3b902d519b3d6587758c70845bc54c15abf522436d590d051a78235084396599",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 219,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 129
+      },
+      "cost": 7.087e-05,
+      "cost_details": {
+        "upstream_inference_completions_cost": 6.132e-05,
+        "upstream_inference_cost": 7.087e-05,
+        "upstream_inference_prompt_cost": 9.55e-06
+      },
+      "is_byok": false,
+      "prompt_tokens": 355,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 320,
+        "video_tokens": 0
+      },
+      "total_tokens": 574
+    }
+  },
+  "repetition": 3,
+  "schema_version": "claim-verification-trial/1",
+  "started_at": "2026-09-19T10:10:40.922494+00:00",
+  "status": "completed",
+  "trial_id": "supported-patch-r3",
+  "verification": {
+    "checked_input": {
+      "case_id": "supported-patch",
+      "claim": "Version 4.2.1 fixes CVE-2026-4107.",
+      "claim_id": "claim-supported-patch",
+      "evidence": [
+        {
+          "contains_instructions": false,
+          "source_id": "source-patch-advisory",
+          "source_kind": "primary",
+          "span_id": "patch-advisory",
+          "temporal_status": "current",
+          "text": "CVE-2026-4107 is fixed in release 4.2.1."
+        }
+      ],
+      "evidence_obligation": "An authoritative release or advisory linking the version and CVE.",
+      "risk": "high",
+      "schema_version": "claim-verification-input/1"
+    },
+    "checked_input_digest": "1bf76cb5ef28035b887ea2f6ee61adc4ad7a11751ac7f9926d124e0492869ad9",
+    "confidence": 95,
+    "contradiction_span_ids": [],
+    "evidence_span_ids": [
+      "patch-advisory"
+    ],
+    "publish_recommendation": true,
+    "reason": "The primary, current patch advisory directly states 'CVE-2026-4107 is fixed in release 4.2.1', which is an authoritative release/advisory linking the version and CVE, exactly matching the claim.",
+    "schema_version": "independent-claim-verification/1",
+    "verdict": "supported",
+    "verification_id": "verification-supported-patch-r3",
+    "verifier": {
+      "model": "general",
+      "prompt_version": "w12.3-verifier/1",
+      "route": "local-litellm"
+    }
+  }
+}

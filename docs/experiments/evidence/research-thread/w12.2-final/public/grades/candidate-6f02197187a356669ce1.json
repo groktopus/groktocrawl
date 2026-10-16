@@ -1,0 +1,59 @@
+{
+  "candidate_id": "candidate-6f02197187a356669ce1",
+  "case_id": "renamed-feature",
+  "completed_at": "2026-09-19T09:16:27.894869+00:00",
+  "completion_attempt": 1,
+  "grade": {
+    "change_accuracy": 100,
+    "current_accuracy": 100,
+    "false_merge": false,
+    "historical_preservation": 100,
+    "lost_history": false,
+    "rationale": "The candidate correctly answers the question: policy checks were renamed release guards, not removed, matching the ledger's change event and directly supported by the Northstar 4 migration guide quote. Current truth (Northstar 4 uses 'release guards', purpose unchanged) and historical truth (Northstar 3 used 'policy checks') are both accurately captured, with the historical term correctly framed as past rather than current, so no stale-current leak and no lost history. The rename is source-confirmed, so treating policy checks and release guards as one capability is not a false merge. Every factual assertion traces to the two cited snapshots, yielding zero unsupported claims. The only defect is the unresolved section: the ledger lists nothing unresolved, but the candidate invents two peripheral open questions (control scope/mechanics and possible behavioral differences) that the sources do not raise, earning 0 on unresolved_accuracy per the no-invented-peripheral-questions rule. Core answer remains fully decision-useful and auditable via exact quotes and snapshot citations.",
+    "stale_current_leak": false,
+    "unresolved_accuracy": 0,
+    "unsupported_claims": 0,
+    "usefulness": 100
+  },
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "852ba22d39755dc5184f0100e486e337dcf3c7bef2239a092b0a2329a78ecd37",
+    "finish_reason": "stop",
+    "latency_ms": 40568.493,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "36488fee8e3dce83c0c533593f809d505c200ff6c6cf7ff3561f90e9b4c41ba7",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 3804,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 3514
+      },
+      "cost": 0.0020457,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.001902,
+        "upstream_inference_cost": 0.0020457,
+        "upstream_inference_prompt_cost": 0.0001437
+      },
+      "is_byok": false,
+      "prompt_tokens": 958,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 4762
+    }
+  },
+  "schema_version": "research-thread-grade/1",
+  "started_at": "2026-09-19T09:15:47.324291+00:00",
+  "status": "completed",
+  "trial_id": "renamed-feature-r2-treatment"
+}

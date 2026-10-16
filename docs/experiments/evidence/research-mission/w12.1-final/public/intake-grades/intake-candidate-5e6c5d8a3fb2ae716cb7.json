@@ -1,0 +1,64 @@
+{
+  "candidate_id": "intake-candidate-5e6c5d8a3fb2ae716cb7",
+  "case_id": "mission-temporal-exception",
+  "completed_at": "2026-09-19T06:25:54.391226+00:00",
+  "grade": {
+    "action_correct": false,
+    "action_rationale": "The task packet and reference mission identify a specific documented exception with a concrete 2026-06-30 expiration, evaluated against a fixed as-of date of 2026-09-19 with no renewal evidence. The request is answerable as stated ('accept' was expected). The candidate's claim that 'neither the exception nor the change is identified' contradicts the supplied packet, so its blocking clarification is unhelpful and based on a misreading, not on missing evidence.",
+    "clarification_utility": 2,
+    "correction_actions": [
+      "Replace the clarify action with accept.",
+      "Proceed to build the research mission with decision scope: whether the recorded exception remains effective on 2026-09-19, given its 2026-06-30 expiry and absence of renewal evidence.",
+      "Preserve the as_of freshness constraint (2026-09-19T00:00:00Z) and the prohibition on inferring renewal from missing evidence.",
+      "Do not seek clarification on the exception's identity; it is already fixed by the supplied packet."
+    ],
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "The candidate did not invent authority or take an unauthorized action; clarify is a permitted action. However, its rationale silently discards the packet's fixed exception and expiry facts, which borders on scope loss, though no hard boundary is formally breached.",
+    "invented_constraints": [],
+    "lost_hard_boundaries": [],
+    "required_field_recall": 0,
+    "unnecessary_fields": [
+      "clarifying_question (unneeded given the expected accept path and identified exception)"
+    ]
+  },
+  "position": 8,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "b92c2d804a3051ca15ff174668a5ddef27db61efe7eb0ce40e67c100342df765",
+    "finish_reason": "stop",
+    "latency_ms": 19011.07,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "87d8f6ba43d7c3c8b1c1c2f86b60e6afac9f03b0b4e36ad9fa82f50e99c9ad7e",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 441,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 82
+      },
+      "cost": 0.00034755,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0002205,
+        "upstream_inference_cost": 0.00034755,
+        "upstream_inference_prompt_cost": 0.00012705
+      },
+      "is_byok": false,
+      "prompt_tokens": 847,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1288
+    }
+  },
+  "schema_version": "research-mission-intake-grade/1",
+  "started_at": "2026-09-19T06:25:35.378854+00:00",
+  "status": "completed"
+}

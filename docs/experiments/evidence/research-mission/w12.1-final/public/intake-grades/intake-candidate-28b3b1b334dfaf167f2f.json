@@ -1,0 +1,100 @@
+{
+  "candidate_id": "intake-candidate-28b3b1b334dfaf167f2f",
+  "case_id": "mission-compound-recovery-portability",
+  "completed_at": "2026-09-19T06:31:23.273724+00:00",
+  "grade": {
+    "action_correct": false,
+    "action_rationale": "expected_intake is 'accept' and reference_mission.clarifications is empty, so the only authorized action was to emit the mission. The candidate issued an unauthorized 'clarify' with mission=null, which under hard_boundary_definition constitutes an unauthorized action and forfeits every boundary the reference mission carries.",
+    "clarification_utility": 0,
+    "correction_actions": [
+      "Replace 'clarify' with 'accept' and emit a research-mission/1 equivalent to the reference: decision to approve or reject the model-provider switch; q1 (how ambiguous writes must recover) and q2 (what provider portability must preserve); obligations o1-o3 with the given weights, evidence roles, and closure rules.",
+      "Bind evidence to the supplied fixture per freshness mode 'current': the policy, the test record, and the brochure constitute the fixed source pack; set minimum_independent_publishers to 0 and drop any caller-designation requirement.",
+      "Preserve scope.include (ambiguous external writes, remote reconciliation, frozen evaluation, identity, cancellation, resource limits) and scope.exclude (vendor claims without a reproducible comparison); do not enumerate internal write paths or recovery sub-guarantees the reference never asks for.",
+      "Carry budget (4 searches / 10 sources / 6 model calls / 300s), stop_when, abstain_when, contradiction_policy 'preserve_and_report', acceptable_uncertainty, and both prohibited_assumptions into the emitted mission.",
+      "Route any evidence shortfall to post-acceptance outcomes (unresolved obligations or abstain) rather than an intake clarification; emit zero clarifying questions."
+    ],
+    "hard_boundary_failure": true,
+    "hard_boundary_rationale": "Three independent hard-boundary failures: (1) unauthorized action - 'clarify' where 'accept' was required and no clarification was warranted; (2) invented authority - a caller-designated normative-source closure requirement absent from the reference source_policy; (3) lost hard boundaries - mission=null discards scope, obligations, source policy, freshness, budget, stop/abstain conditions, and prohibited assumptions.",
+    "invented_constraints": [
+      "Caller must identify a normative internal source (spec, runbook, or code) before intake can proceed",
+      "Internal contract claims may be closed 'solely against the caller-designated normative source'",
+      "Post-clarification scope restricted to 'general durable-write and adapter-pattern evidence only', replacing the supplied fixture with generic public evidence"
+    ],
+    "lost_hard_boundaries": [
+      "decision: approve or reject a model-provider switch for the release workflow",
+      "scope.include: ambiguous external writes, remote reconciliation, frozen evaluation, identity, cancellation, resource limits",
+      "scope.exclude: vendor claims without a reproducible comparison",
+      "questions q1 and q2 (both required)",
+      "obligations o1-o3 with weights 5/5/3, evidence roles, and closure rules",
+      "source_policy: allowed_authority primary/official/independent, minimum_independent_publishers 0, inaccessible sources cannot close obligations",
+      "freshness mode 'current' anchored to the supplied policy and context as the fixture record",
+      "contradiction_policy 'preserve_and_report' and acceptable_uncertainty (leave unsupported obligations unresolved)",
+      "budget: max_searches 4, max_sources 10, max_model_calls 6, max_elapsed_seconds 300",
+      "stop_when and abstain_when conditions",
+      "prohibited_assumptions: a local timeout does not prove the remote write failed; a vendor brochure does not satisfy the frozen evaluation"
+    ],
+    "required_field_recall": 0,
+    "unnecessary_fields": [
+      "Write-path menu (release-record commit, artifact publish, provider-output handoff) - the reference scope fixes the domain as 'ambiguous external writes' and never needs path enumeration",
+      "Recovery-guarantee checklist (atomicity, idempotency, retry/dedup, ordering) - no matching reference obligation; o1 requires operation identity and remote reconciliation before retry",
+      "Caller-designated normative-source mechanism as a gating and closure construct",
+      "Proposed post-clarification evidence scope ('general durable-write and adapter-pattern evidence only') contradicting the fixture-bound freshness mode",
+      "unhelpful_clarification_evidence': null, ",
+      "verdict_per_dimension': null, ",
+      "reference_mission_id': null, ",
+      "unnecessary_clarification': true, ",
+      "verdict': 'fail', ",
+      "score': 2, ",
+      "score_scale': '0-10', ",
+      "dimension_scores': { ",
+      "semantic_accuracy': 1, ",
+      "hard_boundary_preservation': 0, ",
+      "scope_fidelity': 1, ",
+      "field_minimality': 3, ",
+      "clarification_quality': 0 ",
+      "}, ",
+      "false_premises': [ ",
+      "Claim: 'No sources were supplied.' Refutation: reference freshness.rationale ('Use the supplied policy and context as the current fixture record'), stop_when ('The fixed source pack has been accounted for'), o1 closure_rule ('supported by policy and illustrated by the test record'), and o3 closure_rule ('The brochure's missing comparison fields are named') all establish a supplied fixture pack of policy, test record, and brochure. The candidate's premise is false against the reference record."
+    ]
+  },
+  "position": 23,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "1c5d0e144a86f1d957b6c8df3578750e2c46252867b9f3abc64cf5a182091c75",
+    "finish_reason": "stop",
+    "latency_ms": 109520.079,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "87cf3589ab324c019540c488879ca86d5aa3a4c38f54da50ad1865940451b61d",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 7194,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 7369
+      },
+      "cost": 0.00376065,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.003597,
+        "upstream_inference_cost": 0.00376065,
+        "upstream_inference_prompt_cost": 0.00016365
+      },
+      "is_byok": false,
+      "prompt_tokens": 1091,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 8285
+    }
+  },
+  "schema_version": "research-mission-intake-grade/1",
+  "started_at": "2026-09-19T06:29:33.751582+00:00",
+  "status": "completed"
+}

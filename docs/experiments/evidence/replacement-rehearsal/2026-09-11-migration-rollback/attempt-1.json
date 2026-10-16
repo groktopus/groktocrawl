@@ -1,0 +1,10 @@
+{
+  "corpus_size": 6,
+  "deleted_documents": 1,
+  "failure": "HINT:  No function matches the given name and argument types. You might need to add explicit type casts.",
+  "failure_type": "RehearsalError",
+  "git_revision": "eae1fb7acae72eff6f0e0f2fb3d3b2fd22859ac1",
+  "rollback_target_ms": 120000,
+  "schema_version": "w9-migration-rollback/1",
+  "status": "failed"
+}

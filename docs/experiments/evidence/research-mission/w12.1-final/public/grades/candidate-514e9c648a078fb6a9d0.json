@@ -1,0 +1,80 @@
+{
+  "candidate_id": "candidate-514e9c648a078fb6a9d0",
+  "case_id": "mission-compound-recovery-portability",
+  "completed_at": "2026-09-19T06:15:35.192668+00:00",
+  "grade": {
+    "appropriate_abstention": "not_applicable",
+    "decision_usefulness": 0,
+    "decision_usefulness_rationale": "The candidate never delivers a usable answer to the decision-maker. The answer field consists of one decision fragment repeated verbatim dozens of times and terminates mid-sentence ('approval would be a'), so no reader can extract the recovery sequence (q1) or the portability-preservation requirements (q2) from the answer itself. The claims array is accurate, but the task is to grade whether the candidate supports the stated decision, and the candidate output as delivered fails to communicate the decision support. The decision direction implied (not approvable on the supplied record) is consistent with the evidence, but it is never argued or presented in recoverable form.",
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "No invented authority, no silent scope broadening, no freshness violation, and no unauthorized action. The candidate does not approve the switch, does not treat the brochure as evaluation evidence, and does not infer the remote write failed from the local timeout. The degenerate repetition is a quality failure, not a boundary failure: the repeated fragment itself ('not approvable on the supplied record; approval would require inventing missing measurements') is consistent with the abstain_when rule and the evidence pack. The truncated tail is incomplete rather than false, so no unsupported assertion is introduced. However, the truncation means the candidate never completes a decision statement, which is scored under decision usefulness, not as a boundary violation, because the repeated fragment is itself evidence-consistent and no new claim is invented by the cutoff.",
+    "obligation_grades": {
+      "o1": {
+        "rationale": "Claim 1 restates the policy sequence exactly: record operation identity before the external write, reconcile remote state after ambiguous completion before retrying, and a local checkpoint alone does not prove the write failed. Claim 2 supplies the closure rule's illustration from the test record (timeout after release submission; remote service later reported the original request completed). Both halves of the closure rule (policy support + test-record illustration) are met. The candidate correctly avoids the prohibited assumption that a local timeout proves the remote write failed; it asserts the converse.",
+        "source_ids": [
+          "reliability-policy",
+          "reliability-context"
+        ],
+        "status": "closed"
+      },
+      "o2": {
+        "rationale": "Claim 3 retains every provider-change condition from the policy: same frozen task suite, provenance checks, declared resource limits, preservation of tool-result identities, and preservation of cancellation semantics. No condition is dropped, so the closure rule ('every provider-change condition is retained') is satisfied.",
+        "source_ids": [
+          "platform-policy"
+        ],
+        "status": "closed"
+      },
+      "o3": {
+        "rationale": "Claim 4 rejects the brochure's 'enterprise ready' and 'faster' claims as insufficient approval evidence and names all four missing comparison fields from the source (comparison workload, version pins, error distribution, review methodology), satisfying the closure rule. The candidate does not treat the brochure as satisfying the frozen evaluation, avoiding the second prohibited assumption. The stated uncertainty (brochure lacks the evidence; whether the vendor holds it privately is not established) is appropriately bounded.",
+        "source_ids": [
+          "platform-context",
+          "platform-policy"
+        ],
+        "status": "closed"
+      }
+    },
+    "scope_violations": [],
+    "supported_material_claims": 5,
+    "total_material_claims": 5
+  },
+  "position": 17,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "27f40feb4331bf187c3c7f192fb9c46aee74c9440a28f48743dd251fb036e9d5",
+    "finish_reason": "stop",
+    "latency_ms": 58400.948,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "f2d0fca440c4845bc9f0bebd628e83ac4ad79d6f54e0722b3475b2aa4725e1d5",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 5819,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 6006
+      },
+      "cost": 0.00371935,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0029095,
+        "upstream_inference_cost": 0.00371935,
+        "upstream_inference_prompt_cost": 0.00080985
+      },
+      "is_byok": false,
+      "prompt_tokens": 5399,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 11218
+    }
+  },
+  "schema_version": "research-mission-grade/1",
+  "started_at": "2026-09-19T06:14:36.789134+00:00",
+  "status": "completed"
+}

@@ -1,0 +1,93 @@
+{
+  "case_id": "ambiguous-orion",
+  "completed_at": "2026-09-19T10:11:24.727524+00:00",
+  "completion_attempt": 1,
+  "position": 22,
+  "prior_invalid_completions": [],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "3bbe836e4554cc67c970b39320e2a2ced3269ed421927ae8b343c562d7d26a78",
+    "finish_reason": "stop",
+    "latency_ms": 6556.65,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "92cfc2cd0886700bdede40455284c3d4c5134c740e1ee7b77809d6793d078847",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 118,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 30
+      },
+      "cost": 4.958e-05,
+      "cost_details": {
+        "upstream_inference_completions_cost": 4.13e-05,
+        "upstream_inference_cost": 4.958e-05,
+        "upstream_inference_prompt_cost": 8.28e-06
+      },
+      "is_byok": false,
+      "prompt_tokens": 390,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 384,
+        "video_tokens": 0
+      },
+      "total_tokens": 508
+    }
+  },
+  "repetition": 2,
+  "schema_version": "claim-verification-trial/1",
+  "started_at": "2026-09-19T10:11:18.169390+00:00",
+  "status": "completed",
+  "trial_id": "ambiguous-orion-r2",
+  "verification": {
+    "checked_input": {
+      "case_id": "ambiguous-orion",
+      "claim": "Orion supports customer-managed encryption keys.",
+      "claim_id": "claim-ambiguous-orion",
+      "evidence": [
+        {
+          "contains_instructions": false,
+          "source_id": "source-orion-other",
+          "source_kind": "primary",
+          "span_id": "orion-other",
+          "temporal_status": "current",
+          "text": "Orion Data Warehouse supports customer-managed encryption keys."
+        },
+        {
+          "contains_instructions": false,
+          "source_id": "source-orion-target",
+          "source_kind": "primary",
+          "span_id": "orion-target",
+          "temporal_status": "current",
+          "text": "Orion Workflow documentation does not specify customer-managed keys."
+        }
+      ],
+      "evidence_obligation": "Evidence tied to the same identified Orion product.",
+      "risk": "high",
+      "schema_version": "claim-verification-input/1"
+    },
+    "checked_input_digest": "c12cbb603e3f1dbb9cc7abbf167559b7a1dbb6731f475dbbcf84243c106583c1",
+    "confidence": 30,
+    "contradiction_span_ids": [],
+    "evidence_span_ids": [
+      "orion-other",
+      "orion-target"
+    ],
+    "publish_recommendation": false,
+    "reason": "Support exists only for Orion Data Warehouse, not the claimed Orion product; the Workflow span is a negative/documented-absence statement, so the specific product's key support cannot be confirmed.",
+    "schema_version": "independent-claim-verification/1",
+    "verdict": "indeterminate",
+    "verification_id": "verification-ambiguous-orion-r2",
+    "verifier": {
+      "model": "general",
+      "prompt_version": "w12.3-verifier/1",
+      "route": "local-litellm"
+    }
+  }
+}

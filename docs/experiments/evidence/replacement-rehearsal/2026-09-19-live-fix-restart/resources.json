@@ -1,0 +1,126 @@
+{
+  "containers": [
+    {
+      "BlockIO": "319kB / 4.93MB",
+      "CPUPerc": "0.15%",
+      "Container": "584eea22adc5c098d16f7ea447d09f5e4ce70a9aa290108404e21c31ce08ab66",
+      "ID": "584eea22adc5",
+      "MemPerc": "0.28%",
+      "MemUsage": "88.89MiB / 31.18GiB",
+      "Name": "groktocrawl-x-candidate-candidate-agent-1",
+      "NetIO": "1.55MB / 699kB",
+      "PIDs": "6"
+    },
+    {
+      "BlockIO": "665MB / 7.86MB",
+      "CPUPerc": "0.14%",
+      "Container": "86b58cc92614d04db4192cd006859289bf03a96d463f3110304edae3bea552ba",
+      "ID": "86b58cc92614",
+      "MemPerc": "16.86%",
+      "MemUsage": "252.9MiB / 1.465GiB",
+      "Name": "groktocrawl-x-candidate-candidate-browser-1",
+      "NetIO": "11.7MB / 6.26MB",
+      "PIDs": "9"
+    },
+    {
+      "BlockIO": "9.67MB / 1.83MB",
+      "CPUPerc": "0.24%",
+      "Container": "aaed1f3610e7a347e03a58242aad7f21759b13e0cf9e09dfc967f917e9e43474",
+      "ID": "aaed1f3610e7",
+      "MemPerc": "0.20%",
+      "MemUsage": "63.85MiB / 31.18GiB",
+      "Name": "groktocrawl-x-candidate-candidate-mcp-1",
+      "NetIO": "4.12MB / 4.86MB",
+      "PIDs": "2"
+    },
+    {
+      "BlockIO": "49.2kB / 1.82MB",
+      "CPUPerc": "0.20%",
+      "Container": "f792e537e0823c5d8e38bcd6867203582c8ed352140425cc0892030ed9baf1e1",
+      "ID": "f792e537e082",
+      "MemPerc": "1.79%",
+      "MemUsage": "36.66MiB / 2GiB",
+      "Name": "groktocrawl-x-candidate-candidate-parse-1",
+      "NetIO": "7.01kB / 4kB",
+      "PIDs": "5"
+    },
+    {
+      "BlockIO": "35.3MB / 1.84MB",
+      "CPUPerc": "0.13%",
+      "Container": "4f7cda43ff5c541ed0f22c7890ab8c4c45d4f2a349ba67e9b0faac81813b1736",
+      "ID": "4f7cda43ff5c",
+      "MemPerc": "0.13%",
+      "MemUsage": "43.07MiB / 31.18GiB",
+      "Name": "groktocrawl-x-candidate-candidate-portal-1",
+      "NetIO": "7.47MB / 6.04MB",
+      "PIDs": "5"
+    },
+    {
+      "BlockIO": "32.2MB / 12.2MB",
+      "CPUPerc": "0.02%",
+      "Container": "5d07d1ab3be44faaa5e8d5802fc2c5d716c224e32ceb18dd54be57d3d44f0017",
+      "ID": "5d07d1ab3be4",
+      "MemPerc": "1.71%",
+      "MemUsage": "35.08MiB / 2GiB",
+      "Name": "groktocrawl-x-candidate-candidate-postgres-1",
+      "NetIO": "2.02MB / 1.52MB",
+      "PIDs": "7"
+    },
+    {
+      "BlockIO": "116MB / 3.78MB",
+      "CPUPerc": "0.04%",
+      "Container": "05874408aed5e4d0d7b7514e2eab5fe117c8d83a215f3d2eab6c7d25a34f3598",
+      "ID": "05874408aed5",
+      "MemPerc": "1.52%",
+      "MemUsage": "31.07MiB / 2GiB",
+      "Name": "groktocrawl-x-candidate-candidate-qdrant-rollback-1",
+      "NetIO": "4.84MB / 4.71MB",
+      "PIDs": "20"
+    },
+    {
+      "BlockIO": "1.22GB / 284MB",
+      "CPUPerc": "0.14%",
+      "Container": "5155bef720152fb14c878f0ad64ef382989c32fca7f30d5ee3aee49f9a510a10",
+      "ID": "5155bef72015",
+      "MemPerc": "20.24%",
+      "MemUsage": "506.1MiB / 2.441GiB",
+      "Name": "groktocrawl-x-candidate-candidate-scraper-1",
+      "NetIO": "39.5MB / 11.1MB",
+      "PIDs": "7"
+    },
+    {
+      "BlockIO": "3.77GB / 4.39MB",
+      "CPUPerc": "193.14%",
+      "Container": "511546c18d6c3c971a2d7f9a42e9b57aa9d3955342d53ca53ccf495c92ca9769",
+      "ID": "511546c18d6c",
+      "MemPerc": "70.83%",
+      "MemUsage": "2.833GiB / 4GiB",
+      "Name": "groktocrawl-x-candidate-candidate-semantic-1",
+      "NetIO": "5.6MB / 6.83MB",
+      "PIDs": "123"
+    },
+    {
+      "BlockIO": "57MB / 0B",
+      "CPUPerc": "0.15%",
+      "Container": "5d8384002c2c45e332e1093f6b52b5198d3b1e9c83f5fdf1d9310a8abbd03c3e",
+      "ID": "5d8384002c2c",
+      "MemPerc": "16.91%",
+      "MemUsage": "173.1MiB / 1GiB",
+      "Name": "groktocrawl-x-candidate-candidate-slopsearx-1",
+      "NetIO": "39.8MB / 163MB",
+      "PIDs": "5"
+    },
+    {
+      "BlockIO": "66MB / 11.8MB",
+      "CPUPerc": "0.41%",
+      "Container": "b5a193f55f5597a368802119dc8302b22d6b356240ad4260819e945b5d16507e",
+      "ID": "b5a193f55f55",
+      "MemPerc": "2.02%",
+      "MemUsage": "10.37MiB / 512MiB",
+      "Name": "groktocrawl-x-candidate-candidate-valkey-1",
+      "NetIO": "16MB / 13.8MB",
+      "PIDs": "7"
+    }
+  ],
+  "observed_at": "2026-09-19T18:15:21.394476+00:00"
+}

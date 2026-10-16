@@ -1,0 +1,62 @@
+{
+  "candidate_id": "intake-candidate-4d6b1ed1b3473559ae35",
+  "case_id": "mission-temporal-provider",
+  "completed_at": "2026-09-19T06:28:28.518377+00:00",
+  "grade": {
+    "action_correct": false,
+    "action_rationale": "The candidate's clarify action is incorrect. The expected intake is 'accept', and the independently authored reference mission demonstrates the request was answerable as supplied: its decision ('Decide whether the supplied current record is enough to approve a provider switch') and obligation o1 ('Compare the required frozen suite, provenance, resource limits, identity, and cancellation checks with the vendor note's omissions') presuppose that the policy and vendor note are part of the supplied record. The candidate's premise that 'neither document is present in the materials provided' contradicts the ground truth. The candidate's stated invention risk was already mitigated by the contract itself: o1's closure rule ('Every missing gate is named and the approval remains unresolved or rejected') and abstain_when ('Answering would require inventing authority, approval, or missing measurements') ensure evidence gaps leave the decision unresolved rather than fabricated. The correct behavior was to accept and scope the mission, not to block on a clarification asking the user to re-supply documents already provided.",
+    "clarification_utility": 0,
+    "correction_actions": [
+      "Accept the request and emit a mission scoped to the supplied policy and vendor note.",
+      "Do not ask the user to re-supply referenced documents that are part of the provided materials.",
+      "Do not treat the vendor note's claims (e.g., 'enterprise ready and faster') as identifying a tested model version; route that to the o1 comparison against required gates.",
+      "Preserve the as-of freshness framing (2026-09-19) and the closure rule that missing gates leave approval unresolved or rejected."
+    ],
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "The candidate did not invent authority, silently broaden scope, lose a freshness constraint, or take an unauthorized action; it declined to fabricate the policy's criteria or the vendor note's findings. The failure is the opposite error: an unhelpful, false-premise clarification that withholds an answerable decision instead of performing it. This is penalized under unhelpful clarification and failure to match the expected intake, not as a hard-boundary breach, since no mission was emitted and no prohibited content was asserted.",
+    "invented_constraints": [],
+    "lost_hard_boundaries": [],
+    "required_field_recall": 0,
+    "unnecessary_fields": []
+  },
+  "position": 12,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "1b3faca2bd53bd18c7412789e779c38c2ba75ace4ec390b88402ecfeb558f6ef",
+    "finish_reason": "stop",
+    "latency_ms": 126008.91,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "5169624f28dda7b7d8437da595947a7144cb100170934bf6fd36ee1b8cf93bc9",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 6524,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 6011
+      },
+      "cost": 0.0033976,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.003262,
+        "upstream_inference_cost": 0.0033976,
+        "upstream_inference_prompt_cost": 0.0001356
+      },
+      "is_byok": false,
+      "prompt_tokens": 904,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 7428
+    }
+  },
+  "schema_version": "research-mission-intake-grade/1",
+  "started_at": "2026-09-19T06:26:22.507548+00:00",
+  "status": "completed"
+}

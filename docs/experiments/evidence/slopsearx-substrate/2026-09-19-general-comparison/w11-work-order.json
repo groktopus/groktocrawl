@@ -1,0 +1,601 @@
+{
+  "arms": [
+    "flat_http",
+    "recorded_continuation"
+  ],
+  "entries": [
+    {
+      "arm": "flat_http",
+      "case_id": "w10-08-primary-2",
+      "challenge_type": "missing_primary",
+      "control_policy": "fixed",
+      "position": 1,
+      "repetition": 0
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-08-primary-2",
+      "challenge_type": "missing_primary",
+      "control_policy": "fixed",
+      "position": 2,
+      "repetition": 0
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-12-identity-2",
+      "challenge_type": "entity_ambiguity",
+      "control_policy": "fixed",
+      "position": 3,
+      "repetition": 0
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-12-identity-2",
+      "challenge_type": "entity_ambiguity",
+      "control_policy": "fixed",
+      "position": 4,
+      "repetition": 0
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-07-primary-1",
+      "challenge_type": "missing_primary",
+      "control_policy": "fixed",
+      "position": 5,
+      "repetition": 0
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-07-primary-1",
+      "challenge_type": "missing_primary",
+      "control_policy": "fixed",
+      "position": 6,
+      "repetition": 0
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-11-identity-1",
+      "challenge_type": "entity_ambiguity",
+      "control_policy": "fixed",
+      "position": 7,
+      "repetition": 0
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-11-identity-1",
+      "challenge_type": "entity_ambiguity",
+      "control_policy": "fixed",
+      "position": 8,
+      "repetition": 0
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-01-unsupported-1",
+      "challenge_type": "unsupported_claim",
+      "control_policy": "fixed",
+      "position": 9,
+      "repetition": 0
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-01-unsupported-1",
+      "challenge_type": "unsupported_claim",
+      "control_policy": "fixed",
+      "position": 10,
+      "repetition": 0
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-09-independence-1",
+      "challenge_type": "publisher_independence",
+      "control_policy": "fixed",
+      "position": 11,
+      "repetition": 0
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-09-independence-1",
+      "challenge_type": "publisher_independence",
+      "control_policy": "fixed",
+      "position": 12,
+      "repetition": 0
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-03-contradiction-1",
+      "challenge_type": "contradiction",
+      "control_policy": "fixed",
+      "position": 13,
+      "repetition": 0
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-03-contradiction-1",
+      "challenge_type": "contradiction",
+      "control_policy": "fixed",
+      "position": 14,
+      "repetition": 0
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-02-unsupported-2",
+      "challenge_type": "unsupported_claim",
+      "control_policy": "fixed",
+      "position": 15,
+      "repetition": 0
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-02-unsupported-2",
+      "challenge_type": "unsupported_claim",
+      "control_policy": "fixed",
+      "position": 16,
+      "repetition": 0
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-04-contradiction-2",
+      "challenge_type": "contradiction",
+      "control_policy": "fixed",
+      "position": 17,
+      "repetition": 0
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-04-contradiction-2",
+      "challenge_type": "contradiction",
+      "control_policy": "fixed",
+      "position": 18,
+      "repetition": 0
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-06-freshness-2",
+      "challenge_type": "stale_evidence",
+      "control_policy": "fixed",
+      "position": 19,
+      "repetition": 0
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-06-freshness-2",
+      "challenge_type": "stale_evidence",
+      "control_policy": "fixed",
+      "position": 20,
+      "repetition": 0
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-05-freshness-1",
+      "challenge_type": "stale_evidence",
+      "control_policy": "fixed",
+      "position": 21,
+      "repetition": 0
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-05-freshness-1",
+      "challenge_type": "stale_evidence",
+      "control_policy": "fixed",
+      "position": 22,
+      "repetition": 0
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-10-independence-2",
+      "challenge_type": "publisher_independence",
+      "control_policy": "fixed",
+      "position": 23,
+      "repetition": 0
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-10-independence-2",
+      "challenge_type": "publisher_independence",
+      "control_policy": "fixed",
+      "position": 24,
+      "repetition": 0
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-05-freshness-1",
+      "challenge_type": "stale_evidence",
+      "control_policy": "fixed",
+      "position": 25,
+      "repetition": 1
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-05-freshness-1",
+      "challenge_type": "stale_evidence",
+      "control_policy": "fixed",
+      "position": 26,
+      "repetition": 1
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-01-unsupported-1",
+      "challenge_type": "unsupported_claim",
+      "control_policy": "fixed",
+      "position": 27,
+      "repetition": 1
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-01-unsupported-1",
+      "challenge_type": "unsupported_claim",
+      "control_policy": "fixed",
+      "position": 28,
+      "repetition": 1
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-12-identity-2",
+      "challenge_type": "entity_ambiguity",
+      "control_policy": "fixed",
+      "position": 29,
+      "repetition": 1
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-12-identity-2",
+      "challenge_type": "entity_ambiguity",
+      "control_policy": "fixed",
+      "position": 30,
+      "repetition": 1
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-10-independence-2",
+      "challenge_type": "publisher_independence",
+      "control_policy": "fixed",
+      "position": 31,
+      "repetition": 1
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-10-independence-2",
+      "challenge_type": "publisher_independence",
+      "control_policy": "fixed",
+      "position": 32,
+      "repetition": 1
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-04-contradiction-2",
+      "challenge_type": "contradiction",
+      "control_policy": "fixed",
+      "position": 33,
+      "repetition": 1
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-04-contradiction-2",
+      "challenge_type": "contradiction",
+      "control_policy": "fixed",
+      "position": 34,
+      "repetition": 1
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-11-identity-1",
+      "challenge_type": "entity_ambiguity",
+      "control_policy": "fixed",
+      "position": 35,
+      "repetition": 1
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-11-identity-1",
+      "challenge_type": "entity_ambiguity",
+      "control_policy": "fixed",
+      "position": 36,
+      "repetition": 1
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-02-unsupported-2",
+      "challenge_type": "unsupported_claim",
+      "control_policy": "fixed",
+      "position": 37,
+      "repetition": 1
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-02-unsupported-2",
+      "challenge_type": "unsupported_claim",
+      "control_policy": "fixed",
+      "position": 38,
+      "repetition": 1
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-08-primary-2",
+      "challenge_type": "missing_primary",
+      "control_policy": "fixed",
+      "position": 39,
+      "repetition": 1
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-08-primary-2",
+      "challenge_type": "missing_primary",
+      "control_policy": "fixed",
+      "position": 40,
+      "repetition": 1
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-06-freshness-2",
+      "challenge_type": "stale_evidence",
+      "control_policy": "fixed",
+      "position": 41,
+      "repetition": 1
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-06-freshness-2",
+      "challenge_type": "stale_evidence",
+      "control_policy": "fixed",
+      "position": 42,
+      "repetition": 1
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-03-contradiction-1",
+      "challenge_type": "contradiction",
+      "control_policy": "fixed",
+      "position": 43,
+      "repetition": 1
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-03-contradiction-1",
+      "challenge_type": "contradiction",
+      "control_policy": "fixed",
+      "position": 44,
+      "repetition": 1
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-09-independence-1",
+      "challenge_type": "publisher_independence",
+      "control_policy": "fixed",
+      "position": 45,
+      "repetition": 1
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-09-independence-1",
+      "challenge_type": "publisher_independence",
+      "control_policy": "fixed",
+      "position": 46,
+      "repetition": 1
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-07-primary-1",
+      "challenge_type": "missing_primary",
+      "control_policy": "fixed",
+      "position": 47,
+      "repetition": 1
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-07-primary-1",
+      "challenge_type": "missing_primary",
+      "control_policy": "fixed",
+      "position": 48,
+      "repetition": 1
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-05-freshness-1",
+      "challenge_type": "stale_evidence",
+      "control_policy": "fixed",
+      "position": 49,
+      "repetition": 2
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-05-freshness-1",
+      "challenge_type": "stale_evidence",
+      "control_policy": "fixed",
+      "position": 50,
+      "repetition": 2
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-08-primary-2",
+      "challenge_type": "missing_primary",
+      "control_policy": "fixed",
+      "position": 51,
+      "repetition": 2
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-08-primary-2",
+      "challenge_type": "missing_primary",
+      "control_policy": "fixed",
+      "position": 52,
+      "repetition": 2
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-01-unsupported-1",
+      "challenge_type": "unsupported_claim",
+      "control_policy": "fixed",
+      "position": 53,
+      "repetition": 2
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-01-unsupported-1",
+      "challenge_type": "unsupported_claim",
+      "control_policy": "fixed",
+      "position": 54,
+      "repetition": 2
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-06-freshness-2",
+      "challenge_type": "stale_evidence",
+      "control_policy": "fixed",
+      "position": 55,
+      "repetition": 2
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-06-freshness-2",
+      "challenge_type": "stale_evidence",
+      "control_policy": "fixed",
+      "position": 56,
+      "repetition": 2
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-09-independence-1",
+      "challenge_type": "publisher_independence",
+      "control_policy": "fixed",
+      "position": 57,
+      "repetition": 2
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-09-independence-1",
+      "challenge_type": "publisher_independence",
+      "control_policy": "fixed",
+      "position": 58,
+      "repetition": 2
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-04-contradiction-2",
+      "challenge_type": "contradiction",
+      "control_policy": "fixed",
+      "position": 59,
+      "repetition": 2
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-04-contradiction-2",
+      "challenge_type": "contradiction",
+      "control_policy": "fixed",
+      "position": 60,
+      "repetition": 2
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-11-identity-1",
+      "challenge_type": "entity_ambiguity",
+      "control_policy": "fixed",
+      "position": 61,
+      "repetition": 2
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-11-identity-1",
+      "challenge_type": "entity_ambiguity",
+      "control_policy": "fixed",
+      "position": 62,
+      "repetition": 2
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-07-primary-1",
+      "challenge_type": "missing_primary",
+      "control_policy": "fixed",
+      "position": 63,
+      "repetition": 2
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-07-primary-1",
+      "challenge_type": "missing_primary",
+      "control_policy": "fixed",
+      "position": 64,
+      "repetition": 2
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-12-identity-2",
+      "challenge_type": "entity_ambiguity",
+      "control_policy": "fixed",
+      "position": 65,
+      "repetition": 2
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-12-identity-2",
+      "challenge_type": "entity_ambiguity",
+      "control_policy": "fixed",
+      "position": 66,
+      "repetition": 2
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-03-contradiction-1",
+      "challenge_type": "contradiction",
+      "control_policy": "fixed",
+      "position": 67,
+      "repetition": 2
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-03-contradiction-1",
+      "challenge_type": "contradiction",
+      "control_policy": "fixed",
+      "position": 68,
+      "repetition": 2
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-02-unsupported-2",
+      "challenge_type": "unsupported_claim",
+      "control_policy": "fixed",
+      "position": 69,
+      "repetition": 2
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-02-unsupported-2",
+      "challenge_type": "unsupported_claim",
+      "control_policy": "fixed",
+      "position": 70,
+      "repetition": 2
+    },
+    {
+      "arm": "recorded_continuation",
+      "case_id": "w10-10-independence-2",
+      "challenge_type": "publisher_independence",
+      "control_policy": "fixed",
+      "position": 71,
+      "repetition": 2
+    },
+    {
+      "arm": "flat_http",
+      "case_id": "w10-10-independence-2",
+      "challenge_type": "publisher_independence",
+      "control_policy": "fixed",
+      "position": 72,
+      "repetition": 2
+    }
+  ],
+  "inputs": {
+    "cases_sha256": "6761705e14ea1b535a8debdd0e54c6be14d8a42608c6f3606e6e445290aa21d6",
+    "w10_run_manifest_sha256": "a2009fc1fb84cf662b8db6a61130ed5675d530cb97528f3895b7344b60e156e8",
+    "w10_selection_sha256": "76e41947210917d7ea55de797c7bef90d25663d57a8ad36b50d358cb91300671"
+  },
+  "policy_by_challenge_type": {
+    "contradiction": "fixed",
+    "entity_ambiguity": "fixed",
+    "missing_primary": "fixed",
+    "publisher_independence": "fixed",
+    "stale_evidence": "fixed",
+    "unsupported_claim": "fixed"
+  },
+  "repetitions": 3,
+  "result_limit": 8,
+  "schema_version": "enterprise-evaluation/w11-general-work-order/1",
+  "seed": 11052026
+}

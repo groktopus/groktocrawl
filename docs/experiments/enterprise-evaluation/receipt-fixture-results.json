@@ -1,0 +1,122 @@
+{
+  "schema_version": "scoped-receipt-evidence/1",
+  "date": "2026-09-05",
+  "scope": "in_memory_accounting_only",
+  "test_result": {
+    "passed": 40,
+    "failed": 0,
+    "skipped": 0
+  },
+  "input_files_sha256": {
+    "tests/unit/test_execution_ledger.py": "5f1a1aa3f7e31c7567f5ba485fa557ad4efb5f444a77e59fbe22ae82ea01d2a8",
+    "tests/unit/test_scripted_controller.py": "ae2466fa5dc47fbc3c4c52dc6c3aaeb31ce57dcdc0e885b2324f055dcd221d77",
+    "agent-svc/agent/experimental/execution.py": "0ce99d6da170ac2c4e117fbd1a7532f7c08f086f72afa9a6b74028aa69e346be",
+    "agent-svc/agent/experimental/controller.py": "9b9e78a807a5a0df4f45811cf6ad7f47f719e82007f0986c149add0fd4eba00f"
+  },
+  "case_mapping": {
+    "idempotency-control": "test_duplicate_completion_is_idempotent_even_after_cancel: first valid completion",
+    "idempotency-adverse": "test_duplicate_completion_is_idempotent_even_after_cancel: exact and conflicting replay"
+  },
+  "supporting_controller_tests": [
+    "test_scripted_journey_and_stable_reads",
+    "test_concurrent_run_rejected_without_second_dispatch"
+  ],
+  "receipt_trace": {
+    "scope": "in_memory_accounting_only",
+    "control": {
+      "run_id": "run1",
+      "policy_version": "fixture/1",
+      "revision": 2,
+      "state": "running",
+      "limit": {
+        "searches": 0,
+        "sources": 0,
+        "tokens": 5,
+        "cost_microusd": 0
+      },
+      "max_operations": 3,
+      "spent": {
+        "searches": 0,
+        "sources": 0,
+        "tokens": 3,
+        "cost_microusd": 0
+      },
+      "reserved": {
+        "searches": 0,
+        "sources": 0,
+        "tokens": 0,
+        "cost_microusd": 0
+      },
+      "operations": [
+        {
+          "operation_id": "op1",
+          "input_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "reserved": {
+            "searches": 0,
+            "sources": 0,
+            "tokens": 5,
+            "cost_microusd": 0
+          },
+          "state": "completed",
+          "output_id": "out-op1",
+          "actual": {
+            "searches": 0,
+            "sources": 0,
+            "tokens": 3,
+            "cost_microusd": 0
+          }
+        }
+      ]
+    },
+    "exact_replay_while_running": "same_state_object",
+    "after_cancel": {
+      "run_id": "run1",
+      "policy_version": "fixture/1",
+      "revision": 3,
+      "state": "cancelled",
+      "limit": {
+        "searches": 0,
+        "sources": 0,
+        "tokens": 5,
+        "cost_microusd": 0
+      },
+      "max_operations": 3,
+      "spent": {
+        "searches": 0,
+        "sources": 0,
+        "tokens": 3,
+        "cost_microusd": 0
+      },
+      "reserved": {
+        "searches": 0,
+        "sources": 0,
+        "tokens": 0,
+        "cost_microusd": 0
+      },
+      "operations": [
+        {
+          "operation_id": "op1",
+          "input_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "reserved": {
+            "searches": 0,
+            "sources": 0,
+            "tokens": 5,
+            "cost_microusd": 0
+          },
+          "state": "completed",
+          "output_id": "out-op1",
+          "actual": {
+            "searches": 0,
+            "sources": 0,
+            "tokens": 3,
+            "cost_microusd": 0
+          }
+        }
+      ]
+    },
+    "exact_replay_after_cancel": "same_state_object",
+    "conflicting_replay": "rejected_without_state_change"
+  },
+  "full_catalog_execution": false,
+  "external_effects_observed": false
+}

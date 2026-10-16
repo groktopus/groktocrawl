@@ -1,0 +1,85 @@
+{
+  "arm": "treatment",
+  "case_id": "mission-straightforward-delivery",
+  "completed_at": "2026-09-19T05:47:07.466388+00:00",
+  "position": 1,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "34c387bde717c425c13d996cc4ec2b468ee49cda6c0fa45600b1909f095b2894",
+    "finish_reason": "stop",
+    "latency_ms": 11059.745,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "334038ea27262859ef47d88317b41b66f0589b45e1e639eb316fa5980b92b7df",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 315,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 33
+      },
+      "cost": 0.00017411,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.00011025,
+        "upstream_inference_cost": 0.00017411,
+        "upstream_inference_prompt_cost": 6.386e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 741,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 128,
+        "video_tokens": 0
+      },
+      "total_tokens": 1056
+    }
+  },
+  "repetition": 2,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Release actions authorized for the build agent (per supplied policy and context: `delivery-policy` | `delivery-context` | `delivery-context`)",
+    "candidate_id": "candidate-30c4c32331160968e138",
+    "citations": [
+      "delivery-policy",
+      "delivery-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "delivery-policy"
+        ],
+        "text": "The agent may open a pull request after tests pass.",
+        "uncertainty": "No material uncertainty; condition is explicitly stated."
+      },
+      {
+        "source_ids": [
+          "delivery-policy"
+        ],
+        "text": "Production deployment requires approval by the service owner and a recorded rollback plan.",
+        "uncertainty": "No material uncertainty; both conditions are explicit."
+      },
+      {
+        "source_ids": [
+          "delivery-context"
+        ],
+        "text": "The sandbox experiment permitted automatic deployment only to disposable test environments and did not authorize production deployment.",
+        "uncertainty": "No material uncertainty; the limitation is explicit."
+      },
+      {
+        "source_ids": [
+          "delivery-policy"
+        ],
+        "text": "The governing policy does not address other release actions (e.g., staging promotion or test-environment deployment by the agent); whether those are authorized is not established by the supplied evidence.",
+        "uncertainty": "The supplied sources are silent; no authority for those actions exists in the pack."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:46:56.406063+00:00",
+  "status": "completed",
+  "trial_id": "mission-straightforward-delivery-r2-treatment"
+}

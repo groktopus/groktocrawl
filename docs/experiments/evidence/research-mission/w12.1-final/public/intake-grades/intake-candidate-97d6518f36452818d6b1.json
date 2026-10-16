@@ -1,0 +1,71 @@
+{
+  "candidate_id": "intake-candidate-97d6518f36452818d6b1",
+  "case_id": "mission-temporal-provider",
+  "completed_at": "2026-09-19T06:33:31.533186+00:00",
+  "grade": {
+    "action_correct": false,
+    "action_rationale": "The expected intake is 'accept' and the reference mission is fully specified, which is only possible if the policy and vendor note were part of the supplied pack: obligation o1 compares gates against 'the vendor note's omissions' and stop_when requires that 'the fixed source pack has been accounted for.' The candidate instead claimed the documents were absent, issued a clarification requesting them, and emitted no mission (mission: null). This is a spurious, unhelpful clarification that blocks an answerable request, and it forfeits the entire reference deliverable.",
+    "clarification_utility": 1,
+    "correction_actions": [
+      "Accept the request and emit a mission semantically equivalent to mission-temporal-provider: decision on whether the supplied current record satisfies the provider-change gate, scope limited to current evaluation requirements, version pins, resource limits, and provider evidence gaps, with the as-of 2026-09-19 freshness pin and the o1 closure rule intact.",
+      "Remove the clarification entirely; the policy and vendor note are supplied inputs, and provider identities are not required by the reference decision frame."
+    ],
+    "hard_boundary_failure": true,
+    "hard_boundary_rationale": "The hard freshness constraint (as_of 2026-09-19T00:00:00Z) was lost by omission since no mission was produced, which the hard_boundary_definition explicitly penalizes. No invented authority or unauthorized action occurred — the rationale correctly states a mission would be a research boundary only, not permission to switch — but that boundary exists only in prose and was never operationalized. The candidate also invented a blocker (missing documents) contradicted by the reference mission's own citations to vendor-note content and a fixed source pack.",
+    "invented_constraints": [
+      "The rationale invents a missing-inputs contradiction ('the request's premise contradicts its contents; no source text is present') that the ground truth refutes, and speculates about cost-driven vs. risk-driven vs. contract-locked policies to justify blocking."
+    ],
+    "lost_hard_boundaries": [
+      "as_of freshness pin 2026-09-19T00:00:00Z never instantiated (no mission emitted)",
+      "scope exclusion of historical provider performance not in the source pack never instantiated",
+      "closure rule 'every missing gate is named and the approval remains unresolved or rejected' never instantiated",
+      "preserve_and_report contradiction policy and acceptable-uncertainty rule never operationalized",
+      "obligation o1 (weight 5, counterevidence role) and question q1 never produced"
+    ],
+    "required_field_recall": 0,
+    "unnecessary_fields": [
+      "mission: null is redundant under a clarify action",
+      "rationale asserts evidentiary claims (absence of source text) beyond what the intake contract supports"
+    ]
+  },
+  "position": 33,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "813a584068173788e60b52cd2f22e03bdf0194320b3a56f179da80254e1cf5f6",
+    "finish_reason": "stop",
+    "latency_ms": 48036.541,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "479f27e15e5460918e34c2b8a538f1803608fcb570d4a33b99d81b33eb43336e",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 7651,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 8500
+      },
+      "cost": 0.0039638,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0038255,
+        "upstream_inference_cost": 0.0039638,
+        "upstream_inference_prompt_cost": 0.0001383
+      },
+      "is_byok": false,
+      "prompt_tokens": 922,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 8573
+    }
+  },
+  "schema_version": "research-mission-intake-grade/1",
+  "started_at": "2026-09-19T06:32:43.494898+00:00",
+  "status": "completed"
+}

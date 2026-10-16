@@ -1,0 +1,70 @@
+{
+  "answer": {
+    "answer": "After Grove's old advisory URL disappeared, we can establish the following from the supplied snapshots only: (1) Historically, snapshot grove-g12-old captured Grove advisory G-12 reporting that versions before 4.2 were affected. (2) Currently, snapshot grove-g12-gone shows that the requested advisory is unavailable at that URL. What remains unresolved: the reason for the unavailability (e.g., move, withdrawal, or retraction), whether the advisory's content has been revised or superseded, which product the affected versions belong to, and whether the advisory exists at a new location. No inference beyond the two snapshots is supported.",
+    "change_events": [
+      "The URL that previously hosted Grove advisory G-12 no longer serves the advisory; the snapshot grove-g12-gone states 'The requested advisory is unavailable at this URL.'"
+    ],
+    "citations": [
+      "grove-g12-old",
+      "grove-g12-gone"
+    ],
+    "current_truths": [
+      "As of snapshot grove-g12-gone, the former G-12 advisory URL returns an unavailability notice rather than the advisory content."
+    ],
+    "historical_truths": [
+      "Per snapshot grove-g12-old, Grove advisory G-12 reported that versions before 4.2 were affected."
+    ],
+    "unresolved": [
+      "Why the advisory became unavailable (moved, withdrawn, retracted, or site change) is not stated in the supplied snapshots.",
+      "Whether the advisory's content (versions before 4.2 affected) has been revised, superseded, or retracted is unknown.",
+      "Which product the 'versions before 4.2' refers to was never specified in the supplied snapshots.",
+      "Whether the advisory is available at a new URL is not established by the supplied snapshots."
+    ]
+  },
+  "arm": "treatment",
+  "case_id": "rotated-link",
+  "completed_at": "2026-09-19T07:51:33.418986+00:00",
+  "position": 52,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "5c90996dcc82beb948cbac4a5bdb7fecb85213a907f92514fa5c0b7a9cf3413d",
+    "finish_reason": "stop",
+    "latency_ms": 7962.424,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "1094dd0adb7618329236b8c3073ea3d46422bc44b857d0f5ba8c749f50ab558f",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 365,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0.000451524,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000219,
+        "upstream_inference_cost": 0.000451524,
+        "upstream_inference_prompt_cost": 0.000232524
+      },
+      "is_byok": false,
+      "prompt_tokens": 1343,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 64,
+        "video_tokens": 0
+      },
+      "total_tokens": 1708
+    }
+  },
+  "repetition": 3,
+  "schema_version": "research-thread-trial/1",
+  "started_at": "2026-09-19T07:51:25.455370+00:00",
+  "status": "completed",
+  "stratum": "unavailable",
+  "trial_id": "rotated-link-r3-treatment"
+}

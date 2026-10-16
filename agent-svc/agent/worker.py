@@ -245,6 +245,7 @@ async def _process_agent_async(
     max_credits: int | None = None,
     fingerprint: str | None = None,
     task_tracker: Any = None,
+    evidence_budget_chars: int = 32_000,
 ) -> None:
     if task_tracker is not None:
         set_token(task_tracker.cancel_token(job_id))
@@ -307,6 +308,9 @@ async def _process_agent_async(
                         "freshness": freshness,
                         "similarity": cache_result.get("similarity", 0),
                         "memory_id": cache_result.get("memory_id", ""),
+                        "evidence_coverage": entry.get("metadata", {}).get(
+                            "evidence_coverage", {}
+                        ),
                     }
                     # Apply compact citation transformation
                     if cs == CitationStyle.compact:
@@ -355,6 +359,9 @@ async def _process_agent_async(
                             "evidence": {"status": "not_retained"},
                         },
                         "freshness": "stale",
+                        "evidence_coverage": entry.get("metadata", {}).get(
+                            "evidence_coverage", {}
+                        ),
                         "refreshed": False,
                         "age_hours": cache_result.get("age_hours"),
                         "similarity": cache_result.get("similarity", 0),
@@ -394,6 +401,7 @@ async def _process_agent_async(
                                 search_type=search_type,
                                 user_id=user_id,
                                 fingerprint=fingerprint,
+                                evidence_budget_chars=evidence_budget_chars,
                             )
                         except Exception:
                             logger.warning(
@@ -409,6 +417,7 @@ async def _process_agent_async(
                             "source_details": fresh.get("source_details", []),
                             "from_cache": False,
                             "freshness": "refreshed",
+                            "evidence_coverage": fresh.get("evidence_coverage", {}),
                             "refreshed": True,
                             "age_hours": 0.0,
                             "research_memory_id": fresh.get("research_memory_id"),
@@ -491,6 +500,7 @@ async def _process_agent_async(
             search_type=search_type,
             max_searches_per_request=max_searches_per_request,
             max_credits=max_credits,
+            evidence_budget_chars=evidence_budget_chars,
         )
 
         job_meta = store.get_job(job_id)
@@ -708,6 +718,7 @@ async def _process_crawl_async(
             "pages": result.pages,
             "errors": result.errors,
             "robots_blocked": result.robots_blocked,
+            "outcome_summary": result.outcome_summary,
         }
         if verbose:
             payload["filtered_out"] = result.filtered_out
@@ -1147,6 +1158,7 @@ async def _process_plan_execution_async(
 
         all_sources: list[dict] = []
         accumulated_context_parts: list[str] = []
+        evidence_coverage: dict[str, Any] = {}
         seen_urls: set[str] = set()
         full_synthesis = ""
 
@@ -1218,11 +1230,17 @@ async def _process_plan_execution_async(
                             accumulated_context_parts.append(artifact.to_document())
 
                 elif action == "synthesize":
-                    context = (
-                        "\n\n---\n\n".join(accumulated_context_parts)
-                        if accumulated_context_parts
-                        else ""
+                    from .research.evidence import build_evidence_async
+
+                    selected = await build_evidence_async(
+                        [
+                            {"id": f"plan-source-{index}", "markdown": text}
+                            for index, text in enumerate(accumulated_context_parts)
+                        ],
+                        f"{prompt} {description}",
                     )
+                    context = selected["context"]
+                    evidence_coverage = selected["coverage"]
                     synthesis_prompt = (
                         description or f"Synthesise findings for: {prompt}"
                     )
@@ -1276,6 +1294,7 @@ async def _process_plan_execution_async(
                 "sources": [s.get("url", "") for s in all_sources],
                 "source_details": all_sources,
                 "phases_completed": len(phases),
+                "evidence_coverage": evidence_coverage,
                 "total_sources": len(all_sources),
             }
 

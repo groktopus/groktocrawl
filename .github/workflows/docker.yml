@@ -171,11 +171,12 @@ jobs:
           TWIN_TEST_OUTCOME: ${{ steps.twin_tests.outcome }}
           TWIN_RESULT: ${{ steps.twin_tests.outcome == 'success' && 'success' || 'failure' }}
           TWIN_FAILURE_SOURCE: ${{ steps.twin_tests.outcome == 'success' && 'none' || 'twin' }}
-          TWIN_CHANGED_PATHS_JSON: ${{ needs.changes.outputs.changed_paths_json }}
           TWIN_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          TWIN_EVENT_KIND: ${{ github.event_name }}
+          TWIN_EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           TWIN_EXECUTION_MODE: hosted
         run: |
-          uv run --no-sync python scripts/twin_provenance.py --output twin-out --changed-paths-json "$TWIN_CHANGED_PATHS_JSON"
+          uv run --no-sync python scripts/twin_provenance.py --output twin-out --changed-paths-from-event
           uv run --no-sync python -m jsonschema -i twin-out/twin-evidence.json provenance/twin-evidence.schema.json
       - name: Upload twin outcomes and provenance
         if: always()
@@ -223,6 +224,18 @@ jobs:
             context: mcp-svc
             dockerfile: mcp-svc/Dockerfile
             image: ghcr.io/groktopus/groktocrawl-mcp
+          - service: capture-egress-svc
+            context: .
+            dockerfile: capture-egress-svc/Dockerfile
+            image: ghcr.io/groktopus/groktocrawl-capture-egress
+          - service: flare-control
+            context: .
+            dockerfile: flare-control/Dockerfile
+            image: ghcr.io/groktopus/groktocrawl-flare-control
+          - service: flare-protected
+            context: .
+            dockerfile: flare-protected/Dockerfile
+            image: ghcr.io/groktopus/groktocrawl-protected-flare
       max-parallel: 2
 
     permissions:
@@ -251,6 +264,7 @@ jobs:
         with:
           images: ${{ matrix.image }}
           tags: |
+            type=sha,format=long
             type=raw,value=latest,enable=${{ github.ref_name == 'main' }}
             type=raw,value=unstable,enable=${{ github.ref_name == 'main' }}
             type=raw,value=stable,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
@@ -268,6 +282,8 @@ jobs:
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
+          build-args: |
+            GROKTOCRAWL_REVISION=${{ github.sha }}
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name == 'push' }}
           tags: ${{ steps.meta.outputs.tags }}
@@ -275,23 +291,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Prune untagged versions
-        if: github.event_name == 'push'
-        shell: bash
-        run: |
-          PACKAGE_NAME=$(echo "${{ matrix.image }}" | sed 's|.*/||')
-          echo "Pruning untagged versions of $PACKAGE_NAME"
-          gh api \
-            --method GET \
-            "/orgs/${{ env.REGISTRY_OWNER }}/packages/container/$PACKAGE_NAME/versions?per_page=100" \
-            --jq '.[] | select(.metadata.container.tags == null or .metadata.container.tags == []) | .id' \
-            | while read version_id; do
-              echo "  Deleting version $version_id"
-              gh api --method DELETE \
-                "/orgs/${{ env.REGISTRY_OWNER }}/packages/container/$PACKAGE_NAME/versions/$version_id" --silent
-          done
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Keep untagged manifests: multi-architecture indexes reference untagged
+      # platform and attestation manifests, so deleting them breaks published images.
 
   integration-tests:
     name: Integration Tests
@@ -367,6 +368,10 @@ jobs:
         run: |
           cp .env.sample .env
           echo "TWIN_RUN_ID=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> .env
+          echo "DURABLE_RESEARCH_REDIS_URL=redis://valkey:6379/15" >> .env
+          # The full suite uses the real agent API, whose upstream must be the
+          # deterministic fixture rather than the live SlopSearX service.
+          echo "SEARXNG_URL=http://slopsearx-fixture:8080" >> .env
           echo "LLM_BASE_URL=http://llm-svc:8011/v1?run_id=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> .env
           echo "LLM_MODEL=fixture-model" >> .env
           echo "CAPTCHA_VISION_BASE_URL=http://llm-svc:8011/v1" >> .env
@@ -727,9 +732,15 @@ jobs:
           docker compose exec -T agent-svc mkdir -p /app/tests
           docker cp tests/. "$svc":/app/tests/
           docker cp docker-compose.yml "$svc":/app/docker-compose.yml
+          docker cp .env.sample "$svc":/app/.env.sample
+          docker cp groktocrawl "$svc":/app/groktocrawl
           docker compose exec -T agent-svc mkdir -p /app/scripts
           docker cp scripts/classify_ci_changes.py "$svc":/app/scripts/classify_ci_changes.py
           docker cp scripts/coverage_gate.py "$svc":/app/scripts/coverage_gate.py
+          # Service tests exercise these executable policy/maintenance seams.
+          for script in ci_fork_pr_guard.py enforce-branch-protection.py reconcile-jobs.py; do
+            docker cp "scripts/$script" "$svc:/app/scripts/$script"
+          done
           # Copy the stdlib benchmark harness so tests/service/test_benchmark_harness.py
           # can `from benchmarks.run_benchmarks import ...` inside the container.
           docker compose exec -T agent-svc mkdir -p /app/benchmarks
@@ -737,6 +748,13 @@ jobs:
           docker compose exec -T agent-svc mkdir -p /app/.github/workflows
           docker cp .github/workflows/docker.yml "$svc":/app/.github/workflows/docker.yml
           docker cp .github/workflows/fast-tests.yml "$svc":/app/.github/workflows/fast-tests.yml
+          docker cp .github/workflows/. "$svc":/app/.github/workflows/
+          docker cp docker-compose.ci.yml "$svc":/app/docker-compose.ci.yml
+          # Include the protected-profile inputs read by service contract tests.
+          docker cp compose.experimental-candidate.yml "$svc":/app/compose.experimental-candidate.yml
+          docker cp compose.protected-flare-ci.yml "$svc":/app/compose.protected-flare-ci.yml
+          docker cp compose.protected-capture-ci.yml "$svc":/app/compose.protected-capture-ci.yml
+          docker cp compose.protected-capture-lab.yml "$svc":/app/compose.protected-capture-lab.yml
           # Refresh the baked agent package at the path Python imports from /app.
           docker compose exec -T agent-svc mkdir -p /app/agent
           docker cp agent-svc/agent/. "$svc":/app/agent/
@@ -750,14 +768,24 @@ jobs:
           docker cp mcp-svc/. "$svc:/app/mcp-svc/"
 
       - name: Install critical test dependencies
-        run: docker compose exec -T agent-svc pip install pytest pytest-asyncio pytest-cov pytest-timeout jinja2 tabulate markdownify==1.2.3 readability-lxml==0.8.4.1 firecrawl-anydoc==0.2.4 pypdf -q
+        run: |
+          uv export --locked --only-group fast-tests --no-dev --no-emit-project --no-emit-workspace --no-header --format requirements.txt --output-file runtime-test-requirements.txt
+          svc=$(docker compose ps -q agent-svc)
+          docker cp runtime-test-requirements.txt "$svc:/tmp/runtime-test-requirements.txt"
+          docker compose exec -T agent-svc python3 -m pip install --require-hashes -r /tmp/runtime-test-requirements.txt -q
 
       - name: Verify LLM fixture contract and agent routing
         run: |
           docker compose exec -T agent-svc python3 -c "
-          import os
+          import json, os, urllib.request
+          assert os.environ['SEARXNG_URL'] == 'http://slopsearx-fixture:8080'
           assert os.environ['LLM_BASE_URL'].startswith('http://llm-svc:8011/v1?run_id='), os.environ.get('LLM_BASE_URL')
-          print('agent LLM routing verified')
+          request = urllib.request.Request('http://agent-svc:8080/v2/search', data=json.dumps({'query': 'fixture pricing', 'limit': 2}).encode(), headers={'Content-Type': 'application/json'})
+          payload = json.load(urllib.request.urlopen(request, timeout=15))
+          results = payload['data']['web']
+          assert payload['success'] and results, 'agent fixture search returned no results'
+          assert all(result['url'].startswith('http://test-site:8000/') for result in results), 'agent search escaped deterministic fixture'
+          print('agent LLM and deterministic search routing verified')
           "
           docker compose exec -T agent-svc python3 -c "
           import json, urllib.request
@@ -862,14 +890,17 @@ jobs:
 
       - name: Run integration tests
         run: |
-          docker compose exec -T agent-svc pip install pytest pytest-asyncio pytest-cov pytest-xdist pytest-timeout jinja2 tabulate markdownify==1.2.3 readability-lxml==0.8.4.1 firecrawl-anydoc==0.2.4 pypdf PyYAML -q
+          uv export --locked --only-group fast-tests --no-dev --no-emit-project --no-emit-workspace --no-header --format requirements.txt --output-file runtime-test-requirements.txt
+          svc=$(docker compose ps -q agent-svc)
+          docker cp runtime-test-requirements.txt "$svc:/tmp/runtime-test-requirements.txt"
+          docker compose exec -T agent-svc python3 -m pip install --require-hashes -r /tmp/runtime-test-requirements.txt -q
           docker compose exec -T agent-svc mkdir -p /app/coverage
           set +e
           docker compose exec -T agent-svc env \
             QA_OUTCOME_PATH=/app/qa-outcomes-integration.json \
             PYTHONPATH=/app/agent-svc:/app/scraper-svc:/app/llm-svc:/app/parse-svc:/app/portal-svc:/app/browser-svc:/app \
             SCRAPER_BASE_URL=http://scraper-svc:8001 \
-            SEARCH_BASE_URL=http://slopsearx:8080 \
+            SEARCH_BASE_URL=http://slopsearx-fixture:8080 \
             LLM_BASE_URL=http://llm-svc:8011/v1?run_id=${{ github.run_id }}-${{ github.run_attempt }} \
             TEST_SITE_BASE_URL=http://test-site:8000 \
             TIER3_FIXTURE_BASE_URL=http://tier3-fixture:8000 \
@@ -895,11 +926,11 @@ jobs:
           docker cp "$svc:/app/qa-outcomes-integration.md" qa-outcomes-integration.md || true
           docker cp "$svc:/app/coverage/." coverage/ || true
           exit "$pytest_status"
-        timeout-minutes: 20
+        # Keep five minutes for coverage/QA report collection after the full suite.
+        timeout-minutes: 25
 
       - name: Run mcp-svc integration tests (Host-header / transport security)
         run: |
-          docker compose exec -T agent-svc pip install pytest pytest-asyncio httpx -q
           set +e
           docker compose exec -T agent-svc env \
             MCP_URL=http://mcp-svc:8002/mcp \
@@ -980,8 +1011,9 @@ jobs:
           TWIN_RESULT: ${{ job.status }}
           TWIN_FAILURE_SOURCE: ${{ job.status == 'success' && 'none' || 'implementation' }}
           TWIN_TEST_OUTCOME: ${{ job.status }}
-          TWIN_CHANGED_PATHS_JSON: ${{ needs.changes.outputs.changed_paths_json }}
           TWIN_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          TWIN_EVENT_KIND: ${{ github.event_name }}
+          TWIN_EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           TWIN_EXECUTION_MODE: compose
           TWIN_REQUIRE_IMAGES: "1"
           TWIN_RECORD_IMAGES: "1"
@@ -990,7 +1022,7 @@ jobs:
           TWIN_EXCLUDED_TESTS: '["tests/service/test_twin_contract.py","tests/service/test_twin_network_isolation.py","tests/service/test_workflow_contract.py","tests/service/test_answer_evals.py"]'
           TWIN_CHECKS: scenario-version-precheck,manifest-validation
         run: |
-          uv run --no-sync python scripts/twin_provenance.py --output twin-compose-out --changed-paths-json "$TWIN_CHANGED_PATHS_JSON"
+          uv run --no-sync python scripts/twin_provenance.py --output twin-compose-out --changed-paths-from-event
           uv run --no-sync python -m jsonschema -i twin-compose-out/twin-evidence.json provenance/twin-evidence.schema.json
 
       - name: Publish coverage summary
@@ -1091,9 +1123,14 @@ jobs:
         if: always()
         run: docker compose down --remove-orphans --timeout 30
 
+  research-runtime:
+    uses: ./.github/workflows/runtime.yml
+    permissions:
+      contents: read
+
   runtime-gate:
     name: Runtime Gate
-    needs: [changes, twin-contracts, integration-tests]
+    needs: [changes, twin-contracts, integration-tests, research-runtime]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -1151,3 +1188,7 @@ jobs:
         run: |
           echo "Required hosted twin contracts did not complete successfully."
           exit 1
+
+      - name: Require research storage and capture validation
+        if: needs.research-runtime.result != 'success'
+        run: exit 1

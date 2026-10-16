@@ -1,0 +1,93 @@
+{
+  "arm": "control",
+  "case_id": "mission-straightforward-security",
+  "completed_at": "2026-09-19T05:48:34.103069+00:00",
+  "position": 1,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "ba8f80124922b2b700a5f416629603f7030403bc79559c734ed0c96362428164",
+    "finish_reason": "stop",
+    "latency_ms": 23703.003,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "c816f387d0840e5bbc73ff58a0821420f95eabb1f3e4c63d5888e79b63854808",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 596,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 6
+      },
+      "cost": 0.00025112,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0002086,
+        "upstream_inference_cost": 0.00025112,
+        "upstream_inference_prompt_cost": 4.252e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 630,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 256,
+        "video_tokens": 0
+      },
+      "total_tokens": 1226
+    }
+  },
+  "repetition": 2,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Decision support: Build agent credential and write boundary (fictional fixture record, current per supplied pack) — Configure the build agent's credential and write boundary Per the supplied policy, the build agent configuration should be: — Source access: **read-only** access to source code. [security-policy] — Credentials: **short-lived, scoped** credentials only. [security-policy] — Production writes: **not** granted to the build agent. Production configuration writes are reserved for a **separate release identity**, and only **after approval**. [security-policy] — Secret handling: **raw secrets must not enter prompts or logs**. [security-policy] **Contradiction note (preserved):** An onboarding guide calls the release identity an *agent identity*, but grants it no additional privileges and delegates authorization to the security policy. This naming conflict with the policy's treatment of the release identity as a separate, approved write identity is unresolved in the supplied pack; the security policy is treated as the controlling authority. [security-context; security-policy] **Limits / unresolved:** The supplied evidence does not specify credential TTLs, scope definitions, approval workflow mechanics, or enforcement/audit controls. The release identity's own design is out of scope per the request and is not assessed. [security-policy]",
+    "candidate_id": "candidate-cf16ab51e53816367aaa",
+    "citations": [
+      "security-policy",
+      "security-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "security-policy"
+        ],
+        "text": "Build agents receive read-only source access.",
+        "uncertainty": "No material uncertainty; stated directly by the primary policy."
+      },
+      {
+        "source_ids": [
+          "security-policy"
+        ],
+        "text": "Build agents receive short-lived scoped credentials.",
+        "uncertainty": "No material uncertainty on the control itself; specific TTL and scope values are not specified in the supplied evidence."
+      },
+      {
+        "source_ids": [
+          "security-policy"
+        ],
+        "text": "Production configuration writes are performed by a separate release identity only after approval, not by the build agent.",
+        "uncertainty": "No material uncertainty; approval workflow details are not specified in the supplied evidence."
+      },
+      {
+        "source_ids": [
+          "security-policy"
+        ],
+        "text": "Raw secrets must not enter prompts or logs.",
+        "uncertainty": "No material uncertainty; enforcement/audit mechanisms are not specified."
+      },
+      {
+        "source_ids": [
+          "security-context",
+          "security-policy"
+        ],
+        "text": "The onboarding guide calls the release identity an agent identity, but grants it no additional privileges and delegates authorization to the security policy — a naming contradiction with the policy's separate-identity framing that remains unresolved.",
+        "uncertainty": "Contradiction preserved; the supplied pack does not resolve the terminology conflict, and the security policy is treated as controlling."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:48:10.399661+00:00",
+  "status": "completed",
+  "trial_id": "mission-straightforward-security-r2-control"
+}

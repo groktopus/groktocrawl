@@ -1,0 +1,52 @@
+{
+  "case_id": "mission-straightforward-delivery",
+  "completed_at": "2026-09-19T06:01:18.435480+00:00",
+  "position": 5,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "543b3dfe989544489535faa93878154ebe9cf0eea92e3ca5d85805ff45a472a0",
+    "finish_reason": "stop",
+    "latency_ms": 20733.337,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "3b780e735cbd0ef944cf5ed1e9aa360d1d782bb9a37f1505ba7051744332d130",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 365,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 133
+      },
+      "cost": 0.0004915,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0001825,
+        "upstream_inference_cost": 0.0004915,
+        "upstream_inference_prompt_cost": 0.000309
+      },
+      "is_byok": false,
+      "prompt_tokens": 2060,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 2425
+    }
+  },
+  "repetition": 1,
+  "result": {
+    "action": "clarify",
+    "clarifying_question": "The message references a 'supplied policy,' but no policy document or excerpt is included in the request. Please provide the actual policy text (or its authoritative location/identifier) that governs whether the build agent may deploy to production, so the analysis can be grounded in the real source rather than assumptions.",
+    "mission": null,
+    "rationale": "The question is a permission/authorization determination ('may the build agent deploy to production?') whose only valid basis is the referenced policy itself. No policy document was supplied, and the contract forbids inventing authority, scope, facts, or permissions. Guessing at the policy's contents would convert the research into fabrication. Because the missing policy is the primary evidence for the decision and no reasonable default could be assumed without changing the outcome, this is a decision-changing ambiguity that must be resolved with one blocking clarification before a Research Mission can be scoped. Once the policy text is provided, the mission would be framed strictly as a bounded analysis of that document's deployment provisions — not as granting or discovering permission."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:00:57.695605+00:00",
+  "status": "completed",
+  "trial_id": "mission-straightforward-delivery-intake-r1"
+}

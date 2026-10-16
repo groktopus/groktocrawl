@@ -1,0 +1,89 @@
+{
+  "arm": "control",
+  "case_id": "mission-temporal-provider",
+  "completed_at": "2026-09-19T05:53:23.292917+00:00",
+  "position": 2,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "6bfa1a97a24ea2ca65e9a04530a6b6664f6aa22850b1bb094f57171581056e06",
+    "finish_reason": "stop",
+    "latency_ms": 11509.536,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "89c162948ddf4cb0ace31a1dc3bd959f7befcee1adef58add7e645a18ac8cbb6",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 304,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0.0002477,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000152,
+        "upstream_inference_cost": 0.0002477,
+        "upstream_inference_prompt_cost": 9.57e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 638,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 942
+    }
+  },
+  "repetition": 3,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Provider-switch decision: current packet is insufficient; gate NOT satisfied (as of 2026-09-19T00:00:00Z, time-bound to model versions and vendor claims that can change without notice in this pack) — **UNRESOLVED, do not approve on present evidence.**",
+    "candidate_id": "candidate-efd5091c1f52ce8e49b6",
+    "citations": [
+      "platform-policy",
+      "platform-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "platform-policy",
+          "platform-context"
+        ],
+        "text": "The platform policy requires every production model change to pass the same frozen task suite.",
+        "uncertainty": "The policy text names no specific suite contents; identity of the frozen suite must be confirmed internally."
+      },
+      {
+        "source_ids": [
+          "platform-policy",
+          "platform-context"
+        ],
+        "text": "The policy requires provenance checks, declared resource limits, preservation of tool-result identities, and cancellation semantics for provider adapters.",
+        "uncertainty": "No material uncertainty beyond the absence of vendor evidence (see counterevidence claim)."
+      },
+      {
+        "source_ids": [
+          "platform-policy",
+          "platform-context"
+        ],
+        "text": "The vendor note supplies no comparison workload, no version pins, no error distribution, and no review methodology — every required gate element is missing from the packet.",
+        "uncertainty": "No material uncertainty."
+      },
+      {
+        "source_ids": [
+          "platform-policy",
+          "platform-context"
+        ],
+        "text": "The vendor note claims enterprise readiness and speed but is unsupported by the evidence required by the gate; the packet is therefore insufficient and the switch cannot be approved on it.",
+        "uncertainty": "Cannot be resolved with supplied evidence; unresolved pending a compliant submission."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:53:11.782897+00:00",
+  "status": "completed",
+  "trial_id": "mission-temporal-provider-r3-control"
+}

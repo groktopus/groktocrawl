@@ -1,0 +1,52 @@
+{
+  "case_id": "mission-unanswerable-cost",
+  "completed_at": "2026-09-19T06:07:23.769911+00:00",
+  "position": 3,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "052afb8aa235d7fb834ca8fce0c4d084aab690341c61c84f744600e38d33a5f4",
+    "finish_reason": "stop",
+    "latency_ms": 58699.986,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "9c291bff8a67a15a62253fb595c6f70da67f0578604c4781dcc9a41125dda699",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 4048,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 4924
+      },
+      "cost": 0.0023333,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.002024,
+        "upstream_inference_cost": 0.0023333,
+        "upstream_inference_prompt_cost": 0.0003093
+      },
+      "is_byok": false,
+      "prompt_tokens": 2062,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 6110
+    }
+  },
+  "repetition": 3,
+  "result": {
+    "action": "clarify",
+    "clarifying_question": "Which specific agent pilot does this refer to — your organization's internal pilot or a named published case study — and where do its authoritative delivery-cost figures reside (internal finance/engineering metrics vs. public reports)?",
+    "mission": null,
+    "rationale": "The request presupposes a definite subject ('the agent pilot') that no supplied source identifies. Whether the ≥20% threshold is met flips entirely on which pilot's data is examined, what 'total delivery cost' includes, and the baseline period — none of which can be resolved without guessing. Pilot identity and the location of its cost data (internal vs. published) are the root decision-changing ambiguity: they determine scope, source policy, and whether external search can close the question at all. Once the pilot is fixed, the cost definition, baseline, and measurement window become researchable questions rather than guesses. Research itself is appropriate, so abstention is not warranted; issuing a mission now would require inventing scope and facts, which the contract forbids."
+  },
+  "schema_version": "research-mission-intake-trial/1",
+  "started_at": "2026-09-19T06:06:25.063245+00:00",
+  "status": "completed",
+  "trial_id": "mission-unanswerable-cost-intake-r3"
+}

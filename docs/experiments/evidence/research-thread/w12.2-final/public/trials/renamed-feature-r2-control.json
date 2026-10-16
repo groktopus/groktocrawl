@@ -1,0 +1,65 @@
+{
+  "answer": {
+    "answer": "Northstar did not remove policy checks; they were renamed. According to the Northstar 4 migration guide, Northstar 4 renames 'policy checks' to 'release guards' and states their purpose is unchanged (northstar-policy-new). The earlier Northstar 3 guide confirms that pre-deployment controls were called 'policy checks' in that version (northstar-policy-old). Both snapshots belong to the same lineage (northstar-policy-doc) for the same subject (northstar), so the newer snapshot supersedes the older for current-state claims while the older remains valid as historical documentation. No removal is indicated anywhere in the supplied sources, and no questions remain unresolved on this point.",
+    "change_events": [
+      "Northstar 4 renamed 'policy checks' to 'release guards'; the purpose of the controls is unchanged [northstar-policy-new]."
+    ],
+    "citations": [
+      "northstar-policy-old",
+      "northstar-policy-new"
+    ],
+    "current_truths": [
+      "In Northstar 4, the controls formerly called 'policy checks' are called 'release guards', and their purpose is unchanged [northstar-policy-new]."
+    ],
+    "historical_truths": [
+      "In Northstar 3, pre-deployment controls were called 'policy checks' [northstar-policy-old]."
+    ],
+    "unresolved": []
+  },
+  "arm": "control",
+  "case_id": "renamed-feature",
+  "completed_at": "2026-09-19T07:50:28.852779+00:00",
+  "position": 33,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "4d42743a6a9d39da5be8d0087a4e2850d61142db089ff64bffa1ffb9d90cd0c4",
+    "finish_reason": "stop",
+    "latency_ms": 12473.091,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "2fc89b36623c87ae7b791f6d18d143da60e46337b76200aed4c5c578d2ca60a2",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 629,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 406
+      },
+      "cost": 0.00033046,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0003145,
+        "upstream_inference_cost": 0.00033046,
+        "upstream_inference_prompt_cost": 1.596e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 516,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 512,
+        "video_tokens": 0
+      },
+      "total_tokens": 1145
+    }
+  },
+  "repetition": 2,
+  "schema_version": "research-thread-trial/1",
+  "started_at": "2026-09-19T07:50:16.379232+00:00",
+  "status": "completed",
+  "stratum": "terminology",
+  "trial_id": "renamed-feature-r2-control"
+}

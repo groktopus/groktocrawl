@@ -321,13 +321,18 @@ class RuntimeGateWorkflowContractTests(unittest.TestCase):
         self.assertIn("- service: scraper-svc", self.build_and_push)
 
     def test_runtime_services_match_build_and_push_matrix(self) -> None:
-        # Contract (#561): the classifier's RUNTIME_SERVICES must exactly mirror
-        # the docker.yml build-and-push image matrix. A service added to the
-        # compose/build matrix but not to RUNTIME_SERVICES would silently break
-        # service-local PR builds and runtime classification, so this guard keeps
-        # the two from drifting apart.
+        # Base service changes use the service-local lane; protected-image
+        # changes require the full required research-runtime validation.
         self.assertTrue(self.build_matrix_services)
-        self.assertEqual(set(MODULE.RUNTIME_SERVICES), self.build_matrix_services)
+        self.assertEqual(
+            set(MODULE.RUNTIME_SERVICES) | set(MODULE.PROTECTED_IMAGE_SERVICES),
+            self.build_matrix_services,
+        )
+        for service in MODULE.PROTECTED_IMAGE_SERVICES:
+            self.assertEqual(
+                MODULE.affected_services([f"{service}/Dockerfile"]), {"all"}
+            )
+            self.assertTrue(MODULE.requires_full_runtime([f"{service}/Dockerfile"]))
 
     def test_docs_only_pull_request_cannot_run_integration_tests(self) -> None:
         # The fork admission term uses a STRING comparison on format('{0}', ...)
@@ -482,7 +487,7 @@ class RuntimeGateWorkflowContractTests(unittest.TestCase):
         # an already-provisioned image set.
         self.assertNotIn("up --build", self.integration_tests)
 
-    def test_integration_test_staging_copies_only_required_contract_inputs(
+    def test_integration_test_staging_copies_required_contract_inputs(
         self,
     ) -> None:
         self.assertIn(
@@ -517,7 +522,7 @@ class RuntimeGateWorkflowContractTests(unittest.TestCase):
             self.integration_tests,
         )
         self.assertIn(
-            "SEARCH_BASE_URL=http://slopsearx:8080",
+            "SEARCH_BASE_URL=http://slopsearx-fixture:8080",
             self.integration_tests,
         )
         self.assertIn(
@@ -539,7 +544,10 @@ class RuntimeGateWorkflowContractTests(unittest.TestCase):
         self.assertIn(
             "Verify LLM fixture contract and agent routing", self.integration_tests
         )
-        self.assertIn("agent LLM routing verified", self.integration_tests)
+        self.assertIn(
+            "agent LLM and deterministic search routing verified",
+            self.integration_tests,
+        )
         self.assertIn(
             "endpoint = 'http://llm-svc:8011/v1/chat/completions'",
             self.integration_tests,
@@ -571,8 +579,24 @@ class RuntimeGateWorkflowContractTests(unittest.TestCase):
         )
         self.assertIn("--cov=/app/agent", self.integration_tests)
         self.assertNotIn("--cov=/app/agent-svc/agent", self.integration_tests)
-        self.assertNotIn(
+        self.assertIn(
             'docker cp .github/workflows/. "$svc":/app/.github/workflows/',
+            self.integration_tests,
+        )
+        for fixture in (
+            ".env.sample",
+            "groktocrawl",
+            "docker-compose.ci.yml",
+            "compose.experimental-candidate.yml",
+            "compose.protected-flare-ci.yml",
+            "compose.protected-capture-ci.yml",
+            "compose.protected-capture-lab.yml",
+        ):
+            self.assertIn(
+                f'docker cp {fixture} "$svc":/app/{fixture}', self.integration_tests
+            )
+        self.assertIn(
+            "for script in ci_fork_pr_guard.py enforce-branch-protection.py reconcile-jobs.py; do",
             self.integration_tests,
         )
         self.assertIn("-m 'not external'", self.integration_tests)
@@ -904,7 +928,8 @@ class RuntimeGateWorkflowContractTests(unittest.TestCase):
             "- name: Fail when required runtime validation fails", self.runtime_gate
         )
         self.assertIn("needs.integration-tests.result != 'success'", self.runtime_gate)
-        self.assertEqual(self.runtime_gate.count("exit 1"), 3)
+        self.assertIn("needs.research-runtime.result != 'success'", self.runtime_gate)
+        self.assertEqual(self.runtime_gate.count("exit 1"), 4)
 
 
 class FastTestsWorkflowContractTests(unittest.TestCase):

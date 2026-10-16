@@ -1,7 +1,7 @@
 """Integration tests for the GroktoCrawl MCP server.
 
-These tests run against the real MCP server at http://saru:8002/mcp
-and the agent-svc at http://saru:8080.  They verify:
+These tests run against the real MCP server at http://deployment.example.internal:8002/mcp
+and the agent-svc at http://deployment.example.internal:8080.  They verify:
 
 - VAL-MCP-J01..J03: Concurrent client isolation
 - VAL-MCP-K01..K07: Edge cases (large results, timeouts, batch, notification, CORS)
@@ -26,8 +26,8 @@ import pytest
 
 # ── Configuration ───────────────────────────────────────────────────
 
-MCP_URL = os.environ.get("MCP_URL", "http://saru:8002/mcp")
-AGENT_URL = os.environ.get("AGENT_URL", "http://saru:8080")
+MCP_URL = os.environ.get("MCP_URL", "http://deployment.example.internal:8002/mcp")
+AGENT_URL = os.environ.get("AGENT_URL", "http://deployment.example.internal:8080")
 MCP_HEALTH_URL = MCP_URL.replace("/mcp", "/health")
 
 # Default timeout for HTTP requests
@@ -241,7 +241,7 @@ def _default_allowed_test_host() -> str:
                 continue
             return f"{base}:8002"
         # Exact host or host:port entry: use it verbatim so a non-loopback
-        # value (e.g. "hal2000" or "mcp-svc:8002") is returned as-is.
+        # value (e.g. "incumbent.example.internal" or "mcp-svc:8002") is returned as-is.
         if h not in ("localhost", "localhost:8002", "127.0.0.1", "[::1]"):
             return h
     return "localhost:8002"
@@ -1034,7 +1034,7 @@ class TestAPIKeyOverride:
     async def test_auth_middleware_structure(self, client: httpx.AsyncClient):
         """VAL-MCP-H04: Auth middleware allows requests when no key is configured.
 
-        The MCP server on saru has no API key configured, so auth is
+        The MCP server on deployment.example.internal has no API key configured, so auth is
         bypassed.  We verify that requests succeed.
         """
         sid = await _mcp_init(client)
@@ -1368,8 +1368,8 @@ class TestCLICoverage:
     async def test_cli_coverage_script_exists(self):
         """Verify the check-cli-coverage.py script is present."""
         script_paths = [
-            "/Volumes/tank01/magnus/git/groktocrawl/check-cli-coverage.py",
-            "/Volumes/tank01/magnus/git/groktocrawl/agent-svc/agent/tests/check-cli-coverage.py",
+            "/path/to/groktocrawl/check-cli-coverage.py",
+            "/path/to/groktocrawl/agent-svc/agent/tests/check-cli-coverage.py",
         ]
         found = any(os.path.exists(p) for p in script_paths)
         if not found:

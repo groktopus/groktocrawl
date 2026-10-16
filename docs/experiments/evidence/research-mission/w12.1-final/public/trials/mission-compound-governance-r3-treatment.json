@@ -1,0 +1,100 @@
+{
+  "arm": "treatment",
+  "case_id": "mission-compound-governance",
+  "completed_at": "2026-09-19T05:53:52.551774+00:00",
+  "position": 1,
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "77081f76b7ddfef132c3e3a2bb7d89e46b93aecd1483f706443423103c4dec5c",
+    "finish_reason": "stop",
+    "latency_ms": 34007.374,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "bff462886a9ebba9a1cf3ce09f71e589d231d37b06acd09e0a2e1d5962bdf886",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 919,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 5
+      },
+      "cost": 0.00061775,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.0004595,
+        "upstream_inference_cost": 0.00061775,
+        "upstream_inference_prompt_cost": 0.00015825
+      },
+      "is_byok": false,
+      "prompt_tokens": 1055,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1974
+    }
+  },
+  "repetition": 3,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Decision: The exception does **not** authorize a current high-risk change (as of 2026-09-19), and the packet cannot prove approval for one either way. Do not proceed on the basis of this exception; route the change to a named human approver with an audit record, or obtain a signed exception that meets the policy's fields. (Unresolved: whether any such approval or renewal exists outside the supplied bundle.) ### What governs high-risk changes (o1 — supported) The primary policy requires that high-risk changes have (a) a **named human approver**, (b) an **audit record**, and (c) any exception must identify its **scope, expiration, and accountable owner**. The agent **cannot approve its own exception**. [source_id: governance-policy] ### What the exception covers now (o2 — supported) The only exception in the bundle is a **signed exception covering low-risk documentation changes in the internal pilot, expiring 2026-06-30**. [source_id: governance-context] As of the decision date (2026-09-19), **it is expired**, and even before expiry it would not have covered a high-risk change. No renewal is present in the source bundle, and none may be assumed. ### What the evidence cannot establish (o3 — unresolved) The packet cannot prove approval or enforcement for a high-risk production change. There is no record of a named approver, audit entry, or renewed exception for such a change; these remain **unresolved** and cannot be inferred. ### Limits - Evidence is limited to the two supplied fixtures; no external authority was consulted. - Whether any renewal or high-risk approval exists outside the bundle is unknown and explicitly left unresolved.",
+    "candidate_id": "candidate-5a58ceed1b6d93955038",
+    "citations": [
+      "governance-policy",
+      "governance-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "governance-policy"
+        ],
+        "text": "High-risk changes require a named human approver and an audit record.",
+        "uncertainty": "No material uncertainty."
+      },
+      {
+        "source_ids": [
+          "governance-policy"
+        ],
+        "text": "An exception must identify its scope, expiration, and accountable owner.",
+        "uncertainty": "No material uncertainty."
+      },
+      {
+        "source_ids": [
+          "governance-policy"
+        ],
+        "text": "The agent cannot approve its own exception.",
+        "uncertainty": "No material uncertainty."
+      },
+      {
+        "source_ids": [
+          "governance-context"
+        ],
+        "text": "The only exception in the bundle is signed, covers low-risk documentation changes in the internal pilot, and expires 2026-06-30.",
+        "uncertainty": "No material uncertainty within the bundle; the exception is expired as of 2026-09-19."
+      },
+      {
+        "source_ids": [
+          "governance-context"
+        ],
+        "text": "No renewal is present in the source bundle.",
+        "uncertainty": "The bundle cannot show whether a renewal exists outside it; assumed absent per scope."
+      },
+      {
+        "source_ids": [
+          "governance-policy",
+          "governance-context"
+        ],
+        "text": "The packet cannot prove approval or enforcement for a high-risk production change.",
+        "uncertainty": "Explicitly unresolved: absence of evidence in the bundle is not evidence of absence outside it."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:53:18.543046+00:00",
+  "status": "completed",
+  "trial_id": "mission-compound-governance-r3-treatment"
+}

@@ -1,0 +1,85 @@
+{
+  "schema_version": "enterprise-evaluation-design/1",
+  "status": "proposal",
+  "comparison_authorized": false,
+  "corpus_file": "corpus.json",
+  "corpus_sha256": "d3d1821b54783fa831247ea66f362c4a0abacb733c1532ccdb4267be8a7076af",
+  "development_cases": 12,
+  "candidate_review_cases": 30,
+  "required_subquestions": 78,
+  "negative_or_abstention_cases": 24,
+  "reviewers": {
+    "design_author": "Codex implementation agent",
+    "separate_ai_reviewer": "local Hermes one-shot fresh session",
+    "human_calibration_and_adjudication": "Magnus; 12 exposed calibration cases human-confirmed in calibration/human-confirmation.json",
+    "independence_caveat": "The confirmation approves an assistant pre-review and does not establish a blinded independent judge study or human review of held-out outputs."
+  },
+  "thresholds": {
+    "hard_invariant_violations_allowed": 0,
+    "unresolved_critical_unsupported_claims_allowed": 0,
+    "quality_regression_bound": null,
+    "latency_regression_bound": null,
+    "resource_regression_bound": null,
+    "rule": "Estimate pilot baseline and paired uncertainty before proposing numerical performance bounds; review and freeze before comparisons."
+  },
+  "series_external_provider_budget_usd": 0,
+  "hermes_design_review_authorized": true,
+  "execution_status": "exploratory_local_reliability_refresh_recorded_2026-09-10",
+  "exploratory_execution": {
+    "record": "exploratory-local-2026-09-08/evaluation-summary.md",
+    "gateway_host": "inference.example.internal",
+    "gateway_base_url": "http://inference.example.internal:4000/v1",
+    "model": "local",
+    "judge_model": "local",
+    "cases_attempted": 30,
+    "graded": 23,
+    "failed": 7,
+    "calls_dispatched": 54,
+    "comparison_authorized": false,
+    "held_out": false
+  },
+  "sources": 24,
+  "exposure": {
+    "author": "all current source/question/expectation material",
+    "Hermes_design_reviewer": "initial design corpus; full prompt retained under review/",
+    "held_out_eligible_cases": 0
+  },
+  "adverse_denominators": {
+    "question_cases": 42,
+    "negative_or_abstention_question_cases": 24,
+    "planned_runtime_contract_cases": 12,
+    "planned_adverse_runtime_contract_cases": 6,
+    "executed_runtime_contract_cases": 0,
+    "scoped_local_runtime_probes_passed": 8
+  },
+  "design_review": {
+    "reviewer": "Hermes",
+    "response": "review/response.txt",
+    "disposition": "review/disposition.md",
+    "status": "initial_needs_revision_findings_addressed_not_rereviewed"
+  },
+  "previous_exploratory_execution": {
+    "record": "exploratory-local-2026-09-07/evaluation-summary.md",
+    "cases_attempted": 30,
+    "graded": 24,
+    "failed": 6,
+    "calls_dispatched": 53,
+    "comparison_authorized": false,
+    "held_out": false
+  },
+  "latest_exploratory_execution": {
+    "record": "exploratory-local-2026-09-10/evaluation-summary.md",
+    "execution_host": "incumbent.example.internal production GroktoCrawl agent container",
+    "gateway_host": "inference.example.internal",
+    "gateway_base_url": "http://inference.example.internal:4000/v1",
+    "model": "local",
+    "judge_model": "local",
+    "cases_attempted": 30,
+    "graded": 29,
+    "failed": 1,
+    "calls_dispatched": 59,
+    "comparison_authorized": false,
+    "held_out": false,
+    "interpretation": "output reliability evidence only; exposed same-model self-grading is not quality evidence"
+  }
+}

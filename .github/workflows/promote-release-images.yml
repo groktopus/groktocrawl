@@ -1,0 +1,43 @@
+name: Promote Release Images
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing published stable release (vMAJOR.MINOR.PATCH)
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: release-image-promotion
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    if: github.repository == 'groktopus/groktocrawl' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Verify and promote existing release image indexes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: python scripts/promote_release_images.py --release-tag "$RELEASE_TAG" --publish
+      - name: Upload image provenance
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-image-provenance
+          path: release-image-provenance.json
+          if-no-files-found: error

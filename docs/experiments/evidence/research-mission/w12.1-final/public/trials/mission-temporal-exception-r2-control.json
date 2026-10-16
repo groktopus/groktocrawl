@@ -1,0 +1,98 @@
+{
+  "arm": "control",
+  "case_id": "mission-temporal-exception",
+  "completed_at": "2026-09-19T05:54:36.019955+00:00",
+  "position": 2,
+  "receipt": {
+    "attempt": 2,
+    "envelope_sha256": "48ef6cd788e6e0299ef21ca36889f47b1b6771a16057d7c19aeb295f2685bb24",
+    "finish_reason": "stop",
+    "latency_ms": 315042.218,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "ed3b463e815bffaa4c40d7e7dabf8e5bc7e5bb196da3987f88e28adb8c758196",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [
+      {
+        "attempt": 1,
+        "error_type": "ReadTimeout",
+        "latency_ms": 300062.846
+      }
+    ],
+    "usage": {
+      "completion_tokens": 382,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 26
+      },
+      "cost": 0.000143125,
+      "cost_details": {
+        "upstream_inference_completions_cost": 9.55e-05,
+        "upstream_inference_cost": 0.000143125,
+        "upstream_inference_prompt_cost": 4.7625e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 635,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 1017
+    }
+  },
+  "repetition": 2,
+  "schema_version": "research-mission-downstream-trial/1",
+  "sealed_candidate": {
+    "answer": "## Decision: The exception is **not effective** as of 2026-09-19T00:00:00+00:00 (decision: expired / lapsed; renewal required before any continued use of the covered workflow).",
+    "candidate_id": "candidate-f8c77d0202f6a4c06791",
+    "citations": [
+      "governance-policy",
+      "governance-context"
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "governance-context"
+        ],
+        "text": "The signed exception covers low-risk documentation changes in the internal pilot.",
+        "uncertainty": "Scope is limited to low-risk documentation changes in the internal pilot; no broader scope is evidenced."
+      },
+      {
+        "source_ids": [
+          "governance-context"
+        ],
+        "text": "The exception expires on 2026-06-30.",
+        "uncertainty": "No material uncertainty; explicit expiry date in the source."
+      },
+      {
+        "source_ids": [
+          "governance-context"
+        ],
+        "text": "No renewal of the exception is present in the supplied source bundle.",
+        "uncertainty": "Absence of renewal evidence in this packet cannot rule out a renewal recorded elsewhere; that possibility is unresolved, not established."
+      },
+      {
+        "source_ids": [
+          "governance-policy"
+        ],
+        "text": "High-risk changes require a named human approver and an audit record, and an exception must identify scope, expiration, and accountable owner; the agent cannot approve its own exception.",
+        "uncertainty": "Policy facts as stated in the packet; no material uncertainty."
+      },
+      {
+        "source_ids": [
+          "governance-context"
+        ],
+        "text": "As-of comparison: the decision time 2026-09-19 is after the 2026-06-30 expiry, and with no renewal evidenced, the exception had lapsed at the as-of time.",
+        "uncertainty": "Unresolved limit: the packet cannot establish whether a renewal was executed outside the bundle; if one exists, it is not evidenced here."
+      }
+    ]
+  },
+  "started_at": "2026-09-19T05:49:20.976775+00:00",
+  "status": "completed",
+  "trial_id": "mission-temporal-exception-r2-control"
+}

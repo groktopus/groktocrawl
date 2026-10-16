@@ -16,6 +16,15 @@ class AgentSettings(BaseModel):
     valkey_db: int = Field(default=0, alias="VALKEY_DB")
     scraper_url: str = Field(default="http://scraper-svc:8001", alias="SCRAPER_URL")
     searxng_url: str = Field(default="http://searxng:8080", alias="SEARXNG_URL")
+    slopsearx_provenance_profile: str = Field(
+        default="", alias="SLOPSEARX_PROVENANCE_PROFILE"
+    )
+    slopsearx_provenance_mcp_url: str = Field(
+        default="", alias="SLOPSEARX_PROVENANCE_MCP_URL"
+    )
+    slopsearx_provenance_token: str = Field(
+        default="", alias="SLOPSEARX_PROVENANCE_TOKEN"
+    )
     semantic_url: str = Field(default="http://semantic-svc:8003", alias="SEMANTIC_URL")
     llm_base_url: str = Field(default="http://llm-svc:8011/v1", alias="LLM_BASE_URL")
     llm_api_key: str = Field(default="", alias="LLM_API_KEY")
@@ -44,6 +53,15 @@ class AgentSettings(BaseModel):
     # when pointing LLM_MODEL at reasoning models whose long thinking
     # pauses exceed the default.
     llm_call_timeout: float = Field(default=120.0, alias="LLM_CALL_TIMEOUT", gt=0)
+    # Compatibility alias for X deployments. Used under LLM_TOKEN_PARAMETER
+    # only when its corresponding explicit budget has not been configured.
+    llm_max_output_tokens: int | None = Field(
+        default=None, alias="LLM_MAX_OUTPUT_TOKENS", gt=0
+    )
+    typesafe_api_key: str = Field(default="", alias="TYPESAFE_API_KEY")
+    typesafe_jev_min_score: float = Field(
+        default=0.10, alias="TYPESAFE_JEV_MIN_SCORE", gt=0, lt=1
+    )
     api_key: str = Field(default="", alias="API_KEY")
     webhook_secret: str = Field(default="", alias="WEBHOOK_SECRET")
     max_searches_per_request: int = Field(

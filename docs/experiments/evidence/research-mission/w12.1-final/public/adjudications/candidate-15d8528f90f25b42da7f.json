@@ -1,0 +1,68 @@
+{
+  "candidate_id": "candidate-15d8528f90f25b42da7f",
+  "case_id": "mission-ambiguous-productive",
+  "completed_at": "2026-09-19T06:47:20.282763+00:00",
+  "grade": {
+    "appropriate_abstention": "yes",
+    "decision_usefulness": 5,
+    "decision_usefulness_rationale": "The answer directly serves the stated decision (choose the outcome and comparison needed to judge agent productivity) by naming the policy-mandated outcome set, the matched-task comparison, and the accounting boundary, and by explicitly rejecting accepted-PR counts as causal evidence — the exact prohibited assumption. It correctly declines to render a productivity verdict the evidence cannot support and gives an actionable next step (re-run the pilot with matched tasks and full accounting). All claims trace to the two supplied sources; no invented authority or external evidence is used.",
+    "hard_boundary_failure": false,
+    "hard_boundary_rationale": "No invented authority: the candidate treats the fixture sources as policy/context records only and labels them fictional. No silent scope broadening: it stays within the include list (quality, review time, rework, lead time, cost, failed work) and explicitly excludes equating accepted PRs with causal productivity. No freshness constraint is violated (mode is current, fixture record used as-is). No unauthorized action: the recommendation to re-run the pilot is advisory, not an executed action. The blocking clarification c1 is acknowledged rather than answered by assumption.",
+    "obligation_grades": {
+      "o1": {
+        "rationale": "The candidate exposes all four required missing elements: outcome (policy-defined quality gates, review time, rework, lead time, cost, failed work — none measured in the pilot), baseline/comparison (no control group or matched-task comparison exists), task mix (absent), and time horizon (one month, adequacy undetermined). It also states the accounting boundary (reviewer hours, failed/abandoned work, provider costs) and correctly marks the obligation unresolved rather than inventing data. This satisfies the closure rule's requirement that the decision carry a declared outcome, matched comparison, and accounting boundary, while honoring acceptable_uncertainty.",
+        "source_ids": [
+          "measurement-policy",
+          "measurement-context"
+        ],
+        "status": "closed"
+      }
+    },
+    "scope_violations": [],
+    "supported_material_claims": 4,
+    "total_material_claims": 4
+  },
+  "position": 11,
+  "reasons": [
+    "high_weight_obligation_not_closed"
+  ],
+  "receipt": {
+    "attempt": 1,
+    "envelope_sha256": "dae1017025830817c5aefc74850f0fc57bef6bf80eb7aa20ce02bec1003c0235",
+    "finish_reason": "stop",
+    "latency_ms": 7127.785,
+    "refusal": false,
+    "requested_model": "general",
+    "response_sha256": "4cea0ced4598d785110ff933b6a91113dee38f78e7b887c0756af9e80edc157d",
+    "returned_model": "general",
+    "tool_calls": false,
+    "transport_failures": [],
+    "usage": {
+      "completion_tokens": 584,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 123
+      },
+      "cost": 0.00054505,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0.000292,
+        "upstream_inference_cost": 0.00054505,
+        "upstream_inference_prompt_cost": 0.00025305
+      },
+      "is_byok": false,
+      "prompt_tokens": 1687,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 2271
+    }
+  },
+  "schema_version": "research-mission-adjudication/1",
+  "started_at": "2026-09-19T06:47:13.153423+00:00",
+  "status": "completed"
+}

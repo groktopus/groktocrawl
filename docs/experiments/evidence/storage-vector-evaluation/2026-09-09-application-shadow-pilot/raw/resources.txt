@@ -1,0 +1,20 @@
+2026-09-09T07:42:41Z
+groktocrawl-x-pilot-vector-eval-postgres-1|34.91%|182.2MiB / 1GiB
+groktocrawl-x-semantic-pilot|841.59%|1.074GiB / 31.18GiB
+2
+2026-09-09T07:42:46Z
+groktocrawl-x-pilot-vector-eval-postgres-1|31.57%|181.2MiB / 1GiB
+groktocrawl-x-semantic-pilot|0.09%|1.074GiB / 31.18GiB
+2
+2026-09-09T07:42:50Z
+groktocrawl-x-pilot-vector-eval-postgres-1|34.49%|182.6MiB / 1GiB
+groktocrawl-x-semantic-pilot|0.09%|1.063GiB / 31.18GiB
+3
+2026-09-09T07:42:54Z
+groktocrawl-x-pilot-vector-eval-postgres-1|18.38%|183.2MiB / 1GiB
+groktocrawl-x-semantic-pilot|0.11%|1.063GiB / 31.18GiB
+2
+2026-09-09T07:42:58Z
+groktocrawl-x-pilot-vector-eval-postgres-1|15.28%|183MiB / 1GiB
+groktocrawl-x-semantic-pilot|0.06%|1.063GiB / 31.18GiB
+3

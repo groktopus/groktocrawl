@@ -1,0 +1,39 @@
+{
+  "schema_version": "groktocrawl-x.vector-scale-repeated-summary.v1",
+  "workflow_run_id": 34287607217,
+  "verdict": "pass_with_gaps",
+  "rounds": 3,
+  "providers": {
+    "qdrant": {
+      "ok_rounds": 3,
+      "mixed_operations": 720,
+      "failed_operations": 0,
+      "bulk_upsert_median_ms": {"100": 4.522646, "500": 9.198868, "1000": 16.375607},
+      "filtered_search_p50_median_ms": {"100": 1.056338, "500": 1.189765, "1000": 1.341968}
+    },
+    "pgvector": {
+      "ok_rounds": 3,
+      "mixed_operations": 720,
+      "failed_operations": 0,
+      "bulk_upsert_median_ms": {"100": 32.624126, "500": 67.925667, "1000": 113.138057},
+      "filtered_search_p50_median_ms": {"100": 0.248336, "500": 0.242387, "1000": 0.287093}
+    }
+  },
+  "boundary": "isolated repeated component benchmark",
+  "production_capacity_claim": false,
+  "storage_selection": null,
+  "known_limitations": [
+    "synthetic 3-dimensional vectors",
+    "maximum corpus size of 1000 records",
+    "80 mixed operations per provider and size per round",
+    "resource data is a single post-run snapshot",
+    "no sustained-load or soak interval"
+  ],
+  "remaining_gates": [
+    "representative vector dimension and larger corpus",
+    "declared sustained request mix and resource time series",
+    "provider-native model and dimension migration and rollback",
+    "reversible cutover and deletion continuity",
+    "operational surface assessment"
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "arm": "flat_http",
+  "attempts": [
+    {
+      "coverage": null,
+      "query_sha256": "008ccecf5c157474b8e2a900782173ae7fc5eb311f39e0daeee40ea2c119f85b",
+      "result_count": 20,
+      "result_url_sha256": [
+        "0991d9ad197adf87115e062b8f87cd464f08b2841d445346ca8673307ed60213",
+        "bc0d7082af2a11292e42e9cb8ce340bdeb5be78d50be25deb6b28d7f011d0357",
+        "f0e4c23186802c6af098aa8a05a244c54c7df51c6150baf14e0938d974ace9f6",
+        "282dafd211049fd40c90fdf2771c196444ed9bf03224e3efce2855645e605e72",
+        "e89afbfbdf78278452d277a25dd667bea9085df143d0e5b91aeba7828ccd3ca2",
+        "aedf2dbcb4dc9bbe85d66b3a04303ea0c073a4bd9b931b01d63d75294859b7f2",
+        "80c800b5f28efe496d18d393f88ded59294c8aa42f86556b1cbfb4ce5cb0f749",
+        "b2b784811fd033bb68080d2b71be3fe853995de1a8e832dbe9dd3b99f76050ea"
+      ],
+      "returned_results": 8,
+      "unresponsive_engine_count": 3
+    }
+  ],
+  "case_id": "w10-08-primary-2",
+  "challenge_type": "missing_primary",
+  "control_policy": "fixed",
+  "elapsed_ms": 2.276,
+  "engine_count": 7,
+  "engine_scope_sha256": "552d0a8e54100ffed23f23474d8aa8eabcb63c6ed43060cd3c3427d56869f6eb",
+  "position": 39,
+  "query_count": 1,
+  "query_plan_sha256": "6a37f456d151991809db82262fdd30a78373a26dbaf2c8b4d7fcdff36a613e27",
+  "repetition": 1,
+  "schema_version": "enterprise-evaluation/w11-general-retrieval/1",
+  "status": "completed",
+  "w10_source_record_sha256": "89c0271650d638628955adf87aa796d0fc365ed85bfbdb7653d5c679e7636c80"
+}
