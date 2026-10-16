@@ -266,6 +266,18 @@ def test_docker_runtime_uses_isolated_agent_images_and_restarts_after_source_cop
     )
     assert 'docker image rm "groktocrawl-ci/agent:${run_tag}"' in teardown
     assert '"groktocrawl-ci/agent-fixture:${run_tag}"' in teardown
+    teardown_profiles = set(re.findall(r"--profile ([a-z-]+)", teardown))
+    started_profiles = set()
+    for name in ("Start the Docker stack", "Start test fixtures"):
+        start = next(step["run"] for step in steps if step.get("name") == name)
+        started_profiles.update(re.findall(r"--profile ([a-z-]+)", start))
+    assert started_profiles == {"fixture", "indexing", "durable-research"}
+    assert started_profiles <= teardown_profiles
+
+    # The shared Hugging Face cache is external, so `down --volumes` may clean
+    # this run's project volumes without deleting the cross-run model cache.
+    compose = yaml.safe_load((root / "docker-compose.yml").read_text())
+    assert compose["volumes"]["hf-cache"]["external"] is True
 
 
 def test_answer_evals_workflow_is_advisory_and_not_pr_gated():
