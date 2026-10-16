@@ -115,3 +115,55 @@ async def test_receiver_response_body_is_never_downloaded(monkeypatch):
     )
     assert response_body.closed
     assert not response_body.iterated
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("body", ["not-bytes", b"x" * 1_048_577])
+async def test_invalid_recorded_body_is_rejected_before_destination_lookup(
+    monkeypatch, body
+):
+    def unexpected(_url):
+        pytest.fail("invalid callback body must not cause destination lookup")
+
+    monkeypatch.setattr(webhook, "validate_outbound_webhook_url", unexpected)
+    assert (
+        await webhook.deliver_recorded_webhook("https://receiver.example/hook", body)
+        == "rejected"
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "error",
+    [
+        httpx.ConnectError("connection failed"),
+        httpx.ReadTimeout("no acknowledgement"),
+        TimeoutError(),
+    ],
+)
+async def test_transport_failure_returns_retry_without_repeating_dispatch(
+    monkeypatch, error
+):
+    body = b'{"webhookId":"same-event-on-retry"}'
+    requests = []
+    original = httpx.AsyncClient
+    monkeypatch.setattr(webhook, "validate_outbound_webhook_url", lambda _url: None)
+
+    def handle(request):
+        requests.append(request)
+        raise error
+
+    monkeypatch.setattr(
+        webhook.httpx,
+        "AsyncClient",
+        lambda **kwargs: original(transport=httpx.MockTransport(handle), **kwargs),
+    )
+    result = await webhook.deliver_recorded_webhook(
+        "https://receiver.example/hook",
+        body,
+        {"X-Webhook-Signature": "saved-signature"},
+    )
+    assert result == "retry"
+    assert len(requests) == 1
+    assert requests[0].content == body
+    assert requests[0].headers["X-Webhook-Signature"] == "saved-signature"
