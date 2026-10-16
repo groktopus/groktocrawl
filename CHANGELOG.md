@@ -67,7 +67,7 @@ The new architecture defines explicit ownership of run state, budgets, cancellat
 
 This separation is intended to let models and workflow implementations evolve without making them the authority for permissions, budgets, or stored evidence. It also provides a foundation for summaries, deeper analysis, and source reports that remain tied to the same evidence.
 
-**What is implemented versus integrated:** the new route family exercises these contracts using a fixed example. Its durable ledger, PostgreSQL artifact storage, and retained workspace have lifecycle and recovery tests, but the endpoint does not yet acquire real sources for the submitted objective. Connecting live acquisition, claim construction, verification, and rendering is still required before this can replace the existing live research path.
+**What is implemented versus integrated:** the new route family exercises these contracts using a fixed example. Its durable ledger, PostgreSQL artifact storage, and retained workspace have lifecycle and recovery tests, but the endpoint does not yet acquire real sources for the submitted objective. Connecting live acquisition, claim construction, verification, and rendering is still required before this can replace the existing live research path. That integration is tracked in [#666](https://github.com/groktopus/groktocrawl/issues/666).
 
 ### A workspace and recovery protocol for the new foundation
 
