@@ -1012,29 +1012,45 @@ class TestScraperPipelineFixtureOutcome:
     @_requires_curl_cffi
     @pytest.mark.asyncio
     async def test_default_flow_served_fixture_is_flagged_never_bare_success(
-        self, _barrier_scraper_loopback, served_challenge_url
+        self, _barrier_scraper_loopback, served_challenge_url, monkeypatch
     ):
-        """Real fetch pipeline over HTTP-served F1 (default flow).
+        """Real HTTP Tier 2 gates escalate F1 and refuse exhausted recovery.
 
-        Drives smart_scrape end-to-end (HEAD probe -> Tier 2 content
-        negotiation incl. its HTML->markdown fallback -> quality gates) over
-        the F1 challenge served on loopback: the outcome is success-with-
-        warning (block_detected "fail" + block-page warning), never a bare
-        success. Replaces the earlier local re-computation of the gate
-        expression with a real pipeline drive.
+        Browser boundaries are local stubs; HTTP acquisition, extraction,
+        quality gates and recovery coordination remain the production paths.
         """
-        from scraper.fetch import smart_scrape
+        import scraper.fetch as fetch
 
-        result = await smart_scrape(served_challenge_url)
+        browser_calls = []
 
-        assert result.get("warning"), f"expected block-page warning, got {result!r}"
-        assert (
-            "Block-page" in result["warning"] or "block_detected" in result["warning"]
-        )
-        checks = (result.get("quality") or {}).get("checks", {})
-        assert checks.get("block_detected") == "fail"
-        lowered = (result.get("markdown") or "").lower()
-        assert "please enable javascript" in lowered
+        async def blocked_browser(url):
+            browser_calls.append(url)
+            return {
+                "error": "Barrier detected: fastly",
+                "barrier": {
+                    "detected": True,
+                    "type": "fastly",
+                    "provider": "fastly",
+                    "confidence": 0.95,
+                },
+                "markdown": "",
+                "source": "barrier-detection",
+                "url": url,
+            }
+
+        async def unavailable(*_args):
+            return None
+
+        monkeypatch.setattr(fetch, "fetch_via_playwright", blocked_browser)
+        monkeypatch.setattr(fetch, "fetch_via_flaresolverr", unavailable)
+        monkeypatch.setattr(fetch, "_fetch_via_browser_svc", unavailable)
+        result = await fetch.smart_scrape(served_challenge_url)
+
+        assert browser_calls == [served_challenge_url]
+        assert result["error_code"] == "BARRIER_DETECTED"
+        assert result["markdown"] == ""
+        assert result["recovery"]["outcome"] == "unresolved"
+        assert result["recovery"]["exhausted"] is True
 
     def test_tier3_post_extraction_gate_refuses_f1_markdown(self):
         """The REAL Tier 3 gate function refuses F1's markdown.
@@ -1059,7 +1075,7 @@ class TestScraperPipelineFixtureOutcome:
             title, "https://x.test/challenge", markdown, f1_html
         )
 
-        block_status, block_score = _check_block_page(markdown)
+        block_score, block_status = _check_block_page(markdown)
         matched_patterns = [
             p.pattern for p in BLOCK_PAGE_PATTERNS if p.search(markdown.lower())
         ]

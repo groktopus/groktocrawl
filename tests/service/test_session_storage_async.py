@@ -413,3 +413,71 @@ async def test_real_valkey_atomic_append_history_and_deleted_session():
     finally:
         await store.adelete(session_id)
         store.redis.close()
+
+
+@pytest.mark.asyncio
+@pytest.mark.enable_socket
+async def test_research_attachment_atomic_revision_ownership_and_expiry():
+    import os
+
+    from agent.session_store import SessionStore
+
+    url = os.getenv("SESSION_STORE_TEST_URL")
+    if not url:
+        governed_skip(
+            "Set SESSION_STORE_TEST_URL for real Valkey attachment test",
+            owner="repository-maintainer",
+            issue="#666",
+            classification="retained",
+            environment="Requires isolated Valkey; exercised in session-storage CI",
+        )
+    store = SessionStore(redis_url=url)
+    session_id = await store.acreate(ttl=120, owner_scope="test-owner")
+    refs = {
+        "research_test": {
+            "source": "research",
+            "research_source": {
+                "kind": "root",
+                "container_id": "root",
+                "ref_id": "snapshot",
+                "subject": "source",
+            },
+            "content_digest": "0" * 64,
+        }
+    }
+    token = await store.acquire_lock(session_id, timeout=2, lease_ttl=30)
+    assert token is not None
+    context = store.set_lock_owner(token)
+    try:
+        assert (
+            await store.aattach_research(session_id, "run-a", 0, refs, "foreign") == -2
+        )
+        assert (
+            await store.aattach_research(session_id, "run-a", 0, refs, "test-owner")
+            == 1
+        )
+        assert (
+            await store.aattach_research(session_id, "run-a", 1, refs, "test-owner")
+            == 1
+        )
+        assert (
+            await store.aattach_research(session_id, "run-b", 0, refs, "test-owner")
+            == -1
+        )
+        assert (
+            await store.aget_ref(session_id, "research_test") == refs["research_test"]
+        )
+        fresh = SessionStore(redis_url=url)
+        assert (await fresh.aget(session_id))["research_attachment_revision"] == "1"
+        fresh.redis.close()
+        await store.adelete(session_id)
+        assert (
+            await store.aattach_research(session_id, "run-b", 1, refs, "test-owner")
+            == -2
+        )
+        assert await store.aget_ref(session_id, "research_test") is None
+    finally:
+        store.reset_lock_owner(context)
+        await store.arelease_lock(session_id, token)
+        await store.adelete(session_id)
+        store.redis.close()

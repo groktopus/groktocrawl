@@ -26,3 +26,18 @@ def test_cli_dry_run_uses_existing_request_preview():
     assert result["dry_run"] is True
     assert result["method"] == "POST"
     assert result["url"].endswith("/v2/followup/preview")
+
+
+def test_cli_explicit_execution_uses_idempotency_key():
+    client = MagicMock()
+    client.dry_run = False
+    client.followup_execute.return_value = {"success": True, "run_id": "run-1"}
+    body = {"wording": "Explain Alpha"}
+    _cli_ns["cmd_followup"](
+        client,
+        argparse.Namespace(
+            request=json.dumps(body), execute=True, idempotency_key="followup-1"
+        ),
+    )
+    client.followup_execute.assert_called_once_with(body, "followup-1")
+    client.followup_preview.assert_not_called()

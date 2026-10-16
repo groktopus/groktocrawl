@@ -41,7 +41,7 @@ def test_capabilities_advertise_fixture_run_adapter_only_when_enabled(
     assert payload["recovery_mode"] == "process_local"
     assert payload["operations"]["runs"]["available"] is True
     assert payload["operations"]["sessions"]["available"] is True
-    assert payload["operations"]["sessions"]["mode"] == "attachment_only"
+    assert payload["operations"]["sessions"]["mode"] == "live_research_evidence"
 
 
 def test_capabilities_advertise_valkey_fenced_recovery_when_enabled(

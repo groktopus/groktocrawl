@@ -309,7 +309,7 @@ class TestBlockPageFastlyInterstitial:
         barrier = _classify_barrier(
             "JavaScript is disabled in your browser.", "", markdown, html
         )
-        status, _ = _check_block_page(markdown)
+        _, status = _check_block_page(markdown)
         matched = [p for p in BLOCK_PAGE_PATTERNS if p.search(markdown.lower())]
         corroborated = barrier.detected or any(
             m in markdown.lower() for m in FASTLY_PROSE_MARKERS
@@ -341,7 +341,7 @@ class TestBlockPageFastlyInterstitial:
             "</body></html>"
         )
         markdown = html_to_markdown(html)
-        status, _score = _check_block_page(markdown)
+        _score, status = _check_block_page(markdown)
         matched = [p.pattern for p in BLOCK_PAGE_PATTERNS if p.search(markdown.lower())]
 
         # The page matches >=2 generic patterns; whatever the gate scores it,
