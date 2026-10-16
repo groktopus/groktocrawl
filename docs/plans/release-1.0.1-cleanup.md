@@ -34,7 +34,9 @@ uploaded through the session API, parsed by the real Parse HTTP service, stored
 in isolated Valkey, used in a session question, and read back as an exact citation.
 The test also checks foreign-owner rejection and evidence removal after deletion.
 The same journey runs the CLI as a subprocess and dispatches MCP upload, query,
-and read tools against the local HTTP API. The model response is controlled;
+and read tools against the local HTTP API. A second document places the answer
+beyond character 8,000 and verifies that passage reaches the model and can be
+read back exactly through MCP. The model response is controlled;
 this verifies service and client integration, not model answer quality. Final
 deployment checks remain required.
 

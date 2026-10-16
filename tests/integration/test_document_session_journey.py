@@ -95,6 +95,8 @@ async def test_pdf_upload_parse_question_citation_and_delete(
 
         async def generate(self, **kwargs):
             seen.append(kwargs["context"])
+            if "Research retention policy requires 47 days." in kwargs["context"]:
+                return f"The retention period is 47 days [{selected[0]}]."
             return f"The research budget is 12000 [{selected[0]}]."
 
         async def close(self):
@@ -230,6 +232,43 @@ async def test_pdf_upload_parse_question_citation_and_delete(
                     },
                 )
                 assert answer["result"]["citations"][0]["ref_id"] == ref_id
+                # A second document puts the answer beyond the former 8,000
+                # character prefix. The selected passage must reach the model.
+                late_fact = "Research retention policy requires 47 days."
+                long_text = (
+                    "Background information about unrelated office supplies.\n" * 200
+                ) + late_fact
+                assert long_text.index(late_fact) > 8000
+                late = await tool(
+                    "document_attach",
+                    {
+                        "session_id": session_id,
+                        "filename": "retention.txt",
+                        "content_base64": base64.b64encode(long_text.encode()).decode(),
+                        "media_type": "text/plain",
+                    },
+                )
+                selected[0] = late["ref_id"]
+                late_answer = await tool(
+                    "session_query",
+                    {
+                        "session_id": session_id,
+                        "question": "How many days does the research retention policy require?",
+                        "ref_ids": [late["ref_id"]],
+                    },
+                )
+                assert late_fact in seen[-1]
+                assert late_answer["result"]["citations"][0]["ref_id"] == late["ref_id"]
+                late_read = await tool(
+                    "document_read",
+                    {
+                        "session_id": session_id,
+                        "ref_id": late["ref_id"],
+                        "start": long_text.index(late_fact),
+                        "end": len(long_text),
+                    },
+                )
+                assert late_read["markdown"] == late_fact
             foreign = await client.get(
                 uploaded.json()["url"], headers={"X-API-Key": "foreign"}
             )
