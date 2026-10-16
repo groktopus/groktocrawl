@@ -85,6 +85,31 @@ def test_stack_is_built_locally_with_fixture_search_and_owned_volumes():
         assert f'docker cp {filename} "$svc":/app/{filename}' in commands
 
 
+def test_standard_integration_provisions_durable_database():
+    workflow = yaml.safe_load((ROOT / ".github/workflows/docker.yml").read_text())
+    jobs = workflow["jobs"].values()
+    job = next(job for job in jobs if job.get("name") == "Integration Tests")
+    steps = {step.get("name"): step for step in job["steps"]}
+    assert "--profile durable-research up -d" in steps["Start the Docker stack"]["run"]
+    assert "--profile durable-research down" in steps["Tear down stack"]["run"]
+    assert "/app/tests/integration/" in steps["Run integration tests"]["run"]
+    assert job["env"]["COMPOSE_PROJECT_NAME"].endswith(
+        "${{ github.run_id }}-${{ github.run_attempt }}"
+    )
+    assert "token_urlsafe(32)" in steps["Set up .env"]["run"]
+    assert "umask 077" in steps["Set up .env"]["run"]
+    assert (
+        "DURABLE_RESEARCH_POSTGRES_PASSWORD_FILE=$research_password_file"
+        in steps["Set up .env"]["run"]
+    )
+    assert "--volumes" in steps["Tear down stack"]["run"]
+    assert (
+        "label=com.docker.compose.project=$COMPOSE_PROJECT_NAME"
+        in steps["Force-remove all stale project containers"]["run"]
+    )
+    assert "rm -f" in steps["Tear down stack"]["run"]
+
+
 def test_protected_browser_profile_is_required_by_runtime_gate():
     profile = WORKFLOW["jobs"]["protected-browser-profile"]
     gate = WORKFLOW["jobs"]["runtime-gate"]
