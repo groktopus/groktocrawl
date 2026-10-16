@@ -132,7 +132,10 @@ def test_mainline_ci_routes_the_real_agent_and_direct_search_clients_to_fixture(
     assert "payload['success'] and results" in probe
     # These inputs configure test clients and the agent without changing either
     # SlopSearX service's production contract.
-    assert "docker compose --profile indexing up -d" in steps["Start the Docker stack"]
+    assert (
+        "docker compose --profile indexing --profile durable-research up -d"
+        in steps["Start the Docker stack"]
+    )
 
 
 def test_published_service_images_target_amd64_and_arm64():
