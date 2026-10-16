@@ -458,6 +458,7 @@ jobs:
           docker cp .github/workflows/docker.yml "$svc":/app/.github/workflows/docker.yml
           docker cp .github/workflows/. "$svc":/app/.github/workflows/
           docker cp docker-compose.ci.yml "$svc":/app/docker-compose.ci.yml
+          docker cp compose.ci-research-inputs.yml "$svc":/app/compose.ci-research-inputs.yml
           # Include the protected-profile inputs read by service contract tests.
           docker cp compose.experimental-candidate.yml "$svc":/app/compose.experimental-candidate.yml
           docker cp compose.protected-flare-ci.yml "$svc":/app/compose.protected-flare-ci.yml

@@ -1,0 +1,33 @@
+# CI runner and Docker daemon may have different filesystems. Seed these
+# per-project volumes with docker cp; no runner paths become daemon bind mounts.
+services:
+  research-postgres:
+    secrets: !reset []
+    volumes:
+      - type: volume
+        source: ci_research_secret
+        target: /run/secrets
+        read_only: true
+      - type: volume
+        source: ci_research_init
+        target: /docker-entrypoint-initdb.d
+        read_only: true
+  agent-svc:
+    secrets: !reset []
+    volumes:
+      - type: volume
+        source: ci_research_secret
+        target: /run/secrets
+        read_only: true
+  semantic-svc:
+    secrets: !reset []
+    volumes:
+      - type: volume
+        source: ci_research_secret
+        target: /run/secrets
+        read_only: true
+
+secrets: !reset {}
+volumes:
+  ci_research_secret: {}
+  ci_research_init: {}
