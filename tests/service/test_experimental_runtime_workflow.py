@@ -85,6 +85,16 @@ def test_stack_is_built_locally_with_fixture_search_and_owned_volumes():
         assert f'docker cp {filename} "$svc":/app/{filename}' in commands
 
 
+def test_standard_integration_provisions_durable_database():
+    workflow = yaml.safe_load((ROOT / ".github/workflows/docker.yml").read_text())
+    jobs = workflow["jobs"].values()
+    job = next(job for job in jobs if job.get("name") == "Integration Tests")
+    steps = {step.get("name"): step for step in job["steps"]}
+    assert "--profile durable-research up -d" in steps["Start the Docker stack"]["run"]
+    assert "--profile durable-research down" in steps["Tear down stack"]["run"]
+    assert "/app/tests/integration/" in steps["Run integration tests"]["run"]
+
+
 def test_protected_browser_profile_is_required_by_runtime_gate():
     profile = WORKFLOW["jobs"]["protected-browser-profile"]
     gate = WORKFLOW["jobs"]["runtime-gate"]

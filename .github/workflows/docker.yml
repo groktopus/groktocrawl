@@ -395,7 +395,7 @@ jobs:
         run: docker ps -a --filter name=groktocrawl -q | xargs -r docker rm -f || true
 
       - name: Clean up stale containers from previous run
-        run: docker compose down --remove-orphans --timeout 30 || true
+        run: docker compose --profile durable-research down --remove-orphans --timeout 30 || true
 
       - name: Ensure HF model cache volume exists
         run: docker volume inspect hf-cache || docker volume create hf-cache
@@ -431,7 +431,7 @@ jobs:
           # have a published tag yet (e.g. a newly added service), which fails
           # its manifest lookup; tolerate that and let the build/up steps build
           # the missing image from source instead.
-          docker compose --profile indexing pull || true
+          docker compose --profile indexing --profile durable-research pull || true
         timeout-minutes: 10
 
       - name: Build service images (service-local PR build / tag-push full build)
@@ -509,7 +509,7 @@ jobs:
           PY
 
       - name: Start the Docker stack
-        run: docker compose --profile indexing up -d
+        run: docker compose --profile indexing --profile durable-research up -d
         timeout-minutes: 10
 
       - name: Start test fixtures
@@ -1121,7 +1121,7 @@ jobs:
 
       - name: Tear down stack
         if: always()
-        run: docker compose down --remove-orphans --timeout 30
+        run: docker compose --profile durable-research down --remove-orphans --timeout 30
 
   research-runtime:
     uses: ./.github/workflows/runtime.yml
