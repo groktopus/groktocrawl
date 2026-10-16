@@ -17,6 +17,21 @@ from typing import Any
 import httpx
 
 
+def _require_fixture_capabilities(capabilities: dict[str, Any]) -> None:
+    runs = capabilities.get("operations", {}).get("runs", {})
+    if (
+        capabilities.get("implementation_stage")
+        != "postgres_artifact_authority_fixture_adapter"
+        or capabilities.get("live_research_available") is not False
+        or runs.get("execution_mode") != "fixture_only"
+        or runs.get("create_available") is not True
+    ):
+        raise RuntimeError(
+            "Isolated fixture verification requires PostgreSQL fixture authority and "
+            "FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS=true; never enable it for production research"
+        )
+
+
 def _run(command: list[str], *, env: dict[str, str] | None = None) -> str:
     result = subprocess.run(
         command,
@@ -150,11 +165,7 @@ async def verify(args: argparse.Namespace) -> dict[str, Any]:
         capability_response = await client.get("/experimental/research/v1/capabilities")
         capability_response.raise_for_status()
         capabilities = capability_response.json()
-        if (
-            capabilities.get("implementation_stage")
-            != "postgres_artifact_authority_adapter"
-        ):
-            raise RuntimeError("PostgreSQL artifact authority is not active")
+        _require_fixture_capabilities(capabilities)
 
         admitted_response = await client.post(
             "/experimental/research/v1/runs",

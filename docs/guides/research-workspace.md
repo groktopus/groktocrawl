@@ -3,6 +3,11 @@
 The experimental workspace browses existing independent roots. It does not create
 chat history or replay research implicitly. Capabilities report the real fixture,
 process-local, Valkey, or PostgreSQL boundary; existing feature gates still apply.
+New run creation is disabled by default and requires the development-only
+`FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS=true` opt-in. It still executes
+fictional sources and authored judgments. Keep that flag false in production;
+existing run, artifact, evidence, workspace, and recovery gates remain unchanged.
+The workspace does not provide a live research execution adapter.
 
 Use `groktocrawl research workspace --json` to list permitted roots and
 `groktocrawl research workspace RUN_ID --json` to inspect one. Read its revision,

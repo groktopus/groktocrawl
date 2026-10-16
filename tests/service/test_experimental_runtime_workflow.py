@@ -59,12 +59,20 @@ def test_stack_is_built_locally_with_fixture_search_and_owned_volumes():
     job = WORKFLOW["jobs"]["integration-tests"]
     assert job["env"]["COMPOSE_FILE"] == "docker-compose.yml:docker-compose.ci.yml"
     commands = "\n".join(step.get("run", "") for step in job["steps"])
-    assert "--profile indexing --profile fixture build" in commands
+    assert (
+        "--profile indexing --profile fixture --profile durable-research build"
+        in commands
+    )
     assert "up -d --no-build --pull never" in commands
     assert "scripts/ci_public_image_prefetch.py" in commands
     assert "--group runtime" in commands
     assert "--profile indexing" in commands
     assert "--profile fixture" in commands
+    assert "--profile durable-research" in commands
+    assert "DURABLE_RESEARCH_POSTGRES_DSN=" in commands
+    assert "PGPASSFILE=/tmp/postgres.pgpass" in commands
+    assert "SEARXNG_URL=http://slopsearx-fixture:8080" in commands
+    assert "SEARCH_BASE_URL=http://slopsearx-fixture:8080" in commands
     assert "LLM_BASE_URL=http://llm-svc:8011/v1?run_id=" in commands
     assert "docker rm -f" not in commands
     assert "down --volumes --remove-orphans" in commands

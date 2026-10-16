@@ -186,6 +186,7 @@ def authority_app(monkeypatch: pytest.MonkeyPatch):
     for name in (
         "EXPERIMENTAL_RESEARCH",
         "EXPERIMENTAL_RESEARCH_RUNS",
+        "EXPERIMENTAL_RESEARCH_FIXTURE_RUNS",
         "EXPERIMENTAL_RESEARCH_DURABLE",
         "EXPERIMENTAL_RESEARCH_POSTGRES_ARTIFACTS",
     ):
@@ -288,8 +289,10 @@ async def test_postgres_commit_reconciles_after_valkey_interruption(
         )
         task = experimental._RUNS[created.json()["run_id"]].task
         assert task is not None
-        with pytest.raises(RuntimeError, match="projection interruption"):
-            await task
+        await task
+        # A committed PG root is neither failed nor rerun when the Valkey
+        # projection is interrupted. Recovery projects that exact root.
+        assert experimental._RUNS[created.json()["run_id"]].state == "running"
         ledger = DurableResearchLedger(
             url, namespace=app.state.research_durable_namespace
         )
@@ -438,7 +441,9 @@ async def test_workspace_recovers_cited_evidence_without_process_memory(authorit
 
 
 @pytest.mark.asyncio
-async def test_postgres_workspace_outlives_ledger_and_deletes_durably(authority_app):
+async def test_postgres_workspace_outlives_ledger_and_deletes_durably(
+    authority_app, monkeypatch
+):
     app, authority, _ = authority_app
     async with httpx.AsyncClient(
         transport=httpx.ASGITransport(app=app), base_url="http://test"
@@ -452,6 +457,7 @@ async def test_postgres_workspace_outlives_ledger_and_deletes_durably(authority_
         ).json()
         status = await _wait(client, admitted["status_url"])
         run_id = status["run_id"]
+        monkeypatch.delenv("FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS")
         record = experimental._RUNS[run_id]
         record.durable_ledger.redis.delete(record.durable_ledger._run_key(run_id))
         experimental._RUNS.clear()

@@ -31,6 +31,10 @@ class LeaseLostError(DurableConflictError):
     """The caller no longer owns the fencing generation."""
 
 
+class OutcomeUnknownError(DurableResearchError):
+    """An external dispatch has no durable receipt and must not be replayed."""
+
+
 @dataclass(frozen=True)
 class DurableRun:
     """The persisted projection needed to recover one admitted run."""
@@ -180,6 +184,50 @@ redis.call('DEL', KEYS[2])
 return {1, 'deleted'}
 """
 
+_STEP_SCRIPT = """
+local raw = redis.call('GET', KEYS[1])
+if not raw or redis.call('GET', KEYS[2]) ~= ARGV[1] then return {-1} end
+local record = cjson.decode(raw)
+if record.state ~= 'running' then return {-1} end
+record.operations = record.operations or {}
+local prior = record.operations[ARGV[2]]
+if prior then
+  if prior.input_digest ~= ARGV[3] then return {-2} end
+  if ARGV[4] == 'begin' then
+    if prior.state == 'receipt' then return {1, cjson.encode(prior.output)} end
+    return {2}
+  end
+  if prior.state == 'receipt' then return {-2} end
+elseif ARGV[4] ~= 'begin' then return {-2}
+end
+if ARGV[4] == 'begin' then
+  local count = 0
+  for _ in pairs(record.operations) do count = count + 1 end
+  if count >= 72 then return {-2} end
+  record.operations[ARGV[2]] = {input_digest=ARGV[3], state='dispatch_intent'}
+else
+  record.operations[ARGV[2]] = {input_digest=ARGV[3], state='receipt', output=cjson.decode(ARGV[5])}
+end
+local encoded = cjson.encode(record)
+if string.len(encoded) > 1048576 then return {-2} end
+redis.call('SET', KEYS[1], encoded, 'PX', ARGV[6])
+return {0}
+"""
+
+_FAIL_SCRIPT = """
+local raw = redis.call('GET', KEYS[1])
+if not raw or redis.call('GET', KEYS[2]) ~= ARGV[1] then return 0 end
+local record = cjson.decode(raw)
+if record.state ~= 'running' then return 0 end
+record.state = 'failed'
+record.terminal_payload = cjson.decode(ARGV[2])
+record.owner_id = false
+record.lease_expires_at_ms = false
+redis.call('SET', KEYS[1], cjson.encode(record), 'PX', ARGV[3])
+redis.call('DEL', KEYS[2])
+return 1
+"""
+
 
 def _digest(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
@@ -276,7 +324,9 @@ class DurableResearchLedger:
         raw = self.redis.get(self._run_key(run_id))
         return None if raw is None else DurableRun.from_record(json.loads(raw))
 
-    def claim(self, run_id: str, owner_id: str, *, attempt_id: str | None = None) -> DurableRun:
+    def claim(
+        self, run_id: str, owner_id: str, *, attempt_id: str | None = None
+    ) -> DurableRun:
         """Claim or reclaim work with a monotonic fencing generation."""
         result = self.redis.eval(
             _CLAIM_SCRIPT,
@@ -312,6 +362,64 @@ class DurableResearchLedger:
         )
         if int(result) != 1:
             raise LeaseLostError("heartbeat rejected by the fencing authority")
+
+    def step(
+        self,
+        run_id: str,
+        owner_id: str,
+        generation: int,
+        operation_id: str,
+        input_digest: str,
+        *,
+        output: Any = None,
+        complete: bool = False,
+    ) -> tuple[bool, Any]:
+        """Persist intent before dispatch; reuse receipts, never replay ambiguity."""
+        if not operation_id or len(operation_id) > 200:
+            raise DurableResearchError("invalid operation identity")
+        encoded = json.dumps(output, separators=(",", ":"), allow_nan=False)
+        if len(encoded.encode()) > 512_000:
+            raise DurableResearchError("operation receipt exceeds byte budget")
+        result = self.redis.eval(
+            _STEP_SCRIPT,
+            2,
+            self._run_key(run_id),
+            self._lease_key(run_id),
+            f"{owner_id}:{generation}",
+            operation_id,
+            input_digest,
+            "complete" if complete else "begin",
+            encoded,
+            str(self.retention_ms),
+        )
+        code = int(result[0])
+        if code == -1:
+            raise LeaseLostError("operation rejected for stale owner")
+        if code == -2:
+            raise DurableConflictError("operation conflicts with retained execution")
+        if code == 2:
+            raise OutcomeUnknownError("external operation has no retained receipt")
+        return code == 1, json.loads(result[1]) if code == 1 else None
+
+    def fail(
+        self,
+        run_id: str,
+        owner_id: str,
+        generation: int,
+        terminal_payload: dict[str, Any],
+    ) -> None:
+        """Persist a terminal failure only while this worker still owns the run."""
+        result = self.redis.eval(
+            _FAIL_SCRIPT,
+            2,
+            self._run_key(run_id),
+            self._lease_key(run_id),
+            f"{owner_id}:{generation}",
+            json.dumps(terminal_payload),
+            str(self.retention_ms),
+        )
+        if int(result) != 1:
+            raise LeaseLostError("failure rejected for stale owner")
 
     def checkpoint(
         self,

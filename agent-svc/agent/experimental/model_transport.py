@@ -12,7 +12,13 @@ class ReviewTransport:
     """Server-configured endpoint/key; no redirects, retries or logged response bodies."""
 
     def __init__(
-        self, client: httpx.AsyncClient, *, base_url: str, api_key: str
+        self,
+        client: httpx.AsyncClient,
+        *,
+        base_url: str,
+        api_key: str,
+        token_parameter: str = "max_tokens",
+        token_budget: int | None = None,
     ) -> None:
         url = httpx.URL(base_url)
         if (
@@ -26,6 +32,14 @@ class ReviewTransport:
         self._url = str(url.copy_with(path=url.path.rstrip("/") + "/chat/completions"))
         self._client = client
         self._key = api_key
+        if token_parameter not in {"max_tokens", "max_completion_tokens"}:
+            raise ValueError("invalid configured token budget parameter")
+        if token_budget is not None and (
+            type(token_budget) is not int or token_budget <= 0
+        ):
+            raise ValueError("invalid configured token budget")
+        self._token_parameter = token_parameter
+        self._token_budget = token_budget
 
     async def __call__(self, request: ReviewRequest) -> ModelReply:
         payload = {
@@ -35,7 +49,9 @@ class ReviewTransport:
                 {"role": "user", "content": request.payload.decode("utf-8")},
             ],
             "stream": False,
-            "max_tokens": request.max_output_tokens,
+            self._token_parameter: min(request.max_output_tokens, self._token_budget)
+            if self._token_budget is not None
+            else request.max_output_tokens,
             "response_format": (
                 {
                     "type": "json_schema",

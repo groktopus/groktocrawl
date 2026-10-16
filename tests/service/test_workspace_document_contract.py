@@ -16,6 +16,7 @@ async def test_workspace_named_document_context_and_preview(document_app, monkey
     app, store = document_app
     monkeypatch.setenv("FEATURE_EXPERIMENTAL_RESEARCH", "true")
     monkeypatch.setenv("FEATURE_EXPERIMENTAL_RESEARCH_RUNS", "true")
+    monkeypatch.setenv("FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS", "true")
     monkeypatch.setenv("FEATURE_EXPERIMENTAL_RESEARCH_DURABLE", "false")
     experimental._RUNS.clear()
     experimental._IDEMPOTENCY.clear()

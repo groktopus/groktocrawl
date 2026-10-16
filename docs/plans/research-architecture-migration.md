@@ -2,10 +2,10 @@
 
 ## Outcome
 
-GroktoCrawl will include the research architecture developed in GroktoCrawl X.
+GroktoCrawl has adopted the research architecture developed in GroktoCrawl X.
 Existing API, MCP, CLI, and deployment contracts remain supported. Future
-implementation and issues belong in the main repository. The experimental
-repository remains a historical record once migration is verified.
+implementation and issues belong in the main repository. Release, deployment,
+and repository consolidation remain tracked below.
 
 ## Source baseline
 
@@ -36,19 +36,32 @@ tools, portal submission fixes, and release safeguards alongside the new code.
    including its reconciliation checks and abort path. Record the rehearsal
    and cutover results before declaring completion.
 4. **Release and deploy.** Merge after required checks pass and published review
-   findings are addressed. Publish official images, update GroktoCrawl services
-   with those images, and verify API, MCP, CLI, stored research, and recovery.
-   Preserve the existing search-engine service and its configuration.
+   findings are addressed. Publish official images and update GroktoCrawl
+   services with those images. Verify the existing live `/v2` research, document,
+   and capture paths, plus MCP, CLI, and pgvector readiness. Keep scripted
+   fixture-run admission disabled with
+   `FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS=false`:
+   the new durable run endpoint executes an example and is not connected to
+   objective-dependent live acquisition, verification, and retained
+   publication. The existing four research flags may remain enabled for
+   read-only access to retained records. Pgvector cutover is an independent storage change and does not
+   require enabling fixture-run admission. Preserve the existing search-engine
+   service and its configuration.
 5. **Consolidate development.** Move remaining optional research issues to
    mainline, redirect the experimental repository to the supported project,
    and retain its history and recovery material.
 
 ## Completion checks
 
-Completion requires an official mainline commit and published images, a verified
-running deployment, preserved existing data and client contracts, a tested
-recovery path, and reconciled documentation and issue ownership. Passing tests
-alone does not establish deployment completion.
+Completion of the mainline/vector migration requires an official mainline commit
+and published images, a verified running deployment, preserved existing data and
+client contracts, a tested vector rollback path, and reconciled documentation
+and issue ownership. It does not make the fixture-backed run endpoint a live
+research product. That requires separate product work to connect the existing
+live research acquirer to the durable execution, verification, and publication
+path, with its own objective-dependent HTTP/MCP and failure-recovery acceptance
+tests. Passing migration tests alone does not establish that capability or
+deployment completion.
 
 Date-bounded searches remain conditional on the backend returning trustworthy
 enforcement evidence. Unsupported backends must return an explicit error.
@@ -57,8 +70,15 @@ results.
 
 ## Progress
 
-- Both source baselines fetched and compared.
-- Mainline-only runtime, documentation, and deployment contracts audited.
-- Integration and compatibility checks passed on the prior integration head; final startup and health-check patch verification is in progress.
-- Isolated restoration and shadow-backfill rehearsal completed: all 11,852 vector records matched across IDs, payload/content, and vectors.
-- Release, live deployment verification, and repository consolidation remain pending.
+- Mainline integration merged in PR #665 at `7741ddfe03773acae08e0cef47aa6ad6a457b481` after the required integration and compatibility checks passed.
+- The isolated restore and shadow-backfill rehearsal matched all 11,852 records across IDs, payload/content, and vectors.
+- Stable 1.0.0 was published on 2026-10-16 ([release](https://github.com/groktopus/groktocrawl/releases/tag/v1.0.0)); its release PR merged at `f2ebbbb4e8da42c96f054e19d5d86fe556d62a6e`.
+- Official image publication and immutable image digests are still pending verification.
+- The isolated restore and backfill verified pgvector parity; live vector-serving cutover and deployment verification are pending. Verify the existing live `/v2` research, document, capture, MCP, CLI, and semantic paths. Keep scripted fixture-run admission disabled with `FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS=false`; the `/experimental/research/v1` run adapter is an example, not a live researcher. The existing four research flags may remain enabled for previously retained records.
+- Transfer of remaining optional issues and retirement of the experimental repository are pending.
+
+The live adapter gap is separate product work: connect objective-dependent live
+source acquisition, evidence and claim verification, and retained publication to
+the durable run protocol. Acceptance must exercise meaningful HTTP and MCP
+objectives and verify retained source/artifact bytes, as well as budget limits,
+cancellation, and recovery across a forced process crash.
