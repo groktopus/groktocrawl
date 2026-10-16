@@ -1,6 +1,6 @@
 # Complete the 1.0.1 integration cleanup
 
-Status: all ten cleanup requirements verified; release publication is being finalized.
+Status: complete. All ten cleanup requirements are verified; version 1.0.1 is published with verified stable images.
 
 The 1.0.0 integration left the new durable research endpoint connected to example data. The correction must complete the intended user workflows and check the other release claims against actual behavior. The table below defines the completed cleanup scope; supporting evidence follows it.
 
@@ -61,5 +61,7 @@ multi-architecture images passed build and provenance checks. Both deployments
 passed their applicable acceptance checks; mainline now serves PostgreSQL vectors
 and live durable research. Existing data and client configuration were preserved.
 
-The release verification report records final publication and image-tag checks.
+Version 1.0.1 is published. All ten stable image indexes match the tested release
+commit and deployment digests for amd64 and arm64; the verification report links
+the publication and image-tag evidence.
 The cleanup changes are confined to GroktoCrawl.
