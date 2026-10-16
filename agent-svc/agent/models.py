@@ -597,6 +597,7 @@ class AgentStatusResponse(BaseModel):
     )
     data: dict[str, Any] | None = None
     error: str | None = None
+    error_code: str | None = Field(default=None, serialization_alias="errorCode")
     expires_at: str | None = None
     credits_used: int | None = None
     # Retry metadata (ADR-0053) — populated while status == "retry_scheduled".
@@ -776,6 +777,7 @@ class BatchScrapeStatusResponse(BaseModel):
     credits_used: int | None = None
     data: list[dict[str, Any]] | None = None
     error: str | None = None
+    error_code: str | None = None
     next: str | None = Field(
         default=None,
         description="URL for the next chunk of paginated results.",
@@ -823,6 +825,7 @@ class CrawlStatusResponse(BaseModel):
     credits_used: int | None = None
     data: list[dict[str, Any]] | None = None
     error: str | None = None
+    error_code: str | None = None
     outcome_summary: dict[str, Any] | None = None
     next: str | None = Field(
         default=None,
@@ -1143,6 +1146,7 @@ class ExtractStatusResponse(BaseModel):
     status: str = "processing"  # processing | completed | failed
     data: dict[str, Any] | None = None
     error: str | None = None
+    error_code: str | None = Field(default=None, serialization_alias="errorCode")
     expires_at: str | None = None
 
 
@@ -1277,6 +1281,7 @@ class LLMsTextStatusResponse(BaseModel):
     status: str = "processing"
     data: dict[str, Any] | None = None
     error: str | None = None
+    error_code: str | None = Field(default=None, serialization_alias="errorCode")
     expires_at: str | None = None
 
 

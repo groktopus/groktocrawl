@@ -198,7 +198,7 @@ async def execute_plan(
     )
 
     plan_store = PlanStore(redis_url=redis_url)
-    doc = plan_store.consume(body.plan_id)
+    doc = plan_store.get(body.plan_id)
     if doc is None:
         raise NotFoundError(
             detail="Plan not found, expired, or already executed",
@@ -218,18 +218,27 @@ async def execute_plan(
     # ── Sync path: create job, process in background ──────────
     if not body.stream:
         store: JobStore = request.app.state.job_store
-        job_id = store.create_job(
-            kind="plan_execute",
-            payload={
+        job_id = store.create_plan_execution_job(
+            body.plan_id,
+            {
                 "plan_id": body.plan_id,
                 "prompt": prompt,
                 "plan": plan,
                 "modifications": mods,
+                "webhook": body.webhook,
             },
         )
+        if job_id is None:
+            raise NotFoundError(
+                detail="Plan not found, expired, or already executed",
+                details={"plan_id": body.plan_id},
+            )
+        from ..job_execution import submit_job
         from ..worker import _process_plan_execution_async
 
-        request.app.state.task_tracker.create_background_task(
+        submit_job(
+            request,
+            job_id,
             _process_plan_execution_async(
                 job_id=job_id,
                 prompt=prompt,
@@ -241,7 +250,7 @@ async def execute_plan(
                 searxng_url=request.app.state.searxng_url,
                 scraper_url=request.app.state.scraper_url,
                 webhook_config=body.webhook,
-            )
+            ),
         )
         return AgentCreateResponse(id=job_id)
 
@@ -434,6 +443,11 @@ async def execute_plan(
 
         yield "data: [DONE]\n\n"
 
+    if plan_store.consume(body.plan_id) is None:
+        raise NotFoundError(
+            detail="Plan not found, expired, or already executed",
+            details={"plan_id": body.plan_id},
+        )
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 

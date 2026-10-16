@@ -213,6 +213,61 @@ def test_container_test_staging_includes_service_contract_inputs(filename):
     assert "docker cp pyproject.toml" not in staging
 
 
+def test_docker_runtime_uses_isolated_agent_images_and_restarts_after_source_copy():
+    root = Path(__file__).parents[2]
+    workflow = yaml.safe_load((root / ".github/workflows/docker.yml").read_text())
+    steps = workflow["jobs"]["integration-tests"]["steps"]
+    names = [step.get("name") for step in steps]
+    isolate = next(
+        step["run"]
+        for step in steps
+        if step.get("name") == "Isolate agent CI image tags"
+    )
+    verify = next(
+        step["run"]
+        for step in steps
+        if step.get("name") == "Verify running agent image identity"
+    )
+    restart = next(
+        step["run"]
+        for step in steps
+        if step.get("name") == "Restart agent after source refresh"
+    )
+
+    assert "groktocrawl-ci/agent:${run_tag}" in isolate
+    assert "groktocrawl-ci/agent-fixture:${run_tag}" in isolate
+    assert "docker image tag ghcr.io/groktopus/groktocrawl-agent" in isolate
+    assert "GITHUB_EVENT_NAME" in isolate and "GITHUB_REF" in isolate
+    assert "AFFECTED_SERVICES" in isolate
+    assert "slopsearx" not in isolate.lower()
+    assert "mcp-svc:\n    ports: !reset []" in isolate
+    assert "docker inspect --format '{{.Image}}'" in verify
+    assert "docker image inspect --format '{{.Id}}'" in verify
+    assert "docker compose restart agent-svc" in restart
+    assert "localhost:{os.environ['AGENT_PORT']}/health" in restart
+    assert names.index("Pull freshly published service images") < names.index(
+        "Isolate agent CI image tags"
+    )
+    assert names.index("Isolate agent CI image tags") < names.index(
+        "Build service images (service-local PR build / tag-push full build)"
+    )
+    assert (
+        names.index("Start the Docker stack")
+        < names.index("Verify running agent image identity")
+        < names.index("Start test fixtures")
+    )
+    assert (
+        names.index("Copy test files and source directories")
+        < names.index("Restart agent after source refresh")
+        < names.index("Install critical test dependencies")
+    )
+    teardown = next(
+        step["run"] for step in steps if step.get("name") == "Tear down stack"
+    )
+    assert 'docker image rm "groktocrawl-ci/agent:${run_tag}"' in teardown
+    assert '"groktocrawl-ci/agent-fixture:${run_tag}"' in teardown
+
+
 def test_answer_evals_workflow_is_advisory_and_not_pr_gated():
     root = Path(__file__).parents[2]
     workflow = (root / ".github/workflows/answer-evals.yml").read_text()
@@ -287,10 +342,11 @@ def test_compose_run_id_and_failure_provenance_are_unambiguous():
         "TWIN_EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}"
         in compose_evidence
     )
-    assert (
-        "TWIN_BUILT_FROM_CHECKOUT: llm-svc,slopsearx-fixture,agent-svc-fixture,test-site,tier3-fixture"
-        in compose_evidence
-    )
+    assert "TWIN_BUILT_FROM_CHECKOUT: >-" in compose_evidence
+    assert "github.ref != 'refs/heads/main'" in compose_evidence
+    assert "needs.changes.outputs.affected_services == 'all'" in compose_evidence
+    assert "' agent-svc '" in compose_evidence
+    assert "test-site,tier3-fixture,agent-svc' ||" in compose_evidence
     assert "tests/integration/test_twin_failure_injection.py" in compose_evidence
     assert "tests/service/test_twin_failure_injection.py" not in compose_evidence
     for host_only in (

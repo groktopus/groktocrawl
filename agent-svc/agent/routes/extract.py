@@ -27,9 +27,12 @@ async def create_extract(
         kind="extract", payload=body.model_dump(exclude_none=True, by_alias=True)
     )
 
+    from ..job_execution import submit_job
     from ..worker import _process_extract_async
 
-    request.app.state.task_tracker.create_background_task(
+    submit_job(
+        request,
+        job_id,
         _process_extract_async(
             job_id=job_id,
             urls=body.urls,
@@ -40,7 +43,7 @@ async def create_extract(
             llm_model=request.app.state.llm_model,
             scraper_url=request.app.state.scraper_url,
             webhook_config=body.webhook,
-        )
+        ),
     )
     return ExtractCreateResponse(id=job_id)
 
@@ -57,5 +60,6 @@ async def get_extract_status(request: Request, job_id: str) -> ExtractStatusResp
         status=job.get("status", "processing"),
         data=job.get("data"),
         error=job.get("error"),
+        error_code=job.get("error_code"),
         expires_at=job.get("completed_at") or job.get("created_at"),
     )

@@ -133,10 +133,10 @@ The `--profile fixture` flag starts test helper services (`llm-svc` for a built-
 
 - **Python 3.12+** with type hints
 - **FastAPI** for all HTTP services
-- **Async/await** throughout; background jobs run in the API process through `TaskTracker` and `asyncio.create_task()`.
+- **Async/await** throughout; background jobs run in the API process through `TaskTracker` and `asyncio.create_task()`. Legacy jobs may redispatch after restart only while still queued and never claimed. A claimed job is not blindly replayed; after lease expiry it fails with `OUTCOME_UNKNOWN`. See [ADR-0072](docs/adr/0072-valkey-leased-legacy-job-recovery.md) and the [interrupted-jobs runbook](docs/runbooks/interrupted-jobs.md). Cross-service artifacts are not transactionally rolled back.
 - **MIT license** — all contributions are under this license
 - Keep dependencies minimal. Each service's `pyproject.toml` should list only what it needs.
-- **Webhook support required for all async endpoints** — any new endpoint that returns a job ID must accept a `webhook` field in its request and fire it on completion/failure via `deliver_webhook()` in `agent/webhook.py`. This ensures all async jobs are observable.
+- **Webhook support required for all async endpoints** — any new endpoint that returns a job ID must accept a `webhook` field in its request and persist terminal delivery intent through the Valkey outbox, with stable `webhookId` values and bounded at-least-once retries. Reuse the job store's terminal transition/outbox operation; direct `deliver_webhook()` remains best-effort for callers outside the durable job outbox.
 
 ## Project Layout
 

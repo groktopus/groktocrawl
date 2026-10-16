@@ -4,6 +4,15 @@
 * Deciders: Magnus Hedemark, Jasper (AI Agent)
 * Date: 2026-08-03
 
+> **Update (2026-10-15):** The deferred direction for legacy async jobs was later
+> implemented with a bounded Valkey lease and fail-closed recovery contract in
+> [ADR-0072](0072-valkey-leased-legacy-job-recovery.md). This ADR remains the
+> historical decision record for the original best-effort boundary. Its body
+> below records the decision as made in 2026-08 and is not current operating
+> guidance; ADR-0072 governs queued-job recovery, uncertain active work, and
+> webhook delivery today. Cross-service artifact rollback and exactly-once
+> execution remain out of scope.
+
 ## Context and Problem Statement
 
 Async work is launched in-process with `asyncio.create_task()` through `TaskTracker` (agent-svc) and similar lifecycle handling (semantic-svc). Job records persist in Valkey for 24 hours, but execution state, retry scheduling, and webhook delivery do not survive a process restart. After process loss: a job record may remain `processing` until TTL expiry; cancellation can update persisted state but cannot resume work; partial artifacts already written to Valkey, Qdrant, or other downstream systems can remain; and an undelivered completion or failure webhook is not replayed.

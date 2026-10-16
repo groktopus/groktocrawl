@@ -49,7 +49,7 @@ Architecture Decision Records (ADRs) live in `docs/adr/` and capture the context
 
 ### Inline async processing (no RQ worker)
 
-Jobs are processed with `asyncio.create_task()` inside the API process. Valkey persists job records, not execution: interrupted jobs are not resumed after restart, partial artifacts can remain, and undelivered webhooks are not replayed. `TaskTracker` provides only a short graceful-shutdown window. Restart-safe execution is deferred until it is an explicit product requirement; any future design must define ownership, leases, retries, cancellation, artifact consistency, and webhook idempotency in an ADR before selecting queue technology.
+Jobs are processed with `asyncio.create_task()` inside the API process. New records carry a versioned Valkey execution marker and lease: a fresh process may redispatch only jobs still queued and never claimed. Claimed work is never blindly replayed; after lease expiry it becomes `failed` with `OUTCOME_UNKNOWN`. Completion/failure webhook intents are persisted in the Valkey outbox with stable UUIDv4 `webhookId` values and retried at-least-once. Partial artifacts across Valkey, the scraper, semantic index, and research memory are not transactionally rolled back. See [ADR-0072](docs/adr/0072-valkey-leased-legacy-job-recovery.md) and the [interrupted-jobs runbook](docs/runbooks/interrupted-jobs.md); do not describe this as exactly-once execution or general resumability.
 
 ### Research-memory storage
 
@@ -198,7 +198,7 @@ only after CI is green and review findings are addressed.
 
 1. Add the handler in the appropriate `agent-svc/agent/routes/` module and register new routers in that package
 2. Add request/response models in `agent-svc/agent/models.py`
-3. If the endpoint is async (returns a job ID), **it must accept a `webhook` field** and fire it on completion/failure via `deliver_webhook()` in `agent/webhook.py`
+3. If the endpoint is async (returns a job ID), **it must accept a `webhook` field** and persist terminal delivery intent through the Valkey job outbox with a stable `webhookId`. Direct `deliver_webhook()` remains best-effort for callers outside that outbox; see [ADR-0072](docs/adr/0072-valkey-leased-legacy-job-recovery.md).
 4. Rebuild the agent-svc image
 5. Add a test case in `tests/test_stack.py`
 
@@ -232,4 +232,4 @@ The graph's node labels are code identifiers and doc headings, not natural langu
 
 ## Experimental research substrate
 
-The research architecture in `agent-svc/agent/experimental/` is adopted for the standard deployment under [ADR-0069](docs/adr/0069-adopt-bounded-research-substrate.md). Existing APIs, jobs, sessions, and research-memory behavior remain compatible; legacy inline jobs keep their ADR-0047 durability contract. Do not infer deployment readiness from an accepted experiment ADR or the presence of code or environment variables. Before changing this area, read ADR-0069 and the historical [GroktoCrawl X ADR archive](docs/adr/experimental/groktocrawl-x/README.md); archived acceptance is scoped to the former experiment. Keep migrations additive, explicit, versioned, and reversible. Feature flags are rollout controls and may be enabled in the standard deployment after the documented migration and verification checks pass.
+The research architecture in `agent-svc/agent/experimental/` is adopted for the standard deployment under [ADR-0069](docs/adr/0069-adopt-bounded-research-substrate.md). Existing APIs, jobs, sessions, and research-memory behavior remain compatible; legacy inline-job recovery follows [ADR-0072](docs/adr/0072-valkey-leased-legacy-job-recovery.md). Do not infer deployment readiness from an accepted experiment ADR or the presence of code or environment variables. Before changing this area, read ADR-0069 and the historical [GroktoCrawl X ADR archive](docs/adr/experimental/groktocrawl-x/README.md); archived acceptance is scoped to the former experiment. Keep migrations additive, explicit, versioned, and reversible. Feature flags are rollout controls and may be enabled in the standard deployment after the documented migration and verification checks pass.
