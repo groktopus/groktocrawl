@@ -47,6 +47,7 @@ class LocalProviderTwin:
         self.search_requests: list[dict] = []
         self.capture_requests: list[dict] = []
         self.model_requests: list[dict] = []
+        self.callback_requests: list[tuple[bytes, dict]] = []
         self._lock = threading.Lock()
         owner = self
 
@@ -71,9 +72,34 @@ class LocalProviderTwin:
                 query = parse_qs(urlparse(self.path).query).get("q", [""])[0]
                 with owner._lock:
                     owner.search_requests.append({"query": query, "path": self.path})
-                selected = OBJECTIVES.get(query)
+                selected = next(
+                    (
+                        item
+                        for objective, item in OBJECTIVES.items()
+                        if query
+                        in (
+                            objective,
+                            objective + " independent replication",
+                            objective + " limitations",
+                        )
+                    ),
+                    None,
+                )
                 rows = (
-                    [{"url": selected[0], "title": "Local source", "content": ""}]
+                    [
+                        {
+                            "url": selected[0]
+                            + (
+                                "/replication"
+                                if query.endswith(" independent replication")
+                                else "/limits"
+                                if query.endswith(" limitations")
+                                else ""
+                            ),
+                            "title": "Local source",
+                            "content": "",
+                        }
+                    ]
                     if selected
                     else []
                 )
@@ -90,6 +116,11 @@ class LocalProviderTwin:
             def do_POST(self) -> None:
                 length = int(self.headers.get("Content-Length", "0"))
                 raw = self.rfile.read(length)
+                if self.path == "/callback":
+                    with owner._lock:
+                        owner.callback_requests.append((raw, dict(self.headers)))
+                    self._reply(200, {"received": True})
+                    return
                 try:
                     payload = json.loads(raw)
                 except Exception:
@@ -103,7 +134,9 @@ class LocalProviderTwin:
                         (
                             text
                             for source_url, text in OBJECTIVES.values()
-                            if source_url == url
+                            if url == source_url
+                            or url
+                            in (source_url + "/replication", source_url + "/limits")
                         ),
                         None,
                     )
@@ -127,7 +160,18 @@ class LocalProviderTwin:
                         owner.model_requests.append(payload)
                     user = payload["messages"][1]["content"]
                     request = json.loads(user)
-                    if "sources" in request and "objective" in request:
+                    if request.get("planning"):
+                        objective = request["objective"]
+                        answer = {
+                            "reasoning": "Controlled multiquery acceptance plan",
+                            "research_strategy": "deep",
+                            "focused_queries": [
+                                objective,
+                                objective + " independent replication",
+                                objective + " limitations",
+                            ],
+                        }
+                    elif "sources" in request and "objective" in request:
                         source = request["sources"][0]
                         line = source["lines"][0]["text"].rstrip("\n")
                         answer = {
@@ -399,14 +443,18 @@ async def test_two_objectives_use_http_adapters_and_recover_actual_bytes_through
 
         assert [item["query"] for item in provider_twin.search_requests] == [
             first_objective,
+            first_objective + " independent replication",
+            first_objective + " limitations",
             second_objective,
+            second_objective + " independent replication",
+            second_objective + " limitations",
         ]
-        assert len(provider_twin.capture_requests) == 2
+        assert len(provider_twin.capture_requests) == 6
         assert all(
             item.get("lightweight_only") is True
             for item in provider_twin.capture_requests
         )
-        assert len(provider_twin.model_requests) >= 4
+        assert len(provider_twin.model_requests) == 6
         assert all(
             item["model"] == "acceptance-local-model"
             for item in provider_twin.model_requests
@@ -512,4 +560,87 @@ async def test_live_search_failure_is_not_reported_as_success(
         assert "result" not in status or status["result"] is None
         assert any(item["query"] == objective for item in provider_twin.search_requests)
         assert not provider_twin.capture_requests
-        assert not provider_twin.model_requests
+        assert len(provider_twin.model_requests) == 1
+        assert (
+            json.loads(provider_twin.model_requests[0]["messages"][1]["content"])[
+                "planning"
+            ]
+            is True
+        )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("successful", [True, False])
+async def test_real_http_terminal_callback_has_stable_identity_and_status(
+    durable_apps, provider_twin, monkeypatch, successful
+):
+    from agent import webhook
+    from agent.experimental.research_notifications import deliver_notifications
+
+    apps, _, _, ledgers, _, cleanup_research_ids, _ = durable_apps
+    destination = provider_twin.base_url + "/callback"
+
+    def local_test_destination(url):
+        # This test-only allowlist admits exactly the controlled loopback twin.
+        # The production destination policy is separately tested unchanged.
+        assert url == destination
+
+    monkeypatch.setattr(
+        experimental, "validate_outbound_webhook_url", local_test_destination
+    )
+    monkeypatch.setattr(
+        webhook, "validate_outbound_webhook_url", local_test_destination
+    )
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=apps[0]),
+        base_url="http://acceptance",
+        headers={"Authorization": "Bearer live-http-acceptance-owner"},
+    ) as client:
+        created = await client.post(
+            "/experimental/research/v1/runs",
+            headers={"Idempotency-Key": "callback-" + str(successful)},
+            json={
+                "objective": next(iter(OBJECTIVES))
+                if successful
+                else "Unavailable callback test evidence",
+                "webhook": destination,
+            },
+        )
+        assert created.status_code == 202, created.text
+        admission = created.json()
+        cleanup_research_ids.append(admission["research_id"])
+        status = await _terminal(client, admission["status_url"])
+        state = "completed" if successful else "failed"
+        assert status["state"] == state, status
+        assert status["webhook"] == {"state": "pending", "attempts": 0}
+        await deliver_notifications(ledgers[0])
+        assert len(provider_twin.callback_requests) == 1
+        body = json.loads(provider_twin.callback_requests[0][0])
+        assert body["type"] == "research." + state
+        assert body["webhookId"] == body["id"] == admission["run_id"]
+        assert body["data"]["research_id"] == admission["research_id"]
+        assert body["success"] is successful
+        status = (await client.get(admission["status_url"])).json()
+        assert status["webhook"] == {"state": "delivered", "attempts": 1}
+        assert destination not in json.dumps(status)
+
+
+@pytest.mark.asyncio
+async def test_as_of_never_turns_a_new_capture_into_historical_evidence(durable_apps):
+    apps, _, _, _, _, cleanup_research_ids, _ = durable_apps
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=apps[0]),
+        base_url="http://acceptance",
+        headers={"Authorization": "Bearer live-http-acceptance-owner"},
+    ) as client:
+        response = await client.post(
+            "/experimental/research/v1/runs",
+            headers={"Idempotency-Key": "past-evaluation"},
+            json={"objective": next(iter(OBJECTIVES)), "as_of": "2026-01-01T00:00:00Z"},
+        )
+        assert response.status_code == 202, response.text
+        cleanup_research_ids.append(response.json()["research_id"])
+        status = await _terminal(client, response.json()["status_url"])
+        assert status["state"] == "failed", status
+        assert status["error"]["code"] == "historical_validity_unestablished"
+        assert status["result"] is None

@@ -36,7 +36,7 @@ def ledger():
         value.redis.close()
 
 
-def admitted(ledger):
+def admitted(ledger, policy=None):
     value = ledger.admit(
         "test-owner",
         str(uuid4()),
@@ -48,6 +48,7 @@ def admitted(ledger):
             "model": "configured-test-model",
             "token_params": {"max_tokens": 2048},
             "evaluation_time": datetime.now(UTC).isoformat(),
+            "policy_version": policy,
         },
     )
     record = routes._restore_durable_record(value)
@@ -248,21 +249,24 @@ async def test_heartbeat_and_remote_cancel_fence_publication(ledger, monkeypatch
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("policy", [None, "durable-live/2"])
 async def test_real_construction_and_review_replay_without_new_model_calls(
-    ledger, monkeypatch
+    ledger, monkeypatch, policy
 ):
     from agent.experimental import real_journey
 
     from tests.unit.test_query_construction import TEXT, batch_decisions, proposal
 
-    record = admitted(ledger)
+    record = admitted(ledger, policy)
     model_calls = []
+    search_calls = []
 
     class Search:
         def __init__(self, *_args, **_kwargs):
             pass
 
-        async def search(self, *_args, **_kwargs):
+        async def search(self, query, **_kwargs):
+            search_calls.append(query)
             return [{"url": "https://source.test/pilot"}], SimpleNamespace(
                 empty_result=False
             )
@@ -281,7 +285,17 @@ async def test_real_construction_and_review_replay_without_new_model_calls(
         async def __call__(self, request):
             value = json.loads(request.payload)
             model_calls.append(value)
-            reply = proposal() if "schema" in value else batch_decisions(value)
+            reply = (
+                {
+                    "reasoning": "Bounded controlled plan",
+                    "research_strategy": "deep",
+                    "focused_queries": [record.objective, "replication", "limitations"],
+                }
+                if value.get("planning")
+                else proposal()
+                if "schema" in value
+                else batch_decisions(value)
+            )
             return ModelReply(json.dumps(reply).encode(), "configured-test-model", 1, 1)
 
     original = real_journey.ConsolidatedJourney
@@ -308,7 +322,12 @@ async def test_real_construction_and_review_replay_without_new_model_calls(
     ledger.redis.delete(ledger._lease_key(record.run_id))
     claim(record)
     result = await live_runner.run_live(record, record.app)
-    assert len(model_calls) == 2  # construction plus batched semantic review
+    assert len(model_calls) == (3 if policy else 2)
+    assert search_calls == (
+        [record.objective, "replication", "limitations"]
+        if policy
+        else [record.objective]
+    )
     assert result.candidate.admitted.manifest.research_id == record.research_id
     assert result.sources == completed[0].sources
     assert [report.body for report in result.reports] == [

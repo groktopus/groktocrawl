@@ -9,6 +9,10 @@ from .knowledge import Digest, Identity, Text
 from .knowledge_context import KnowledgeContext, StrictRecord, Timestamp, moment
 
 
+class HistoricalValidityError(ValueError):
+    """Retained evidence cannot establish validity at a requested past target."""
+
+
 class FixtureReviewer(StrictRecord):
     kind: Literal["fixture"]
     identity: Identity

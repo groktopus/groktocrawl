@@ -137,6 +137,7 @@ The `--profile fixture` flag starts test helper services (`llm-svc` for a built-
 - **MIT license** — all contributions are under this license
 - Keep dependencies minimal. Each service's `pyproject.toml` should list only what it needs.
 - **Webhook support required for all async endpoints** — any new endpoint that returns a job ID must accept a `webhook` field in its request and fire it on completion/failure via `deliver_webhook()` in `agent/webhook.py`. This ensures all async jobs are observable.
+- **Durable research callbacks** use the recorded outbox and `deliver_recorded_webhook()` rather than an untracked fire-and-forget delivery. Preserve exact body/event identity across retries and expose unconfirmed delivery honestly. See the [live research contract](docs/guides/durable-research.md); its retained-call and time-evaluation rules are separate from legacy job behavior.
 
 ## Project Layout
 

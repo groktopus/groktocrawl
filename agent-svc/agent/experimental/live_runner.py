@@ -15,6 +15,7 @@ from ..barrier_guard import is_block_flagged
 from ..searxng_client import SearXNGClient
 from ..session_store import SessionStore
 from ..settings import load_settings
+from .durable_plan import plan_queries
 from .durable_research import OutcomeUnknownError
 from .model_review import ModelReply
 from .model_transport import ReviewTransport
@@ -32,6 +33,7 @@ async def run_live(record: Any, app: Any):
         raise ValueError("admission unavailable")
     evaluated = datetime.fromisoformat(admitted.payload["evaluation_time"])
     model = admitted.payload["model"]
+    planned_policy = admitted.payload.get("policy_version") == "durable-live/2"
     selected_sources = tuple(
         CapturedSource(**source)
         for source in admitted.payload.get("selected_sources", [])
@@ -153,8 +155,17 @@ async def run_live(record: Any, app: Any):
                 "empty": health.empty_result,
             }
 
-        result = await effect("search", {"objective": objective, "limit": limit}, fetch)
-        if (result["empty"] or not result["urls"]) and not selected_sources:
+        identity = (
+            "search:" + hashlib.sha256(objective.encode()).hexdigest()
+            if planned_policy
+            else "search"
+        )
+        result = await effect(identity, {"objective": objective, "limit": limit}, fetch)
+        if (
+            (result["empty"] or not result["urls"])
+            and not selected_sources
+            and not planned_policy
+        ):
             raise ValueError("search returned no usable sources")
         return tuple(result["urls"])
 
@@ -225,6 +236,17 @@ async def run_live(record: Any, app: Any):
         if remaining <= 0:
             raise ValueError("research execution deadline expired")
         async with asyncio.timeout(remaining):
+            queries = (
+                await plan_queries(
+                    record.objective,
+                    complete=complete,
+                    model=model,
+                    selected_sources=selected_sources,
+                    as_of=admitted.payload.get("as_of"),
+                )
+                if planned_policy and len(selected_sources) < 8
+                else None
+            )
             return await run_query(
                 record.objective,
                 search=search,
@@ -239,4 +261,8 @@ async def run_live(record: Any, app: Any):
                     uuid5(NAMESPACE_URL, f"groktocrawl-x:artifact-set:{record.run_id}")
                 ),
                 selected_sources=selected_sources,
+                as_of=admitted.payload.get("as_of"),
+                queries=queries,
+                source_limit=8 if queries is not None else 3,
+                allow_partial=planned_policy,
             )

@@ -169,6 +169,8 @@ async def construct_research(
     clock: Callable[[], datetime] = _utc,
     research_id: str | None = None,
     revision_id: str | None = None,
+    as_of: str | None = None,
+    acquisition_failures: tuple[str, ...] = (),
 ) -> ConstructedResearch:
     """One model call, no retries; returned knowledge is NOT verified or publishable."""
     if (
@@ -215,6 +217,9 @@ async def construct_research(
     payload = json.dumps(
         {
             "objective": objective,
+            "as_of": as_of,
+            "acquisition_failures": acquisition_failures,
+            "as_of_semantics": "Evidence evaluation target only; newly captured text is not an archived capture. Do not invent dates or historical validity.",
             "sources": [
                 {
                     "source_index": index,
@@ -274,10 +279,24 @@ async def construct_research(
                     {
                         "question_id": "question-root",
                         "question": objective,
-                        "status": content.answer_status,
+                        "status": "unresolved"
+                        if acquisition_failures
+                        else content.answer_status,
                         "report_claim_id": answer,
                     }
-                ],
+                ]
+                + (
+                    [
+                        {
+                            "question_id": "question-acquisition-coverage",
+                            "question": f"Acquisition coverage is incomplete: {len(acquisition_failures)} planned sources were unavailable. What remains unestablished?",
+                            "status": "unresolved",
+                            "report_claim_id": answer,
+                        }
+                    ]
+                    if acquisition_failures
+                    else []
+                ),
                 "conflicts": [
                     {
                         "conflict_id": f"conflict-{index}",
@@ -298,7 +317,7 @@ async def construct_research(
                 "parent_revision_id": None,
                 "parent_digest": None,
                 "created_at": now.isoformat().replace("+00:00", "Z"),
-                "as_of": now.isoformat().replace("+00:00", "Z"),
+                "as_of": as_of or now.isoformat().replace("+00:00", "Z"),
                 "objective": objective,
                 "policy_version": "real-research-pilot/3",
                 "snapshots": [s.model_dump(mode="json") for s in snapshots],

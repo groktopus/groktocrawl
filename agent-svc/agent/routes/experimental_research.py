@@ -17,6 +17,11 @@ from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from common.features import is_enabled
+from common.url import (
+    WebhookDestinationDNSRetryableError,
+    WebhookDestinationValidationError,
+    validate_outbound_webhook_url,
+)
 
 from ..experimental.artifact_authority import (
     ArtifactAuthority,
@@ -32,6 +37,7 @@ from ..experimental.durable_research import (
     LeaseLostError,
     OutcomeUnknownError,
 )
+from ..experimental.knowledge_checks import HistoricalValidityError
 from ..experimental.live_runner import run_live
 from ..experimental.query_construction import CapturedSource
 from ..experimental.source_store import StorageConflictError
@@ -86,6 +92,8 @@ class _RunRecord:
     durable_evidence: dict[str, tuple[bytes, str]] = field(default_factory=dict)
     artifact_authority: ArtifactAuthority | None = None
     authority_set_digest: str | None = None
+    notification: dict[str, Any] | None = None
+    webhook_requested: bool = False
     execution_mode: str = "fixture"
     app: Any = None
 
@@ -367,6 +375,16 @@ def _record_projection(record: _RunRecord) -> dict[str, Any]:
         if record.state == "completed" and record.result is not None
         else None,
         "error": record.error if terminal and terminal.event == "error" else None,
+        **(
+            {
+                "webhook": {
+                    "state": (record.notification or {}).get("state", "pending"),
+                    "attempts": (record.notification or {}).get("attempts", 0),
+                }
+            }
+            if record.webhook_requested
+            else {}
+        ),
         "status_url": f"{_ROUTE_PREFIX}/runs/{record.run_id}",
         "events_url": f"{_ROUTE_PREFIX}/runs/{record.run_id}/events",
     }
@@ -406,6 +424,7 @@ def _check_retained_ledger(record: _RunRecord) -> None:
                 "authority_set_digest",
             ):
                 setattr(record, name, getattr(restored, name))
+        record.notification = current.notification
     if record.deleted:
         raise HTTPException(status_code=410, detail="Research run deleted")
 
@@ -523,6 +542,8 @@ def _restore_durable_record(durable: DurableRun) -> _RunRecord:
         deleted=deleted,
         execution_mode=payload.get("execution_mode", "fixture"),
         error=terminal.get("error"),
+        notification=durable.notification,
+        webhook_requested=isinstance(payload.get("webhook"), str),
     )
 
 
@@ -768,9 +789,19 @@ async def _execute_run(record: _RunRecord) -> None:
         async with record.lock:
             if record.state in {"completed", "cancelled"} or record.deleted:
                 return
+            pending_dispatch = False
+            if record.execution_mode == "live" and record.durable_ledger is not None:
+                try:
+                    pending_dispatch = await asyncio.to_thread(
+                        record.durable_ledger.has_pending_dispatch, record.run_id
+                    )
+                except Exception:
+                    return
             record.error = {
                 "code": "outcome_unknown"
-                if isinstance(exc, OutcomeUnknownError)
+                if isinstance(exc, OutcomeUnknownError) or pending_dispatch
+                else "historical_validity_unestablished"
+                if isinstance(exc, HistoricalValidityError)
                 else "research_run_failed"
                 if record.execution_mode == "live"
                 else "fixture_run_failed",
@@ -961,14 +992,15 @@ def capability_document() -> dict[str, Any]:
                 else "durable_artifact_authority_required",
                 "execution_mode": "live" if live_creation else "fixture_only",
                 "policy": {
-                    "searches": 1,
-                    "sources": 3,
+                    "searches": 3,
+                    "sources": 8,
                     "source_bytes": 256_000,
                     "timeout_seconds": 180,
                     "model_calls": 64,
                     "automatic_ambiguous_call_retry": False,
-                    "webhook": False,
-                    "as_of": False,
+                    "webhook": live_creation,
+                    "as_of": live_creation,
+                    "as_of_semantics": "evidence_evaluation_target_not_historical_capture",
                 },
             },
             "artifacts": {
@@ -1018,12 +1050,33 @@ async def admit_research_run(
         raise HTTPException(
             status_code=422, detail="Selected evidence exceeds research context budget"
         )
-    if payload.webhook is not None or payload.as_of is not None:
+    fixture = is_enabled("experimental_research_fixture_runs")
+    if fixture and payload.webhook is not None:
+        raise HTTPException(
+            status_code=422, detail="Fixture runs do not dispatch webhooks"
+        )
+    if payload.webhook is not None:
+        try:
+            await asyncio.to_thread(validate_outbound_webhook_url, payload.webhook)
+        except WebhookDestinationDNSRetryableError as exc:
+            raise HTTPException(
+                status_code=503, detail="Webhook destination temporarily unavailable"
+            ) from exc
+        except WebhookDestinationValidationError as exc:
+            raise HTTPException(
+                status_code=422, detail="Webhook destination is not allowed"
+            ) from exc
+    if payload.as_of is not None and (
+        payload.as_of.utcoffset() is None or payload.as_of > datetime.now(UTC)
+    ):
         raise HTTPException(
             status_code=422,
-            detail="Durable research does not yet support webhook delivery or as_of evaluation",
+            detail="as_of must be a timezone-aware nonfuture evidence evaluation target",
         )
-    fixture = is_enabled("experimental_research_fixture_runs")
+    if fixture and payload.as_of is not None:
+        raise HTTPException(
+            status_code=422, detail="Fixture runs cannot evaluate as_of"
+        )
     if not fixture and not (_durable_enabled() and _artifact_authority_enabled()):
         raise HTTPException(
             status_code=503,
@@ -1074,11 +1127,18 @@ async def admit_research_run(
                     "objective": payload.objective,
                     "research_id": str(uuid4()),
                     "execution_mode": "fixture" if fixture else "live",
+                    "policy_version": "durable-live/2",
                     "model": model,
                     "token_params": _token_budget_params(),
                     "selected_sources": [asdict(source) for source in selected_sources],
                     "session_scope": request_scope(request),
                     "evaluation_time": datetime.now(UTC).isoformat(),
+                    "as_of": payload.as_of.astimezone(UTC)
+                    .isoformat()
+                    .replace("+00:00", "Z")
+                    if payload.as_of
+                    else None,
+                    "webhook": payload.webhook,
                     "events": [accepted_event.model_dump(mode="json")],
                 },
             )

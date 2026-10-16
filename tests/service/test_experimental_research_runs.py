@@ -518,7 +518,7 @@ async def test_disabling_fixture_admission_preserves_existing_reads(app, monkeyp
     "unsupported",
     [{"webhook": "https://receiver.test/hook"}, {"as_of": "2026-01-01T00:00:00Z"}],
 )
-async def test_unimplemented_options_rejected_before_admission(
+async def test_live_only_options_rejected_before_fixture_admission(
     app, monkeypatch, unsupported
 ):
     def unexpected(*_args, **_kwargs):

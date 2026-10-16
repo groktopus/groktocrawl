@@ -5,7 +5,8 @@ from dataclasses import dataclass
 
 from .checked_knowledge import admit_checked_history
 from .context_sources import ContextSourceResolver
-from .knowledge_checks import Reviewer
+from .knowledge_checks import HistoricalValidityError, Reviewer
+from .knowledge_context import moment
 from .knowledge_execution import KnowledgeExecutionLedger
 from .manifest_outputs import AdmittedManifest, ManifestResolver, admit_render_manifest
 from .render_execution import RenderExecutionLedger
@@ -59,6 +60,19 @@ def _check_eligibility(admitted: AdmittedManifest) -> None:
                     != {"semantic_support", "freshness"}
                     or any(r.verdict != "pass" for r in checks)
                 ):
+                    if (
+                        knowledge.context.as_of is not None
+                        and moment(knowledge.context.as_of)
+                        < moment(knowledge.context.created_at)
+                        and any(
+                            inputs[r.input_id].check_type == "freshness"
+                            and r.verdict != "pass"
+                            for r in checks
+                        )
+                    ):
+                        raise HistoricalValidityError(
+                            "historical validity is not established by retained evidence"
+                        )
                     raise ValueError(
                         "publication statement contains an ineligible claim"
                     )

@@ -28,13 +28,17 @@ async def run_query(
     revision_id: str | None = None,
     artifact_set_id: str | None = None,
     selected_sources: tuple[CapturedSource, ...] = (),
+    as_of: str | None = None,
+    queries: tuple[str, ...] | None = None,
+    allow_partial: bool = False,
 ) -> JourneyResult:
-    """One search, up to three acquisitions, one construction, executed reviews.
+    """Run a bounded query plan, retained acquisitions, construction and checks.
 
     Tool implementations own destination policy, capacity admission and credentials.
-    No callbacks are derived from source text; no retries or additional searches
-    occur. Any failed acquisition fails this initial policy rather than silently
-    turning an operational error into a successful partial answer.
+    Explicit plans allow at most three searches and eight total sources. Known
+    acquisition failures can produce an insufficient-coverage report; ambiguous
+    dispatch failures always stop. The legacy default remains one search and
+    three new sources. No retries or callbacks are derived from source text.
     """
     if (
         not isinstance(objective, str)
@@ -42,8 +46,19 @@ async def run_query(
         or len(objective) > 10_000
     ):
         raise ValueError("invalid research objective")
-    if type(source_limit) is not int or not 1 <= source_limit <= 3:
-        raise ValueError("source limit must be between one and three")
+    ceiling = 8 if queries is not None else 3
+    if type(source_limit) is not int or not 1 <= source_limit <= ceiling:
+        raise ValueError("invalid bounded source limit")
+    planned = queries if queries is not None else (objective,)
+    if (
+        not 1 <= len(planned) <= 3
+        or any(
+            not isinstance(query, str) or not query.strip() or len(query) > 10_000
+            for query in planned
+        )
+        or len(set(planned)) != len(planned)
+    ):
+        raise ValueError("invalid bounded query plan")
     if len(selected_sources) > 8 or any(
         not source.text.strip() for source in selected_sources
     ):
@@ -53,11 +68,23 @@ async def run_query(
         raise ValueError("retained context exceeds research byte budget")
     async with asyncio.timeout(180):
         fresh_limit = min(source_limit, 8 - len(selected_sources))
-        urls = (
-            await asyncio.ensure_future(search(objective, fresh_limit))
-            if fresh_limit
-            else ()
+        results = []
+        for query in planned if fresh_limit else ():
+            rows = await asyncio.ensure_future(search(query, fresh_limit))
+            if (
+                not isinstance(rows, tuple)
+                or len(rows) > fresh_limit
+                or len(set(rows)) != len(rows)
+            ):
+                raise ValueError("search did not return a bounded source plan")
+            results.append(rows)
+        ordered = dict.fromkeys(
+            url
+            for index in range(fresh_limit)
+            for rows in results
+            for url in rows[index : index + 1]
         )
+        urls = tuple(ordered)[:fresh_limit]
         owner = asyncio.current_task()
         if owner is not None and owner.cancelling():
             raise asyncio.CancelledError
@@ -79,10 +106,17 @@ async def run_query(
                 raise ValueError("search returned invalid source URL")
         sources = list(selected_sources)
         retained_bytes = seed_bytes
+        failures = []
         for url in urls:
             if any(source.url == url for source in selected_sources):
                 continue
-            source = await asyncio.ensure_future(acquire(url))
+            try:
+                source = await asyncio.ensure_future(acquire(url))
+            except ValueError:
+                if not allow_partial:
+                    raise
+                failures.append(url)
+                continue
             task = asyncio.current_task()
             if task is not None and task.cancelling():
                 raise asyncio.CancelledError
@@ -94,6 +128,8 @@ async def run_query(
             if retained_bytes > 256_000:
                 raise ValueError("acquisition exceeded research byte budget")
             sources.append(source)
+        if not sources:
+            raise ValueError("no usable acquired research sources")
         evaluated = max(
             [clock() if clock is not None else datetime.now(UTC)]
             + [
@@ -112,4 +148,6 @@ async def run_query(
             research_id=research_id,
             revision_id=revision_id,
             artifact_set_id=artifact_set_id,
+            as_of=as_of,
+            acquisition_failures=tuple(failures),
         )
