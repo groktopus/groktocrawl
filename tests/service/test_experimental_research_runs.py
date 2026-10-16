@@ -10,6 +10,54 @@ from agent.routes import experimental_research as experimental
 from fastapi import FastAPI
 
 
+class AttachmentSessions:
+    """Owned session test boundary; real Lua is tested with isolated Valkey."""
+
+    def __init__(self):
+        import hashlib
+
+        self.owners = {
+            "session-1": "anonymous",
+            "deleted-session": "anonymous",
+            "scope-session": "key:" + hashlib.sha256(b"owner").hexdigest()[:32],
+        }
+        self.revisions = {}
+        self.runs = {}
+        self.refs = {}
+
+    async def aget(self, identity):
+        owner = self.owners.get(identity)
+        return {"owner_scope": owner} if owner else None
+
+    async def acquire_lock(self, *args, **kwargs):
+        return "owned-test-lock"
+
+    def set_lock_owner(self, token):
+        return token
+
+    def reset_lock_owner(self, token):
+        pass
+
+    async def arelease_lock(self, *args):
+        pass
+
+    async def ahas_pending_steps(self, *args):
+        return False
+
+    async def aattach_research(self, identity, run, expected, refs, owner):
+        if self.owners.get(identity) != owner:
+            return -2
+        revision = self.revisions.get(identity, 0)
+        if revision != expected:
+            return -1
+        if self.runs.get(identity) == run:
+            return revision
+        self.refs.update(refs)
+        self.runs[identity] = run
+        self.revisions[identity] = revision + 1
+        return revision + 1
+
+
 @pytest.fixture
 def app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
     monkeypatch.setenv("FEATURE_EXPERIMENTAL_RESEARCH", "true")
@@ -18,7 +66,16 @@ def app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
     experimental._RUNS.clear()
     experimental._IDEMPOTENCY.clear()
     experimental._SESSION_ATTACHMENTS.clear()
+    sessions = AttachmentSessions()
+    monkeypatch.setattr("agent.session_store.SessionStore", lambda **kwargs: sessions)
     value = FastAPI()
+    from agent.exceptions import GroktoCrawlError
+    from fastapi.responses import JSONResponse
+
+    @value.exception_handler(GroktoCrawlError)
+    async def domain_error(_request, exc):
+        return JSONResponse(status_code=exc.status_code, content={"error": str(exc)})
+
     value.include_router(experimental.router)
     return value
 
