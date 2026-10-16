@@ -239,7 +239,11 @@ async def _run_research_events(
 
             if pass_count == 1:
                 # ── Pass 1: normal discovery ──────────────────────
-                if strategy == "deep" and len(queries) > 1:
+                # Focused mode controls the number of research passes, not
+                # whether a planner's distinct comparison queries are run.
+                # Searching each planned side in the same pass prevents a
+                # ranked result set for one subject from crowding out another.
+                if len(queries) > 1:
 
                     async def discover_pass_one_multi(
                         on_artifact,
@@ -319,7 +323,7 @@ async def _run_research_events(
                 if pass_count > 1
                 else (
                     discover_pass_one_multi
-                    if strategy == "deep" and len(queries) > 1
+                    if len(queries) > 1
                     else discover_pass_one_single
                 )
             )
