@@ -472,3 +472,17 @@ def test_image_publication_preserves_untagged_multiarch_child_manifests():
             command = step.get("run", "")
             if "/packages/container/" in command:
                 assert not re.search(r"(?:--method|-X)\s+DELETE\b", command)
+
+
+def test_full_integration_steps_allow_report_headroom_without_relaxing_test_timeouts():
+    root = Path(__file__).parents[2]
+    for filename in ("docker.yml", "runtime.yml"):
+        workflow = yaml.safe_load((root / ".github/workflows" / filename).read_text())
+        job = workflow["jobs"]["integration-tests"]
+        step = next(s for s in job["steps"] if s.get("name") == "Run integration tests")
+        assert step["timeout-minutes"] == 25
+        assert "--timeout=120" in step["run"]
+        assert 'docker cp "$svc:/app/coverage/." coverage/' in step["run"]
+        assert 'exit "$pytest_status"' in step["run"]
+        if filename == "runtime.yml":
+            assert job["timeout-minutes"] == 60
