@@ -1259,8 +1259,7 @@ jobs:
           docker compose \
             --profile fixture \
             --profile indexing \
-            --profile durable-research \
-            down --volumes --remove-orphans --timeout 30
+            --profile durable-research down --volumes --remove-orphans --timeout 30
 
   research-runtime:
     uses: ./.github/workflows/runtime.yml
