@@ -61,9 +61,7 @@ def test_capabilities_advertise_postgres_artifact_authority(monkeypatch) -> None
     monkeypatch.setenv("FEATURE_EXPERIMENTAL_RESEARCH_DURABLE", "true")
     monkeypatch.setenv("FEATURE_EXPERIMENTAL_RESEARCH_POSTGRES_ARTIFACTS", "true")
     payload = _client().get("/experimental/research/v1/capabilities").json()
-    assert (
-        payload["implementation_stage"] == "postgres_artifact_authority_fixture_adapter"
-    )
+    assert payload["implementation_stage"] == "postgres_artifact_authority_live_adapter"
     assert payload["recovery_mode"] == "postgres_artifacts_valkey_fenced"
 
 
@@ -77,17 +75,15 @@ def test_retained_capabilities_distinguish_fixture_creation_from_reads(monkeypat
         monkeypatch.setenv("FEATURE_" + flag, "true")
     monkeypatch.delenv("FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS", raising=False)
     payload = _client().get("/experimental/research/v1/capabilities").json()
-    assert payload["live_research_available"] is False
-    assert (
-        payload["implementation_stage"] == "postgres_artifact_authority_fixture_adapter"
-    )
+    assert payload["live_research_available"] is True
+    assert payload["implementation_stage"] == "postgres_artifact_authority_live_adapter"
     assert payload["operations"]["workspace"]["available"] is True
     assert payload["operations"]["artifacts"]["available"] is True
     runs = payload["operations"]["runs"]
     assert runs["available"] is True
-    assert runs["create_available"] is False
-    assert runs["creation_reason"] == "development_fixture_opt_in_required"
-    assert runs["execution_mode"] == "fixture_only"
+    assert runs["create_available"] is True
+    assert runs["creation_reason"] is None
+    assert runs["execution_mode"] == "live"
     monkeypatch.setenv("FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS", "true")
     enabled = _client().get("/experimental/research/v1/capabilities").json()
     assert enabled["operations"]["runs"]["create_available"] is True

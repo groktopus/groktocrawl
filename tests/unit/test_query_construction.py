@@ -374,3 +374,22 @@ async def test_invalid_line_ranges_are_rejected(start, end):
     value["evidence"][0].update(start_line=start, end_line=end)
     with pytest.raises(ValueError):
         await run(value)
+
+
+@pytest.mark.asyncio
+async def test_selected_source_preserves_unknown_original_metadata():
+    async def complete(_request):
+        return ModelReply(json.dumps(proposal()).encode(), "local", None, None)
+
+    result = await construct_research(
+        QUESTION,
+        (CapturedSource(None, TEXT, None, origin_id="retained-root:source-1"),),
+        complete=complete,
+        scope_id="owner",
+        clock=journey_clock,
+    )
+    snapshot = result.context.snapshots[0]
+    assert snapshot.canonical_url is None
+    assert snapshot.retrieved_at is None
+    assert snapshot.origin_id == "retained-root:source-1"
+    assert (await result.resolve(snapshot.content_ref)).body == TEXT.encode()

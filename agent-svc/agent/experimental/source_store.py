@@ -42,12 +42,14 @@ class RetainedSource:
     descriptor: CanonicalDocument
 
 
-def source_descriptor(body: bytes, url: str) -> CanonicalDocument:
+def source_descriptor(
+    body: bytes, url: str | None, *, allow_unknown_url: bool = False
+) -> CanonicalDocument:
     """Validate bounded exact UTF-8 source bytes before entering a transaction."""
     if not isinstance(body, bytes) or len(body) > MAX_BODY:
         raise ValueError("source byte limit exceeded")
     body.decode("utf-8", errors="strict")
-    if (
+    if not (allow_unknown_url and url is None) and (
         not isinstance(url, str)
         or not url.startswith(("https://", "http://"))
         or len(url) > 8192

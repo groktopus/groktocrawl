@@ -371,6 +371,16 @@ def create_app() -> FastAPI:
         This runs inside a running event loop (unlike module-level
         ``asyncio.create_task()`` which would fail at import time).
         """
+        from common.features import is_enabled
+
+        from .routes.experimental_research import recover_research_runs
+
+        if is_enabled("experimental_research_runs") and is_enabled(
+            "experimental_research_durable"
+        ):
+            app.state.task_tracker.create_background_task(
+                recover_research_runs(app, app.state.task_tracker.shutdown_event)
+            )
         if app.state.slopsearx_provenance is not None:
             await app.state.slopsearx_provenance.check_profile()
         app.state.task_tracker.create_background_task(
@@ -386,7 +396,10 @@ def create_app() -> FastAPI:
 
     @app.on_event("shutdown")
     async def shutdown_event() -> None:
+        from .routes.experimental_research import stop_research_runs
+
         await app.state.task_tracker.shutdown(grace_period=5.0)
+        await stop_research_runs(app)
         await app.state.research_memory.close()
         await app.state.scraper_client.close()
         await app.state.searxng_client.close()

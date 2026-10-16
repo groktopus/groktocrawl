@@ -1,10 +1,4 @@
-"""Opt-in experimental research protocol adapters.
-
-New runs use fictional sources and authored judgments and require an explicit
-development fixture opt-in. Existing process-local, Valkey, and PostgreSQL
-retained reads and recovery keep their separate gates; no live research adapter
-is selected by this route.
-"""
+"""Durable bounded live research and explicitly selected development fixtures."""
 
 import asyncio
 import base64
@@ -12,8 +6,9 @@ import hashlib
 import importlib.util
 import json
 import os
-from dataclasses import dataclass, field
-from datetime import datetime
+from contextlib import asynccontextmanager, suppress
+from dataclasses import asdict, dataclass, field
+from datetime import UTC, datetime
 from typing import Any, Literal, cast
 from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
@@ -34,8 +29,14 @@ from ..experimental.durable_research import (
     DurableResearchError,
     DurableResearchLedger,
     DurableRun,
+    LeaseLostError,
+    OutcomeUnknownError,
 )
+from ..experimental.live_runner import run_live
+from ..experimental.query_construction import CapturedSource
 from ..experimental.source_store import StorageConflictError
+from ..llm import _token_budget_params
+from ..session_scope import request_scope
 
 router = APIRouter()
 
@@ -44,7 +45,7 @@ _MAX_DURABLE_TERMINAL_PAYLOAD_BYTES = 1_048_576
 
 
 class CreateResearchRunRequest(BaseModel):
-    """Bounded fixture-run admission request."""
+    """Bounded objective-driven research admission request."""
 
     protocol_version: Literal["research/1"] = "research/1"
     objective: str = Field(min_length=1, max_length=10_000)
@@ -85,6 +86,8 @@ class _RunRecord:
     durable_evidence: dict[str, tuple[bytes, str]] = field(default_factory=dict)
     artifact_authority: ArtifactAuthority | None = None
     authority_set_digest: str | None = None
+    execution_mode: str = "fixture"
+    app: Any = None
 
 
 _RUNS: dict[str, _RunRecord] = {}
@@ -385,6 +388,24 @@ def _check_retained_ledger(record: _RunRecord) -> None:
             raise HTTPException(status_code=410, detail="Research run expired")
         if current.state == "deleted":
             record.deleted = True
+        elif current.state in {"completed", "failed", "cancelled"} and record.state in {
+            "accepted",
+            "running",
+            "cancel_requested",
+        }:
+            restored = _restore_durable_record(current)
+            for name in (
+                "state",
+                "result",
+                "error",
+                "events",
+                "durable_manifest",
+                "durable_artifacts",
+                "durable_knowledge",
+                "durable_evidence",
+                "authority_set_digest",
+            ):
+                setattr(record, name, getattr(restored, name))
     if record.deleted:
         raise HTTPException(status_code=410, detail="Research run deleted")
 
@@ -413,6 +434,7 @@ def _find_run(run_id: str, request: Request) -> _RunRecord:
                 record.task = asyncio.create_task(_execute_run(record))
     if record is None or record.scope_id != _scope_id(request):
         raise HTTPException(status_code=404, detail="Research run not found")
+    record.app = request.app
     _check_retained_ledger(record)
     return record
 
@@ -499,6 +521,8 @@ def _restore_durable_record(durable: DurableRun) -> _RunRecord:
         authority_set_digest=authority_set_digest,
         durable_ledger=None,
         deleted=deleted,
+        execution_mode=payload.get("execution_mode", "fixture"),
+        error=terminal.get("error"),
     )
 
 
@@ -540,6 +564,11 @@ def _retained_artifact_result(retained: RetainedArtifactSet) -> dict[str, Any]:
 
 
 async def _reconcile_authority(record: _RunRecord) -> None:
+    async with _execution_lock(record):
+        await _reconcile_authority_locked(record)
+
+
+async def _reconcile_authority_locked(record: _RunRecord) -> None:
     """Project an already committed PostgreSQL result into Valkey after loss."""
     if (
         record.state not in {"accepted", "running"}
@@ -569,6 +598,16 @@ async def _reconcile_authority(record: _RunRecord) -> None:
         raise DurableResearchError("reconciliation owner unavailable")
     record.durable_owner_id = claimed.owner_id
     record.durable_generation = claimed.owner_generation
+    _project_retained_owned(record, retained)
+
+
+def _project_retained_owned(record: _RunRecord, retained: RetainedArtifactSet) -> None:
+    if (
+        record.durable_ledger is None
+        or record.durable_owner_id is None
+        or record.durable_generation is None
+    ):
+        raise LeaseLostError("retained projection requires owned execution")
     record.result = _retained_artifact_result(retained)
     record.authority_set_digest = retained.set_digest
     terminal_event = _build_event(record, "done", "completed", result=record.result)
@@ -581,15 +620,15 @@ async def _reconcile_authority(record: _RunRecord) -> None:
     ).hexdigest()
     record.durable_ledger.checkpoint(
         record.run_id,
-        claimed.owner_id,
-        claimed.owner_generation,
+        record.durable_owner_id,
+        record.durable_generation,
         "terminal_projection",
         checkpoint_digest,
     )
     record.durable_ledger.commit_result(
         record.run_id,
-        claimed.owner_id,
-        claimed.owner_generation,
+        record.durable_owner_id,
+        record.durable_generation,
         result_digest,
         terminal_payload=terminal_payload,
     )
@@ -597,119 +636,278 @@ async def _reconcile_authority(record: _RunRecord) -> None:
     record.events.append(terminal_event)
 
 
-async def _execute_run(record: _RunRecord) -> None:
-    async with record.lock:
-        if record.deleted:
-            record.state = "cancelled"
-            return
-        if record.state not in {"accepted", "running"}:
-            return
-        if record.durable_ledger is not None:
-            try:
-                claimed = record.durable_ledger.claim(
-                    record.run_id,
-                    owner_id=f"worker:{uuid4()}",
-                    attempt_id=f"attempt:{uuid4()}",
-                )
-            except Exception:
-                return
-            record.durable_owner_id = claimed.owner_id
-            record.durable_generation = claimed.owner_generation
-        record.state = "running"
-        _event(record, "progress", "running", stage="acquisition")
+@asynccontextmanager
+async def _execution_lock(record: _RunRecord):
+    if record.execution_mode == "live" and record.artifact_authority is not None:
+        async with record.artifact_authority.execution_lock(
+            _scope_uuid(record.scope_id), UUID(record.research_id)
+        ):
+            yield
+    else:
+        yield
+
+
+async def _renew_owner(record: _RunRecord, worker: asyncio.Task[Any]) -> None:
+    ledger = record.durable_ledger
+    if (
+        ledger is None
+        or record.durable_owner_id is None
+        or record.durable_generation is None
+    ):
+        raise LeaseLostError("renewal requires owned execution")
+    owner, generation = record.durable_owner_id, record.durable_generation
     try:
-        journey = example_journey(
-            scope_id=record.scope_id,
-            research_id=record.research_id,
-            objective=record.objective,
-            artifact_set_id=str(
-                uuid5(NAMESPACE_URL, f"groktocrawl-x:artifact-set:{record.run_id}")
-            ),
-        )
-        result = await journey.run()
+        while True:
+            await asyncio.sleep(ledger.lease_ms / 3000)
+            await asyncio.to_thread(
+                ledger.heartbeat,
+                record.run_id,
+                owner,
+                generation,
+            )
     except asyncio.CancelledError:
-        async with record.lock:
-            if record.state not in {"completed", "failed", "cancelled"}:
-                record.state = "cancelled"
-                _event(record, "cancelled", "cancelled")
         raise
-    except Exception:  # pragma: no cover - defensive terminal contract
-        async with record.lock:
-            if record.state == "cancel_requested":
+    except Exception:
+        # The old worker must stop dispatching when renewal is uncertain.
+        worker.cancel()
+
+
+async def _execute_run(record: _RunRecord) -> None:
+    renewal = None
+    try:
+        async with record.lock, _execution_lock(record):
+            if record.deleted:
+                record.state = "cancelled"
+                return
+            if record.state not in {"accepted", "running"}:
+                return
+            if record.durable_ledger is not None:
+                try:
+                    claimed = await asyncio.to_thread(
+                        record.durable_ledger.claim,
+                        record.run_id,
+                        owner_id=f"worker:{uuid4()}",
+                        attempt_id=f"attempt:{uuid4()}",
+                    )
+                except DurableConflictError:
+                    return
+                record.durable_owner_id = claimed.owner_id
+                record.durable_generation = claimed.owner_generation
+                if (
+                    record.execution_mode == "live"
+                    and record.artifact_authority is not None
+                ):
+                    retained = await record.artifact_authority.find_run(
+                        _scope_uuid(record.scope_id), UUID(record.run_id)
+                    )
+                    if retained is not None:
+                        _project_retained_owned(record, retained)
+                        return
+                worker = asyncio.current_task()
+                assert worker is not None
+                renewal = asyncio.create_task(_renew_owner(record, worker))
+            record.state = "running"
+            _event(record, "progress", "running", stage="acquisition")
+        if record.execution_mode == "live":
+            remaining = (
+                claimed.created_at_ms / 1000 + 180 - datetime.now(UTC).timestamp()
+            )
+            async with asyncio.timeout(max(0, remaining)):
+                result = await run_live(record, record.app)
+        else:
+            journey = example_journey(
+                scope_id=record.scope_id,
+                research_id=record.research_id,
+                objective=record.objective,
+                artifact_set_id=str(
+                    uuid5(NAMESPACE_URL, f"groktocrawl-x:artifact-set:{record.run_id}")
+                ),
+            )
+            result = await journey.run()
+        async with record.lock, _execution_lock(record):
+            if record.deleted or record.state in {"cancelled", "cancel_requested"}:
                 record.state = "cancelled"
                 _event(record, "cancelled", "cancelled")
-            elif record.state not in {"completed", "cancelled"}:
-                record.state = "failed"
-                record.error = {"code": "fixture_run_failed", "retryable": False}
-                _event(record, "error", "failed", error=record.error)
-        return
-    async with record.lock:
-        if record.deleted or record.state == "cancel_requested":
+                return
+            if record.durable_ledger is not None:
+                if record.durable_owner_id is None or record.durable_generation is None:
+                    raise LeaseLostError("publication requires owned execution")
+                await asyncio.to_thread(
+                    record.durable_ledger.heartbeat,
+                    record.run_id,
+                    record.durable_owner_id,
+                    record.durable_generation,
+                )
+            await _publish_run(record, result)
+    except asyncio.CancelledError:
+        # Shutdown/lease loss leaves running work reclaimable. A client cancel
+        # has its own durable fence; neither invents successful provider receipts.
+        if record.durable_ledger is None and record.state not in {
+            "completed",
+            "failed",
+        }:
             record.state = "cancelled"
             _event(record, "cancelled", "cancelled")
-            return
-        record.journey = result
-        record.result = _artifact_result(record)
-        terminal_event: ProtocolEvent | None = None
-        if (
-            record.durable_ledger is not None
-            and record.durable_owner_id is not None
-            and record.durable_generation is not None
-        ):
-            terminal_event = _build_event(
-                record, "done", "completed", result=record.result
-            )
-            retained = None
-            if record.artifact_authority is not None:
-                manifest = result.candidate.admitted.manifest
-                retained = await record.artifact_authority.commit(
-                    _scope_uuid(record.scope_id),
-                    UUID(record.research_id),
-                    UUID(record.run_id),
-                    UUID(manifest.artifact_set_id),
-                    result.manifest_bytes,
-                    {
-                        report.artifact.layer: (
-                            report.artifact.artifact_id,
-                            report.body,
-                        )
-                        for report in result.reports
-                    },
-                    knowledge=result.knowledge_bytes,
-                    evidence={
-                        source.reference.snapshot_id: (source.body, source.media_type)
-                        for source in result.sources
-                    },
+        raise
+    except LeaseLostError:
+        return
+    except Exception as exc:
+        if record.artifact_authority is not None:
+            try:
+                retained = await record.artifact_authority.find_run(
+                    _scope_uuid(record.scope_id), UUID(record.run_id)
                 )
-                record.authority_set_digest = retained.set_digest
-            terminal_payload = _durable_terminal_payload(
-                record, terminal_event, retained
+                if retained is not None:
+                    # PG committed but the projection was interrupted. A later
+                    # owner/read reconciles the exact root without paid calls.
+                    return
+            except Exception:
+                # Publication may have committed. Do not invent a failed root
+                # while the authority cannot settle that outcome.
+                return
+        async with record.lock:
+            if record.state in {"completed", "cancelled"} or record.deleted:
+                return
+            record.error = {
+                "code": "outcome_unknown"
+                if isinstance(exc, OutcomeUnknownError)
+                else "research_run_failed"
+                if record.execution_mode == "live"
+                else "fixture_run_failed",
+                "retryable": False,
+            }
+            failure = _build_event(record, "error", "failed", error=record.error)
+            if (
+                record.durable_ledger is not None
+                and record.durable_owner_id is not None
+                and record.durable_generation is not None
+            ):
+                try:
+                    await asyncio.to_thread(
+                        record.durable_ledger.fail,
+                        record.run_id,
+                        record.durable_owner_id,
+                        record.durable_generation,
+                        {
+                            "research_id": record.research_id,
+                            "error": record.error,
+                            "events": [
+                                event.model_dump(mode="json")
+                                for event in (*record.events, failure)
+                            ],
+                        },
+                    )
+                except DurableResearchError:
+                    return
+            record.state = "failed"
+            record.events.append(failure)
+    finally:
+        if renewal is not None:
+            renewal.cancel()
+            await asyncio.gather(renewal, return_exceptions=True)
+        if record.task is asyncio.current_task():
+            record.task = None
+
+
+async def recover_research_runs(app: Any, shutdown: asyncio.Event) -> None:
+    """Reconcile/reclaim admitted work without requiring a client to poll it."""
+    request = Request({"type": "http", "app": app})
+    ledger = _durable_ledger(request)
+    while not shutdown.is_set():
+        try:
+            pending = await asyncio.to_thread(ledger.reclaimable)
+            for durable in pending[:100]:
+                record = _RUNS.get(durable.run_id)
+                if record is None:
+                    record = _restore_durable_record(durable)
+                    _RUNS[durable.run_id] = record
+                record.durable_ledger = ledger
+                record.app = app
+                if _artifact_authority_enabled():
+                    record.artifact_authority = _artifact_authority(request)
+                if record.task is None or record.task.done():
+                    record.task = asyncio.create_task(_execute_run(record))
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            # A transient storage outage is not permission to dispatch without
+            # ownership. The next scan may recover once authority returns.
+            pass
+        with suppress(TimeoutError):
+            await asyncio.wait_for(shutdown.wait(), timeout=0.5)
+
+
+async def stop_research_runs(app: Any) -> None:
+    """Stop this process's workers; leave durable intents for safe recovery."""
+    tasks = [
+        record.task
+        for record in _RUNS.values()
+        if record.app is app and record.task is not None and not record.task.done()
+    ]
+    for task in tasks:
+        task.cancel()
+    await asyncio.gather(*tasks, return_exceptions=True)
+
+
+async def _publish_run(record: _RunRecord, result: Any) -> None:
+    record.journey = result
+    record.result = _artifact_result(record)
+    terminal_event: ProtocolEvent | None = None
+    if (
+        record.durable_ledger is not None
+        and record.durable_owner_id is not None
+        and record.durable_generation is not None
+    ):
+        terminal_event = _build_event(record, "done", "completed", result=record.result)
+        retained = None
+        if record.artifact_authority is not None:
+            manifest = result.candidate.admitted.manifest
+            retained = await record.artifact_authority.commit(
+                _scope_uuid(record.scope_id),
+                UUID(record.research_id),
+                UUID(record.run_id),
+                UUID(manifest.artifact_set_id),
+                result.manifest_bytes,
+                {
+                    report.artifact.layer: (
+                        report.artifact.artifact_id,
+                        report.body,
+                    )
+                    for report in result.reports
+                },
+                knowledge=result.knowledge_bytes,
+                evidence={
+                    source.reference.snapshot_id: (source.body, source.media_type)
+                    for source in result.sources
+                },
             )
-            checkpoint_digest = hashlib.sha256(
-                json.dumps(terminal_payload, sort_keys=True).encode("utf-8")
-            ).hexdigest()
-            result_digest = hashlib.sha256(
-                json.dumps(record.result, sort_keys=True).encode("utf-8")
-            ).hexdigest()
-            record.durable_ledger.checkpoint(
-                record.run_id,
-                record.durable_owner_id,
-                record.durable_generation,
-                "terminal_projection",
-                checkpoint_digest,
-            )
-            record.durable_ledger.commit_result(
-                record.run_id,
-                record.durable_owner_id,
-                record.durable_generation,
-                result_digest,
-                terminal_payload=terminal_payload,
-            )
-        record.state = "completed"
-        if terminal_event is not None:
-            record.events.append(terminal_event)
-        else:
-            _event(record, "done", "completed", result=record.result)
+            record.authority_set_digest = retained.set_digest
+        terminal_payload = _durable_terminal_payload(record, terminal_event, retained)
+        checkpoint_digest = hashlib.sha256(
+            json.dumps(terminal_payload, sort_keys=True).encode("utf-8")
+        ).hexdigest()
+        result_digest = hashlib.sha256(
+            json.dumps(record.result, sort_keys=True).encode("utf-8")
+        ).hexdigest()
+        record.durable_ledger.checkpoint(
+            record.run_id,
+            record.durable_owner_id,
+            record.durable_generation,
+            "terminal_projection",
+            checkpoint_digest,
+        )
+        record.durable_ledger.commit_result(
+            record.run_id,
+            record.durable_owner_id,
+            record.durable_generation,
+            result_digest,
+            terminal_payload=terminal_payload,
+        )
+    record.state = "completed"
+    if terminal_event is not None:
+        record.events.append(terminal_event)
+    else:
+        _event(record, "done", "completed", result=record.result)
 
 
 def capability_document() -> dict[str, Any]:
@@ -719,11 +917,14 @@ def capability_document() -> dict[str, Any]:
     fixture_creation = runs_available and is_enabled(
         "experimental_research_fixture_runs"
     )
+    live_creation = durable and _artifact_authority_enabled() and not fixture_creation
     return {
         "protocol_version": "research/1",
         "route_prefix": _ROUTE_PREFIX,
-        "live_research_available": False,
-        "implementation_stage": "postgres_artifact_authority_fixture_adapter"
+        "live_research_available": live_creation,
+        "implementation_stage": "postgres_artifact_authority_live_adapter"
+        if live_creation
+        else "postgres_artifact_authority_fixture_adapter"
         if durable and _artifact_authority_enabled()
         else "durable_fixture_run_adapter"
         if durable
@@ -754,11 +955,21 @@ def capability_document() -> dict[str, Any]:
             "runs": {
                 "available": runs_available,
                 "reason": None if runs_available else "public_adapters_pending",
-                "create_available": fixture_creation,
+                "create_available": fixture_creation or live_creation,
                 "creation_reason": None
-                if fixture_creation
-                else "development_fixture_opt_in_required",
-                "execution_mode": "fixture_only",
+                if fixture_creation or live_creation
+                else "durable_artifact_authority_required",
+                "execution_mode": "live" if live_creation else "fixture_only",
+                "policy": {
+                    "searches": 1,
+                    "sources": 3,
+                    "source_bytes": 256_000,
+                    "timeout_seconds": 180,
+                    "model_calls": 64,
+                    "automatic_ambiguous_call_retry": False,
+                    "webhook": False,
+                    "as_of": False,
+                },
             },
             "artifacts": {
                 "available": runs_available,
@@ -789,12 +1000,39 @@ async def get_experimental_research_capabilities() -> dict[str, Any]:
 async def create_experimental_research_run(
     payload: CreateResearchRunRequest, request: Request
 ) -> dict[str, Any]:
-    """Admit one bounded fixture run with scoped idempotency."""
+    return await admit_research_run(payload, request)
+
+
+async def admit_research_run(
+    payload: CreateResearchRunRequest,
+    request: Request,
+    *,
+    selected_sources: tuple[CapturedSource, ...] = (),
+) -> dict[str, Any]:
+    """Admit live durable work or an explicitly selected development fixture."""
     _require_runs()
-    if not is_enabled("experimental_research_fixture_runs"):
+    if (
+        len(selected_sources) > 8
+        or sum(len(source.text.encode()) for source in selected_sources) > 256_000
+    ):
         raise HTTPException(
-            status_code=404,
-            detail="Fixture research creation disabled; no live research adapter is available",
+            status_code=422, detail="Selected evidence exceeds research context budget"
+        )
+    if payload.webhook is not None or payload.as_of is not None:
+        raise HTTPException(
+            status_code=422,
+            detail="Durable research does not yet support webhook delivery or as_of evaluation",
+        )
+    fixture = is_enabled("experimental_research_fixture_runs")
+    if not fixture and not (_durable_enabled() and _artifact_authority_enabled()):
+        raise HTTPException(
+            status_code=503,
+            detail="Live research requires durable execution and PostgreSQL artifact authority",
+        )
+    model = getattr(request.app.state, "llm_model", None)
+    if not fixture and not model:
+        raise HTTPException(
+            status_code=503, detail="Configured research model unavailable"
         )
     key = request.headers.get("Idempotency-Key", "").strip()
     if not key or len(key) > 200:
@@ -810,7 +1048,12 @@ async def create_experimental_research_run(
                 status_code=503,
                 detail="Artifact evidence schema 16 required before admission",
             ) from exc
-    digest = hashlib.sha256(payload.model_dump_json().encode()).hexdigest()
+    admitted_input = payload.model_dump_json().encode()
+    if selected_sources:
+        admitted_input += json.dumps(
+            [asdict(source) for source in selected_sources], sort_keys=True
+        ).encode()
+    digest = hashlib.sha256(admitted_input).hexdigest()
     existing = _IDEMPOTENCY.get((scope, key)) if durable is None else None
     if durable is not None:
         selected_run_id = str(uuid4())
@@ -821,17 +1064,28 @@ async def create_experimental_research_run(
             event="accepted",
             state="accepted",
         )
-        admitted = durable.admit(
-            scope,
-            key,
-            digest,
-            run_id=selected_run_id,
-            payload={
-                "objective": payload.objective,
-                "research_id": str(uuid4()),
-                "events": [accepted_event.model_dump(mode="json")],
-            },
-        )
+        try:
+            admitted = durable.admit(
+                scope,
+                key,
+                digest,
+                run_id=selected_run_id,
+                payload={
+                    "objective": payload.objective,
+                    "research_id": str(uuid4()),
+                    "execution_mode": "fixture" if fixture else "live",
+                    "model": model,
+                    "token_params": _token_budget_params(),
+                    "selected_sources": [asdict(source) for source in selected_sources],
+                    "session_scope": request_scope(request),
+                    "evaluation_time": datetime.now(UTC).isoformat(),
+                    "events": [accepted_event.model_dump(mode="json")],
+                },
+            )
+        except DurableConflictError as exc:
+            raise HTTPException(
+                status_code=409, detail="Idempotency key conflict"
+            ) from exc
         research_id = str(admitted.payload.get("research_id", str(uuid4())))
         record = _RUNS.get(admitted.run_id)
         if record is None:
@@ -840,6 +1094,7 @@ async def create_experimental_research_run(
             record.durable_ledger = durable
             _RUNS[admitted.run_id] = record
         record.artifact_authority = authority
+        record.app = request.app
         if authority is not None:
             await authority.ensure_scope(_scope_uuid(scope))
         if record.task is None:
@@ -927,9 +1182,23 @@ async def cancel_experimental_research_run(
     """Request cancellation and return the current authoritative projection."""
     _require_runs()
     record = _find_run(run_id, request)
-    async with record.lock:
+    async with record.lock, _execution_lock(record):
         if record.state in {"completed", "failed", "cancelled"}:
             return _record_projection(record)
+        if record.execution_mode == "live" and record.artifact_authority is not None:
+            retained = await record.artifact_authority.find_run(
+                _scope_uuid(record.scope_id), UUID(record.run_id)
+            )
+            if retained is not None:
+                # Publication acquired the same lock first. It is committed,
+                # so cancellation cannot retrospectively claim it was stopped.
+                await _reconcile_authority_locked(record)
+                return {
+                    **_record_projection(record),
+                    "state": "completed",
+                    "execution_outcome": "completed",
+                    "result": _retained_artifact_result(retained),
+                }
         if record.durable_ledger is not None:
             terminal_event = _build_event(record, "cancelled", "cancelled")
             terminal_payload = {
@@ -942,7 +1211,7 @@ async def cancel_experimental_research_run(
             durable = record.durable_ledger.cancel(
                 record.run_id, terminal_payload=terminal_payload
             )
-            if durable.state == "completed":
+            if durable.state in {"completed", "failed", "deleted"}:
                 recovered = _restore_durable_record(durable)
                 record.state = recovered.state
                 record.result = recovered.result
@@ -1162,7 +1431,7 @@ async def get_experimental_artifact(artifact_id: str, request: Request) -> Respo
 async def get_experimental_evidence(
     research_id: str, snapshot_id: str, request: Request
 ) -> dict[str, Any]:
-    """Return bounded exact fixture evidence for one scoped snapshot."""
+    """Return exact scoped evidence with its recorded acquisition provenance."""
     _require_runs()
     scope = _scope_id(request)
     for record in _RUNS.values():
@@ -1183,6 +1452,9 @@ async def get_experimental_evidence(
                     "media_type": source.media_type,
                     "body": source.body.decode("utf-8"),
                     "content_digest": hashlib.sha256(source.body).hexdigest(),
+                    **_evidence_provenance(
+                        record.journey.knowledge_bytes, snapshot_id, source.body
+                    ),
                 }
     for record in _durable_read_records(request):
         if record.research_id != research_id or record.scope_id != scope:
@@ -1203,6 +1475,7 @@ async def get_experimental_evidence(
                 "media_type": media_type,
                 "body": body.decode("utf-8"),
                 "content_digest": hashlib.sha256(body).hexdigest(),
+                **_evidence_provenance(record.durable_knowledge, snapshot_id, body),
             }
         try:
             body, media_type = await record.artifact_authority.read_evidence(
@@ -1216,6 +1489,13 @@ async def get_experimental_evidence(
             "media_type": media_type,
             "body": body.decode("utf-8"),
             "content_digest": hashlib.sha256(body).hexdigest(),
+            **_evidence_provenance(
+                await record.artifact_authority.read_knowledge(
+                    _scope_uuid(scope), UUID(research_id)
+                ),
+                snapshot_id,
+                body,
+            ),
         }
     if _artifact_authority_enabled():
         authority = _artifact_authority(request)
@@ -1235,8 +1515,39 @@ async def get_experimental_evidence(
             "media_type": media_type,
             "body": body.decode("utf-8"),
             "content_digest": hashlib.sha256(body).hexdigest(),
+            **_evidence_provenance(
+                await authority.read_knowledge(_scope_uuid(scope), research),
+                snapshot_id,
+                body,
+            ),
         }
     raise HTTPException(status_code=404, detail="Evidence not found")
+
+
+def _evidence_provenance(
+    knowledge: bytes | None, snapshot_id: str, body: bytes
+) -> dict[str, Any]:
+    unknown = {"url": None, "retrieved_at": None, "origin_id": None, "lineage_id": None}
+    if knowledge is None:
+        return unknown
+    snapshots = json.loads(knowledge).get("context", {}).get("snapshots", [])
+    snapshot = next(
+        (item for item in snapshots if item.get("snapshot_id") == snapshot_id), None
+    )
+    if (
+        snapshot is None
+        or snapshot.get("content_digest") != hashlib.sha256(body).hexdigest()
+    ):
+        raise HTTPException(
+            status_code=503, detail="Evidence provenance integrity unavailable"
+        )
+    return {
+        "url": snapshot.get("canonical_url"),
+        **{
+            key: snapshot.get(key)
+            for key in ("retrieved_at", "origin_id", "lineage_id")
+        },
+    }
 
 
 @router.delete(f"{_ROUTE_PREFIX}/research/{{research_id}}", status_code=202)

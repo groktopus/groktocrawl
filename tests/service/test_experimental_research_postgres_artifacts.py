@@ -289,8 +289,10 @@ async def test_postgres_commit_reconciles_after_valkey_interruption(
         )
         task = experimental._RUNS[created.json()["run_id"]].task
         assert task is not None
-        with pytest.raises(RuntimeError, match="projection interruption"):
-            await task
+        await task
+        # A committed PG root is neither failed nor rerun when the Valkey
+        # projection is interrupted. Recovery projects that exact root.
+        assert experimental._RUNS[created.json()["run_id"]].state == "running"
         ledger = DurableResearchLedger(
             url, namespace=app.state.research_durable_namespace
         )

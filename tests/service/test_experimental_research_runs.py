@@ -407,8 +407,8 @@ async def test_production_flags_do_not_admit_fixture_work(
             headers={"Idempotency-Key": "production-must-not-create"},
             json={"objective": "A real user research request"},
         )
-    assert response.status_code == 404
-    assert "Fixture research creation disabled" in response.json()["detail"]
+    assert response.status_code == 503
+    assert "Configured research model unavailable" in response.json()["detail"]
     assert experimental._RUNS == {}
     assert experimental._IDEMPOTENCY == {}
 
@@ -452,5 +452,31 @@ async def test_disabling_fixture_admission_preserves_existing_reads(app, monkeyp
             headers={"Idempotency-Key": "new-after-disable"},
             json={"objective": "Must not create another fixture"},
         )
-        assert rejected.status_code == 404
+        assert rejected.status_code == 503
         assert len(experimental._RUNS) == 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "unsupported",
+    [{"webhook": "https://receiver.test/hook"}, {"as_of": "2026-01-01T00:00:00Z"}],
+)
+async def test_unimplemented_options_rejected_before_admission(
+    app, monkeypatch, unsupported
+):
+    def unexpected(*_args, **_kwargs):
+        raise AssertionError("unsupported option admitted work")
+
+    monkeypatch.setattr(experimental, "_durable_ledger", unexpected)
+    monkeypatch.setattr(experimental, "_artifact_authority", unexpected)
+    async with await _client(app) as client:
+        response = await client.post(
+            "/experimental/research/v1/runs",
+            headers={"Idempotency-Key": "unsupported"},
+            json={
+                "objective": "Must not silently ignore supplied options",
+                **unsupported,
+            },
+        )
+    assert response.status_code == 422
+    assert experimental._RUNS == {}
