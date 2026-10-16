@@ -71,7 +71,7 @@ def _check_eligibility(admitted: AdmittedManifest) -> None:
                         )
                     ):
                         raise HistoricalValidityError(
-                            "historical validity is not established by retained evidence"
+                            "publication ineligible: historical validity is not established by retained evidence"
                         )
                     raise ValueError(
                         "publication statement contains an ineligible claim"
