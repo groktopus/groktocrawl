@@ -115,6 +115,76 @@ class TestRunResearchMaxCredits:
         assert len(result["source_details"]) >= 3
         assert len(scraper.scrape_with_fallback.call_args_list) >= 3
 
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "subject_queries",
+        [
+            [
+                "LangGraph human approval before tool action",
+                "Pydantic AI human approval before tool action",
+            ],
+            ["OakFlow approval policy", "MapleAgent approval policy"],
+        ],
+    )
+    async def test_focused_comparison_searches_each_planned_subject_with_shared_credit_cap(
+        self, subject_queries
+    ):
+        """Focused comparisons retain subject queries and divide the scrape budget."""
+        from agent.research.loop import run_research
+
+        queries = subject_queries
+        subjects = [query.split()[0].lower() for query in queries]
+        searxng = MagicMock()
+
+        async def _search(query: str, **kwargs):
+            subject = subjects[queries.index(query)]
+            results = [
+                {
+                    "url": f"https://{subject}{i}.example",
+                    "title": subject,
+                    "description": "d",
+                }
+                for i in range(8)
+            ]
+            return results, MagicMock()
+
+        searxng.search = AsyncMock(side_effect=_search)
+        searxng.close = AsyncMock()
+        llm = MagicMock()
+        llm.generate = AsyncMock(return_value="balanced answer")
+        llm.close = AsyncMock()
+        scraper = _make_scraper()
+
+        with (
+            patch("agent.research.loop.SearXNGClient", return_value=searxng),
+            patch("agent.research.loop.ScraperClient", return_value=scraper),
+            patch("agent.research.loop.LLMClient", return_value=llm),
+            patch(
+                "agent.research.loop._generate_research_plan",
+                new=AsyncMock(
+                    return_value={
+                        "reasoning": "Compare both named subjects",
+                        "research_strategy": "deep",
+                        "focused_queries": queries,
+                    }
+                ),
+            ),
+        ):
+            result = await run_research(
+                prompt=f"Compare {queries[0]} and {queries[1]}",
+                llm_model="m",
+                max_searches_per_request=5,
+                max_credits=5,
+                search_type="focused",
+            )
+
+        searched = [call.args[0] for call in searxng.search.await_args_list]
+        source_urls = [source["url"] for source in result["source_details"]]
+        assert searched == queries
+        assert len(source_urls) == 5
+        assert sum(subjects[0] in url for url in source_urls) == 3
+        assert sum(subjects[1] in url for url in source_urls) == 2
+
 
 class TestAgentWorkerMaxCreditsWiring:
     """The agent route/worker must thread max_credits to run_research."""

@@ -78,6 +78,7 @@ QUERY_INTELLIGENCE_SYSTEM_PROMPT = """You are a research planning agent. Given a
 
 Rules:
 - For broad, multi-topic prompts, decompose into 3-6 specific search queries that each target a distinct sub-topic
+- For comparison prompts naming multiple products, frameworks, or other subjects, create a separate query for each subject so evidence is gathered for every side before synthesis
 - For narrow, single-topic prompts, use 1-2 queries and set strategy to "focused"
 - Never pass the user's full prompt as a search query — extract the core search intent
 - Output valid JSON only, no other text
