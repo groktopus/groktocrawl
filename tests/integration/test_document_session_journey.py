@@ -1,8 +1,13 @@
 """Real Parse HTTP and Valkey document journey; only model output is controlled."""
 
+import base64
 import hashlib
+import importlib
+import json
 import os
 import socket
+import subprocess
+import sys
 import threading
 import time
 from pathlib import Path
@@ -22,34 +27,39 @@ from parse_svc.app import app as parse_app
 
 
 @pytest.fixture
-def parse_http_url():
-    listener = socket.socket()
-    listener.bind(("127.0.0.1", 0))
-    listener.listen(128)
-    server = uvicorn.Server(
-        uvicorn.Config(parse_app, log_level="error", lifespan="off")
-    )
-    worker = threading.Thread(
-        target=server.run, kwargs={"sockets": [listener]}, daemon=True
-    )
-    worker.start()
-    try:
+def http_servers():
+    running = []
+
+    def start(app):
+        listener = socket.socket()
+        listener.bind(("127.0.0.1", 0))
+        listener.listen(128)
+        server = uvicorn.Server(uvicorn.Config(app, log_level="error", lifespan="off"))
+        worker = threading.Thread(
+            target=server.run, kwargs={"sockets": [listener]}, daemon=True
+        )
+        running.append((server, worker, listener))
+        worker.start()
         deadline = time.monotonic() + 10
         while not server.started and worker.is_alive() and time.monotonic() < deadline:
             time.sleep(0.01)
-        assert server.started, "Parse HTTP server did not start"
-        yield f"http://127.0.0.1:{listener.getsockname()[1]}"
+        assert server.started, "Local HTTP server did not start"
+        return f"http://127.0.0.1:{listener.getsockname()[1]}"
+
+    try:
+        yield start
     finally:
-        server.should_exit = True
-        worker.join(timeout=10)
-        listener.close()
-        assert not worker.is_alive(), "Parse HTTP server did not stop"
+        for server, worker, listener in reversed(running):
+            server.should_exit = True
+            worker.join(timeout=10)
+            listener.close()
+            assert not worker.is_alive(), "Local HTTP server did not stop"
 
 
 @pytest.mark.asyncio
 @pytest.mark.enable_socket
 async def test_pdf_upload_parse_question_citation_and_delete(
-    monkeypatch, parse_http_url
+    monkeypatch, http_servers, tmp_path
 ):
     redis_url = os.environ.get("SESSION_STORE_TEST_URL") or os.environ.get("VALKEY_URL")
     if not redis_url:
@@ -61,7 +71,7 @@ async def test_pdf_upload_parse_question_citation_and_delete(
         VALKEY_DB=int(address.path.strip("/") or "0"),
     )
     monkeypatch.setattr("agent.settings.load_settings", lambda: settings)
-    monkeypatch.setattr(documents, "PARSE_SVC_URL", parse_http_url)
+    monkeypatch.setattr(documents, "PARSE_SVC_URL", http_servers(parse_app))
     app = FastAPI()
     app.state.valkey_url = redis_url
     app.state.searxng_url = "http://unused"
@@ -95,10 +105,11 @@ async def test_pdf_upload_parse_question_citation_and_delete(
         Path(__file__).parents[1] / "fixtures/documents/budget-table.pdf"
     ).read_bytes()
     store = SessionStore(redis_url=redis_url)
+    api_url = http_servers(app)
+    owner_key = "document-" + uuid4().hex
     async with httpx.AsyncClient(
-        transport=httpx.ASGITransport(app=app),
-        base_url="http://test",
-        headers={"X-API-Key": "document-" + uuid4().hex},
+        base_url=api_url,
+        headers={"X-API-Key": owner_key},
     ) as client:
         created = await client.post("/v2/session/create", json={"ttl": 120})
         assert created.status_code == 200, created.text
@@ -142,6 +153,83 @@ async def test_pdf_upload_parse_question_citation_and_delete(
                 },
             )
             assert quote.json()["markdown"] == "Research | 12000 | 11000"
+            # Exercise the actual CLI process and MCP tool dispatch against the
+            # same HTTP API and retained bytes, not mocked client responses.
+            repo = Path(__file__).resolve().parents[2]
+            document_path = tmp_path / "budget.pdf"
+            document_path.write_bytes(content)
+            cli_env = {
+                **os.environ,
+                "API_KEY": owner_key,
+                "GROKTOCRAWL_API_KEY": owner_key,
+            }
+
+            def cli(*args):
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        str(repo / "groktocrawl"),
+                        "--server",
+                        api_url,
+                        "--json",
+                        "document",
+                        *args,
+                    ],
+                    env=cli_env,
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                )
+                assert result.returncode == 0, result.stderr
+                return json.loads(result.stdout)
+
+            assert cli("attach", session_id, str(document_path))["ref_id"] == ref_id
+            assert (
+                cli("show", session_id, ref_id)["content_digest"]
+                == uploaded.json()["content_digest"]
+            )
+            cli_answer = cli(
+                "query", session_id, "What is the research budget?", "--ref", ref_id
+            )
+            assert cli_answer["result"]["citations"][0]["ref_id"] == ref_id
+            monkeypatch.syspath_prepend(str(repo / "mcp-svc"))
+            mcp_server = importlib.import_module("mcp_server")
+            from groktocrawl_client import GroktocrawlClient
+
+            async with GroktocrawlClient(
+                base_url=api_url, api_key=owner_key
+            ) as mcp_client:
+                monkeypatch.setattr(mcp_server, "_client", mcp_client)
+
+                async def tool(name, arguments):
+                    response, _structured = await mcp_server.mcp.call_tool(
+                        name, arguments
+                    )
+                    return json.loads(response[0].text)
+
+                attached = await tool(
+                    "document_attach",
+                    {
+                        "session_id": session_id,
+                        "filename": "budget.pdf",
+                        "content_base64": base64.b64encode(content).decode(),
+                        "media_type": "application/pdf",
+                    },
+                )
+                assert attached["ref_id"] == ref_id
+                readback = await tool(
+                    "document_read", {"session_id": session_id, "ref_id": ref_id}
+                )
+                assert readback["content_digest"] == uploaded.json()["content_digest"]
+                answer = await tool(
+                    "session_query",
+                    {
+                        "session_id": session_id,
+                        "question": "What is the research budget?",
+                        "ref_ids": [ref_id],
+                    },
+                )
+                assert answer["result"]["citations"][0]["ref_id"] == ref_id
             foreign = await client.get(
                 uploaded.json()["url"], headers={"X-API-Key": "foreign"}
             )

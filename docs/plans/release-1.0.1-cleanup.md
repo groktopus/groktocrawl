@@ -33,8 +33,10 @@ PR #671 includes `tests/integration/test_document_session_journey.py`: a PDF is
 uploaded through the session API, parsed by the real Parse HTTP service, stored
 in isolated Valkey, used in a session question, and read back as an exact citation.
 The test also checks foreign-owner rejection and evidence removal after deletion.
-The model response is controlled. This verifies the integrated API workflow;
-CLI/MCP client-path acceptance and final deployment checks remain required.
+The same journey runs the CLI as a subprocess and dispatches MCP upload, query,
+and read tools against the local HTTP API. The model response is controlled;
+this verifies service and client integration, not model answer quality. Final
+deployment checks remain required.
 
 ## Documentation audit
 
