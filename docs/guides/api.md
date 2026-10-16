@@ -95,6 +95,15 @@ Completed external-call receipts can be reused after restart. A dispatch whose
 outcome cannot be established fails as `outcome_unknown` rather than making an
 unrecorded replacement call.
 
+New live admissions plan at most three distinct queries and retain up to eight
+sources within 256,000 source bytes and a 180-second admission deadline. Known
+capture failures remain explicit as insufficient coverage. `as_of` must be a
+timezone-aware, nonfuture evidence evaluation target: it does not retrieve an
+archived page or establish past validity from a new capture. An optional webhook
+uses a durable terminal outbox, three bounded attempts and one stable event ID.
+Receivers must deduplicate `webhookId`; exhausted or uncertain delivery is
+`unconfirmed`, not delivered. See the [live execution contract](durable-research.md).
+
 The flags are `FEATURE_EXPERIMENTAL_RESEARCH`,
 `FEATURE_EXPERIMENTAL_RESEARCH_RUNS`, `FEATURE_EXPERIMENTAL_RESEARCH_DURABLE`,
 and `FEATURE_EXPERIMENTAL_RESEARCH_POSTGRES_ARTIFACTS`. Disabled capabilities

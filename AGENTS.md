@@ -51,6 +51,10 @@ Architecture Decision Records (ADRs) live in `docs/adr/` and capture the context
 
 Jobs are processed with `asyncio.create_task()` inside the API process. New records carry a versioned Valkey execution marker and lease: a fresh process may redispatch only jobs still queued and never claimed. Claimed work is never blindly replayed; after lease expiry it becomes `failed` with `OUTCOME_UNKNOWN`. Completion/failure webhook intents are persisted in the Valkey outbox with stable UUIDv4 `webhookId` values and retried at-least-once. Partial artifacts across Valkey, the scraper, semantic index, and research memory are not transactionally rolled back. See [ADR-0072](docs/adr/0072-valkey-leased-legacy-job-recovery.md) and the [interrupted-jobs runbook](docs/runbooks/interrupted-jobs.md); do not describe this as exactly-once execution or general resumability.
 
+### Durable research execution
+
+The separate `/experimental/research/v1` live run path uses server-configured search, acquisition, and model clients when its four existing feature flags are enabled and the explicit development fixture flag is false. PostgreSQL schema16 retains source bytes and audited report sets; Valkey retains scoped admission, owner generations, operation intents/receipts, and terminal projections. Do not replace a failed or unknown external operation with an unrecorded retry. The worker renews ownership; claim, publication, and cancellation serialize on a scoped PostgreSQL advisory lock, and deletion fences late publication. Recovery checks committed PostgreSQL results before invoking any adapter. Legacy `/v2` jobs keep their separate contract. Read [ADR-0070](docs/adr/0070-execute-live-durable-research.md) before changing these boundaries.
+
 ### Research-memory storage
 
 Research-memory artifacts remain in Valkey; semantic vectors default to the
@@ -63,10 +67,6 @@ unmigrated deployments, and use the explicit backfill/parity/rollback commands
 in `docs/runbooks/research-memory-pgvector.md` before selecting PostgreSQL.
 The semantic page index's `VECTOR_STORE_MODE` is separate; `pgvector_only`
 means the page-index service has no Qdrant runtime dependency.
-
-### Durable research execution
-
-The separate `/experimental/research/v1` live run path uses server-configured search, acquisition, and model clients when its four existing feature flags are enabled and the explicit development fixture flag is false. PostgreSQL schema16 retains source bytes and audited report sets; Valkey retains scoped admission, owner generations, operation intents/receipts, and terminal projections. Do not replace a failed or unknown external operation with an unrecorded retry. The worker renews ownership; claim, publication, and cancellation serialize on a scoped PostgreSQL advisory lock, and deletion fences late publication. Recovery checks committed PostgreSQL results before invoking any adapter. Legacy `/v2` jobs keep their separate contract. Read [ADR-0070](docs/adr/0070-execute-live-durable-research.md) before changing these boundaries.
 
 ### Three-tier smart scraper
 
@@ -231,5 +231,7 @@ The graph's node labels are code identifiers and doc headings, not natural langu
 
 
 ## Experimental research substrate
+
+Live durable HTTP execution uses `experimental/live_runner.py`, recorded query planning and `DurableResearchLedger`; see [ADR-0070](docs/adr/0070-execute-live-durable-research.md) and the [execution contract](docs/guides/durable-research.md). Preserve admitted policy versions, exact operation receipts, fencing and atomic PostgreSQL publication. Never replay an ambiguous paid dispatch. Terminal callbacks have a separate durable outbox and stable event ID; callback retries must not restart research. `as_of` is an evidence evaluation target, not archived capture. Test changed execution through the public HTTP route with isolated stores as well as interruption boundaries.
 
 The research architecture in `agent-svc/agent/experimental/` is adopted for the standard deployment under [ADR-0069](docs/adr/0069-adopt-bounded-research-substrate.md). Existing APIs, jobs, sessions, and research-memory behavior remain compatible; legacy inline-job recovery follows [ADR-0072](docs/adr/0072-valkey-leased-legacy-job-recovery.md). Do not infer deployment readiness from an accepted experiment ADR or the presence of code or environment variables. Before changing this area, read ADR-0069 and the historical [GroktoCrawl X ADR archive](docs/adr/experimental/groktocrawl-x/README.md); archived acceptance is scoped to the former experiment. Keep migrations additive, explicit, versioned, and reversible. Feature flags are rollout controls and may be enabled in the standard deployment after the documented migration and verification checks pass.

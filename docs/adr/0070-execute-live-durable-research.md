@@ -21,11 +21,15 @@ Renew the worker lease during execution. A short PostgreSQL advisory transaction
 
 Startup scans reclaimable admissions and tracks worker shutdown. Terminal failures and cancellation survive process loss; process-local status is synchronized from the durable ledger. Errors are redacted stable codes, not source/provider content or credentials.
 
-## Current bounds and remaining release work
+## Bounded discovery, time and callbacks
 
-The initial adapter policy is one search, at most three fresh sources, 256000 source bytes and an absolute 180-second execution deadline. Up to eight selected retained sources can supplement the plan within the same byte budget; fresh slots shrink to keep eight sources total. Unknown original URLs and retrieval dates remain null rather than fabricated. Construction and review calls have bounded count and output. These bounds are not equivalent to the existing iterative deep-research loop.
+New admissions pin policy `durable-live/2`: one recorded model planning call produces at most three distinct queries, followed by round-robin source selection across their results. At most eight sources, 256000 source bytes, 64 model calls and an absolute 180-second execution deadline are permitted. Selected retained sources consume the same budgets; eight retained sources need no new search. A known failed capture can leave a checked report with insufficient coverage, never an unqualified complete result. Ambiguous dispatch still stops immediately. Older admissions keep their one-search/three-fresh-source policy so restart does not alter retained operation identities. These bounds are not equivalent to the existing iterative deep-research loop.
 
-`as_of` and `webhook` are explicitly rejected before admission in this initial core change. Their semantics, broader bounded discovery, executable workspace follow-ups and source handoff remain required release work tracked by issue #666. This ADR is not evidence that the complete 1.0.1 goal has shipped.
+`as_of` means a timezone-aware, nonfuture evidence evaluation target. It does not request historical search or fabricate archived captures. Original URLs and retrieval dates remain null when unknown. Freshness checks compare actual retained evidence times with that target; unsupported past validity fails as `historical_validity_unestablished`, even if a model returns a passing opinion. Evidence captured before the target remains eligible for the other checks.
+
+Validate an optional webhook URL before admission using the existing outbound destination policy, then persist it with the admitted payload. The terminal record and notification index are created without a publish-to-enqueue gap. A separate startup worker claims each terminal notification under a bounded lease and persists one exact event body and stable UUID before sending. Completion, failure and cancellation are distinct events. Up to three attempts reuse that body and ID, revalidate the destination, sign the exact bytes, and never follow redirects. Permanent destination/HTTP rejection is `rejected`; exhausting retries or losing the final acknowledgement is `unconfirmed`, not delivered. Receiver deduplication is required: HTTP delivery is at least once, not exactly once. Deletion fences future attempts; an already dispatched callback cannot be recalled. Callback retries never rerun research or paid calls.
+
+Executable workspace follow-ups and source handoff are integrated separately and must pass combined HTTP/retained-store acceptance before issue #666 or the 1.0.1 goal can close.
 
 ## Confirmation
 

@@ -15,6 +15,7 @@ from .knowledge import Text
 from .knowledge_checks import (
     CheckAssessment,
     CheckResult,
+    HistoricalValidityError,
     KnowledgeCheckInput,
     Reviewer,
 )
@@ -180,6 +181,12 @@ class KnowledgeExecutionLedger:
             {**common, "verification_id": identity, "verdict": decision.outcome}
         )
         if result.verdict == "pass" and not checked.freshness_allows_pass():
+            if checked.context.as_of is not None and moment(
+                checked.context.as_of
+            ) < moment(checked.context.created_at):
+                raise HistoricalValidityError(
+                    "historical validity is not established by retained evidence"
+                )
             raise ValueError("freshness basis cannot authorize executor pass")
         return result
 

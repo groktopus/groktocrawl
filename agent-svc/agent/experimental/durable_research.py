@@ -53,6 +53,7 @@ class DurableRun:
     retry_deadline_ms: int
     created_at_ms: int
     payload: dict[str, Any]
+    notification: dict[str, Any] | None = None
 
     @classmethod
     def from_record(cls, record: dict[str, Any]) -> DurableRun:
@@ -71,6 +72,7 @@ class DurableRun:
             retry_deadline_ms=int(record["retry_deadline_ms"]),
             created_at_ms=int(record["created_at_ms"]),
             payload=dict(record.get("payload") or {}),
+            notification=record.get("notification"),
         )
 
 
@@ -84,6 +86,8 @@ end
 redis.call('SET', KEYS[1], cjson.encode({run_id=ARGV[1], request_digest=ARGV[2]}), 'PX', ARGV[4])
 redis.call('SET', KEYS[2], ARGV[3], 'PX', ARGV[4])
 redis.call('SADD', KEYS[3], ARGV[1])
+local admitted = cjson.decode(ARGV[3])
+if type(admitted.payload.webhook) == 'string' and string.len(admitted.payload.webhook)>0 then redis.call('SADD', KEYS[4], ARGV[1]) end
 return {0, ARGV[1]}
 """
 
@@ -228,6 +232,62 @@ redis.call('DEL', KEYS[2])
 return 1
 """
 
+_NOTIFICATION_CLAIM_SCRIPT = """
+local raw = redis.call('GET', KEYS[1])
+if not raw then redis.call('SREM', KEYS[2], ARGV[1]); return {0} end
+local record = cjson.decode(raw)
+if record.state == 'deleted' or type(record.payload.webhook) ~= 'string' then
+  redis.call('SREM', KEYS[2], ARGV[1]); return {0}
+end
+if record.state ~= 'completed' and record.state ~= 'failed' and record.state ~= 'cancelled' then return {0} end
+local now = redis.call('TIME')
+local now_ms = tonumber(now[1])*1000 + math.floor(tonumber(now[2])/1000)
+local note = record.notification
+if not note then
+  local terminal = record.terminal_payload or {}
+  local payload = {type='research.'..record.state, id=record.run_id,
+    webhookId=record.run_id, success=record.state == 'completed',
+    error=terminal.error or cjson.null,
+    data={run_id=record.run_id, research_id=record.payload.research_id,
+      state=record.state, result=terminal.result or cjson.null}}
+  note = {state='pending', attempts=0, body=cjson.encode(payload)}
+end
+if note.state == 'delivered' or note.state == 'rejected' or note.state == 'unconfirmed' then
+  redis.call('SREM', KEYS[2], ARGV[1]); return {0}
+end
+if tonumber(note.lease_until or 0)>now_ms or tonumber(note.available_at or 0)>now_ms then return {0} end
+if note.attempts >= 3 then
+  note.state='unconfirmed'; note.owner=cjson.null; record.notification=note
+  redis.call('SET', KEYS[1], cjson.encode(record), 'PX', ARGV[3])
+  redis.call('SREM', KEYS[2], ARGV[1]); return {0}
+end
+note.attempts=note.attempts+1; note.state='sending'; note.owner=ARGV[2]; note.lease_until=now_ms+45000
+record.notification=note
+redis.call('SET', KEYS[1], cjson.encode(record), 'PX', ARGV[3])
+return {1, record.payload.webhook, note.body}
+"""
+
+_NOTIFICATION_FINISH_SCRIPT = """
+local raw = redis.call('GET', KEYS[1])
+if not raw then redis.call('SREM', KEYS[2], ARGV[1]); return 0 end
+local record = cjson.decode(raw)
+local note = record.notification
+if record.state == 'deleted' then redis.call('SREM', KEYS[2], ARGV[1]); return 0 end
+if not note or note.owner ~= ARGV[2] or note.state ~= 'sending' then return 0 end
+local outcome = ARGV[3]
+if outcome == 'retry' and note.attempts < 3 then
+  local now = redis.call('TIME')
+  note.state='pending'; note.available_at=tonumber(now[1])*1000+math.floor(tonumber(now[2])/1000)+(2^note.attempts)*1000
+else
+  note.state=outcome == 'retry' and 'unconfirmed' or outcome
+  redis.call('SREM', KEYS[2], ARGV[1])
+end
+note.owner=cjson.null; note.lease_until=0
+record.notification=note
+redis.call('SET', KEYS[1], cjson.encode(record), 'PX', ARGV[4])
+return 1
+"""
+
 
 def _digest(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
@@ -271,6 +331,9 @@ class DurableResearchLedger:
     def _index_key(self) -> str:
         return self._key("index", "runs")
 
+    def _notification_index_key(self) -> str:
+        return self._key("index", "notifications")
+
     def admit(
         self,
         scope_id: str,
@@ -303,10 +366,11 @@ class DurableResearchLedger:
         }
         result = self.redis.eval(
             _ADMIT_SCRIPT,
-            3,
+            4,
             self._idempotency_key(scope_id, idempotency_key),
             self._run_key(selected_run_id),
             self._index_key(),
+            self._notification_index_key(),
             selected_run_id,
             request_digest,
             json.dumps(record, separators=(",", ":")),
@@ -420,6 +484,52 @@ class DurableResearchLedger:
         )
         if int(result) != 1:
             raise LeaseLostError("failure rejected for stale owner")
+
+    def has_pending_dispatch(self, run_id: str) -> bool:
+        raw = self.redis.get(self._run_key(run_id))
+        if raw is None:
+            raise DurableResearchError("execution record unavailable")
+        return any(
+            operation.get("state") == "dispatch_intent"
+            for operation in json.loads(raw).get("operations", {}).values()
+        )
+
+    def notification_candidates(self, cursor: int = 0) -> tuple[int, list[str]]:
+        next_cursor, members = self.redis.sscan(
+            self._notification_index_key(), cursor=cursor, count=10
+        )
+        return next_cursor, [
+            member.decode() if isinstance(member, bytes) else member
+            for member in members
+        ]
+
+    def claim_notification(self, run_id: str, owner: str) -> tuple[str, bytes] | None:
+        result = self.redis.eval(
+            _NOTIFICATION_CLAIM_SCRIPT,
+            2,
+            self._run_key(run_id),
+            self._notification_index_key(),
+            run_id,
+            owner,
+            str(self.retention_ms),
+        )
+        return (
+            (str(result[1]), str(result[2]).encode()) if int(result[0]) == 1 else None
+        )
+
+    def finish_notification(self, run_id: str, owner: str, outcome: str) -> None:
+        if outcome not in {"delivered", "rejected", "retry"}:
+            raise ValueError("invalid notification outcome")
+        self.redis.eval(
+            _NOTIFICATION_FINISH_SCRIPT,
+            2,
+            self._run_key(run_id),
+            self._notification_index_key(),
+            run_id,
+            owner,
+            outcome,
+            str(self.retention_ms),
+        )
 
     def checkpoint(
         self,

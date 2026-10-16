@@ -4,6 +4,8 @@ GroktoCrawl is a self-hosted, MIT-licensed web data platform compatible with the
 
 It is designed as a local-first, observable, model-flexible foundation for organizations that want agentic research and web intelligence without surrendering control of their data, infrastructure, or model choices.
 
+Research memory keeps full artifacts in Valkey and defaults to Qdrant for vector lookup. Deployments can explicitly mirror that index to PostgreSQL/pgvector and migrate it with the [research-memory storage runbook](docs/runbooks/research-memory-pgvector.md); the separate semantic page index also has a PostgreSQL-only mode after its own backfill. These modes are opt-in and do not change existing storage configuration by default.
+
 ## Start here
 
 Choose your path. Both run the same Docker stack defined in `docker-compose.yml`; they differ in which services and credentials you configure.
@@ -73,11 +75,9 @@ curl -N -X POST http://localhost:8080/v2/crawl \
 
 The `/experimental/research/v1` endpoint can execute an objective through the server-configured search, scraper, and model, then retain source bytes, checked knowledge, and three report layers in PostgreSQL. Enable all four research flags and schema 16; leave the development-only `FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS=false`. Setting that flag true explicitly selects scripted demonstration runs. Existing retained records keep their readers.
 
-This durable endpoint currently uses one search and at most three freshly acquired sources, with a 180-second deadline. Completed external-call receipts are reused after restart; an interrupted dispatch without a receipt fails as `outcome_unknown` and is never automatically sent again. `as_of` and `webhook` are rejected before admission while their durable contracts are completed. This is separate from the existing `/v2` research loop and does not imply execution of workspace follow-up previews or source copying into sessions. Completion of the remaining release work is tracked in [#666](https://github.com/groktopus/groktocrawl/issues/666). See [ADR-0070](docs/adr/0070-execute-live-durable-research.md).
+This durable endpoint plans up to three searches and retains up to eight sources within 256,000 source bytes and a 180-second deadline. Known capture failures remain visible as insufficient coverage; ambiguous external dispatch stops as `outcome_unknown`. Completed call receipts are reused after restart without another paid call. `as_of` is a timezone-aware, nonfuture evidence evaluation target: it does not retrieve an archived web page, and a new capture cannot establish past validity by itself. Optional completion, failure and cancellation webhooks use a durable outbox with three attempts and one stable event ID; receivers must deduplicate that ID. See the [live execution contract](docs/guides/durable-research.md) and [ADR-0070](docs/adr/0070-execute-live-durable-research.md). The remaining 1.0.1 acceptance work is tracked in [#666](https://github.com/groktopus/groktocrawl/issues/666).
 
-The semantic page index can move from Qdrant to pgvector after verified backfill and parity checks, with Qdrant retained for rollback. See [ADR-0069](docs/adr/0069-adopt-bounded-research-substrate.md), the [migration plan](docs/plans/research-architecture-migration.md), and the [deployment migration runbook](docs/runbooks/mainline-architecture-migration.md). Protected capture is described in the [protected Compose override](docker-compose.protected.yml). Historical decisions remain in the [GroktoCrawl X ADR archive](docs/adr/experimental/groktocrawl-x/README.md).
-
-Research-memory artifacts remain in Valkey; its vector index defaults to Qdrant and can be migrated to PostgreSQL/pgvector after a verified backfill. Qdrant remains available for rollback until operators verify a reverse copy and end their rollback window. See [ADR-0071](docs/adr/0071-use-pgvector-for-research-memory-with-reversible-rollback.md) and the [research-memory storage runbook](docs/runbooks/research-memory-pgvector.md).
+Research-memory artifacts remain in Valkey; its vector index defaults to Qdrant and can be migrated to PostgreSQL/pgvector after a verified backfill. The semantic page index has separate Qdrant, shadow, and PostgreSQL-only modes. Qdrant remains available for rollback until operators verify a reverse copy and end their rollback window. The `/experimental/research/v1` path remains stable for compatibility. See [ADR-0069](docs/adr/0069-adopt-bounded-research-substrate.md), [ADR-0071](docs/adr/0071-use-pgvector-for-research-memory-with-reversible-rollback.md), the [research-memory storage runbook](docs/runbooks/research-memory-pgvector.md), and the [deployment migration runbook](docs/runbooks/mainline-architecture-migration.md). The protected capture topology is described in the [protected Compose override](docker-compose.protected.yml). Historical experiment decisions and their scope are recorded in the [GroktoCrawl X ADR archive](docs/adr/experimental/groktocrawl-x/README.md).
 
 ## What it provides
 
@@ -104,7 +104,7 @@ When the stack is running, FastAPI publishes the canonical request/response sche
 
 ## Architecture at a glance
 
-`agent-svc` is the public API and coordinator. It persists job state in Valkey, calls `scraper-svc` and SlopSearX, uses `semantic-svc`/Qdrant for vector retrieval, and delegates synthesis to an OpenAI-compatible LLM. Supporting services provide browser sessions, document parsing, the portal, scheduled monitors, and MCP access. See the [architecture guide](docs/architecture.md) for the service graph and boundaries.
+`agent-svc` is the public API and coordinator. It persists job state and research-memory artifacts in Valkey, calls `scraper-svc` and SlopSearX, uses `semantic-svc` for page-vector retrieval, and delegates synthesis to an OpenAI-compatible LLM. The semantic index defaults to Qdrant and can use PostgreSQL/pgvector in its explicit PostgreSQL-only mode. Research-memory vectors have their own Qdrant/shadow/pgvector modes. Supporting services provide browser sessions, document parsing, the portal, scheduled monitors, and MCP access. See the [architecture guide](docs/architecture.md) for the service graph and boundaries.
 
 ## Adapters
 

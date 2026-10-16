@@ -527,14 +527,28 @@ async def followup_preview(request: dict[str, Any]) -> str:
 
 
 @mcp.tool(annotations=_NEUTRAL)
-async def followup_execute(request: dict[str, Any], idempotency_key: str) -> str:
+async def followup_execute(
+    request: dict[str, Any],
+    idempotency_key: str,
+    webhook: str | None = None,
+    as_of: str | None = None,
+) -> str:
     """Run an explicitly requested follow-up using selected retained evidence.
 
-    Uses the preview request shape. Starts independent durable research and can
+    Uses the preview shape plus optional webhook and as_of execution options.
+    as_of evaluates evidence at a timezone-aware nonfuture target, not an archive.
+    webhook receives durable terminal events; deduplicate the stable webhookId.
+    Starts independent durable research and can
     invoke configured search, capture and model services. Reuse the same key
     only when retrying the same request; preview alone never starts work.
     """
-    result = await _client.followup_execute(request, idempotency_key)
+    body = dict(request)
+    for option, value in (("webhook", webhook), ("as_of", as_of)):
+        if value is not None:
+            if option in body and body[option] != value:
+                raise ValueError(f"Conflicting {option} execution options")
+            body[option] = value
+    result = await _client.followup_execute(body, idempotency_key)
     _ensure_success(result)
     return _resp(result)
 

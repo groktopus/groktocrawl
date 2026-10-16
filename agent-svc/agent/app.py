@@ -373,6 +373,7 @@ def create_app() -> FastAPI:
         """
         from common.features import is_enabled
 
+        from .experimental.research_notifications import run_notification_loop
         from .job_execution import recover_legacy_jobs
         from .routes.experimental_research import recover_research_runs
 
@@ -381,6 +382,9 @@ def create_app() -> FastAPI:
         ):
             app.state.task_tracker.create_background_task(
                 recover_research_runs(app, app.state.task_tracker.shutdown_event)
+            )
+            app.state.task_tracker.create_background_task(
+                run_notification_loop(app, app.state.task_tracker.shutdown_event)
             )
         app.state.task_tracker.create_background_task(
             recover_legacy_jobs(app, app.state.task_tracker.shutdown_event)

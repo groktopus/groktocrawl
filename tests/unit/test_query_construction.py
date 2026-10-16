@@ -393,3 +393,128 @@ async def test_selected_source_preserves_unknown_original_metadata():
     assert snapshot.retrieved_at is None
     assert snapshot.origin_id == "retained-root:source-1"
     assert (await result.resolve(snapshot.content_ref)).body == TEXT.encode()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "captured,established",
+    [("2026-09-06T00:00:00Z", True), ("2026-09-08T00:00:00Z", False)],
+)
+async def test_as_of_uses_recorded_evidence_time_not_fabricated_archive(
+    captured, established
+):
+    from agent.experimental.knowledge_checks import HistoricalValidityError
+    from agent.experimental.real_journey import research_from_sources
+
+    async def complete(request):
+        value = json.loads(request.payload)
+        content = proposal() if "schema" in value else batch_decisions(value)
+        return ModelReply(json.dumps(content).encode(), "test-model", 1, 1)
+
+    async def execute():
+        return await research_from_sources(
+            QUESTION,
+            (CapturedSource("https://example.test/pilot", TEXT, captured),),
+            complete=complete,
+            scope_id="owner",
+            clock=lambda: datetime(2026, 9, 9, tzinfo=UTC),
+            as_of="2026-09-07T00:00:00Z",
+        )
+
+    if established:
+        result = await execute()
+        knowledge = json.loads(result.knowledge_bytes)
+        assert knowledge["context"]["as_of"] == "2026-09-07T00:00:00Z"
+        assert knowledge["context"]["snapshots"][0]["retrieved_at"] == captured
+    else:
+        with pytest.raises(HistoricalValidityError):
+            await execute()
+
+
+@pytest.mark.asyncio
+async def test_multiquery_round_robin_and_known_failure_are_explicit():
+    from agent.experimental.query_runner import run_query
+
+    queries = ("primary evidence", "independent replication", "limits")
+    searched, captured = [], []
+    plans = {
+        queries[0]: (
+            "https://source.test/a",
+            "https://source.test/shared",
+            "https://source.test/a2",
+        ),
+        queries[1]: ("https://source.test/b", "https://source.test/shared"),
+        queries[2]: ("https://source.test/c", "https://source.test/shared"),
+    }
+
+    async def search(query, limit):
+        searched.append((query, limit))
+        return plans[query]
+
+    async def acquire(url):
+        captured.append(url)
+        if url.endswith("/b"):
+            raise ValueError("confirmed unavailable source")
+        return CapturedSource(url, TEXT, "2026-09-06T00:00:00Z")
+
+    seen = []
+
+    async def complete(request):
+        value = json.loads(request.payload)
+        seen.append(value)
+        content = proposal() if "schema" in value else batch_decisions(value)
+        return ModelReply(json.dumps(content).encode(), "test-model", 1, 1)
+
+    result = await run_query(
+        QUESTION,
+        search=search,
+        acquire=acquire,
+        complete=complete,
+        scope_id="owner",
+        queries=queries,
+        source_limit=4,
+        allow_partial=True,
+        clock=journey_clock,
+    )
+    assert searched == [(query, 4) for query in queries]
+    assert captured == [
+        "https://source.test/a",
+        "https://source.test/b",
+        "https://source.test/c",
+        "https://source.test/shared",
+    ]
+    assert seen[0]["acquisition_failures"] == ["https://source.test/b"]
+    assert len(result.sources) == 3
+    assert result.candidate.admitted.knowledge.coverage == "insufficient"
+    assert "Acquisition coverage is incomplete" in result.reports[1].body.decode()
+
+
+@pytest.mark.asyncio
+async def test_partial_policy_never_swallows_ambiguous_external_dispatch():
+    from agent.experimental.durable_research import OutcomeUnknownError
+    from agent.experimental.query_runner import run_query
+
+    captured = []
+
+    async def search(*_args):
+        return ("https://source.test/unknown", "https://source.test/next")
+
+    async def acquire(url):
+        captured.append(url)
+        raise OutcomeUnknownError("no durable external receipt")
+
+    async def complete(_request):
+        raise AssertionError("ambiguous acquisition reached model")
+
+    with pytest.raises(OutcomeUnknownError):
+        await run_query(
+            QUESTION,
+            search=search,
+            acquire=acquire,
+            complete=complete,
+            scope_id="owner",
+            queries=(QUESTION,),
+            source_limit=8,
+            allow_partial=True,
+        )
+    assert captured == ["https://source.test/unknown"]

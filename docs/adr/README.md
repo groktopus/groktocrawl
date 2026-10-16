@@ -23,7 +23,7 @@ An Architecture Decision Record captures an important architectural decision mad
 
 **Status legend:** accepted ADRs describe decisions used by the current implementation. Proposed ADRs are design work, not promises of current behavior. Superseded ADRs are historical context only; use their successor when documenting current behavior.
 
-**Current accepted decisions:** ADR-0001–0007, 0009–0012, 0014–0022, 0026 (as superseded for migrated deployments), 0029–0035, 0038, 0039, 0043–0057, 0059–0067, and 0069.
+**Current accepted decisions:** ADR-0001–0007, 0009–0012, 0014–0022, 0026 (as superseded for migrated deployments), 0029–0035, 0038, 0039, 0043–0057, 0059–0067, 0069, and 0072.
 
 **Proposed work:** ADR-0023–0025, 0027, 0028, 0036, 0037, 0040–0042, 0068, 0070, and 0071.
 

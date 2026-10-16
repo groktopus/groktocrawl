@@ -70,6 +70,21 @@ The CLI equivalent is:
 groktocrawl followup @followup.json --execute --idempotency-key investigation-2
 ```
 
+Execute accepts two additional options: `webhook` for a terminal callback and
+`as_of` for a timezone-aware, nonfuture evidence evaluation target. Include them
+in the execution JSON or use `--webhook https://receiver.example/research` and
+`--as-of 2026-09-01T00:00:00Z`. Conflicting JSON and command options are rejected.
+Preview has a separate strict schema and rejects these execution-only fields;
+it never accepts a callback that would be silently discarded.
+
+MCP exposes the same optional `webhook` and `as_of` arguments on
+`followup_execute`, or accepts them inside its request object. Conflicting values
+are rejected. Both options participate in durable idempotency: changing the
+callback or target time with the same key returns 409. The callback's stable
+event ID, retry bounds and unconfirmed state follow the [live research
+contract](durable-research.md). `as_of` evaluates retained evidence; it does not
+turn new captures into archived evidence or promise historical search.
+
 MCP callers use `followup_execute(request, idempotency_key)`. Execution can call
 configured search, capture, and model services; reuse the same key only when
 retrying the same request. Poll the returned run using the ordinary research

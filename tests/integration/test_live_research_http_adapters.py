@@ -12,8 +12,11 @@ import hashlib
 import importlib
 import json
 import os
+import re
+import socket
 import sys
 import threading
+from contextlib import asynccontextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from uuid import uuid4
@@ -21,6 +24,7 @@ from uuid import uuid4
 import httpx
 import pytest
 import pytest_asyncio
+import uvicorn
 from agent.experimental.durable_research import DurableResearchLedger
 from agent.routes import experimental_research as experimental
 from agent.scraper_client import ScraperClient
@@ -47,6 +51,8 @@ class LocalProviderTwin:
         self.search_requests: list[dict] = []
         self.capture_requests: list[dict] = []
         self.model_requests: list[dict] = []
+        self.callback_requests: list[tuple[bytes, dict]] = []
+        self.session_contexts: list[str] = []
         self._lock = threading.Lock()
         owner = self
 
@@ -71,9 +77,34 @@ class LocalProviderTwin:
                 query = parse_qs(urlparse(self.path).query).get("q", [""])[0]
                 with owner._lock:
                     owner.search_requests.append({"query": query, "path": self.path})
-                selected = OBJECTIVES.get(query)
+                selected = next(
+                    (
+                        item
+                        for objective, item in OBJECTIVES.items()
+                        if query
+                        in (
+                            objective,
+                            objective + " independent replication",
+                            objective + " limitations",
+                        )
+                    ),
+                    None,
+                )
                 rows = (
-                    [{"url": selected[0], "title": "Local source", "content": ""}]
+                    [
+                        {
+                            "url": selected[0]
+                            + (
+                                "/replication"
+                                if query.endswith(" independent replication")
+                                else "/limits"
+                                if query.endswith(" limitations")
+                                else ""
+                            ),
+                            "title": "Local source",
+                            "content": "",
+                        }
+                    ]
                     if selected
                     else []
                 )
@@ -90,6 +121,11 @@ class LocalProviderTwin:
             def do_POST(self) -> None:
                 length = int(self.headers.get("Content-Length", "0"))
                 raw = self.rfile.read(length)
+                if self.path == "/callback":
+                    with owner._lock:
+                        owner.callback_requests.append((raw, dict(self.headers)))
+                    self._reply(200, {"received": True})
+                    return
                 try:
                     payload = json.loads(raw)
                 except Exception:
@@ -103,7 +139,9 @@ class LocalProviderTwin:
                         (
                             text
                             for source_url, text in OBJECTIVES.values()
-                            if source_url == url
+                            if url == source_url
+                            or url
+                            in (source_url + "/replication", source_url + "/limits")
                         ),
                         None,
                     )
@@ -126,8 +164,31 @@ class LocalProviderTwin:
                     with owner._lock:
                         owner.model_requests.append(payload)
                     user = payload["messages"][1]["content"]
-                    request = json.loads(user)
-                    if "sources" in request and "objective" in request:
+                    session_query = user.startswith(
+                        "Here is the information I gathered:"
+                    )
+                    request = {} if session_query else json.loads(user)
+                    if session_query:
+                        with owner._lock:
+                            owner.session_contexts.append(user)
+                        reference = re.search(r"research_[0-9a-f]{24}", user)
+                        assert reference is not None
+                        text = next(
+                            text for _url, text in OBJECTIVES.values() if text in user
+                        )
+                        answer = text + " [" + reference.group() + "]"
+                    elif request.get("planning"):
+                        objective = request["objective"]
+                        answer = {
+                            "reasoning": "Controlled multiquery acceptance plan",
+                            "research_strategy": "deep",
+                            "focused_queries": [
+                                objective,
+                                objective + " independent replication",
+                                objective + " limitations",
+                            ],
+                        }
+                    elif "sources" in request and "objective" in request:
                         source = request["sources"][0]
                         line = source["lines"][0]["text"].rstrip("\n")
                         answer = {
@@ -180,7 +241,11 @@ class LocalProviderTwin:
                             "choices": [
                                 {
                                     "finish_reason": "stop",
-                                    "message": {"content": json.dumps(answer)},
+                                    "message": {
+                                        "content": answer
+                                        if isinstance(answer, str)
+                                        else json.dumps(answer)
+                                    },
                                 }
                             ],
                         },
@@ -236,6 +301,15 @@ async def durable_apps(
         pytest.fail(
             "acceptance requires isolated DURABLE_RESEARCH_REDIS_URL/VALKEY_URL and DURABLE_RESEARCH_POSTGRES_DSN"
         )
+    from urllib.parse import urlsplit
+
+    from agent.settings import load_settings
+
+    address = urlsplit(redis_url)
+    monkeypatch.setenv("VALKEY_HOST", address.hostname)
+    monkeypatch.setenv("VALKEY_PORT", str(address.port or 6379))
+    monkeypatch.setenv("VALKEY_DB", address.path.strip("/") or "0")
+    load_settings.cache_clear()
 
     for flag in (
         "EXPERIMENTAL_RESEARCH",
@@ -268,6 +342,8 @@ async def durable_apps(
     def make_app() -> FastAPI:
         app = FastAPI()
         app.state.valkey_url = redis_url
+        app.state.searxng_url = provider_twin.base_url
+        app.state.scraper_url = provider_twin.base_url
         app.state.research_postgres_dsn = postgres_dsn
         app.state.searxng_client = SearXNGClient(provider_twin.base_url, max_searches=5)
         app.state.scraper_client = ScraperClient(
@@ -277,6 +353,11 @@ async def durable_apps(
         app.state.llm_api_key = "local-acceptance-only"
         app.state.llm_model = "acceptance-local-model"
         app.include_router(experimental.router)
+        from agent.routes.followup import router as followup_router
+        from agent.routes.session import router as session_router
+
+        app.include_router(followup_router)
+        app.include_router(session_router)
         return app
 
     apps = [make_app()]
@@ -323,6 +404,7 @@ async def durable_apps(
         for key in redis.scan_iter(match=f"{prefix}*"):
             redis.delete(key)
         redis.close()
+        load_settings.cache_clear()
 
 
 async def _terminal(client: httpx.AsyncClient, url: str) -> dict:
@@ -334,6 +416,35 @@ async def _terminal(client: httpx.AsyncClient, url: str) -> dict:
             return status
         await asyncio.sleep(0.05)
     raise AssertionError("live research run did not reach a terminal state")
+
+
+@asynccontextmanager
+async def local_http_api(app):
+    """Serve the same app on its current loop so retained-store pools stay local."""
+    listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    listener.bind(("127.0.0.1", 0))
+    listener.listen(128)
+    listener.setblocking(False)
+    server = uvicorn.Server(
+        uvicorn.Config(app, lifespan="off", log_level="error", loop="asyncio")
+    )
+    task = asyncio.create_task(server.serve(sockets=[listener]))
+    try:
+        for _ in range(200):
+            if server.started:
+                break
+            if task.done():
+                await task
+                raise AssertionError("Local API server stopped before readiness")
+            await asyncio.sleep(0.01)
+        assert server.started, "Local API server did not become ready"
+        yield f"http://127.0.0.1:{listener.getsockname()[1]}"
+    finally:
+        server.should_exit = True
+        try:
+            await asyncio.wait_for(task, 5)
+        finally:
+            listener.close()
 
 
 @pytest.mark.asyncio
@@ -399,14 +510,18 @@ async def test_two_objectives_use_http_adapters_and_recover_actual_bytes_through
 
         assert [item["query"] for item in provider_twin.search_requests] == [
             first_objective,
+            first_objective + " independent replication",
+            first_objective + " limitations",
             second_objective,
+            second_objective + " independent replication",
+            second_objective + " limitations",
         ]
-        assert len(provider_twin.capture_requests) == 2
+        assert len(provider_twin.capture_requests) == 6
         assert all(
             item.get("lightweight_only") is True
             for item in provider_twin.capture_requests
         )
-        assert len(provider_twin.model_requests) >= 4
+        assert len(provider_twin.model_requests) == 6
         assert all(
             item["model"] == "acceptance-local-model"
             for item in provider_twin.model_requests
@@ -512,4 +627,380 @@ async def test_live_search_failure_is_not_reported_as_success(
         assert "result" not in status or status["result"] is None
         assert any(item["query"] == objective for item in provider_twin.search_requests)
         assert not provider_twin.capture_requests
-        assert not provider_twin.model_requests
+        assert len(provider_twin.model_requests) == 1
+        assert (
+            json.loads(provider_twin.model_requests[0]["messages"][1]["content"])[
+                "planning"
+            ]
+            is True
+        )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("successful", [True, False])
+@pytest.mark.parametrize("endpoint", ["runs", "followup"])
+async def test_real_http_terminal_callback_has_stable_identity_and_status(
+    durable_apps, provider_twin, monkeypatch, successful, endpoint
+):
+    from agent import webhook
+    from agent.experimental.research_notifications import deliver_notifications
+
+    apps, _, _, ledgers, _, cleanup_research_ids, _ = durable_apps
+    destination = provider_twin.base_url + "/callback"
+
+    def local_test_destination(url):
+        # This test-only allowlist admits exactly the controlled loopback twin.
+        # The production destination policy is separately tested unchanged.
+        assert url in {destination, destination + "?rotation=1"}
+
+    monkeypatch.setattr(
+        experimental, "validate_outbound_webhook_url", local_test_destination
+    )
+    monkeypatch.setattr(
+        webhook, "validate_outbound_webhook_url", local_test_destination
+    )
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=apps[0]),
+        base_url="http://acceptance",
+        headers={"Authorization": "Bearer live-http-acceptance-owner"},
+    ) as client:
+        objective = (
+            next(iter(OBJECTIVES))
+            if successful
+            else "Unavailable callback test evidence"
+        )
+        route = (
+            "/experimental/research/v1/runs"
+            if endpoint == "runs"
+            else "/v2/followup/execute"
+        )
+        request_body = {
+            "objective" if endpoint == "runs" else "wording": objective,
+            "webhook": destination,
+        }
+        created = await client.post(
+            route,
+            headers={"Idempotency-Key": "callback-" + str(successful)},
+            json=request_body,
+        )
+        assert created.status_code == 202, created.text
+        admission = created.json()
+        cleanup_research_ids.append(admission["research_id"])
+        status = await _terminal(client, admission["status_url"])
+        state = "completed" if successful else "failed"
+        assert status["state"] == state, status
+        assert status["webhook"] == {"state": "pending", "attempts": 0}
+        replay = await client.post(
+            route,
+            headers={"Idempotency-Key": "callback-" + str(successful)},
+            json=request_body,
+        )
+        assert replay.status_code == 202, replay.text
+        assert replay.json()["run_id"] == admission["run_id"]
+        conflict = await client.post(
+            route,
+            headers={"Idempotency-Key": "callback-" + str(successful)},
+            json={**request_body, "webhook": destination + "?rotation=1"},
+        )
+        assert conflict.status_code == 409, conflict.text
+        await deliver_notifications(ledgers[0])
+        assert len(provider_twin.callback_requests) == 1
+        body = json.loads(provider_twin.callback_requests[0][0])
+        assert body["type"] == "research." + state
+        assert body["webhookId"] == body["id"] == admission["run_id"]
+        assert body["data"]["research_id"] == admission["research_id"]
+        assert body["success"] is successful
+        status = (await client.get(admission["status_url"])).json()
+        assert status["webhook"] == {"state": "delivered", "attempts": 1}
+        assert destination not in json.dumps(status)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("endpoint", ["runs", "followup"])
+async def test_as_of_never_turns_a_new_capture_into_historical_evidence(
+    durable_apps, endpoint
+):
+    apps, _, _, _, _, cleanup_research_ids, _ = durable_apps
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=apps[0]),
+        base_url="http://acceptance",
+        headers={"Authorization": "Bearer live-http-acceptance-owner"},
+    ) as client:
+        response = await client.post(
+            "/experimental/research/v1/runs"
+            if endpoint == "runs"
+            else "/v2/followup/execute",
+            headers={"Idempotency-Key": "past-evaluation"},
+            json={
+                "objective" if endpoint == "runs" else "wording": next(
+                    iter(OBJECTIVES)
+                ),
+                "as_of": "2026-01-01T00:00:00Z",
+            },
+        )
+        assert response.status_code == 202, response.text
+        cleanup_research_ids.append(response.json()["research_id"])
+        status = await _terminal(client, response.json()["status_url"])
+        assert status["state"] == "failed", status
+        assert status["error"]["code"] == "historical_validity_unestablished"
+        assert status["result"] is None
+
+
+@pytest.mark.asyncio
+async def test_live_retained_source_drives_independent_followup_and_owned_session(
+    durable_apps, provider_twin, monkeypatch
+):
+    from agent.session_store import SessionStore
+
+    apps, _, _, ledgers, make_app, cleanup_roots, cleanup_clients = durable_apps
+    owner = {"Authorization": "Bearer live-http-acceptance-owner"}
+    session_id = None
+    store = SessionStore(
+        redis_url=os.environ.get("DURABLE_RESEARCH_REDIS_URL")
+        or os.environ["VALKEY_URL"]
+    )
+    try:
+        async with (
+            local_http_api(apps[0]) as api_url,
+            httpx.AsyncClient(
+                transport=httpx.ASGITransport(app=apps[0]),
+                base_url="http://acceptance",
+                headers=owner,
+            ) as client,
+        ):
+            created = await client.post(
+                "/experimental/research/v1/runs",
+                headers={"Idempotency-Key": "followup-original"},
+                json={"objective": next(iter(OBJECTIVES))},
+            )
+            assert created.status_code == 202, created.text
+            original = created.json()
+            cleanup_roots.append(original["research_id"])
+            assert (await _terminal(client, original["status_url"]))[
+                "state"
+            ] == "completed"
+            workspace = (
+                await client.get(
+                    f"/experimental/research/v1/workspace/{original['run_id']}"
+                )
+            ).json()
+            original_url, original_body = next(iter(OBJECTIVES.values()))
+            source = next(
+                item
+                for item in workspace["evidence"]
+                if item.get("source", {}).get("canonical_url") == original_url
+            )
+            retained = (await client.get(source["url"])).json()
+            assert retained["body"] == original_body
+            selection = {
+                "kind": "root",
+                "container_id": original["research_id"],
+                "ref_id": source["snapshot_id"],
+                "subject": "Aurora battery pilot",
+            }
+            followup_body = {"wording": tuple(OBJECTIVES)[1], "selected": [selection]}
+            process = await asyncio.create_subprocess_exec(
+                sys.executable,
+                str(Path(__file__).resolve().parents[2] / "groktocrawl"),
+                "--server",
+                api_url,
+                "--json",
+                "followup",
+                json.dumps(followup_body),
+                "--execute",
+                "--idempotency-key",
+                "followup-root-selection",
+                env={
+                    **os.environ,
+                    "GROKTOCRAWL_API_KEY": "live-http-acceptance-owner",
+                    "API_KEY": "",
+                },
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            try:
+                stdout, stderr = await asyncio.wait_for(process.communicate(), 30)
+            finally:
+                if process.returncode is None:
+                    process.kill()
+                    await process.wait()
+            assert process.returncode == 0, stderr.decode()
+            admission = json.loads(stdout)
+            assert admission["success"] is True
+            cleanup_roots.append(admission["research_id"])
+            assert admission["run_id"] != original["run_id"]
+            assert admission["research_id"] != original["research_id"]
+            assert (await _terminal(client, admission["status_url"]))[
+                "state"
+            ] == "completed"
+            before = (
+                len(provider_twin.search_requests),
+                len(provider_twin.capture_requests),
+                len(provider_twin.model_requests),
+            )
+            duplicate = await client.post(
+                "/v2/followup/execute",
+                headers={"Idempotency-Key": "followup-root-selection"},
+                json=followup_body,
+            )
+            assert duplicate.status_code == 202, duplicate.text
+            assert duplicate.json()["run_id"] == admission["run_id"]
+            assert before == (
+                len(provider_twin.search_requests),
+                len(provider_twin.capture_requests),
+                len(provider_twin.model_requests),
+            )
+            constructed = next(
+                json.loads(item["messages"][1]["content"])
+                for item in provider_twin.model_requests
+                if json.loads(item["messages"][1]["content"]).get("objective")
+                == tuple(OBJECTIVES)[1]
+                and "sources" in json.loads(item["messages"][1]["content"])
+            )
+            text = "".join(
+                line["text"]
+                for item in constructed["sources"]
+                for line in item["lines"]
+            )
+            assert original_body in text
+            assert OBJECTIVES[tuple(OBJECTIVES)[1]][1] in text
+            durable = ledgers[0].get(admission["run_id"])
+            assert (
+                durable.payload["selected_sources"][0]["origin_id"]
+                == f"root:{original['research_id']}:{source['snapshot_id']}"
+            )
+            assert (
+                durable.payload["selected_sources"][0]["lineage_id"]
+                == retained["content_digest"]
+            )
+            assert (
+                durable.payload["selected_sources"][0]["retrieved_at"]
+                == retained["retrieved_at"]
+            )
+
+            session = await client.post("/v2/session/create", json={"ttl": 120})
+            assert session.status_code == 200, session.text
+            session_id = session.json()["sessionId"]
+            attached = await client.post(
+                f"/experimental/research/v1/sessions/{session_id}/attachments",
+                json={"run_id": original["run_id"], "expected_revision": 0},
+            )
+            assert attached.status_code == 200, attached.text
+            stored_refs = {
+                ref: await store.aget_ref(session_id, ref)
+                for ref in attached.json()["ref_ids"]
+            }
+            ref_id = next(
+                ref
+                for ref, material in stored_refs.items()
+                if material["url"] == original_url
+            )
+            saved = await store.aget_ref(session_id, ref_id)
+            assert "markdown" not in saved
+            assert saved["content_digest"] == retained["content_digest"]
+            step = await client.post(
+                f"/v2/session/{session_id}/step",
+                json={
+                    "action": "query",
+                    "params": {
+                        "question": "What does the Aurora battery pilot report?",
+                        "ref_ids": [ref_id],
+                    },
+                },
+            )
+            assert step.status_code == 200, step.text
+            assert original_body in provider_twin.session_contexts[-1]
+            citation = step.json()["result"]["citations"][0]
+            assert citation["ref_id"] == ref_id
+            assert citation["content_digest"] == retained["content_digest"]
+            session_selection = {
+                "kind": "session",
+                "container_id": session_id,
+                "ref_id": ref_id,
+                "subject": "Aurora battery pilot",
+            }
+            mcp_dir = str(Path(__file__).resolve().parents[2] / "mcp-svc")
+            if mcp_dir not in sys.path:
+                sys.path.insert(0, mcp_dir)
+            mcp_server = importlib.import_module("mcp_server")
+            from groktocrawl_client import GroktocrawlClient
+
+            mcp_client = GroktocrawlClient(base_url=api_url)
+            mcp_client._client = httpx.AsyncClient(base_url=api_url, headers=owner)
+            cleanup_clients.append(mcp_client)
+            monkeypatch.setattr(mcp_server, "_client", mcp_client)
+            reply, _structured = await mcp_server.mcp.call_tool(
+                "followup_execute",
+                {
+                    "request": {
+                        "wording": tuple(OBJECTIVES)[1],
+                        "selected": [session_selection],
+                    },
+                    "idempotency_key": "followup-linked-session",
+                },
+            )
+            linked = json.loads(reply[0].text)
+            assert linked["success"] is True, linked
+            cleanup_roots.append(linked["research_id"])
+            linked_status = await _terminal(client, linked["status_url"])
+            assert linked_status["state"] == "completed", linked_status
+
+        experimental._RUNS.clear()
+        experimental._IDEMPOTENCY.clear()
+        experimental._DURABLE_LEDGERS.clear()
+        experimental._ARTIFACT_AUTHORITIES.clear()
+        recovered_app = make_app()
+        apps.append(recovered_app)
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=recovered_app),
+            base_url="http://acceptance",
+            headers=owner,
+        ) as client:
+            followup_workspace = (
+                await client.get(
+                    f"/experimental/research/v1/workspace/{admission['run_id']}"
+                )
+            ).json()
+            inherited = []
+            for item in followup_workspace["evidence"]:
+                evidence = (await client.get(item["url"])).json()
+                if (
+                    evidence["origin_id"]
+                    == f"root:{original['research_id']}:{source['snapshot_id']}"
+                ):
+                    inherited.append(evidence)
+            assert len(inherited) == 1
+            assert inherited[0]["body"] == original_body
+            assert inherited[0]["lineage_id"] == retained["content_digest"]
+            assert inherited[0]["url"] == original_url
+            assert inherited[0]["retrieved_at"] == retained["retrieved_at"]
+            exact = await client.get(f"/v2/session/{session_id}/evidence/{ref_id}")
+            assert exact.status_code == 200, exact.text
+            assert (
+                "".join(span["quote"] for span in exact.json()["spans"])
+                == original_body
+            )
+            deleted = await client.delete(
+                f"/experimental/research/v1/research/{original['research_id']}"
+            )
+            assert deleted.status_code == 202, deleted.text
+            before = (
+                len(provider_twin.search_requests),
+                len(provider_twin.capture_requests),
+                len(provider_twin.model_requests),
+            )
+            refused = await client.post(
+                "/v2/followup/execute",
+                headers={"Idempotency-Key": "followup-after-root-deletion"},
+                json={"wording": tuple(OBJECTIVES)[1], "selected": [session_selection]},
+            )
+            assert refused.status_code == 410, refused.text
+            assert before == (
+                len(provider_twin.search_requests),
+                len(provider_twin.capture_requests),
+                len(provider_twin.model_requests),
+            )
+    finally:
+        if session_id is not None:
+            await store.adelete(session_id)
+        store.redis.close()

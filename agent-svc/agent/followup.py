@@ -33,6 +33,13 @@ class FollowupRequest(BaseModel):
         return self
 
 
+class FollowupExecutionRequest(FollowupRequest):
+    """Execution-only options; preview remains a strict read-only request."""
+
+    as_of: datetime | None = None
+    webhook: str | None = None
+
+
 class SelectedEvidence(BaseModel):
     identity: EvidenceChoice
     observed_at: str | None
