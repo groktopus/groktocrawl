@@ -73,6 +73,14 @@ class TestWebhookIdUuid:
             assert uuid.UUID(whid).version == 4
 
 
+class TestBuildWebhookIntent:
+    @pytest.mark.parametrize("config", [None, {}, {"url": ""}])
+    def test_missing_destination_does_not_create_intent(self, config):
+        from agent.webhook import build_webhook_intent
+
+        assert build_webhook_intent(config, "completed", "job-1") is None
+
+
 class TestDeliverWebhook:
     @pytest.mark.asyncio
     async def test_no_webhook_config_does_nothing(self):
@@ -334,6 +342,158 @@ class TestDeliverWebhook:
             _args, kwargs = mock_client.post.call_args
             body = json.loads(kwargs["content"].decode())
             assert body["metadata"] == {}
+
+    @pytest.mark.asyncio
+    async def test_outbox_delivery_is_enqueued_and_tracked(self, monkeypatch):
+        """Job deliveries persist their intent before scheduling the send."""
+        from agent import webhook
+
+        job_id = "job-outbox-test"
+        persisted = {
+            "webhookId": "persisted-id",
+            "url": "https://hook.example.com",
+            "event": "completed",
+            "body": '{"type":"completed"}',
+            "headers": {"Content-Type": "application/json"},
+        }
+
+        class Store:
+            def __init__(self):
+                self.calls = []
+
+            def enqueue_webhook(self, actual_job_id, fingerprint, event):
+                self.calls.append((actual_job_id, fingerprint, event))
+                return persisted
+
+        class Tracker:
+            def __init__(self):
+                self.pending = []
+
+            def create_background_task(self, coroutine):
+                self.pending.append(coroutine)
+
+        store = Store()
+        tracker = Tracker()
+        delivered = []
+
+        async def deliver(actual_store, actual_job_id, event):
+            delivered.append((actual_store, actual_job_id, event))
+
+        monkeypatch.setattr(webhook, "_deliver_outbox_event", deliver)
+        token = webhook._WEBHOOK_STORE_CONTEXT.set(store)
+        try:
+            await webhook.deliver_webhook(
+                {"url": "https://hook.example.com"},
+                "completed",
+                job_id,
+                {"result": "saved"},
+                task_tracker=tracker,
+            )
+        finally:
+            webhook._WEBHOOK_STORE_CONTEXT.reset(token)
+
+        assert len(store.calls) == 1
+        assert store.calls[0][0] == job_id
+        assert store.calls[0][1]
+        assert len(tracker.pending) == 1
+        assert delivered == []
+        await tracker.pending.pop()
+        assert delivered == [(store, job_id, persisted)]
+
+    @pytest.mark.asyncio
+    async def test_outbox_claim_conflict_does_not_send_or_finish(self, monkeypatch):
+        """A delivery that lost its lease cannot send or alter the outbox row."""
+        from agent import webhook
+
+        class Store:
+            def __init__(self):
+                self.finished = []
+
+            def claim_webhook(self, *_args, **_kwargs):
+                return None
+
+            def finish_webhook(self, *args):
+                self.finished.append(args)
+
+        async def unexpected_send(*_args):
+            pytest.fail("an unclaimed webhook must not be sent")
+
+        store = Store()
+        monkeypatch.setattr(webhook, "_send_outbox_event", unexpected_send)
+        await webhook._deliver_outbox_event(
+            store, "job-lease-conflict", {"webhookId": "already-owned"}
+        )
+        assert store.finished == []
+
+    @pytest.mark.asyncio
+    async def test_outbox_delivery_records_nonterminal_send_result(self, monkeypatch):
+        """A retryable or rejected send is retained with its delivery status."""
+        from agent import webhook
+
+        event = {"webhookId": "event-id", "url": "https://hook.example.com"}
+        calls = []
+
+        class Store:
+            def claim_webhook(self, job_id, webhook_id, owner):
+                calls.append(("claim", job_id, webhook_id, owner))
+                return event
+
+            def finish_webhook(self, *args):
+                calls.append(("finish", *args))
+
+        async def retry_later(claimed, job_id):
+            assert claimed is event
+            assert job_id == "job-retry-later"
+            return "pending"
+
+        monkeypatch.setattr(webhook, "_send_outbox_event", retry_later)
+        await webhook._deliver_outbox_event(
+            Store(), "job-retry-later", {"webhookId": "event-id"}
+        )
+
+        claim, finish = calls
+        assert claim[:3] == ("claim", "job-retry-later", "event-id")
+        assert finish[:4] == ("finish", "job-retry-later", "event-id", claim[3])
+        assert finish[4:] == ("pending", "pending")
+
+    @pytest.mark.asyncio
+    async def test_pending_replay_schedules_each_event_with_its_job_id(
+        self, monkeypatch
+    ):
+        """Startup replay hands each persisted event to the tracked executor."""
+        from agent import webhook
+
+        class Store:
+            def list_pending_webhooks(self):
+                return [
+                    {"job_id": "job-a", "webhookId": "event-a"},
+                    {"job_id": "job-b", "webhookId": "event-b"},
+                ]
+
+        class Tracker:
+            def __init__(self):
+                self.tasks = []
+
+            def create_background_task(self, coroutine):
+                self.tasks.append(coroutine)
+
+        store = Store()
+        tracker = Tracker()
+        scheduled = []
+
+        async def deliver(actual_store, job_id, event):
+            scheduled.append((actual_store, job_id, event))
+
+        monkeypatch.setattr(webhook, "_deliver_outbox_event", deliver)
+        count = await webhook.replay_pending_webhooks(store, tracker)
+        assert count == 2
+        assert scheduled == []
+        for task in tracker.tasks:
+            await task
+        assert [(job_id, event["webhookId"]) for _, job_id, event in scheduled] == [
+            ("job-a", "event-a"),
+            ("job-b", "event-b"),
+        ]
 
     @pytest.mark.asyncio
     async def test_metadata_echoed_on_all_event_types(self):
