@@ -93,13 +93,17 @@ mode: it serves from PostgreSQL and continues Qdrant writes. The new
 `pgvector_only` mode removes Qdrant from readiness and request handling. If
 rolling back after using it, pause semantic index writes and snapshot Qdrant
 first. Run `python /app/shadow_backfill.py restore-qdrant` in semantic-svc to
-upsert the active PostgreSQL records without deleting any Qdrant points. This
-reports nonmatching Qdrant IDs and exits with parity false while stale points
-remain. Only after confirming the backup and complete PG projection, run
-`python /app/shadow_backfill.py restore-qdrant --prune-stale`; this explicitly
-deletes Qdrant IDs absent from the active PostgreSQL set and verifies the exact
-ID-set parity by reading Qdrant back. Retain the database projection and verify
-parity before switching to `qdrant`.
+restore the active PostgreSQL model vectors and merge their payload fields
+without deleting Qdrant points. This reports extra active-model Qdrant IDs and
+exits with parity false while those vectors remain. Only after confirming the
+backup and complete PG projection, run
+`python /app/shadow_backfill.py restore-qdrant --prune-stale`. Pruning removes
+only the stale named vector for the selected model. It deletes a whole point
+only when that point has no other named vectors; points containing another
+model's vectors retain those vectors and payload, and points with unknown or
+unnamed vectors are preserved. The final parity check compares the selected
+model's active IDs. Retain the database projection and verify parity before
+switching to `qdrant`.
 
 To run semantic-svc with PostgreSQL as its only vector service, set
 `VECTOR_STORE_MODE=pgvector_only` in the operator environment and use the

@@ -112,11 +112,12 @@ def restore_qdrant_from_pgvector(
     batch_size: int = 256,
     prune_stale: bool = False,
 ) -> dict[str, Any]:
-    """Restore Qdrant from pgvector, pruning unmatched IDs only by request."""
+    """Restore one named vector without pruning other models' point data."""
     if batch_size <= 0:
         raise ValueError("batch_size must be positive")
     source_ids = shadow.active_ids(model=model)
     existing_ids: set[int] = set()
+    points_by_id: dict[int, Any] = {}
     offset = None
     while True:
         points, next_offset = qdrant.scroll(
@@ -124,21 +125,40 @@ def restore_qdrant_from_pgvector(
             limit=batch_size,
             offset=offset,
             with_payload=False,
-            with_vectors=False,
+            with_vectors=True,
         )
-        existing_ids.update(int(point.id) for point in points)
+        for point in points:
+            point_id = int(point.id)
+            existing_ids.add(point_id)
+            points_by_id[point_id] = point
         if next_offset is None:
             break
         offset = next_offset
 
     stale_ids = sorted(existing_ids - source_ids)
+    pruned_ids: set[int] = set()
     if prune_stale:
-        for start in range(0, len(stale_ids), batch_size):
-            qdrant.delete(
-                collection_name=collection,
-                points_selector=stale_ids[start : start + batch_size],
-                wait=True,
-            )
+        for point_id in stale_ids:
+            vectors = getattr(points_by_id[point_id], "vector", None)
+            # Only remove a stale copy of this model. Points for another model,
+            # unnamed vectors, and payload-only/unknown points are retained.
+            if not isinstance(vectors, Mapping) or model not in vectors:
+                continue
+            other_vectors = set(vectors) - {model}
+            if other_vectors:
+                qdrant.delete_vectors(
+                    collection_name=collection,
+                    points=[point_id],
+                    vectors=[model],
+                    wait=True,
+                )
+            else:
+                qdrant.delete(
+                    collection_name=collection,
+                    points_selector=[point_id],
+                    wait=True,
+                )
+            pruned_ids.add(point_id)
 
     upserted = 0
     offset = 0
@@ -146,18 +166,42 @@ def restore_qdrant_from_pgvector(
         records = shadow.records(model=model, limit=batch_size, offset=offset)
         if not records:
             break
-        qdrant.upsert(
-            collection_name=collection,
-            points=[
-                models.PointStruct(
-                    id=record.point_id,
-                    vector={model: list(record.vector)},
-                    payload=dict(record.payload),
+        existing_updates = []
+        new_points = []
+        for record in records:
+            if record.point_id in existing_ids:
+                # Qdrant upsert replaces the whole named-vector map. Update only
+                # this model's vector and merge its payload so other models'
+                # vectors and metadata remain intact.
+                existing_updates.append(
+                    models.PointVectors(
+                        id=record.point_id,
+                        vector={model: list(record.vector)},
+                    )
                 )
-                for record in records
-            ],
-            wait=True,
-        )
+                qdrant.set_payload(
+                    collection_name=collection,
+                    points=[record.point_id],
+                    payload=dict(record.payload),
+                    wait=True,
+                )
+            else:
+                new_points.append(
+                    models.PointStruct(
+                        id=record.point_id,
+                        vector={model: list(record.vector)},
+                        payload=dict(record.payload),
+                    )
+                )
+                existing_ids.add(record.point_id)
+        if existing_updates:
+            qdrant.update_vectors(
+                collection_name=collection, points=existing_updates, wait=True
+            )
+        if new_points:
+            qdrant.upsert(
+                collection_name=collection, points=new_points, wait=True
+            )
         upserted += len(records)
         offset += len(records)
         if len(records) < batch_size:
@@ -171,9 +215,14 @@ def restore_qdrant_from_pgvector(
             limit=batch_size,
             offset=offset,
             with_payload=False,
-            with_vectors=False,
+            with_vectors=True,
         )
-        observed_ids.update(int(point.id) for point in points)
+        observed_ids.update(
+            int(point.id)
+            for point in points
+            if isinstance(getattr(point, "vector", None), Mapping)
+            and model in point.vector
+        )
         if next_offset is None:
             break
         offset = next_offset
@@ -185,7 +234,7 @@ def restore_qdrant_from_pgvector(
         "pgvector_active_count": len(source_ids),
         "qdrant_upserted_count": upserted,
         "qdrant_stale_candidate_count": len(stale_ids),
-        "qdrant_stale_deleted_count": len(stale_ids) if prune_stale else 0,
+        "qdrant_stale_deleted_count": len(pruned_ids),
         "qdrant_missing_ids": len(missing_ids),
         "qdrant_extra_ids": len(extra_ids),
         "id_set_sha256": hashlib.sha256(

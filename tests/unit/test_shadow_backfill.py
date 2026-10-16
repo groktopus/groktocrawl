@@ -121,21 +121,62 @@ def test_reconcile_rejects_nonpositive_batch_size():
 def test_restore_qdrant_reconciles_active_postgres_projection():
     class _Qdrant:
         def __init__(self):
-            self.ids = {1, 9}
+            self.points = {
+                1: SimpleNamespace(
+                    id=1,
+                    vector={"v_bge-m3": [0.1], "v_old-model": [0.9]},
+                    payload={"url": "https://one", "old_metadata": "preserve"},
+                ),
+                9: SimpleNamespace(
+                    id=9,
+                    vector={"v_bge-m3": [0.9], "v_old-model": [0.8]},
+                    payload={"url": "https://old", "other": "preserve"},
+                ),
+                10: SimpleNamespace(
+                    id=10,
+                    vector={"v_bge-m3": [0.7]},
+                    payload={"url": "https://stale"},
+                ),
+            }
             self.deleted = []
+            self.deleted_vectors = []
+            self.payload_updates = []
+            self.vector_updates = []
             self.upserts = []
 
         def scroll(self, **kwargs):
-            return ([SimpleNamespace(id=point_id) for point_id in sorted(self.ids)], None)
+            return ([self.points[point_id] for point_id in sorted(self.points)], None)
 
         def delete(self, **kwargs):
             points = kwargs["points_selector"]
             self.deleted.append(points)
-            self.ids.difference_update(points)
+            for point_id in points:
+                self.points.pop(point_id, None)
+
+        def delete_vectors(self, **kwargs):
+            point_ids = kwargs["points"]
+            vector_names = kwargs["vectors"]
+            self.deleted_vectors.append((point_ids, vector_names))
+            for point_id in point_ids:
+                for vector_name in vector_names:
+                    self.points[point_id].vector.pop(vector_name, None)
+
+        def set_payload(self, **kwargs):
+            self.payload_updates.append(kwargs)
+            for point_id in kwargs["points"]:
+                self.points[point_id].payload.update(kwargs["payload"])
+
+        def update_vectors(self, **kwargs):
+            self.vector_updates.extend(kwargs["points"])
+            for update in kwargs["points"]:
+                self.points[update.id].vector.update(update.vector)
 
         def upsert(self, **kwargs):
             self.upserts.extend(kwargs["points"])
-            self.ids.update(int(point.id) for point in kwargs["points"])
+            for point in kwargs["points"]:
+                self.points[int(point.id)] = SimpleNamespace(
+                    id=int(point.id), vector=point.vector, payload=point.payload
+                )
 
     class _Store:
         def active_ids(self, *, model):
@@ -163,22 +204,42 @@ def test_restore_qdrant_reconciles_active_postgres_projection():
         prune_stale=True,
     )
 
-    assert qdrant.deleted == [[9]]
-    assert len(qdrant.upserts) == 2
-    assert qdrant.upserts[0].vector == {"v_bge-m3": [0.1, 0.2]}
+    assert qdrant.deleted == [[10]]
+    assert qdrant.deleted_vectors == [([9], ["v_bge-m3"])]
+    assert qdrant.points[9].vector == {"v_old-model": [0.8]}
+    assert qdrant.points[9].payload == {"url": "https://old", "other": "preserve"}
+    assert qdrant.points[1].vector["v_old-model"] == [0.9]
+    assert qdrant.points[1].payload["old_metadata"] == "preserve"
+    assert 10 not in qdrant.points
+    assert len(qdrant.upserts) == 1
+    assert len(qdrant.vector_updates) == 1
     assert result["parity"] is True
     assert result["qdrant_missing_ids"] == result["qdrant_extra_ids"] == 0
 
 
 def test_restore_qdrant_preserves_stale_points_without_explicit_prune():
     class _Qdrant:
-        ids = {1, 9}
+        points = {
+            1: SimpleNamespace(id=1, vector={"v_bge-m3": [0.1]}, payload={}),
+            9: SimpleNamespace(id=9, vector={"v_other-model": [0.9]}, payload={}),
+        }
 
         def scroll(self, **kwargs):
-            return ([SimpleNamespace(id=point_id) for point_id in sorted(self.ids)], None)
+            return ([self.points[point_id] for point_id in sorted(self.points)], None)
 
         def upsert(self, **kwargs):
-            self.ids.update(int(point.id) for point in kwargs["points"])
+            for point in kwargs["points"]:
+                self.points[int(point.id)] = SimpleNamespace(
+                    id=int(point.id), vector=point.vector, payload=point.payload
+                )
+
+        def update_vectors(self, **kwargs):
+            for update in kwargs["points"]:
+                self.points[update.id].vector.update(update.vector)
+
+        def set_payload(self, **kwargs):
+            for point_id in kwargs["points"]:
+                self.points[point_id].payload.update(kwargs["payload"])
 
         def delete(self, **kwargs):
             pytest.fail("restore must not delete Qdrant rows without prune_stale")
@@ -202,7 +263,8 @@ def test_restore_qdrant_preserves_stale_points_without_explicit_prune():
         qdrant, _Store(), collection="pages", model="v_bge-m3", batch_size=10
     )
 
-    assert qdrant.ids == {1, 2, 9}
-    assert result["parity"] is False
+    assert set(qdrant.points) == {1, 2, 9}
+    assert qdrant.points[9].vector == {"v_other-model": [0.9]}
+    assert result["parity"] is True
     assert result["qdrant_stale_candidate_count"] == 1
     assert result["qdrant_stale_deleted_count"] == 0

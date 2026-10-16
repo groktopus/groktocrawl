@@ -49,7 +49,7 @@ Migration is explicit and additive. The backfill skips expired rows and Qdrant p
 
 ## Rollback
 
-For research memory, run the `restore-qdrant` migration command to upsert current non-expired PostgreSQL rows whose Valkey artifacts still exist, then return `RESEARCH_MEMORY_VECTOR_MODE` to `qdrant`. The command preserves existing Qdrant points not present in PostgreSQL. For the semantic page index, run the supported PostgreSQL-to-Qdrant restore while retaining the PostgreSQL projection, then set `VECTOR_STORE_MODE=qdrant`. A database or Valkey restore is not part of application rollback.
+For research memory, run the `restore-qdrant` migration command to upsert current non-expired PostgreSQL rows whose Valkey artifacts still exist, then return `RESEARCH_MEMORY_VECTOR_MODE` to `qdrant`. The command preserves existing Qdrant points not present in PostgreSQL. For the semantic page index, run the supported PostgreSQL-to-Qdrant restore while retaining the PostgreSQL projection, then set `VECTOR_STORE_MODE=qdrant`. Restore updates only the selected named vector and merges payload fields on existing points. Optional stale pruning removes only that model's named vector; it deletes the point itself only when no other named vectors remain. A database or Valkey restore is not part of application rollback.
 
 ## Confirmation
 
