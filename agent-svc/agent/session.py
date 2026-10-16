@@ -835,6 +835,12 @@ class SessionManager:
         finally:
             await llm.close()
 
+        # A root can be deleted while the model is answering. Revalidate linked
+        # evidence before publishing the answer into session history.
+        for ref in refs.values():
+            if ref.get("research_source"):
+                await self._resolve_attached_ref(ref)
+
         step_index = await self._store_call(
             "aappend_step",
             "append_step",

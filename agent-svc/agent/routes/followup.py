@@ -44,7 +44,10 @@ async def _validated_preview(
             from .experimental_research import get_experimental_evidence
 
             # Reuse feature, credential scope, tombstone and identity checks.
-            await get_experimental_evidence(choice.container_id, choice.ref_id, request)
+            evidence = await get_experimental_evidence(
+                choice.container_id, choice.ref_id, request
+            )
+            observed_at = evidence.get("retrieved_at")
         choices.append(selected_evidence(choice, observed_at, body.max_age_seconds))
     return preview(body, choices)
 

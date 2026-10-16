@@ -1,7 +1,7 @@
 """MCP server exposing GroktoCrawl tools via Model Context Protocol.
 
 Uses FastMCP from the official mcp SDK (v1.x) with Streamable HTTP
-transport.  Defines 73 tools matching the GroktoCrawl agent-svc
+transport.  Defines 74 tools matching the GroktoCrawl agent-svc
 API surface, with proper readOnlyHint/destructiveHint annotations.
 
 Tool surface policy (see scripts/check-mcp-coverage.py): every agent-svc

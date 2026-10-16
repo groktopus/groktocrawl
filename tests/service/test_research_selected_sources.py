@@ -172,3 +172,40 @@ async def test_session_manager_requires_scoped_resolver_for_attached_ref():
     ref = {"research_source": choice().model_dump(), "content_digest": "0" * 64}
     with pytest.raises(ValueError, match="scoped resolution"):
         await manager._resolve_attached_ref(ref)
+
+
+@pytest.mark.asyncio
+async def test_query_does_not_publish_if_linked_root_disappears_during_model(
+    monkeypatch,
+):
+    from agent.session import SessionManager
+
+    pointer = {"research_source": choice().model_dump(), "content_digest": "0" * 64}
+    resolver = AsyncMock(
+        side_effect=[
+            {**pointer, "markdown": "Retained fact", "url": "https://example.org"},
+            HTTPException(410, "Deleted"),
+        ]
+    )
+    manager = SessionManager(reference_resolver=resolver)
+    manager.store = SimpleNamespace(
+        aget_artifact=AsyncMock(return_value=""),
+        aget_refs=AsyncMock(return_value={"research_ref": pointer}),
+        aappend_step=AsyncMock(),
+        aappend_artifact=AsyncMock(),
+    )
+    model = SimpleNamespace(
+        generate=AsyncMock(return_value="Fact [research_ref]"), close=AsyncMock()
+    )
+    monkeypatch.setattr("agent.session.LLMClient", lambda *args: model)
+    with pytest.raises(HTTPException) as exc:
+        await manager._step_query(
+            "session",
+            {"question": "Fact?", "ref_ids": ["research_ref"]},
+            "http://unused",
+            "test",
+            "test",
+        )
+    assert exc.value.status_code == 410
+    manager.store.aappend_step.assert_not_awaited()
+    manager.store.aappend_artifact.assert_not_awaited()

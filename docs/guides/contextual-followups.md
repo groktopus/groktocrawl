@@ -33,14 +33,15 @@ Plural pronouns, demonstratives and multiple referents return
 assigns “the other one.” Supply `standalone_override` to explicitly name each
 referent; the original wording is always returned. `correction` is preserved but
 requires an override before a ready proposal. An unrelated fully named question
-stays unchanged; selected context does not silently enter its prompt.
+stays unchanged in the preview. Explicit execution supplies the selected source
+bytes to the new investigation.
 
 The response includes the exact selected identities, temporal metadata and typed
 `compare`, `deepen`, `narrow`, `request_evidence` suggestions as appropriate. Their
 query and identities are inspectable parameters, not executable URLs or tool
 calls. Every action requires confirmation. To execute, explicitly submit the
-chosen query/refs to the existing research or session APIs, which validate
-liveness again. A preview is not a lease on evidence and creates no retained data.
+chosen request to `/v2/followup/execute`, or use the research/session APIs.
+Execution validates evidence liveness again. A preview is not a lease on evidence and creates no retained data.
 
 Context is bounded to eight selected identities, 160-character subject names,
 4,000-character wording/override and a 1,000-character correction. Evidence bodies
