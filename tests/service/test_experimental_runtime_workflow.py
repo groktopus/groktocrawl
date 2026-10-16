@@ -124,8 +124,20 @@ def test_pgvector_acceptance_tests_receive_isolated_database_credentials(filenam
             if job.get("name") == "Integration Tests"
         )
     integration = next(
-        step["run"] for step in job["steps"] if step.get("name") == "Run integration tests"
+        step["run"]
+        for step in job["steps"]
+        if step.get("name") == "Run integration tests"
     )
+    source_copy = next(
+        step["run"]
+        for step in job["steps"]
+        if step.get("name") == "Copy test files and source directories"
+    )
+    packages = re.search(r"for pkg in (.+); do", source_copy).group(1).split()
+    assert "semantic-svc" in packages, (
+        "pgvector integration imports require semantic source"
+    )
+    assert (ROOT / "semantic-svc/shadow_pgvector.py").is_file()
     passwordless_dsn = "postgresql://groktocrawl@research-postgres:5432/groktocrawl"
     assert f"RESEARCH_MEMORY_PGVECTOR_TEST_DSN={passwordless_dsn}" in integration
     assert f"PGVECTOR_SEMANTIC_TEST_DSN={passwordless_dsn}" in integration
