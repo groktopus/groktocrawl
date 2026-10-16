@@ -225,3 +225,72 @@ async def test_unowned_legacy_session_rejected_before_copying_evidence(monkeypat
         await resolve_selected_sources([selected], request())
     assert exc.value.status_code == 422
     store.aget_ref.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("failure_status", [410, 409])
+async def test_deepen_does_not_publish_if_linked_root_changes_during_model(
+    monkeypatch, failure_status
+):
+    from agent.session import SessionManager
+
+    pointer = {"research_source": choice().model_dump(), "content_digest": "0" * 64}
+    changed = False
+
+    async def resolve(_ref):
+        if changed:
+            raise HTTPException(
+                failure_status, "Retained source unavailable or changed"
+            )
+        return {
+            **pointer,
+            "markdown": "Original retained fact",
+            "url": "https://example.org/original",
+        }
+
+    manager = SessionManager(reference_resolver=resolve)
+    manager.store = SimpleNamespace(
+        aget_ref=AsyncMock(return_value=pointer),
+        aget_refs=AsyncMock(return_value={"research_ref": pointer}),
+        aappend_step=AsyncMock(),
+        aadd_refs=AsyncMock(),
+        aappend_artifact=AsyncMock(),
+    )
+    search = SimpleNamespace(
+        search=AsyncMock(return_value=([{"url": "https://example.org/new"}], {})),
+        close=AsyncMock(),
+    )
+    scraper = SimpleNamespace(
+        scrape_with_fallback=AsyncMock(
+            return_value={
+                "success": True,
+                "data": {"markdown": "Additional retained fact"},
+            }
+        ),
+        close=AsyncMock(),
+    )
+
+    async def generate(**_kwargs):
+        nonlocal changed
+        changed = True
+        return "Derived finding from both sources"
+
+    model = SimpleNamespace(generate=AsyncMock(side_effect=generate), close=AsyncMock())
+    monkeypatch.setattr("agent.session.SearXNGClient", lambda *args: search)
+    monkeypatch.setattr("agent.session.ScraperClient", lambda *args: scraper)
+    monkeypatch.setattr("agent.session.LLMClient", lambda *args: model)
+    with pytest.raises(HTTPException) as exc:
+        await manager._step_deepen(
+            "session",
+            {"ref_id": "research_ref", "sub_topic": "Fact?", "max_sources": 1},
+            "http://unused",
+            "http://unused",
+            "http://unused",
+            "test",
+            "test",
+        )
+    assert exc.value.status_code == failure_status
+    model.generate.assert_awaited_once()
+    manager.store.aappend_step.assert_not_awaited()
+    manager.store.aadd_refs.assert_not_awaited()
+    manager.store.aappend_artifact.assert_not_awaited()
