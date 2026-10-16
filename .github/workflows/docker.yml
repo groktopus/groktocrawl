@@ -342,6 +342,7 @@ jobs:
     # kept so the job env documents the port map and the stack still starts with
     # sane defaults if the preflight step is ever removed or bypassed.
     env:
+      COMPOSE_PROJECT_NAME: groktocrawl-ci-${{ github.run_id }}-${{ github.run_attempt }}
       AGENT_PORT: "18080"
       SCRAPER_HOST_PORT: "18001"
       SLOPSEARX_HOST_PORT: "18081"
@@ -369,6 +370,11 @@ jobs:
           cp .env.sample .env
           echo "TWIN_RUN_ID=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> .env
           echo "DURABLE_RESEARCH_REDIS_URL=redis://valkey:6379/15" >> .env
+          umask 077
+          research_password_file="${RUNNER_TEMP}/groktocrawl-postgres-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.password"
+          python3 -c 'from secrets import token_urlsafe; print(token_urlsafe(32))' > "$research_password_file"
+          echo "DURABLE_RESEARCH_POSTGRES_PASSWORD_FILE=$research_password_file" >> .env
+          echo "DURABLE_RESEARCH_POSTGRES_DSN=postgresql://groktocrawl@research-postgres:5432/groktocrawl" >> .env
           # The full suite uses the real agent API, whose upstream must be the
           # deterministic fixture rather than the live SlopSearX service.
           echo "SEARXNG_URL=http://slopsearx-fixture:8080" >> .env
@@ -392,10 +398,10 @@ jobs:
           # the integration lane, so no token is needed here.
 
       - name: Force-remove all stale project containers
-        run: docker ps -a --filter name=groktocrawl -q | xargs -r docker rm -f || true
+        run: docker ps -a --filter "label=com.docker.compose.project=$COMPOSE_PROJECT_NAME" -q | xargs -r docker rm -f || true
 
       - name: Clean up stale containers from previous run
-        run: docker compose --profile durable-research down --remove-orphans --timeout 30 || true
+        run: docker compose --profile durable-research down --volumes --remove-orphans --timeout 30 || true
 
       - name: Ensure HF model cache volume exists
         run: docker volume inspect hf-cache || docker volume create hf-cache
@@ -1121,7 +1127,9 @@ jobs:
 
       - name: Tear down stack
         if: always()
-        run: docker compose --profile durable-research down --remove-orphans --timeout 30
+        run: |
+          trap 'rm -f "${RUNNER_TEMP}/groktocrawl-postgres-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.password"' EXIT
+          docker compose --profile durable-research down --volumes --remove-orphans --timeout 30
 
   research-runtime:
     uses: ./.github/workflows/runtime.yml

@@ -93,6 +93,21 @@ def test_standard_integration_provisions_durable_database():
     assert "--profile durable-research up -d" in steps["Start the Docker stack"]["run"]
     assert "--profile durable-research down" in steps["Tear down stack"]["run"]
     assert "/app/tests/integration/" in steps["Run integration tests"]["run"]
+    assert job["env"]["COMPOSE_PROJECT_NAME"].endswith(
+        "${{ github.run_id }}-${{ github.run_attempt }}"
+    )
+    assert "token_urlsafe(32)" in steps["Set up .env"]["run"]
+    assert "umask 077" in steps["Set up .env"]["run"]
+    assert (
+        "DURABLE_RESEARCH_POSTGRES_PASSWORD_FILE=$research_password_file"
+        in steps["Set up .env"]["run"]
+    )
+    assert "--volumes" in steps["Tear down stack"]["run"]
+    assert (
+        "label=com.docker.compose.project=$COMPOSE_PROJECT_NAME"
+        in steps["Force-remove all stale project containers"]["run"]
+    )
+    assert "rm -f" in steps["Tear down stack"]["run"]
 
 
 def test_protected_browser_profile_is_required_by_runtime_gate():
