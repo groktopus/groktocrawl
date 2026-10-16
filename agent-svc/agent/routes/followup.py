@@ -5,7 +5,13 @@ import asyncio
 from fastapi import APIRouter, Request
 
 from ..exceptions import NotFoundError, UpstreamError
-from ..followup import FollowupRequest, FollowupResponse, preview, selected_evidence
+from ..followup import (
+    FollowupExecutionRequest,
+    FollowupRequest,
+    FollowupResponse,
+    preview,
+    selected_evidence,
+)
 from ..session_scope import authorize_session
 from ..session_store import SessionStore
 from ._helpers import _get_redis_url
@@ -53,7 +59,7 @@ async def _validated_preview(
 
 
 @router.post("/v2/followup/execute", status_code=202)
-async def execute_followup(request: Request, body: FollowupRequest) -> dict:
+async def execute_followup(request: Request, body: FollowupExecutionRequest) -> dict:
     """Explicitly start independent research with current, selected evidence.
 
     The existing preview stays read-only. This execution endpoint uses the same
@@ -65,7 +71,10 @@ async def execute_followup(request: Request, body: FollowupRequest) -> dict:
     from ..research_sources import resolve_selected_sources
     from .experimental_research import CreateResearchRunRequest, admit_research_run
 
-    proposal = await preview_followup(request, body)
+    preview_body = FollowupRequest.model_validate(
+        body.model_dump(exclude={"as_of", "webhook"})
+    )
+    proposal = await preview_followup(request, preview_body)
     if proposal.status != "ready" or proposal.proposed_query is None:
         raise HTTPException(
             status_code=422,
@@ -87,8 +96,11 @@ async def execute_followup(request: Request, body: FollowupRequest) -> dict:
         )
         for item, material in zip(body.selected, materials, strict=True)
     )
-    return await admit_research_run(
-        CreateResearchRunRequest(objective=proposal.proposed_query),
+    admitted = await admit_research_run(
+        CreateResearchRunRequest(
+            objective=proposal.proposed_query, as_of=body.as_of, webhook=body.webhook
+        ),
         request,
         selected_sources=sources,
     )
+    return {"success": True, **admitted}

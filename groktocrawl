@@ -737,14 +737,14 @@ class Client:
         """Execute a selected-evidence follow-up with durable idempotency."""
         return self._request(
             "POST",
-            "/v2/followup/execute",
+            "/followup/execute",
             json_data=body,
             request_headers={"Idempotency-Key": idempotency_key},
         )
 
     def followup_preview(self, body: dict) -> dict:
         """Validate selected context and return an unexecuted query proposal."""
-        return self._request("POST", "/v2/followup/preview", json_data=body)
+        return self._request("POST", "/followup/preview", json_data=body)
 
     def experimental_research_workspace(
         self,
@@ -2114,6 +2114,14 @@ def cmd_followup(client: Client, args: argparse.Namespace) -> None:
         die(f"Invalid follow-up JSON: {exc}")
     if not isinstance(body, dict):
         die("Follow-up request must be a JSON object")
+    for option in ("webhook", "as_of"):
+        value = getattr(args, option, None)
+        if value is not None:
+            if not getattr(args, "execute", False):
+                die("--webhook and --as-of require --execute")
+            if option in body and body[option] != value:
+                die(f"Conflicting {option} values in JSON and command option")
+            body[option] = value
     if getattr(args, "execute", False):
         key = getattr(args, "idempotency_key", None)
         if not key:
@@ -3741,7 +3749,7 @@ def make_parser() -> argparse.ArgumentParser:
     p_evidence.add_argument("--expected-digest", type=_evidence_digest_arg)
 
     p_followup = subparsers.add_parser(
-        "followup", help="Preview explicit contextual follow-ups without executing"
+        "followup", help="Preview or explicitly execute selected contextual follow-ups"
     )
     p_followup.add_argument("request", help="JSON request or @file.json")
     p_followup.add_argument(
@@ -3751,6 +3759,12 @@ def make_parser() -> argparse.ArgumentParser:
     )
     p_followup.add_argument(
         "--idempotency-key", help="Stable key for this execution request"
+    )
+    p_followup.add_argument(
+        "--webhook", help="Terminal callback URL; requires --execute"
+    )
+    p_followup.add_argument(
+        "--as-of", help="Timezone-aware evidence evaluation target; requires --execute"
     )
 
     p_research = subparsers.add_parser(

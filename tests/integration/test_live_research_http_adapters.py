@@ -13,8 +13,10 @@ import importlib
 import json
 import os
 import re
+import socket
 import sys
 import threading
+from contextlib import asynccontextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from uuid import uuid4
@@ -22,6 +24,7 @@ from uuid import uuid4
 import httpx
 import pytest
 import pytest_asyncio
+import uvicorn
 from agent.experimental.durable_research import DurableResearchLedger
 from agent.routes import experimental_research as experimental
 from agent.scraper_client import ScraperClient
@@ -415,6 +418,35 @@ async def _terminal(client: httpx.AsyncClient, url: str) -> dict:
     raise AssertionError("live research run did not reach a terminal state")
 
 
+@asynccontextmanager
+async def local_http_api(app):
+    """Serve the same app on its current loop so retained-store pools stay local."""
+    listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    listener.bind(("127.0.0.1", 0))
+    listener.listen(128)
+    listener.setblocking(False)
+    server = uvicorn.Server(
+        uvicorn.Config(app, lifespan="off", log_level="error", loop="asyncio")
+    )
+    task = asyncio.create_task(server.serve(sockets=[listener]))
+    try:
+        for _ in range(200):
+            if server.started:
+                break
+            if task.done():
+                await task
+                raise AssertionError("Local API server stopped before readiness")
+            await asyncio.sleep(0.01)
+        assert server.started, "Local API server did not become ready"
+        yield f"http://127.0.0.1:{listener.getsockname()[1]}"
+    finally:
+        server.should_exit = True
+        try:
+            await asyncio.wait_for(task, 5)
+        finally:
+            listener.close()
+
+
 @pytest.mark.asyncio
 async def test_two_objectives_use_http_adapters_and_recover_actual_bytes_through_mcp(
     durable_apps, provider_twin: LocalProviderTwin, monkeypatch: pytest.MonkeyPatch
@@ -606,8 +638,9 @@ async def test_live_search_failure_is_not_reported_as_success(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("successful", [True, False])
+@pytest.mark.parametrize("endpoint", ["runs", "followup"])
 async def test_real_http_terminal_callback_has_stable_identity_and_status(
-    durable_apps, provider_twin, monkeypatch, successful
+    durable_apps, provider_twin, monkeypatch, successful, endpoint
 ):
     from agent import webhook
     from agent.experimental.research_notifications import deliver_notifications
@@ -618,7 +651,7 @@ async def test_real_http_terminal_callback_has_stable_identity_and_status(
     def local_test_destination(url):
         # This test-only allowlist admits exactly the controlled loopback twin.
         # The production destination policy is separately tested unchanged.
-        assert url == destination
+        assert url in {destination, destination + "?rotation=1"}
 
     monkeypatch.setattr(
         experimental, "validate_outbound_webhook_url", local_test_destination
@@ -631,15 +664,24 @@ async def test_real_http_terminal_callback_has_stable_identity_and_status(
         base_url="http://acceptance",
         headers={"Authorization": "Bearer live-http-acceptance-owner"},
     ) as client:
+        objective = (
+            next(iter(OBJECTIVES))
+            if successful
+            else "Unavailable callback test evidence"
+        )
+        route = (
+            "/experimental/research/v1/runs"
+            if endpoint == "runs"
+            else "/v2/followup/execute"
+        )
+        request_body = {
+            "objective" if endpoint == "runs" else "wording": objective,
+            "webhook": destination,
+        }
         created = await client.post(
-            "/experimental/research/v1/runs",
+            route,
             headers={"Idempotency-Key": "callback-" + str(successful)},
-            json={
-                "objective": next(iter(OBJECTIVES))
-                if successful
-                else "Unavailable callback test evidence",
-                "webhook": destination,
-            },
+            json=request_body,
         )
         assert created.status_code == 202, created.text
         admission = created.json()
@@ -648,6 +690,19 @@ async def test_real_http_terminal_callback_has_stable_identity_and_status(
         state = "completed" if successful else "failed"
         assert status["state"] == state, status
         assert status["webhook"] == {"state": "pending", "attempts": 0}
+        replay = await client.post(
+            route,
+            headers={"Idempotency-Key": "callback-" + str(successful)},
+            json=request_body,
+        )
+        assert replay.status_code == 202, replay.text
+        assert replay.json()["run_id"] == admission["run_id"]
+        conflict = await client.post(
+            route,
+            headers={"Idempotency-Key": "callback-" + str(successful)},
+            json={**request_body, "webhook": destination + "?rotation=1"},
+        )
+        assert conflict.status_code == 409, conflict.text
         await deliver_notifications(ledgers[0])
         assert len(provider_twin.callback_requests) == 1
         body = json.loads(provider_twin.callback_requests[0][0])
@@ -661,7 +716,10 @@ async def test_real_http_terminal_callback_has_stable_identity_and_status(
 
 
 @pytest.mark.asyncio
-async def test_as_of_never_turns_a_new_capture_into_historical_evidence(durable_apps):
+@pytest.mark.parametrize("endpoint", ["runs", "followup"])
+async def test_as_of_never_turns_a_new_capture_into_historical_evidence(
+    durable_apps, endpoint
+):
     apps, _, _, _, _, cleanup_research_ids, _ = durable_apps
     async with httpx.AsyncClient(
         transport=httpx.ASGITransport(app=apps[0]),
@@ -669,9 +727,16 @@ async def test_as_of_never_turns_a_new_capture_into_historical_evidence(durable_
         headers={"Authorization": "Bearer live-http-acceptance-owner"},
     ) as client:
         response = await client.post(
-            "/experimental/research/v1/runs",
+            "/experimental/research/v1/runs"
+            if endpoint == "runs"
+            else "/v2/followup/execute",
             headers={"Idempotency-Key": "past-evaluation"},
-            json={"objective": next(iter(OBJECTIVES)), "as_of": "2026-01-01T00:00:00Z"},
+            json={
+                "objective" if endpoint == "runs" else "wording": next(
+                    iter(OBJECTIVES)
+                ),
+                "as_of": "2026-01-01T00:00:00Z",
+            },
         )
         assert response.status_code == 202, response.text
         cleanup_research_ids.append(response.json()["research_id"])
@@ -683,11 +748,11 @@ async def test_as_of_never_turns_a_new_capture_into_historical_evidence(durable_
 
 @pytest.mark.asyncio
 async def test_live_retained_source_drives_independent_followup_and_owned_session(
-    durable_apps, provider_twin
+    durable_apps, provider_twin, monkeypatch
 ):
     from agent.session_store import SessionStore
 
-    apps, _, _, ledgers, make_app, cleanup_roots, _ = durable_apps
+    apps, _, _, ledgers, make_app, cleanup_roots, cleanup_clients = durable_apps
     owner = {"Authorization": "Bearer live-http-acceptance-owner"}
     session_id = None
     store = SessionStore(
@@ -695,11 +760,14 @@ async def test_live_retained_source_drives_independent_followup_and_owned_sessio
         or os.environ["VALKEY_URL"]
     )
     try:
-        async with httpx.AsyncClient(
-            transport=httpx.ASGITransport(app=apps[0]),
-            base_url="http://acceptance",
-            headers=owner,
-        ) as client:
+        async with (
+            local_http_api(apps[0]) as api_url,
+            httpx.AsyncClient(
+                transport=httpx.ASGITransport(app=apps[0]),
+                base_url="http://acceptance",
+                headers=owner,
+            ) as client,
+        ):
             created = await client.post(
                 "/experimental/research/v1/runs",
                 headers={"Idempotency-Key": "followup-original"},
@@ -731,13 +799,34 @@ async def test_live_retained_source_drives_independent_followup_and_owned_sessio
                 "subject": "Aurora battery pilot",
             }
             followup_body = {"wording": tuple(OBJECTIVES)[1], "selected": [selection]}
-            followup = await client.post(
-                "/v2/followup/execute",
-                headers={"Idempotency-Key": "followup-root-selection"},
-                json=followup_body,
+            process = await asyncio.create_subprocess_exec(
+                sys.executable,
+                str(Path(__file__).resolve().parents[2] / "groktocrawl"),
+                "--server",
+                api_url,
+                "--json",
+                "followup",
+                json.dumps(followup_body),
+                "--execute",
+                "--idempotency-key",
+                "followup-root-selection",
+                env={
+                    **os.environ,
+                    "GROKTOCRAWL_API_KEY": "live-http-acceptance-owner",
+                    "API_KEY": "",
+                },
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
             )
-            assert followup.status_code == 202, followup.text
-            admission = followup.json()
+            try:
+                stdout, stderr = await asyncio.wait_for(process.communicate(), 30)
+            finally:
+                if process.returncode is None:
+                    process.kill()
+                    await process.wait()
+            assert process.returncode == 0, stderr.decode()
+            admission = json.loads(stdout)
+            assert admission["success"] is True
             cleanup_roots.append(admission["research_id"])
             assert admission["run_id"] != original["run_id"]
             assert admission["research_id"] != original["research_id"]
@@ -830,14 +919,30 @@ async def test_live_retained_source_drives_independent_followup_and_owned_sessio
                 "ref_id": ref_id,
                 "subject": "Aurora battery pilot",
             }
-            linked = await client.post(
-                "/v2/followup/execute",
-                headers={"Idempotency-Key": "followup-linked-session"},
-                json={"wording": tuple(OBJECTIVES)[1], "selected": [session_selection]},
+            mcp_dir = str(Path(__file__).resolve().parents[2] / "mcp-svc")
+            if mcp_dir not in sys.path:
+                sys.path.insert(0, mcp_dir)
+            mcp_server = importlib.import_module("mcp_server")
+            from groktocrawl_client import GroktocrawlClient
+
+            mcp_client = GroktocrawlClient(base_url=api_url)
+            mcp_client._client = httpx.AsyncClient(base_url=api_url, headers=owner)
+            cleanup_clients.append(mcp_client)
+            monkeypatch.setattr(mcp_server, "_client", mcp_client)
+            reply, _structured = await mcp_server.mcp.call_tool(
+                "followup_execute",
+                {
+                    "request": {
+                        "wording": tuple(OBJECTIVES)[1],
+                        "selected": [session_selection],
+                    },
+                    "idempotency_key": "followup-linked-session",
+                },
             )
-            assert linked.status_code == 202, linked.text
-            cleanup_roots.append(linked.json()["research_id"])
-            linked_status = await _terminal(client, linked.json()["status_url"])
+            linked = json.loads(reply[0].text)
+            assert linked["success"] is True, linked
+            cleanup_roots.append(linked["research_id"])
+            linked_status = await _terminal(client, linked["status_url"])
             assert linked_status["state"] == "completed", linked_status
 
         experimental._RUNS.clear()

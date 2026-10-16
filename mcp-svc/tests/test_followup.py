@@ -48,3 +48,35 @@ async def test_execution_preserves_idempotency_and_is_not_read_only(monkeypatch)
     client.assert_awaited_once_with(body, "followup-key")
     tool = next(t for t in await mcp.list_tools() if t.name == "followup_execute")
     assert tool.annotations.readOnlyHint is False
+
+
+@pytest.mark.asyncio
+async def test_execution_options_are_explicit_and_forwarded(monkeypatch):
+    import mcp_server
+
+    client = AsyncMock(return_value={"success": True, "run_id": "new-run"})
+    monkeypatch.setattr(mcp_server._client, "followup_execute", client)
+    await mcp_server.followup_execute(
+        {"wording": "Explain Alpha"},
+        "options-1",
+        webhook="https://receiver.example/hook",
+        as_of="2026-09-01T00:00:00Z",
+    )
+    client.assert_awaited_once_with(
+        {
+            "wording": "Explain Alpha",
+            "webhook": "https://receiver.example/hook",
+            "as_of": "2026-09-01T00:00:00Z",
+        },
+        "options-1",
+    )
+    tool = next(t for t in await mcp.list_tools() if t.name == "followup_execute")
+    assert {"webhook", "as_of"} <= set(tool.inputSchema["properties"])
+    client.reset_mock()
+    with pytest.raises(ValueError, match="Conflicting"):
+        await mcp_server.followup_execute(
+            {"wording": "Explain Alpha", "webhook": "https://other.example/hook"},
+            "options-1",
+            webhook="https://receiver.example/hook",
+        )
+    client.assert_not_awaited()
