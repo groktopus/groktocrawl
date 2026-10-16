@@ -390,7 +390,8 @@ async def test_mixed_local_document_and_web_question_resolves_exact_citation_spa
             assert "Zirconium calibration requires forty-two samples" in context
             assert "do not select this private ref" not in context
             generations.append(context)
-            return f"The budget agrees with public evidence [{references[0]}] [ref_web]. Retention is fourteen days [{references[1]}]. Zirconium requires forty-two samples [{references[2]}]."
+            assert "Citation key" in context
+            return "The budget agrees with public evidence [1] [4]. Retention is fourteen days [2]. Zirconium requires forty-two samples [3]."
 
         async def close(self):
             pass
@@ -466,6 +467,10 @@ async def test_mixed_local_document_and_web_question_resolves_exact_citation_spa
         assert query.status_code == 200
         result = query.json()["result"]
         assert result["ref_count"] == 4
+        assert all(
+            metadata["ref_id"] in generations[0].split("Citation key", 1)[1]
+            for metadata in admitted
+        )
         assert {item["ref_id"] for item in result["citations"]} == {
             *references,
             "ref_web",
@@ -509,3 +514,128 @@ async def test_mixed_local_document_and_web_question_resolves_exact_citation_spa
         assert rejected.status_code == 404
         assert len(generations) == 1
         assert (await client.get(admitted[0]["url"])).status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_malformed_truncated_document_reference_is_not_fuzzy_mapped(monkeypatch):
+    from agent.session import SessionManager
+
+    ref_id = "doc_" + "b" * 64
+
+    class FixtureLLM:
+        def __init__(self, *_args):
+            pass
+
+        async def generate(self, **kwargs):
+            assert f"[1] = {ref_id}" in kwargs["context"]
+            malformed = ref_id[: len("doc_") + 31]
+            return (
+                "The annual budget per team member is USD 1,714.29 "
+                f"[Reference: {malformed}]."
+            )
+
+        async def close(self):
+            pass
+
+    monkeypatch.setattr("agent.session.LLMClient", FixtureLLM)
+
+    class Store:
+        refs = {
+            ref_id: {
+                "source": "document",
+                "markdown": "Annual budget USD 24000 for 14 people.",
+            }
+        }
+
+        async def aget_artifact(self, _session_id):
+            return ""
+
+        async def aget_refs(self, _session_id):
+            return self.refs
+
+        async def aappend_step(self, _session_id, _step):
+            return 1
+
+        async def aappend_artifact(self, _session_id, _content):
+            return True
+
+    manager = SessionManager.__new__(SessionManager)
+    manager.store = Store()
+    result = await manager._step_query(
+        "session",
+        {
+            "question": "What is the annual budget per team member?",
+            "ref_ids": list(Store.refs),
+        },
+        "http://fixture.invalid/llm",
+        "",
+        "fixture",
+    )
+    assert result["citations"] == []
+    assert result["answer"].endswith(f"[Reference: {ref_id[: len('doc_') + 31]}].")
+
+
+@pytest.mark.asyncio
+async def test_numeric_citation_key_resolves_to_exact_document_source(monkeypatch):
+    import hashlib
+
+    from agent.session import SessionManager
+
+    ref_id = "doc_" + "c" * 64
+    text = "Annual budget USD 24000 for 14 people."
+
+    class FixtureLLM:
+        def __init__(self, *_args):
+            pass
+
+        async def generate(self, **kwargs):
+            assert f"[1] = {ref_id}" in kwargs["context"]
+            return "The budget is USD 24,000 [1]."
+
+        async def close(self):
+            pass
+
+    monkeypatch.setattr("agent.session.LLMClient", FixtureLLM)
+
+    class Store:
+        refs = {
+            ref_id: {
+                "source": "document",
+                "markdown": text,
+                "url": "/v2/session/session/documents/" + ref_id,
+                "anchors": [],
+            }
+        }
+
+        async def aget_artifact(self, _session_id):
+            return ""
+
+        async def aget_refs(self, _session_id):
+            return self.refs
+
+        async def aappend_step(self, _session_id, _step):
+            return 1
+
+        async def aappend_artifact(self, _session_id, _content):
+            return True
+
+    manager = SessionManager.__new__(SessionManager)
+    manager.store = Store()
+    result = await manager._step_query(
+        "session",
+        {"question": "What is the annual budget?", "ref_ids": [ref_id]},
+        "http://fixture.invalid/llm",
+        "",
+        "fixture",
+    )
+    assert result["citations"] == [
+        {
+            "ref_id": ref_id,
+            "snapshot_id": result["evidence_coverage"]["sources"][0]["snapshot_id"],
+            "content_digest": hashlib.sha256(text.encode()).hexdigest(),
+            "spans": result["evidence_coverage"]["sources"][0]["spans"],
+            "url": "/v2/session/session/documents/" + ref_id,
+            "anchors": [],
+            "extraction": {},
+        }
+    ]
