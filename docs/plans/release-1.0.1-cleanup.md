@@ -35,7 +35,8 @@ Do not change SlopSearch. Use isolated test services and controlled search/model
 | Workspace evidence, explicit follow-ups and document/client acceptance | [#671](https://github.com/groktopus/groktocrawl/pull/671) | Merged after required CI and review, including public API capture and PostgreSQL follow-up acceptance; deployment remains |
 | PostgreSQL-only memory and semantic indexing | [#672](https://github.com/groktopus/groktocrawl/pull/672) | Merged after required CI and review, including startup, indexing and restart without Qdrant; deployment remains |
 | Legacy job recovery and durable callbacks | [#673](https://github.com/groktopus/groktocrawl/pull/673) | Merged after required CI and review; deployment remains |
-| Multi-query research, time semantics and research callbacks | [#674](https://github.com/groktopus/groktocrawl/pull/674) | Nine PostgreSQL HTTP cases passed; final required checks after recovery integration remain |
+| Multi-query research, time semantics and research callbacks | [#674](https://github.com/groktopus/groktocrawl/pull/674) | Hosted integration and PostgreSQL checks passed on the final head; self-hosted integration remains |
+| Documentation and architecture reconciliation | [#675](https://github.com/groktopus/groktocrawl/pull/675) | Source review, surface inventories and relative file links checked; final required CI and release evidence remain |
 
 Research breadth, time semantics and research callbacks are a separate follow-on
 to the durable core. None of the rows above alone completes the release.
@@ -92,6 +93,13 @@ also passed PostgreSQL migration/backup/restore/capacity and protected capture
 checks. The API image identity is checked before testing, and the API restarts
 after checkout source is staged so old imported modules cannot survive into
 new-source tests. This is CI evidence; deployment verification remains required.
+
+PR #674's hosted integration suite passed 2,798 tests at
+`231172e5c8321ffac689fee875be4a10d181d71d`, with 162 skips and 17 deselections
+recorded separately. All nine live-research HTTP acceptance cases passed in that
+[run](https://github.com/groktopus/groktocrawl/actions/runs/38877715181/job/116896737119).
+The PostgreSQL storage probes also passed on this head. The self-hosted suite
+must pass before merging; these results do not complete deployment verification.
 
 ## Documentation audit
 
