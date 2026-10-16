@@ -184,7 +184,7 @@ def main():
     model = os.getenv("ACTIVE_EMBED_MODEL", "v_bge-m3")
     if model != "v_bge-m3":
         raise ValueError("unsupported named vector")
-    q = QdrantClient(url=os.getenv("QDRANT_URL", "http://qdrant:6333"), timeout=10)
+    q = QdrantClient(url=os.getenv("QDRANT_URL", "http://qdrant:6333"), timeout=60)
     store = PgvectorShadowStore(config, int(os.getenv("EMBED_DIM", "1024")))
     try:
         before = metric_counts()
