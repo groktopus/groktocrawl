@@ -27,6 +27,24 @@ Architectural changes require new decisions where existing ADRs no longer apply.
 
 Do not change SlopSearch. Use isolated test services and controlled search/model/capture responses for repeatable acceptance. Preserve existing deployment data and client configuration. Record actual test limitations rather than treating collection, fixture counts, or successful health responses as proof of user outcomes.
 
+## Documentation audit
+
+Keep this audit open until the final code is merged. A corrected paragraph is not
+proof that the described workflow passes.
+
+| Documents | Compare against | Completion requirement |
+| --- | --- | --- |
+| README and quick start | Compose defaults, feature flags, service health and public capabilities | A new operator can distinguish live features from test fixtures and start the documented configuration |
+| AGENTS.md and CONTRIBUTING.md | Current source layout, test workflows, job ownership and error handling | Commands and development guidance match the implementation and required CI |
+| Architecture guide and ADR index | Durable research, legacy job recovery, storage backends and workspace integration | New decisions are indexed; obsolete contracts are clearly superseded without rewriting historical evidence |
+| Research, document and workspace guides | API routes, CLI parsing, MCP tools, ownership and retained evidence | Examples exercise the actual operation and explain expiry, deletion and uncertain outcomes |
+| Deployment and recovery runbooks | Compose profiles, schema migrations, backup/restore and callback delivery | Prerequisites, rollback steps and recovery limits match the tested implementation |
+| Public surface inventory and references | Routes, command flags, tool signatures and environment settings | Automated inventory checks pass and manual behavior review finds no unsupported promises |
+| Changelog, release notes and announcement | Merged changes and final acceptance results | Describe verified user benefits and material limitations; no unsupported quality claims |
+
+Workspace and follow-up corrections are included in PR #671. Storage and restart
+instructions must be reconciled again after their implementation PRs merge.
+
 ## Release completion
 
 After all changes merge, run the complete required checks on the exact release commit, verify the built images, and perform the documented deployment and user-workflow checks. Confirm that the release notes and announcement match those results. Publish 1.0.1 only when every row above has linked completion evidence.

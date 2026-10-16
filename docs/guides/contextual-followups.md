@@ -2,7 +2,8 @@
 
 `POST /v2/followup/preview` returns a provider-free, read-only standalone query
 proposal. It never launches retrieval, synthesis, session steps or suggested
-work. Independent research roots remain the default (ADR-0084).
+work. Independent research roots remain the default, as described in the
+[historical decision on independent roots](../adr/experimental/groktocrawl-x/0084-retain-independent-research-roots-over-default-threads.md).
 
 ```json
 {
