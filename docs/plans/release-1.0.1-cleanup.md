@@ -35,7 +35,7 @@ Do not change SlopSearch. Use isolated test services and controlled search/model
 | Workspace evidence, explicit follow-ups and document/client acceptance | [#671](https://github.com/groktopus/groktocrawl/pull/671) | Merged after required CI and review, including public API capture and PostgreSQL follow-up acceptance; deployment remains |
 | PostgreSQL-only memory and semantic indexing | [#672](https://github.com/groktopus/groktocrawl/pull/672) | Merged after required CI and review, including startup, indexing and restart without Qdrant; deployment remains |
 | Legacy job recovery and durable callbacks | [#673](https://github.com/groktopus/groktocrawl/pull/673) | Merged after required CI and review; deployment remains |
-| Multi-query research, time semantics and research callbacks | [#674](https://github.com/groktopus/groktocrawl/pull/674) | Hosted integration and PostgreSQL checks passed on the final head; self-hosted integration remains |
+| Multi-query research, time semantics and research callbacks | [#674](https://github.com/groktopus/groktocrawl/pull/674) | Merged after all required CI and review; deployment remains |
 | Documentation and architecture reconciliation | [#675](https://github.com/groktopus/groktocrawl/pull/675) | Source review, surface inventories and relative file links checked; final required CI and release evidence remain |
 
 Research breadth, time semantics and research callbacks are a separate follow-on
@@ -98,13 +98,17 @@ PR #674's hosted integration suite passed 2,798 tests at
 `231172e5c8321ffac689fee875be4a10d181d71d`, with 162 skips and 17 deselections
 recorded separately. All nine live-research HTTP acceptance cases passed in that
 [run](https://github.com/groktopus/groktocrawl/actions/runs/38877715181/job/116896737119).
-The PostgreSQL storage probes also passed on this head. The self-hosted suite
-must pass before merging; these results do not complete deployment verification.
+The self-hosted suite also passed 2,798 tests, with the same 162 skips and
+17 deselections, in its [final run](https://github.com/groktopus/groktocrawl/actions/runs/38877715181/job/116896743290).
+The PostgreSQL storage probes and all required checks passed before PR #674
+merged as `3f1406970c900ab999b04bb07009c2c16bb2eeeb`. These results do not
+complete deployment verification.
 
 ## Documentation audit
 
-Keep this audit open until the final code is merged. A corrected paragraph is not
-proof that the described workflow passes.
+The source audit is complete against the merged implementation. Documentation
+PR #675 still requires its final checks and merge; release notes and deployment
+evidence remain open. A corrected paragraph alone is not proof of behavior.
 
 | Documents | Compare against | Completion requirement |
 | --- | --- | --- |
@@ -117,8 +121,12 @@ proof that the described workflow passes.
 | Changelog, release notes and announcement | Merged changes and final acceptance results | Describe verified user benefits and material limitations; no unsupported quality claims |
 
 Workspace and follow-up corrections are included in PR #671. Storage and restart
-instructions have been reconciled with merged PRs #672 and #673. The final audit
-still checks the research policy and release instructions after PR #674 merges.
+instructions have been reconciled with merged PRs #672 and #673. Research policy
+and client guidance were checked against PR #674. ADR-0070 is accepted following
+its completed implementation and integration tests. Documentation surface and
+CLI/MCP inventory checks pass, and all 175 relative file links checked in the
+changed Markdown resolve. Release instructions still require final image and
+deployment evidence before publication.
 
 The command audit also corrected AGENTS.md and CONTRIBUTING.md: tests run from
 the checkout, not a nonexistent test directory inside the production image. The

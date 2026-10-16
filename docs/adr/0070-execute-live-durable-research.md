@@ -1,6 +1,6 @@
 # Execute live durable research with persisted external-call receipts
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-10-16
 - Deciders: GroktoCrawl maintainers
 - Scope: `/experimental/research/v1` run execution; legacy jobs are unchanged
