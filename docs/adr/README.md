@@ -4,7 +4,7 @@ This directory contains Architecture Decision Records (ADRs) for GroktoCrawl.
 
 ## Scope and provenance
 
-This index records decisions for the mainline GroktoCrawl codebase. [ADR-0069](0069-adopt-bounded-research-substrate.md) adopts the bounded research substrate in the standard deployment, with feature flags used during verified migration rather than as a permanent opt-in boundary. It supersedes ADR-0026's Qdrant serving choice only for deployments that complete the pgvector backfill and cutover; Qdrant remains available for rollback. ADR-0047's legacy inline-job contract is unchanged. The original GroktoCrawl X records are preserved in the [provenance archive](experimental/groktocrawl-x/README.md); their historical status does not automatically change other mainline decisions.
+This index records decisions for the mainline GroktoCrawl codebase. [ADR-0069](0069-adopt-bounded-research-substrate.md) adopts the bounded research substrate in the standard deployment, with feature flags used during verified migration rather than as a permanent opt-in boundary. It supersedes ADR-0026's Qdrant serving choice only for deployments that complete the pgvector backfill and cutover; Qdrant remains available for rollback. ADR-0047 records the original best-effort inline-job boundary; [ADR-0072](0072-valkey-leased-legacy-job-recovery.md) governs the current queued-job recovery, active-job failure, and webhook-outbox contract. The original GroktoCrawl X records are preserved in the [provenance archive](experimental/groktocrawl-x/README.md); their historical status does not automatically change other mainline decisions.
 
 ## What is an ADR?
 

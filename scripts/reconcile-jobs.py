@@ -2,9 +2,10 @@
 """reconcile-jobs.py — identify and reconcile jobs stranded in ``processing``.
 
 GroktoCrawl executes async jobs in-process through ``TaskTracker``
-(ADR-0035). A crash, forced termination, or restart does not resume or
-reclaim interrupted work, so job records can remain ``processing`` until
-their 24-hour Valkey TTL expires (ADR-0047).
+(ADR-0035). Startup recovery under ADR-0072 redispatches only work that is
+still queued and never claimed. A claimed worker is not replayed; after its
+lease expires the job becomes ``OUTCOME_UNKNOWN``. This tool is a manual
+fallback for records that remain stale after startup recovery.
 
 This operator tool lists those stranded jobs and can mark them ``failed``.
 
@@ -287,7 +288,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         prog="reconcile-jobs",
         description=(
             "List or reconcile GroktoCrawl jobs stranded in 'processing' "
-            "after a process loss (ADR-0047)."
+            "after a process loss (ADR-0072)."
         ),
     )
     parser.add_argument(

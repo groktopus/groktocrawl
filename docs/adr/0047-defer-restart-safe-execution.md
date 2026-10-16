@@ -7,8 +7,10 @@
 > **Update (2026-10-15):** The deferred direction for legacy async jobs was later
 > implemented with a bounded Valkey lease and fail-closed recovery contract in
 > [ADR-0072](0072-valkey-leased-legacy-job-recovery.md). This ADR remains the
-> historical decision record for the original best-effort boundary; ADR-0072
-> governs current behavior. Cross-service artifact rollback and exactly-once
+> historical decision record for the original best-effort boundary. Its body
+> below records the decision as made in 2026-08 and is not current operating
+> guidance; ADR-0072 governs queued-job recovery, uncertain active work, and
+> webhook delivery today. Cross-service artifact rollback and exactly-once
 > execution remain out of scope.
 
 ## Context and Problem Statement

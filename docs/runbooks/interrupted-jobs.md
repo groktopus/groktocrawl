@@ -76,4 +76,4 @@ After an `agent-svc` restart, startup recovery dispatches jobs whose versioned V
 ## Escalation
 
 - **Level 1 (On-call engineer)**: reconcile stranded jobs as above and re-submit critical work.
-- **Level 2 (Service owner)**: if jobs keep stranding on every restart, or partial artifacts are corrupting downstream stores (Qdrant/semantic index, research memory), escalate to the service owner and review the durability roadmap in ADR-0047.
+- **Level 2 (Service owner)**: if jobs keep stranding on every restart, or partial artifacts are corrupting downstream stores (Qdrant/semantic index, research memory), escalate to the service owner and review the bounded recovery contract and remaining artifact-consistency limits in [ADR-0072](../adr/0072-valkey-leased-legacy-job-recovery.md). ADR-0047 is the historical record of the earlier best-effort decision.
