@@ -271,3 +271,41 @@ async def deliver_webhook(
         task_tracker.create_background_task(_do_deliver())
     else:
         await _do_deliver()
+
+
+async def deliver_recorded_webhook(
+    url: str, body: bytes, headers: dict[str, str] | None = None, *, context: str = ""
+) -> str:
+    """One validated signed attempt for a durable same-ID outbox.
+
+    The caller persists exact body bytes and owns retry count/backoff. A timeout
+    is retryable with that same event ID; receiving systems must deduplicate it.
+    No destination, body, response content or credentials are logged here.
+    """
+    if not isinstance(body, bytes) or len(body) > 1_048_576:
+        return "rejected"
+    try:
+        async with asyncio.timeout(15):
+            await asyncio.to_thread(validate_outbound_webhook_url, url)
+            actual_headers = {"Content-Type": "application/json", **(headers or {})}
+            if headers is None and _webhook_settings.webhook_secret:
+                actual_headers["X-Webhook-Signature"] = (
+                    f"sha256={_sign_body(body, _webhook_settings.webhook_secret)}"
+                )
+            async with httpx.AsyncClient(
+                timeout=TIMEOUT_SECONDS, follow_redirects=False
+            ) as client:
+                response = await client.post(url, content=body, headers=actual_headers)
+            if 200 <= response.status_code < 300:
+                return "delivered"
+            return (
+                "retry"
+                if response.status_code >= 500 or response.status_code == 429
+                else "rejected"
+            )
+    except WebhookDestinationDNSRetryableError:
+        return "retry"
+    except WebhookDestinationValidationError:
+        return "rejected"
+    except (httpx.HTTPError, TimeoutError):
+        return "retry"
