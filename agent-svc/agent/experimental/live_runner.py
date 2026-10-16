@@ -1,0 +1,242 @@
+"""Server-owned live adapters with persisted, non-replaying external operations."""
+
+import asyncio
+import hashlib
+import json
+from dataclasses import asdict
+from datetime import UTC, datetime
+from typing import Any
+from uuid import NAMESPACE_URL, UUID, uuid5
+
+import httpx
+
+from ..admission import get_admission
+from ..barrier_guard import is_block_flagged
+from ..searxng_client import SearXNGClient
+from ..session_store import SessionStore
+from ..settings import load_settings
+from .durable_research import OutcomeUnknownError
+from .model_review import ModelReply
+from .model_transport import ReviewTransport
+from .query_construction import CapturedSource
+from .query_runner import run_query
+
+
+async def run_live(record: Any, app: Any):
+    """Execute an admitted objective; credentials stay in server-owned clients."""
+    ledger = record.durable_ledger
+    if ledger is None or record.durable_owner_id is None:
+        raise ValueError("live research requires durable ownership")
+    admitted = await asyncio.to_thread(ledger.get, record.run_id)
+    if admitted is None:
+        raise ValueError("admission unavailable")
+    evaluated = datetime.fromisoformat(admitted.payload["evaluation_time"])
+    model = admitted.payload["model"]
+    selected_sources = tuple(
+        CapturedSource(**source)
+        for source in admitted.payload.get("selected_sources", [])
+    )
+
+    async def validate_selected():
+        for source in selected_sources:
+            if not source.origin_id or not source.lineage_id:
+                raise ValueError("selected source has no retained authority")
+            kind, container, reference = source.origin_id.split(":", 2)
+            if kind == "root":
+                body, _ = await record.artifact_authority.read_evidence(
+                    uuid5(
+                        NAMESPACE_URL, f"groktocrawl-x:research-scope:{record.scope_id}"
+                    ),
+                    UUID(container),
+                    reference,
+                )
+            elif kind == "session":
+                settings = load_settings()
+                store = SessionStore(
+                    redis_url=f"redis://{settings.valkey_host}:{settings.valkey_port}/{settings.valkey_db}"
+                )
+                try:
+                    session = await store.aget(container)
+                    if (
+                        not session
+                        or not session.get("owner_scope")
+                        or not admitted.payload.get("session_scope")
+                        or session.get("owner_scope")
+                        != admitted.payload.get("session_scope")
+                    ):
+                        raise ValueError(
+                            "selected session is unavailable to admitted scope"
+                        )
+                    ref = await store.aget_ref(container, reference)
+                    if not ref:
+                        raise ValueError("selected session source is unavailable")
+                    pointer = ref.get("research_source")
+                    if pointer is not None:
+                        if pointer.get("kind") != "root":
+                            raise ValueError("invalid linked research source")
+                        body, _ = await record.artifact_authority.read_evidence(
+                            uuid5(
+                                NAMESPACE_URL,
+                                f"groktocrawl-x:research-scope:{record.scope_id}",
+                            ),
+                            UUID(pointer["container_id"]),
+                            pointer["ref_id"],
+                        )
+                        if hashlib.sha256(body).hexdigest() != ref.get(
+                            "content_digest"
+                        ):
+                            raise ValueError("linked research source changed")
+                    elif ref.get("markdown"):
+                        body = ref["markdown"].encode()
+                    else:
+                        raise ValueError("selected session source is unavailable")
+                finally:
+                    await asyncio.to_thread(store.redis.close)
+            else:
+                raise ValueError("selected source authority is unsupported")
+            actual = hashlib.sha256(body).hexdigest()
+            if actual != source.lineage_id or body != source.text.encode():
+                raise ValueError("selected source changed or failed integrity")
+
+    await validate_selected()
+
+    async def effect(identity, inputs, call):
+        encoded = json.dumps(
+            inputs, sort_keys=True, separators=(",", ":"), allow_nan=False
+        )
+        input_digest = hashlib.sha256(encoded.encode()).hexdigest()
+        replay, output = await asyncio.to_thread(
+            ledger.step,
+            record.run_id,
+            record.durable_owner_id,
+            record.durable_generation,
+            identity,
+            input_digest,
+        )
+        if replay:
+            return output
+        # Every exception after intent is ambiguous until a bounded receipt is
+        # durable. Never convert it to a retry or silently select another model.
+        try:
+            output = await call()
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            raise OutcomeUnknownError("external dispatch outcome is unknown") from exc
+        await asyncio.to_thread(
+            ledger.step,
+            record.run_id,
+            record.durable_owner_id,
+            record.durable_generation,
+            identity,
+            input_digest,
+            output=output,
+            complete=True,
+        )
+        return output
+
+    async def search(objective, limit):
+        async def fetch():
+            search_client = SearXNGClient(
+                getattr(app.state, "searxng_url", None)
+                or app.state.searxng_client.base_url,
+                max_searches=1,
+            )
+            try:
+                rows, health = await search_client.search(
+                    objective, limit=limit, raise_on_rate_limit=True
+                )
+            finally:
+                await search_client.close()
+            return {
+                "urls": list(dict.fromkeys(row["url"] for row in rows))[:limit],
+                "empty": health.empty_result,
+            }
+
+        result = await effect("search", {"objective": objective, "limit": limit}, fetch)
+        if (result["empty"] or not result["urls"]) and not selected_sources:
+            raise ValueError("search returned no usable sources")
+        return tuple(result["urls"])
+
+    async def acquire(url):
+        async def fetch():
+            result = await app.state.scraper_client.scrape(url, lightweight_only=True)
+            return {
+                "response": {
+                    "success": result.get("success"),
+                    "warning": bool(result.get("warning")),
+                    "data": {"markdown": (result.get("data") or {}).get("markdown")},
+                },
+                "blocked": is_block_flagged(result),
+                "retrieved_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+            }
+
+        result = await effect(
+            "acquire:" + hashlib.sha256(url.encode()).hexdigest(), {"url": url}, fetch
+        )
+        value = result["response"]
+        if not value.get("success") or value.get("warning") or result["blocked"]:
+            raise ValueError("source acquisition failed or was qualified")
+        text = (value.get("data") or {}).get("markdown")
+        if not isinstance(text, str) or not text.strip():
+            raise ValueError("source acquisition returned no text")
+        return CapturedSource(url, text, result["retrieved_at"])
+
+    model_calls = 0
+    async with httpx.AsyncClient() as client:
+        token_parameter, token_budget = next(
+            iter(admitted.payload["token_params"].items())
+        )
+        transport = ReviewTransport(
+            client,
+            base_url=app.state.llm_base_url,
+            api_key=app.state.llm_api_key,
+            token_parameter=token_parameter,
+            token_budget=token_budget,
+        )
+
+        async def complete(request):
+            nonlocal model_calls
+            model_calls += 1
+            await validate_selected()
+            if model_calls > 64:
+                raise ValueError("model call budget exhausted")
+
+            async def fetch():
+                reply = await transport(request)
+                return {**asdict(reply), "content": reply.content.decode("utf-8")}
+
+            admission = get_admission()
+            weight = admission.weight_for("llm")
+            await admission.acquire("llm", weight=weight)
+            try:
+                values = await effect(
+                    f"model:{model_calls}",
+                    {**asdict(request), "payload": request.payload.decode("utf-8")},
+                    fetch,
+                )
+            finally:
+                admission.release("llm", weight=weight)
+            return ModelReply(
+                **{**values, "content": values["content"].encode("utf-8")}
+            )
+
+        remaining = admitted.created_at_ms / 1000 + 180 - datetime.now(UTC).timestamp()
+        if remaining <= 0:
+            raise ValueError("research execution deadline expired")
+        async with asyncio.timeout(remaining):
+            return await run_query(
+                record.objective,
+                search=search,
+                acquire=acquire,
+                complete=complete,
+                scope_id=record.scope_id,
+                model=model,
+                clock=lambda: evaluated,
+                research_id=record.research_id,
+                revision_id=str(uuid5(NAMESPACE_URL, f"{record.run_id}:revision")),
+                artifact_set_id=str(
+                    uuid5(NAMESPACE_URL, f"groktocrawl-x:artifact-set:{record.run_id}")
+                ),
+                selected_sources=selected_sources,
+            )

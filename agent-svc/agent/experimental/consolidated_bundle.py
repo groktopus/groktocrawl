@@ -135,7 +135,8 @@ async def admit_consolidated_bundle(
         not isinstance(snapshot_ids, list)
         or len(snapshot_ids) > MAX_SNAPSHOTS
         or any(
-            not isinstance(value, str) or not 1 <= len(value) <= 200
+            not isinstance(value, str)
+            or not 1 <= len(value) <= 200
             or "/" in value
             or "\\" in value
             or value in {".", ".."}
@@ -149,7 +150,11 @@ async def admit_consolidated_bundle(
     names = {
         "knowledge.json",
         "manifest.json",
-        *(f"sources/{index}.{extension}" for index in range(len(snapshot_ids)) for extension in ("body", "json")),
+        *(
+            f"sources/{index}.{extension}"
+            for index in range(len(snapshot_ids))
+            for extension in ("body", "json")
+        ),
         *(f"outputs/{layer}.md" for layer in LAYERS),
     }
     if not isinstance(members, dict) or set(members) != names:
@@ -165,12 +170,16 @@ async def admit_consolidated_bundle(
     if actual_snapshot_ids != snapshot_ids:
         raise ValueError("consolidated snapshot identities differ from knowledge")
     sources = []
-    for index, snapshot in enumerate(sorted(context.snapshots, key=lambda item: item.snapshot_id)):
+    for index, snapshot in enumerate(
+        sorted(context.snapshots, key=lambda item: item.snapshot_id)
+    ):
         body = decoded[f"sources/{index}.body"]
         descriptor = admit_canonical_json(
             decoded[f"sources/{index}.json"], schema_version=SCHEMA
         )
-        expected = source_descriptor(body, snapshot.canonical_url)
+        expected = source_descriptor(
+            body, snapshot.canonical_url, allow_unknown_url=True
+        )
         if descriptor.data != expected.data:
             raise ValueError("consolidated source descriptor differs from body")
         sources.append(
@@ -244,7 +253,9 @@ async def build_consolidated_bundle(
     snapshots = sorted(knowledge.context.snapshots, key=lambda item: item.snapshot_id)
     for index, snapshot in enumerate(snapshots):
         source = sources[snapshot.snapshot_id]
-        descriptor = source_descriptor(source.body, snapshot.canonical_url)
+        descriptor = source_descriptor(
+            source.body, snapshot.canonical_url, allow_unknown_url=True
+        )
         members[f"sources/{index}.json"] = bundle_member(descriptor.data)
         members[f"sources/{index}.body"] = bundle_member(source.body)
     for report in retained.reports:

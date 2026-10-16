@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Mapping
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -65,6 +66,26 @@ class ArtifactLifecycleError(StorageConflictError):
 
 class ArtifactAuthority(SourceStore):
     """Atomic, scoped storage boundary; callers establish scope authorization."""
+
+    @staticmethod
+    async def _lock_execution(conn, scope: UUID, research: UUID) -> None:
+        key = int.from_bytes(
+            hashlib.sha256(f"{scope}:{research}".encode()).digest()[:8],
+            "big",
+            signed=True,
+        )
+        await conn.execute("SELECT pg_advisory_xact_lock(%s)", (key,))
+
+    @asynccontextmanager
+    async def execution_lock(self, scope: UUID, research: UUID):
+        """Serialize execution ownership, publication and cancellation for a root.
+
+        No external research calls belong inside this short transaction. Artifact
+        writes use their own transaction while this connection holds the lock.
+        """
+        async with self._transaction() as conn:
+            await self._lock_execution(conn, scope, research)
+            yield
 
     async def migrate_artifact_authority(self) -> None:
         migration = (
@@ -371,6 +392,7 @@ class ArtifactAuthority(SourceStore):
 
     async def delete(self, scope: UUID, research: UUID) -> None:
         async with self._transaction() as conn:
+            await self._lock_execution(conn, scope, research)
             row = await (
                 await conn.execute(
                     "SELECT deleted FROM research_staging.research_artifact_sets WHERE scope_id=%s AND research_id=%s FOR UPDATE",

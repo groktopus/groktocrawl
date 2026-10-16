@@ -113,6 +113,7 @@ def test_durable_research_profile_wires_one_password_secret_and_keeps_default_of
     )
     assert _env(agent)["FEATURE_EXPERIMENTAL_RESEARCH"].endswith("false}")
     assert _env(agent)["FEATURE_EXPERIMENTAL_RESEARCH_DURABLE"].endswith("false}")
+    assert _env(agent)["FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS"].endswith("false}")
     assert agent["depends_on"]["research-postgres"] == {
         "condition": "service_healthy",
         "required": False,

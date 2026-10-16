@@ -1,5 +1,6 @@
 """Validate the experimental CI execution boundary and required-check outcomes."""
 
+import hashlib
 import ipaddress
 import itertools
 import json
@@ -7,6 +8,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -59,12 +61,20 @@ def test_stack_is_built_locally_with_fixture_search_and_owned_volumes():
     job = WORKFLOW["jobs"]["integration-tests"]
     assert job["env"]["COMPOSE_FILE"] == "docker-compose.yml:docker-compose.ci.yml"
     commands = "\n".join(step.get("run", "") for step in job["steps"])
-    assert "--profile indexing --profile fixture build" in commands
+    assert (
+        "--profile indexing --profile fixture --profile durable-research build"
+        in commands
+    )
     assert "up -d --no-build --pull never" in commands
     assert "scripts/ci_public_image_prefetch.py" in commands
     assert "--group runtime" in commands
     assert "--profile indexing" in commands
     assert "--profile fixture" in commands
+    assert "--profile durable-research" in commands
+    assert "DURABLE_RESEARCH_POSTGRES_DSN=" in commands
+    assert "PGPASSFILE=/tmp/postgres.pgpass" in commands
+    assert "SEARXNG_URL=http://slopsearx-fixture:8080" in commands
+    assert "SEARCH_BASE_URL=http://slopsearx-fixture:8080" in commands
     assert "LLM_BASE_URL=http://llm-svc:8011/v1?run_id=" in commands
     assert "docker rm -f" not in commands
     assert "down --volumes --remove-orphans" in commands
@@ -75,6 +85,189 @@ def test_stack_is_built_locally_with_fixture_search_and_owned_volumes():
         "compose.protected-capture-lab.yml",
     ):
         assert f'docker cp {filename} "$svc":/app/{filename}' in commands
+
+
+def test_standard_integration_provisions_durable_database():
+    workflow = yaml.safe_load((ROOT / ".github/workflows/docker.yml").read_text())
+    jobs = workflow["jobs"].values()
+    job = next(job for job in jobs if job.get("name") == "Integration Tests")
+    steps = {step.get("name"): step for step in job["steps"]}
+    assert "--profile durable-research up -d" in steps["Start the Docker stack"]["run"]
+    assert "--profile durable-research down" in steps["Tear down stack"]["run"]
+    assert "/app/tests/integration/" in steps["Run integration tests"]["run"]
+    assert job["env"]["COMPOSE_PROJECT_NAME"].endswith(
+        "${{ github.run_id }}-${{ github.run_attempt }}"
+    )
+    assert "token_urlsafe(32)" in steps["Set up .env"]["run"]
+    assert "umask 077" in steps["Set up .env"]["run"]
+    assert (
+        "DURABLE_RESEARCH_POSTGRES_PASSWORD_FILE=$research_password_file"
+        in steps["Set up .env"]["run"]
+    )
+    assert "--volumes" in steps["Tear down stack"]["run"]
+    assert (
+        "label=com.docker.compose.project=$COMPOSE_PROJECT_NAME"
+        in steps["Force-remove all stale project containers"]["run"]
+    )
+    assert "rm -f" in steps["Tear down stack"]["run"]
+
+
+def _standard_integration_job():
+    workflow = yaml.safe_load((ROOT / ".github/workflows/docker.yml").read_text())
+    return next(
+        job
+        for job in workflow["jobs"].values()
+        if job.get("name") == "Integration Tests"
+    )
+
+
+def test_self_hosted_research_inputs_use_only_owned_named_volumes():
+    class ComposeLoader(yaml.SafeLoader):
+        pass
+
+    def reset(loader, node):
+        if isinstance(node, yaml.MappingNode):
+            return loader.construct_mapping(node, deep=True)
+        return loader.construct_sequence(node, deep=True)
+
+    ComposeLoader.add_constructor("!reset", reset)
+    overlay = yaml.load(
+        (ROOT / "compose.ci-research-inputs.yml").read_text(), Loader=ComposeLoader
+    )
+    assert set(overlay["services"]) == {
+        "research-postgres",
+        "agent-svc",
+        "semantic-svc",
+    }
+    assert overlay["secrets"] == {}
+    assert set(overlay["volumes"]) == {"ci_research_secret", "ci_research_init"}
+    for service in overlay["services"].values():
+        assert service["secrets"] == []
+        assert all(
+            mount["type"] == "volume" and mount["read_only"] is True
+            for mount in service["volumes"]
+        )
+        assert (
+            next(
+                mount
+                for mount in service["volumes"]
+                if mount["target"] == "/run/secrets"
+            )["source"]
+            == "ci_research_secret"
+        )
+    # Compose merges volumes by container target, replacing the checkout bind.
+    assert (
+        next(
+            mount
+            for mount in overlay["services"]["research-postgres"]["volumes"]
+            if mount["target"] == "/docker-entrypoint-initdb.d"
+        )["source"]
+        == "ci_research_init"
+    )
+    job = _standard_integration_job()
+    assert (
+        job["env"]["COMPOSE_FILE"]
+        == "docker-compose.yml:compose.ci-research-inputs.yml"
+    )
+    names = [step.get("name") for step in job["steps"]]
+    assert (
+        names.index("Clean up stale containers from previous run")
+        < names.index("Seed daemon-owned research inputs")
+        < names.index("Start the Docker stack")
+    )
+    steps = {step.get("name"): step for step in job["steps"]}
+    assert steps["Seed daemon-owned research inputs"]["timeout-minutes"] == 5
+    assert (
+        'docker rm -f "${COMPOSE_PROJECT_NAME}-research-inputs"'
+        in steps["Tear down stack"]["run"]
+    )
+    for workflow in ("docker.yml", "runtime.yml"):
+        assert (
+            'docker cp compose.ci-research-inputs.yml "$svc":/app/compose.ci-research-inputs.yml'
+            in (ROOT / ".github/workflows" / workflow).read_text()
+        )
+        assert (
+            'docker cp agent-svc/agent/experimental/migrations/. "$svc":/app/agent-svc/agent/experimental/migrations/'
+            in (ROOT / ".github/workflows" / workflow).read_text()
+        )
+
+
+@pytest.mark.parametrize("fail_copy", [False, True])
+def test_research_input_seeding_streams_files_and_cleans_helper_on_failure(
+    tmp_path, fail_copy
+):
+    job = _standard_integration_job()
+    command = next(
+        step["run"]
+        for step in job["steps"]
+        if step.get("name") == "Seed daemon-owned research inputs"
+    )
+    project = "groktocrawl-ci-123-2"
+    secret = "test-only-value-must-not-appear-in-argv-or-logs"
+    password_file = tmp_path / "groktocrawl-postgres-123-2.password"
+    password_file.write_text(secret)
+    password_file.chmod(0o600)
+    log = tmp_path / "commands.jsonl"
+    docker = tmp_path / "docker"
+    docker.write_text(
+        f"#!{sys.executable}\n"
+        + """import hashlib, json, os, pathlib, sys
+args = sys.argv[1:]
+record = {"argv": args}
+if args[0] == "cp":
+    source = pathlib.Path(args[1])
+    if source.is_file():
+        record["copied_digest"] = hashlib.sha256(source.read_bytes()).hexdigest()
+    else:
+        record["copied_sql"] = sorted(path.name for path in source.glob("*.sql"))
+with open(os.environ["FAKE_DOCKER_LOG"], "a") as output:
+    output.write(json.dumps(record) + "\\n")
+if args[0] == "cp" and "migrations" in args[1] and os.environ["FAIL_SQL_COPY"] == "true":
+    sys.exit(7)
+if args[0] == "inspect":
+    print(0)
+"""
+    )
+    docker.chmod(0o700)
+    uv = tmp_path / "uv"
+    uv.write_text(
+        f"#!{sys.executable}\nimport os, sys\nos.execv(sys.executable, [sys.executable, *sys.argv[4:]])\n"
+    )
+    uv.chmod(0o700)
+    result = subprocess.run(
+        ["bash", "-c", command],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        env={
+            **os.environ,
+            "PATH": f"{tmp_path}{os.pathsep}{os.environ['PATH']}",
+            "RUNNER_TEMP": str(tmp_path),
+            "COMPOSE_PROJECT_NAME": project,
+            "GITHUB_RUN_ID": "123",
+            "GITHUB_RUN_ATTEMPT": "2",
+            "FAKE_DOCKER_LOG": str(log),
+            "FAIL_SQL_COPY": str(fail_copy).lower(),
+        },
+        timeout=20,
+    )
+    assert result.returncode == (7 if fail_copy else 0), result.stderr
+    records = [json.loads(line) for line in log.read_text().splitlines()]
+    create = next(item["argv"] for item in records if item["argv"][0] == "create")
+    assert create[create.index("--network") + 1] == "none"
+    assert "type=bind" not in str(create)
+    assert str(tmp_path) not in str(create)
+    assert all(
+        item["argv"][-1].startswith(project + "_")
+        for item in records
+        if item["argv"][:2] == ["volume", "create"]
+    )
+    copied = next(item for item in records if "copied_digest" in item)
+    assert copied["copied_digest"] == hashlib.sha256(secret.encode()).hexdigest()
+    sql = next(item["copied_sql"] for item in records if "copied_sql" in item)
+    assert "001_source_staging.sql" in sql and "016_artifact_evidence.sql" in sql
+    assert records[-1]["argv"] == ["rm", "-f", project + "-research-inputs"]
+    assert secret not in result.stdout + result.stderr + log.read_text()
 
 
 def test_protected_browser_profile_is_required_by_runtime_gate():

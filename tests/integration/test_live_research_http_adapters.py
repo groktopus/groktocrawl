@@ -1,0 +1,515 @@
+"""HTTP acceptance tests for durable objective-driven research.
+
+The search, capture, and OpenAI-compatible model endpoints here are local digital
+twins. Valkey and PostgreSQL must be the isolated acceptance services configured
+by the caller; no paid or public provider is contacted.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import hashlib
+import importlib
+import json
+import os
+import sys
+import threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from uuid import uuid4
+
+import httpx
+import pytest
+import pytest_asyncio
+from agent.experimental.durable_research import DurableResearchLedger
+from agent.routes import experimental_research as experimental
+from agent.scraper_client import ScraperClient
+from agent.searxng_client import SearXNGClient
+from fastapi import FastAPI
+from redis import Redis
+
+OBJECTIVES = {
+    "What does the Aurora battery pilot report?": (
+        "https://research.test/aurora",
+        "AURORA DIGITAL TWIN: The pilot measured 18 percent lower charging loss.",
+    ),
+    "What does the Birch heat-pump trial report?": (
+        "https://research.test/birch",
+        "BIRCH DIGITAL TWIN: The trial measured 11 percent lower winter electricity use.",
+    ),
+}
+
+
+class LocalProviderTwin:
+    """Three local HTTP endpoints with request logs and deterministic responses."""
+
+    def __init__(self) -> None:
+        self.search_requests: list[dict] = []
+        self.capture_requests: list[dict] = []
+        self.model_requests: list[dict] = []
+        self._lock = threading.Lock()
+        owner = self
+
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self, *_args) -> None:
+                return
+
+            def _reply(self, status: int, value: dict) -> None:
+                body = json.dumps(value).encode()
+                self.send_response(status)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+            def do_GET(self) -> None:
+                if self.path.split("?", 1)[0] != "/search":
+                    self._reply(404, {"error": "unknown path"})
+                    return
+                from urllib.parse import parse_qs, urlparse
+
+                query = parse_qs(urlparse(self.path).query).get("q", [""])[0]
+                with owner._lock:
+                    owner.search_requests.append({"query": query, "path": self.path})
+                selected = OBJECTIVES.get(query)
+                rows = (
+                    [{"url": selected[0], "title": "Local source", "content": ""}]
+                    if selected
+                    else []
+                )
+                self._reply(
+                    200,
+                    {
+                        "query": query,
+                        "number_of_results": len(rows),
+                        "results": rows,
+                        "engines": [{"name": "local-twin", "results": len(rows)}],
+                    },
+                )
+
+            def do_POST(self) -> None:
+                length = int(self.headers.get("Content-Length", "0"))
+                raw = self.rfile.read(length)
+                try:
+                    payload = json.loads(raw)
+                except Exception:
+                    self._reply(400, {"error": "invalid JSON"})
+                    return
+                if self.path == "/scrape":
+                    url = payload.get("url", "")
+                    with owner._lock:
+                        owner.capture_requests.append(payload)
+                    body = next(
+                        (
+                            text
+                            for source_url, text in OBJECTIVES.values()
+                            if source_url == url
+                        ),
+                        None,
+                    )
+                    if body is None:
+                        self._reply(404, {"success": False, "error": "unknown source"})
+                        return
+                    self._reply(
+                        200,
+                        {
+                            "success": True,
+                            "data": {
+                                "url": url,
+                                "markdown": body,
+                                "source": "local-digital-twin",
+                            },
+                        },
+                    )
+                    return
+                if self.path == "/chat/completions":
+                    with owner._lock:
+                        owner.model_requests.append(payload)
+                    user = payload["messages"][1]["content"]
+                    request = json.loads(user)
+                    if "sources" in request and "objective" in request:
+                        source = request["sources"][0]
+                        line = source["lines"][0]["text"].rstrip("\n")
+                        answer = {
+                            "schema_version": "research-construction/4",
+                            "evidence": [
+                                {"source_index": 1, "start_line": 1, "end_line": 1}
+                            ],
+                            "claims": [
+                                {
+                                    "text": f"The captured source reports: {line}",
+                                    "qualifiers": [
+                                        "One source captured by the local acceptance twin"
+                                    ],
+                                    "temporal_scope": "historical",
+                                    "supported_by": [1],
+                                    "contradicted_by": [],
+                                }
+                            ],
+                            "answer_claim_index": 1,
+                            "answer_status": "answered",
+                            "conflicts": [],
+                        }
+                    elif "checks" in request:
+                        answer = {
+                            "schema_version": "model-review-batch/1",
+                            "decisions": [
+                                {
+                                    "check_index": item["check_index"],
+                                    "outcome": "supported"
+                                    if item["check_type"] == "assessment"
+                                    else "pass",
+                                    "reason": "Local deterministic acceptance response; not an independent quality judgment.",
+                                }
+                                for item in request["checks"]
+                            ],
+                        }
+                    else:
+                        assessment = request.get("check_type") == "assessment"
+                        answer = {
+                            "schema_version": "model-review-decision/1",
+                            "input_digest": request["input_digest"],
+                            "outcome": "supported" if assessment else "pass",
+                            "reason": "Local deterministic acceptance response; not an independent quality judgment.",
+                        }
+                    self._reply(
+                        200,
+                        {
+                            "model": "acceptance-local-model",
+                            "usage": {"prompt_tokens": 1, "completion_tokens": 1},
+                            "choices": [
+                                {
+                                    "finish_reason": "stop",
+                                    "message": {"content": json.dumps(answer)},
+                                }
+                            ],
+                        },
+                    )
+                    return
+                self._reply(404, {"error": "unknown path"})
+
+        self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.thread.start()
+        self.base_url = f"http://127.0.0.1:{self.server.server_port}"
+
+    def close(self) -> None:
+        self.server.shutdown()
+        self.server.server_close()
+        self.thread.join(timeout=2)
+
+
+class LocalAdmission:
+    """Keep the test focused on the configured HTTP capture adapter."""
+
+    @staticmethod
+    def weight_for(_resource_class: str) -> int:
+        return 1
+
+    @staticmethod
+    async def acquire(_resource_class: str, *, weight: int) -> None:
+        assert weight == 1
+
+    @staticmethod
+    def release(_resource_class: str, *, weight: int) -> None:
+        assert weight == 1
+
+
+@pytest.fixture
+def provider_twin():
+    twin = LocalProviderTwin()
+    try:
+        yield twin
+    finally:
+        twin.close()
+
+
+@pytest_asyncio.fixture
+async def durable_apps(
+    monkeypatch: pytest.MonkeyPatch, provider_twin: LocalProviderTwin
+):
+    redis_url = os.environ.get("DURABLE_RESEARCH_REDIS_URL") or os.environ.get(
+        "VALKEY_URL"
+    )
+    postgres_dsn = os.environ.get("DURABLE_RESEARCH_POSTGRES_DSN")
+    if not redis_url or not postgres_dsn:
+        pytest.fail(
+            "acceptance requires isolated DURABLE_RESEARCH_REDIS_URL/VALKEY_URL and DURABLE_RESEARCH_POSTGRES_DSN"
+        )
+
+    for flag in (
+        "EXPERIMENTAL_RESEARCH",
+        "EXPERIMENTAL_RESEARCH_RUNS",
+        "EXPERIMENTAL_RESEARCH_DURABLE",
+        "EXPERIMENTAL_RESEARCH_POSTGRES_ARTIFACTS",
+    ):
+        monkeypatch.setenv(f"FEATURE_{flag}", "true")
+    monkeypatch.setenv("FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS", "false")
+
+    namespace = f"groktocrawl:test:live-http:{uuid4()}"
+    redis = Redis.from_url(redis_url, decode_responses=True)
+    original_factory = experimental.DurableResearchLedger
+    created_ledgers: list[DurableResearchLedger] = []
+
+    def namespaced_ledger(url: str) -> DurableResearchLedger:
+        ledger = original_factory(url, namespace=namespace)
+        created_ledgers.append(ledger)
+        return ledger
+
+    monkeypatch.setattr(experimental, "DurableResearchLedger", namespaced_ledger)
+    for cache in (
+        experimental._RUNS,
+        experimental._IDEMPOTENCY,
+        experimental._DURABLE_LEDGERS,
+        experimental._ARTIFACT_AUTHORITIES,
+    ):
+        cache.clear()
+
+    def make_app() -> FastAPI:
+        app = FastAPI()
+        app.state.valkey_url = redis_url
+        app.state.research_postgres_dsn = postgres_dsn
+        app.state.searxng_client = SearXNGClient(provider_twin.base_url, max_searches=5)
+        app.state.scraper_client = ScraperClient(
+            provider_twin.base_url, admission=LocalAdmission()
+        )
+        app.state.llm_base_url = provider_twin.base_url
+        app.state.llm_api_key = "local-acceptance-only"
+        app.state.llm_model = "acceptance-local-model"
+        app.include_router(experimental.router)
+        return app
+
+    apps = [make_app()]
+    cleanup_research_ids: list[str] = []
+    cleanup_clients = []
+    try:
+        yield (
+            apps,
+            namespace,
+            redis,
+            created_ledgers,
+            make_app,
+            cleanup_research_ids,
+            cleanup_clients,
+        )
+    finally:
+        if cleanup_research_ids and apps:
+            async with httpx.AsyncClient(
+                transport=httpx.ASGITransport(app=apps[-1]),
+                base_url="http://acceptance",
+                headers={"Authorization": "Bearer live-http-acceptance-owner"},
+            ) as cleanup_client:
+                for research_id in cleanup_research_ids:
+                    await cleanup_client.delete(
+                        f"/experimental/research/v1/research/{research_id}"
+                    )
+        for app in apps:
+            for name in ("searxng_client", "scraper_client"):
+                client = getattr(app.state, name, None)
+                if client is not None:
+                    await client.close()
+        for client in cleanup_clients:
+            await client.close()
+        for ledger in created_ledgers:
+            ledger.redis.close()
+        for cache in (
+            experimental._RUNS,
+            experimental._IDEMPOTENCY,
+            experimental._DURABLE_LEDGERS,
+            experimental._ARTIFACT_AUTHORITIES,
+        ):
+            cache.clear()
+        prefix = f"{namespace}:"
+        for key in redis.scan_iter(match=f"{prefix}*"):
+            redis.delete(key)
+        redis.close()
+
+
+async def _terminal(client: httpx.AsyncClient, url: str) -> dict:
+    for _ in range(600):
+        response = await client.get(url)
+        assert response.status_code == 200, response.text
+        status = response.json()
+        if status["state"] in {"completed", "failed", "cancelled"}:
+            return status
+        await asyncio.sleep(0.05)
+    raise AssertionError("live research run did not reach a terminal state")
+
+
+@pytest.mark.asyncio
+async def test_two_objectives_use_http_adapters_and_recover_actual_bytes_through_mcp(
+    durable_apps, provider_twin: LocalProviderTwin, monkeypatch: pytest.MonkeyPatch
+):
+    apps, _, _, _, make_app, cleanup_research_ids, cleanup_clients = durable_apps
+    app = apps[0]
+    owner = {"Authorization": "Bearer live-http-acceptance-owner"}
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app),
+        base_url="http://acceptance",
+        headers=owner,
+    ) as client:
+        first_objective = next(iter(OBJECTIVES))
+        first = await client.post(
+            "/experimental/research/v1/runs",
+            headers={"Idempotency-Key": "aurora-objective"},
+            json={"objective": first_objective},
+        )
+        assert first.status_code == 202, first.text
+        first_admission = first.json()
+        cleanup_research_ids.append(first_admission["research_id"])
+        duplicate = await client.post(
+            "/experimental/research/v1/runs",
+            headers={"Idempotency-Key": "aurora-objective"},
+            json={"objective": first_objective},
+        )
+        assert duplicate.status_code == 202
+        assert duplicate.json()["run_id"] == first_admission["run_id"]
+        first_status = await _terminal(client, first_admission["status_url"])
+        assert first_status["state"] == "completed", first_status
+
+        mcp_dir = str(Path(__file__).resolve().parents[2] / "mcp-svc")
+        if mcp_dir not in sys.path:
+            sys.path.insert(0, mcp_dir)
+        mcp_server = importlib.import_module("mcp_server")
+        from groktocrawl_client import GroktocrawlClient
+
+        mcp_client = GroktocrawlClient(base_url="http://acceptance")
+        cleanup_clients.append(mcp_client)
+        mcp_client._client = httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app),
+            base_url="http://acceptance",
+            headers=owner,
+        )
+        prior_client = mcp_server._client
+        monkeypatch.setattr(mcp_server, "_client", mcp_client)
+        second_objective = tuple(OBJECTIVES)[1]
+        mcp_response, _structured = await mcp_server.mcp.call_tool(
+            "research_create",
+            {"objective": second_objective, "idempotency_key": "birch-objective"},
+        )
+        second_admission = json.loads(mcp_response[0].text)
+        cleanup_research_ids.append(second_admission["research_id"])
+        second_status = await _terminal(client, second_admission["status_url"])
+        assert second_status["state"] == "completed", second_status
+        assert second_status["result"]["research_id"] == second_admission["research_id"]
+        mcp_status_response, _structured = await mcp_server.mcp.call_tool(
+            "research_status", {"run_id": second_admission["run_id"]}
+        )
+        assert json.loads(mcp_status_response[0].text)["state"] == "completed"
+
+        assert [item["query"] for item in provider_twin.search_requests] == [
+            first_objective,
+            second_objective,
+        ]
+        assert len(provider_twin.capture_requests) == 2
+        assert all(
+            item.get("lightweight_only") is True
+            for item in provider_twin.capture_requests
+        )
+        assert len(provider_twin.model_requests) >= 4
+        assert all(
+            item["model"] == "acceptance-local-model"
+            for item in provider_twin.model_requests
+        )
+        model_inputs = [
+            json.loads(item["messages"][1]["content"])
+            for item in provider_twin.model_requests
+        ]
+        for objective, (_url, source_body) in OBJECTIVES.items():
+            construction = next(
+                item
+                for item in model_inputs
+                if item.get("objective") == objective and "sources" in item
+            )
+            assert source_body in "".join(
+                line["text"]
+                for source in construction["sources"]
+                for line in source["lines"]
+            )
+
+        # Drop all route process state, create a distinct FastAPI app, and recover
+        # source bytes/artifacts through the durable ledger + PostgreSQL authority.
+        for current_app in apps:
+            for name in ("searxng_client", "scraper_client"):
+                await getattr(current_app.state, name).close()
+        experimental._RUNS.clear()
+        experimental._IDEMPOTENCY.clear()
+        experimental._DURABLE_LEDGERS.clear()
+        experimental._ARTIFACT_AUTHORITIES.clear()
+        recovered_app = make_app()
+        apps.append(recovered_app)
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=recovered_app),
+            base_url="http://acceptance",
+            headers=owner,
+        ) as recovered:
+            observations = []
+            for admission, objective, expected_url, expected_body, objective_marker in (
+                (
+                    first_admission,
+                    first_objective,
+                    *OBJECTIVES[first_objective],
+                    "AURORA",
+                ),
+                (
+                    second_admission,
+                    second_objective,
+                    *OBJECTIVES[second_objective],
+                    "BIRCH",
+                ),
+            ):
+                workspace = await recovered.get(
+                    f"/experimental/research/v1/workspace/{admission['run_id']}"
+                )
+                assert workspace.status_code == 200, workspace.text
+                document = workspace.json()
+                assert document["state"] == "completed"
+                assert document["objective"] == objective
+                evidence_link = next(
+                    item
+                    for item in document["evidence"]
+                    if item.get("source", {}).get("canonical_url") == expected_url
+                )
+                evidence = await recovered.get(evidence_link["url"])
+                assert evidence.status_code == 200, evidence.text
+                assert evidence.json()["body"].encode() == expected_body.encode()
+                assert (
+                    evidence.json()["content_digest"]
+                    == hashlib.sha256(expected_body.encode()).hexdigest()
+                )
+                summary_url = document["actions"]["render_summary"]["url"]
+                summary = await recovered.get(summary_url)
+                assert summary.status_code == 200
+                assert objective_marker in summary.text
+                assert expected_body in summary.text
+                observations.append((evidence.json()["body"], summary.text))
+
+            assert observations[0][0] != observations[1][0]
+            assert observations[0][1] != observations[1][1]
+        monkeypatch.setattr(mcp_server, "_client", prior_client)
+
+
+@pytest.mark.asyncio
+async def test_live_search_failure_is_not_reported_as_success(
+    durable_apps, provider_twin
+):
+    apps, _, _, _, _, cleanup_research_ids, _cleanup_clients = durable_apps
+    app = apps[0]
+    objective = "What does the unavailable local source establish?"
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://acceptance"
+    ) as client:
+        created = await client.post(
+            "/experimental/research/v1/runs",
+            headers={"Idempotency-Key": "empty-search"},
+            json={"objective": objective},
+        )
+        assert created.status_code == 202, created.text
+        cleanup_research_ids.append(created.json()["research_id"])
+        status = await _terminal(client, created.json()["status_url"])
+        assert status["state"] == "failed"
+        assert status["error"]["code"] in {"research_run_failed", "outcome_unknown"}
+        assert "result" not in status or status["result"] is None
+        assert any(item["query"] == objective for item in provider_twin.search_requests)
+        assert not provider_twin.capture_requests
+        assert not provider_twin.model_requests

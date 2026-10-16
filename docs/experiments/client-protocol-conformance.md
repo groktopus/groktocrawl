@@ -11,8 +11,15 @@ and cancelled outcomes for cross-client parity checks.
 
 The opt-in `GET /experimental/research/v1/capabilities` adapter now exposes this
 boundary when `FEATURE_EXPERIMENTAL_RESEARCH=true`. A second opt-in gate,
-`FEATURE_EXPERIMENTAL_RESEARCH_RUNS=true`, enables a fixture-backed run/status/cancel/event
-adapter plus exact in-memory artifact and evidence reads. A third opt-in gate,
+`FEATURE_EXPERIMENTAL_RESEARCH_RUNS=true`, enables retained run/status/cancel/event
+and artifact/evidence reads. New fixture admission additionally requires the
+development-only `FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS=true` opt-in;
+leaving it false preserves those reads and recovery without creating new runs.
+For [isolated demo verification and checkpoints](../runbooks/experimental-replacement-candidate.md#verify-and-freeze-the-receipt),
+persist the true setting in the dedicated private candidate env file used by
+all Compose recreations, not just in a one-command shell prefix. After the full
+sequence, reset that file to false and recreate the demo agent. Production
+configuration keeps fixture admission false throughout. A third opt-in gate,
 `FEATURE_EXPERIMENTAL_RESEARCH_DURABLE=true`, wires admission, lease fencing,
 checkpoint identity, terminal status projection and cancellation authority to Valkey.
 The additional `FEATURE_EXPERIMENTAL_RESEARCH_POSTGRES_ARTIFACTS=true` gate requires
@@ -23,7 +30,7 @@ reclaimed run uses a deterministic artifact-set identity, so a PostgreSQL commit
 followed by process loss can be replayed without creating a second artifact set;
 deletion reaches PostgreSQL before the Valkey tombstone. Capabilities report
 `fixture_run_adapter`/`process_local`, `durable_fixture_run_adapter`/`valkey_fenced`,
-or `postgres_artifact_authority_adapter`/`postgres_artifacts_valkey_fenced` accordingly. Session attachment remains
+or `postgres_artifact_authority_fixture_adapter`/`postgres_artifacts_valkey_fenced` accordingly. Session attachment remains
 `attachment_only`; all flags are off by default, and inherited `/v2` routes are unchanged.
 
 The tests cover completed, failed and cancelled terminal outcomes, duplicate replay

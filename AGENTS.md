@@ -50,6 +50,10 @@ Architecture Decision Records (ADRs) live in `docs/adr/` and capture the context
 
 Jobs are processed with `asyncio.create_task()` inside the API process. Valkey persists job records, not execution: interrupted jobs are not resumed after restart, partial artifacts can remain, and undelivered webhooks are not replayed. `TaskTracker` provides only a short graceful-shutdown window. Restart-safe execution is deferred until it is an explicit product requirement; any future design must define ownership, leases, retries, cancellation, artifact consistency, and webhook idempotency in an ADR before selecting queue technology.
 
+### Durable research execution
+
+The separate `/experimental/research/v1` live run path uses server-configured search, acquisition, and model clients when its four existing feature flags are enabled and the explicit development fixture flag is false. PostgreSQL schema16 retains source bytes and audited report sets; Valkey retains scoped admission, owner generations, operation intents/receipts, and terminal projections. Do not replace a failed or unknown external operation with an unrecorded retry. The worker renews ownership; claim, publication, and cancellation serialize on a scoped PostgreSQL advisory lock, and deletion fences late publication. Recovery checks committed PostgreSQL results before invoking any adapter. Legacy `/v2` jobs keep their separate contract. Read [ADR-0070](docs/adr/0070-execute-live-durable-research.md) before changing these boundaries.
+
 ### Three-tier smart scraper
 
 Tier 1: Check `/llms.txt` at the site root (one GET, whole site in markdown)

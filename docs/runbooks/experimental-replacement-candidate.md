@@ -173,6 +173,27 @@ capture-readiness signal.
 
 ## Verify and freeze the receipt
 
+This verifier creates a fictional research run. Use it only on an isolated
+development/demo stack with its dedicated private `$CANDIDATE_ENV`; never edit a
+production environment file for this procedure. In that file, set the existing
+`FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS` entry to `true` (add it if absent).
+Keep it true through the entire verification and every pilot checkpoint below.
+The verifier and checkpoint runner recreate services using `--env-file`, so a
+flag prefixed to only the initial `docker compose up` command does not persist.
+
+Clear any shell override so subsequent commands use that dedicated file:
+
+```sh
+unset FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS
+docker compose --env-file "$CANDIDATE_ENV" -f "$CANDIDATE_COMPOSE" \
+  up -d --no-deps --force-recreate candidate-agent
+```
+
+Keep the flag false for normal operation. Reset the dedicated file to false and
+recreate the demo agent only after the entire verification/checkpoint sequence
+is finished or abandoned, as described below. Existing retained reads remain
+available while fixture admission is disabled.
+
 Load only the candidate API key into the verifier process and write the receipt
 outside the repository first:
 
@@ -211,6 +232,11 @@ can serve research work. The two model probes are therefore readiness gates;
 their receipt records only readiness, HTTP class, and latency.
 
 ## Run a time-gated pilot checkpoint
+
+Keep `FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS=true` in the same dedicated
+private `$CANDIDATE_ENV` for every checkpoint and retry; do not reset it after
+only the initial verifier. Each checkpoint passes this file to later Compose
+recreations and to the fixture verifier.
 
 Use the checkpoint runner for restart checkpoint 0, checkpoint 1, and checkpoint
 2. It reads the tracked
@@ -278,14 +304,32 @@ elapsed, all three checkpoint numbers are present, and the packet total proves
 at least 30 successful operations. A failing report is retained evidence for a
 revise or reject decision; it must not be rewritten into a passing state.
 
+## End isolated fixture verification
+
+After the final checkpoint, or when abandoning the isolated sequence, change
+`FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS` to `false` in the same private
+`$CANDIDATE_ENV`. Then apply that setting only to the demo agent:
+
+```sh
+unset FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS
+docker compose --env-file "$CANDIDATE_ENV" -f "$CANDIDATE_COMPOSE" \
+  up -d --no-deps --force-recreate candidate-agent
+```
+
+Keep the dedicated file false afterward so any later normal Compose recreation
+also disables new fictional runs. Retained artifacts and workspace reads keep
+their existing feature gates. Do not enable fixture admission in production.
+
 ## Stop without destroying evidence
 
 ```sh
 docker compose --env-file "$CANDIDATE_ENV" -f "$CANDIDATE_COMPOSE" stop
 ```
 
-Use `start` followed by the verifier for the restart check. `down` removes
-containers and networks while preserving named volumes. Do not use `down -v`;
+For another fixture restart check, repeat the isolated opt-in and agent
+recreation above before using `start` and the verifier, and reset the dedicated
+file after that sequence. `down` removes containers and networks while
+preserving named volumes. Do not use `down -v`;
 volume removal belongs only to the later, separately reviewed retirement step.
 
 ## Failure boundary

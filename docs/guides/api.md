@@ -80,14 +80,22 @@ GroktoCrawl targets Firecrawl v2 request/response conventions for its compatible
 
 The opt-in research protocol is separate from `/v2/agent` and `/v2/answer`:
 `GET /experimental/research/v1/capabilities` reports enabled capabilities, and
-`POST /experimental/research/v1/runs` starts a bounded run. Run status and events
+`POST /experimental/research/v1/runs` admits only development fixture runs when
+`FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS=true`; it returns 404 by default,
+before storage or execution. This backend uses fictional sources and authored
+judgments, not live web research. Run status and events
 are available under `/runs/{run_id}` and `/runs/{run_id}/events`; audited artifacts,
 evidence, and explicit workspace actions have routes under the same prefix. See the
 [retained research workspace guide](research-workspace.md) for named actions and
 state boundaries.
 
-The protocol uses `FEATURE_EXPERIMENTAL_RESEARCH`; run creation, durable execution,
-and PostgreSQL artifact authority have separate feature flags during rollout. A
+The protocol uses `FEATURE_EXPERIMENTAL_RESEARCH`; run readability, durable execution,
+and PostgreSQL artifact authority have separate feature flags during rollout.
+The additional fixture-admission flag affects only new POST admissions. Leave it
+false in production while preserving the existing flags for retained status,
+artifacts, evidence, workspace access, and recovery of already admitted runs.
+Capabilities distinguish readable runs from `create_available` and always identify
+the fixture execution backend, including with PostgreSQL artifact authority. A
 disabled capability returns 404. PostgreSQL is included in the standard Compose
 deployment; durable operation requires its configured connection and explicit ordered
 schema migrations. Existing inline jobs, sessions, research-memory records, and `/v2/*`

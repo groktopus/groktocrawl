@@ -67,6 +67,7 @@ def review_plan(
                         "snapshot_id": s.snapshot_id,
                         "basis": "historical_snapshot"
                         if claim.temporal_scope == "historical"
+                        and s.retrieved_at is not None
                         else "unknown",
                         "max_age_seconds": 604800,
                         "reason": "Captured document only; publication/effective dates are unknown.",
@@ -80,7 +81,11 @@ def review_plan(
                 json.dumps(
                     {
                         "schema_version": "knowledge-check-input-prototype/1",
-                        "input_id": str(uuid4()),
+                        "input_id": str(
+                            uuid5(
+                                NAMESPACE_URL, f"{context.revision_id}:{kind}:{subject}"
+                            )
+                        ),
                         "check_type": kind,
                         "subject_id": subject,
                         "policy_version": context.policy_version,
@@ -138,10 +143,14 @@ async def render_research(
                 source = next(
                     s for s in context.snapshots if s.snapshot_id == passage.snapshot_id
                 )
-                text += f"{passage.evidence_id}: {source.canonical_url}\n\n{passage.quote}\n\n"
+                text += f"{passage.evidence_id}: {source.canonical_url or 'Original URL unknown; retained source ' + source.snapshot_id}\n\n{passage.quote}\n\n"
         text += (
             "## Sources\n\n"
-            + "\n".join(s.canonical_url for s in context.snapshots)
+            + "\n".join(
+                s.canonical_url
+                or "Original URL unknown; retained source " + s.snapshot_id
+                for s in context.snapshots
+            )
             + "\n"
         )
         identity = str(uuid5(NAMESPACE_URL, f"{artifact_set_id}:{layer}"))
@@ -176,6 +185,9 @@ async def research_from_sources(
     scope_id: str,
     model: str = "local",
     clock: Callable[[], datetime] | None = None,
+    research_id: str | None = None,
+    revision_id: str | None = None,
+    artifact_set_id: str | None = None,
 ) -> JourneyResult:
     """Construct, check and audit a bounded root; no retained publication yet."""
     execution_clock = clock or (lambda: datetime.now(UTC))
@@ -186,6 +198,8 @@ async def research_from_sources(
         scope_id=scope_id,
         model=model,
         clock=execution_clock,
+        research_id=research_id,
+        revision_id=revision_id,
     )
     adapter = ModelReviewAdapter(
         provider="configured-litellm",
@@ -199,7 +213,7 @@ async def research_from_sources(
         version="1",
         configuration_digest=text_digest("knowledge-context-prototype/1"),
     )
-    identity = str(uuid4())
+    identity = artifact_set_id or str(uuid4())
     callbacks = {}
     for source in constructed.sources:
 

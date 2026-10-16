@@ -7,7 +7,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Annotated, Literal
-from uuid import uuid4
+from uuid import NAMESPACE_URL, uuid4, uuid5
 
 from pydantic import Field
 
@@ -76,9 +76,11 @@ class ConstructedContent(StrictRecord):
 
 @dataclass(frozen=True)
 class CapturedSource:
-    url: str
+    url: str | None
     text: str
-    retrieved_at: str
+    retrieved_at: str | None
+    origin_id: str | None = None
+    lineage_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -130,7 +132,7 @@ def _locate(
     return located
 
 
-def _edges(content: ConstructedContent) -> list[dict[str, object]]:
+def _edges(content: ConstructedContent, revision_id: str) -> list[dict[str, object]]:
     edges: list[dict[str, object]] = []
     for index, claim in enumerate(content.claims, 1):
         for kind, selected in (
@@ -140,7 +142,12 @@ def _edges(content: ConstructedContent) -> list[dict[str, object]]:
             for evidence_id in _selected(selected, len(content.evidence), "evidence"):
                 edges.append(
                     {
-                        "relationship_id": str(uuid4()),
+                        "relationship_id": str(
+                            uuid5(
+                                NAMESPACE_URL,
+                                f"{revision_id}:{index}:{kind}:{evidence_id}",
+                            )
+                        ),
                         "kind": kind,
                         "source_id": evidence_id,
                         "target_id": f"claim-{index}",
@@ -160,6 +167,8 @@ async def construct_research(
     scope_id: str,
     model: str = "local",
     clock: Callable[[], datetime] = _utc,
+    research_id: str | None = None,
+    revision_id: str | None = None,
 ) -> ConstructedResearch:
     """One model call, no retries; returned knowledge is NOT verified or publishable."""
     if (
@@ -175,7 +184,8 @@ async def construct_research(
         raise ValueError("construction source budget exceeded")
     if sum(len(s.text.splitlines()) for s in sources) > 10_000:
         raise ValueError("construction source line budget exceeded")
-    research_id, revision_id = str(uuid4()), str(uuid4())
+    research_id = research_id or str(uuid4())
+    revision_id = revision_id or str(uuid4())
     snapshots, resolved = [], []
     for index, source in enumerate(sources, 1):
         identity = f"source-{index}"
@@ -193,8 +203,8 @@ async def construct_research(
             content_bytes=len(source.text.encode()),
             published_at=None,
             effective_at=None,
-            origin_id=None,
-            lineage_id=None,
+            origin_id=source.origin_id,
+            lineage_id=source.lineage_id,
         )
         snapshots.append(snapshot)
         resolved.append(
@@ -259,7 +269,7 @@ async def construct_research(
                     }
                     for index, c in enumerate(content.claims, 1)
                 ],
-                "relationships": _edges(content),
+                "relationships": _edges(content, revision_id),
                 "questions": [
                     {
                         "question_id": "question-root",
