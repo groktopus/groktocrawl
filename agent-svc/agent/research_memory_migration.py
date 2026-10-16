@@ -118,7 +118,7 @@ def run(command: str) -> dict[str, Any]:
         return {"schema_ready": True, "qdrant_changed": False, "valkey_changed": False}
 
     if command == "restore-qdrant":
-        rows = store.snapshot()
+        snapshot_rows = store.snapshot()
         redis = Redis.from_url(redis_url, decode_responses=True)
         restored = 0
         with httpx.Client(timeout=30) as client:
@@ -133,22 +133,26 @@ def run(command: str) -> dict[str, Any]:
             elif collection.status_code >= 400:
                 collection.raise_for_status()
             batch: list[dict[str, Any]] = []
-            for memory_id, row in rows.items():
-                if not redis.exists(f"memory:{memory_id}:data") or row[
+            for memory_id, snapshot_row in snapshot_rows.items():
+                if not redis.exists(f"memory:{memory_id}:data") or snapshot_row[
                     "expires_at"
                 ] <= datetime.now(UTC):
                     continue
                 payload = {
                     "memory_id": memory_id,
-                    "query": row["query"],
-                    "user_id": row["user_id"],
-                    "timestamp": row["created_at"].isoformat(),
-                    "expires_at": row["expires_at"].isoformat(),
+                    "query": snapshot_row["query"],
+                    "user_id": snapshot_row["user_id"],
+                    "timestamp": snapshot_row["created_at"].isoformat(),
+                    "expires_at": snapshot_row["expires_at"].isoformat(),
                 }
-                if row["fingerprint"]:
-                    payload["fingerprint"] = row["fingerprint"]
+                if snapshot_row["fingerprint"]:
+                    payload["fingerprint"] = snapshot_row["fingerprint"]
                 batch.append(
-                    {"id": memory_id, "vector": row["embedding"], "payload": payload}
+                    {
+                        "id": memory_id,
+                        "vector": snapshot_row["embedding"],
+                        "payload": payload,
+                    }
                 )
                 if len(batch) == 100:
                     client.put(
@@ -163,17 +167,17 @@ def run(command: str) -> dict[str, Any]:
                 restored += len(batch)
         return {
             "restored_live_points": restored,
-            "pgvector_rows": len(rows),
+            "pgvector_rows": len(snapshot_rows),
             "qdrant_changed": True,
             "valkey_changed": False,
         }
 
-    rows, skipped = _source_rows(qdrant_url, redis_url)
+    source_rows, skipped = _source_rows(qdrant_url, redis_url)
     if command == "backfill":
-        for row in rows:
-            store.upsert(row)
+        for source_row in source_rows:
+            store.upsert(source_row)
         return {
-            "source_live_points": len(rows),
+            "source_live_points": len(source_rows),
             "expired_or_missing_artifact_skipped": skipped,
             "pgvector_rows": store.count(),
             "qdrant_changed": False,
@@ -188,7 +192,7 @@ def run(command: str) -> dict[str, Any]:
         if row["expires_at"] > now
         and redis.exists(f"memory:{memory_id}:data")
     }
-    source_by_id = {row.memory_id: row for row in rows}
+    source_by_id = {row.memory_id: row for row in source_rows}
     missing = sorted(set(source_by_id) - set(pg_rows))
     extra = sorted(set(pg_rows) - set(source_by_id))
     vector_mismatches: list[str] = []

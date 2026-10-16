@@ -6,6 +6,7 @@ Extracted from app.py per ADR-0037.
 import json
 import logging
 import time
+from functools import partial
 
 import app as app_module
 from app import (
@@ -43,11 +44,25 @@ from retention import (
     _compute_retention_score,
     _evict_if_needed,
 )
-from shadow_pgvector import ShadowRecord
+from shadow_pgvector import PgvectorShadowStore, ShadowRecord
 
 logger = logging.getLogger(__name__)
 
 router_index = APIRouter()
+
+
+def _required_shadow_store() -> PgvectorShadowStore:
+    """Return the configured pgvector store or fail the request closed."""
+    if _shadow_store is None:
+        raise HTTPException(503, "PostgreSQL vector store is unavailable")
+    return _shadow_store
+
+
+def _required_qdrant_client(qdrant):
+    """Narrow the Qdrant client after the pgvector-only branch is excluded."""
+    if qdrant is None:
+        raise HTTPException(503, "Qdrant vector store is unavailable")
+    return qdrant
 
 
 def _write_qdrant_rollback_copy(operation: str, function):
@@ -169,10 +184,12 @@ async def index_page(body: IndexRequest):
         if getattr(SHADOW_CONFIG, "pg_only", False):
             existing_payload = await _run_required_pgvector_operation(
                 "get_payload",
-                lambda: _shadow_store.get_payload(point_id, model=_get_active_model()),
+                lambda: _required_shadow_store().get_payload(
+                    point_id, model=_get_active_model()
+                ),
             )
         else:
-            existing = qdrant.retrieve(
+            existing = _required_qdrant_client(qdrant).retrieve(
                 COLLECTION_NAME, ids=[point_id], with_payload=True, with_vectors=False
             )
             if existing and existing[0].payload:
@@ -222,7 +239,7 @@ async def index_page(body: IndexRequest):
     if not getattr(SHADOW_CONFIG, "pg_only", False):
         _write_qdrant_rollback_copy(
             "upsert",
-            lambda: qdrant.upsert(
+            lambda: _required_qdrant_client(qdrant).upsert(
                 collection_name=COLLECTION_NAME,
                 points=[
                     models.PointStruct(id=point_id, vector=vectors, payload=payload)
@@ -231,7 +248,7 @@ async def index_page(body: IndexRequest):
         )
 
     def shadow_write():
-        return _shadow_store.upsert(
+        return _required_shadow_store().upsert(
             point_id=point_id,
             url=body.url,
             title=body.title,
@@ -248,10 +265,12 @@ async def index_page(body: IndexRequest):
     if getattr(SHADOW_CONFIG, "pg_only", False):
         await _run_required_pgvector_operation(
             "evict",
-            lambda: _shadow_store.evict_to_limit(model=active_nv, max_docs=MAX_DOCS),
+            lambda: _required_shadow_store().evict_to_limit(
+                model=active_nv, max_docs=MAX_DOCS
+            ),
         )
     else:
-        await _evict_if_needed(qdrant)
+        await _evict_if_needed(_required_qdrant_client(qdrant))
 
     return IndexResponse(status="indexed", url_hash=point_id)
 
@@ -317,12 +336,14 @@ async def index_batch(body: IndexBatchRequest):
             if getattr(SHADOW_CONFIG, "pg_only", False):
                 existing_payload = await _run_required_pgvector_operation(
                     "get_payload",
-                    lambda point_id=point_id: _shadow_store.get_payload(
-                        point_id, model=active_nv
+                    partial(
+                        _required_shadow_store().get_payload,
+                        point_id,
+                        model=active_nv,
                     ),
                 )
             else:
-                existing = qdrant.retrieve(
+                existing = _required_qdrant_client(qdrant).retrieve(
                     COLLECTION_NAME,
                     ids=[point_id],
                     with_payload=True,
@@ -382,11 +403,13 @@ async def index_batch(body: IndexBatchRequest):
     if not getattr(SHADOW_CONFIG, "pg_only", False):
         _write_qdrant_rollback_copy(
             "upsert_batch",
-            lambda: qdrant.upsert(collection_name=COLLECTION_NAME, points=points),
+            lambda: _required_qdrant_client(qdrant).upsert(
+                collection_name=COLLECTION_NAME, points=points
+            ),
         )
 
     def shadow_batch_write():
-        return _shadow_store.upsert_many(shadow_records)
+        return _required_shadow_store().upsert_many(shadow_records)
 
     if SHADOW_CONFIG.serving or getattr(SHADOW_CONFIG, "pg_only", False):
         await _run_required_pgvector_operation("upsert_batch", shadow_batch_write)
@@ -401,10 +424,12 @@ async def index_batch(body: IndexBatchRequest):
     if getattr(SHADOW_CONFIG, "pg_only", False):
         await _run_required_pgvector_operation(
             "evict",
-            lambda: _shadow_store.evict_to_limit(model=active_nv, max_docs=MAX_DOCS),
+            lambda: _required_shadow_store().evict_to_limit(
+                model=active_nv, max_docs=MAX_DOCS
+            ),
         )
     else:
-        await _evict_if_needed(qdrant)
+        await _evict_if_needed(_required_qdrant_client(qdrant))
 
     return IndexBatchResponse(status="indexed", count=len(points))
 
@@ -417,15 +442,17 @@ async def delete_index(url_hash: int):
     )
     if SHADOW_CONFIG.serving or getattr(SHADOW_CONFIG, "pg_only", False):
         await _run_required_pgvector_operation(
-            "delete", lambda: _shadow_store.delete(url_hash)
+            "delete", lambda: _required_shadow_store().delete(url_hash)
         )
     if not getattr(SHADOW_CONFIG, "pg_only", False):
-        qdrant.delete(
+        _required_qdrant_client(qdrant).delete(
             COLLECTION_NAME,
             points_selector=models.PointIdsList(points=[url_hash]),
         )
     if not SHADOW_CONFIG.serving and not getattr(SHADOW_CONFIG, "pg_only", False):
-        _schedule_shadow_operation("delete", lambda: _shadow_store.delete(url_hash))
+        _schedule_shadow_operation(
+            "delete", lambda: _required_shadow_store().delete(url_hash)
+        )
     return {"status": "deleted"}
 
 
@@ -434,7 +461,7 @@ async def index_stats():
     """Return index size and configuration."""
     if SHADOW_CONFIG.serving or getattr(SHADOW_CONFIG, "pg_only", False):
         count = await _run_required_pgvector_operation(
-            "count", lambda: _shadow_store.count(model=_get_active_model())
+            "count", lambda: _required_shadow_store().count(model=_get_active_model())
         )
     else:
         qdrant = await _ensure_qdrant()
@@ -450,7 +477,7 @@ async def index_model():
     """Return current embedding model config and migration state."""
     if SHADOW_CONFIG.serving or getattr(SHADOW_CONFIG, "pg_only", False):
         count = await _run_required_pgvector_operation(
-            "count", lambda: _shadow_store.count(model=_get_active_model())
+            "count", lambda: _required_shadow_store().count(model=_get_active_model())
         )
     else:
         qdrant = await _ensure_qdrant()

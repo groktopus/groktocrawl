@@ -228,7 +228,7 @@ def main() -> int:
         if args.prune_stale and command != "restore-qdrant":
             parser.error("--prune-stale is only valid with restore-qdrant")
         if command == "restore-qdrant":
-            result = restore_qdrant_from_pgvector(
+            restore_result = restore_qdrant_from_pgvector(
                 qdrant,
                 shadow,
                 collection=collection,
@@ -236,17 +236,17 @@ def main() -> int:
                 batch_size=batch_size,
                 prune_stale=args.prune_stale,
             )
-            sys.stdout.write(json.dumps(result, sort_keys=True) + "\n")
-            return 0 if result["parity"] else 1
-        result = reconcile_shadow(
+            sys.stdout.write(json.dumps(restore_result, sort_keys=True) + "\n")
+            return 0 if restore_result["parity"] else 1
+        shadow_result = reconcile_shadow(
             qdrant,
             shadow,
             collection=collection,
             model=model,
             batch_size=batch_size,
         )
-        sys.stdout.write(json.dumps(asdict(result), sort_keys=True) + "\n")
-        return 0 if result.parity else 1
+        sys.stdout.write(json.dumps(asdict(shadow_result), sort_keys=True) + "\n")
+        return 0 if shadow_result.parity else 1
     finally:
         qdrant.close()
         shadow.close()

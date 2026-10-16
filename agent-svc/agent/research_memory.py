@@ -819,16 +819,16 @@ class ResearchMemory:
         if self.vector_mode == "pgvector":
             try:
                 assert self._pgvector is not None
-                offset = 0
+                pg_offset = 0
                 ids: list[str] = []
                 while True:
                     page = await asyncio.to_thread(
-                        self._pgvector.list_ids, limit=1000, offset=offset
+                        self._pgvector.list_ids, limit=1000, offset=pg_offset
                     )
                     ids.extend(page)
                     if len(page) < 1000:
                         break
-                    offset += len(page)
+                    pg_offset += len(page)
                 for memory_id in ids:
                     if not self.redis.exists(f"memory:{memory_id}:data"):
                         removed += int(
