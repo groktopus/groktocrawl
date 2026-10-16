@@ -142,7 +142,9 @@ def _check_boilerplate(markdown: str) -> tuple[float, str]:
         return 0.3, "fail"
 
 
-def _check_completeness(markdown: str, title: str = "") -> tuple[float, str]:
+def _check_completeness(
+    markdown: str, title: str = "", html: str = ""
+) -> tuple[float, str]:
     """Check whether extracted content meets minimum completeness thresholds.
 
     Args:
@@ -154,6 +156,9 @@ def _check_completeness(markdown: str, title: str = "") -> tuple[float, str]:
     """
     if not markdown or not markdown.strip():
         return 0.0, "fail"
+
+    if _missing_repeated_content_blocks(markdown, html):
+        return 0.1, "fail"
 
     content = markdown.strip()
     content_len = len(content)
@@ -181,6 +186,117 @@ def _check_completeness(markdown: str, title: str = "") -> tuple[float, str]:
         return 0.85, "pass"
     else:
         return 0.6, "warn"
+
+
+_REPEATED_BLOCK_TAGS = {"article", "div", "li", "section"}
+_REPEATED_BLOCK_CHROME = {
+    "ad",
+    "ads",
+    "advert",
+    "advertisement",
+    "breadcrumb",
+    "footer",
+    "header",
+    "menu",
+    "nav",
+    "navigation",
+    "promo",
+    "promotion",
+    "related",
+    "recommendation",
+    "sidebar",
+    "sponsor",
+    "sponsored",
+}
+
+
+def _missing_repeated_content_blocks(markdown: str, html: str) -> list[str]:
+    """Find substantial repeated sibling blocks omitted from extracted text.
+
+    Readability can drop individual records from a card or result list while
+    returning enough text to pass length-based completeness checks. This
+    signal is deliberately limited to repeated, text-heavy siblings that
+    account for at least half of the non-script body text. Navigation, page
+    chrome, sidebars, and advertising containers are excluded.
+    """
+    if not markdown or not html:
+        return []
+
+    try:
+        from bs4 import BeautifulSoup
+
+        soup = BeautifulSoup(html, "html.parser")
+    except Exception:
+        return []
+
+    def excluded(element) -> bool:
+        for ancestor in [element, *element.parents]:
+            if getattr(ancestor, "name", None) in {
+                "aside",
+                "footer",
+                "header",
+                "nav",
+                "script",
+                "style",
+            }:
+                return True
+            tokens = {str(token).lower() for token in (ancestor.get("class") or [])}
+            if tokens & _REPEATED_BLOCK_CHROME or any(
+                token.startswith(
+                    (
+                        "ad-",
+                        "ad_",
+                        "advert",
+                        "promo",
+                        "related",
+                        "sidebar",
+                        "sponsor",
+                    )
+                )
+                for token in tokens
+            ):
+                return True
+        return False
+
+    groups: dict[tuple[int, str, tuple[str, ...]], list[str]] = {}
+    for parent in soup.find_all(True):
+        for child in parent.find_all(recursive=False):
+            if child.name not in _REPEATED_BLOCK_TAGS or not child.get("class"):
+                continue
+            if excluded(child):
+                continue
+            classes = tuple(sorted(str(token).lower() for token in child["class"]))
+            text = re.sub(r"\s+", " ", child.get_text(" ", strip=True)).strip()
+            if len(text) < 60:
+                continue
+            key = (id(parent), child.name, classes)
+            groups.setdefault(key, []).append(text)
+
+    if not groups:
+        return []
+
+    body = soup.body or soup
+    for tag in body(["script", "style"]):
+        tag.decompose()
+    body_text = re.sub(r"\s+", " ", body.get_text(" ", strip=True)).strip()
+    body_size = len(body_text)
+    markdown_without_link_targets = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", markdown)
+    markdown_text = re.sub(r"\s+", "", markdown_without_link_targets).casefold()
+
+    relevant_groups = [
+        texts
+        for texts in groups.values()
+        if len(texts) >= 4 and sum(map(len, texts)) >= 0.5 * body_size
+    ]
+    if not relevant_groups:
+        return []
+
+    texts = max(relevant_groups, key=lambda group: sum(map(len, group)))
+    return [
+        text
+        for text in texts
+        if re.sub(r"\s+", "", text).casefold() not in markdown_text
+    ]
 
 
 def _check_block_page(
@@ -303,7 +419,7 @@ def assess_quality(
         }
     """
     boilerplate_score, boilerplate_status = _check_boilerplate(markdown)
-    completeness_score, completeness_status = _check_completeness(markdown, title)
+    completeness_score, completeness_status = _check_completeness(markdown, title, html)
     block_score, block_status = _check_block_page(
         markdown, url, captcha_resolved=captcha_resolved
     )
