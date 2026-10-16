@@ -1048,7 +1048,7 @@ jobs:
           docker cp "$svc:/app/coverage/." coverage/ || true
           exit "$pytest_status"
         # Keep five minutes for coverage/QA report collection after the full suite.
-        timeout-minutes: 25
+        timeout-minutes: 30
 
       - name: Run mcp-svc integration tests (Host-header / transport security)
         run: |
