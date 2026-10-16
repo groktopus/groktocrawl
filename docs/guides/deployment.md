@@ -4,7 +4,19 @@
 
 `docker compose up -d` starts the production service graph. `docker compose --profile fixture up --build -d` additionally starts `llm-svc`, `test-site`, `tier3-fixture`, `slopsearx-fixture`, and `agent-svc-fixture` for local evaluation. Semantic indexing is optional and best-effort on constrained hosts; before first enabling it, create the external model-cache volume with `docker volume create hf-cache`, then start `semantic-svc` and Qdrant with `docker compose --profile indexing up -d`. Without that profile, ordinary scrape and keyword/deep search continue, while vector and hybrid-vector retrieval, semantic/hybrid reranking, `/v2/find-similar`, and semantic-backed research-memory indexing are unavailable. The main public ports are agent API `8080`, fixture agent API `8084` when the fixture profile is enabled, portal `8082`, scraper `8001`, semantic service `8003` when indexing is enabled, SlopSearX `8081`, GroktoCrawl MCP `8002`, and direct SlopSearX MCP `8007` when the `mcp` profile is enabled.
 
-`agent-svc` coordinates requests; `scraper-svc` fetches content; optional `semantic-svc` uses Qdrant; Valkey stores operational state; SlopSearX discovers web results; `browser-svc`, `parse-svc`, `portal-svc`, `mcp-svc`, `slopsearx-mcp`, and Ofelia provide specialized capabilities. `mcp-svc` exposes GroktoCrawl API tools; the opt-in `slopsearx-mcp` companion exposes direct SlopSearX search-engine tools when the `mcp` profile is enabled. The [architecture guide](../architecture.md) describes ownership and data flow.
+`agent-svc` coordinates requests; `scraper-svc` fetches content; optional `semantic-svc` uses Qdrant by default; Valkey stores operational state; SlopSearX discovers web results; `browser-svc`, `parse-svc`, `portal-svc`, `mcp-svc`, `slopsearx-mcp`, and Ofelia provide specialized capabilities. `mcp-svc` exposes GroktoCrawl API tools; the opt-in `slopsearx-mcp` companion exposes direct SlopSearX search-engine tools when the `mcp` profile is enabled. The [architecture guide](../architecture.md) describes ownership and data flow.
+
+Research memory stores full artifacts in Valkey and defaults to Qdrant vectors.
+After starting the `durable-research` profile and following the
+[research-memory pgvector runbook](../runbooks/research-memory-pgvector.md),
+operators may select PostgreSQL shadow or PostgreSQL-only vector mode. This is
+separate from semantic page-index `VECTOR_STORE_MODE`; `pgvector_only` removes
+Qdrant from that service's readiness and request path, while the existing
+`pgvector` mode retains Qdrant writes for immediate rollback. For a
+PostgreSQL-only semantic service, set `VECTOR_STORE_MODE=pgvector_only` and use
+the dedicated `pgvector-only` Compose profile without `indexing` or
+`durable-research`; Qdrant is not started by that profile. Existing Qdrant
+containers and data remain available for rollback.
 
 The published GroktoCrawl service images support both `linux/amd64` and
 `linux/arm64`, so arm64 hosts such as Apple Silicon Macs do not need to run

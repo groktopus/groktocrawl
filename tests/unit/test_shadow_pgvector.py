@@ -42,6 +42,17 @@ def test_pgvector_mode_is_enabled_for_serving(monkeypatch):
     assert config.serving is True
 
 
+def test_pgvector_only_mode_is_enabled_without_rollback_requirement(monkeypatch):
+    monkeypatch.setenv("VECTOR_STORE_MODE", "pgvector_only")
+    monkeypatch.setenv("PGVECTOR_SHADOW_DSN", "postgresql://isolated")
+
+    config = shadow.ShadowConfig.from_env()
+
+    assert config.enabled is True
+    assert config.serving is False
+    assert config.pg_only is True
+
+
 def test_shadow_sample_rate_is_bounded(monkeypatch):
     monkeypatch.setenv("VECTOR_STORE_MODE", "shadow_pgvector")
     monkeypatch.setenv("PGVECTOR_SHADOW_DSN", "postgresql://shadow")

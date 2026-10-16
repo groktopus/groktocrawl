@@ -10,6 +10,7 @@ from app import (
     COLLECTION_NAME,
     EMBED_DIM,
     EMBED_MODEL_NAME,
+    SHADOW_CONFIG,
     _ensure_qdrant,
     _migration,
     _named_vector_name,
@@ -166,6 +167,12 @@ async def migrate_start(body: MigrationStartRequest):
     active model until cutover.
     """
 
+    if getattr(SHADOW_CONFIG, "pg_only", False):
+        raise HTTPException(
+            409,
+            "Embedding-model migration requires Qdrant; switch to qdrant or pgvector rollback mode first.",
+        )
+
     if _migration["status"] != "idle":
         raise HTTPException(
             409, f"Migration already in progress: {_migration['status']}"
@@ -247,6 +254,12 @@ async def migrate_cutover():
     named vector. On container restart, reverts to ACTIVE_EMBED_MODEL
     env var. For permanent cutover, update the env var and restart.
     """
+
+    if getattr(SHADOW_CONFIG, "pg_only", False):
+        raise HTTPException(
+            409,
+            "Embedding-model migration requires Qdrant; switch to qdrant or pgvector rollback mode first.",
+        )
 
     if _migration["status"] not in ("dual_write", "backfilling"):
         raise HTTPException(

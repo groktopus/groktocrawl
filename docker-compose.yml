@@ -14,6 +14,7 @@ services:
     restart: unless-stopped
     profiles:
       - durable-research
+      - pgvector-only
     environment:
       POSTGRES_DB: groktocrawl
       POSTGRES_USER: groktocrawl
@@ -237,6 +238,7 @@ services:
     profiles:
       - indexing
       - durable-research
+      - pgvector-only
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
@@ -285,6 +287,7 @@ services:
     depends_on:
       qdrant:
         condition: service_healthy
+        required: false
       research-postgres:
         condition: service_healthy
         required: false
@@ -301,6 +304,7 @@ services:
     restart: unless-stopped
     profiles:
       - indexing
+      - durable-research
     mem_limit: 4g
     volumes:
       - qdrant_data:/qdrant/storage
@@ -357,6 +361,8 @@ services:
         required: false
     environment:
       - DURABLE_RESEARCH_POSTGRES_DSN=${DURABLE_RESEARCH_POSTGRES_DSN:-postgresql://groktocrawl@research-postgres:5432/groktocrawl}
+      - RESEARCH_MEMORY_VECTOR_MODE=${RESEARCH_MEMORY_VECTOR_MODE:-qdrant}
+      - RESEARCH_MEMORY_PGVECTOR_DSN=${RESEARCH_MEMORY_PGVECTOR_DSN:-postgresql://groktocrawl@research-postgres:5432/groktocrawl}
       - DURABLE_RESEARCH_REDIS_URL=${DURABLE_RESEARCH_REDIS_URL:-redis://valkey:6379/2}
       - PGPASSFILE=/tmp/postgres.pgpass
       - FEATURE_EXPERIMENTAL_RESEARCH=${FEATURE_EXPERIMENTAL_RESEARCH:-false}

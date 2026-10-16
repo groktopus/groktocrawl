@@ -4,6 +4,8 @@ GroktoCrawl is a self-hosted, MIT-licensed web data platform compatible with the
 
 It is designed as a local-first, observable, model-flexible foundation for organizations that want agentic research and web intelligence without surrendering control of their data, infrastructure, or model choices.
 
+Research memory keeps full artifacts in Valkey and defaults to Qdrant for vector lookup. Deployments can explicitly mirror that index to PostgreSQL/pgvector and migrate it with the [research-memory storage runbook](docs/runbooks/research-memory-pgvector.md); the separate semantic page index also has a PostgreSQL-only mode after its own backfill. These modes are opt-in and do not change existing storage configuration by default.
+
 ## Start here
 
 Choose your path. Both run the same Docker stack defined in `docker-compose.yml`; they differ in which services and credentials you configure.

@@ -186,6 +186,35 @@ class TestHealthReadiness:
         assert recovered.status_code == 200
         assert json.loads(recovered.body)["pgvector"] == "ready"
 
+    @pytest.mark.asyncio
+    async def test_pgvector_only_readiness_does_not_probe_qdrant(self, monkeypatch):
+        import json
+        from types import SimpleNamespace
+
+        import app
+
+        monkeypatch.setattr(app, "_models_ready", True)
+        monkeypatch.setattr(
+            app, "SHADOW_CONFIG", SimpleNamespace(pg_only=True, serving=False)
+        )
+        monkeypatch.setattr(app, "_is_pgvector_ready", lambda: True)
+        monkeypatch.setattr(
+            app,
+            "_is_qdrant_ready",
+            lambda: (_ for _ in ()).throw(AssertionError("Qdrant probe")),
+        )
+
+        response = await app.readiness()
+
+        assert response.status_code == 200
+        assert json.loads(response.body) == {
+            "status": "ok",
+            "models": "loaded",
+            "vector_store": "pgvector",
+            "pgvector": "ready",
+            "qdrant": "not_required",
+        }
+
 
 # ── Tests: _url_hash ──────────────────────────────────────────────
 
@@ -824,6 +853,38 @@ class TestMigrationStates:
         _set_active_override(None)
         assert _get_active_model() == original
 
+    @pytest.mark.asyncio
+    async def test_model_migration_is_rejected_in_pgvector_only_mode(self, monkeypatch):
+        from types import SimpleNamespace
+
+        import router_migration
+        from fastapi import HTTPException
+        from models import MigrationStartRequest
+
+        monkeypatch.setattr(
+            router_migration, "SHADOW_CONFIG", SimpleNamespace(pg_only=True)
+        )
+
+        async def unexpected_qdrant_access():
+            raise AssertionError("pgvector-only mode must not contact Qdrant")
+
+        monkeypatch.setattr(router_migration, "_ensure_qdrant", unexpected_qdrant_access)
+        with pytest.raises(HTTPException) as exc_info:
+            await router_migration.migrate_start(
+                MigrationStartRequest(target_model="BAAI/bge-m4", target_dim=1024)
+            )
+        assert exc_info.value.status_code == 409
+
+        from app import _migration
+
+        _migration.update(status="dual_write", target_model="BAAI/bge-m4")
+        try:
+            with pytest.raises(HTTPException) as exc_info:
+                await router_migration.migrate_cutover()
+            assert exc_info.value.status_code == 409
+        finally:
+            _migration.update(status="idle", target_model="")
+
 
 # ── Tests: verify_api_key ──────────────────────────────────────────
 
@@ -1298,3 +1359,61 @@ class TestPgvectorShadowIndexWiring:
         assert exc_info.value.detail == (
             "Qdrant rollback store is unavailable — please retry"
         )
+
+    @pytest.mark.asyncio
+    async def test_pgvector_only_index_avoids_qdrant_for_write_and_eviction(
+        self, monkeypatch
+    ):
+        from types import SimpleNamespace
+
+        import app as app_module
+        import numpy as np
+        import router_index
+        from models import IndexRequest
+
+        events = []
+
+        class _Model:
+            def encode(self, text, **kwargs):
+                return np.array([0.1, 0.2, 0.3])
+
+        class _Pgvector:
+            def get_payload(self, point_id, *, model):
+                return None
+
+            def upsert(self, **kwargs):
+                events.append("pgvector_upsert")
+
+            def evict_to_limit(self, **kwargs):
+                events.append("pgvector_evict")
+
+        async def _required(operation, function):
+            events.append(operation)
+            return function()
+
+        monkeypatch.setattr(app_module, "_models_ready", True)
+        monkeypatch.setattr(
+            router_index, "SHADOW_CONFIG", SimpleNamespace(pg_only=True, serving=False)
+        )
+        monkeypatch.setattr(
+            router_index,
+            "_ensure_qdrant",
+            lambda: pytest.fail("pgvector-only index contacted Qdrant"),
+        )
+        monkeypatch.setattr(router_index, "_get_embed_model", lambda: _Model())
+        monkeypatch.setattr(router_index, "_get_active_model", lambda: "v_bge-m3")
+        monkeypatch.setattr(router_index, "_shadow_store", _Pgvector())
+        monkeypatch.setattr(router_index, "_run_required_pgvector_operation", _required)
+
+        response = await router_index.index_page(
+            IndexRequest(url="https://example.com", title="Example", content="body")
+        )
+
+        assert response.status == "indexed"
+        assert events == [
+            "get_payload",
+            "upsert",
+            "pgvector_upsert",
+            "evict",
+            "pgvector_evict",
+        ]

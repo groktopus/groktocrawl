@@ -33,6 +33,8 @@ from redis import Redis
 from common.metrics import METRICS
 from common.stage_metrics import inc_counter, observe_elapsed, set_gauge
 
+from .research_memory_pgvector import MemoryVector, PgvectorResearchMemoryStore
+
 logger = logging.getLogger(__name__)
 
 _MEMORY_LOOKUP_SECONDS = "groktocrawl_research_memory_lookup_seconds"
@@ -51,7 +53,7 @@ DEFAULT_SWEEP_INTERVAL_SECONDS: float = 300.0
 _MEMORY_SWEEP_RUNS = "groktocrawl_research_memory_sweep_runs_total"
 _MEMORY_SWEEP_RUNS_HELP = "Research memory sweep invocations"
 _MEMORY_ORPHANS_SWEPT = "groktocrawl_research_memory_orphans_swept_total"
-_MEMORY_ORPHANS_SWEPT_HELP = "Orphaned Qdrant points removed by research memory sweep"
+_MEMORY_ORPHANS_SWEPT_HELP = "Orphaned vector rows removed by research memory sweep"
 _MEMORY_ORPHANS_GAUGE = "groktocrawl_research_memory_orphans"
 _MEMORY_ORPHANS_GAUGE_HELP = "Orphaned Qdrant points removed in the most recent sweep"
 
@@ -209,7 +211,7 @@ async def run_research_memory_sweep_loop(
     interval: float,
     shutdown_event: asyncio.Event,
 ) -> None:
-    """Periodically sweep dangling Qdrant references until shutdown.
+    """Periodically sweep dangling research-memory vector references until shutdown.
 
     Runs as a tracked background task; the first sweep happens after one
     ``interval`` and each iteration checks the shutdown event so the task
@@ -274,6 +276,25 @@ class ResearchMemory:
         self.threshold = threshold
         self.ttl = _get_ttl()
         self.max_artifact_bytes = _get_max_artifact_bytes()
+        self.vector_mode = (
+            os.getenv("RESEARCH_MEMORY_VECTOR_MODE", "qdrant").strip().lower()
+        )
+        if self.vector_mode not in {"qdrant", "shadow_pgvector", "pgvector"}:
+            raise ValueError(
+                "RESEARCH_MEMORY_VECTOR_MODE must be qdrant, shadow_pgvector, or pgvector"
+            )
+        pg_dsn = os.getenv("RESEARCH_MEMORY_PGVECTOR_DSN", "").strip()
+        if self.vector_mode in {"shadow_pgvector", "pgvector"} and not pg_dsn:
+            pg_dsn = os.getenv("DURABLE_RESEARCH_POSTGRES_DSN", "").strip()
+        if self.vector_mode in {"shadow_pgvector", "pgvector"} and not pg_dsn:
+            raise ValueError(
+                "RESEARCH_MEMORY_PGVECTOR_DSN is required for pgvector modes"
+            )
+        self._pgvector = (
+            PgvectorResearchMemoryStore(pg_dsn)
+            if self.vector_mode in {"shadow_pgvector", "pgvector"}
+            else None
+        )
         self._qdrant_client: httpx.AsyncClient | None = None
         self._semantic_client: httpx.AsyncClient | None = None
         self._refresh_tasks: dict[str, asyncio.Task[Any]] = {}
@@ -380,8 +401,8 @@ class ResearchMemory:
     ) -> dict[str, Any]:
         """Search for a semantically similar cached artifact.
 
-        Embeds *prompt* via semantic-svc, searches the Qdrant
-        ``research_memory`` collection, fetches matching artifacts from
+        Embeds *prompt* via semantic-svc, searches the configured vector
+        backend for ``research_memory`` records, fetches matching artifacts from
         Valkey, and returns the best match above the similarity
         threshold.
 
@@ -419,32 +440,46 @@ class ResearchMemory:
                 )
                 return {"hit": False}
 
-            try:
-                await self._ensure_collection()
-
-                qdrant = await self._get_qdrant()
-                search_payload: dict[str, Any] = {
-                    "vector": embedding,
-                    "limit": 5,
-                    "with_payload": True,
-                }
-                if user_id:
-                    search_payload["filter"] = {
-                        "must": [{"key": "user_id", "match": {"value": user_id}}]
+            if self.vector_mode == "pgvector":
+                try:
+                    assert self._pgvector is not None
+                    results = await asyncio.to_thread(
+                        self._pgvector.search, embedding, user_id=user_id, limit=5
+                    )
+                    results = [
+                        {"score": row["score"], "payload": row} for row in results
+                    ]
+                except Exception:
+                    outcome = "error"
+                    logger.warning(
+                        "pgvector search failed for research memory", exc_info=True
+                    )
+                    return {"hit": False}
+            else:
+                try:
+                    await self._ensure_collection()
+                    qdrant = await self._get_qdrant()
+                    search_payload: dict[str, Any] = {
+                        "vector": embedding,
+                        "limit": 5,
+                        "with_payload": True,
                     }
-
-                resp = await qdrant.post(
-                    f"{self._qdrant_url}/collections/{QDRANT_COLLECTION}/points/search",
-                    json=search_payload,
-                )
-                resp.raise_for_status()
-                results = resp.json().get("result", [])
-            except Exception:
-                outcome = "error"
-                logger.warning(
-                    "Qdrant search failed for research memory", exc_info=True
-                )
-                return {"hit": False}
+                    if user_id:
+                        search_payload["filter"] = {
+                            "must": [{"key": "user_id", "match": {"value": user_id}}]
+                        }
+                    resp = await qdrant.post(
+                        f"{self._qdrant_url}/collections/{QDRANT_COLLECTION}/points/search",
+                        json=search_payload,
+                    )
+                    resp.raise_for_status()
+                    results = resp.json().get("result", [])
+                except Exception:
+                    outcome = "error"
+                    logger.warning(
+                        "Qdrant search failed for research memory", exc_info=True
+                    )
+                    return {"hit": False}
 
             if not results:
                 return {"hit": False}
@@ -624,12 +659,9 @@ class ResearchMemory:
         self.redis.set(data_key, json.dumps(entry), ex=self.ttl)
         self.redis.sadd("memory:index", memory_id)
 
-        # Embed and store in Qdrant
+        # Embed and store in the configured vector backend.
         try:
             embedding = await self._embed(prompt)
-            await self._ensure_collection()
-
-            qdrant = await self._get_qdrant()
             point_payload: dict[str, Any] = {
                 "query": prompt,
                 "memory_id": memory_id,
@@ -639,34 +671,54 @@ class ResearchMemory:
             }
             if fingerprint:
                 point_payload["fingerprint"] = fingerprint
-            point = {
-                "id": memory_id,
-                "vector": embedding,
-                "payload": point_payload,
-            }
-            resp = await qdrant.put(
-                f"{self._qdrant_url}/collections/{QDRANT_COLLECTION}/points",
-                json={"points": [point]},
+            if self.vector_mode in {"shadow_pgvector", "pgvector"}:
+                assert self._pgvector is not None
+                try:
+                    await asyncio.to_thread(self._pgvector.ensure_schema)
+                    await asyncio.to_thread(
+                        self._pgvector.upsert,
+                        MemoryVector(
+                            memory_id=memory_id,
+                            query=prompt,
+                            user_id=user_id,
+                            fingerprint=fingerprint,
+                            created_at=now,
+                            expires_at=expires_at,
+                            embedding=embedding,
+                        ),
+                    )
+                except Exception:
+                    if self.vector_mode == "pgvector":
+                        raise
+                    logger.warning(
+                        "pgvector mirror upsert failed for memory_id=%s",
+                        memory_id,
+                        exc_info=True,
+                    )
+            if self.vector_mode != "pgvector":
+                await self._ensure_collection()
+                qdrant = await self._get_qdrant()
+                point = {"id": memory_id, "vector": embedding, "payload": point_payload}
+                resp = await qdrant.put(
+                    f"{self._qdrant_url}/collections/{QDRANT_COLLECTION}/points",
+                    json={"points": [point]},
+                )
+                if resp.status_code not in (200, 201):
+                    raise RuntimeError(f"Qdrant upsert returned {resp.status_code}")
+            logger.info(
+                "Stored research memory %s (emb_dim=%d, sources=%d, artifact_chars=%d)",
+                memory_id,
+                len(embedding),
+                len(sources),
+                len(artifact),
             )
-            if resp.status_code not in (200, 201):
-                logger.warning(
-                    "Qdrant upsert returned %d for memory_id=%s: %s",
-                    resp.status_code,
-                    memory_id,
-                    resp.text,
-                )
-            else:
-                logger.info(
-                    "Stored research memory %s (emb_dim=%d, sources=%d, "
-                    "artifact_chars=%d)",
-                    memory_id,
-                    len(embedding),
-                    len(sources),
-                    len(artifact),
-                )
         except Exception:
+            if self.vector_mode == "pgvector":
+                self.redis.delete(data_key)
+                self.redis.srem("memory:index", memory_id)
+                raise
             logger.warning(
-                "Failed to store Qdrant point for memory_id=%s "
+                "Failed to store research-memory vector for memory_id=%s "
                 "(artifact stored in Valkey)",
                 memory_id,
                 exc_info=True,
@@ -692,7 +744,7 @@ class ResearchMemory:
             return None
 
     async def delete(self, memory_id: str) -> bool:
-        """Delete from both Valkey **and** Qdrant atomically.
+        """Delete a memory artifact and its configured vector projection.
 
         Args:
             memory_id: The artifact ID to delete.
@@ -701,10 +753,26 @@ class ResearchMemory:
             ``True`` if the Valkey key existed and was deleted.
         """
         data_key = f"memory:{memory_id}:data"
+        if self.vector_mode == "pgvector":
+            assert self._pgvector is not None
+            # Keep the artifact when the authoritative index cannot accept the
+            # delete so the caller can retry without losing data.
+            await asyncio.to_thread(self._pgvector.delete, memory_id)
+            existed = self.redis.delete(data_key) > 0
+            self.redis.srem("memory:index", memory_id)
+            return existed
         existed = self.redis.delete(data_key) > 0
         self.redis.srem("memory:index", memory_id)
 
-        # Remove Qdrant point (best-effort)
+        # Remove configured vector row(s); Qdrant remains best-effort in the
+        # legacy and shadow modes, but is never contacted in PG-only mode.
+        if self.vector_mode == "shadow_pgvector" and self._pgvector:
+            try:
+                await asyncio.to_thread(self._pgvector.delete, memory_id)
+            except Exception:
+                logger.warning(
+                    "pgvector delete failed for memory_id=%s", memory_id, exc_info=True
+                )
         try:
             qdrant = await self._get_qdrant()
             resp = await qdrant.post(
@@ -737,16 +805,41 @@ class ResearchMemory:
         return existed
 
     async def sweep(self) -> int:
-        """Remove Qdrant points whose Valkey keys have expired.
+        """Remove vector rows whose Valkey keys have expired.
 
-        Scrolls through all points in the ``research_memory`` Qdrant
-        collection and deletes those with no corresponding
+        In Qdrant mode, scrolls points in the ``research_memory`` collection;
+        in pgvector mode, scans the PostgreSQL projection. Deletes rows with no corresponding
         ``memory:{id}:data`` Valkey key.
 
         Returns:
-            Number of Qdrant points removed.
+            Number of vector rows removed.
         """
         removed = 0
+
+        if self.vector_mode == "pgvector":
+            try:
+                assert self._pgvector is not None
+                offset = 0
+                ids: list[str] = []
+                while True:
+                    page = await asyncio.to_thread(
+                        self._pgvector.list_ids, limit=1000, offset=offset
+                    )
+                    ids.extend(page)
+                    if len(page) < 1000:
+                        break
+                    offset += len(page)
+                for memory_id in ids:
+                    if not self.redis.exists(f"memory:{memory_id}:data"):
+                        removed += int(
+                            await asyncio.to_thread(self._pgvector.delete, memory_id)
+                        )
+                removed += await asyncio.to_thread(self._pgvector.delete_expired)
+            except Exception:
+                logger.warning("pgvector research memory sweep failed", exc_info=True)
+            finally:
+                _record_sweep_metrics(removed)
+            return removed
 
         try:
             qdrant = await self._get_qdrant()

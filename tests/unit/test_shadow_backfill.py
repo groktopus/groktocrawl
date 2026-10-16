@@ -9,7 +9,8 @@ import pytest
 SEMANTIC_SVC = Path(__file__).parents[2] / "semantic-svc"
 sys.path.insert(0, str(SEMANTIC_SVC))
 
-from shadow_backfill import reconcile_shadow
+from shadow_backfill import reconcile_shadow, restore_qdrant_from_pgvector
+from shadow_pgvector import ShadowRecord
 
 
 def _point(point_id, vector, *, url="https://example.com"):
@@ -115,3 +116,93 @@ def test_reconcile_rejects_nonpositive_batch_size():
             model="v_bge-m3",
             batch_size=0,
         )
+
+
+def test_restore_qdrant_reconciles_active_postgres_projection():
+    class _Qdrant:
+        def __init__(self):
+            self.ids = {1, 9}
+            self.deleted = []
+            self.upserts = []
+
+        def scroll(self, **kwargs):
+            return ([SimpleNamespace(id=point_id) for point_id in sorted(self.ids)], None)
+
+        def delete(self, **kwargs):
+            points = kwargs["points_selector"]
+            self.deleted.append(points)
+            self.ids.difference_update(points)
+
+        def upsert(self, **kwargs):
+            self.upserts.extend(kwargs["points"])
+            self.ids.update(int(point.id) for point in kwargs["points"])
+
+    class _Store:
+        def active_ids(self, *, model):
+            return {1, 2}
+
+        def records(self, *, model, limit, offset):
+            if offset:
+                return []
+            return [
+                ShadowRecord(
+                    1, "https://one", "One", [0.1, 0.2], model, {"url": "https://one"}
+                ),
+                ShadowRecord(
+                    2, "https://two", "Two", [0.3, 0.4], model, {"url": "https://two"}
+                ),
+            ]
+
+    qdrant = _Qdrant()
+    result = restore_qdrant_from_pgvector(
+        qdrant,
+        _Store(),
+        collection="pages",
+        model="v_bge-m3",
+        batch_size=10,
+        prune_stale=True,
+    )
+
+    assert qdrant.deleted == [[9]]
+    assert len(qdrant.upserts) == 2
+    assert qdrant.upserts[0].vector == {"v_bge-m3": [0.1, 0.2]}
+    assert result["parity"] is True
+    assert result["qdrant_missing_ids"] == result["qdrant_extra_ids"] == 0
+
+
+def test_restore_qdrant_preserves_stale_points_without_explicit_prune():
+    class _Qdrant:
+        ids = {1, 9}
+
+        def scroll(self, **kwargs):
+            return ([SimpleNamespace(id=point_id) for point_id in sorted(self.ids)], None)
+
+        def upsert(self, **kwargs):
+            self.ids.update(int(point.id) for point in kwargs["points"])
+
+        def delete(self, **kwargs):
+            pytest.fail("restore must not delete Qdrant rows without prune_stale")
+
+    class _Store:
+        def active_ids(self, *, model):
+            return {1, 2}
+
+        def records(self, *, model, limit, offset):
+            if offset:
+                return []
+            return [
+                ShadowRecord(
+                    point_id, f"https://{point_id}", str(point_id), [0.1, 0.2], model, {}
+                )
+                for point_id in (1, 2)
+            ]
+
+    qdrant = _Qdrant()
+    result = restore_qdrant_from_pgvector(
+        qdrant, _Store(), collection="pages", model="v_bge-m3", batch_size=10
+    )
+
+    assert qdrant.ids == {1, 2, 9}
+    assert result["parity"] is False
+    assert result["qdrant_stale_candidate_count"] == 1
+    assert result["qdrant_stale_deleted_count"] == 0

@@ -89,7 +89,7 @@ async def search_vector(body: VectorSearchRequest):
 
     active_nv = _get_active_model()
 
-    if SHADOW_CONFIG.serving:
+    if SHADOW_CONFIG.serving or getattr(SHADOW_CONFIG, "pg_only", False):
         pgvector_results = await _run_required_pgvector_operation(
             "search",
             lambda: _shadow_store.search(
