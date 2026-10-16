@@ -13,6 +13,7 @@ browser service interaction.
 """
 
 import asyncio
+import hashlib
 import logging
 import time
 from contextlib import AsyncExitStack
@@ -386,9 +387,7 @@ async def _playwright_fetch_unbounded(
                 markdown = html_to_markdown(html) if html else ""
 
                 barrier = _classify_barrier(title, url, markdown, html)
-                barrier_blocks = barrier.detected and not (
-                    captcha_resolved and barrier.barrier_type == "captcha"
-                )
+                barrier_blocks = barrier.detected
                 if not markdown or len(markdown) < 500 or barrier_blocks:
                     for attempt in range(2):
                         logger.info(
@@ -406,9 +405,7 @@ async def _playwright_fetch_unbounded(
                         html = await retry_transient(page.content)
                         markdown = html_to_markdown(html) if html else ""
                         barrier = _classify_barrier(title, url, markdown, html)
-                        barrier_blocks = barrier.detected and not (
-                            captcha_resolved and barrier.barrier_type == "captcha"
-                        )
+                        barrier_blocks = barrier.detected
                         if markdown and len(markdown) >= 500 and not barrier_blocks:
                             logger.info(
                                 "SPA retry %d succeeded for %s (%d chars)",
@@ -433,7 +430,12 @@ async def _playwright_fetch_unbounded(
                         # say) are not refused (#586 review).
                         from .extract import BLOCK_PAGE_PATTERNS, _check_block_page
 
-                        block_status, _ = _check_block_page(markdown)
+                        cleared_captcha = (
+                            captcha_resolved and barrier.barrier_type != "captcha"
+                        )
+                        _, block_status = _check_block_page(
+                            markdown, captcha_resolved=cleared_captcha
+                        )
                         matched_patterns = [
                             pattern.pattern
                             for pattern in BLOCK_PAGE_PATTERNS
@@ -458,13 +460,7 @@ async def _playwright_fetch_unbounded(
                             and len(matched_patterns) >= 2
                             and challenge_corroborated
                         )
-                        barrier_hit = (
-                            barrier.detected
-                            and not (
-                                captcha_resolved and barrier.barrier_type == "captcha"
-                            )
-                            and barrier.confidence > 0.7
-                        )
+                        barrier_hit = barrier.detected and barrier.confidence > 0.7
                         if barrier_hit or block_fail_refusal:
                             reason = (
                                 f"barrier {barrier.barrier_type} "
@@ -491,6 +487,21 @@ async def _playwright_fetch_unbounded(
                             "source": "playwright",
                             "url": url,
                             "raw_html_start": html,
+                            **(
+                                {
+                                    "_captcha_resolution": {
+                                        "verified": True,
+                                        "markdown_digest": hashlib.sha256(
+                                            markdown.encode()
+                                        ).hexdigest(),
+                                        "html_digest": hashlib.sha256(
+                                            html.encode()
+                                        ).hexdigest(),
+                                    }
+                                }
+                                if cleared_captcha
+                                else {}
+                            ),
                         }
             finally:
                 _observe_extraction(extraction_started)

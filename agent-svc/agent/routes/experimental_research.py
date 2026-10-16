@@ -982,7 +982,7 @@ def capability_document() -> dict[str, Any]:
             "sessions": {
                 "available": runs_available,
                 "reason": None if runs_available else "public_adapters_pending",
-                "mode": "attachment_only" if runs_available else None,
+                "mode": "live_research_evidence" if runs_available else None,
             },
         },
     }
@@ -1615,30 +1615,72 @@ async def attach_experimental_research_session(
     _require_runs()
     if len(session_id) > 200:
         raise HTTPException(status_code=400, detail="Session ID is too long")
-    record = _find_run(payload.run_id, request)
-    if record.state != "completed" or record.result is None:
-        raise HTTPException(status_code=409, detail="Research run is not completed")
-    key = (_scope_id(request), session_id)
-    current = _SESSION_ATTACHMENTS.get(key)
-    current_revision = current[0] if current is not None else 0
-    if payload.expected_revision != current_revision:
-        raise HTTPException(status_code=409, detail="Session revision conflict")
-    if current is not None and current[1] == payload.run_id:
-        return {
-            "session_id": session_id,
-            "revision": current_revision,
-            "run_id": payload.run_id,
-            "research_id": record.research_id,
-            "artifact_set_id": record.result["artifact_set_id"],
+    from ..followup import EvidenceChoice
+    from ..research_sources import resolve_selected_sources
+    from ..session_scope import authorize_session, request_scope
+    from ..session_store import SessionStore
+    from ._helpers import _get_redis_url
+    from .documents import _document_lock
+
+    store = SessionStore(redis_url=_get_redis_url(request))
+    session = await authorize_session(store, session_id, request)
+    if session.get("owner_scope") is None:
+        raise HTTPException(422, "Create an owned session before attaching research")
+    selected = await inspect_research_workspace(payload.run_id, request)
+    if selected["state"] != "completed":
+        raise HTTPException(409, "Research run is not completed")
+    snapshots = list(
+        dict.fromkeys(item["snapshot_id"] for item in selected["evidence"])
+    )
+    choices = [
+        EvidenceChoice(
+            kind="root",
+            container_id=selected["research_id"],
+            ref_id=snapshot,
+            subject="Attached research source",
+        )
+        for snapshot in snapshots
+    ]
+    materials = await resolve_selected_sources(choices, request)
+    refs = {}
+    for choice, material in zip(choices, materials, strict=True):
+        identity = f"{choice.container_id}:{choice.ref_id}"
+        ref_id = "research_" + hashlib.sha256(identity.encode()).hexdigest()[:24]
+        refs[ref_id] = {
+            "source": "research",
+            "research_source": choice.model_dump(),
+            "snapshot_id": choice.ref_id,
+            "content_digest": material["content_digest"],
+            "url": material["url"],
+            "title": choice.subject,
+            "scraped_at": material["retrieved_at"],
         }
-    revision = current_revision + 1
-    _SESSION_ATTACHMENTS[key] = (revision, payload.run_id)
+    if not refs:
+        raise HTTPException(422, "Research has no retained source evidence")
+    async with _document_lock(store, session_id, request):
+        # Check the root again after obtaining the session lock. Reads and queries
+        # also resolve the pointers, so deletion never leaves usable cached text.
+        await resolve_selected_sources(choices, request)
+        revision = await store.aattach_research(
+            session_id,
+            payload.run_id,
+            payload.expected_revision,
+            refs,
+            request_scope(request),
+        )
+    if revision < 0:
+        status = {-1: 409, -2: 404, -3: 409, -4: 422}[revision]
+        raise HTTPException(
+            status,
+            "Session attachment conflict, unavailable session, or reference limit",
+        )
     return {
         "session_id": session_id,
         "revision": revision,
         "run_id": payload.run_id,
-        "research_id": record.research_id,
-        "artifact_set_id": record.result["artifact_set_id"],
+        "research_id": selected["research_id"],
+        "ref_ids": list(refs),
+        "mode": "live_research_evidence",
     }
 
 
@@ -1882,7 +1924,7 @@ async def inspect_research_workspace(
             "method": "POST",
             "url_template": f"{_ROUTE_PREFIX}/sessions/{{session_id}}/attachments",
             "available": importlib.util.find_spec("agent.session_scope") is not None,
-            "mode": "attachment_only",
+            "mode": "live_research_evidence",
             "body": {
                 "run_id": run_id,
                 "expected_revision": "required session revision",
@@ -1905,7 +1947,7 @@ async def inspect_research_workspace(
         "document_context": {
             "mode": "explicit_session_attachment",
             "available": importlib.util.find_spec("agent.routes.documents") is not None,
-            "research_attachment_mode": "attachment_only; does not copy root sources into query context",
+            "research_attachment_mode": "live_research_evidence; resolved and authorized on each use",
             "list_url_template": "/v2/session/{session_id}/documents",
             "query_url_template": "/v2/session/{session_id}/step",
         },

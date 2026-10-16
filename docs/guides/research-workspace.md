@@ -1,13 +1,18 @@
 # Retained research workspace
 
-The experimental workspace browses existing independent roots. It does not create
-chat history or replay research implicitly. Capabilities report the real fixture,
-process-local, Valkey, or PostgreSQL boundary; existing feature gates still apply.
-New run creation is disabled by default and requires the development-only
-`FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS=true` opt-in. It still executes
-fictional sources and authored judgments. Keep that flag false in production;
-existing run, artifact, evidence, workspace, and recovery gates remain unchanged.
-The workspace does not provide a live research execution adapter.
+The workspace lets you browse retained research, read its sources, and explicitly
+start follow-up work. Browsing never starts a model call or another search.
+
+New research uses the configured search, capture, and model services when
+`FEATURE_EXPERIMENTAL_RESEARCH`, `FEATURE_EXPERIMENTAL_RESEARCH_RUNS`,
+`FEATURE_EXPERIMENTAL_RESEARCH_DURABLE`, and
+`FEATURE_EXPERIMENTAL_RESEARCH_POSTGRES_ARTIFACTS` are enabled and PostgreSQL is
+migrated through schema 16. Keep
+`FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS=false`: setting it true deliberately
+selects fictional demonstration data for development. Capabilities report the
+active execution and storage mode. See
+[ADR-0070](../adr/0070-execute-live-durable-research.md) for execution and recovery
+boundaries.
 
 Use `groktocrawl research workspace --json` to list permitted roots and
 `groktocrawl research workspace RUN_ID --json` to inspect one. Read its revision,
@@ -38,11 +43,15 @@ created or stored by the workspace.
 
 Document context lists and reads actual owned session document refs through named
 `documents`/`document_evidence` actions. Upload and document queries remain on the
-existing document/session APIs. Experimental root attachment records only an
-attachment; it does not copy root sources into session query evidence.
+existing document/session APIs. Attaching a completed research root returns session `ref_ids` for its retained
+sources. Select those IDs in a session query's `ref_ids` parameter to use the
+research evidence. References are stored atomically with the attachment revision;
+source bodies are resolved from retained research on each use. Deleting or
+expiring a root makes its linked evidence unavailable, and a changed content
+digest is rejected. The session must have an established owner.
 
 Follow-up previews use `/v2/followup/preview` with selected identities and do not
-execute research. Each follow-up remains an independent root. Pending, failed and
+execute research. Use the explicit [follow-up execution API, CLI or MCP tool](contextual-followups.md#execute-a-follow-up) to start a new investigation from selected evidence. Each follow-up remains an independent root. Pending, failed and
 cancelled runs expose their true state; partial/insufficient completed coverage is
 reported as supplied by the audited manifest, never called exhaustive.
 

@@ -8,7 +8,8 @@ Fastly-challenge fixture instead, per the M1 user-testing fidelity findings:
   * ``scrape_with_fallback`` accepts a clean negative-control (fixture N)
     scrape end-to-end — no spurious browser retry.
   * ``smart_scrape`` over an HTTP-served F1 (default flow) surfaces the
-    block-page warning + block_detected "fail" — never a bare success.
+    block-page gate escalates to bounded browser recovery, then refuses
+    unresolved content without returning challenge bytes.
   * ``smart_scrape`` over an HTTP-served F1 (forced-browser flow) keeps the
     Tier 3 barrier envelope visible in its terminal outcome (#586 polish),
     and the default flow preserves the envelope after full tier exhaustion
@@ -272,31 +273,45 @@ class TestSmartScrapeOverServedFixture:
     @_requires_curl_cffi
     @pytest.mark.asyncio
     async def test_default_flow_served_fixture_is_flagged_never_bare_success(
-        self, served_challenge_url
+        self, served_challenge_url, monkeypatch
     ):
-        """Default smart_scrape flow over HTTP-served F1 (real Tier 2 path).
+        """Real HTTP Tier 2 gates escalate F1 and refuse exhausted recovery.
 
-        Drives the REAL fetch pipeline (HEAD probe -> Tier 2 content
-        negotiation incl. its HTML->markdown fallback -> quality gates) over
-        the fixture served on loopback. Expected: success-with-warning shape —
-        block-page warning + block_detected "fail", never a bare success.
+        Browser boundaries are local stubs; HTTP acquisition, extraction,
+        quality gates and recovery coordination remain the production paths.
         """
-        from scraper.fetch import smart_scrape
+        import scraper.fetch as fetch
 
-        result = await smart_scrape(served_challenge_url)
+        browser_calls = []
 
-        assert result.get("warning"), f"expected block-page warning, got {result!r}"
-        assert (
-            "Block-page" in result["warning"] or "block_detected" in result["warning"]
-        )
-        checks = (result.get("quality") or {}).get("checks", {})
-        assert checks.get("block_detected") == "fail"
-        lowered = (result.get("markdown") or "").lower()
-        assert "please enable javascript" in lowered, (
-            "the challenge markdown itself must be what got flagged"
-        )
-        # Never a bare success: the flag rides along with whatever payload ships.
-        assert not (result.get("success", True) and not result.get("warning"))
+        async def blocked_browser(url):
+            browser_calls.append(url)
+            return {
+                "error": "Barrier detected: fastly",
+                "barrier": {
+                    "detected": True,
+                    "type": "fastly",
+                    "provider": "fastly",
+                    "confidence": 0.95,
+                },
+                "markdown": "",
+                "source": "barrier-detection",
+                "url": url,
+            }
+
+        async def unavailable(*_args):
+            return None
+
+        monkeypatch.setattr(fetch, "fetch_via_playwright", blocked_browser)
+        monkeypatch.setattr(fetch, "fetch_via_flaresolverr", unavailable)
+        monkeypatch.setattr(fetch, "_fetch_via_browser_svc", unavailable)
+        result = await fetch.smart_scrape(served_challenge_url)
+
+        assert browser_calls == [served_challenge_url]
+        assert result["error_code"] == "BARRIER_DETECTED"
+        assert result["markdown"] == ""
+        assert result["recovery"]["outcome"] == "unresolved"
+        assert result["recovery"]["exhausted"] is True
 
     @_requires_curl_cffi
     @pytest.mark.asyncio

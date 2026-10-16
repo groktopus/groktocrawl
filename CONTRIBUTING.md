@@ -111,7 +111,7 @@ All tests must pass before a PR is merged.
 
 ### Durable research acceptance
 
-`tests/service/test_live_research_recovery.py` exercises operation reuse, ambiguous-dispatch refusal, persistent failures and lease/cancel fencing with isolated Valkey. `tests/integration/test_live_research_http_adapters.py` additionally requires an isolated PostgreSQL schema16 database and runs actual HTTP search/capture/model digital twins. The runtime workflow provisions the durable profile and runs this test mandatorily. These twins require no provider credentials. Component tests alone do not establish objective-dependent retained research; changes to the durable adapter must preserve this full HTTP-to-retained-byte test and its recovery checks. Never point acceptance tests at a production database.
+`tests/service/test_live_research_recovery.py` exercises operation reuse, ambiguous-dispatch refusal, persistent failures and lease/cancel fencing with isolated Valkey. `tests/integration/test_live_research_http_adapters.py` additionally requires an isolated PostgreSQL schema16 database and runs actual HTTP search/capture/model digital twins. The runtime workflow provisions the durable profile and runs this test mandatorily. These twins require no provider credentials. Here, schema 16 means the application schema version, not PostgreSQL version 16. Component tests alone do not establish objective-dependent retained research; changes to the durable adapter must preserve this full HTTP-to-retained-byte test and its recovery checks. Never point acceptance tests at a production database.
 
 ## Development Setup
 
@@ -255,6 +255,15 @@ See `docs/adr/README.md` for the full index of existing ADRs.
 ## Documentation updates
 
 Keep the README as onboarding material and update the relevant guide in `docs/guides/` for public behavior changes. The validated inventory in `docs/reference/public-surface.md` must change with any public route, top-level CLI command, compose service, or `.env.sample` setting. `scripts/check-docs-surface.py` is the local and CI guardrail; do not add broad exemptions for public behavior.
+
+For each behavior change, check the README, `AGENTS.md`, this contributor guide,
+the current architecture guide and ADR index, user guides, and API/CLI/MCP
+examples. A surface-inventory check verifies names and coverage, not whether the
+instructions describe working behavior. Verify examples against the affected
+interface and record which tests used controlled services and which used a live
+deployment. Update feature gates, storage prerequisites, restart behavior, and
+migration instructions together. Preserve older experiment reports as history;
+do not present their results as verification of a later release.
 
 ## Commit Guidelines
 

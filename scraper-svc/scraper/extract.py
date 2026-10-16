@@ -183,7 +183,9 @@ def _check_completeness(markdown: str, title: str = "") -> tuple[float, str]:
         return 0.6, "warn"
 
 
-def _check_block_page(markdown: str, url: str = "") -> tuple[float, str]:
+def _check_block_page(
+    markdown: str, url: str = "", *, captcha_resolved: bool = False
+) -> tuple[float, str]:
     """Detect block pages, error pages, and other non-content responses.
 
     Uses pattern matching against known block page signatures. This complements
@@ -193,6 +195,8 @@ def _check_block_page(markdown: str, url: str = "") -> tuple[float, str]:
     Args:
         markdown: Extracted markdown content.
         url: Source URL (for context, not currently used in pattern matching).
+        captcha_resolved: Browser-verified solve with cleared widget DOM;
+            suppress only neutral CAPTCHA names, never other barrier phrases.
 
     Returns:
         Tuple of (score 0.0–1.0, status "pass"|"warn"|"fail").
@@ -205,6 +209,10 @@ def _check_block_page(markdown: str, url: str = "") -> tuple[float, str]:
     matched_patterns = []
 
     for pattern in BLOCK_PAGE_PATTERNS:
+        # A browser-observed solve with cleared widget DOM may leave a neutral
+        # article mentioning CAPTCHA. All other interstitial markers still apply.
+        if captcha_resolved and pattern.pattern in {"hcaptcha", "recaptcha", "captcha"}:
+            continue
         if pattern.search(content_lower):
             matched_patterns.append(pattern.pattern)
 
@@ -267,6 +275,8 @@ def assess_quality(
     url: str = "",
     title: str = "",
     html_size: int = 0,
+    *,
+    captcha_resolved: bool = False,
 ) -> dict:
     """Run all quality gates on extracted content.
 
@@ -281,6 +291,8 @@ def assess_quality(
             HTML is unavailable (e.g. tier pipelines keep only markdown).
             Backs the ``volume`` check: anomalously thin extraction from a
             large source is flagged so callers never ship a silent truncation.
+        captcha_resolved: Verified browser solve with cleared widget DOM. Only
+            neutral CAPTCHA names are exempted from the block-page gate.
 
     Returns:
         Dict with score, per-check breakdown, and detail:
@@ -292,7 +304,9 @@ def assess_quality(
     """
     boilerplate_score, boilerplate_status = _check_boilerplate(markdown)
     completeness_score, completeness_status = _check_completeness(markdown, title)
-    block_score, block_status = _check_block_page(markdown, url)
+    block_score, block_status = _check_block_page(
+        markdown, url, captcha_resolved=captcha_resolved
+    )
 
     # Volume gate: pass when no source-size information is available or
     # when the yield is healthy; fail only on anomalously thin output.
