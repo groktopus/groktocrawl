@@ -26,6 +26,7 @@ When the server has no `API_KEY`, it intentionally accepts unauthenticated reque
 | `search` | Search with sources, categories, contents, rich/deep modes, schema, prompt, or SSE. |
 | `map` | Discover URLs for a site. |
 | `crawl` | Create and optionally poll a crawl; set depth, paths, format, and page limits. |
+| `research` | Create bounded durable research, watch status, read retained evidence, attach completed runs to sessions and manage the workspace. |
 | `agent`, `answer` | Run streaming research or grounded Q&A; `--sync` disables streaming. |
 | `extract`, `batch-scrape`, `generate-llmstxt` | Start or inspect asynchronous extraction jobs. |
 | `browser` | `create`, `exec`, `list`, and `destroy` browser sessions. |
@@ -64,11 +65,31 @@ Use `groktocrawl document create-session|attach|list|show|query|detach` for scop
 parsed-file evidence. See [Private Document Evidence](private-documents.md) for
 byte/span bounds, selected document/web refs, ownership and session lifetimes.
 
-The opt-in experimental `research workspace [RUN_ID]` lists or selects retained roots;
+## Durable research
+
+Start with `./groktocrawl research capabilities` to inspect availability and the
+server's execution mode. With live research enabled, create and watch a run:
+
+```bash
+./groktocrawl research create "Compare the documented approaches to research provenance" --idempotency-key provenance-example-001
+./groktocrawl research watch RUN_ID
+```
+
+Save the idempotency key before sending; reuse it only for the same request.
+`research status` and `cancel` manage runs. `show`, `evidence`, `download`,
+`delete` and `attach` work with retained outputs; their required
+identifiers are shown by each subcommand's `--help`.
+
+`research workspace [RUN_ID]` lists or selects retained roots;
 `research resume RUN_ID OPERATION --expected-revision DIGEST` performs a named
-revision-guarded operation. The protocol may be disabled by feature flags; see the
-[API guide](api.md#experimental-research-protocol). See [research workspace](research-workspace.md) for
-render/export/evidence, explicit session document context and follow-up preview.
+revision-guarded operation. The protocol may be disabled by feature flags.
+The development fixture flag selects fictional demonstration data; the client
+command itself does not choose live or fixture execution. See the
+[durable research contract](durable-research.md),
+[API guide](api.md#experimental-research-protocol), and
+[research workspace guide](research-workspace.md).
+
+## Publication date filters
 
 For audited scholarly publication windows, use
 `groktocrawl search "retrieval evaluation" --engines openalex --date-from 2026-01-01 --date-to 2026-01-31 --json`.

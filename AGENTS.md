@@ -39,7 +39,9 @@ groktocrawl/
 ├── llm-svc/            # LLM fixture for local testing
 ├── test-site/          # Fixture website for integration tests
 ├── tests/
-│   └── test_stack.py   # Integration tests
+│   ├── integration/   # HTTP and multi-service acceptance tests
+│   ├── service/       # Service contracts
+│   └── unit/          # Unit tests
 └── docker-compose.yml  # Single-file deployment
 ```
 
@@ -150,18 +152,28 @@ The crawl engine (`agent-svc/agent/crawler.py`) replaces the original stub crawl
 
 ## Testing
 
-```bash
-# Full integration test against running Docker stack
-cp .env.sample .env
-docker compose up --build -d
-docker compose exec agent-svc python3 /app/agent/tests/test_stack.py
+Run from a disposable development checkout, with Docker and `uv` installed.
+Do not overwrite an existing deployment's `.env`.
 
-# Or run inline (requires httpx)
-pip install httpx
-python tests/test_stack.py
+```bash
+# Create .env from .env.sample only if this checkout has no configuration.
+test -f .env || cp .env.sample .env
+docker compose --profile fixture up --build -d
+uv sync --locked --no-dev --group fast-tests
+
+# Basic HTTP health checks against the local stack; these are not the full suite.
+uv run --no-sync pytest tests/integration/test_stack.py::test_services_health \
+  tests/integration/test_stack.py::test_scraper_health_reports_playwright \
+  -n 0 --no-cov
 ```
 
-The integration tests in `tests/test_stack.py` verify all endpoints against a live Docker stack with fixture services.
+Tests live under `tests/integration/`, `tests/service/` and `tests/unit/`.
+Production images do not include the test suite. CI copies checkout tests and
+installs their locked dependencies before running the full container suite.
+See [CONTRIBUTING.md](CONTRIBUTING.md#running-tests) for fast tests and the
+workflow definitions for isolated search/model fixtures, storage and recovery
+acceptance. Override `AGENT_BASE_URL` and `SCRAPER_BASE_URL` for non-default
+local ports; do not point these checks or acceptance fixtures at production.
 
 ## Pull Requests, Review, and Merging
 
@@ -200,7 +212,7 @@ only after CI is green and review findings are addressed.
 2. Add request/response models in `agent-svc/agent/models.py`
 3. If the endpoint is async (returns a job ID), **it must accept a `webhook` field** and persist terminal delivery intent through the Valkey job outbox with a stable `webhookId`. Direct `deliver_webhook()` remains best-effort for callers outside that outbox; see [ADR-0072](docs/adr/0072-valkey-leased-legacy-job-recovery.md).
 4. Rebuild the agent-svc image
-5. Add a test case in `tests/test_stack.py`
+5. Add endpoint contract tests under `tests/service/` and user-workflow acceptance under `tests/integration/`; use the isolated CI setup for dependencies.
 
 ## Environment Variables
 

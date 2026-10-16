@@ -27,24 +27,35 @@ Architectural changes require new decisions where existing ADRs no longer apply.
 
 Do not change SlopSearch. Use isolated test services and controlled search/model/capture responses for repeatable acceptance. Preserve existing deployment data and client configuration. Record actual test limitations rather than treating collection, fixture counts, or successful health responses as proof of user outcomes.
 
-## Pull requests in progress
+## Delivery status
 
 | Change | Review | Remaining verification |
 | --- | --- | --- |
-| Live durable research and retained sources | [#670](https://github.com/groktopus/groktocrawl/pull/670) | Research runtime and PostgreSQL checks passed; separate cancelled integration check is being rerun |
-| Workspace evidence, explicit follow-ups and document/client acceptance | [#671](https://github.com/groktopus/groktocrawl/pull/671) | Full required CI, PostgreSQL follow-up acceptance and public API capture probe |
-| PostgreSQL-only memory and semantic indexing | [#672](https://github.com/groktopus/groktocrawl/pull/672) | Required checks and review |
-| Legacy job recovery and durable callbacks | [#673](https://github.com/groktopus/groktocrawl/pull/673) | Required checks and review |
-| Multi-query research, time semantics and research callbacks | [#674](https://github.com/groktopus/groktocrawl/pull/674) | PostgreSQL HTTP acceptance, required checks and review after workspace integration |
+| Live durable research and retained sources | [#670](https://github.com/groktopus/groktocrawl/pull/670) | Merged after required CI and review; deployment remains |
+| Workspace evidence, explicit follow-ups and document/client acceptance | [#671](https://github.com/groktopus/groktocrawl/pull/671) | Merged after required CI and review, including public API capture and PostgreSQL follow-up acceptance; deployment remains |
+| PostgreSQL-only memory and semantic indexing | [#672](https://github.com/groktopus/groktocrawl/pull/672) | Merged after required CI and review, including startup, indexing and restart without Qdrant; deployment remains |
+| Legacy job recovery and durable callbacks | [#673](https://github.com/groktopus/groktocrawl/pull/673) | Merged after required CI and review; deployment remains |
+| Multi-query research, time semantics and research callbacks | [#674](https://github.com/groktopus/groktocrawl/pull/674) | Merged after all required CI and review; deployment remains |
+| Documentation and architecture reconciliation | [#675](https://github.com/groktopus/groktocrawl/pull/675) | Source review, surface inventories and relative file links checked; final required CI and release evidence remain |
 
 Research breadth, time semantics and research callbacks are a separate follow-on
 to the durable core. None of the rows above alone completes the release.
 
 ## Verification in progress
 
-The workspace branch passed 4,707 unit/service tests and 42 subtests, with 21
-skips; agent type checks passed across 161 files. These checks complement the
-required container acceptance rather than replace it.
+The combined implementation at `92e5cc17` passed 4,780 unit/service tests and
+42 subtests, with 21 skips. MCP tests passed 269 cases; type checking passed
+across 257 files. Later CI fixes supplied the SQL migrations and semantic service source needed
+by the container tests. A separate semantic HTTP acceptance test was also added. These local results complement the required checks on each
+final PR head; skipped cases are not counted as passes.
+
+All nine cases in `tests/integration/test_live_research_http_adapters.py` passed
+at integrated source `a2a717485b3b72cbb789083a0daf35f92e476c43` against isolated PostgreSQL 17
+and Valkey, with the tracked SQL migrations. The cases cover distinct objectives
+through HTTP/MCP, recovery, search failure, success/failure callbacks, `as_of`,
+and retained-source follow-ups. Search, capture, model and callback responses
+came from local HTTP twins. This verifies service integration and failure handling;
+it does not measure live search quality or establish deployment readiness.
 
 PR #671 includes `tests/integration/test_document_session_journey.py`: a PDF is
 uploaded through the session API, parsed by the real Parse HTTP service, stored
@@ -60,13 +71,44 @@ deployment checks remain required.
 The container CAPTCHA probe also exercises the public `/v2/scrape` route with no
 manual recovery options. It requires the packaged browser to recover the local
 grid challenge and checks that an unresolved challenge returns
-`CAPTCHA_UNRESOLVED` without caching challenge content. This extension is pending
-container CI; syntax checks alone do not count as passing recovery evidence.
+`CAPTCHA_UNRESOLVED` without caching challenge content. The probe passed on
+`42a4914f` in the [container acceptance job](https://github.com/groktopus/groktocrawl/actions/runs/38851810673/job/116815758817).
+Final required checks and deployment verification remain.
+
+The PostgreSQL-only storage checks also ran against an isolated PostgreSQL 17
+instance: research memory and semantic storage both passed. The semantic HTTP
+acceptance test in PR #672 starts the real service with Qdrant unavailable and
+verifies readiness, single and batch indexing, search, deletion, and persisted
+search after a fresh process starts. It passed with controlled embeddings;
+this proves the storage workflow, not real-model relevance. All three storage
+cases also passed in the [final container run](https://github.com/groktopus/groktocrawl/actions/runs/38862542492/job/116848939850)
+at `b43d9b836d1e36be08e5ed9c9641c0444f7cb366`. Required checks passed before
+PR #672 merged. Deployment verification remains open.
+
+PR #673 passed all required checks at
+`9409e7b04fc553024249a941fc42ccab02e317e3` before merging. Both the standard
+and research-runtime integration suites passed 2,764 tests, with 162 skips and
+17 deselections recorded separately. The [required CI run](https://github.com/groktopus/groktocrawl/actions/runs/38869783999)
+also passed PostgreSQL migration/backup/restore/capacity and protected capture
+checks. The API image identity is checked before testing, and the API restarts
+after checkout source is staged so old imported modules cannot survive into
+new-source tests. This is CI evidence; deployment verification remains required.
+
+PR #674's hosted integration suite passed 2,798 tests at
+`231172e5c8321ffac689fee875be4a10d181d71d`, with 162 skips and 17 deselections
+recorded separately. All nine live-research HTTP acceptance cases passed in that
+[run](https://github.com/groktopus/groktocrawl/actions/runs/38877715181/job/116896737119).
+The self-hosted suite also passed 2,798 tests, with the same 162 skips and
+17 deselections, in its [final run](https://github.com/groktopus/groktocrawl/actions/runs/38877715181/job/116896743290).
+The PostgreSQL storage probes and all required checks passed before PR #674
+merged as `3f1406970c900ab999b04bb07009c2c16bb2eeeb`. These results do not
+complete deployment verification.
 
 ## Documentation audit
 
-Keep this audit open until the final code is merged. A corrected paragraph is not
-proof that the described workflow passes.
+The source audit is complete against the merged implementation. Documentation
+PR #675 still requires its final checks and merge; release notes and deployment
+evidence remain open. A corrected paragraph alone is not proof of behavior.
 
 | Documents | Compare against | Completion requirement |
 | --- | --- | --- |
@@ -79,7 +121,17 @@ proof that the described workflow passes.
 | Changelog, release notes and announcement | Merged changes and final acceptance results | Describe verified user benefits and material limitations; no unsupported quality claims |
 
 Workspace and follow-up corrections are included in PR #671. Storage and restart
-instructions must be reconciled again after their implementation PRs merge.
+instructions have been reconciled with merged PRs #672 and #673. Research policy
+and client guidance were checked against PR #674. ADR-0070 is accepted following
+its completed implementation and integration tests. Documentation surface and
+CLI/MCP inventory checks pass, and all 175 relative file links checked in the
+changed Markdown resolve. Release instructions still require final image and
+deployment evidence before publication.
+
+The command audit also corrected AGENTS.md and CONTRIBUTING.md: tests run from
+the checkout, not a nonexistent test directory inside the production image. The
+two documented HTTP health test names collect successfully; they are explicitly
+a smoke check, not a substitute for the isolated CI acceptance suite.
 
 ## Release completion
 

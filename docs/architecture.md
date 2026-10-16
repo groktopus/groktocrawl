@@ -10,19 +10,22 @@ flowchart LR
     agent --> search["SlopSearX\nweb discovery"]
     agent --> semantic["semantic-svc\nembeddings and reranking"]
     semantic <--> qdrant[("Qdrant\nvector index")]
-    semantic -. pgvector modes .-> postgres[("PostgreSQL\npgvector projection")]
+    semantic -. pgvector modes .-> postgres[("PostgreSQL\nretained research and vector projections")]
+    agent <-->|durable research| postgres
+    agent -. research memory vector mode .-> postgres
+    agent -. default research memory vectors .-> qdrant
     agent --> llm["OpenAI-compatible LLM"]
     scraper --> browser["browser-svc\nPlaywright sessions"]
     scraper -. optional .-> flare["FlareSolverr"]
     portal["portal-svc"] --> agent
     mcp["mcp-svc"] --> agent
     ofelia["Ofelia scheduler"] -. monitor runs .-> agent
-    parse["parse-svc"] --> agent
+    agent --> parse["parse-svc\ndocument parsing"]
 ```
 
 `agent-svc` owns the public `/v2` API, authorization, request IDs, health and metrics. It composes domain routers from `agent/routes/`, owns background tasks through `TaskTracker`, and stores persistent job records in Valkey. Jobs are processed in-process with `asyncio.create_task()`; there is no external job owner or worker queue.
 
-## Main execution paths
+## Existing API job execution
 
 ```mermaid
 flowchart TD
@@ -52,6 +55,28 @@ This is fail-closed recovery, not general resumability or exactly-once execution
 
 Research code lives in `agent/research/`: it plans a query, discovers sources, scrapes them, synthesizes with the LLM, optionally detects gaps for another pass, and can stream progress and tokens. Research memory keeps artifacts and their TTL in Valkey; its vectors default to Qdrant, with explicit PostgreSQL shadow and PostgreSQL-only modes. The semantic page index is a separate projection with its own Qdrant/pgvector modes and backfill. PostgreSQL does not replace Valkey artifacts, and enabling one pgvector mode does not migrate the other index. See [ADR-0071](adr/0071-use-pgvector-for-research-memory-with-reversible-rollback.md) and the [storage migration runbook](runbooks/research-memory-pgvector.md). Crawl uses a breadth-first engine with sitemap discovery, path filters, concurrency, cache controls, robots/politeness handling, canonical/content deduplication, and SSE progress.
 
+## Durable research and retained evidence
+
+The separate `/experimental/research/v1` API uses
+`agent/experimental/live_runner.py`. With all four research flags enabled,
+schema 16 available, and the development fixture flag disabled, it plans bounded
+queries, acquires sources through the configured search and scraper clients,
+and uses the configured model to construct and check research outputs.
+Valkey retains admission, ownership, external-call receipts and callback state;
+PostgreSQL retains exact sources, knowledge and report artifacts. Completed
+receipts can be reused after interruption. A dispatched call without a retained
+response is reported as `outcome_unknown` instead of being silently repeated.
+See [ADR-0070](adr/0070-execute-live-durable-research.md) and the
+[durable research guide](guides/durable-research.md) for budgets, time semantics,
+publication fencing and callback limits.
+
+Sessions can link to selected retained research sources or attach documents
+parsed by `parse-svc`. Questions resolve those selected bytes and return
+retrievable citations. Links are checked again when used; deleted, expired or
+changed source records are not silently replaced. An explicit follow-up starts
+a separate investigation; previewing one does not run research. These paths
+share the API through CLI and MCP clients.
+
 ## Scraping pipeline
 
 ```mermaid
@@ -80,7 +105,8 @@ Stage-level latency and capacity signals are recorded with bounded labels and ex
 
 ## Operational boundaries
 
-- Valkey is the shared state boundary for jobs, monitor/session data, and caches.
+- Valkey is the shared state boundary for jobs, monitor/session data, caches, research execution receipts and callback delivery.
+- PostgreSQL is the authority for durable research sources, knowledge and reports. Its vector projections are separate from that retained-evidence contract.
 - Qdrant is the default persistent vector-index boundary. PostgreSQL/pgvector is an explicit alternative; its two indexes have separate schemas, modes, and backfills as documented in ADR-0071.
 - SlopSearX and the configured LLM are external capabilities; their availability is surfaced through health checks and request failures/degradation.
 - `portal-svc` and `mcp-svc` are thin clients of the public agent API; they do not own duplicate business logic.

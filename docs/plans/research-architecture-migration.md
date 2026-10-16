@@ -2,6 +2,11 @@
 
 ## Outcome
 
+The 1.0.0 merge completed repository integration but missed live durable research
+and other workflow connections. The [1.0.1 cleanup plan](release-1.0.1-cleanup.md)
+now governs completion and release readiness. The steps below retain the original
+migration scope; they are not evidence that deployment has completed.
+
 GroktoCrawl has adopted the research architecture developed in GroktoCrawl X.
 Existing API, MCP, CLI, and deployment contracts remain supported. Future
 implementation and issues belong in the main repository. Release, deployment,
@@ -40,13 +45,12 @@ tools, portal submission fixes, and release safeguards alongside the new code.
    services with those images. Verify the existing live `/v2` research, document,
    and capture paths, plus MCP, CLI, and pgvector readiness. Keep scripted
    fixture-run admission disabled with
-   `FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS=false`:
-   the new durable run endpoint executes an example and is not connected to
-   objective-dependent live acquisition, verification, and retained
-   publication. The existing four research flags may remain enabled for
-   read-only access to retained records. Pgvector cutover is an independent storage change and does not
-   require enabling fixture-run admission. Preserve the existing search-engine
-   service and its configuration.
+   `FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS=false`. The 1.0.1 correction
+   connects the durable endpoint to live acquisition and retained publication;
+   admission requires all four research flags, schema 16, configured dependencies,
+   and passing acceptance checks described in ADR-0070. Verify the deployed
+   artifact before enabling it. Pgvector cutover is an independent storage change.
+   Preserve the existing search-engine service and its configuration.
 5. **Consolidate development.** Move remaining optional research issues to
    mainline, redirect the experimental repository to the supported project,
    and retain its history and recovery material.
@@ -56,12 +60,10 @@ tools, portal submission fixes, and release safeguards alongside the new code.
 Completion of the mainline/vector migration requires an official mainline commit
 and published images, a verified running deployment, preserved existing data and
 client contracts, a tested vector rollback path, and reconciled documentation
-and issue ownership. It does not make the fixture-backed run endpoint a live
-research product. That requires separate product work to connect the existing
-live research acquirer to the durable execution, verification, and publication
-path, with its own objective-dependent HTTP/MCP and failure-recovery acceptance
-tests. Passing migration tests alone does not establish that capability or
-deployment completion.
+and issue ownership. Storage migration alone does not prove live research.
+The 1.0.1 cleanup additionally requires objective-dependent HTTP/MCP behavior,
+retained-byte verification, cancellation and recovery tests, and verification of
+the final deployed artifact. See the cleanup plan for the complete checklist.
 
 Date-bounded searches remain conditional on the backend returning trustworthy
 enforcement evidence. Unsupported backends must return an explicit error.
@@ -72,13 +74,12 @@ results.
 
 - Mainline integration merged in PR #665 at `7741ddfe03773acae08e0cef47aa6ad6a457b481` after the required integration and compatibility checks passed.
 - The isolated restore and shadow-backfill rehearsal matched all 11,852 records across IDs, payload/content, and vectors.
-- Stable 1.0.0 was published on 2026-10-16 ([release](https://github.com/groktopus/groktocrawl/releases/tag/v1.0.0)); its release PR merged at `f2ebbbb4e8da42c96f054e19d5d86fe556d62a6e`.
-- Official image publication and immutable image digests are still pending verification.
-- The isolated restore and backfill verified pgvector parity; live vector-serving cutover and deployment verification are pending. Verify the existing live `/v2` research, document, capture, MCP, CLI, and semantic paths. Keep scripted fixture-run admission disabled with `FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS=false`; the `/experimental/research/v1` run adapter is an example, not a live researcher. The existing four research flags may remain enabled for previously retained records.
+- Version 1.0.0 was initially published on 2026-10-16 ([release](https://github.com/groktopus/groktocrawl/releases/tag/v1.0.0)); its release PR merged at `f2ebbbb4e8da42c96f054e19d5d86fe556d62a6e`.
+- Version 1.0.0 was subsequently marked prerelease after the missing live adapter was found. Do not use its publication as evidence that the cleanup is complete.
+- Final 1.0.1 image publication, immutable digests and deployment verification remain pending.
+- The isolated restore and backfill verified pgvector parity; live vector-serving cutover and deployment verification remain pending. Keep demonstration admission disabled. Enable the corrected live research path only after the 1.0.1 acceptance and deployment checks pass.
 - Transfer of remaining optional issues and retirement of the experimental repository are pending.
 
-The live adapter gap is separate product work: connect objective-dependent live
-source acquisition, evidence and claim verification, and retained publication to
-the durable run protocol. Acceptance must exercise meaningful HTTP and MCP
-objectives and verify retained source/artifact bytes, as well as budget limits,
-cancellation, and recovery across a forced process crash.
+Live durable research, workspace integration, storage and restart recovery are
+tracked together in the 1.0.1 cleanup plan. Controlled service tests establish
+integration behavior; they do not establish improved real-world answer quality.

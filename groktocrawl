@@ -789,7 +789,7 @@ class Client:
         idempotency_key: str,
         webhook: str | None = None,
     ) -> dict[str, Any]:
-        """Admit one experimental fixture-backed research run."""
+        """Admit one bounded research run in the server-configured mode."""
         body: dict[str, Any] = {"objective": objective}
         if webhook:
             body["webhook"] = webhook
@@ -3813,7 +3813,7 @@ def make_parser() -> argparse.ArgumentParser:
     p_resume.add_argument("--wording")
     p_resume.add_argument("--selected", help="Explicit identity selections as JSON")
     p_research_create = p_research_sub.add_parser(
-        "create", help="Admit a fixture-backed experimental research run"
+        "create", help="Admit a bounded research run"
     )
     p_research_create.add_argument("objective", help="Research objective")
     p_research_create.add_argument(

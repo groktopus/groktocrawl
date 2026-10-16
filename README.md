@@ -17,7 +17,7 @@ The fastest end-to-end smoke test, with no external credentials. The `fixture` p
 **Config:** copy `.env.sample` to `.env`. No credentials are required; the optional direct SlopSearX MCP companion (`slopsearx-mcp`) is opt-in via the `mcp` Compose profile and only then needs a non-empty `SLOPSEARX_MCP_AUTH_TOKEN`.
 
 ```bash
-cp .env.sample .env
+test -f .env || cp .env.sample .env
 docker compose --profile fixture up --build -d
 curl http://localhost:8080/health
 ./groktocrawl scrape https://example.com
@@ -34,7 +34,7 @@ The same stack pointed at a real LLM provider, an open-web search backend, and a
 Timeouts are configurable: raise `LLM_CALL_TIMEOUT` (idle-timeout seconds, default 120 — e.g. set 300 for reasoning models), and tune `QDRANT_QUERY_TIMEOUT` / `QDRANT_CLIENT_TIMEOUT` if the semantic/Qdrant path needs different bounds.
 
 ```bash
-cp .env.sample .env   # set LLM_BASE_URL/LLM_API_KEY/LLM_MODEL, BRAVE_API_KEY, API_KEY
+test -f .env || cp .env.sample .env   # set LLM_BASE_URL/LLM_API_KEY/LLM_MODEL, BRAVE_API_KEY, API_KEY
 docker compose up --build -d
 curl http://localhost:8080/health
 ./groktocrawl scrape https://example.com
