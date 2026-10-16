@@ -471,7 +471,7 @@ jobs:
           docker compose exec -T agent-svc mkdir -p /app/agent
           docker cp agent-svc/agent/. "$svc":/app/agent/
           # Copy the remaining service packages under their repository paths.
-          for pkg in scraper-svc/scraper parse-svc/parse_svc portal-svc/portal browser-svc/browser_svc llm-svc/llm_svc slopsearx-fixture/slopsearx_fixture common; do
+          for pkg in scraper-svc/scraper parse-svc/parse_svc portal-svc/portal browser-svc/browser_svc llm-svc/llm_svc slopsearx-fixture/slopsearx_fixture semantic-svc common; do
             docker compose exec -T agent-svc mkdir -p "/app/$pkg"
             docker cp "$pkg/." "$svc:/app/$pkg/"
           done
