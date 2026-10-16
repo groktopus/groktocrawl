@@ -14,6 +14,7 @@ from fastapi import FastAPI
 def app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
     monkeypatch.setenv("FEATURE_EXPERIMENTAL_RESEARCH", "true")
     monkeypatch.setenv("FEATURE_EXPERIMENTAL_RESEARCH_RUNS", "true")
+    monkeypatch.setenv("FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS", "true")
     experimental._RUNS.clear()
     experimental._IDEMPOTENCY.clear()
     experimental._SESSION_ATTACHMENTS.clear()
@@ -251,7 +252,9 @@ async def test_deletion_tombstone_wins_over_late_completion(
 
         assert (await client.get(admission["status_url"])).status_code == 410
         assert (await client.get(admission["events_url"])).status_code == 410
-        assert (await client.get(f"/experimental/research/v1/workspace/{run_id}")).status_code == 410
+        assert (
+            await client.get(f"/experimental/research/v1/workspace/{run_id}")
+        ).status_code == 410
         attached = await client.post(
             "/experimental/research/v1/sessions/deleted-session/attachments",
             json={"run_id": run_id, "expected_revision": 0},
@@ -377,3 +380,103 @@ async def test_deleting_one_root_does_not_block_other_roots(app: FastAPI):
         assert (
             await client.get("/experimental/research/v1/artifacts/unknown")
         ).status_code == 404
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("fixture_flag", [None, "false", "invalid"])
+async def test_production_flags_do_not_admit_fixture_work(
+    app, monkeypatch, fixture_flag
+):
+    # Enabling retained readers must not authorize new fictional research.
+    monkeypatch.setenv("FEATURE_EXPERIMENTAL_RESEARCH_DURABLE", "true")
+    monkeypatch.setenv("FEATURE_EXPERIMENTAL_RESEARCH_POSTGRES_ARTIFACTS", "true")
+    if fixture_flag is None:
+        monkeypatch.delenv("FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS")
+    else:
+        monkeypatch.setenv("FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS", fixture_flag)
+
+    def unexpected_work(*args, **kwargs):
+        raise AssertionError("fixture admission reached storage or execution")
+
+    monkeypatch.setattr(experimental, "_durable_ledger", unexpected_work)
+    monkeypatch.setattr(experimental, "_artifact_authority", unexpected_work)
+    monkeypatch.setattr(experimental, "example_journey", unexpected_work)
+    async with await _client(app) as client:
+        response = await client.post(
+            "/experimental/research/v1/runs",
+            headers={"Idempotency-Key": "production-must-not-create"},
+            json={"objective": "A real user research request"},
+        )
+    assert response.status_code == 503
+    assert "Configured research model unavailable" in response.json()["detail"]
+    assert experimental._RUNS == {}
+    assert experimental._IDEMPOTENCY == {}
+
+
+@pytest.mark.asyncio
+async def test_disabling_fixture_admission_preserves_existing_reads(app, monkeypatch):
+    async with await _client(app) as client:
+        created = await client.post(
+            "/experimental/research/v1/runs",
+            headers={"Idempotency-Key": "retained-before-disable"},
+            json={"objective": "Explicit development fixture"},
+        )
+        assert created.status_code == 202
+        admitted = created.json()
+        before = await _wait_for_terminal(client, admitted["run_id"])
+        result = before["result"]
+        artifact_before = await client.get(result["artifacts"]["summary"])
+        monkeypatch.delenv("FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS")
+        assert (await client.get(admitted["status_url"])).json() == before
+        assert (await client.get(admitted["events_url"])).status_code == 200
+        assert (await client.get(result["manifest_url"])).status_code == 200
+        assert (
+            await client.get(result["artifacts"]["summary"])
+        ).content == artifact_before.content
+        assert (
+            await client.get(
+                f"/experimental/research/v1/research/{result['research_id']}/evidence/source-1"
+            )
+        ).status_code == 200
+        listing = await client.get("/experimental/research/v1/workspace")
+        assert any(
+            item["run_id"] == admitted["run_id"] for item in listing.json()["items"]
+        )
+        assert (
+            await client.get(
+                f"/experimental/research/v1/workspace/{admitted['run_id']}"
+            )
+        ).status_code == 200
+        rejected = await client.post(
+            "/experimental/research/v1/runs",
+            headers={"Idempotency-Key": "new-after-disable"},
+            json={"objective": "Must not create another fixture"},
+        )
+        assert rejected.status_code == 503
+        assert len(experimental._RUNS) == 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "unsupported",
+    [{"webhook": "https://receiver.test/hook"}, {"as_of": "2026-01-01T00:00:00Z"}],
+)
+async def test_unimplemented_options_rejected_before_admission(
+    app, monkeypatch, unsupported
+):
+    def unexpected(*_args, **_kwargs):
+        raise AssertionError("unsupported option admitted work")
+
+    monkeypatch.setattr(experimental, "_durable_ledger", unexpected)
+    monkeypatch.setattr(experimental, "_artifact_authority", unexpected)
+    async with await _client(app) as client:
+        response = await client.post(
+            "/experimental/research/v1/runs",
+            headers={"Idempotency-Key": "unsupported"},
+            json={
+                "objective": "Must not silently ignore supplied options",
+                **unsupported,
+            },
+        )
+    assert response.status_code == 422
+    assert experimental._RUNS == {}

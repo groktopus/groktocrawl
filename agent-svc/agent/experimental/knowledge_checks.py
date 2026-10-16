@@ -135,7 +135,7 @@ class KnowledgeCheckInput(StrictRecord):
             if basis.basis == "unknown":
                 return False
             if basis.basis == "historical_snapshot":
-                if claim.temporal_scope != "historical":
+                if claim.temporal_scope != "historical" or source.retrieved_at is None:
                     return False
                 date = moment(source.retrieved_at)
             else:

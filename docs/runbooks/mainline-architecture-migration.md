@@ -4,8 +4,11 @@ This runbook adds the durable research PostgreSQL store and, after verified
 backfill and parity checks, makes pgvector the vector-serving store in the
 existing Compose project. Qdrant remains online and receives writes for read
 rollback. The existing Valkey job store, SlopSearX image/configuration, and
-API/MCP ports are preserved. Research flags remain off during initial
-preparation and are enabled after their migration and integrity checks pass.
+API/MCP ports are preserved. This runbook does not enable scripted research
+execution. Keep `FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS=false` throughout
+the vector migration.
+Existing research/workspace/artifact read flags may remain enabled to serve
+retained records. Pgvector promotion is independent of research-run admission.
 The adoption decision is [ADR-0069](../adr/0069-adopt-bounded-research-substrate.md);
 the sequencing and release work are in the
 [research architecture migration plan](../plans/research-architecture-migration.md).
@@ -37,9 +40,11 @@ down -v`. PostgreSQL gets a new volume named from the project and
    chmod 600 /secure/path/research-postgres-password
    ```
 
-   Keep all four `FEATURE_EXPERIMENTAL_RESEARCH*` settings false and
-   `VECTOR_STORE_MODE=qdrant` during preparation. Leave Valkey DB 0 and Qdrant
-   as they are.
+   Keep `FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS=false` and
+   `VECTOR_STORE_MODE=qdrant` during preparation. Do not enable fixture-run
+   admission at any point in this vector migration. Existing research flags may
+   remain enabled when needed for read-only access to previously retained roots
+   and artifacts. Leave Valkey DB 0 and Qdrant as they are.
 3. Back up the full Valkey dataset (the RDB includes DB 0 and DB 2) and take a
    Qdrant collection snapshot before enabling the new profile. Store the
    resulting files off-host and verify their checksums and restore procedure.
@@ -150,11 +155,18 @@ down -v`. PostgreSQL gets a new volume named from the project and
 
 8. Cut over only after the reconciliation and comparison gates pass. Set
    `VECTOR_STORE_MODE=pgvector` and retain Qdrant dual writes. If research
-  artifacts are in scope, enable all four research feature flags only after the
-  schema-16 and table-level reconciliation passes. Apply flags in dependency
-  order: `FEATURE_EXPERIMENTAL_RESEARCH`, then `_RUNS`, then `_DURABLE`, then
-  `_POSTGRES_ARTIFACTS`. Recreate the agent and semantic services and confirm
-  API, MCP, and semantic readiness on their existing ports. Monitor search
+   artifacts are in scope, keep the database schema and read-only artifact
+   authority available after the schema-16 and table-level reconciliation
+   passes. Keep `FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS=false`: the
+   current run endpoint executes a scripted example and is not connected to
+   live query acquisition and publication. Existing research flags may remain
+   enabled for retained reads. The separate [isolated demo verification](experimental-replacement-candidate.md#verify-and-freeze-the-receipt)
+   persists a true fixture flag only in its dedicated test environment through
+   all checkpoints, then resets that file to false and recreates the demo agent;
+   do not apply that test opt-in to this production migration.
+   Pgvector cutover is independent of research-run admission and must be validated on its own. Recreate the agent and semantic
+   services and confirm existing API, MCP, and semantic readiness on their
+   existing ports. Monitor search
   result parity, vector counts, PostgreSQL saturation, Qdrant write freshness,
   request errors, and latency for the agreed observation window.
 
@@ -174,10 +186,14 @@ down -v`. PostgreSQL gets a new volume named from the project and
   store during pgvector serving. Verify readiness reports Qdrant ready and
   representative searches return results. If the current image is defective,
   restore the previously recorded agent/semantic image digests as well.
-- **Research API rollback:** turn off the experimental feature flags and restore
-  the previous agent image. This leaves existing mainline jobs in Valkey DB 0
-  and all research rows in PostgreSQL for diagnosis. Do not delete the new
-  database volume as part of application rollback.
+- **Research API rollback:** scripted fixture-run admission should already be
+  disabled by `FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS=false`. If it was
+  enabled accidentally, disable it and restore the previous agent image if
+  needed. Keep existing
+  research flags required to read retained roots until their owners have a
+  separate disposition. This leaves existing mainline jobs in Valkey DB 0 and
+  research rows in PostgreSQL intact. Do not delete the new database volume as
+  part of application rollback.
 - **Database recovery:** restore PostgreSQL only when the database itself is
   damaged or inconsistent. Take a forensic copy first. Restore the verified
   `pg_dump` into a new/empty PostgreSQL volume, run schema checks, and point the

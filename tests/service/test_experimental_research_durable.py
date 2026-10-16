@@ -25,6 +25,7 @@ def app(monkeypatch: pytest.MonkeyPatch) -> Iterator[FastAPI]:
         raise RuntimeError("DURABLE_RESEARCH_REDIS_URL or VALKEY_URL is required")
     monkeypatch.setenv("FEATURE_EXPERIMENTAL_RESEARCH", "true")
     monkeypatch.setenv("FEATURE_EXPERIMENTAL_RESEARCH_RUNS", "true")
+    monkeypatch.setenv("FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS", "true")
     monkeypatch.setenv("FEATURE_EXPERIMENTAL_RESEARCH_DURABLE", "true")
     namespace = f"groktocrawl:test:service:{uuid4()}"
     redis = Redis.from_url(url, decode_responses=True)
@@ -190,6 +191,7 @@ async def test_admitted_run_recovers_and_cancel_does_not_resurrect(
         )
         assert created.status_code == 202
         run_id = created.json()["run_id"]
+        monkeypatch.delenv("FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS")
         experimental._RUNS.clear()
         recovered = await client.get(created.json()["status_url"])
         assert recovered.status_code == 200
@@ -241,6 +243,7 @@ async def test_running_run_reclaims_after_lease_loss(
         original.durable_ledger.redis.delete(original.durable_ledger._lease_key(run_id))
         original_task.cancel()
         await asyncio.gather(original_task, return_exceptions=True)
+        monkeypatch.delenv("FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS")
         experimental._RUNS.clear()
         started.clear()
         recovered = await client.get(created.json()["status_url"])

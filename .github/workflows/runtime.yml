@@ -162,6 +162,13 @@ jobs:
           cp .env.sample .env
           echo "TWIN_RUN_ID=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> .env
           echo "DURABLE_RESEARCH_REDIS_URL=redis://valkey:6379/15" >> .env
+          echo "SEARXNG_URL=http://slopsearx-fixture:8080" >> .env
+          umask 077
+          research_password_file="/tmp/groktocrawl-research-postgres-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.password"
+          python3 -c 'from secrets import token_urlsafe; print(token_urlsafe(32))' > "$research_password_file"
+          chmod 600 "$research_password_file"
+          echo "DURABLE_RESEARCH_POSTGRES_PASSWORD_FILE=$research_password_file" >> .env
+          echo "DURABLE_RESEARCH_POSTGRES_DSN=postgresql://groktocrawl@research-postgres:5432/groktocrawl" >> .env
           echo "LLM_BASE_URL=http://llm-svc:8011/v1?run_id=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> .env
           echo "LLM_MODEL=fixture-model" >> .env
           echo "CAPTCHA_VISION_BASE_URL=http://llm-svc:8011/v1" >> .env
@@ -187,6 +194,7 @@ jobs:
           --group runtime
           --profile indexing
           --profile fixture
+          --profile durable-research
           --receipt runtime-public-image-prefetch.json
         timeout-minutes: 10
 
@@ -199,7 +207,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Build all application and fixture images from checkout
-        run: docker compose --profile indexing --profile fixture build
+        run: docker compose --profile indexing --profile fixture --profile durable-research build
         timeout-minutes: 25
 
       - name: Build and probe the capture gateway image
@@ -217,7 +225,7 @@ jobs:
           docker exec -i "$container" python - < tests/integration/capture_egress_image_probe.py
 
       - name: Start the Docker stack
-        run: docker compose --profile indexing --profile fixture up -d --no-build --pull never
+        run: docker compose --profile indexing --profile fixture --profile durable-research up -d --no-build --pull never
         timeout-minutes: 10
 
       - name: Wait for services to be healthy
@@ -592,9 +600,12 @@ jobs:
           set +e
           docker compose exec -T agent-svc env \
             QA_OUTCOME_PATH=/app/qa-outcomes-integration.json \
+            DURABLE_RESEARCH_REDIS_URL=redis://valkey:6379/15 \
+            DURABLE_RESEARCH_POSTGRES_DSN=postgresql://groktocrawl@research-postgres:5432/groktocrawl \
+            PGPASSFILE=/tmp/postgres.pgpass \
             PYTHONPATH=/app/agent-svc:/app/scraper-svc:/app/llm-svc:/app/parse-svc:/app/portal-svc:/app/browser-svc:/app \
             SCRAPER_BASE_URL=http://scraper-svc:8001 \
-            SEARCH_BASE_URL=http://slopsearx:8080 \
+            SEARCH_BASE_URL=http://slopsearx-fixture:8080 \
             LLM_BASE_URL=http://llm-svc:8011/v1?run_id=${{ github.run_id }}-${{ github.run_attempt }} \
             TEST_SITE_BASE_URL=http://test-site:8000 \
             TIER3_FIXTURE_BASE_URL=http://tier3-fixture:8000 \
@@ -816,7 +827,9 @@ jobs:
 
       - name: Tear down stack
         if: always()
-        run: docker compose --profile indexing --profile fixture down --volumes --remove-orphans --timeout 30
+        run: |
+          docker compose --profile indexing --profile fixture --profile durable-research down --volumes --remove-orphans --timeout 30
+          rm -f "/tmp/groktocrawl-research-postgres-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.password"
 
   protected-browser-profile:
     name: Protected Browser Egress Profile

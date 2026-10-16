@@ -3,20 +3,20 @@
 - Status: accepted
 - Deciders: Groktopus maintainers
 - Date: 2026-10-15
-- Scope: research execution and retained-evidence substrate in the standard GroktoCrawl deployment; capability flags are temporary rollout controls
+- Scope: research execution and retained-evidence substrate in the standard GroktoCrawl deployment; scripted fixture-run admission remains disabled in deployments
 - Provenance: adopted in part from the bounded architecture records in [`docs/adr/experimental/groktocrawl-x/`](experimental/groktocrawl-x/README.md), based on experiment commit `9c7744b66f205080a44bfd89808494dbe80eb5a4`
 - Supersedes: ADR-0026's Qdrant serving-store choice for deployments that complete the verified pgvector backfill and cutover. Qdrant remains a rollback-write target. This does not revise ADR-0047 or change the existing public API, job, session, or cache contracts.
 
 ## Context and Problem Statement
 
-The research architecture work developed an explicit execution controller, versioned claims-and-evidence records, verification outcomes, and audited artifact rendering. The mainline standard deployment includes PostgreSQL for durable research state, making these capabilities usable in the same deployment as deterministic retrieval, scraping, and existing clients.
+The research architecture work developed an explicit execution controller, versioned claims-and-evidence records, verification outcomes, and audited artifact rendering. PostgreSQL is integrated into the standard Compose deployment for durable retained records and the separate vector migration. The run endpoint remains a scripted example until the live acquisition and publication adapter is implemented; a shared database alone does not make those research capabilities operational.
 
 The experimental records include decisions accepted for bounded prototypes, evaluations, and use in the former experimental repository. Those acceptances do not establish that every experimental feature is production ready or that existing user data has been migrated. Mainline needs a clear adoption boundary that preserves deployed interfaces and makes state changes reversible.
 
 ## Decision Drivers
 
 - Keep existing API, CLI, MCP, job, session, and research-memory behavior compatible by default.
-- Keep research routes and pgvector serving disabled during the initial rollout checks, then enable the adopted capabilities in the standard deployment after the documented migration and verification gates pass.
+- Keep scripted fixture-run admission disabled in deployments with `FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS=false`. Existing four research/workspace/artifact flags retain their read, status, workspace, and recovery behavior and may remain enabled to serve retained records. This development-only flag is not a production live-research switch; a future live adapter must be integrated and separately verified. Pgvector serving is a separate vector-store migration and does not depend on research flags.
 - Separate execution ownership, evidence, verified knowledge, and rendered artifacts so each can be inspected and versioned.
 - Avoid implicit conversion, deletion, or reinterpretation of existing persisted state.
 - Permit rollback to the existing research path without losing data or changing existing schemas.
@@ -29,7 +29,7 @@ The experimental records include decisions accepted for bounded prototypes, eval
 
 ## Decision Outcome
 
-Adopt option 3. The new research substrate provides explicit bounded execution, versioned knowledge and evidence, verification records, and audited renderings in the standard deployment architecture. The `/experimental/research/v1` route family and its existing feature flags remain the rollout boundary while implementation and operations are verified. Its path remains stable for compatibility; the word `experimental` does not create a separate repository or a permanent separate deployment mode. After the required checks pass, the standard deployment enables the supported durable research capabilities without changing the route or moving the service to a different stack.
+Adopt option 3. The research substrate defines explicit bounded execution, versioned knowledge and evidence, verification records, and audited renderings in the standard deployment architecture. The current `/experimental/research/v1` run adapter is a scripted fixture demonstration; it does not acquire live sources for the submitted objective. Keep `FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS=false` in deployments, while preserving the existing research/workspace/artifact flags and read access for retained records as required. This opt-in is only for development/demo fixture admission, not production live research. A live adapter must connect the existing research acquisition path to this execution, evidence, verification, and publication flow and pass separate product acceptance checks before production run admission is considered. The route path remains stable for compatibility; its name does not require a separate repository or deployment. Pgvector serving is independent of the fixture route and follows the vector migration below.
 
 For vector search, pgvector becomes the serving store only after a complete mainline-Qdrant backfill and the parity and operational checks in the [migration runbook](../runbooks/mainline-architecture-migration.md). The cutover keeps Qdrant online and dual-writes to it so operators can return reads to Qdrant without rebuilding the old index. This narrows ADR-0026 only for deployments that complete this migration; unmigrated deployments continue using Qdrant.
 
@@ -37,13 +37,13 @@ The execution owner is the sole authority for run transitions, budgets, cancella
 
 All loops, retries, source acquisition, and rendering repair remain subject to explicit limits. A model response cannot increase budgets or permissions. Missing or incompatible evidence, state, or verification versions fail closed or produce an explicitly qualified result according to the operation contract.
 
-The new route family does not replace the existing research, `/v2/answer`, session, job, or research-memory path and does not change their request or response schemas. PostgreSQL is part of the standard Compose deployment and is the durable store for the research capabilities that require it; the feature flags control route and capability availability during rollout. They are temporary rollout controls, not a requirement to operate a separate experimental deployment. A flag being present in an environment inventory does not imply the feature is enabled; after migration checks pass, the deployment enables the supported durable capabilities.
+The new route family does not replace the existing live research, `/v2/answer`, session, job, or research-memory paths and does not change their request or response schemas. PostgreSQL is part of the standard Compose deployment and supports retained research artifacts as well as the independent pgvector migration. Database availability or schema version 16 does not make the fixture adapter production research. Keep `FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS=false` in deployments; the existing four research flags may remain enabled for retained reads and recovery. A pgvector cutover can proceed independently of the research flags.
 
 ### Compatibility and state migration
 
 Existing inline jobs, sessions, research-memory records, API payloads, CLI flags, and MCP tools retain their current readers and writers. The new durable research ledger applies only to the research route family; it does not make legacy inline jobs restart-safe or change their best-effort contract in ADR-0047. No startup task automatically imports or rewrites legacy records into the new execution or evidence stores. New records must carry explicit schema and policy versions. Schema migrations must be additive and ordered, and must refuse an unknown or incompatible prior schema before modifying it.
 
-Before enabling durable research capabilities, the deployment procedure must identify the affected PostgreSQL schema, take and verify a recoverable backup, record the source and target schema versions, run the explicit ordered migration, and verify representative reads and integrity checks. The vector-store cutover additionally requires a verified Qdrant backfill and parity checks; Qdrant remains current through dual writes for rollback. Any conversion of existing research records requires the resumable migration and reconciliation procedure in the migration runbook, with provenance, counts, integrity checks, and a documented abort path. This ADR does not authorize deletion or reinterpretation of legacy state.
+The current fixture-backed run endpoint is not an operational capability to enable. A future live adapter requires a separately reviewed migration and acceptance plan that covers the ordered schema migration, backup and restore, objective-dependent HTTP/MCP execution, retained evidence and artifact reads, and crash, budget, and cancellation behavior. The vector-store cutover is independent: it requires a verified Qdrant backfill and parity checks, and Qdrant remains current through dual writes for rollback. Any conversion of existing research records requires the resumable migration and reconciliation procedure in the migration runbook, with provenance, counts, integrity checks, and a documented abort path. This ADR does not authorize deletion or reinterpretation of legacy state.
 
 ### Rollback
 
@@ -54,8 +54,8 @@ Operators can disable the feature gates and route compatible work through the pr
 ### Positive Consequences
 
 - Research architecture can evolve in the mainline repository without silently changing existing API or storage contracts.
-- Every experimental run can carry explicit budget, ownership, evidence, verification, and artifact-version information.
-- Operators have a defined rollout, migration, and rollback boundary before default enablement; verified deployments converge on the durable research capabilities and pgvector serving.
+- The research design gives runs explicit budget, ownership, evidence, verification, and artifact-version information when its live adapter is completed.
+- Operators have separate migration and rollback paths for the live-research foundation and pgvector serving; vector cutover does not require enabling the fixture route.
 
 ### Negative Consequences
 
@@ -65,7 +65,7 @@ Operators can disable the feature gates and route compatible work through the pr
 
 ## Confirmation
 
-For each capability, its implementation review must identify the relevant feature flag, public-surface impact, schema/version behavior, migration and rollback evidence, and test coverage. Before enabling it by default in the standard deployment, confirm operator backup/restore evidence, deployment configuration, and required CI gates. Until those checks are complete, documentation must label the API capability experimental and must not present it as a default-enabled guarantee.
+For pgvector, confirm backup/restore evidence, exact backfill parity, Qdrant rollback writes, deployment configuration, and required CI gates before cutover. Keep `FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS=false` while the route is fixture-backed; preserve the existing research flags needed for retained-record access. This opt-in must not be used for production research. A future live adapter requires separate HTTP/MCP, retained-byte, crash-recovery, budget, and cancellation acceptance before its production run admission is enabled. Documentation must continue to identify the current route as a scripted demonstration until then.
 
 ## Links
 

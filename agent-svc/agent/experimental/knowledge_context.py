@@ -46,10 +46,13 @@ class ContentReference(StrictRecord):
 
 class ReferencedSnapshot(StrictRecord):
     snapshot_id: Identity
-    canonical_url: Annotated[
-        str, Field(max_length=8192, pattern=r"^https?://[^\s/]+(?:/[^\s]*)?$")
-    ]
-    retrieved_at: Timestamp
+    canonical_url: (
+        Annotated[
+            str, Field(max_length=8192, pattern=r"^https?://[^\s/]+(?:/[^\s]*)?$")
+        ]
+        | None
+    )
+    retrieved_at: Timestamp | None
     normalization_version: Identity
     media_type: MediaType
     content_ref: ContentReference
@@ -148,7 +151,10 @@ class KnowledgeContext(StrictRecord):
                 source.content_ref.snapshot_id,
             ) != (self.scope_id, self.research_id, source.snapshot_id):
                 raise ValueError("source reference crosses logical context identity")
-            if moment(source.retrieved_at) > created:
+            if (
+                source.retrieved_at is not None
+                and moment(source.retrieved_at) > created
+            ):
                 raise ValueError("context predates acquisition")
         if any(e.snapshot_id not in snapshots for e in self.evidence):
             raise ValueError("evidence references an unavailable snapshot")

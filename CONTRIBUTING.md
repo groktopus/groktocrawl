@@ -109,6 +109,10 @@ The Docker command above remains the integration-test path.
 
 All tests must pass before a PR is merged.
 
+### Durable research acceptance
+
+`tests/service/test_live_research_recovery.py` exercises operation reuse, ambiguous-dispatch refusal, persistent failures and lease/cancel fencing with isolated Valkey. `tests/integration/test_live_research_http_adapters.py` additionally requires an isolated PostgreSQL schema16 database and runs actual HTTP search/capture/model digital twins. The runtime workflow provisions the durable profile and runs this test mandatorily. These twins require no provider credentials. Component tests alone do not establish objective-dependent retained research; changes to the durable adapter must preserve this full HTTP-to-retained-byte test and its recovery checks. Never point acceptance tests at a production database.
+
 ## Development Setup
 
 You need Docker and Docker Compose. No other dependencies are required — everything runs in containers.

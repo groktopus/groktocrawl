@@ -451,7 +451,10 @@ class RuntimeGateWorkflowContractTests(unittest.TestCase):
         # refreshed from the latest published images so unchanged services match a
         # known commit; GHCR login runs for pull_request events.
         self.assertIn("Pull freshly published service images", self.integration_tests)
-        self.assertIn("docker compose --profile indexing pull", self.integration_tests)
+        self.assertIn(
+            "docker compose --profile indexing --profile durable-research pull",
+            self.integration_tests,
+        )
         self.assertIn(
             "github.event_name == 'push' && github.ref == 'refs/heads/main'",
             self.integration_tests,
@@ -460,7 +463,10 @@ class RuntimeGateWorkflowContractTests(unittest.TestCase):
 
     def test_main_push_pulls_published_images_without_rebuilding(self) -> None:
         self.assertIn("Pull freshly published service images", self.integration_tests)
-        self.assertIn("docker compose --profile indexing pull", self.integration_tests)
+        self.assertIn(
+            "docker compose --profile indexing --profile durable-research pull",
+            self.integration_tests,
+        )
         self.assertIn(
             "github.event_name == 'push' && github.ref == 'refs/heads/main'",
             self.integration_tests,
@@ -479,9 +485,13 @@ class RuntimeGateWorkflowContractTests(unittest.TestCase):
         )
 
     def test_start_stack_step_no_longer_uses_build(self) -> None:
-        self.assertIn("docker compose --profile indexing up -d", self.integration_tests)
+        self.assertIn(
+            "docker compose --profile indexing --profile durable-research up -d",
+            self.integration_tests,
+        )
         self.assertNotIn(
-            "docker compose --profile indexing up --build -d", self.integration_tests
+            "docker compose --profile indexing --profile durable-research up --build -d",
+            self.integration_tests,
         )
         # The only `up` is build-less: no event rebuilds the full stack on top of
         # an already-provisioned image set.
@@ -574,7 +584,7 @@ class RuntimeGateWorkflowContractTests(unittest.TestCase):
         self.assertLess(probe_index, targeted_index)
         self.assertLess(targeted_index, critical_index)
         self.assertNotIn(
-            "SEARXNG_URL=http://slopsearx-fixture:8080 docker compose --profile indexing up -d",
+            "SEARXNG_URL=http://slopsearx-fixture:8080 docker compose --profile indexing --profile durable-research up -d",
             self.integration_tests,
         )
         self.assertIn("--cov=/app/agent", self.integration_tests)

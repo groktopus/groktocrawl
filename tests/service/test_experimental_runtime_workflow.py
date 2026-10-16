@@ -59,12 +59,20 @@ def test_stack_is_built_locally_with_fixture_search_and_owned_volumes():
     job = WORKFLOW["jobs"]["integration-tests"]
     assert job["env"]["COMPOSE_FILE"] == "docker-compose.yml:docker-compose.ci.yml"
     commands = "\n".join(step.get("run", "") for step in job["steps"])
-    assert "--profile indexing --profile fixture build" in commands
+    assert (
+        "--profile indexing --profile fixture --profile durable-research build"
+        in commands
+    )
     assert "up -d --no-build --pull never" in commands
     assert "scripts/ci_public_image_prefetch.py" in commands
     assert "--group runtime" in commands
     assert "--profile indexing" in commands
     assert "--profile fixture" in commands
+    assert "--profile durable-research" in commands
+    assert "DURABLE_RESEARCH_POSTGRES_DSN=" in commands
+    assert "PGPASSFILE=/tmp/postgres.pgpass" in commands
+    assert "SEARXNG_URL=http://slopsearx-fixture:8080" in commands
+    assert "SEARCH_BASE_URL=http://slopsearx-fixture:8080" in commands
     assert "LLM_BASE_URL=http://llm-svc:8011/v1?run_id=" in commands
     assert "docker rm -f" not in commands
     assert "down --volumes --remove-orphans" in commands
@@ -75,6 +83,31 @@ def test_stack_is_built_locally_with_fixture_search_and_owned_volumes():
         "compose.protected-capture-lab.yml",
     ):
         assert f'docker cp {filename} "$svc":/app/{filename}' in commands
+
+
+def test_standard_integration_provisions_durable_database():
+    workflow = yaml.safe_load((ROOT / ".github/workflows/docker.yml").read_text())
+    jobs = workflow["jobs"].values()
+    job = next(job for job in jobs if job.get("name") == "Integration Tests")
+    steps = {step.get("name"): step for step in job["steps"]}
+    assert "--profile durable-research up -d" in steps["Start the Docker stack"]["run"]
+    assert "--profile durable-research down" in steps["Tear down stack"]["run"]
+    assert "/app/tests/integration/" in steps["Run integration tests"]["run"]
+    assert job["env"]["COMPOSE_PROJECT_NAME"].endswith(
+        "${{ github.run_id }}-${{ github.run_attempt }}"
+    )
+    assert "token_urlsafe(32)" in steps["Set up .env"]["run"]
+    assert "umask 077" in steps["Set up .env"]["run"]
+    assert (
+        "DURABLE_RESEARCH_POSTGRES_PASSWORD_FILE=$research_password_file"
+        in steps["Set up .env"]["run"]
+    )
+    assert "--volumes" in steps["Tear down stack"]["run"]
+    assert (
+        "label=com.docker.compose.project=$COMPOSE_PROJECT_NAME"
+        in steps["Force-remove all stale project containers"]["run"]
+    )
+    assert "rm -f" in steps["Tear down stack"]["run"]
 
 
 def test_protected_browser_profile_is_required_by_runtime_gate():
