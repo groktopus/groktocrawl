@@ -98,4 +98,5 @@ An Architecture Decision Record captures an important architectural decision mad
 | 0068 | [Select bounded evidence from complete sources](0068-bounded-full-source-evidence.md) | proposed |
 | 0069 | [Adopt a Bounded Research Substrate](0069-adopt-bounded-research-substrate.md) | accepted; rollout-gated adoption in standard deployment |
 | 0070 | [Execute live durable research with persisted external-call receipts](0070-execute-live-durable-research.md) | proposed; implementation acceptance pending |
+| 0072 | [Recover Legacy Async Jobs with Valkey Leases](0072-valkey-leased-legacy-job-recovery.md) | accepted |
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full ADR workflow: when to write an ADR, how to number it, and how to get it reviewed in a PR. Experimental records are linked from the provenance archive, not included in the mainline sequence.

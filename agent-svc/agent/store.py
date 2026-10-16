@@ -8,9 +8,139 @@ under concurrency (VAL-CONC-042).
 
 import json
 import uuid
+from contextvars import ContextVar
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from redis import Redis
+
+_EXECUTION_CONTEXT: ContextVar[tuple[str, str, int] | None] = ContextVar(
+    "groktocrawl_job_execution_context", default=None
+)
+_WEBHOOK_STORE_CONTEXT: ContextVar[Any | None] = ContextVar(
+    "groktocrawl_webhook_store_context", default=None
+)
+
+_ENQUEUE_WEBHOOK_SCRIPT = """
+local existing = redis.call('GET', KEYS[2])
+if existing then return redis.call('HGET', KEYS[1], existing) end
+redis.call('HSET', KEYS[1], ARGV[1], ARGV[2])
+redis.call('SET', KEYS[2], ARGV[1], 'EX', ARGV[3])
+redis.call('EXPIRE', KEYS[1], ARGV[3])
+return ARGV[2]
+"""
+_CLAIM_WEBHOOK_SCRIPT = """
+local raw = redis.call('HGET', KEYS[1], ARGV[1])
+if not raw then return nil end
+local event = cjson.decode(raw)
+if event.status == 'delivered' or event.status == 'abandoned' then return nil end
+if event.lease_owner and event.lease_owner ~= cjson.null and tonumber(event.lease_expires_at or 0) > tonumber(ARGV[3]) then return nil end
+event.lease_owner = ARGV[2]
+event.lease_expires_at = tonumber(ARGV[3]) + tonumber(ARGV[4])
+event.status = 'delivering'
+redis.call('HSET', KEYS[1], ARGV[1], cjson.encode(event))
+return cjson.encode(event)
+"""
+_FINISH_WEBHOOK_SCRIPT = """
+local raw = redis.call('HGET', KEYS[1], ARGV[1])
+if not raw then return 0 end
+local event = cjson.decode(raw)
+if event.lease_owner ~= ARGV[2] then return 0 end
+event.lease_owner = nil
+event.lease_expires_at = 0
+event.attempts = tonumber(event.attempts or 0) + 1
+if ARGV[3] == 'delivered' or ARGV[3] == 'abandoned' then
+ event.status = ARGV[3]
+else
+ event.status = 'pending'
+end
+event.last_error = ARGV[4]
+redis.call('HSET', KEYS[1], ARGV[1], cjson.encode(event))
+return 1
+"""
+
+_COMPLETE_FENCED_SCRIPT = """
+local raw = redis.call('GET', KEYS[1])
+if not raw then return 0 end
+local meta = cjson.decode(raw)
+local e = meta.execution
+if (meta.status ~= 'processing' and meta.status ~= 'retry_scheduled') or type(e) ~= 'table' then return 0 end
+if e.lease_owner ~= ARGV[1] or tonumber(e.fence) ~= tonumber(ARGV[2]) then return 0 end
+if tonumber(e.lease_expires_at or 0) <= tonumber(ARGV[3]) then return 0 end
+meta.status = 'completed'
+meta.completed_at = ARGV[4]
+e.state = 'completed'
+e.pending_operation = nil
+e.lease_owner = nil
+e.lease_expires_at = 0
+e.checkpoint = {kind='terminal', status='completed', at=ARGV[4]}
+local data = cjson.decode(ARGV[5])
+data.completed = tonumber(redis.call('GET', KEYS[3]) or data.completed or 0)
+redis.call('SET', KEYS[1], cjson.encode(meta), 'KEEPTTL')
+redis.call('SET', KEYS[2], cjson.encode(data), 'EX', ARGV[6])
+if ARGV[7] ~= '' and not redis.call('GET', KEYS[5]) then
+ redis.call('HSET', KEYS[4], ARGV[8], ARGV[9])
+ redis.call('SET', KEYS[5], ARGV[8], 'EX', ARGV[6])
+ redis.call('EXPIRE', KEYS[4], ARGV[6])
+end
+return 1
+"""
+_FAIL_FENCED_SCRIPT = """
+local raw = redis.call('GET', KEYS[1])
+if not raw then return 0 end
+local meta = cjson.decode(raw)
+local e = meta.execution
+if (meta.status ~= 'processing' and meta.status ~= 'retry_scheduled') or type(e) ~= 'table' then return 0 end
+if e.lease_owner ~= ARGV[1] or tonumber(e.fence) ~= tonumber(ARGV[2]) then return 0 end
+if tonumber(e.lease_expires_at or 0) <= tonumber(ARGV[3]) then return 0 end
+meta.status = 'failed'
+meta.error = ARGV[4]
+meta.completed_at = ARGV[5]
+e.state = 'failed'
+e.pending_operation = nil
+e.lease_owner = nil
+e.lease_expires_at = 0
+e.checkpoint = {kind='terminal', status='failed', at=ARGV[5]}
+redis.call('SET', KEYS[1], cjson.encode(meta), 'KEEPTTL')
+if ARGV[7] ~= '' and not redis.call('GET', KEYS[3]) then
+ redis.call('HSET', KEYS[2], ARGV[8], ARGV[9])
+ redis.call('SET', KEYS[3], ARGV[8], 'EX', ARGV[6])
+ redis.call('EXPIRE', KEYS[2], ARGV[6])
+end
+return 1
+"""
+_CANCEL_SCRIPT = """
+local raw = redis.call('GET', KEYS[1])
+if not raw then return 0 end
+local meta = cjson.decode(raw)
+if meta.status ~= 'processing' and meta.status ~= 'retry_scheduled' then return 0 end
+meta.status = 'cancelled'
+meta.completed_at = ARGV[1]
+local e = meta.execution
+if type(e) == 'table' then
+  e.state = 'cancelled'
+  e.fence = tonumber(e.fence or 0) + 1
+  e.lease_owner = nil
+  e.lease_expires_at = 0
+  e.pending_operation = nil
+  e.checkpoint = {kind='terminal', status='cancelled', at=ARGV[1]}
+end
+redis.call('SET', KEYS[1], cjson.encode(meta), 'KEEPTTL')
+if ARGV[3] ~= '' and not redis.call('GET', KEYS[3]) then
+ redis.call('HSET', KEYS[2], ARGV[4], ARGV[5])
+ redis.call('SET', KEYS[3], ARGV[4], 'EX', ARGV[2])
+ redis.call('EXPIRE', KEYS[2], ARGV[2])
+end
+return 1
+"""
+_CREATE_PLAN_JOB_SCRIPT = """
+local plan = redis.call('GET', KEYS[1])
+if not plan then return nil end
+redis.call('SET', KEYS[2], ARGV[1], 'EX', ARGV[2])
+redis.call('SET', KEYS[3], 0, 'EX', ARGV[2])
+redis.call('DEL', KEYS[1])
+return plan
+"""
 
 
 def _now_iso() -> str:
@@ -53,11 +183,54 @@ class JobStore:
             "created_at": _now_iso(),
             "expires_at": _expires_iso(),
             "payload": payload or {},
+            # The public status remains ``processing`` for API compatibility;
+            # this internal state makes ownership recoverable across process
+            # loss. A new job is safe to dispatch until a worker claims it.
+            "execution": {
+                "version": 1,
+                "state": "queued",
+                "fence": 0,
+                "lease_owner": None,
+                "lease_expires_at": None,
+                "pending_operation": None,
+                "checkpoint": None,
+            },
         }
         self.redis.set(f"job:{job_id}:meta", json.dumps(meta), ex=_default_ttl())
         # Initialize atomic completed counter
         self.redis.set(_COMPLETED_KEY.format(id=job_id), 0, ex=_default_ttl())
         return job_id
+
+    def create_plan_execution_job(self, plan_id: str, payload: dict) -> str | None:
+        """Atomically consume a plan while creating its durable execution job."""
+        job_id = str(uuid.uuid4())
+        meta = {
+            "id": job_id,
+            "kind": "plan_execute",
+            "status": "processing",
+            "created_at": _now_iso(),
+            "expires_at": _expires_iso(),
+            "payload": payload,
+            "execution": {
+                "version": 1,
+                "state": "queued",
+                "fence": 0,
+                "lease_owner": None,
+                "lease_expires_at": None,
+                "pending_operation": None,
+                "checkpoint": None,
+            },
+        }
+        raw_plan = self.redis.eval(
+            _CREATE_PLAN_JOB_SCRIPT,
+            3,
+            f"plan:{plan_id}",
+            f"job:{job_id}:meta",
+            _COMPLETED_KEY.format(id=job_id),
+            json.dumps(meta),
+            _default_ttl(),
+        )
+        return job_id if raw_plan is not None else None
 
     def increment_completed(self, job_id: str) -> int:
         """Atomically increment the completed page count for a crawl job.
@@ -138,7 +311,9 @@ class JobStore:
             meta["data"] = json.loads(data_raw)
         return meta  # type: ignore[no-any-return]
 
-    def complete_job(self, job_id: str, data: dict) -> None:
+    def complete_job(
+        self, job_id: str, data: dict, webhook_event: dict | None = None
+    ) -> bool:
         """Mark a job as completed with its result data.
 
         Only transitions ``processing`` → ``completed``. If the current
@@ -147,20 +322,49 @@ class JobStore:
         concurrent ``cancel_job()`` (e.g., via ``DELETE /v2/crawl/{id}``)
         is silently overwritten.
         """
+        context = _EXECUTION_CONTEXT.get()
+        if context is not None and context[0] == job_id:
+            result = self.redis.eval(
+                _COMPLETE_FENCED_SCRIPT,
+                5,
+                f"job:{job_id}:meta",
+                f"job:{job_id}:data",
+                _COMPLETED_KEY.format(id=job_id),
+                self._webhook_key(job_id),
+                f"job:{job_id}:webhook-fingerprint:{webhook_event['fingerprint']}"
+                if webhook_event
+                else f"job:{job_id}:webhook-fingerprint:none",
+                context[1],
+                context[2],
+                __import__("time").time(),
+                _now_iso(),
+                json.dumps(data),
+                _default_ttl(),
+                webhook_event["fingerprint"] if webhook_event else "",
+                webhook_event["event"]["webhookId"] if webhook_event else "",
+                json.dumps(webhook_event["event"]) if webhook_event else "",
+            )
+            if isinstance(result, int):
+                return result == 1
         meta_raw = self.redis.get(f"job:{job_id}:meta")
         if meta_raw is None:
-            return
+            return False
         meta = json.loads(meta_raw)
         if meta["status"] != "processing":
             # Job was cancelled, failed, or already completed concurrently.
             # Preserve the existing terminal status — do not overwrite.
-            return
+            return False
         meta["status"] = "completed"
         meta["completed_at"] = _now_iso()
         self.redis.set(f"job:{job_id}:meta", json.dumps(meta), ex=_default_ttl())
         # Ensure the final data payload has the correct completed count
         data["completed"] = self.get_completed(job_id)
         self.redis.set(f"job:{job_id}:data", json.dumps(data), ex=_default_ttl())
+        if webhook_event:
+            self.enqueue_webhook(
+                job_id, webhook_event["fingerprint"], webhook_event["event"]
+            )
+        return True
 
     def overwrite_job_data(self, job_id: str, data: dict) -> None:
         """Overwrite the data payload of an already-completed job.
@@ -172,7 +376,9 @@ class JobStore:
         data["completed"] = self.get_completed(job_id)
         self.redis.set(f"job:{job_id}:data", json.dumps(data), ex=_default_ttl())
 
-    def fail_job(self, job_id: str, error: str) -> None:
+    def fail_job(
+        self, job_id: str, error: str, webhook_event: dict | None = None
+    ) -> bool:
         """Mark a job as failed with an error message.
 
         Only transitions ``processing`` or ``retry_scheduled`` → ``failed``.
@@ -180,24 +386,67 @@ class JobStore:
         status is left unchanged. This prevents a race where a concurrent
         ``cancel_job()`` is silently overwritten with ``failed``.
         """
+        context = _EXECUTION_CONTEXT.get()
+        if context is not None and context[0] == job_id:
+            result = self.redis.eval(
+                _FAIL_FENCED_SCRIPT,
+                3,
+                f"job:{job_id}:meta",
+                self._webhook_key(job_id),
+                f"job:{job_id}:webhook-fingerprint:{webhook_event['fingerprint']}"
+                if webhook_event
+                else f"job:{job_id}:webhook-fingerprint:none",
+                context[1],
+                context[2],
+                __import__("time").time(),
+                error,
+                _now_iso(),
+                _default_ttl(),
+                webhook_event["fingerprint"] if webhook_event else "",
+                webhook_event["event"]["webhookId"] if webhook_event else "",
+                json.dumps(webhook_event["event"]) if webhook_event else "",
+            )
+            if isinstance(result, int):
+                return result == 1
         meta_raw = self.redis.get(f"job:{job_id}:meta")
         if meta_raw is None:
-            return
+            return False
         meta = json.loads(meta_raw)
         if meta["status"] not in ("processing", "retry_scheduled"):
             # Preserve existing terminal status (e.g., cancelled).
-            return
+            return False
         meta["status"] = "failed"
         meta["error"] = error
         meta["completed_at"] = _now_iso()
         self.redis.set(f"job:{job_id}:meta", json.dumps(meta), ex=_default_ttl())
+        if webhook_event:
+            self.enqueue_webhook(
+                job_id, webhook_event["fingerprint"], webhook_event["event"]
+            )
+        return True
 
-    def cancel_job(self, job_id: str) -> bool:
+    def cancel_job(self, job_id: str, webhook_event: dict | None = None) -> bool:
         """Cancel a job that's still processing or waiting to retry.
 
         Returns True if cancelled. A job waiting in ``retry_scheduled``
         is cancelled so no further retry starts (ADR-0053 AC-003.6).
         """
+        result = self.redis.eval(
+            _CANCEL_SCRIPT,
+            3,
+            f"job:{job_id}:meta",
+            self._webhook_key(job_id),
+            f"job:{job_id}:webhook-fingerprint:{webhook_event['fingerprint']}"
+            if webhook_event
+            else f"job:{job_id}:webhook-fingerprint:none",
+            _now_iso(),
+            _default_ttl(),
+            webhook_event["fingerprint"] if webhook_event else "",
+            webhook_event["event"]["webhookId"] if webhook_event else "",
+            json.dumps(webhook_event["event"]) if webhook_event else "",
+        )
+        if isinstance(result, int):
+            return result == 1
         meta_raw = self.redis.get(f"job:{job_id}:meta")
         if meta_raw is None:
             return False
@@ -207,6 +456,10 @@ class JobStore:
         meta["status"] = "cancelled"
         meta["completed_at"] = _now_iso()
         self.redis.set(f"job:{job_id}:meta", json.dumps(meta), ex=_default_ttl())
+        if webhook_event:
+            self.enqueue_webhook(
+                job_id, webhook_event["fingerprint"], webhook_event["event"]
+            )
         return True
 
     def schedule_retry(
@@ -312,6 +565,100 @@ class JobStore:
             if cursor == 0:
                 break
         return active
+
+    def list_processing_jobs(self, limit: int = 500) -> list[dict]:
+        """Return bounded processing records for startup recovery scans."""
+        jobs: list[dict] = []
+        cursor = 0
+        while len(jobs) < limit:
+            cursor, keys = self.redis.scan(cursor=cursor, match="job:*:meta", count=100)
+            if keys:
+                pipe = self.redis.pipeline()
+                for key in keys:
+                    pipe.get(key)
+                for raw in pipe.execute():
+                    if raw is None:
+                        continue
+                    meta = json.loads(raw)
+                    if meta.get("status") in ("processing", "retry_scheduled"):
+                        jobs.append(meta)
+                        if len(jobs) >= limit:
+                            return jobs
+            if cursor == 0:
+                break
+        return jobs
+
+    @staticmethod
+    def _webhook_key(job_id: str) -> str:
+        return f"job:{job_id}:webhooks"
+
+    def enqueue_webhook(self, job_id: str, fingerprint: str, event: dict) -> dict:
+        """Persist a webhook event before network delivery; return canonical event."""
+        webhook_id = str(event["webhookId"])
+        raw = json.dumps({**event, "status": "pending", "attempts": 0})
+        result = self.redis.eval(
+            _ENQUEUE_WEBHOOK_SCRIPT,
+            2,
+            self._webhook_key(job_id),
+            f"job:{job_id}:webhook-fingerprint:{fingerprint}",
+            webhook_id,
+            raw,
+            _default_ttl(),
+        )
+        return json.loads(result)
+
+    def claim_webhook(
+        self, job_id: str, webhook_id: str, owner: str, lease: int = 30
+    ) -> dict | None:
+        result = self.redis.eval(
+            _CLAIM_WEBHOOK_SCRIPT,
+            1,
+            self._webhook_key(job_id),
+            webhook_id,
+            owner,
+            datetime.now(UTC).timestamp(),
+            lease,
+        )
+        return json.loads(result) if result else None
+
+    def finish_webhook(
+        self,
+        job_id: str,
+        webhook_id: str,
+        owner: str,
+        status: str,
+        error: str | None = None,
+    ) -> bool:
+        result = self.redis.eval(
+            _FINISH_WEBHOOK_SCRIPT,
+            1,
+            self._webhook_key(job_id),
+            webhook_id,
+            owner,
+            status,
+            error or "",
+        )
+        return result == 1
+
+    def list_pending_webhooks(self, limit: int = 500) -> list[dict]:
+        events: list[dict] = []
+        cursor = 0
+        while len(events) < limit:
+            cursor, keys = self.redis.scan(
+                cursor=cursor, match="job:*:webhooks", count=100
+            )
+            for key in keys:
+                job_id = key.split(":", 2)[1]
+                for raw in self.redis.hgetall(key).values():
+                    event = json.loads(raw)
+                    if event.get("status") in ("pending", "delivering"):
+                        event["job_id"] = job_id
+                        events.append(event)
+                        if len(events) >= limit:
+                            return events
+            if cursor == 0:
+                break
+        return events
 
     def count_active_jobs(self, kind: str | None = None) -> int:
         """Count the number of jobs currently in 'processing' status.

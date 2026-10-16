@@ -355,14 +355,18 @@ async def create_agent(request: Request, body: AgentRequest, response: Response)
 
     # ── Sync path — create job, process in background ─────────────
     store: JobStore = request.app.state.job_store
-    job_id = store.create_job(
-        kind="agent", payload=body.model_dump(exclude_none=True, by_alias=True)
-    )
+    job_payload = body.model_dump(exclude_none=True, by_alias=True)
+    job_payload["recovery_user_id"] = _derive_user_id(request)
+    job_id = store.create_job(kind="agent", payload=job_payload)
 
     from ..worker import _process_agent_async
 
     user_id = _derive_user_id(request)
-    request.app.state.task_tracker.create_background_task(
+    from ..job_execution import submit_job
+
+    submit_job(
+        request,
+        job_id,
         _process_agent_async(
             job_id=job_id,
             prompt=body.prompt,
@@ -390,7 +394,6 @@ async def create_agent(request: Request, body: AgentRequest, response: Response)
             task_tracker=request.app.state.task_tracker,
             evidence_budget_chars=body.evidence_budget_chars,
         ),
-        job_id=job_id,
     )
 
     response.headers["X-Search-Budget"] = f"{max_searches}/{max_searches}"
@@ -411,6 +414,7 @@ async def get_agent_status(request: Request, job_id: str) -> AgentStatusResponse
         status=job.get("status", "processing"),
         data=job.get("data"),
         error=job.get("error"),
+        error_code=job.get("error_code"),
         expires_at=job.get("completed_at") or job.get("created_at"),
         retry_at=job.get("retry_at"),
         retry_attempt=job.get("retry_attempt"),

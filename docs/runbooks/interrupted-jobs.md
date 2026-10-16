@@ -4,11 +4,12 @@ Owner: GroktoCrawl maintainers
 
 ## When to use
 
-After an `agent-svc` restart, crash, forced termination, or deployment, jobs that were in flight may remain `processing` until their 24-hour record TTL expires. Background execution is best-effort and not restart-safe (see [ADR-0047](../adr/0047-defer-restart-safe-execution.md)): interrupted work is not resumed, partial artifacts are not rolled back, and undelivered completion or failure webhooks are not replayed. There is **no durability SLO** for in-flight execution.
+After an `agent-svc` restart, startup recovery dispatches jobs whose versioned Valkey marker proves they were still queued and never claimed. Work that had started is never replayed. After its 45-second lease expires, the record becomes `failed` with `error_code=OUTCOME_UNKNOWN`; a provider or downstream service may already have completed the operation. Pre-marker records follow the same fail-closed rule. Partial artifacts are not rolled back. Completion/failure webhook intents are persisted and retried at-least-once with the original `webhookId`; receivers must deduplicate it. See [ADR-0072](../adr/0072-valkey-leased-legacy-job-recovery.md).
 
 ## Symptoms
 
-- Jobs stuck in `processing` well beyond their expected runtime. Crawl jobs are bounded by `CRAWL_MAX_DURATION_SECONDS` (default 1800s) and `CRAWL_IDLE_TIMEOUT_SECONDS` (default 300s).
+- A job remains `processing` well beyond startup and the 45-second execution lease.
+- A job changes to `failed` with `OUTCOME_UNKNOWN` after an interrupted worker loses its lease.
 - Clients polling job status never reach `completed` or `failed`.
 - `agent-svc` restarted, was killed, or was redeployed while jobs were in flight.
 - Completion or failure webhooks were not received after a restart.
@@ -23,13 +24,13 @@ After an `agent-svc` restart, crash, forced termination, or deployment, jobs tha
 
    Crawl-only: `curl -s http://localhost:8080/v2/crawl/active`.
 
-2. **Flag jobs older than a threshold** (dry-run by default — nothing is modified):
+2. **Check for stale records after startup recovery** (dry-run by default — nothing is modified):
 
    ```bash
    docker compose exec agent-svc python3 /app/scripts/reconcile-jobs.py --stale-after 3600
    ```
 
-   Lower the threshold right after a known restart (e.g. `--stale-after 60`) to sweep jobs orphaned by that restart. Filter by kind with `--kind crawl|agent|extract|batch_scrape|llmstxt|plan_execute`; add `--json` for machine-readable output. The tool exits `1` when stranded jobs are found, so it can be used as an alerting check. Set `--stale-after` above your longest legitimate job runtime — the default 3600s exceeds the crawl cap (`CRAWL_MAX_DURATION_SECONDS` default 1800s), but agent research jobs have no hard duration cap, so run the tool while `agent-svc` is stopped to avoid misclassifying a live long-running job (`--fail` requires `--assume-stopped` for exactly this reason).
+   Startup recovery should redispatch safe queued records and fail interrupted active records after their lease expires. If `processing` records remain after that window, use the tool to investigate; do not resubmit them until the external effect is checked. Filter by kind with `--kind crawl|agent|extract|batch_scrape|llmstxt|plan_execute`; add `--json` for machine-readable output. The tool exits `1` when stranded jobs are found.
 
 3. **Raw Valkey inspection (fallback, no Python client needed):**
 
@@ -38,11 +39,13 @@ After an `agent-svc` restart, crash, forced termination, or deployment, jobs tha
    docker compose exec valkey valkey-cli GET 'job:<job_id>:meta'
    ```
 
-   Each record includes `status`, `created_at`, and `kind`. A `processing` record whose `created_at` predates the restart is stranded.
+   Records include an internal `execution` marker. `state=queued` is eligible for safe redispatch; `state=running` with an expired lease is not replayed. A missing marker means the job predates this recovery protocol and will be marked `OUTCOME_UNKNOWN`.
 
 ## Resolve interrupted jobs
 
-1. **Where a cancel endpoint exists, cancel instead of failing:**
+1. **For `OUTCOME_UNKNOWN`, inspect before resubmitting.** Check provider or downstream logs and any partial job artifacts to determine whether the requested effect already happened. A new submission receives a new job ID and can repeat those effects.
+
+2. **For a still-live job, use its cancel endpoint:**
 
    ```bash
    curl -X DELETE http://localhost:8080/v2/crawl/<job_id>
@@ -50,25 +53,25 @@ After an `agent-svc` restart, crash, forced termination, or deployment, jobs tha
    curl -X DELETE http://localhost:8080/v2/batch/scrape/<job_id>
    ```
 
-   Extract, llmstxt, and plan-execution jobs have no cancel endpoint — use step 2.
+   Extract, llmstxt, and plan-execution jobs have no cancel endpoint.
 
-2. **Reconcile stranded jobs (processing -> failed only):**
+3. **Use manual reconciliation only as a fallback** if startup recovery leaves a stale `processing` record. Stop `agent-svc` first:
 
    ```bash
    docker compose exec agent-svc python3 /app/scripts/reconcile-jobs.py --stale-after 3600 --fail --assume-stopped
    ```
 
-   `--assume-stopped` is your attestation that `agent-svc` is stopped: the tool refuses `--fail` without it because failing a job whose worker is still alive would make the worker's later completion no-op and silently discard its final result. The tool re-reads each record immediately before writing and only transitions records still in `processing`, so a job that completed or was cancelled in the meantime is not overwritten in the common case (best-effort read-check-write, matching `JobStore.fail_job` semantics — not atomic). Re-run the dry-run to confirm nothing remains in `processing`.
+   `--assume-stopped` is required because a live worker must not be failed manually. The normal lease recovery path uses atomic fenced transitions; the reconciliation script remains a best-effort operator fallback.
 
-3. **Re-submit critical work.** The original request is not replayed; re-run the client command (e.g. `./groktocrawl crawl ...`). Webhook consumers should deduplicate by `webhookId` — a re-submitted job delivers a fresh event with a fresh `webhookId`.
+4. **Re-submit only after checking the effect.** The original request is never replayed after a worker has started. A new job has a new ID and webhook event IDs.
 
-4. **Let expiry handle the rest.** Records TTL out 24 hours after creation; reconciled `failed` records preserve the original TTL.
+5. **Let expiry handle the rest.** Job and outbox records expire 24 hours after creation.
 
 ## Prevention
 
 - Deploy and restart with graceful shutdowns (`docker compose stop`, `docker compose up -d --force-recreate`) so in-flight tasks get the five-second ADR-0035 grace period; avoid `docker compose kill` and `SIGKILL` unless necessary.
-- Alert on stranded jobs: run `scripts/reconcile-jobs.py --stale-after <threshold>` on a schedule and page on exit code `1`, or monitor `GET /v2/activity` after known restart events.
-- Track durable-execution milestones in [ADR-0047](../adr/0047-defer-restart-safe-execution.md) (leases, reconciliation surface, webhook outbox, queue-backed worker, artifact consistency) and re-evaluate when restart incidents become frequent.
+- Alert on records that remain `processing` beyond the lease window and monitor `OUTCOME_UNKNOWN` failures after restarts.
+- Review the bounded recovery contract and remaining cross-service artifact-consistency limitation in [ADR-0072](../adr/0072-valkey-leased-legacy-job-recovery.md).
 
 ## Escalation
 

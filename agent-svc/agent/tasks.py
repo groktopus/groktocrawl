@@ -45,6 +45,13 @@ class TaskTracker:
         ``job_id`` is provided, the owning task is remembered for
         per-job cancellation.
         """
+        if job_id is not None:
+            existing = self._job_tasks.get(job_id)
+            if existing is not None and not existing.done():
+                # Startup recovery and the request path can observe the same
+                # queued record. Keep one worker and preserve its cancel owner.
+                coro.close()
+                return existing
         task: asyncio.Task[Any] = asyncio.create_task(coro)
         self._tasks.add(task)
         task.add_done_callback(self._tasks.discard)

@@ -48,7 +48,7 @@ Architecture Decision Records (ADRs) live in `docs/adr/` and capture the context
 
 ### Inline async processing (no RQ worker)
 
-Jobs are processed with `asyncio.create_task()` inside the API process. Valkey persists job records, not execution: interrupted jobs are not resumed after restart, partial artifacts can remain, and undelivered webhooks are not replayed. `TaskTracker` provides only a short graceful-shutdown window. Restart-safe execution is deferred until it is an explicit product requirement; any future design must define ownership, leases, retries, cancellation, artifact consistency, and webhook idempotency in an ADR before selecting queue technology.
+Jobs are processed with `asyncio.create_task()` inside the API process. New records carry a versioned Valkey execution marker and lease: a fresh process may redispatch only jobs still queued and never claimed. Claimed work is never blindly replayed; after lease expiry it becomes `failed` with `OUTCOME_UNKNOWN`. Completion/failure webhook intents are persisted in the Valkey outbox with stable UUIDv4 `webhookId` values and retried at-least-once. Partial artifacts across Valkey, the scraper, semantic index, and research memory are not transactionally rolled back. See [ADR-0072](docs/adr/0072-valkey-leased-legacy-job-recovery.md) and the [interrupted-jobs runbook](docs/runbooks/interrupted-jobs.md); do not describe this as exactly-once execution or general resumability.
 
 ### Durable research execution
 
