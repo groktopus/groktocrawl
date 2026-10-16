@@ -1,6 +1,7 @@
 """Session route handlers — multi-step research sessions."""
 
 import logging
+from functools import partial
 from typing import Any
 
 from fastapi import APIRouter, Query, Request
@@ -17,6 +18,7 @@ from ..models import (
     SessionStepRequest,
     SessionStepResponse,
 )
+from ..research_sources import resolve_attached_reference
 from ..session_scope import authorize_session, request_scope
 from ._helpers import _get_redis_url
 
@@ -43,9 +45,12 @@ async def select_session_evidence(
     from ..session import SessionManager
     from ..session_scope import authorize_session
 
-    mgr = SessionManager(redis_url=_get_redis_url(request))
+    mgr = SessionManager(
+        redis_url=_get_redis_url(request),
+        reference_resolver=partial(resolve_attached_reference, request=request),
+    )
     await authorize_session(mgr.store, session_id, request)
-    source = await mgr.store.aget_ref(session_id, ref_id)
+    source = await mgr.resolve_ref(session_id, ref_id)
     if source is None or not source.get("markdown"):
         raise NotFoundError(detail="Retained evidence not found")
     digest = text_digest(source["markdown"])
@@ -83,7 +88,7 @@ async def select_session_evidence(
             raise InvalidRequestError(detail=str(exc)) from exc
     # Session/ref liveness may have changed while scanning; fail closed.
     await authorize_session(mgr.store, session_id, request)
-    current = await mgr.store.aget_ref(session_id, ref_id)
+    current = await mgr.resolve_ref(session_id, ref_id)
     if current is None or text_digest(current.get("markdown") or "") != digest:
         raise NotFoundError(detail="Retained evidence no longer available")
     return {
@@ -127,7 +132,10 @@ async def create_session(request: Request, body: SessionCreateRequest) -> Any:
     """
     from ..session import SessionManager
 
-    mgr = SessionManager(redis_url=_get_redis_url(request))
+    mgr = SessionManager(
+        redis_url=_get_redis_url(request),
+        reference_resolver=partial(resolve_attached_reference, request=request),
+    )
     session_id = await mgr.create_session(
         ttl=body.ttl, owner_scope=request_scope(request)
     )
@@ -154,7 +162,10 @@ async def session_step(
     """
     from ..session import SessionManager
 
-    mgr = SessionManager(redis_url=_get_redis_url(request))
+    mgr = SessionManager(
+        redis_url=_get_redis_url(request),
+        reference_resolver=partial(resolve_attached_reference, request=request),
+    )
     await authorize_session(mgr.store, session_id, request)
     try:
         result = await mgr.step(
@@ -191,7 +202,10 @@ async def get_session(request: Request, session_id: str) -> Any:
     """Get session status, step history, and artifact length."""
     from ..session import SessionManager
 
-    mgr = SessionManager(redis_url=_get_redis_url(request))
+    mgr = SessionManager(
+        redis_url=_get_redis_url(request),
+        reference_resolver=partial(resolve_attached_reference, request=request),
+    )
     await authorize_session(mgr.store, session_id, request)
     session = await mgr.get_session(session_id)
     if session is None:
@@ -212,7 +226,10 @@ async def export_session(request: Request, session_id: str) -> Any:
     """Export the accumulated session artifact as markdown."""
     from ..session import SessionManager
 
-    mgr = SessionManager(redis_url=_get_redis_url(request))
+    mgr = SessionManager(
+        redis_url=_get_redis_url(request),
+        reference_resolver=partial(resolve_attached_reference, request=request),
+    )
     await authorize_session(mgr.store, session_id, request)
     try:
         export = await mgr.export_session(session_id)
@@ -226,7 +243,10 @@ async def delete_session(request: Request, session_id: str) -> Any:
     """Delete a session and all associated data."""
     from ..session import SessionManager
 
-    mgr = SessionManager(redis_url=_get_redis_url(request))
+    mgr = SessionManager(
+        redis_url=_get_redis_url(request),
+        reference_resolver=partial(resolve_attached_reference, request=request),
+    )
     try:
         await authorize_session(mgr.store, session_id, request)
     except NotFoundError:
@@ -264,7 +284,10 @@ async def resolve_session_refs(
     """
     from ..session import SessionManager
 
-    mgr = SessionManager(redis_url=_get_redis_url(request))
+    mgr = SessionManager(
+        redis_url=_get_redis_url(request),
+        reference_resolver=partial(resolve_attached_reference, request=request),
+    )
     await authorize_session(mgr.store, session_id, request)
     session = await mgr.get_session(session_id)
     if session is None:

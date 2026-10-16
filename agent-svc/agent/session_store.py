@@ -493,6 +493,55 @@ class SessionStore:
             )
         )
 
+    async def aattach_research(
+        self,
+        session_id: str,
+        run_id: str,
+        expected_revision: int,
+        refs: dict[str, dict],
+        owner_scope: str,
+    ) -> int:
+        """Atomically attach scoped reference pointers and advance their revision."""
+        script = """
+        -- session_attach_research_v1
+        if redis.call('exists', KEYS[1]) == 0 then return -2 end
+        if redis.call('hget', KEYS[1], 'owner_scope') ~= ARGV[1] then return -2 end
+        if ARGV[4] == '' or redis.call('get', KEYS[3]) ~= ARGV[4] then return -3 end
+        local revision = tonumber(redis.call('hget', KEYS[1], 'research_attachment_revision') or '0')
+        if revision ~= tonumber(ARGV[2]) then return -1 end
+        if redis.call('hget', KEYS[1], 'research_attachment_run') == ARGV[3] then return revision end
+        local added = 0
+        for i = 5, #ARGV, 2 do
+            if redis.call('hexists', KEYS[2], ARGV[i]) == 0 then added = added + 1 end
+        end
+        if redis.call('hlen', KEYS[2]) + added > 256 then return -4 end
+        if #ARGV > 4 then redis.call('hset', KEYS[2], unpack(ARGV, 5)) end
+        revision = revision + 1
+        redis.call('hset', KEYS[1], 'research_attachment_revision', revision,
+                   'research_attachment_run', ARGV[3])
+        local ttl = redis.call('pttl', KEYS[1])
+        if ttl > 0 then redis.call('pexpire', KEYS[2], ttl) end
+        return revision
+        """
+        values = [
+            value for key, ref in refs.items() for value in (key, json.dumps(ref))
+        ]
+        return int(
+            await self._offload(
+                self.redis.eval,
+                script,
+                3,
+                _meta_key(session_id),
+                _refs_key(session_id),
+                _lock_key(session_id),
+                owner_scope,
+                expected_revision,
+                run_id,
+                _LOCK_OWNER.get() or "",
+                *values,
+            )
+        )
+
     async def aget_ref(self, session_id: str, ref_id: str) -> dict | None:
         return await self._offload(self.get_ref, session_id, ref_id)
 

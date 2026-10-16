@@ -141,9 +141,14 @@ async def test_owned_route_digest_paging_foreign_deletion_and_no_acquisition(
     store.aget_ref = AsyncMock(
         return_value={"markdown": text, "url": "https://example.com"}
     )
-    monkeypatch.setattr(
-        session_module, "SessionManager", lambda **_kwargs: MagicMock(store=store)
-    )
+    manager_type = session_module.SessionManager
+
+    def manager_with_store(**kwargs):
+        manager = manager_type(**kwargs)
+        manager.store = store
+        return manager
+
+    monkeypatch.setattr(session_module, "SessionManager", manager_with_store)
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://fixture"
     ) as client:

@@ -33,6 +33,8 @@ async def resolve_selected_sources(
         if item.kind == "session":
             await authorize_session(store, item.container_id, request)
             ref = await store.aget_ref(item.container_id, item.ref_id)
+            if ref is not None and ref.get("research_source"):
+                ref = await resolve_attached_reference(ref, request)
             if ref is None or not ref.get("markdown"):
                 raise HTTPException(404, "Selected session evidence unavailable")
             body = ref["markdown"]
@@ -66,3 +68,25 @@ async def resolve_selected_sources(
             }
         )
     return sources
+
+
+async def resolve_attached_reference(
+    ref: dict[str, Any], request: Request
+) -> dict[str, Any]:
+    """Recheck a linked root on every use; never cache its body in the session."""
+    pointer = ref.get("research_source")
+    if pointer is None:
+        return ref
+    selection = EvidenceChoice.model_validate(pointer)
+    if selection.kind != "root":
+        raise HTTPException(503, "Invalid retained research attachment")
+    material = (await resolve_selected_sources([selection], request))[0]
+    if material["content_digest"] != ref.get("content_digest"):
+        raise HTTPException(409, "Attached research evidence changed")
+    return {
+        **ref,
+        "markdown": material["markdown"],
+        "char_count": len(material["markdown"]),
+        "url": material["url"],
+        "scraped_at": material["retrieved_at"],
+    }

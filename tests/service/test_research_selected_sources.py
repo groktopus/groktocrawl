@@ -120,3 +120,55 @@ async def test_byte_budget_counts_utf8_not_characters(monkeypatch):
     with pytest.raises(HTTPException) as exc:
         await resolve_selected_sources([choice()], request())
     assert exc.value.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_attached_reference_resolves_current_root_bytes(monkeypatch):
+    from agent.research_sources import resolve_attached_reference
+
+    body = "Current retained source"
+    digest = hashlib.sha256(body.encode()).hexdigest()
+    reader = AsyncMock(return_value={"body": body, "content_digest": digest})
+    monkeypatch.setattr(
+        "agent.routes.experimental_research.get_experimental_evidence", reader
+    )
+    ref = {"research_source": choice().model_dump(), "content_digest": digest}
+    result = await resolve_attached_reference(ref, request())
+    assert result["markdown"] == body
+    assert "markdown" not in ref
+    reader.side_effect = HTTPException(410, "Deleted")
+    with pytest.raises(HTTPException) as exc:
+        await resolve_attached_reference(ref, request())
+    assert exc.value.status_code == 410
+
+
+@pytest.mark.asyncio
+async def test_attached_reference_rejects_changed_digest(monkeypatch):
+    from agent.research_sources import resolve_attached_reference
+
+    body = "Changed retained source"
+    monkeypatch.setattr(
+        "agent.routes.experimental_research.get_experimental_evidence",
+        AsyncMock(
+            return_value={
+                "body": body,
+                "content_digest": hashlib.sha256(body.encode()).hexdigest(),
+            }
+        ),
+    )
+    with pytest.raises(HTTPException) as exc:
+        await resolve_attached_reference(
+            {"research_source": choice().model_dump(), "content_digest": "0" * 64},
+            request(),
+        )
+    assert exc.value.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_session_manager_requires_scoped_resolver_for_attached_ref():
+    from agent.session import SessionManager
+
+    manager = SessionManager()
+    ref = {"research_source": choice().model_dump(), "content_digest": "0" * 64}
+    with pytest.raises(ValueError, match="scoped resolution"):
+        await manager._resolve_attached_ref(ref)

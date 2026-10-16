@@ -11,6 +11,7 @@ import inspect
 import json
 import logging
 import uuid
+from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from typing import Any
 
@@ -60,9 +61,11 @@ class SessionManager:
         self,
         redis_url: str = "redis://localhost:6379/0",
         default_ttl: int = 3600,
+        reference_resolver: Callable[[dict], Awaitable[dict]] | None = None,
     ):
         self.store = SessionStore(redis_url=redis_url, default_ttl=default_ttl)
         self.default_ttl = default_ttl
+        self.reference_resolver = reference_resolver
 
     async def _store_call(
         self, async_name: str, sync_name: str, *args: Any, **kwargs: Any
@@ -415,6 +418,13 @@ class SessionManager:
 
         return result
 
+    async def _resolve_attached_ref(self, ref: dict) -> dict:
+        if not ref.get("research_source"):
+            return ref
+        if self.reference_resolver is None:
+            raise ValueError("Retained research evidence requires scoped resolution")
+        return await self.reference_resolver(ref)
+
     async def resolve_ref(self, session_id: str, ref_id: str) -> dict | None:
         """Resolve a single reference ID to its full source content.
 
@@ -422,7 +432,8 @@ class SessionManager:
         ``source``, ``char_count``, and ``scraped_at``.  Returns ``None`` if
         the ref or session does not exist.
         """
-        return await self._store_call("aget_ref", "get_ref", session_id, ref_id)
+        ref = await self._store_call("aget_ref", "get_ref", session_id, ref_id)
+        return await self._resolve_attached_ref(ref) if ref is not None else None
 
     async def resolve_refs(
         self, session_id: str, ref_ids: list[str]
@@ -435,7 +446,7 @@ class SessionManager:
         """
         result: dict[str, dict] = {}
         for ref_id in ref_ids:
-            ref_data = await self._store_call("aget_ref", "get_ref", session_id, ref_id)
+            ref_data = await self.resolve_ref(session_id, ref_id)
             if ref_data is not None:
                 result[ref_id] = ref_data
         return result
@@ -784,10 +795,17 @@ class SessionManager:
             ):
                 raise ValueError("Selected evidence reference not found in session")
             refs = {ref: refs[ref] for ref in dict.fromkeys(selected_ids)}
+            refs = {
+                key: await self._resolve_attached_ref(ref) for key, ref in refs.items()
+            }
             if any(not ref.get("markdown") for ref in refs.values()):
                 raise ValueError(
                     "Selected evidence has no retained text; scrape or attach it first"
                 )
+        if selected_ids is None:
+            refs = {
+                key: await self._resolve_attached_ref(ref) for key, ref in refs.items()
+            }
         evidence_sources = [
             {"id": ref_id, **ref_data}
             for ref_id, ref_data in refs.items()
@@ -909,7 +927,7 @@ class SessionManager:
         max_sources = max(1, min(max_sources, 10))
 
         # 1. Find the cited source in the session's refs
-        ref_data = await self._store_call("aget_ref", "get_ref", session_id, ref_id)
+        ref_data = await self.resolve_ref(session_id, ref_id)
         if ref_data is None:
             available_refs = await self._store_call("aget_refs", "get_refs", session_id)
             raise ValueError(

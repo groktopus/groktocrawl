@@ -33,8 +33,12 @@ created or stored by the workspace.
 
 Document context lists and reads actual owned session document refs through named
 `documents`/`document_evidence` actions. Upload and document queries remain on the
-existing document/session APIs. Experimental root attachment records only an
-attachment; it does not copy root sources into session query evidence.
+existing document/session APIs. Attaching a completed research root returns session `ref_ids` for its retained
+sources. Select those IDs in a session query's `ref_ids` parameter to use the
+research evidence. References are stored atomically with the attachment revision;
+source bodies are resolved from retained research on each use. Deleting or
+expiring a root makes its linked evidence unavailable, and a changed content
+digest is rejected. The session must have an established owner.
 
 Follow-up previews use `/v2/followup/preview` with selected identities and do not
 execute research. Each follow-up remains an independent root. Pending, failed and
