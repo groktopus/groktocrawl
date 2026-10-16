@@ -240,6 +240,7 @@ def test_docker_runtime_uses_isolated_agent_images_and_restarts_after_source_cop
     assert "GITHUB_EVENT_NAME" in isolate and "GITHUB_REF" in isolate
     assert "AFFECTED_SERVICES" in isolate
     assert "slopsearx" not in isolate.lower()
+    assert "mcp-svc:\n    ports: !reset []" in isolate
     assert "docker inspect --format '{{.Image}}'" in verify
     assert "docker image inspect --format '{{.Id}}'" in verify
     assert "docker compose restart agent-svc" in restart

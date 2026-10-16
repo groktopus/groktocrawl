@@ -459,6 +459,9 @@ jobs:
               image: groktocrawl-ci/agent:${run_tag}
             agent-svc-fixture:
               image: groktocrawl-ci/agent-fixture:${run_tag}
+            # Tests reach MCP through the Compose network, not the shared host.
+            mcp-svc:
+              ports: !reset []
           EOF
           echo "COMPOSE_FILE=${COMPOSE_FILE}:${GITHUB_WORKSPACE}/.ci-agent-images.yml" >> "$GITHUB_ENV"
           # Preserve the pulled/published image for jobs that do not rebuild
