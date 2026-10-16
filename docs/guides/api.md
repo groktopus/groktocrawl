@@ -34,7 +34,7 @@ Operators: the [deployment guide](deployment.md#job-durability-and-recovery) doc
 
 `POST /v2/agent` and `POST /v2/answer` support SSE when `stream: true`; agent events include planning, source discovery, scraping, tokens, and completion. Crawls stream through `GET /v2/crawl/{job_id}/stream`, including replay for completed jobs. Consume each SSE event as JSON and treat `done`/`error` as terminal.
 
-Every asynchronous creation request accepts webhook configuration. Completion and failure delivery is best effort and is not persisted for retry after process loss; verify the endpoint’s OpenAPI model for the exact field shape and sign requests with `WEBHOOK_SECRET` where configured.
+Every asynchronous creation request accepts webhook configuration. Async-job events are persisted in a per-job Valkey outbox before delivery; completion and failure intents are committed with the terminal job status and pending events are retried after process loss with the same `webhookId`. Delivery is at-least-once, so receivers should deduplicate by that ID. Other webhook callers may retain best-effort delivery. Verify the endpoint’s OpenAPI model for the exact field shape and sign requests with `WEBHOOK_SECRET` where configured.
 
 Webhook destinations are validated before delivery: only `http`/`https` URLs resolving to public hosts are accepted, and private, loopback, link-local, multicast, metadata, and other restricted destinations are skipped with a warning in the service log. Redirects are not followed during delivery, so a validated destination cannot be redirected to a restricted host. Monitor webhooks follow the same policy.
 
