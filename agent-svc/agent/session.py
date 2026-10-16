@@ -883,6 +883,7 @@ class SessionManager:
             "ref_count": len(refs),
             "citations": [
                 {
+                    "index": citation_numbers[item["id"]],
                     "ref_id": item["id"],
                     "snapshot_id": item["snapshot_id"],
                     "content_digest": item["content_sha256"],

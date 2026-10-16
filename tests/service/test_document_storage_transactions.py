@@ -475,6 +475,10 @@ async def test_mixed_local_document_and_web_question_resolves_exact_citation_spa
             *references,
             "ref_web",
         }
+        assert [(item["index"], item["ref_id"]) for item in result["citations"]] == [
+            (number, ref_id)
+            for number, ref_id in enumerate([*references, "ref_web"], 1)
+        ]
         doc_citations = {
             item["ref_id"]: item
             for item in result["citations"]
@@ -581,16 +585,19 @@ async def test_numeric_citation_key_resolves_to_exact_document_source(monkeypatc
 
     from agent.session import SessionManager
 
-    ref_id = "doc_" + "c" * 64
-    text = "Annual budget USD 24000 for 14 people."
+    first_ref = "doc_" + "a" * 64
+    cited_ref = "doc_" + "c" * 64
+    first_text = "Annual budget USD 12000 for 8 people."
+    cited_text = "Annual budget USD 24000 for 14 people."
 
     class FixtureLLM:
         def __init__(self, *_args):
             pass
 
         async def generate(self, **kwargs):
-            assert f"[1] = {ref_id}" in kwargs["context"]
-            return "The budget is USD 24,000 [1]."
+            assert f"[1] = {first_ref}" in kwargs["context"]
+            assert f"[2] = {cited_ref}" in kwargs["context"]
+            return "The budget is USD 24,000 [2]."
 
         async def close(self):
             pass
@@ -599,12 +606,18 @@ async def test_numeric_citation_key_resolves_to_exact_document_source(monkeypatc
 
     class Store:
         refs = {
-            ref_id: {
+            first_ref: {
                 "source": "document",
-                "markdown": text,
-                "url": "/v2/session/session/documents/" + ref_id,
+                "markdown": first_text,
+                "url": "/v2/session/session/documents/" + first_ref,
                 "anchors": [],
-            }
+            },
+            cited_ref: {
+                "source": "document",
+                "markdown": cited_text,
+                "url": "/v2/session/session/documents/" + cited_ref,
+                "anchors": [],
+            },
         }
 
         async def aget_artifact(self, _session_id):
@@ -623,18 +636,23 @@ async def test_numeric_citation_key_resolves_to_exact_document_source(monkeypatc
     manager.store = Store()
     result = await manager._step_query(
         "session",
-        {"question": "What is the annual budget?", "ref_ids": [ref_id]},
+        {
+            "question": "What is the annual budget?",
+            "ref_ids": [first_ref, cited_ref],
+        },
         "http://fixture.invalid/llm",
         "",
         "fixture",
     )
+    second_source = result["evidence_coverage"]["sources"][1]
     assert result["citations"] == [
         {
-            "ref_id": ref_id,
-            "snapshot_id": result["evidence_coverage"]["sources"][0]["snapshot_id"],
-            "content_digest": hashlib.sha256(text.encode()).hexdigest(),
-            "spans": result["evidence_coverage"]["sources"][0]["spans"],
-            "url": "/v2/session/session/documents/" + ref_id,
+            "index": 2,
+            "ref_id": cited_ref,
+            "snapshot_id": second_source["snapshot_id"],
+            "content_digest": hashlib.sha256(cited_text.encode()).hexdigest(),
+            "spans": second_source["spans"],
+            "url": "/v2/session/session/documents/" + cited_ref,
             "anchors": [],
             "extraction": {},
         }
