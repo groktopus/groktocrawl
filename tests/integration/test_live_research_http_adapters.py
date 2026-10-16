@@ -12,6 +12,7 @@ import hashlib
 import importlib
 import json
 import os
+import re
 import sys
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -48,6 +49,7 @@ class LocalProviderTwin:
         self.capture_requests: list[dict] = []
         self.model_requests: list[dict] = []
         self.callback_requests: list[tuple[bytes, dict]] = []
+        self.session_contexts: list[str] = []
         self._lock = threading.Lock()
         owner = self
 
@@ -159,8 +161,20 @@ class LocalProviderTwin:
                     with owner._lock:
                         owner.model_requests.append(payload)
                     user = payload["messages"][1]["content"]
-                    request = json.loads(user)
-                    if request.get("planning"):
+                    session_query = user.startswith(
+                        "Here is the information I gathered:"
+                    )
+                    request = {} if session_query else json.loads(user)
+                    if session_query:
+                        with owner._lock:
+                            owner.session_contexts.append(user)
+                        reference = re.search(r"research_[0-9a-f]{24}", user)
+                        assert reference is not None
+                        text = next(
+                            text for _url, text in OBJECTIVES.values() if text in user
+                        )
+                        answer = text + " [" + reference.group() + "]"
+                    elif request.get("planning"):
                         objective = request["objective"]
                         answer = {
                             "reasoning": "Controlled multiquery acceptance plan",
@@ -224,7 +238,11 @@ class LocalProviderTwin:
                             "choices": [
                                 {
                                     "finish_reason": "stop",
-                                    "message": {"content": json.dumps(answer)},
+                                    "message": {
+                                        "content": answer
+                                        if isinstance(answer, str)
+                                        else json.dumps(answer)
+                                    },
                                 }
                             ],
                         },
@@ -280,6 +298,15 @@ async def durable_apps(
         pytest.fail(
             "acceptance requires isolated DURABLE_RESEARCH_REDIS_URL/VALKEY_URL and DURABLE_RESEARCH_POSTGRES_DSN"
         )
+    from urllib.parse import urlsplit
+
+    from agent.settings import load_settings
+
+    address = urlsplit(redis_url)
+    monkeypatch.setenv("VALKEY_HOST", address.hostname)
+    monkeypatch.setenv("VALKEY_PORT", str(address.port or 6379))
+    monkeypatch.setenv("VALKEY_DB", address.path.strip("/") or "0")
+    load_settings.cache_clear()
 
     for flag in (
         "EXPERIMENTAL_RESEARCH",
@@ -312,6 +339,8 @@ async def durable_apps(
     def make_app() -> FastAPI:
         app = FastAPI()
         app.state.valkey_url = redis_url
+        app.state.searxng_url = provider_twin.base_url
+        app.state.scraper_url = provider_twin.base_url
         app.state.research_postgres_dsn = postgres_dsn
         app.state.searxng_client = SearXNGClient(provider_twin.base_url, max_searches=5)
         app.state.scraper_client = ScraperClient(
@@ -321,6 +350,11 @@ async def durable_apps(
         app.state.llm_api_key = "local-acceptance-only"
         app.state.llm_model = "acceptance-local-model"
         app.include_router(experimental.router)
+        from agent.routes.followup import router as followup_router
+        from agent.routes.session import router as session_router
+
+        app.include_router(followup_router)
+        app.include_router(session_router)
         return app
 
     apps = [make_app()]
@@ -367,6 +401,7 @@ async def durable_apps(
         for key in redis.scan_iter(match=f"{prefix}*"):
             redis.delete(key)
         redis.close()
+        load_settings.cache_clear()
 
 
 async def _terminal(client: httpx.AsyncClient, url: str) -> dict:
@@ -644,3 +679,223 @@ async def test_as_of_never_turns_a_new_capture_into_historical_evidence(durable_
         assert status["state"] == "failed", status
         assert status["error"]["code"] == "historical_validity_unestablished"
         assert status["result"] is None
+
+
+@pytest.mark.asyncio
+async def test_live_retained_source_drives_independent_followup_and_owned_session(
+    durable_apps, provider_twin
+):
+    from agent.session_store import SessionStore
+
+    apps, _, _, ledgers, make_app, cleanup_roots, _ = durable_apps
+    owner = {"Authorization": "Bearer live-http-acceptance-owner"}
+    session_id = None
+    store = SessionStore(
+        redis_url=os.environ.get("DURABLE_RESEARCH_REDIS_URL")
+        or os.environ["VALKEY_URL"]
+    )
+    try:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=apps[0]),
+            base_url="http://acceptance",
+            headers=owner,
+        ) as client:
+            created = await client.post(
+                "/experimental/research/v1/runs",
+                headers={"Idempotency-Key": "followup-original"},
+                json={"objective": next(iter(OBJECTIVES))},
+            )
+            assert created.status_code == 202, created.text
+            original = created.json()
+            cleanup_roots.append(original["research_id"])
+            assert (await _terminal(client, original["status_url"]))[
+                "state"
+            ] == "completed"
+            workspace = (
+                await client.get(
+                    f"/experimental/research/v1/workspace/{original['run_id']}"
+                )
+            ).json()
+            original_url, original_body = next(iter(OBJECTIVES.values()))
+            source = next(
+                item
+                for item in workspace["evidence"]
+                if item.get("source", {}).get("canonical_url") == original_url
+            )
+            retained = (await client.get(source["url"])).json()
+            assert retained["body"] == original_body
+            selection = {
+                "kind": "root",
+                "container_id": original["research_id"],
+                "ref_id": source["snapshot_id"],
+                "subject": "Aurora battery pilot",
+            }
+            followup_body = {"wording": tuple(OBJECTIVES)[1], "selected": [selection]}
+            followup = await client.post(
+                "/v2/followup/execute",
+                headers={"Idempotency-Key": "followup-root-selection"},
+                json=followup_body,
+            )
+            assert followup.status_code == 202, followup.text
+            admission = followup.json()
+            cleanup_roots.append(admission["research_id"])
+            assert admission["run_id"] != original["run_id"]
+            assert admission["research_id"] != original["research_id"]
+            assert (await _terminal(client, admission["status_url"]))[
+                "state"
+            ] == "completed"
+            before = (
+                len(provider_twin.search_requests),
+                len(provider_twin.capture_requests),
+                len(provider_twin.model_requests),
+            )
+            duplicate = await client.post(
+                "/v2/followup/execute",
+                headers={"Idempotency-Key": "followup-root-selection"},
+                json=followup_body,
+            )
+            assert duplicate.status_code == 202, duplicate.text
+            assert duplicate.json()["run_id"] == admission["run_id"]
+            assert before == (
+                len(provider_twin.search_requests),
+                len(provider_twin.capture_requests),
+                len(provider_twin.model_requests),
+            )
+            constructed = next(
+                json.loads(item["messages"][1]["content"])
+                for item in provider_twin.model_requests
+                if json.loads(item["messages"][1]["content"]).get("objective")
+                == tuple(OBJECTIVES)[1]
+                and "sources" in json.loads(item["messages"][1]["content"])
+            )
+            text = "".join(
+                line["text"]
+                for item in constructed["sources"]
+                for line in item["lines"]
+            )
+            assert original_body in text
+            assert OBJECTIVES[tuple(OBJECTIVES)[1]][1] in text
+            durable = ledgers[0].get(admission["run_id"])
+            assert (
+                durable.payload["selected_sources"][0]["origin_id"]
+                == f"root:{original['research_id']}:{source['snapshot_id']}"
+            )
+            assert (
+                durable.payload["selected_sources"][0]["lineage_id"]
+                == retained["content_digest"]
+            )
+            assert (
+                durable.payload["selected_sources"][0]["retrieved_at"]
+                == retained["retrieved_at"]
+            )
+
+            session = await client.post("/v2/session/create", json={"ttl": 120})
+            assert session.status_code == 200, session.text
+            session_id = session.json()["sessionId"]
+            attached = await client.post(
+                f"/experimental/research/v1/sessions/{session_id}/attachments",
+                json={"run_id": original["run_id"], "expected_revision": 0},
+            )
+            assert attached.status_code == 200, attached.text
+            stored_refs = {
+                ref: await store.aget_ref(session_id, ref)
+                for ref in attached.json()["ref_ids"]
+            }
+            ref_id = next(
+                ref
+                for ref, material in stored_refs.items()
+                if material["url"] == original_url
+            )
+            saved = await store.aget_ref(session_id, ref_id)
+            assert "markdown" not in saved
+            assert saved["content_digest"] == retained["content_digest"]
+            step = await client.post(
+                f"/v2/session/{session_id}/step",
+                json={
+                    "action": "query",
+                    "params": {
+                        "question": "What does the Aurora battery pilot report?",
+                        "ref_ids": [ref_id],
+                    },
+                },
+            )
+            assert step.status_code == 200, step.text
+            assert original_body in provider_twin.session_contexts[-1]
+            citation = step.json()["result"]["citations"][0]
+            assert citation["ref_id"] == ref_id
+            assert citation["content_digest"] == retained["content_digest"]
+            session_selection = {
+                "kind": "session",
+                "container_id": session_id,
+                "ref_id": ref_id,
+                "subject": "Aurora battery pilot",
+            }
+            linked = await client.post(
+                "/v2/followup/execute",
+                headers={"Idempotency-Key": "followup-linked-session"},
+                json={"wording": tuple(OBJECTIVES)[1], "selected": [session_selection]},
+            )
+            assert linked.status_code == 202, linked.text
+            cleanup_roots.append(linked.json()["research_id"])
+            linked_status = await _terminal(client, linked.json()["status_url"])
+            assert linked_status["state"] == "completed", linked_status
+
+        experimental._RUNS.clear()
+        experimental._IDEMPOTENCY.clear()
+        experimental._DURABLE_LEDGERS.clear()
+        experimental._ARTIFACT_AUTHORITIES.clear()
+        recovered_app = make_app()
+        apps.append(recovered_app)
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=recovered_app),
+            base_url="http://acceptance",
+            headers=owner,
+        ) as client:
+            followup_workspace = (
+                await client.get(
+                    f"/experimental/research/v1/workspace/{admission['run_id']}"
+                )
+            ).json()
+            inherited = []
+            for item in followup_workspace["evidence"]:
+                evidence = (await client.get(item["url"])).json()
+                if (
+                    evidence["origin_id"]
+                    == f"root:{original['research_id']}:{source['snapshot_id']}"
+                ):
+                    inherited.append(evidence)
+            assert len(inherited) == 1
+            assert inherited[0]["body"] == original_body
+            assert inherited[0]["lineage_id"] == retained["content_digest"]
+            assert inherited[0]["url"] == original_url
+            assert inherited[0]["retrieved_at"] == retained["retrieved_at"]
+            exact = await client.get(f"/v2/session/{session_id}/evidence/{ref_id}")
+            assert exact.status_code == 200, exact.text
+            assert (
+                "".join(span["quote"] for span in exact.json()["spans"])
+                == original_body
+            )
+            deleted = await client.delete(
+                f"/experimental/research/v1/research/{original['research_id']}"
+            )
+            assert deleted.status_code == 202, deleted.text
+            before = (
+                len(provider_twin.search_requests),
+                len(provider_twin.capture_requests),
+                len(provider_twin.model_requests),
+            )
+            refused = await client.post(
+                "/v2/followup/execute",
+                headers={"Idempotency-Key": "followup-after-root-deletion"},
+                json={"wording": tuple(OBJECTIVES)[1], "selected": [session_selection]},
+            )
+            assert refused.status_code == 410, refused.text
+            assert before == (
+                len(provider_twin.search_requests),
+                len(provider_twin.capture_requests),
+                len(provider_twin.model_requests),
+            )
+    finally:
+        if session_id is not None:
+            await store.adelete(session_id)
+        store.redis.close()
