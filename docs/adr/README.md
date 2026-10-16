@@ -23,7 +23,7 @@ An Architecture Decision Record captures an important architectural decision mad
 
 **Status legend:** accepted ADRs describe decisions used by the current implementation. Proposed ADRs are design work, not promises of current behavior. Superseded ADRs are historical context only; use their successor when documenting current behavior.
 
-**Current accepted decisions:** ADR-0001–0007, 0009–0012, 0014–0022, 0026 (as superseded for migrated deployments), 0029–0035, 0038, 0039, 0043–0057, 0059–0069, 0071, and 0072.
+**Current accepted decisions:** ADR-0001–0007, 0009–0012, 0014–0022, 0026 (as superseded for migrated deployments), 0029–0035, 0038, 0039, 0043–0046, 0048–0057, and 0059–0072.
 
 **Proposed work:** ADR-0023–0025, 0027, 0028, 0036, 0037, and 0040–0042.
 
@@ -75,7 +75,7 @@ An Architecture Decision Record captures an important architectural decision mad
 | 0044 | [Autonomous CAPTCHA Recovery](0044-autonomous-captcha-recovery.md) | accepted |
 | 0045 | [Outbound Webhook Destination Validation](0045-outbound-webhook-destination-validation.md) | accepted |
 | 0046 | [Enforce QA Checks and Review Policy on main](0046-enforce-qa-checks-and-review-policy-on-main.md) | accepted |
-| 0047 | [Defer Restart-Safe Execution with an Explicit Job-Durability Contract](0047-defer-restart-safe-execution.md) | accepted |
+| 0047 | [Defer Restart-Safe Execution with an Explicit Job-Durability Contract](0047-defer-restart-safe-execution.md) | superseded by ADR-0072 |
 | 0048 | [Stage-Level Latency and Capacity Telemetry](0048-stage-level-telemetry.md) | accepted |
 | 0049 | [Research Memory Compatibility Fingerprint, Freshness, and Stale-While-Revalidate](0049-research-memory-compatibility-freshness-swr.md) | accepted |
 | 0050 | [Request-Scoped Source Artifact and Lightweight-Only Scrape Contract](0050-source-artifact-and-lightweight-only-scrape.md) | accepted |
