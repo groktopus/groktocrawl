@@ -153,6 +153,15 @@ down -v`. PostgreSQL gets a new volume named from the project and
      --no-deps --force-recreate semantic-svc
    ```
 
+   If the strict comparison fails because approximate search returns different
+   neighbors, preserve that failure. The separately reviewed
+   [exact-rank acceptance procedure](exact-rank-migration-acceptance.md) can test
+   the same frozen sample against exact Qdrant and PostgreSQL rankings with the
+   existing score tolerance. It does not waive full data parity, write checks,
+   service health or rollback readiness. Record both receipts and explain which
+   comparison supports the decision. A passing exact comparison must never be
+   reported as a passing strict shadow comparison.
+
 8. Cut over only after the reconciliation and comparison gates pass. Set
    `VECTOR_STORE_MODE=pgvector` and retain Qdrant dual writes. If research
    artifacts are in scope, keep the database schema and read-only artifact
