@@ -295,14 +295,13 @@ async def deliver_recorded_webhook(
             async with httpx.AsyncClient(
                 timeout=TIMEOUT_SECONDS, follow_redirects=False
             ) as client:
-                response = await client.post(url, content=body, headers=actual_headers)
-            if 200 <= response.status_code < 300:
+                async with client.stream(
+                    "POST", url, content=body, headers=actual_headers
+                ) as response:
+                    status = response.status_code
+            if 200 <= status < 300:
                 return "delivered"
-            return (
-                "retry"
-                if response.status_code >= 500 or response.status_code == 429
-                else "rejected"
-            )
+            return "retry" if status >= 500 or status == 429 else "rejected"
     except WebhookDestinationDNSRetryableError:
         return "retry"
     except WebhookDestinationValidationError:

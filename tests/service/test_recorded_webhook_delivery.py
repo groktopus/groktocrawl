@@ -81,3 +81,37 @@ async def test_recorded_attempt_revalidates_destination_before_dispatch(
         await webhook.deliver_recorded_webhook("http://127.0.0.1/private", b"{}")
         == outcome
     )
+
+
+@pytest.mark.asyncio
+async def test_receiver_response_body_is_never_downloaded(monkeypatch):
+    class ReceiverBody(httpx.AsyncByteStream):
+        iterated = False
+        closed = False
+
+        async def __aiter__(self):
+            self.iterated = True
+            yield b"A receiver-controlled body must not be downloaded"
+
+        async def aclose(self):
+            self.closed = True
+
+    response_body = ReceiverBody()
+    original = httpx.AsyncClient
+    monkeypatch.setattr(webhook, "validate_outbound_webhook_url", lambda _url: None)
+    monkeypatch.setattr(
+        webhook.httpx,
+        "AsyncClient",
+        lambda **kwargs: original(
+            transport=httpx.MockTransport(
+                lambda _request: httpx.Response(204, stream=response_body)
+            ),
+            **kwargs,
+        ),
+    )
+    assert (
+        await webhook.deliver_recorded_webhook("https://receiver.example/hook", b"{}")
+        == "delivered"
+    )
+    assert response_body.closed
+    assert not response_body.iterated
