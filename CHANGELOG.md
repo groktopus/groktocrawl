@@ -2,6 +2,80 @@
 
 All notable changes to GroktoCrawl are documented in this file.
 
+## [1.0.1](https://github.com/groktopus/groktocrawl/compare/v1.0.0...v1.0.1) (2026-10-16)
+
+GroktoCrawl 1.0.0 shipped its new durable research endpoint connected to demonstration data. That was a release defect. This patch connects it to configured search, page capture and model services, and completes the related workflows that were left unfinished. The existing `/v2/agent` research endpoint was already using real services.
+
+### Research that produces usable evidence
+
+The durable endpoint turns your objective into a bounded investigation: up to three searches and eight retained sources, with explicit time and content limits. It saves the actual source text, checked knowledge and report artifacts. Completed operations can be reused after a restart. If an interrupted external call has an unknown outcome, the run reports that uncertainty instead of silently making the same paid call again.
+
+You can attach retained research to a session, ask questions about it, inspect exact cited passages, and explicitly start a follow-up investigation from selected evidence. These workflows are available through the API, CLI and MCP. Uploaded documents can also be parsed, queried and read back through citations.
+
+### Scraping that tries recovery before giving up
+
+A normal scrape could recognize challenge text yet return it before reaching the
+browser recovery path. The scraper now tries the configured recovery tools before
+reporting that the page is unavailable. Callers do not need to know which retry
+option to request. A successful browser solve is checked against the resulting
+content; unresolved challenge pages remain errors and are not cached as articles.
+This does not guarantee access to every protected site.
+
+### Recovery, callbacks and storage
+
+Queued legacy jobs can be recovered after a restart. Claimed work that cannot safely be resumed ends with an explicit `OUTCOME_UNKNOWN` result; partial artifacts remain visible. Completion callbacks use persistent delivery records and stable event identities. Receivers must deduplicate retries.
+
+Research memory and the semantic page index can operate on PostgreSQL/pgvector without Qdrant after the documented migration and verification steps. Qdrant remains a supported backend and rollback option. Migration is explicit; upgrading does not silently move existing data.
+
+### Important limits
+
+- Direct HTTP creation accepts `as_of`; CLI and MCP creation currently expose the objective, retry key and callback. `as_of` asks the research system to evaluate evidence for a date. It does not fetch an archived version of a page or prove that newly captured content existed on that date.
+- Research remains bounded; it does not promise exhaustive discovery or perfect answers.
+- Interrupted external calls are not exactly-once operations. The system preserves receipts and reports uncertainty where safe replay cannot be established.
+- CI uses controlled search, capture and model services to verify integration and recovery. Those tests do not demonstrate a measured improvement in live-model answer quality.
+
+### Upgrading
+
+Keep existing data and configuration backups. Live durable research requires
+PostgreSQL schema 16, Valkey, configured search/capture/model services and all four
+research feature flags. Keep `FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS=false`;
+setting it true deliberately selects the development demonstration. Check the
+research capabilities endpoint before starting a run.
+
+PostgreSQL vector migration has two separate parts: research-memory vectors and
+the semantic page index. Full research-memory artifacts still live in Valkey.
+Use the migration runbooks to initialize, backfill and compare each index before
+changing its serving mode. Keep the documented rollback path until verification
+is complete.
+
+Update the CLI from the same release as the server. MCP clients should refresh
+their tool inventory to see explicit follow-up execution. Existing `/v2/agent`
+remains the iterative research interface; the durable research API is a separate,
+bounded workflow with retained evidence and restart handling.
+
+### Change list
+
+This patch includes the following reviewed changes:
+
+- [#670](https://github.com/groktopus/groktocrawl/pull/670): connect durable research to configured services; retain exact evidence and recover completed operations safely.
+- [#671](https://github.com/groktopus/groktocrawl/pull/671): make attached research available to session questions, execute explicit follow-ups, verify document journeys and repair normal-request challenge recovery.
+- [#672](https://github.com/groktopus/groktocrawl/pull/672): add PostgreSQL-only research-memory and page-vector modes with migration verification and reverse-copy support.
+- [#673](https://github.com/groktopus/groktocrawl/pull/673): recover never-started jobs across six job families and retain completion/failure notification delivery across restarts.
+- [#674](https://github.com/groktopus/groktocrawl/pull/674): plan bounded multi-query research, apply evidence-time checks and deliver durable research callbacks; correct CLI follow-up routing.
+- [#675](https://github.com/groktopus/groktocrawl/pull/675): reconcile the architecture, ADR index, README, contributor/agent guidance, client guides, migration and recovery instructions with the implemented release.
+
+### Verification
+
+The implementation and documentation pull requests passed their required checks.
+Each final hosted and self-hosted integration suite passed 2,798 tests, with
+162 skips and 17 deselections reported separately. All nine live-research HTTP
+cases passed against real PostgreSQL and Valkey with controlled search, capture,
+model and callback services. The tests cover different objectives, retained
+source reads, interruption recovery, callbacks, evidence dates and follow-ups.
+
+These are integration results, not a claim that a live model always produces
+better answers. Follow the upgrade and backup instructions for your deployment.
+
 ## [1.0.0](https://github.com/groktopus/groktocrawl/compare/v0.14.0...v1.0.0) (2026-10-16)
 
 

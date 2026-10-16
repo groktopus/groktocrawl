@@ -1,6 +1,6 @@
 [project]
 name = "groktocrawl"
-version = "1.0.0"
+version = "1.0.1"
 description = "Self-hosted, Firecrawl-compatible web scraping and AI research API"
 requires-python = ">=3.12"
 dependencies = [
