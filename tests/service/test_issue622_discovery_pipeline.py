@@ -131,6 +131,113 @@ async def test_credit_admission_waits_for_query_order_before_spending_budget():
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("first_result", ["empty", "failed", "duplicate"])
+async def test_unused_query_quota_is_borrowed_after_all_queries_resolve(first_result):
+    """An empty, failed, or duplicate-only subject cannot strand credits."""
+    from agent.research import discovery
+
+    later_urls = [f"https://later.example/{index}" for index in range(8)]
+
+    async def search(query: str, **_kwargs):
+        if query == "first" and first_result == "failed":
+            raise RuntimeError("fixture search failure")
+        if query == "first":
+            return (
+                [_result(url) for url in later_urls]
+                if first_result == "duplicate"
+                else [],
+                "healthy",
+            )
+        results = [_result(later_urls[0])] if first_result == "duplicate" else []
+        return ([*results, *[_result(url) for url in later_urls]], "healthy")
+
+    scraped: list[str] = []
+    searxng = MagicMock(search=AsyncMock(side_effect=search))
+    scraper = _scraper(asyncio.Event(), scraped)
+    result = await discovery._run_multi_query_discover_and_scrape(
+        queries=["first", "later"],
+        urls=None,
+        searxng=searxng,
+        scraper=scraper,
+        max_credits=5,
+    )
+
+    assert len(scraped) == 5
+    assert set(scraped) == set(later_urls[:5])
+    assert result["credits_used"] == 5
+
+
+@pytest.mark.asyncio
+async def test_cached_query_results_do_not_consume_credit_or_strand_other_subjects():
+    from agent.research import discovery
+    from agent.research.sources import SourceArtifact
+
+    cached_url = "https://cached.example/page"
+    later_urls = [f"https://later.example/{index}" for index in range(8)]
+    search = MagicMock(
+        search=AsyncMock(
+            side_effect=[
+                ([_result(cached_url)], "healthy"),
+                (
+                    [_result(cached_url), *[_result(url) for url in later_urls]],
+                    "healthy",
+                ),
+            ]
+        )
+    )
+    scraped: list[str] = []
+    scraper = _scraper(asyncio.Event(), scraped)
+    registry = discovery.SourceRegistry()
+    registry.register(SourceArtifact(url=cached_url, markdown="cached content"))
+
+    result = await discovery._run_multi_query_discover_and_scrape(
+        queries=["cached subject", "uncached subject"],
+        urls=None,
+        searxng=search,
+        scraper=scraper,
+        max_credits=5,
+        source_registry=registry,
+    )
+
+    assert len(scraped) == 5
+    assert set(scraped) == set(later_urls[:5])
+    assert {artifact.url for artifact in result["artifacts"]} == {
+        cached_url,
+        *later_urls[:5],
+    }
+    assert result["credits_used"] == 5
+
+
+@pytest.mark.asyncio
+async def test_credit_budget_smaller_than_query_count_searches_all_but_scrapes_within_cap():
+    from agent.research import discovery
+
+    queries = ["one", "two", "three"]
+    scraped: list[str] = []
+    searxng = MagicMock(
+        search=AsyncMock(
+            side_effect=[
+                ([_result(f"https://{query}.example/page")], "healthy")
+                for query in queries
+            ]
+        )
+    )
+    scraper = _scraper(asyncio.Event(), scraped)
+
+    result = await discovery._run_multi_query_discover_and_scrape(
+        queries=queries,
+        urls=None,
+        searxng=searxng,
+        scraper=scraper,
+        max_credits=1,
+    )
+
+    assert len(searxng.search.await_args_list) == 3
+    assert len(scraped) == 1
+    assert result["credits_used"] == 1
+
+
+@pytest.mark.asyncio
 async def test_credit_admission_uses_search_order_without_url_blacklisting():
     from agent.research import discovery
 

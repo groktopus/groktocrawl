@@ -485,9 +485,19 @@ async def _run_multi_query_discover_and_scrape(
             for i, q in enumerate(queries_to_run)
         }
         scrape_tasks: set[asyncio.Task[SourceArtifact | None]] = set()
-        candidate_urls: list[str] = []
+        candidate_urls: list[tuple[int, str]] = []
         attempted_keys: set[str] = set()
         max_attempts = None if max_credits is None else max(0, max_credits)
+        per_query_attempts = [0] * len(queries_to_run)
+        base_quota, remainder = (
+            divmod(max_attempts, len(queries_to_run))
+            if max_attempts is not None and queries_to_run
+            else (0, 0)
+        )
+        query_quotas = [
+            base_quota + (1 if index < remainder else 0)
+            for index in range(len(queries_to_run))
+        ]
         scrape_semaphore = asyncio.Semaphore(5)
         admitted_query = 0
 
@@ -498,7 +508,24 @@ async def _run_multi_query_discover_and_scrape(
                 and len(scrape_tasks) < 5
                 and (max_attempts is None or attempts < max_attempts)
             ):
-                url = candidate_urls.pop(0)
+                eligible_index = next(
+                    (
+                        index
+                        for index, (query_index, _url) in enumerate(candidate_urls)
+                        if max_attempts is None
+                        or per_query_attempts[query_index] < query_quotas[query_index]
+                    ),
+                    None,
+                )
+                # Keep the initial per-query opportunities until every search
+                # has resolved. After that, spend any remaining request budget
+                # on available candidates, including when another query was
+                # empty, failed, or returned only duplicate URLs.
+                if eligible_index is None and not search_tasks and candidate_urls:
+                    eligible_index = 0
+                if eligible_index is None:
+                    break
+                query_index, url = candidate_urls.pop(eligible_index)
                 key = normalize_source_url(url)
                 if key in attempted_keys:
                     continue
@@ -509,6 +536,7 @@ async def _run_multi_query_discover_and_scrape(
                     admitted_urls.append(url)
                     continue
                 attempts += 1
+                per_query_attempts[query_index] += 1
                 admitted_urls.append(url)
                 scrape_tasks.add(
                     asyncio.create_task(
@@ -577,7 +605,7 @@ async def _run_multi_query_discover_and_scrape(
                                 key = normalize_source_url(url)
                                 if url and key not in seen_urls:
                                     seen_urls.add(key)
-                                    candidate_urls.append(url)
+                                    candidate_urls.append((admitted_query, url))
                             admitted_query += 1
                     else:
                         scrape_task = cast(asyncio.Task[SourceArtifact | None], task)
