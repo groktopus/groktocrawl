@@ -79,7 +79,7 @@ def test_metrics_fail_closed(body):
 def test_metrics_present_zero():
     assert gate.parse_metrics(
         '# TYPE groktocrawl_pgvector_shadow_operations_total counter\n# TYPE groktocrawl_pgvector_shadow_comparisons_total counter\ngroktocrawl_pgvector_shadow_operations_total{operation="upsert",outcome="failure"} 0\ngroktocrawl_pgvector_shadow_comparisons_total{outcome="failure"} 0'
-    ) == {"upsert_failure": 0, "comparison_failure": 0}
+    ) == {"write_failure": 0, "comparison_failure": 0, "comparison_observed": True}
 
 
 def test_nonfinite_recomputed_score():
@@ -99,7 +99,7 @@ def test_joined_score_disagreement():
 def test_declared_lazy_families_are_zero():
     assert gate.parse_metrics(
         "# TYPE groktocrawl_pgvector_shadow_operations_total counter\n# TYPE groktocrawl_pgvector_shadow_comparisons_total counter"
-    ) == {"upsert_failure": 0, "comparison_failure": 0}
+    ) == {"write_failure": 0, "comparison_failure": 0, "comparison_observed": True}
 
 
 @pytest.mark.parametrize(
@@ -117,3 +117,18 @@ def test_declared_metrics_still_reject_bad_series(suffix):
     )
     with pytest.raises(ValueError):
         gate.parse_metrics(body)
+
+
+def test_comparison_family_can_be_unregistered():
+    result = gate.parse_metrics(
+        '# TYPE groktocrawl_pgvector_shadow_operations_total counter\ngroktocrawl_pgvector_shadow_operations_total{operation="upsert",outcome="success"} 2'
+    )
+    assert result["comparison_observed"] is False
+    assert result["write_failure"] == 0
+
+
+def test_delete_failures_are_counted():
+    result = gate.parse_metrics(
+        '# TYPE groktocrawl_pgvector_shadow_operations_total counter\ngroktocrawl_pgvector_shadow_operations_total{operation="delete",outcome="failure"} 2'
+    )
+    assert result["write_failure"] == 2

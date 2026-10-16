@@ -49,7 +49,7 @@ def validate_results(exact, projected, scores):
 
 def parse_metrics(body):
     families = {
-        "groktocrawl_pgvector_shadow_operations_total": "upsert_failure",
+        "groktocrawl_pgvector_shadow_operations_total": "write_failure",
         "groktocrawl_pgvector_shadow_comparisons_total": "comparison_failure",
     }
     declared = set()
@@ -83,11 +83,17 @@ def parse_metrics(body):
             raise ValueError("invalid metric")
         operation = dict(pairs)
         if operation.get("outcome") == "failure" and (
-            name.endswith("comparisons_total") or operation.get("operation") == "upsert"
+            name.endswith("comparisons_total")
+            or operation.get("operation") in {"upsert", "delete"}
         ):
             totals[families[name]] += value
-    if declared != set(families):
-        raise ValueError("required counter declarations absent")
+    if "groktocrawl_pgvector_shadow_operations_total" not in declared:
+        raise ValueError("required operations counter declaration absent")
+    if any(name not in declared for name, _ in seen):
+        raise ValueError("series without counter declaration")
+    totals["comparison_observed"] = (
+        "groktocrawl_pgvector_shadow_comparisons_total" in declared
+    )
     return totals
 
 
@@ -220,7 +226,9 @@ def main():
             validate_results(exact, pg, scores)
             strict += [key for key, _ in exact] == [key for key, _ in pg]
         after = metric_counts()
-        if any(after[key] != before[key] for key in before):
+        if any(
+            after[key] != before[key] for key in ("write_failure", "comparison_failure")
+        ) or (before["comparison_observed"] and not after["comparison_observed"]):
             raise ValueError("error counters changed or reset")
         print(
             json.dumps(
@@ -236,6 +244,9 @@ def main():
                     "queries": COUNT,
                     "limit": LIMIT,
                     "tolerance": TOLERANCE,
+                    "runtime_comparison_monitor": "observed"
+                    if before["comparison_observed"] and after["comparison_observed"]
+                    else "not_observed",
                     "ordered_id_matches": strict,
                     "tie_equivalent": COUNT - strict,
                 },
