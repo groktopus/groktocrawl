@@ -27,7 +27,23 @@ Architectural changes require new decisions where existing ADRs no longer apply.
 
 Do not change SlopSearch. Use isolated test services and controlled search/model/capture responses for repeatable acceptance. Preserve existing deployment data and client configuration. Record actual test limitations rather than treating collection, fixture counts, or successful health responses as proof of user outcomes.
 
+## Pull requests in progress
+
+| Change | Review | Remaining verification |
+| --- | --- | --- |
+| Live durable research and retained sources | [#670](https://github.com/groktopus/groktocrawl/pull/670) | Runtime acceptance after adding the missing pinned MCP test dependency |
+| Workspace evidence, explicit follow-ups and document/client acceptance | [#671](https://github.com/groktopus/groktocrawl/pull/671) | Full required CI, PostgreSQL follow-up acceptance and public API capture probe |
+| PostgreSQL-only memory and semantic indexing | [#672](https://github.com/groktopus/groktocrawl/pull/672) | Required checks and review |
+| Legacy job recovery and durable callbacks | [#673](https://github.com/groktopus/groktocrawl/pull/673) | Required checks and review |
+
+Research breadth, time semantics and research callbacks are a separate follow-on
+to the durable core. None of the rows above alone completes the release.
+
 ## Verification in progress
+
+The workspace branch passed 4,707 unit/service tests and 42 subtests, with 21
+skips; agent type checks passed across 161 files. These checks complement the
+required container acceptance rather than replace it.
 
 PR #671 includes `tests/integration/test_document_session_journey.py`: a PDF is
 uploaded through the session API, parsed by the real Parse HTTP service, stored
