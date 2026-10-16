@@ -112,6 +112,36 @@ def test_standard_integration_provisions_durable_database():
     assert "rm -f" in steps["Tear down stack"]["run"]
 
 
+@pytest.mark.parametrize("filename", ["docker.yml", "runtime.yml"])
+def test_pgvector_acceptance_tests_receive_isolated_database_credentials(filename):
+    workflow = yaml.safe_load((ROOT / ".github/workflows" / filename).read_text())
+    if filename == "runtime.yml":
+        job = workflow["jobs"]["integration-tests"]
+    else:
+        job = next(
+            job
+            for job in workflow["jobs"].values()
+            if job.get("name") == "Integration Tests"
+        )
+    integration = next(
+        step["run"] for step in job["steps"] if step.get("name") == "Run integration tests"
+    )
+    passwordless_dsn = "postgresql://groktocrawl@research-postgres:5432/groktocrawl"
+    assert f"RESEARCH_MEMORY_PGVECTOR_TEST_DSN={passwordless_dsn}" in integration
+    assert f"PGVECTOR_SEMANTIC_TEST_DSN={passwordless_dsn}" in integration
+    assert "PGPASSFILE=/tmp/postgres.pgpass" in integration
+    assert "/app/tests/integration/" in integration
+    ignored_paths = re.findall(r"--ignore(?:-glob)?=([^\s]+)", integration)
+    assert not any(
+        test_file in ignored_path
+        for test_file in (
+            "test_research_memory_pgvector_store.py",
+            "test_semantic_pgvector_only_store.py",
+        )
+        for ignored_path in ignored_paths
+    )
+
+
 def _standard_integration_job():
     workflow = yaml.safe_load((ROOT / ".github/workflows/docker.yml").read_text())
     return next(

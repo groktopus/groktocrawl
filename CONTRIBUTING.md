@@ -111,7 +111,7 @@ All tests must pass before a PR is merged.
 
 ### Durable research acceptance
 
-`tests/service/test_live_research_recovery.py` exercises operation reuse, ambiguous-dispatch refusal, persistent failures and lease/cancel fencing with isolated Valkey. `tests/integration/test_live_research_http_adapters.py` additionally requires an isolated PostgreSQL schema16 database and runs actual HTTP search/capture/model digital twins. The runtime workflow provisions the durable profile and runs this test mandatorily. These twins require no provider credentials. Component tests alone do not establish objective-dependent retained research; changes to the durable adapter must preserve this full HTTP-to-retained-byte test and its recovery checks. Never point acceptance tests at a production database.
+`tests/service/test_live_research_recovery.py` exercises operation reuse, ambiguous-dispatch refusal, persistent failures and lease/cancel fencing with isolated Valkey. `tests/integration/test_live_research_http_adapters.py` additionally requires an isolated PostgreSQL schema16 database and runs actual HTTP search/capture/model digital twins. The runtime workflow provisions the durable profile and runs this test mandatorily. These twins require no provider credentials. Here, schema 16 means the application schema version, not PostgreSQL version 16. Component tests alone do not establish objective-dependent retained research; changes to the durable adapter must preserve this full HTTP-to-retained-byte test and its recovery checks. Never point acceptance tests at a production database.
 
 ## Development Setup
 
@@ -143,11 +143,39 @@ The `--profile fixture` flag starts test helper services (`llm-svc` for a built-
 - `agent-svc/` — the main API service (FastAPI + research worker)
 - `scraper-svc/` — URL-to-markdown conversion service (three-tier fetch: llms.txt → content-negotiation → Playwright)
 - `browser-svc/` — headless Playwright browser sessions
-- `semantic-svc/` — vector indexing and near-duplicate detection (Qdrant)
+- `semantic-svc/` — vector indexing and near-duplicate detection (Qdrant or PostgreSQL/pgvector)
 - `portal-svc/` — web UI for human users
 - `llm-svc/` — LLM fixture for local testing (replaceable with any OpenAI-compatible backend)
 - `test-site/` — fixture website for integration tests
 - `tests/` — unit, service, and integration tests
+
+### Vector storage and migrations
+
+Qdrant remains the default vector store. Research-memory artifacts and their
+expiry metadata remain in Valkey; `RESEARCH_MEMORY_VECTOR_MODE` selects the
+vector projection (`qdrant`, `shadow_pgvector`, or `pgvector`). The semantic
+page index uses `VECTOR_STORE_MODE`; `pgvector_only` serves from PostgreSQL
+without Qdrant readiness checks or writes. These are separate stores and
+backfills, even though they may share the PostgreSQL service.
+
+PostgreSQL modes require the `research-postgres` service and its pgvector
+extension. In Compose, the `durable-research` profile enables PostgreSQL for
+research-memory migration and keeps Qdrant available; `pgvector-only` enables
+PostgreSQL plus `semantic-svc` without activating Qdrant. Do not enable the
+`indexing` or `durable-research` profile when you intend to run the semantic
+service without Qdrant.
+
+Before changing a deployed mode, take and verify backups of the active Valkey,
+Qdrant, and PostgreSQL data. Initialize the destination schema, run the
+idempotent backfill, and require exact active-ID and metadata parity plus
+vector parity within the documented tolerance before switching reads. Keep
+the source data intact through the rollback window. The
+[research-memory migration runbook](docs/runbooks/research-memory-pgvector.md)
+contains the copy, verification, and reverse-copy commands; in particular,
+semantic restore preserves unmatched Qdrant points unless the operator
+explicitly requests `--prune-stale` after verifying a backup. Storage changes
+must add or update tests for migration idempotency, missing-backend behavior,
+and rollback, and record architectural changes in the [ADR index](docs/adr/README.md).
 
 ## Error Handling Conventions
 
@@ -227,6 +255,15 @@ See `docs/adr/README.md` for the full index of existing ADRs.
 ## Documentation updates
 
 Keep the README as onboarding material and update the relevant guide in `docs/guides/` for public behavior changes. The validated inventory in `docs/reference/public-surface.md` must change with any public route, top-level CLI command, compose service, or `.env.sample` setting. `scripts/check-docs-surface.py` is the local and CI guardrail; do not add broad exemptions for public behavior.
+
+For each behavior change, check the README, `AGENTS.md`, this contributor guide,
+the current architecture guide and ADR index, user guides, and API/CLI/MCP
+examples. A surface-inventory check verifies names and coverage, not whether the
+instructions describe working behavior. Verify examples against the affected
+interface and record which tests used controlled services and which used a live
+deployment. Update feature gates, storage prerequisites, restart behavior, and
+migration instructions together. Preserve older experiment reports as history;
+do not present their results as verification of a later release.
 
 ## Commit Guidelines
 

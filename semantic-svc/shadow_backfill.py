@@ -12,7 +12,7 @@ from collections.abc import Mapping
 from dataclasses import asdict, dataclass
 from typing import Any
 
-from qdrant_client import QdrantClient
+from qdrant_client import QdrantClient, models
 from shadow_pgvector import PgvectorShadowStore, ShadowConfig, ShadowRecord
 
 
@@ -103,7 +103,150 @@ def reconcile_shadow(
     )
 
 
+def restore_qdrant_from_pgvector(
+    qdrant: Any,
+    shadow: PgvectorShadowStore,
+    *,
+    collection: str,
+    model: str,
+    batch_size: int = 256,
+    prune_stale: bool = False,
+) -> dict[str, Any]:
+    """Restore one named vector without pruning other models' point data."""
+    if batch_size <= 0:
+        raise ValueError("batch_size must be positive")
+    source_ids = shadow.active_ids(model=model)
+    existing_ids: set[int] = set()
+    points_by_id: dict[int, Any] = {}
+    offset = None
+    while True:
+        points, next_offset = qdrant.scroll(
+            collection_name=collection,
+            limit=batch_size,
+            offset=offset,
+            with_payload=False,
+            with_vectors=True,
+        )
+        for point in points:
+            point_id = int(point.id)
+            existing_ids.add(point_id)
+            points_by_id[point_id] = point
+        if next_offset is None:
+            break
+        offset = next_offset
+
+    stale_ids = sorted(existing_ids - source_ids)
+    pruned_ids: set[int] = set()
+    if prune_stale:
+        for point_id in stale_ids:
+            vectors = getattr(points_by_id[point_id], "vector", None)
+            # Only remove a stale copy of this model. Points for another model,
+            # unnamed vectors, and payload-only/unknown points are retained.
+            if not isinstance(vectors, Mapping) or model not in vectors:
+                continue
+            other_vectors = set(vectors) - {model}
+            if other_vectors:
+                qdrant.delete_vectors(
+                    collection_name=collection,
+                    points=[point_id],
+                    vectors=[model],
+                    wait=True,
+                )
+            else:
+                qdrant.delete(
+                    collection_name=collection,
+                    points_selector=[point_id],
+                    wait=True,
+                )
+            pruned_ids.add(point_id)
+
+    upserted = 0
+    offset = 0
+    while True:
+        records = shadow.records(model=model, limit=batch_size, offset=offset)
+        if not records:
+            break
+        existing_updates = []
+        new_points = []
+        for record in records:
+            if record.point_id in existing_ids:
+                # Qdrant upsert replaces the whole named-vector map. Update only
+                # this model's vector and merge its payload so other models'
+                # vectors and metadata remain intact.
+                existing_updates.append(
+                    models.PointVectors(
+                        id=record.point_id,
+                        vector={model: list(record.vector)},
+                    )
+                )
+                qdrant.set_payload(
+                    collection_name=collection,
+                    points=[record.point_id],
+                    payload=dict(record.payload),
+                    wait=True,
+                )
+            else:
+                new_points.append(
+                    models.PointStruct(
+                        id=record.point_id,
+                        vector={model: list(record.vector)},
+                        payload=dict(record.payload),
+                    )
+                )
+                existing_ids.add(record.point_id)
+        if existing_updates:
+            qdrant.update_vectors(
+                collection_name=collection, points=existing_updates, wait=True
+            )
+        if new_points:
+            qdrant.upsert(
+                collection_name=collection, points=new_points, wait=True
+            )
+        upserted += len(records)
+        offset += len(records)
+        if len(records) < batch_size:
+            break
+
+    observed_ids: set[int] = set()
+    offset = None
+    while True:
+        points, next_offset = qdrant.scroll(
+            collection_name=collection,
+            limit=batch_size,
+            offset=offset,
+            with_payload=False,
+            with_vectors=True,
+        )
+        observed_ids.update(
+            int(point.id)
+            for point in points
+            if isinstance(getattr(point, "vector", None), Mapping)
+            and model in point.vector
+        )
+        if next_offset is None:
+            break
+        offset = next_offset
+    missing_ids = source_ids - observed_ids
+    extra_ids = observed_ids - source_ids
+    return {
+        "collection": collection,
+        "model": model,
+        "pgvector_active_count": len(source_ids),
+        "qdrant_upserted_count": upserted,
+        "qdrant_stale_candidate_count": len(stale_ids),
+        "qdrant_stale_deleted_count": len(pruned_ids),
+        "qdrant_missing_ids": len(missing_ids),
+        "qdrant_extra_ids": len(extra_ids),
+        "id_set_sha256": hashlib.sha256(
+            ",".join(str(i) for i in sorted(source_ids)).encode()
+        ).hexdigest(),
+        "parity": not missing_ids and not extra_ids,
+    }
+
+
 def main() -> int:
+    import argparse
+
     config = ShadowConfig.from_env()
     if not config.enabled:
         raise SystemExit("VECTOR_STORE_MODE must be shadow_pgvector for backfill")
@@ -117,15 +260,42 @@ def main() -> int:
     )
     shadow = PgvectorShadowStore(config, dimension)
     try:
-        result = reconcile_shadow(
+        parser = argparse.ArgumentParser(description=__doc__)
+        parser.add_argument(
+            "command",
+            nargs="?",
+            choices=("backfill", "restore-qdrant"),
+            default="backfill",
+        )
+        parser.add_argument(
+            "--prune-stale",
+            action="store_true",
+            help="delete Qdrant points absent from pgvector (requires a verified Qdrant backup)",
+        )
+        args = parser.parse_args()
+        command = args.command
+        if args.prune_stale and command != "restore-qdrant":
+            parser.error("--prune-stale is only valid with restore-qdrant")
+        if command == "restore-qdrant":
+            restore_result = restore_qdrant_from_pgvector(
+                qdrant,
+                shadow,
+                collection=collection,
+                model=model,
+                batch_size=batch_size,
+                prune_stale=args.prune_stale,
+            )
+            sys.stdout.write(json.dumps(restore_result, sort_keys=True) + "\n")
+            return 0 if restore_result["parity"] else 1
+        shadow_result = reconcile_shadow(
             qdrant,
             shadow,
             collection=collection,
             model=model,
             batch_size=batch_size,
         )
-        sys.stdout.write(json.dumps(asdict(result), sort_keys=True) + "\n")
-        return 0 if result.parity else 1
+        sys.stdout.write(json.dumps(asdict(shadow_result), sort_keys=True) + "\n")
+        return 0 if shadow_result.parity else 1
     finally:
         qdrant.close()
         shadow.close()

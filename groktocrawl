@@ -733,6 +733,15 @@ class Client:
             return f"{self.server}{path}"
         return f"{self.server}/{self.api_version}{path}"
 
+    def followup_execute(self, body: dict, idempotency_key: str) -> dict:
+        """Execute a selected-evidence follow-up with durable idempotency."""
+        return self._request(
+            "POST",
+            "/v2/followup/execute",
+            json_data=body,
+            request_headers={"Idempotency-Key": idempotency_key},
+        )
+
     def followup_preview(self, body: dict) -> dict:
         """Validate selected context and return an unexecuted query proposal."""
         return self._request("POST", "/v2/followup/preview", json_data=body)
@@ -2105,7 +2114,13 @@ def cmd_followup(client: Client, args: argparse.Namespace) -> None:
         die(f"Invalid follow-up JSON: {exc}")
     if not isinstance(body, dict):
         die("Follow-up request must be a JSON object")
-    result = client.followup_preview(body)
+    if getattr(args, "execute", False):
+        key = getattr(args, "idempotency_key", None)
+        if not key:
+            die("--execute requires --idempotency-key")
+        result = client.followup_execute(body, key)
+    else:
+        result = client.followup_preview(body)
     if not client.dry_run and not result.get("success"):
         die(result.get("error", "Follow-up preview failed"))
     emit(json.dumps(result, indent=2), result)
@@ -3729,6 +3744,14 @@ def make_parser() -> argparse.ArgumentParser:
         "followup", help="Preview explicit contextual follow-ups without executing"
     )
     p_followup.add_argument("request", help="JSON request or @file.json")
+    p_followup.add_argument(
+        "--execute",
+        action="store_true",
+        help="Start research using the selected evidence",
+    )
+    p_followup.add_argument(
+        "--idempotency-key", help="Stable key for this execution request"
+    )
 
     p_research = subparsers.add_parser(
         "research", help="Inspect the opt-in experimental research protocol"

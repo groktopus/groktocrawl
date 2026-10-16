@@ -27,6 +27,60 @@ Architectural changes require new decisions where existing ADRs no longer apply.
 
 Do not change SlopSearch. Use isolated test services and controlled search/model/capture responses for repeatable acceptance. Preserve existing deployment data and client configuration. Record actual test limitations rather than treating collection, fixture counts, or successful health responses as proof of user outcomes.
 
+## Pull requests in progress
+
+| Change | Review | Remaining verification |
+| --- | --- | --- |
+| Live durable research and retained sources | [#670](https://github.com/groktopus/groktocrawl/pull/670) | Research runtime and PostgreSQL checks passed; separate cancelled integration check is being rerun |
+| Workspace evidence, explicit follow-ups and document/client acceptance | [#671](https://github.com/groktopus/groktocrawl/pull/671) | Full required CI, PostgreSQL follow-up acceptance and public API capture probe |
+| PostgreSQL-only memory and semantic indexing | [#672](https://github.com/groktopus/groktocrawl/pull/672) | Required checks and review |
+| Legacy job recovery and durable callbacks | [#673](https://github.com/groktopus/groktocrawl/pull/673) | Required checks and review |
+| Multi-query research, time semantics and research callbacks | [#674](https://github.com/groktopus/groktocrawl/pull/674) | PostgreSQL HTTP acceptance, required checks and review after workspace integration |
+
+Research breadth, time semantics and research callbacks are a separate follow-on
+to the durable core. None of the rows above alone completes the release.
+
+## Verification in progress
+
+The workspace branch passed 4,707 unit/service tests and 42 subtests, with 21
+skips; agent type checks passed across 161 files. These checks complement the
+required container acceptance rather than replace it.
+
+PR #671 includes `tests/integration/test_document_session_journey.py`: a PDF is
+uploaded through the session API, parsed by the real Parse HTTP service, stored
+in isolated Valkey, used in a session question, and read back as an exact citation.
+The test also checks foreign-owner rejection and evidence removal after deletion.
+The same journey runs the CLI as a subprocess and dispatches MCP upload, query,
+and read tools against the local HTTP API. A second document places the answer
+beyond character 8,000 and verifies that passage reaches the model and can be
+read back exactly through MCP. The model response is controlled;
+this verifies service and client integration, not model answer quality. Final
+deployment checks remain required.
+
+The container CAPTCHA probe also exercises the public `/v2/scrape` route with no
+manual recovery options. It requires the packaged browser to recover the local
+grid challenge and checks that an unresolved challenge returns
+`CAPTCHA_UNRESOLVED` without caching challenge content. This extension is pending
+container CI; syntax checks alone do not count as passing recovery evidence.
+
+## Documentation audit
+
+Keep this audit open until the final code is merged. A corrected paragraph is not
+proof that the described workflow passes.
+
+| Documents | Compare against | Completion requirement |
+| --- | --- | --- |
+| README and quick start | Compose defaults, feature flags, service health and public capabilities | A new operator can distinguish live features from test fixtures and start the documented configuration |
+| AGENTS.md and CONTRIBUTING.md | Current source layout, test workflows, job ownership and error handling | Commands and development guidance match the implementation and required CI |
+| Architecture guide and ADR index | Durable research, legacy job recovery, storage backends and workspace integration | New decisions are indexed; obsolete contracts are clearly superseded without rewriting historical evidence |
+| Research, document and workspace guides | API routes, CLI parsing, MCP tools, ownership and retained evidence | Examples exercise the actual operation and explain expiry, deletion and uncertain outcomes |
+| Deployment and recovery runbooks | Compose profiles, schema migrations, backup/restore and callback delivery | Prerequisites, rollback steps and recovery limits match the tested implementation |
+| Public surface inventory and references | Routes, command flags, tool signatures and environment settings | Automated inventory checks pass and manual behavior review finds no unsupported promises |
+| Changelog, release notes and announcement | Merged changes and final acceptance results | Describe verified user benefits and material limitations; no unsupported quality claims |
+
+Workspace and follow-up corrections are included in PR #671. Storage and restart
+instructions must be reconciled again after their implementation PRs merge.
+
 ## Release completion
 
 After all changes merge, run the complete required checks on the exact release commit, verify the built images, and perform the documented deployment and user-workflow checks. Confirm that the release notes and announcement match those results. Publish 1.0.1 only when every row above has linked completion evidence.

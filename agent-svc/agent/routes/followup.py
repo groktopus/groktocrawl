@@ -44,6 +44,51 @@ async def _validated_preview(
             from .experimental_research import get_experimental_evidence
 
             # Reuse feature, credential scope, tombstone and identity checks.
-            await get_experimental_evidence(choice.container_id, choice.ref_id, request)
+            evidence = await get_experimental_evidence(
+                choice.container_id, choice.ref_id, request
+            )
+            observed_at = evidence.get("retrieved_at")
         choices.append(selected_evidence(choice, observed_at, body.max_age_seconds))
     return preview(body, choices)
+
+
+@router.post("/v2/followup/execute", status_code=202)
+async def execute_followup(request: Request, body: FollowupRequest) -> dict:
+    """Explicitly start independent research with current, selected evidence.
+
+    The existing preview stays read-only. This execution endpoint uses the same
+    scoped idempotency and durable admission rules as ordinary research runs.
+    """
+    from fastapi import HTTPException
+
+    from ..experimental.query_construction import CapturedSource
+    from ..research_sources import resolve_selected_sources
+    from .experimental_research import CreateResearchRunRequest, admit_research_run
+
+    proposal = await preview_followup(request, body)
+    if proposal.status != "ready" or proposal.proposed_query is None:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": "Clarify the follow-up before execution",
+                "ambiguities": proposal.ambiguities,
+            },
+        )
+    materials = await resolve_selected_sources(body.selected, request)
+    sources = tuple(
+        CapturedSource(
+            url=material["url"]
+            if material["url"] and material["url"].startswith(("http://", "https://"))
+            else None,
+            text=material["markdown"],
+            retrieved_at=material["retrieved_at"],
+            origin_id=f"{item.kind}:{item.container_id}:{item.ref_id}",
+            lineage_id=material["content_digest"],
+        )
+        for item, material in zip(body.selected, materials, strict=True)
+    )
+    return await admit_research_run(
+        CreateResearchRunRequest(objective=proposal.proposed_query),
+        request,
+        selected_sources=sources,
+    )

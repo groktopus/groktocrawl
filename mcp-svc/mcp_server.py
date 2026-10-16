@@ -1,7 +1,7 @@
 """MCP server exposing GroktoCrawl tools via Model Context Protocol.
 
 Uses FastMCP from the official mcp SDK (v1.x) with Streamable HTTP
-transport.  Defines 73 tools matching the GroktoCrawl agent-svc
+transport.  Defines 74 tools matching the GroktoCrawl agent-svc
 API surface, with proper readOnlyHint/destructiveHint annotations.
 
 Tool surface policy (see scripts/check-mcp-coverage.py): every agent-svc
@@ -522,6 +522,19 @@ async def followup_preview(request: dict[str, Any]) -> str:
     Suggestions require confirmation and never run research automatically.
     """
     result = await _client.followup_preview(request)
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_NEUTRAL)
+async def followup_execute(request: dict[str, Any], idempotency_key: str) -> str:
+    """Run an explicitly requested follow-up using selected retained evidence.
+
+    Uses the preview request shape. Starts independent durable research and can
+    invoke configured search, capture and model services. Reuse the same key
+    only when retrying the same request; preview alone never starts work.
+    """
+    result = await _client.followup_execute(request, idempotency_key)
     _ensure_success(result)
     return _resp(result)
 

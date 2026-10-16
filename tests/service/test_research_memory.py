@@ -146,7 +146,7 @@ class TestCompatibilityFingerprint:
 # ── Query: compatibility + freshness + gates ─────────────────────
 
 
-class TestResearchMemoryQuery:
+class TestResearchMemoryQueryCompatibility:
     @pytest.mark.asyncio
     async def test_compatible_replay_hit(self):
         fp = compute_fingerprint(prompt="q")
@@ -159,6 +159,151 @@ class TestResearchMemoryQuery:
         assert result["age_hours"] is not None
         assert result["expires_at"] is not None
 
+
+class TestPgvectorOnlyResearchMemory:
+    @pytest.mark.asyncio
+    async def test_query_uses_pgvector_and_never_contacts_qdrant(self, monkeypatch):
+        monkeypatch.setenv("RESEARCH_MEMORY_VECTOR_MODE", "pgvector")
+        monkeypatch.setenv("RESEARCH_MEMORY_PGVECTOR_DSN", "postgresql://isolated")
+        memory = ResearchMemory("redis://localhost:6379/0")
+        artifact = _stored_entry("00000000-0000-4000-8000-000000000001")
+        memory.redis = _dict_redis(
+            {"memory:00000000-0000-4000-8000-000000000001:data": json.dumps(artifact)}
+        )
+        memory._embed = AsyncMock(return_value=[0.0] * 1024)
+        memory._pgvector.search = MagicMock(
+            return_value=[
+                {
+                    "memory_id": "00000000-0000-4000-8000-000000000001",
+                    "score": 0.95,
+                    "user_id": None,
+                    "fingerprint": None,
+                }
+            ]
+        )
+        memory._get_qdrant = AsyncMock(
+            side_effect=AssertionError("Qdrant was contacted")
+        )
+
+        result = await memory.query("q")
+
+        assert result["hit"] is True
+        assert result["memory_id"] == "00000000-0000-4000-8000-000000000001"
+        memory._pgvector.search.assert_called_once()
+        memory._get_qdrant.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_store_uses_pgvector_without_qdrant(self, monkeypatch):
+        monkeypatch.setenv("RESEARCH_MEMORY_VECTOR_MODE", "pgvector")
+        monkeypatch.setenv("RESEARCH_MEMORY_PGVECTOR_DSN", "postgresql://isolated")
+        memory = ResearchMemory("redis://localhost:6379/0")
+        store: dict[str, str] = {}
+        redis = _dict_redis(store)
+        memory.redis = redis
+        memory._embed = AsyncMock(return_value=[0.0] * 1024)
+        memory._pgvector.ensure_schema = MagicMock()
+        memory._pgvector.upsert = MagicMock()
+        memory._get_qdrant = AsyncMock(
+            side_effect=AssertionError("Qdrant was contacted")
+        )
+
+        memory_id = await memory.store("q", "answer", [])
+
+        assert memory_id
+        memory._pgvector.ensure_schema.assert_called_once_with()
+        memory._pgvector.upsert.assert_called_once()
+        assert f"memory:{memory_id}:data" in store
+        redis.sadd.assert_called_once_with("memory:index", memory_id)
+        memory._get_qdrant.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_query_misses_closed_when_pgvector_is_unavailable(self, monkeypatch):
+        monkeypatch.setenv("RESEARCH_MEMORY_VECTOR_MODE", "pgvector")
+        monkeypatch.setenv("RESEARCH_MEMORY_PGVECTOR_DSN", "postgresql://isolated")
+        memory = ResearchMemory("redis://localhost:6379/0")
+        memory._embed = AsyncMock(return_value=[0.0] * 1024)
+        memory._pgvector.search = MagicMock(side_effect=ConnectionError("offline"))
+        memory._get_qdrant = AsyncMock(
+            side_effect=AssertionError("unavailable pgvector must not fall back")
+        )
+
+        assert await memory.query("q") == {"hit": False}
+        memory._get_qdrant.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_store_cleans_artifact_when_pgvector_write_fails(self, monkeypatch):
+        monkeypatch.setenv("RESEARCH_MEMORY_VECTOR_MODE", "pgvector")
+        monkeypatch.setenv("RESEARCH_MEMORY_PGVECTOR_DSN", "postgresql://isolated")
+        memory = ResearchMemory("redis://localhost:6379/0")
+        store: dict[str, str] = {}
+        redis = _dict_redis(store)
+        memory.redis = redis
+        memory._embed = AsyncMock(return_value=[0.0] * 1024)
+        memory._pgvector.ensure_schema = MagicMock()
+        memory._pgvector.upsert = MagicMock(side_effect=ConnectionError("offline"))
+        memory._get_qdrant = AsyncMock(
+            side_effect=AssertionError("pgvector mode must not contact Qdrant")
+        )
+
+        with pytest.raises(ConnectionError, match="offline"):
+            await memory.store("q", "answer", [])
+
+        assert not store
+        redis.srem.assert_called_once()
+        memory._get_qdrant.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_delete_and_sweep_use_pgvector_only(self, monkeypatch):
+        monkeypatch.setenv("RESEARCH_MEMORY_VECTOR_MODE", "pgvector")
+        monkeypatch.setenv("RESEARCH_MEMORY_PGVECTOR_DSN", "postgresql://isolated")
+        memory = ResearchMemory("redis://localhost:6379/0")
+        memory.redis = _dict_redis({"memory:mid:data": "{}"})
+        memory._pgvector.delete = MagicMock(return_value=True)
+        memory._pgvector.delete_expired = MagicMock(return_value=2)
+        memory._pgvector.list_ids = MagicMock(return_value=[])
+        memory._get_qdrant = AsyncMock(
+            side_effect=AssertionError("Qdrant was contacted")
+        )
+
+        assert await memory.delete("mid") is True
+        assert await memory.sweep() == 2
+        memory._pgvector.delete.assert_called_once_with("mid")
+        memory._pgvector.delete_expired.assert_called_once_with()
+        memory._get_qdrant.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_sweep_removes_rows_whose_valkey_artifact_is_missing(
+        self, monkeypatch
+    ):
+        monkeypatch.setenv("RESEARCH_MEMORY_VECTOR_MODE", "pgvector")
+        monkeypatch.setenv("RESEARCH_MEMORY_PGVECTOR_DSN", "postgresql://isolated")
+        memory = ResearchMemory("redis://localhost:6379/0")
+        memory.redis = _dict_redis({})
+        memory._pgvector.list_ids = MagicMock(return_value=["orphan-id"])
+        memory._pgvector.delete = MagicMock(return_value=True)
+        memory._pgvector.delete_expired = MagicMock(return_value=0)
+        memory._get_qdrant = AsyncMock(
+            side_effect=AssertionError("Qdrant was contacted")
+        )
+
+        assert await memory.sweep() == 1
+        memory._pgvector.delete.assert_called_once_with("orphan-id")
+        memory._get_qdrant.assert_not_called()
+
+    def test_pgvector_mode_requires_dsn_and_unknown_modes_fail_closed(
+        self, monkeypatch
+    ):
+        monkeypatch.setenv("RESEARCH_MEMORY_VECTOR_MODE", "pgvector")
+        monkeypatch.delenv("RESEARCH_MEMORY_PGVECTOR_DSN", raising=False)
+        monkeypatch.delenv("DURABLE_RESEARCH_POSTGRES_DSN", raising=False)
+        with pytest.raises(ValueError, match="DSN is required"):
+            ResearchMemory("redis://localhost:6379/0")
+        monkeypatch.setenv("RESEARCH_MEMORY_VECTOR_MODE", "typo")
+        with pytest.raises(ValueError, match="must be qdrant"):
+            ResearchMemory("redis://localhost:6379/0")
+
+
+class TestResearchMemoryQuery:
     @pytest.mark.asyncio
     async def test_incompatible_fingerprint_miss(self):
         stored_fp = compute_fingerprint(prompt="q", model="gpt-4o")
@@ -833,7 +978,7 @@ class TestSweep:
         )
         metrics.counter.assert_called_once_with(
             "groktocrawl_research_memory_orphans_swept_total",
-            "Orphaned Qdrant points removed by research memory sweep",
+            "Orphaned vector rows removed by research memory sweep",
         )
         metrics.counter.return_value.inc.assert_called_once_with(value=1.0)
         set_gauge.assert_called_once_with(

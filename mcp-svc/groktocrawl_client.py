@@ -371,6 +371,15 @@ class GroktocrawlClient:
         """Read-only preview; proposed actions are never executed."""
         return await self._post("/v2/followup/preview", body)
 
+    async def followup_execute(self, body: dict, idempotency_key: str) -> dict:
+        """Explicitly execute a follow-up with scoped durable idempotency."""
+        return await self._request_with_headers(
+            "POST",
+            "/v2/followup/execute",
+            body,
+            {"Idempotency-Key": idempotency_key},
+        )
+
     # ── API methods ─────────────────────────────────────────────
 
     async def scrape(

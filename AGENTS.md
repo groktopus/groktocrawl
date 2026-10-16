@@ -13,10 +13,11 @@ groktocrawl/
 ├── agent-svc/          # Main API + agent research loop + crawl engine
 │   └── agent/
 │       ├── app.py      # FastAPI app factory, wires dependencies
-│       ├── api.py      # Route handlers (all endpoints)
+│       ├── api.py      # Compatibility import for the routes package
+│       ├── routes/     # FastAPI route handlers grouped by feature
 │       ├── models.py   # Pydantic request/response schemas
 │       ├── worker.py   # Job processing functions (async)
-│       ├── research.py # Agent research loop (search → scrape → LLM)
+│       ├── research/   # Discovery, evidence selection, prompts and research loops
 │       ├── scraper_client.py  # HTTP client to scraper-svc
 │       ├── searxng_client.py  # Search API client
 │       ├── llm.py      # OpenAI-compatible LLM client
@@ -50,6 +51,19 @@ Architecture Decision Records (ADRs) live in `docs/adr/` and capture the context
 
 Jobs are processed with `asyncio.create_task()` inside the API process. New records carry a versioned Valkey execution marker and lease: a fresh process may redispatch only jobs still queued and never claimed. Claimed work is never blindly replayed; after lease expiry it becomes `failed` with `OUTCOME_UNKNOWN`. Completion/failure webhook intents are persisted in the Valkey outbox with stable UUIDv4 `webhookId` values and retried at-least-once. Partial artifacts across Valkey, the scraper, semantic index, and research memory are not transactionally rolled back. See [ADR-0072](docs/adr/0072-valkey-leased-legacy-job-recovery.md) and the [interrupted-jobs runbook](docs/runbooks/interrupted-jobs.md); do not describe this as exactly-once execution or general resumability.
 
+### Research-memory storage
+
+Research-memory artifacts remain in Valkey; semantic vectors default to the
+Qdrant `research_memory` collection. The explicit
+`RESEARCH_MEMORY_VECTOR_MODE=shadow_pgvector` mode mirrors vectors to the
+`research_memory` PostgreSQL schema while Qdrant remains authoritative.
+`RESEARCH_MEMORY_VECTOR_MODE=pgvector` reads and writes the PostgreSQL
+projection without contacting Qdrant. Keep the default unchanged for
+unmigrated deployments, and use the explicit backfill/parity/rollback commands
+in `docs/runbooks/research-memory-pgvector.md` before selecting PostgreSQL.
+The semantic page index's `VECTOR_STORE_MODE` is separate; `pgvector_only`
+means the page-index service has no Qdrant runtime dependency.
+
 ### Durable research execution
 
 The separate `/experimental/research/v1` live run path uses server-configured search, acquisition, and model clients when its four existing feature flags are enabled and the explicit development fixture flag is false. PostgreSQL schema16 retains source bytes and audited report sets; Valkey retains scoped admission, owner generations, operation intents/receipts, and terminal projections. Do not replace a failed or unknown external operation with an unrecorded retry. The worker renews ownership; claim, publication, and cancellation serialize on a scoped PostgreSQL advisory lock, and deletion fences late publication. Recovery checks committed PostgreSQL results before invoking any adapter. Legacy `/v2` jobs keep their separate contract. Read [ADR-0070](docs/adr/0070-execute-live-durable-research.md) before changing these boundaries.
@@ -73,9 +87,9 @@ Tier 3: Playwright render + readability extraction
 
 The agent service uses an OpenAI-compatible client. Swap the provider by changing `LLM_BASE_URL`, `LLM_API_KEY`, and `LLM_MODEL` in `.env`.
 
-**Per-request model override:** `POST /v2/agent` accepts an optional `model` field in the request body. When set to a model name (e.g., `"gpt-4o"`), it overrides `LLM_MODEL` for that job. When omitted or `"default"`, the env-configured model is used. Wired through in `api.py` → `worker.py` → `research.py`.
+**Per-request model override:** `POST /v2/agent` accepts an optional `model` field in the request body. When set to a model name (e.g., `"gpt-4o"`), it overrides `LLM_MODEL` for that job. When omitted or `"default"`, the env-configured model is used. Wired through in `routes/agent.py` → `worker.py` → `research/loop.py`.
 
-**System prompt:** The agent's research behavior is defined by `SYSTEM_PROMPT` and `EXTRACT_SYSTEM_PROMPT` constants in `research.py`. These are fixed — not configurable at runtime. They instruct the LLM to evaluate source quality, synthesize across pages, detect contradictions, and cite sources.
+**System prompt:** The agent's research behavior is defined by `SYSTEM_PROMPT` and `EXTRACT_SYSTEM_PROMPT` constants in `research/prompts.py`. These are fixed — not configurable at runtime. They instruct the LLM to evaluate source quality, synthesize across pages, detect contradictions, and cite sources.
 
 **Search parameters:** `POST /v2/search` accepts Firecrawl v2 `sources` and `categories` dimensions alongside `query` and `limit`. These are translated to SlopSearX categories — see `searxng_client.py` for the translation maps and `docs/adr/0013-search-architecture-with-vertical-categories.md` for the architecture.
 
@@ -132,7 +146,7 @@ The crawl engine (`agent-svc/agent/crawler.py`) replaces the original stub crawl
 
 **Concurrency model:** Configurable via `maxConcurrency` (1-50, default 3) with `asyncio.Semaphore`. When `delay` is set, concurrency is forced to 1 with `asyncio.sleep()` between scrapes. Valkey-backed distributed coordination is optional for multi-instance deployments.
 
-**Data flow:** `POST /v2/crawl` → `api.py:create_crawl()` → `JobStore.create_job()` → `_process_crawl_async()` (background task) → `CrawlEngine.run()` → per-page: cache check → path filter → scraper fetch → canonical check → content hash dedup → link extraction → enqueue children → job store progress update. Webhooks fire per-page (`crawl.page`) and on completion (`crawl.completed`).
+**Data flow:** `POST /v2/crawl` → `routes/crawl.py:create_crawl()` → `JobStore.create_job()` → `_process_crawl_async()` (background task) → `CrawlEngine.run()` → per-page: cache check → path filter → scraper fetch → canonical check → content hash dedup → link extraction → enqueue children → job store progress update. Webhooks fire per-page (`crawl.page`) and on completion (`crawl.completed`).
 
 ## Testing
 
@@ -182,7 +196,7 @@ only after CI is green and review findings are addressed.
 
 ## Adding a New Endpoint
 
-1. Add the route handler in `agent-svc/agent/api.py`
+1. Add the handler in the appropriate `agent-svc/agent/routes/` module and register new routers in that package
 2. Add request/response models in `agent-svc/agent/models.py`
 3. If the endpoint is async (returns a job ID), **it must accept a `webhook` field** and persist terminal delivery intent through the Valkey job outbox with a stable `webhookId`. Direct `deliver_webhook()` remains best-effort for callers outside that outbox; see [ADR-0072](docs/adr/0072-valkey-leased-legacy-job-recovery.md).
 4. Rebuild the agent-svc image

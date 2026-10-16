@@ -42,21 +42,25 @@ class ShadowConfig:
 
     @property
     def enabled(self) -> bool:
-        return self.mode in {"shadow_pgvector", "pgvector"}
+        return self.mode in {"shadow_pgvector", "pgvector", "pgvector_only"}
 
     @property
     def serving(self) -> bool:
         return self.mode == "pgvector"
 
+    @property
+    def pg_only(self) -> bool:
+        return self.mode == "pgvector_only"
+
     @classmethod
     def from_env(cls) -> ShadowConfig:
         mode = os.getenv("VECTOR_STORE_MODE", "qdrant").strip().lower()
-        if mode not in {"qdrant", "shadow_pgvector", "pgvector"}:
+        if mode not in {"qdrant", "shadow_pgvector", "pgvector", "pgvector_only"}:
             raise ValueError(
-                "VECTOR_STORE_MODE must be qdrant, shadow_pgvector, or pgvector"
+                "VECTOR_STORE_MODE must be qdrant, shadow_pgvector, pgvector, or pgvector_only"
             )
         dsn = os.getenv("PGVECTOR_SHADOW_DSN", "").strip()
-        if mode in {"shadow_pgvector", "pgvector"} and not dsn:
+        if mode in {"shadow_pgvector", "pgvector", "pgvector_only"} and not dsn:
             raise ValueError("PGVECTOR_SHADOW_DSN is required when pgvector is enabled")
         sample_rate = float(os.getenv("PGVECTOR_SHADOW_SAMPLE_RATE", "0.1"))
         if not 0.0 <= sample_rate <= 1.0:
@@ -256,6 +260,50 @@ class PgvectorShadowStore:
                 (list(point_ids),),
             )
 
+    def get_payload(self, point_id: int, *, model: str) -> dict[str, Any] | None:
+        with self._lock:
+            row = (
+                self._connect()
+                .execute(
+                    f"""SELECT url, title, payload FROM {self.config.schema}.{self.config.table}
+                    WHERE point_id=%s AND model=%s AND deleted=false""",
+                    (point_id, model),
+                )
+                .fetchone()
+            )
+        if row is None:
+            return None
+        payload = row[2]
+        if isinstance(payload, str):
+            payload = json.loads(payload)
+        return dict(payload)
+
+    def evict_to_limit(self, *, model: str, max_docs: int) -> int:
+        """Apply the existing low-retention-first capacity bound in pg-only mode."""
+        with self._lock:
+            connection = self._connect()
+            count = int(
+                connection.execute(
+                    f"SELECT count(*) FROM {self.config.schema}.{self.config.table} "
+                    "WHERE model=%s AND deleted=false",
+                    (model,),
+                ).fetchone()[0]
+            )
+            excess = count - max_docs
+            if excess <= 0:
+                return 0
+            connection.execute(
+                f"""UPDATE {self.config.schema}.{self.config.table} SET deleted=true,
+                    updated_at=now() WHERE point_id IN (
+                      SELECT point_id FROM {self.config.schema}.{self.config.table}
+                      WHERE model=%s AND deleted=false
+                      ORDER BY COALESCE((payload->>'retention_score')::double precision, 0.0),
+                               updated_at ASC, point_id ASC LIMIT %s
+                    )""",
+                (model, excess),
+            )
+            return excess
+
     def active_ids(self, *, model: str) -> set[int]:
         with self._lock:
             rows = self._connect().execute(
@@ -264,6 +312,39 @@ class PgvectorShadowStore:
                 (model,),
             )
             return {int(row[0]) for row in rows.fetchall()}
+
+    def records(
+        self, *, model: str, limit: int = 256, offset: int = 0
+    ) -> list[ShadowRecord]:
+        with self._lock:
+            rows = (
+                self._connect()
+                .execute(
+                    f"""SELECT point_id, url, title, embedding::text, model, payload
+                    FROM {self.config.schema}.{self.config.table}
+                    WHERE model=%s AND deleted=false
+                    ORDER BY point_id LIMIT %s OFFSET %s""",
+                    (model, limit, offset),
+                )
+                .fetchall()
+            )
+        records: list[ShadowRecord] = []
+        for row in rows:
+            payload = row[5]
+            if isinstance(payload, str):
+                payload = json.loads(payload)
+            vector_text = str(row[3]).strip("[]")
+            records.append(
+                ShadowRecord(
+                    int(row[0]),
+                    str(row[1]),
+                    str(row[2]),
+                    [float(value) for value in vector_text.split(",") if value],
+                    str(row[4]),
+                    dict(payload),
+                )
+            )
+        return records
 
     def count(self, *, model: str) -> int:
         with self._lock:

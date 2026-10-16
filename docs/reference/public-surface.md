@@ -33,6 +33,7 @@ POST /v2/enrich
 POST /v2/extract
 GET /v2/extract/{job_id}
 POST /v2/followup/preview
+POST /v2/followup/execute
 POST /v2/find-similar
 POST /v2/generate-llmstxt
 GET /v2/generate-llmstxt/{job_id}
@@ -256,8 +257,10 @@ configured private model endpoint; it does not permit private scrape targets.
 - QDRANT_URL
 - RECOVERY_LLM_TIMEOUT
 - RESEARCH_MEMORY_MAX_ARTIFACT_BYTES
+- RESEARCH_MEMORY_PGVECTOR_DSN
 - RESEARCH_MEMORY_SCOPE
 - RESEARCH_MEMORY_TTL
+- RESEARCH_MEMORY_VECTOR_MODE
 - SCRAPE_CACHE_DOMAIN_TTLS
 - SCRAPE_CACHE_MAX_TTL
 - SCRAPE_CACHE_MIN_TTL

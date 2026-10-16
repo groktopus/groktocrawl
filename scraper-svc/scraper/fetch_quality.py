@@ -11,12 +11,13 @@ HTML-to-markdown conversion: readability + markdownify pipeline used by
 all tiers that produce raw HTML.
 """
 
+import hashlib
 import logging
 import re
 
 from .barrier import (
     BarrierInfo,  # noqa: F401
-    _classify_barrier,  # noqa: F401
+    _classify_barrier,
     _is_bot_challenge,  # noqa: F401
     _is_substack_redirect,  # noqa: F401
 )
@@ -350,8 +351,28 @@ def _add_quality(result: dict, html: str = "", title: str = "") -> dict:
         html_size = result["source_html_size"]
     else:
         html_size = len(html)
+    raw_html = html or result.get("raw_html_start") or ""
+    proof = result.get("_captcha_resolution") or {}
+    # This receipt is minted only by the browser after a successful solve and
+    # widget removal, never from request options. Bind it to the exact retained
+    # bytes so a changed/poisoned cache entry cannot reuse an earlier solve.
+    captcha_resolved = (
+        result.get("source") == "playwright"
+        and isinstance(proof, dict)
+        and proof.get("verified") is True
+        and bool(raw_html)
+        and proof.get("markdown_digest")
+        == hashlib.sha256(markdown.encode()).hexdigest()
+        and proof.get("html_digest") == hashlib.sha256(raw_html.encode()).hexdigest()
+        and _classify_barrier("", url, markdown, raw_html).barrier_type != "captcha"
+    )
     quality = assess_quality(
-        markdown, html=html, url=url, title=title, html_size=html_size
+        markdown,
+        html=html,
+        url=url,
+        title=title,
+        html_size=html_size,
+        captcha_resolved=captcha_resolved,
     )
     # Preserve a pre-existing warning (e.g. a cached entry's barrier flag)
     # unless the fresh assessment produces its own (#586).
@@ -418,11 +439,15 @@ def _enrich_with_metadata(result: dict, html: str = "") -> dict:
 def _quality_acceptable(result: dict) -> bool:
     """Check if a scrape result's quality is above the degradation threshold.
 
+    A block warning/failure always requires recovery regardless of aggregate
+    score. Non-blocking low-yield warnings retain the usual score threshold.
     Results without a quality field (e.g., barrier detections) are returned
     as-is without degradation.
     """
     quality = result.get("quality")
     if quality is None:
         return True  # No quality assessment available — return as-is
+    if quality.get("checks", {}).get("block_detected") in {"warn", "fail"}:
+        return False
     score = quality.get("score", 1.0)
     return score >= QA_MIN_QUALITY_THRESHOLD
