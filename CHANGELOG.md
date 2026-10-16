@@ -4,23 +4,150 @@ All notable changes to GroktoCrawl are documented in this file.
 
 ## [1.0.0](https://github.com/groktopus/groktocrawl/compare/v0.14.0...v1.0.0) (2026-10-16)
 
-GroktoCrawl 1.0.0 adopts the research architecture developed and tested in GroktoCrawl X. Future development continues in the main repository.
 
-### What is new
+GroktoCrawl 1.0 brings the architecture developed in GroktoCrawl X into the main project, together with improvements to research, document handling, search, capture recovery, and agent integrations since 0.14. Development now continues in one codebase.
 
-- Durable research records, retained source evidence, and research workspaces.
-- PostgreSQL storage and pgvector similarity search, with a documented migration from Qdrant.
-- Automatic capture recovery and an optional isolated capture deployment.
-- More complete API, CLI, and MCP research tools, while preserving existing session, plan, and memory operations.
-- Publication-date filters that report when a search backend cannot enforce them, plus exports of already-fetched source content.
-- Runtime revision information for checking which release is deployed.
-- Reliable AMD64 and ARM64 image publishing, with verified release tags and a fix for cleanup that could break image downloads.
+**A significant limitation:** the new durable research endpoint still runs a scripted demonstration with fictional sources. It is not yet connected to live search and model-backed research. Its storage, recovery, evidence, and workspace machinery are included as a foundation; they should not be mistaken for a finished durable web-research agent. The existing `/v2` research paths continue to perform live research. Earlier short release notes did not make this distinction clear enough.
 
-### Upgrading
+GroktoCrawl remains self-hosted, MIT-licensed, and compatible with its existing Firecrawl-style API surface.
 
-Follow the [migration runbook](https://github.com/groktopus/groktocrawl/blob/main/docs/runbooks/mainline-architecture-migration.md) before enabling PostgreSQL or changing vector storage. Back up existing data, validate the restore, and check backfill parity before switching serving modes. Qdrant rollback writes remain available during the transition.
+## What changes for users today
 
-Existing endpoints and client settings remain supported. The search-engine service definitions are unchanged. Historical experiment reports and decisions remain in the repository for reference.
+### Use the whole source, not just its opening paragraphs
+
+Existing research, grounded answers, and session queries can select relevant passages from across complete acquired source bodies. A useful fact halfway down a page or near the end of a document is no longer excluded simply because it falls outside an opening-text slice.
+
+Responses expose source hashes, selected character ranges, and omitted-text coverage. Answer and session callers can choose an evidence budget. This gives you a way to inspect the material supplied to the model and adjust the request when too little was included. Selection is bounded and lexical; it improves access to acquired text without claiming that every relevant passage will be found.
+
+### Know what the investigation actually covered
+
+Deep research no longer stops at the earlier three-source threshold when its planned queries support more evidence. It reports planned and executed queries, candidates, capture attempts, reused sources, and remaining gaps.
+
+That matters when a convincing answer rests on a narrow search. Clients can see whether a configured source target was met and what work remains, rather than interpreting a source count as proof that the topic was covered exhaustively.
+
+### Bring your own documents alongside web evidence
+
+Attach a local document to an owned research session and ask questions across selected document and web references. The workflow uses the existing local-first Parse service and exposes extracted text, source identities, and exact passage references through API, CLI, and MCP.
+
+This is useful when the question depends on a report, specification, or other material that a web search cannot find. You choose the references used for the question and can inspect the extracted text afterward.
+
+Attachments follow the session's expiry and deletion rules. They retain extracted text, not an indefinite archive of the original uploaded file. Use authenticated sessions for private material.
+
+[Private document guide](https://github.com/groktopus/groktocrawl/blob/v1.0.0/docs/guides/private-documents.md)
+
+### Let GroktoCrawl handle page recovery
+
+When a supported capture path encounters a challenge or another recognized barrier, the shared scraper recovery policy tries applicable recovery methods within its configured limits. Calling agents no longer need to choose the next internal recovery tool for those paths.
+
+Recovery outcomes and barrier classifications stay visible to callers. A site may still be unavailable, but the result includes a clearer account of what happened after the applicable recovery steps. Operators can also configure an optional protected-capture deployment with explicit network isolation.
+
+### Get more out of your agent's existing connection
+
+The MCP surface now includes typed session operations, research-plan review and execution, and research-memory lifecycle tools alongside the adopted research interfaces. The combined surface has 73 tools; individual capabilities still depend on their configuration and maturity.
+
+For live workflows, agents can maintain a research session, inspect a plan before executing it, resolve source references, and manage reusable research memory through MCP. The CLI and API preserve corresponding coverage and source metadata. Firefox users also get a fix for Deep Research and recent-query submissions that could abort streaming responses.
+
+### Keep the evidence you already fetched
+
+Opt-in pyramid exports preserve complete fetched Markdown and source metadata instead of producing empty source dossiers. You can move from a summary to its source material without making another capture just to recover text the service already had.
+
+Fast, non-streaming keyword search also gains explicit page/offset continuation. Publication-date filters require trustworthy enforcement information from the backend; an unsupported filter produces an explicit error rather than silently returning an unfiltered result.
+
+## The architectural changes
+
+### PostgreSQL and a reversible pgvector migration
+
+PostgreSQL is integrated into the Compose architecture for retained research artifacts and evidence. After a verified migration, pgvector can serve the existing vector index. Valkey retains its execution-coordination and existing application responsibilities.
+
+The migration path backfills existing Qdrant data, checks identifiers, content, vectors, and retrieval parity, then switches reads. Qdrant stays current through rollback writes during the transition. Installing 1.0 does not automatically move or delete existing data, and unmigrated installations continue to use Qdrant.
+
+### Separate execution, evidence, verification, and reports
+
+The new architecture defines explicit ownership of run state, budgets, cancellation, retries, and completion. Separate records describe source captures, claims, supporting or conflicting evidence, verification outcomes, and rendered reports. Reports identify the knowledge revision they represent.
+
+This separation is intended to let models and workflow implementations evolve without making them the authority for permissions, budgets, or stored evidence. It also provides a foundation for summaries, deeper analysis, and source reports that remain tied to the same evidence.
+
+**What is implemented versus integrated:** the new route family exercises these contracts using a fixed example. Its durable ledger, PostgreSQL artifact storage, and retained workspace have lifecycle and recovery tests, but the endpoint does not yet acquire real sources for the submitted objective. Connecting live acquisition, claim construction, verification, and rendering is still required before this can replace the existing live research path.
+
+### A workspace and recovery protocol for the new foundation
+
+The new workspace can browse retained roots, inspect reports and citation bytes, export results, and perform explicit attachment, cancellation, and deletion actions. It exposes coverage, revision, and retention information through portal, CLI, and MCP interfaces. At this release, roots created by the new run endpoint contain the scripted example described above.
+
+The durable protocol has defined recovery and cancellation behavior for that path. It does not make existing inline `/v2` jobs restart-safe. Private session documents also have a separate lifecycle from PostgreSQL-retained research artifacts.
+
+[Research workspace guide](https://github.com/groktopus/groktocrawl/blob/v1.0.0/docs/guides/research-workspace.md)
+
+### Keep orchestration replaceable
+
+The release includes the reference workflow and optional LangGraph comparison work. LangGraph is not installed as a mandatory runtime for every request. These experiments inform future workflow development; they are not a claim that advanced LangGraph research is enabled in the shipped service.
+
+## Upgrading from 0.14
+
+This is a major release because the storage and research architecture have changed substantially. Existing endpoints and client settings remain supported, but enabling durable research and switching vector storage require an operator-led migration.
+
+1. Read the [mainline migration runbook](https://github.com/groktopus/groktocrawl/blob/v1.0.0/docs/runbooks/mainline-architecture-migration.md).
+2. Back up the existing stores and configuration, and verify that the backups can be restored.
+3. Apply the ordered PostgreSQL schema migrations only as part of the documented migration. Keep the fixture-backed research run endpoint disabled for production research; enabling its flags does not turn it into a live investigator.
+4. Backfill your existing vector data, check identifiers, content, vectors, and retrieval parity, then switch serving modes. Keep the documented Qdrant rollback path available.
+5. Verify API, CLI, MCP, retained data, and runtime revision after the update. Update the CLI from the release source if you install it as a standalone script.
+
+The new research API retains the `/experimental/research/v1` path for compatibility. Its capabilities remain opt-in, and the run endpoint is fixture-backed as described above. A separate repository or stack is not required to work on this foundation. Retention remains explicit and bounded. Private session documents and retained research artifacts have different lifecycles, described in their guides.
+
+## Changelog: v0.14.0 → v1.0.0
+
+The following changelog groups the user-facing and operational changes in this release. The complete commit-level comparison is linked at the end.
+
+### Research architecture and retained evidence foundation
+
+The following new-route capabilities are exercised through the scripted adapter in 1.0; they do not yet provide live durable research.
+
+- Adopt the GroktoCrawl X research architecture in mainline, with an explicit compatibility and migration decision in [ADR-0069](https://github.com/groktopus/groktocrawl/blob/v1.0.0/docs/adr/0069-adopt-bounded-research-substrate.md). ([#665](https://github.com/groktopus/groktocrawl/pull/665))
+- Add durable research execution records, checkpoint recovery, persisted cancellation, and bounded retry handling for the new research workflow.
+- Add versioned claims, source provenance, evidence references, verification records, and report-to-knowledge revision tracking.
+- Add PostgreSQL authority for retained artifact sets, source text, and audited knowledge, with ordered schema migrations and explicit expiry/deletion behavior.
+- Add retained research workspace operations across the portal, API, CLI, and MCP, including report reading, export, and explicit follow-up actions.
+- Preserve the experimental ADRs and evaluation records as historical evidence while establishing mainline as the home for future development.
+
+### Search, answers, and source exports
+
+- Select bounded, verbatim evidence across complete acquired source bodies; expose source hashes, selected ranges, and omitted-text coverage. ([#661](https://github.com/groktopus/groktocrawl/pull/661))
+- Add caller-selectable evidence budgets for grounded answers and session queries, and preserve coverage metadata in streaming completion and cached answers. ([#661](https://github.com/groktopus/groktocrawl/pull/661))
+- Add page/offset continuation for fast, non-streaming keyword search, with explicit rejection of unsupported combinations. ([#661](https://github.com/groktopus/groktocrawl/pull/661))
+- Keep deep research acquisition going beyond the earlier three-source stopping behavior when the planned query set supports more evidence; expose discovery attempts, outcomes, reuse, and gaps. ([#644](https://github.com/groktopus/groktocrawl/pull/644))
+- Preserve fetched Markdown and source metadata in opt-in pyramid exports instead of producing empty source dossiers. ([#643](https://github.com/groktopus/groktocrawl/pull/643), [#665](https://github.com/groktopus/groktocrawl/pull/665))
+- Add publication-date bounds that require trustworthy backend enforcement metadata; unsupported backends return an explicit error rather than pretending the filter was applied. ([#665](https://github.com/groktopus/groktocrawl/pull/665))
+
+### Agent tools and user interfaces
+
+- Add owned private-document attachments, document/web session questions, exact extracted-text passage reads, and document lifecycle operations. ([#665](https://github.com/groktopus/groktocrawl/pull/665))
+
+- Expose research-session creation, steps, retrieval, export, resolution, and deletion through typed MCP tools. ([#646](https://github.com/groktopus/groktocrawl/pull/646))
+- Expose research-plan creation, inspection, and explicitly approved execution through MCP. ([#647](https://github.com/groktopus/groktocrawl/pull/647))
+- Expose research-memory query, store, retrieval, deletion, batch, and sweep operations through MCP, preserving freshness and compatibility metadata. ([#648](https://github.com/groktopus/groktocrawl/pull/648))
+- Reconcile the existing and adopted research tools into a 73-tool MCP surface. ([#665](https://github.com/groktopus/groktocrawl/pull/665))
+- Fix Firefox Deep Research and recent-query submissions that could abort streaming requests. ([#657](https://github.com/groktopus/groktocrawl/pull/657))
+- Preserve CLI crawl outcome counts and zero-page reasons, streaming argument handling, and typed barrier errors through the adopted fixes. ([#665](https://github.com/groktopus/groktocrawl/pull/665))
+
+### Capture, model compatibility, and integrations
+
+- Centralize bounded capture recovery so supported callers share the scraper's recovery policy and diagnostics. ([#665](https://github.com/groktopus/groktocrawl/pull/665))
+- Add optional protected capture profiles and their network-boundary tests. ([#665](https://github.com/groktopus/groktocrawl/pull/665))
+- Allow explicit selection of `max_tokens` or `max_completion_tokens`, with separate generation and health budgets, for OpenAI-compatible providers. ([#655](https://github.com/groktopus/groktocrawl/pull/655))
+- Pass `ENGINE_SEMANTICSCHOLAR_API_KEY` into the search service from the stack configuration. ([#652](https://github.com/groktopus/groktocrawl/pull/652))
+- Add optional Jev configuration through `TYPESAFE_API_KEY` for the configured SlopSearX services. Jev remains an operator opt-in, not a mandatory inference dependency. ([#651](https://github.com/groktopus/groktocrawl/pull/651))
+- Improve SearXNG health fallback and reduce sweep noise; update CloakBrowser to 0.5.9. ([#649](https://github.com/groktopus/groktocrawl/pull/649), [#618](https://github.com/groktopus/groktocrawl/pull/618))
+
+### Storage, deployment, and release reliability
+
+- Add pgvector serving, Qdrant backfill/parity checks, shadow comparison, and rollback writes as part of the documented storage migration. ([#665](https://github.com/groktopus/groktocrawl/pull/665))
+- Expose runtime revision and model readiness information to make deployed versions easier to verify. ([#665](https://github.com/groktopus/groktocrawl/pull/665))
+- Add the workflow for official AMD64 and ARM64 images with source-revision metadata and immutable digest references. ([#665](https://github.com/groktopus/groktocrawl/pull/665))
+- Add verified release-image promotion and remove registry cleanup that could delete platform manifests still referenced by multi-architecture images. ([#665](https://github.com/groktopus/groktocrawl/pull/665))
+- Make research-storage, restore, and protected-capture checks part of the required runtime gate. Both full integration suites passed 2,700 tests with zero failures on the [release PR CI run](https://github.com/groktopus/groktocrawl/actions/runs/38830497723); each recorded 153 conditional skips.
+
+**Full commit history:** [v0.14.0…v1.0.0](https://github.com/groktopus/groktocrawl/compare/v0.14.0...v1.0.0)
+
+**Release source:** [`f2ebbbb4e8da42c96f054e19d5d86fe556d62a6e`](https://github.com/groktopus/groktocrawl/commit/f2ebbbb4e8da42c96f054e19d5d86fe556d62a6e)
 
 ## [0.14.0](https://github.com/groktopus/groktocrawl/compare/v0.13.0...v0.14.0) (2026-09-07)
 
