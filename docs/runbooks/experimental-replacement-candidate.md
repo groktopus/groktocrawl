@@ -173,6 +173,19 @@ capture-readiness signal.
 
 ## Verify and freeze the receipt
 
+This verifier creates a fictional research run. Use it only on an isolated
+development/demo stack. Explicitly opt into fixture admission before verification:
+
+```sh
+FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS=true docker compose \
+  --env-file "$CANDIDATE_ENV" -f "$CANDIDATE_COMPOSE" \
+  up -d --no-deps candidate-agent
+```
+
+Keep the new flag false for normal operation. After the fixture check, recreate
+only that demo service with `FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS=false`
+using the same Compose command. Existing retained reads remain available.
+
 Load only the candidate API key into the verifier process and write the receipt
 outside the repository first:
 

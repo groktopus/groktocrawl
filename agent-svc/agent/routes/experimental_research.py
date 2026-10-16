@@ -1,8 +1,9 @@
 """Opt-in experimental research protocol adapters.
 
-The first executable adapter is deliberately fixture-backed and process-local.
-It exercises the protocol lifecycle and exact artifact reads without claiming
-durable execution, live-provider quality, or production authorization policy.
+New runs use fictional sources and authored judgments and require an explicit
+development fixture opt-in. Existing process-local, Valkey, and PostgreSQL
+retained reads and recovery keep their separate gates; no live research adapter
+is selected by this route.
 """
 
 import asyncio
@@ -715,10 +716,14 @@ def capability_document() -> dict[str, Any]:
     """Return the honest capability boundary for the current W6 slice."""
     runs_available = is_enabled("experimental_research_runs")
     durable = runs_available and _durable_enabled()
+    fixture_creation = runs_available and is_enabled(
+        "experimental_research_fixture_runs"
+    )
     return {
         "protocol_version": "research/1",
         "route_prefix": _ROUTE_PREFIX,
-        "implementation_stage": "postgres_artifact_authority_adapter"
+        "live_research_available": False,
+        "implementation_stage": "postgres_artifact_authority_fixture_adapter"
         if durable and _artifact_authority_enabled()
         else "durable_fixture_run_adapter"
         if durable
@@ -749,6 +754,11 @@ def capability_document() -> dict[str, Any]:
             "runs": {
                 "available": runs_available,
                 "reason": None if runs_available else "public_adapters_pending",
+                "create_available": fixture_creation,
+                "creation_reason": None
+                if fixture_creation
+                else "development_fixture_opt_in_required",
+                "execution_mode": "fixture_only",
             },
             "artifacts": {
                 "available": runs_available,
@@ -781,6 +791,11 @@ async def create_experimental_research_run(
 ) -> dict[str, Any]:
     """Admit one bounded fixture run with scoped idempotency."""
     _require_runs()
+    if not is_enabled("experimental_research_fixture_runs"):
+        raise HTTPException(
+            status_code=404,
+            detail="Fixture research creation disabled; no live research adapter is available",
+        )
     key = request.headers.get("Idempotency-Key", "").strip()
     if not key or len(key) > 200:
         raise HTTPException(status_code=400, detail="Idempotency-Key is required")

@@ -203,6 +203,7 @@ async def test_real_root_resolver_scope_identity_deletion_and_feature_gate(monke
 
     monkeypatch.setenv("FEATURE_EXPERIMENTAL_RESEARCH", "true")
     monkeypatch.setenv("FEATURE_EXPERIMENTAL_RESEARCH_RUNS", "true")
+    monkeypatch.setenv("FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS", "true")
     app = FastAPI()
     app.include_router(experimental.router)
     app.include_router(router)
