@@ -53,3 +53,24 @@ CLI: `groktocrawl followup @request.json --json` (or inline JSON). `--dry-run`
 previews the HTTP request only. MCP: `followup_preview(request={...})` accepts the
 same request contract and returns the same proposal. This preview adds no UI;
 the persistent workspace consumes the API separately.
+
+## Execute a follow-up
+
+Preview remains read-only. To start research explicitly, send the same request
+body to `POST /v2/followup/execute` with an `Idempotency-Key` header. The service
+rechecks selected evidence ownership, retention, and content integrity, then
+admits a new durable research run. Ambiguous wording returns 422 without starting
+research. Deleted or unavailable evidence is not silently replaced with a label.
+
+The CLI equivalent is:
+
+```sh
+groktocrawl followup @followup.json --execute --idempotency-key investigation-2
+```
+
+MCP callers use `followup_execute(request, idempotency_key)`. Execution can call
+configured search, capture, and model services; reuse the same key only when
+retrying the same request. Poll the returned run using the ordinary research
+status tools. This requires live durable research and its PostgreSQL authority.
+Selected sources retain their original provenance; unknown capture dates stay
+unknown. The selected evidence is subject to the research byte and source budgets.

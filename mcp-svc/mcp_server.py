@@ -526,6 +526,19 @@ async def followup_preview(request: dict[str, Any]) -> str:
     return _resp(result)
 
 
+@mcp.tool(annotations=_NEUTRAL)
+async def followup_execute(request: dict[str, Any], idempotency_key: str) -> str:
+    """Run an explicitly requested follow-up using selected retained evidence.
+
+    Uses the preview request shape. Starts independent durable research and can
+    invoke configured search, capture and model services. Reuse the same key
+    only when retrying the same request; preview alone never starts work.
+    """
+    result = await _client.followup_execute(request, idempotency_key)
+    _ensure_success(result)
+    return _resp(result)
+
+
 @mcp.tool(annotations=_RO)
 async def research_capabilities() -> str:
     """Return the opt-in experimental research protocol capabilities."""

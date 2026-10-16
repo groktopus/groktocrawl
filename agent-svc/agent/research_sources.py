@@ -49,10 +49,7 @@ async def resolve_selected_sources(
             digest = hashlib.sha256(body.encode()).hexdigest()
             if evidence["content_digest"] != digest:
                 raise HTTPException(503, "Selected evidence integrity unavailable")
-            url = (
-                f"/experimental/research/v1/research/{item.container_id}"
-                f"/evidence/{item.ref_id}"
-            )
+            url = evidence.get("url")
             observed = evidence.get("retrieved_at")
         if not body.strip():
             raise HTTPException(422, "Selected evidence contains no text")
