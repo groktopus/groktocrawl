@@ -4,7 +4,7 @@ This directory contains Architecture Decision Records (ADRs) for GroktoCrawl.
 
 ## Scope and provenance
 
-This index records decisions for the mainline GroktoCrawl codebase. [ADR-0069](0069-adopt-bounded-research-substrate.md) adopts the bounded research substrate in the standard deployment, with feature flags used during verified migration rather than as a permanent opt-in boundary. It supersedes ADR-0026's Qdrant serving choice only for deployments that complete the pgvector backfill and cutover; Qdrant remains available for rollback. ADR-0047 records the original best-effort inline-job boundary; [ADR-0072](0072-valkey-leased-legacy-job-recovery.md) governs the current queued-job recovery, active-job failure, and webhook-outbox contract. The original GroktoCrawl X records are preserved in the [provenance archive](experimental/groktocrawl-x/README.md); their historical status does not automatically change other mainline decisions.
+This index records decisions for the mainline GroktoCrawl codebase. ADR-0069 records the initial 1.0.0 adoption; [ADR-0070](0070-execute-live-durable-research.md) describes the live execution correction, with final acceptance tracked in the [1.0.1 cleanup plan](../plans/release-1.0.1-cleanup.md). [ADR-0069](0069-adopt-bounded-research-substrate.md) adopts the bounded research substrate in the standard deployment, with feature flags used during verified migration rather than as a permanent opt-in boundary. It supersedes ADR-0026's Qdrant serving choice only for deployments that complete the pgvector backfill and cutover; Qdrant remains available for rollback. ADR-0047 records the original best-effort inline-job boundary; [ADR-0072](0072-valkey-leased-legacy-job-recovery.md) governs the current queued-job recovery, active-job failure, and webhook-outbox contract. The original GroktoCrawl X records are preserved in the [provenance archive](experimental/groktocrawl-x/README.md); their historical status does not automatically change other mainline decisions.
 
 ## What is an ADR?
 
@@ -23,9 +23,9 @@ An Architecture Decision Record captures an important architectural decision mad
 
 **Status legend:** accepted ADRs describe decisions used by the current implementation. Proposed ADRs are design work, not promises of current behavior. Superseded ADRs are historical context only; use their successor when documenting current behavior.
 
-**Current accepted decisions:** ADR-0001–0007, 0009–0012, 0014–0022, 0026 (as superseded for migrated deployments), 0029–0035, 0038, 0039, 0043–0057, 0059–0067, 0069, and 0072.
+**Current accepted decisions:** ADR-0001–0007, 0009–0012, 0014–0022, 0026 (as superseded for migrated deployments), 0029–0035, 0038, 0039, 0043–0057, 0059–0069, 0071, and 0072.
 
-**Proposed work:** ADR-0023–0025, 0027, 0028, 0036, 0037, 0040–0042, 0068, 0070, and 0071.
+**Proposed work:** ADR-0023–0025, 0027, 0028, 0036, 0037, 0040–0042, and 0070.
 
 | ADR | Title | Status |
 |-----|-------|--------|
@@ -95,9 +95,9 @@ An Architecture Decision Record captures an important architectural decision mad
 | 0065 | [Stream Discovery Acquisitions as Queries Complete](0065-stream-discovery-acquisitions.md) | accepted |
 | 0066 | [Opt In to Independent Session Steps](0066-opt-in-to-independent-session-steps.md) | accepted |
 | 0067 | [Select the LLM Token Budget Parameter Explicitly](0067-explicit-llm-token-budget-parameter.md) | accepted |
-| 0068 | [Select bounded evidence from complete sources](0068-bounded-full-source-evidence.md) | proposed |
+| 0068 | [Select bounded evidence from complete sources](0068-bounded-full-source-evidence.md) | accepted |
 | 0069 | [Adopt a Bounded Research Substrate](0069-adopt-bounded-research-substrate.md) | accepted; rollout-gated adoption in standard deployment |
 | 0070 | [Execute live durable research with persisted external-call receipts](0070-execute-live-durable-research.md) | proposed; implementation acceptance pending |
-| 0071 | [Use pgvector for Research Memory with Reversible Rollback](0071-use-pgvector-for-research-memory-with-reversible-rollback.md) | proposed |
+| 0071 | [Use pgvector for Research Memory with Reversible Rollback](0071-use-pgvector-for-research-memory-with-reversible-rollback.md) | accepted |
 | 0072 | [Recover Legacy Async Jobs with Valkey Leases](0072-valkey-leased-legacy-job-recovery.md) | accepted |
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full ADR workflow: when to write an ADR, how to number it, and how to get it reviewed in a PR. Experimental records are linked from the provenance archive, not included in the mainline sequence.

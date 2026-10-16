@@ -1298,7 +1298,7 @@ class GroktocrawlClient:
     async def experimental_research_create(
         self, objective: str, idempotency_key: str, webhook: str | None = None
     ) -> dict:
-        """Admit one experimental fixture-backed research run."""
+        """Admit one bounded research run in the server-configured mode."""
         body: dict[str, Any] = {"objective": objective}
         if webhook is not None:
             body["webhook"] = webhook

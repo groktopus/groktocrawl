@@ -14,7 +14,10 @@ Persist the idempotency key before sending. Retrying the same scoped request ret
 
 The policy permits at most three model-planned queries, eight total sources, 256,000 source bytes, 64 model calls and 180 seconds from admission. Selected retained evidence consumes the same source/byte budget and retains its original provenance. This is bounded research, not an unlimited search guarantee.
 
-An optional `as_of`, such as `"2026-09-01T00:00:00Z"`, evaluates evidence at that target time. It must include a timezone and cannot be in the future. It does not select a historical search index or recover archived pages. A newly captured page does not prove what was true before its capture; a run lacking eligible evidence fails with `historical_validity_unestablished`. Unknown retrieval dates remain unknown. Historical evidence must still pass support and other verification checks.
+For direct HTTP run creation, an optional `as_of`, such as `"2026-09-01T00:00:00Z"`, evaluates evidence at that target time. It must include a timezone and cannot be in the future. It does not select a historical search index or recover archived pages. A newly captured page does not prove what was true before its capture; a run lacking eligible evidence fails with `historical_validity_unestablished`. Unknown retrieval dates remain unknown. Historical evidence must still pass support and other verification checks.
+
+CLI `research create` and MCP `research_create` currently accept the objective,
+idempotency key and optional webhook; use HTTP to set `as_of` at creation.
 
 External call intents and exact completed responses are retained before dependent work starts. Restart reuses completed responses. An interrupted dispatch with no saved response fails as `outcome_unknown`; automatic replay could spend again and is prohibited. Cancellation fences later operations and publication, while an already sent external request cannot be recalled. A PostgreSQL result committed before interruption is reconciled without another research call.
 

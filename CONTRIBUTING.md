@@ -94,10 +94,13 @@ uv sync --locked --no-dev --group fast-tests
 PYTHONPATH=agent-svc:scraper-svc:llm-svc:parse-svc:portal-svc:browser-svc:semantic-svc:. \
   uv run --no-sync pytest tests/unit/ tests/service/ --no-cov
 
-# From the repo root (fixture services provide an LLM and test sites):
-cp .env.sample .env
+# Basic HTTP health checks in a disposable development checkout:
+# Preserve an existing .env; never run acceptance against production stores.
+test -f .env || cp .env.sample .env
 docker compose --profile fixture up --build -d
-docker compose exec -T agent-svc python3 -m pytest /app/tests/integration/ /app/tests/service/
+uv run --no-sync pytest tests/integration/test_stack.py::test_services_health \
+  tests/integration/test_stack.py::test_scraper_health_reports_playwright \
+  -n 0 --no-cov
 
 # Fast checks that do not require the stack:
 python3 scripts/check-cli-coverage.py
@@ -105,7 +108,14 @@ python3 scripts/check-docs-surface.py
 ```
 
 The fast test suite is Docker-free and covers only `tests/unit/` and `tests/service/`.
-The Docker command above remains the integration-test path.
+The two HTTP checks above verify local service health only. Production images do
+not contain `/app/tests`; CI explicitly copies tests and installs locked test
+dependencies. The full integration setup is defined in
+[Docker CI](.github/workflows/docker.yml) and the reusable
+[runtime workflow](.github/workflows/runtime.yml), including isolated search/model
+twins and PostgreSQL/Valkey acceptance. Use those environments for the full suite;
+starting the basic fixture profile alone does not reproduce every CI prerequisite.
+For non-default published ports, set `AGENT_BASE_URL` and `SCRAPER_BASE_URL`.
 
 All tests must pass before a PR is merged.
 
@@ -115,12 +125,12 @@ All tests must pass before a PR is merged.
 
 ## Development Setup
 
-You need Docker and Docker Compose. No other dependencies are required — everything runs in containers.
+Running the development stack requires Docker and Docker Compose. Running the checkout tests above also requires `uv` to install their locked Python dependencies.
 
 ```bash
 git clone https://github.com/your-username/groktocrawl
 cd groktocrawl
-cp .env.sample .env
+test -f .env || cp .env.sample .env
 docker compose --profile fixture up --build -d
 
 # Verify health

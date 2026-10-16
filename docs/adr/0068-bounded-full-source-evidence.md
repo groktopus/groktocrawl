@@ -1,6 +1,6 @@
 # 0068: Select bounded evidence from complete sources
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-10-07
 
 ## Context

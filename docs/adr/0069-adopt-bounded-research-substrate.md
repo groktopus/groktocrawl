@@ -7,6 +7,15 @@
 - Provenance: adopted in part from the bounded architecture records in [`docs/adr/experimental/groktocrawl-x/`](experimental/groktocrawl-x/README.md), based on experiment commit `9c7744b66f205080a44bfd89808494dbe80eb5a4`
 - Supersedes: ADR-0026's Qdrant serving-store choice for deployments that complete the verified pgvector backfill and cutover. Qdrant remains a rollback-write target. This does not revise ADR-0047 or change the existing public API, job, session, or cache contracts.
 
+> Historical boundary: this decision records the initial 1.0.0 adoption.
+> [ADR-0070](0070-execute-live-durable-research.md) describes the subsequent live
+> execution correction; its acceptance remains tracked in the
+> [1.0.1 cleanup plan](../plans/release-1.0.1-cleanup.md). The fixture-only statements
+> below describe the original adapter, not the corrected implementation.
+> [ADR-0071](0071-use-pgvector-for-research-memory-with-reversible-rollback.md)
+> extends storage to research memory, and
+> [ADR-0072](0072-valkey-leased-legacy-job-recovery.md) updates legacy job recovery.
+
 ## Context and Problem Statement
 
 The research architecture work developed an explicit execution controller, versioned claims-and-evidence records, verification outcomes, and audited artifact rendering. PostgreSQL is integrated into the standard Compose deployment for durable retained records and the separate vector migration. The run endpoint remains a scripted example until the live acquisition and publication adapter is implemented; a shared database alone does not make those research capabilities operational.

@@ -1,6 +1,6 @@
 # Use pgvector for Research Memory with Reversible Rollback
 
-- Status: proposed
+- Status: accepted
 - Deciders: Groktopus maintainers
 - Date: 2026-10-15
 - Scope: research-memory embedding index and semantic page index
