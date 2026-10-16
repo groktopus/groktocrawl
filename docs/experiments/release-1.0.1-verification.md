@@ -82,5 +82,17 @@ configuration was preserved. Default Compose settings were activated only after
 acceptance and without another container restart. Private operator receipts retain
 the detailed deployment checks and any unsuccessful verification attempts.
 
-Stable release publication and image-tag verification are recorded below when
-complete.
+## Published release
+
+[Version 1.0.1](https://github.com/groktopus/groktocrawl/releases/tag/v1.0.1)
+was published on October 16, 2026. The stable release tag points to the exact
+verified runtime commit above. The
+[image promotion workflow](https://github.com/groktopus/groktocrawl/actions/runs/38910527919)
+passed and promoted all ten existing image indexes without rebuilding. Both
+amd64 and arm64 image configurations identify the same source revision. Their
+index digests match the images used for deployment verification.
+
+The `stable`, `1`, `1.0`, `1.0.1`, and `v1.0.1` image tags were verified. The release
+includes [image provenance](https://github.com/groktopus/groktocrawl/releases/download/v1.0.1/release-image-provenance.json),
+expanded release notes, upgrade guidance, and the full changelog link. The cleanup
+requirements, deployment checks, release tag, and published images are complete.
