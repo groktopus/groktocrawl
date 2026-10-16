@@ -1253,7 +1253,14 @@ jobs:
           run_tag="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           trap 'docker image rm "groktocrawl-ci/agent:${run_tag}" "groktocrawl-ci/agent-fixture:${run_tag}" >/dev/null 2>&1 || true; rm -f "${RUNNER_TEMP}/groktocrawl-postgres-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.password"' EXIT
           docker rm -f "${COMPOSE_PROJECT_NAME}-research-inputs" >/dev/null 2>&1 || true
-          docker compose --profile durable-research down --volumes --remove-orphans --timeout 30
+          # Include every profile started by this job. Omitting fixture (or
+          # indexing) leaves those services outside the Compose teardown set;
+          # their restart policy can bring them back after a runner reboot.
+          docker compose \
+            --profile fixture \
+            --profile indexing \
+            --profile durable-research \
+            down --volumes --remove-orphans --timeout 30
 
   research-runtime:
     uses: ./.github/workflows/runtime.yml
