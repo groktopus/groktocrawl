@@ -31,10 +31,11 @@ Do not change SlopSearch. Use isolated test services and controlled search/model
 
 | Change | Review | Remaining verification |
 | --- | --- | --- |
-| Live durable research and retained sources | [#670](https://github.com/groktopus/groktocrawl/pull/670) | Runtime acceptance after adding the missing pinned MCP test dependency |
+| Live durable research and retained sources | [#670](https://github.com/groktopus/groktocrawl/pull/670) | Research runtime and PostgreSQL checks passed; separate cancelled integration check is being rerun |
 | Workspace evidence, explicit follow-ups and document/client acceptance | [#671](https://github.com/groktopus/groktocrawl/pull/671) | Full required CI, PostgreSQL follow-up acceptance and public API capture probe |
 | PostgreSQL-only memory and semantic indexing | [#672](https://github.com/groktopus/groktocrawl/pull/672) | Required checks and review |
 | Legacy job recovery and durable callbacks | [#673](https://github.com/groktopus/groktocrawl/pull/673) | Required checks and review |
+| Multi-query research, time semantics and research callbacks | [#674](https://github.com/groktopus/groktocrawl/pull/674) | PostgreSQL HTTP acceptance, required checks and review after workspace integration |
 
 Research breadth, time semantics and research callbacks are a separate follow-on
 to the durable core. None of the rows above alone completes the release.
