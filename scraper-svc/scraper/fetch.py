@@ -116,13 +116,38 @@ async def _maybe_degrade(
     """Check quality and decide whether to return or degrade to next tier.
 
     If quality is acceptable, returns the result dict (caller should return it).
-    If quality is below threshold, adds to best_effort list and returns None
+    Blocked content is excluded from best_effort. Other below-threshold
+    content is added to best_effort and returns None
     (caller should fall through to next tier).
 
     Returns:
         The result dict if acceptable, None if degraded.
     """
     result = _add_quality(result)
+    if result.get("quality", {}).get("checks", {}).get("block_detected") in {
+        "warn",
+        "fail",
+    }:
+        # Never retain a challenge as a best-effort candidate or let its
+        # aggregate score short-circuit the browser's bounded recovery path.
+        barrier = _classify_barrier(
+            "",
+            result.get("url", ""),
+            result.get("markdown", ""),
+            result.get("raw_html_start", ""),
+        )
+        result.setdefault(
+            "barrier",
+            {
+                "detected": True,
+                "type": barrier.barrier_type or "suspicious",
+                "provider": barrier.provider,
+                "confidence": barrier.confidence,
+                "detail": "Post-extraction block-page gate",
+            },
+        )
+        result.setdefault("error_code", "BARRIER_DETECTED")
+        return None
     if _quality_acceptable(result):
         return result
     bq = result.get("quality", {})
