@@ -2,6 +2,86 @@
 
 All notable changes to GroktoCrawl are documented in this file.
 
+## [1.0.1](https://github.com/groktopus/groktocrawl/compare/v1.0.0...v1.0.1) (2026-10-16)
+
+
+### Features
+
+* recover queued legacy jobs after restart ([9a53ca1](https://github.com/groktopus/groktocrawl/commit/9a53ca1287038c0ee47fdadf37be5060c56ad516))
+* recover queued legacy jobs after restart ([6e4ff1d](https://github.com/groktopus/groktocrawl/commit/6e4ff1d739eab21a1095cb2d64d1270a18c7d2fb))
+
+
+### Bug Fixes
+
+* **ci:** allow full research suite to finish within its job budget ([231172e](https://github.com/groktopus/groktocrawl/commit/231172e5c8321ffac689fee875be4a10d181d71d))
+* **ci:** include semantic source in storage acceptance containers ([88af3af](https://github.com/groktopus/groktocrawl/commit/88af3af2decf604b3bef876e6efe28a642987030))
+* **ci:** isolate agent images and reload staged source ([12c415d](https://github.com/groktopus/groktocrawl/commit/12c415db6d1ca99b7f94fb30db844ff5023d8191))
+* **ci:** keep MCP tests on the internal Docker network ([9409e7b](https://github.com/groktopus/groktocrawl/commit/9409e7b04fc553024249a941fc42ccab02e317e3))
+* complete bounded durable research planning and callbacks ([3f14069](https://github.com/groktopus/groktocrawl/commit/3f1406970c900ab999b04bb07009c2c16bb2eeeb))
+* expose explicit durable follow-up execution across clients ([be7f8d5](https://github.com/groktopus/groktocrawl/commit/be7f8d5333890cf79eaf36e9900f8f7a651d0264))
+* **followup:** honor callback and evaluation options across clients ([ae88cda](https://github.com/groktopus/groktocrawl/commit/ae88cda422539d8d23df20ed96c325a4a71198c9))
+* make retained research attachments usable in session questions ([ab2fbb1](https://github.com/groktopus/groktocrawl/commit/ab2fbb19a8aefd20dd48af4c17f1f0545cee014f))
+* normalize pending webhook scan keys ([d649ba0](https://github.com/groktopus/groktocrawl/commit/d649ba09e15a6da022fcd0edbc6343f2c408d335))
+* recheck attached evidence before publishing session answers ([2a7d8b0](https://github.com/groktopus/groktocrawl/commit/2a7d8b026ee86c246ce69c5c2b4f43ec03bfa680))
+* recheck retained research before saving deepen findings ([5871b48](https://github.com/groktopus/groktocrawl/commit/5871b48851b836109158ece57f817eea35fea0fc))
+* require owned session evidence for durable follow-ups ([fbe0a8b](https://github.com/groktopus/groktocrawl/commit/fbe0a8b78b426bb0f57029ee3b5ba390740c7c7d))
+* **research:** complete bounded discovery time evaluation and callbacks ([6efc27e](https://github.com/groktopus/groktocrawl/commit/6efc27e52d8bbdf9b84598b329ee2a809072b6c6))
+* **research:** execute live objectives with durable call receipts ([6d75f9a](https://github.com/groktopus/groktocrawl/commit/6d75f9ab0bd432650ccafd16121b5d45e40bbbcc))
+* **research:** execute live objectives with durable call receipts ([9f634de](https://github.com/groktopus/groktocrawl/commit/9f634debeee6877061fd18d5fcb86d95e4d81d76))
+* **research:** preserve publication eligibility error context ([ab6a5f5](https://github.com/groktopus/groktocrawl/commit/ab6a5f55685841a7041278381c902c102e569711))
+* **research:** require explicit fixture run admission ([b9690aa](https://github.com/groktopus/groktocrawl/commit/b9690aaa772302a75bcec250d250e2b453aacc50))
+* resolve scoped retained sources for research follow-ups ([8db0333](https://github.com/groktopus/groktocrawl/commit/8db0333c487629518d9d31a1b86c9bf0c4a843bc))
+* **scraper:** recover blocked normal scrapes before admission ([31cde26](https://github.com/groktopus/groktocrawl/commit/31cde264b1fc303f6655309fff994f3907140694))
+* use retained research in session questions and follow-ups ([7baf683](https://github.com/groktopus/groktocrawl/commit/7baf68384f65974722a794c1f9163346a77717a7))
+* **webhook:** close callback responses without reading bodies ([4f7e23a](https://github.com/groktopus/groktocrawl/commit/4f7e23a6961eea677b6e63f8dbd71f92478f5749))
+* **webhook:** share bounded signed attempts for durable outboxes ([56e7ea9](https://github.com/groktopus/groktocrawl/commit/56e7ea9933ec9934763345df3437b931be068911))
+
+
+### Documentation
+
+* align release guidance with completed research workflows ([8eadca0](https://github.com/groktopus/groktocrawl/commit/8eadca03e7f9a5d7060b59307168b0eb6df7519d))
+* align research API and migration guidance with live execution ([c70fb72](https://github.com/groktopus/groktocrawl/commit/c70fb722eda0a15aaf8729ac16b125028896f72b))
+* audit release instructions against implemented behavior ([0d6c240](https://github.com/groktopus/groktocrawl/commit/0d6c24049e4fdffcb28c5c7ad593fb14a3ffd8bf))
+* clarify live research migration boundary ([f6dfa76](https://github.com/groktopus/groktocrawl/commit/f6dfa764ebad0ded6c6ca744375c99cf1659f414))
+* clarify the live research boundary in release overview ([af83611](https://github.com/groktopus/groktocrawl/commit/af836116f6b9a5fdff00692f43d87808a57b6752))
+* clarify webhook outbox retry guarantees ([a841040](https://github.com/groktopus/groktocrawl/commit/a841040d98433bf521771656fa973b085165a170))
+* close implementation audit after passing final research checks ([de49afe](https://github.com/groktopus/groktocrawl/commit/de49afe7bed116032781929131135813c61cd629))
+* define complete 1.0.1 integration cleanup ([38dff34](https://github.com/groktopus/groktocrawl/commit/38dff3432b62ffc88f4a39df897ad0ad525db3b0))
+* define the work required to complete 1.0.1 ([c369a53](https://github.com/groktopus/groktocrawl/commit/c369a534f2658d6287cbe923a6210a0946692aec))
+* link cleanup pull requests and remaining acceptance checks ([b9e6851](https://github.com/groktopus/groktocrawl/commit/b9e68510bcbcea76cfdcec0d58eaddc2a7c79475))
+* persist fixture opt-in through isolated checkpoints ([20af6eb](https://github.com/groktopus/groktocrawl/commit/20af6eb9f68856902085fd74e4160fd59304585d))
+* record final-head hosted research acceptance ([f572e5c](https://github.com/groktopus/groktocrawl/commit/f572e5cb986da593a4b61de5b397d6be729e445a))
+* track remaining research acceptance in release checklist ([bce92fc](https://github.com/groktopus/groktocrawl/commit/bce92fcf13b503bf6bc105fa2ef5e0a1da990042))
+* update legacy job recovery guidance ([c0b9f5e](https://github.com/groktopus/groktocrawl/commit/c0b9f5ec2160a465cc4f77661f227d949d83ddc4))
+
+
+### CI/CD
+
+* include migration SQL in workflow test containers ([510ba81](https://github.com/groktopus/groktocrawl/commit/510ba810ec141542b8968360c0241767fa620fd7))
+* isolate research acceptance database credentials and volumes ([06aafa4](https://github.com/groktopus/groktocrawl/commit/06aafa43f552357d613dbc9f45c75783b206f61a))
+* seed research inputs across the runner Docker boundary ([beadd73](https://github.com/groktopus/groktocrawl/commit/beadd738701afaca579253b4a39213857c0d740c))
+* start PostgreSQL for standard research acceptance tests ([15df8c0](https://github.com/groktopus/groktocrawl/commit/15df8c0f3426555d46ccd17caae7c8258846d552))
+* validate final research changes against main ([70b17fc](https://github.com/groktopus/groktocrawl/commit/70b17fc3ebd23dcffdba54bfb1892dd7109340bd))
+
+
+### Tests
+
+* align CI contracts with PostgreSQL acceptance setup ([a7ddca3](https://github.com/groktopus/groktocrawl/commit/a7ddca38d923b40a5d76e5b8fa10428eb505374e))
+* align durability checks with recovery contract ([c193b4e](https://github.com/groktopus/groktocrawl/commit/c193b4e7aa3ec63b87e5a8d4e67f469a8404d380))
+* **ci:** align source staging contract with semantic acceptance ([d7a92ae](https://github.com/groktopus/groktocrawl/commit/d7a92ae57a5efe906e68c343fa73409e86426264))
+* cover rejected and interrupted research callbacks ([cd317a6](https://github.com/groktopus/groktocrawl/commit/cd317a6e6f35b5b0f5fa9842291b985264cdd35c))
+* exercise document evidence through CLI and MCP clients ([8506e3e](https://github.com/groktopus/groktocrawl/commit/8506e3ed5ac06ab71a17c716f2e622cc3a4db928))
+* exercise isolated recovery and webhook outbox paths in CI ([4ee5daf](https://github.com/groktopus/groktocrawl/commit/4ee5dafef51e58b4c6cbea9644dbd26cfaf1d4e5))
+* install pinned MCP dependency for runtime acceptance ([319a2fe](https://github.com/groktopus/groktocrawl/commit/319a2fece9903a9d9a65990e472e3b0487f6bc75))
+* preserve owned session boundaries in research lifecycle checks ([9c24058](https://github.com/groktopus/groktocrawl/commit/9c24058cc6ec435dd625292af16ad7ebb225ba3a))
+* **research:** prove selected followups and session handoff over HTTP ([3a3ebf0](https://github.com/groktopus/groktocrawl/commit/3a3ebf0777a2845eba4ede0cb5bbea451b36dbb2))
+* verify attachment questions and citation deletion with Valkey ([0031d43](https://github.com/groktopus/groktocrawl/commit/0031d439c8d89400b2cab373bbe6d4eb663a197f))
+* verify automatic capture recovery through the public API ([4a0aafa](https://github.com/groktopus/groktocrawl/commit/4a0aafa0bc586e8876c9579ead57296fa612486b))
+* verify document questions through Parse HTTP and Valkey ([2927fe8](https://github.com/groktopus/groktocrawl/commit/2927fe8d8841bbb4964acbf224f0826efe61b831))
+* verify follow-up MCP parity and updated capability inventory ([6629d52](https://github.com/groktopus/groktocrawl/commit/6629d52c7c7f9647ae34d3397bf58356ba18963b))
+* verify late document passages survive the complete client workflow ([f864e11](https://github.com/groktopus/groktocrawl/commit/f864e11bd07287f43bd109c55752739baab33861))
+* verify semantic HTTP workflows without Qdrant ([b43d9b8](https://github.com/groktopus/groktocrawl/commit/b43d9b836d1e36be08e5ed9c9641c0444f7cb366))
+
 ## [1.0.0](https://github.com/groktopus/groktocrawl/compare/v0.14.0...v1.0.0) (2026-10-16)
 
 
