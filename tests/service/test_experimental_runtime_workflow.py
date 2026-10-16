@@ -216,6 +216,10 @@ def test_self_hosted_research_inputs_use_only_owned_named_volumes():
             'docker cp compose.ci-research-inputs.yml "$svc":/app/compose.ci-research-inputs.yml'
             in (ROOT / ".github/workflows" / workflow).read_text()
         )
+        assert (
+            'docker cp agent-svc/agent/experimental/migrations/. "$svc":/app/agent-svc/agent/experimental/migrations/'
+            in (ROOT / ".github/workflows" / workflow).read_text()
+        )
 
 
 @pytest.mark.parametrize("fail_copy", [False, True])
