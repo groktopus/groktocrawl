@@ -40,6 +40,12 @@ read back exactly through MCP. The model response is controlled;
 this verifies service and client integration, not model answer quality. Final
 deployment checks remain required.
 
+The container CAPTCHA probe also exercises the public `/v2/scrape` route with no
+manual recovery options. It requires the packaged browser to recover the local
+grid challenge and checks that an unresolved challenge returns
+`CAPTCHA_UNRESOLVED` without caching challenge content. This extension is pending
+container CI; syntax checks alone do not count as passing recovery evidence.
+
 ## Documentation audit
 
 Keep this audit open until the final code is merged. A corrected paragraph is not
