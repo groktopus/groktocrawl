@@ -149,6 +149,7 @@ jobs:
           automatic_review: true
           review_depth: ${{ needs.assess-depth.outputs.depth }}
           review_model: custom:Nous-GPT-6-Luna-0
+          reasoning_effort: none
           security_model: custom:Nous-GPT-6-Luna-0
           automatic_security_review: ${{ needs.assess-depth.outputs.security }}
           allowed_bots: "dependabot[bot]"
