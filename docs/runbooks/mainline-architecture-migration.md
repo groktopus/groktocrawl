@@ -160,8 +160,11 @@ down -v`. PostgreSQL gets a new volume named from the project and
    passes. Keep `FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS=false`: the
    current run endpoint executes a scripted example and is not connected to
    live query acquisition and publication. Existing research flags may remain
-   enabled for retained reads. Pgvector cutover is independent of research-run
-   admission and must be validated on its own. Recreate the agent and semantic
+   enabled for retained reads. The separate [isolated demo verification](experimental-replacement-candidate.md#verify-and-freeze-the-receipt)
+   persists a true fixture flag only in its dedicated test environment through
+   all checkpoints, then resets that file to false and recreates the demo agent;
+   do not apply that test opt-in to this production migration.
+   Pgvector cutover is independent of research-run admission and must be validated on its own. Recreate the agent and semantic
    services and confirm existing API, MCP, and semantic readiness on their
    existing ports. Monitor search
   result parity, vector counts, PostgreSQL saturation, Qdrant write freshness,
