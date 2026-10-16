@@ -2,6 +2,26 @@
 
 All notable changes to GroktoCrawl are documented in this file.
 
+## [1.0.0](https://github.com/groktopus/groktocrawl/compare/v0.14.0...v1.0.0) (2026-10-16)
+
+GroktoCrawl 1.0.0 adopts the research architecture developed and tested in GroktoCrawl X. Future development continues in the main repository.
+
+### What is new
+
+- Durable research records, retained source evidence, and research workspaces.
+- PostgreSQL storage and pgvector similarity search, with a documented migration from Qdrant.
+- Automatic capture recovery and an optional isolated capture deployment.
+- More complete API, CLI, and MCP research tools, while preserving existing session, plan, and memory operations.
+- Publication-date filters that report when a search backend cannot enforce them, plus exports of already-fetched source content.
+- Runtime revision information for checking which release is deployed.
+- Reliable AMD64 and ARM64 image publishing, with verified release tags and a fix for cleanup that could break image downloads.
+
+### Upgrading
+
+Follow the [migration runbook](https://github.com/groktopus/groktocrawl/blob/main/docs/runbooks/mainline-architecture-migration.md) before enabling PostgreSQL or changing vector storage. Back up existing data, validate the restore, and check backfill parity before switching serving modes. Qdrant rollback writes remain available during the transition.
+
+Existing endpoints and client settings remain supported. The search-engine service definitions are unchanged. Historical experiment reports and decisions remain in the repository for reference.
+
 ## [0.14.0](https://github.com/groktopus/groktocrawl/compare/v0.13.0...v0.14.0) (2026-09-07)
 
 
