@@ -1102,6 +1102,10 @@ class SessionManager:
                 f"deep-dive on {ref_id!r} with prompt: {sub_topic}"
             )
 
+        # Source retention may change while search, capture and synthesis run.
+        # Recheck before publishing findings derived from a linked research root.
+        await self._resolve_attached_ref(ref_data)
+
         # Store findings
         step_index = await self._store_call(
             "aappend_step",
