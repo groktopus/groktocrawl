@@ -205,6 +205,8 @@ class LocalProviderTwin:
                                     ],
                                     "temporal_scope": "current"
                                     if owner.current_claim
+                                    and request.get("answer_basis")
+                                    != "captured_sources"
                                     else "historical",
                                     "supported_by": [1],
                                     "contradicted_by": [],
@@ -1057,3 +1059,35 @@ async def test_current_undated_sources_explain_failure_and_survive_recovery(
             len(provider_twin.search_requests),
             len(provider_twin.capture_requests),
         )
+
+
+@pytest.mark.asyncio
+async def test_source_bounded_live_report_is_explicit_about_current_validity(
+    durable_apps, provider_twin
+):
+    apps, _, _, _, _, cleanup_ids, _ = durable_apps
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=apps[0]), base_url="http://acceptance"
+    ) as client:
+        response = await client.post(
+            "/experimental/research/v1/runs",
+            headers={"Idempotency-Key": "source-bounded-answer"},
+            json={"objective": next(iter(OBJECTIVES))},
+        )
+        assert response.status_code == 202
+        admitted = response.json()
+        cleanup_ids.append(admitted["research_id"])
+        status = await _terminal(client, admitted["status_url"])
+        assert status["state"] == "completed", status
+        assert len(provider_twin.model_requests) == 3
+        construction = json.loads(
+            provider_twin.model_requests[1]["messages"][1]["content"]
+        )
+        assert construction["answer_basis"] == "captured_sources"
+        for url in status["result"]["artifacts"].values():
+            artifact = await client.get(url)
+            assert artifact.status_code == 200
+            assert (
+                "does not independently confirm present-day validity" in artifact.text
+            )
+            assert "The captured sources report:" in artifact.text

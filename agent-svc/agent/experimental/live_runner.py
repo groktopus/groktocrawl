@@ -33,10 +33,15 @@ async def run_live(record: Any, app: Any):
         raise ValueError("admission unavailable")
     evaluated = datetime.fromisoformat(admitted.payload["evaluation_time"])
     model = admitted.payload["model"]
-    bounded_evidence_policy = admitted.payload.get("policy_version") == "durable-live/3"
+    source_bound_policy = admitted.payload.get("policy_version") == "durable-live/4"
+    bounded_evidence_policy = admitted.payload.get("policy_version") in {
+        "durable-live/3",
+        "durable-live/4",
+    }
     planned_policy = admitted.payload.get("policy_version") in {
         "durable-live/2",
         "durable-live/3",
+        "durable-live/4",
     }
     selected_sources = tuple(
         CapturedSource(**source)
@@ -273,4 +278,5 @@ async def run_live(record: Any, app: Any):
                 allow_partial=planned_policy,
                 max_output_tokens=completion_budget,
                 evidence_budget_chars=32000 if bounded_evidence_policy else None,
+                source_bound=source_bound_policy,
             )

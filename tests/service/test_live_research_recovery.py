@@ -249,7 +249,9 @@ async def test_heartbeat_and_remote_cancel_fence_publication(ledger, monkeypatch
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("policy", [None, "durable-live/2", "durable-live/3"])
+@pytest.mark.parametrize(
+    "policy", [None, "durable-live/2", "durable-live/3", "durable-live/4"]
+)
 async def test_real_construction_and_review_replay_without_new_model_calls(
     ledger, monkeypatch, policy
 ):
@@ -284,13 +286,18 @@ async def test_real_construction_and_review_replay_without_new_model_calls(
 
         async def __call__(self, request):
             assert request.max_output_tokens == (
-                8192 if policy == "durable-live/3" else 2048
+                8192 if policy in {"durable-live/3", "durable-live/4"} else 2048
             )
             value = json.loads(request.payload)
             if "schema" in value:
                 assert all(
-                    ("omitted_lines" in source) == (policy == "durable-live/3")
+                    ("omitted_lines" in source)
+                    == (policy in {"durable-live/3", "durable-live/4"})
                     for source in value["sources"]
+                )
+            if "schema" in value:
+                assert (value.get("answer_basis") == "captured_sources") == (
+                    policy == "durable-live/4"
                 )
             model_calls.append(value)
             reply = (

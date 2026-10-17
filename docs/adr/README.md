@@ -23,7 +23,7 @@ An Architecture Decision Record captures an important architectural decision mad
 
 **Status legend:** accepted ADRs describe decisions used by the current implementation. Proposed ADRs are design work, not promises of current behavior. Superseded ADRs are historical context only; use their successor when documenting current behavior.
 
-**Current accepted decisions:** ADR-0001–0007, 0009–0012, 0014–0022, 0026 (as superseded for migrated deployments), 0029–0035, 0038, 0039, 0043–0046, 0048–0057, and 0059–0072.
+**Current accepted decisions:** ADR-0001–0007, 0009–0012, 0014–0022, 0026 (as superseded for migrated deployments), 0029–0035, 0038, 0039, 0043–0046, 0048–0057, and 0059–0073.
 
 **Proposed work:** ADR-0023–0025, 0027, 0028, 0036, 0037, and 0040–0042.
 
@@ -100,4 +100,6 @@ An Architecture Decision Record captures an important architectural decision mad
 | 0070 | [Execute live durable research with persisted external-call receipts](0070-execute-live-durable-research.md) | accepted |
 | 0071 | [Use pgvector for Research Memory with Reversible Rollback](0071-use-pgvector-for-research-memory-with-reversible-rollback.md) | accepted |
 | 0072 | [Recover Legacy Async Jobs with Valkey Leases](0072-valkey-leased-legacy-job-recovery.md) | accepted |
+| 0073 | [Publish research about captured sources with an explicit scope](0073-publish-source-bounded-research.md) | accepted |
+
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full ADR workflow: when to write an ADR, how to number it, and how to get it reviewed in a PR. Experimental records are linked from the provenance archive, not included in the mainline sequence.
