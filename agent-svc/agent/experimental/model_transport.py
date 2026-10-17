@@ -5,6 +5,7 @@ import json
 
 import httpx
 
+from .model_failure import ModelOutputLimitError
 from .model_review import ModelReply, ModelReviewAdapter, ReviewRequest
 
 
@@ -84,6 +85,14 @@ class ReviewTransport:
                     body.extend(chunk)
             result = json.loads(body)
             choice = result["choices"][0]
+            if choice["finish_reason"] == "length":
+                usage = result.get("usage")
+                usage = usage if isinstance(usage, dict) else {}
+                raise ModelOutputLimitError(
+                    http_status=response.status_code,
+                    input_tokens=usage.get("prompt_tokens"),
+                    output_tokens=usage.get("completion_tokens"),
+                )
             message = choice["message"]
             if (
                 choice["finish_reason"] != "stop"
@@ -109,6 +118,8 @@ class ReviewTransport:
                 usage.get("completion_tokens"),
                 raw_digest,
             )
+        except ModelOutputLimitError:
+            raise
         except Exception:
             raise ValueError("model transport failed") from None
 

@@ -40,6 +40,7 @@ from ..experimental.durable_research import (
 from ..experimental.knowledge_checks import HistoricalValidityError
 from ..experimental.live_policy import CURRENT_LIVE_POLICY, execution_timeout_seconds
 from ..experimental.live_runner import run_live
+from ..experimental.model_failure import ModelOutputLimitError
 from ..experimental.publication_gate import UnverifiedResearchError
 from ..experimental.query_construction import CapturedSource
 from ..experimental.source_store import StorageConflictError
@@ -811,6 +812,13 @@ async def _execute_run(record: _RunRecord) -> None:
                 else "fixture_run_failed",
                 "retryable": False,
             }
+            if isinstance(exc, ModelOutputLimitError) and not pending_dispatch:
+                record.error = {
+                    "code": exc.code,
+                    "message": "Model response reached its output limit. No report was published.",
+                    "diagnostics": exc.diagnostics,
+                    "retryable": False,
+                }
             if isinstance(exc, UnverifiedResearchError) and not pending_dispatch:
                 record.error = {
                     "code": "evidence_not_verified",

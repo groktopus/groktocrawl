@@ -57,3 +57,15 @@ The source text, capture dates, citations, and verification results are retained
 Missing capture dates, unsupported statements, and captures made after a requested
 past date still cannot pass the existing checks. Earlier admissions keep their
 original rules and saved results. See [ADR-0073](../adr/0073-publish-source-bounded-research.md).
+
+## When a model reaches its output limit
+
+A received `length` finish reason stops the run with `model_output_limit` and
+`retryable: false`. No partial report is published. Status includes only safe
+HTTP status, finish reason, and valid token counts. The service retains a failure
+receipt so a restart does not make the same model call again. You can submit a
+separate, narrower question if useful.
+
+A timeout or disconnected call remains `outcome_unknown`; it is not automatically
+repeated. An exact token count at the ceiling alone does not prove that an older
+failed call reached its output limit. See [ADR-0075](../adr/0075-retain-known-model-output-limit-receipts.md).
