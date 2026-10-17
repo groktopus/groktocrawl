@@ -246,7 +246,7 @@ async def research_from_sources(
         provider="configured-litellm",
         model=model,
         complete=complete,
-        timeout_seconds=90,
+        timeout_seconds=180 if source_bound else 90,
         max_output_tokens=max_output_tokens,
     )
     mechanical_reviewer = ToolReviewer(

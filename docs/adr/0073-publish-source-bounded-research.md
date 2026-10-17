@@ -38,6 +38,11 @@ paid operations. The constructor defaults to the previous behavior for existing
 callers; only version 4 opts into the new mode. Model request receipts, fencing,
 publication transactions, and callback delivery retain ADR-0070's contracts.
 
+Version 4 drafting and model review use the admission's existing shared
+180-second deadline. Shorter model-stage timers must not abandon a call while
+that shared deadline still permits it. Earlier policies keep their original
+stage limits; no retry is introduced.
+
 The new construction prompt digest includes its actual scope and excerpt
 instructions. The report renderer and audit use version 3 for this mode, while
 previous research retains renderer version 2.

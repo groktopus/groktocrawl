@@ -350,3 +350,14 @@ async def test_transport_allows_slow_reply_only_with_explicit_deadline(
         else:
             assert (await transport(request)).content == b"{}"
     assert calls == [expected]
+
+
+@pytest.mark.parametrize("timeout", [0, 181, True])
+def test_model_review_rejects_deadlines_outside_its_supported_range(timeout):
+    with pytest.raises(ValueError, match="invalid model review bounds"):
+        ModelReviewAdapter(
+            provider="test",
+            model="local",
+            complete=lambda _request: None,
+            timeout_seconds=timeout,
+        )

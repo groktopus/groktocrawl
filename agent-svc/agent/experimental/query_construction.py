@@ -315,7 +315,7 @@ async def construct_research(
             else ""
         )
     )
-    async with asyncio.timeout(120):
+    async with asyncio.timeout(180 if source_bound else 120):
         reply = await asyncio.ensure_future(
             complete(
                 ReviewRequest(
