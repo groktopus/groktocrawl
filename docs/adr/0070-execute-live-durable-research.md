@@ -7,6 +7,8 @@
 
 Later changes: [ADR-0073](0073-publish-source-bounded-research.md) defines source-bound answers. [ADR-0074](0074-use-a-five-minute-live-research-deadline.md) gives new version-5 admissions a five-minute deadline; earlier policies keep their original limits.
 
+[ADR-0075](0075-retain-known-model-output-limit-receipts.md) adds sanitized receipts for positively received model output-limit failures. Unknown dispatches retain the no-replay contract.
+
 ## Context
 
 ADR-0069 adopted storage and verification components, but the HTTP run worker selected a scripted example. Separately tested real-source construction did not prove that an HTTP objective acquired sources or retained those bytes. Connecting that function without lifecycle integration would repeat external calls after crashes: the old worker renewed no lease and checkpointed only its terminal result.

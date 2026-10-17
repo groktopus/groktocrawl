@@ -18,6 +18,7 @@ from ..settings import load_settings
 from .durable_plan import plan_queries
 from .durable_research import OutcomeUnknownError
 from .live_policy import execution_timeout_seconds
+from .model_failure import ModelOutputLimitError
 from .model_review import ModelReply
 from .model_transport import ReviewTransport
 from .query_construction import CapturedSource
@@ -134,12 +135,30 @@ async def run_live(record: Any, app: Any):
             input_digest,
         )
         if replay:
+            if identity.startswith("model:") and "model_failure" in output:
+                raise ModelOutputLimitError.from_receipt(output)
             return output
-        # Every exception after intent is ambiguous until a bounded receipt is
-        # durable. Never convert it to a retry or silently select another model.
+        # Only a positively received, sanitized model failure can become a
+        # failure receipt. All other exceptions leave dispatch ambiguous.
         try:
             output = await call()
         except asyncio.CancelledError:
+            raise
+        except ModelOutputLimitError as exc:
+            if not identity.startswith("model:"):
+                raise OutcomeUnknownError(
+                    "external dispatch outcome is unknown"
+                ) from exc
+            await asyncio.to_thread(
+                ledger.step,
+                record.run_id,
+                record.durable_owner_id,
+                record.durable_generation,
+                identity,
+                input_digest,
+                output=exc.receipt(),
+                complete=True,
+            )
             raise
         except Exception as exc:
             raise OutcomeUnknownError("external dispatch outcome is unknown") from exc

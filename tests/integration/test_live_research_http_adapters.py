@@ -49,6 +49,7 @@ class LocalProviderTwin:
 
     def __init__(self) -> None:
         self.current_claim = False
+        self.limit_on_model_call: int | None = None
         self.search_requests: list[dict] = []
         self.capture_requests: list[dict] = []
         self.model_requests: list[dict] = []
@@ -164,6 +165,24 @@ class LocalProviderTwin:
                 if self.path == "/chat/completions":
                     with owner._lock:
                         owner.model_requests.append(payload)
+                        limited = len(owner.model_requests) == owner.limit_on_model_call
+                    if limited:
+                        self._reply(
+                            200,
+                            {
+                                "choices": [
+                                    {
+                                        "finish_reason": "length",
+                                        "message": {"content": "PRIVATE RESPONSE"},
+                                    }
+                                ],
+                                "usage": {
+                                    "prompt_tokens": 123,
+                                    "completion_tokens": 8192,
+                                },
+                            },
+                        )
+                        return
                     user = payload["messages"][1]["content"]
                     session_query = user.startswith(
                         "Here is the information I gathered:"
@@ -1101,3 +1120,70 @@ async def test_source_bounded_live_report_is_explicit_about_current_validity(
                 "does not independently confirm present-day validity" in artifact.text
             )
             assert "The captured sources report:" in artifact.text
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("limited_call", [1, 2, 3])
+async def test_output_limit_is_retained_through_http_status_and_restart(
+    durable_apps, provider_twin, limited_call
+):
+    apps, _, _, ledgers, make_app, cleanup_ids, _ = durable_apps
+    provider_twin.limit_on_model_call = limited_call
+    body = {"objective": next(iter(OBJECTIVES))}
+    headers = {"Idempotency-Key": "output-limit-case"}
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=apps[0]), base_url="http://acceptance"
+    ) as client:
+        response = await client.post(
+            "/experimental/research/v1/runs", headers=headers, json=body
+        )
+        assert response.status_code == 202
+        admitted = response.json()
+        cleanup_ids.append(admitted["research_id"])
+        status = await _terminal(client, admitted["status_url"])
+        assert status["state"] == "failed", status
+        assert status["result"] is None
+        assert status["error"] == {
+            "code": "model_output_limit",
+            "message": "Model response reached its output limit. No report was published.",
+            "diagnostics": {
+                "finish_reason": "length",
+                "http_status": 200,
+                "input_tokens": 123,
+                "output_tokens": 8192,
+            },
+            "retryable": False,
+        }
+        ledger = ledgers[-1]
+        retained = json.loads(ledger.redis.get(ledger._run_key(admitted["run_id"])))
+        assert retained["operations"][f"model:{limited_call}"]["state"] == "receipt"
+        assert not ledger.has_pending_dispatch(admitted["run_id"])
+        assert "PRIVATE RESPONSE" not in json.dumps(retained["operations"])
+        counts = (
+            len(provider_twin.model_requests),
+            len(provider_twin.search_requests),
+            len(provider_twin.capture_requests),
+        )
+        assert counts[0] == limited_call
+        experimental._RUNS.clear()
+        recovered = make_app()
+        apps.append(recovered)
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=recovered), base_url="http://acceptance"
+        ) as fresh:
+            assert (await fresh.get(admitted["status_url"])).json()["error"] == status[
+                "error"
+            ]
+            replay = await fresh.post(
+                "/experimental/research/v1/runs", headers=headers, json=body
+            )
+            assert replay.status_code == 202
+            assert replay.json()["run_id"] == admitted["run_id"]
+            events = await fresh.get(admitted["events_url"])
+            assert "model_output_limit" in events.text
+            assert "PRIVATE RESPONSE" not in events.text
+        assert counts == (
+            len(provider_twin.model_requests),
+            len(provider_twin.search_requests),
+            len(provider_twin.capture_requests),
+        )

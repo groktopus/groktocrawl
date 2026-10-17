@@ -103,4 +103,6 @@ An Architecture Decision Record captures an important architectural decision mad
 | 0073 | [Publish research about captured sources with an explicit scope](0073-publish-source-bounded-research.md) | accepted |
 | 0074 | [Give new live research five minutes to finish](0074-use-a-five-minute-live-research-deadline.md) | accepted |
 
+| 0075 | [Retain known model output-limit failures](0075-retain-known-model-output-limit-receipts.md) | accepted |
+
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full ADR workflow: when to write an ADR, how to number it, and how to get it reviewed in a PR. Experimental records are linked from the provenance archive, not included in the mainline sequence.

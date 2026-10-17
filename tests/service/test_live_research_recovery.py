@@ -517,3 +517,66 @@ async def test_admitted_deadline_cancels_without_replaying_model(
         await live_runner.run_live(record, record.app)
     assert calls == before
     assert ledger.has_pending_dispatch(record.run_id)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("save_receipt", [True, False])
+async def test_known_output_limit_receipt_survives_recovery_without_dispatch(
+    ledger, monkeypatch, save_receipt
+):
+    from agent.experimental.model_failure import ModelOutputLimitError
+
+    record = admitted(ledger)
+    calls = []
+
+    class Transport:
+        def __init__(self, *_args, **_kwargs):
+            pass
+
+        async def __call__(self, request):
+            calls.append(request)
+            raise ModelOutputLimitError(
+                http_status=200, input_tokens=10, output_tokens=8192
+            )
+
+    async def query(_objective, **kwargs):
+        await kwargs["complete"](
+            ReviewRequest("test", b"{}", "configured-test-model", 32)
+        )
+
+    monkeypatch.setattr(live_runner, "ReviewTransport", Transport)
+    monkeypatch.setattr(live_runner, "run_query", query)
+    claim(record)
+    original_step = ledger.step
+
+    def step(*args, **kwargs):
+        if kwargs.get("complete") and not save_receipt:
+            raise RuntimeError("simulated receipt write interruption")
+        return original_step(*args, **kwargs)
+
+    monkeypatch.setattr(ledger, "step", step)
+    with pytest.raises(ModelOutputLimitError if save_receipt else RuntimeError):
+        await live_runner.run_live(record, record.app)
+    assert ledger.has_pending_dispatch(record.run_id) is not save_receipt
+    if not save_receipt:
+        with pytest.raises(OutcomeUnknownError):
+            await live_runner.run_live(record, record.app)
+        assert len(calls) == 1
+        return
+    retained = ledger.get(record.run_id)
+    assert (
+        json.loads(ledger.redis.get(ledger._run_key(record.run_id)))["operations"][
+            "model:1"
+        ]["state"]
+        == "receipt"
+    )
+    recovered = routes._restore_durable_record(retained)
+    recovered.durable_ledger = ledger
+    recovered.app = record.app
+    recovered.durable_owner_id = record.durable_owner_id
+    recovered.durable_generation = record.durable_generation
+    with pytest.raises(ModelOutputLimitError) as caught:
+        await live_runner.run_live(recovered, recovered.app)
+    assert caught.value.diagnostics["output_tokens"] == 8192
+    assert len(calls) == 1
+    assert not ledger.has_pending_dispatch(record.run_id)
