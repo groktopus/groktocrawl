@@ -384,3 +384,31 @@ async def test_selected_root_liveness_rechecked_before_external_work(
     claim(record)
     with pytest.raises((ValueError, StorageConflictError)):
         await live_runner.run_live(record, record.app)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("freshness", [True, False])
+async def test_evidence_failure_keeps_safe_terminal_details(
+    ledger, monkeypatch, freshness
+):
+    from agent.experimental.publication_gate import UnverifiedResearchError
+
+    record = admitted(ledger)
+    record.artifact_authority = EmptyAuthority()
+    failure = UnverifiedResearchError(freshness=freshness)
+
+    async def fail(*_args):
+        raise failure
+
+    monkeypatch.setattr(routes, "run_live", fail)
+    await routes._execute_run(record)
+    restored = routes._restore_durable_record(ledger.get(record.run_id))
+    assert restored.state == "failed"
+    assert restored.error == {
+        "code": "evidence_not_verified",
+        "reason": failure.reason,
+        "message": failure.message,
+        "retryable": False,
+    }
+    assert restored.events[-1].error == restored.error
+    assert record.artifact_authority.commits == 0

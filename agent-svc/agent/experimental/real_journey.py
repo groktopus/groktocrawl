@@ -8,10 +8,16 @@ from uuid import NAMESPACE_URL, uuid4, uuid5
 from .checked_knowledge import CheckedKnowledge
 from .consolidated_journey import ConsolidatedJourney, JourneyResult, RenderedReport
 from .knowledge import text_digest
-from .knowledge_checks import KnowledgeCheckInput, ModelReviewer, ToolReviewer
-from .knowledge_context import KnowledgeContext
+from .knowledge_checks import (
+    HistoricalValidityError,
+    KnowledgeCheckInput,
+    ModelReviewer,
+    ToolReviewer,
+)
+from .knowledge_context import KnowledgeContext, moment
 from .knowledge_execution import ExecutionDecision
 from .model_review import Complete, ModelReviewAdapter
+from .publication_gate import UnverifiedResearchError, claim_publication_failures
 from .query_construction import CapturedSource, construct_research
 from .render_execution import RenderInspection
 from .render_manifest import ManifestArtifact, Renderer
@@ -110,11 +116,29 @@ async def render_research(
 ) -> tuple[RenderedReport, ...]:
     """Deterministic presentation of assessed claims; full output still needs audit."""
     context = knowledge.context
+    failures = claim_publication_failures(knowledge)
+    required = {q.report_claim_id for q in context.questions}
+    blocked = required & failures.keys()
+    if blocked:
+        freshness = any(failures[c] == "source_freshness_unverified" for c in blocked)
+        if (
+            freshness
+            and context.as_of is not None
+            and moment(context.as_of) < moment(context.created_at)
+        ):
+            raise HistoricalValidityError(
+                "historical validity is not established by retained evidence"
+            )
+        raise UnverifiedResearchError(freshness=freshness)
     reports = []
     for layer in ("summary", "analysis", "dossier"):
         text = f"# {layer.title()}\n\nModel-reviewed experimental research.\n\n{context.objective}\n\nCoverage: {knowledge.coverage}.\n\n"
         statements = []
+        if failures:
+            text += f"{len(failures)} additional conclusions could not be verified and are omitted.\n\n"
         for claim in context.claims:
+            if claim.claim_id in failures:
+                continue
             start = len(text)
             text += claim.text
             evidence = _evidence(context, claim.claim_id)
@@ -256,8 +280,8 @@ async def research_from_sources(
     auditor = ToolReviewer(
         kind="tool",
         identity="deterministic-research-render-audit",
-        version="1",
-        configuration_digest=text_digest("assessed-claim-pyramid/1"),
+        version="2",
+        configuration_digest=text_digest("assessed-claim-pyramid/2"),
     )
 
     async def audit(inspection: RenderInspection) -> ExecutionDecision:
@@ -289,8 +313,8 @@ async def research_from_sources(
             verify=verify,
             renderer=Renderer(
                 identity="assessed-claim-pyramid",
-                version="1",
-                configuration_digest=text_digest("assessed-claim-pyramid/1"),
+                version="2",
+                configuration_digest=text_digest("assessed-claim-pyramid/2"),
             ),
             render=render,
             auditor=auditor,

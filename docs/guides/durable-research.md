@@ -24,3 +24,22 @@ External call intents and exact completed responses are retained before dependen
 The optional webhook receives `research.completed`, `research.failed` or `research.cancelled` with `id` and `webhookId` equal to the run UUID, plus `data.run_id`, `data.research_id`, `data.state` and the result receipt or error. The outbox revalidates destination safety for every attempt, signs the exact body using the configured webhook secret, and never follows redirects. Deduplicate by `webhookId`: an acknowledgement lost after your receiver accepted a request can cause a repeat. Three bounded attempts lead to `delivered`, `rejected` or `unconfirmed`. The status response exposes only notification state and attempt count, not the destination or payload. Outbox recovery lasts within the execution ledger retention advertised by capabilities; it does not promise delivery after that retention expires.
 
 The verification model evaluates support; passing checks are not proof of factual truth or a human review. Read the sources and coverage qualification before relying on a report. API and integration tests use controlled local HTTP twins with real isolated retained stores and do not contact public search or paid providers.
+
+
+## When evidence cannot be verified
+
+A model can find supporting text without establishing that it is current. A recent
+capture alone does not establish when a page was published or took effect. The
+publication checks keep that distinction.
+
+Reports omit additional conclusions that do not pass verification and say how
+many were omitted. If a conclusion needed to answer the question cannot pass,
+the run ends as `failed` with code `evidence_not_verified`, a readable `message`,
+and reason `source_freshness_unverified` or `answer_support_unverified`. It does
+not publish an unverified answer. A request for a past date still uses
+`historical_validity_unestablished` when the available evidence cannot establish
+that historical answer.
+
+These are final outcomes for that admission. Reading status or recovering the
+run preserves its completed search and model responses; it does not repeat those
+calls. A clearer error is not evidence that the original question was answered.
