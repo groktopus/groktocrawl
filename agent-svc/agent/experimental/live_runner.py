@@ -214,6 +214,9 @@ async def run_live(record: Any, app: Any):
             api_key=app.state.llm_api_key,
             token_parameter=token_parameter,
             token_budget=token_budget,
+            # The outer admission deadline bounds all version-4 work together.
+            # Do not abandon a valid slow draft at the legacy 90-second limit.
+            timeout=180 if source_bound_policy else 90,
         )
 
         async def complete(request):
