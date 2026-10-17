@@ -190,6 +190,8 @@ async def research_from_sources(
     artifact_set_id: str | None = None,
     as_of: str | None = None,
     acquisition_failures: tuple[str, ...] = (),
+    max_output_tokens: int = 2048,
+    evidence_budget_chars: int | None = None,
 ) -> JourneyResult:
     """Construct, check and audit a bounded root; no retained publication yet."""
     execution_clock = clock or (lambda: datetime.now(UTC))
@@ -204,12 +206,15 @@ async def research_from_sources(
         revision_id=revision_id,
         as_of=as_of,
         acquisition_failures=acquisition_failures,
+        max_output_tokens=max_output_tokens,
+        evidence_budget_chars=evidence_budget_chars,
     )
     adapter = ModelReviewAdapter(
         provider="configured-litellm",
         model=model,
         complete=complete,
         timeout_seconds=90,
+        max_output_tokens=max_output_tokens,
     )
     mechanical_reviewer = ToolReviewer(
         kind="tool",

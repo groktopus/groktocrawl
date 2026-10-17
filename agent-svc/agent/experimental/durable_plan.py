@@ -26,6 +26,7 @@ async def plan_queries(
     model: str,
     selected_sources: tuple[CapturedSource, ...] = (),
     as_of: str | None = None,
+    max_output_tokens: int = 2048,
 ) -> tuple[str, ...]:
     reply = await complete(
         ReviewRequest(
@@ -44,7 +45,7 @@ async def plan_queries(
                 }
             ).encode(),
             model,
-            2048,
+            max_output_tokens,
             QueryPlan.model_json_schema(),
         )
     )

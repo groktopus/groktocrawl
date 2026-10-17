@@ -518,3 +518,100 @@ async def test_partial_policy_never_swallows_ambiguous_external_dispatch():
             allow_partial=True,
         )
     assert captured == ["https://source.test/unknown"]
+
+
+@pytest.mark.asyncio
+async def test_bounded_construction_keeps_original_lines_and_configured_budget():
+    from agent.experimental.query_construction import construction_sources
+
+    text = "".join(f"Unrelated filler {i}.\n" for i in range(1000))
+    text += "Alder cancellation requires thirty days notice.\n"
+    source = CapturedSource("https://example.test/terms", text, "2026-09-06T00:00:00Z")
+    shown = construction_sources((source,), "Alder cancellation notice", 1000)
+    assert sum(len(row["text"]) for row in shown[0]["lines"]) <= 1000
+    assert shown[0]["omitted_lines"] > 0
+    assert any(row["line"] == 1001 for row in shown[0]["lines"])
+    value = proposal()
+    value["evidence"][0].update(start_line=1001, end_line=1001)
+
+    async def complete(request):
+        assert request.max_output_tokens == 8192
+        assert json.loads(request.payload)["sources"] == shown
+        return ModelReply(json.dumps(value).encode(), "local", 100, 2500)
+
+    result = await construct_research(
+        "Alder cancellation notice",
+        (source,),
+        complete=complete,
+        scope_id="owner",
+        clock=journey_clock,
+        max_output_tokens=8192,
+        evidence_budget_chars=1000,
+    )
+    assert result.context.evidence[0].quote == text.splitlines(keepends=True)[1000]
+    resolved = await result.resolve(result.context.snapshots[0].content_ref)
+    assert resolved.body == text.encode()
+
+
+@pytest.mark.asyncio
+async def test_bounded_construction_rejects_evidence_from_omitted_lines():
+    text = "".join(f"Unrelated filler {i}.\n" for i in range(1000))
+    text += "Alder cancellation requires thirty days notice.\n"
+
+    async def complete(request):
+        shown = {
+            row["line"] for row in json.loads(request.payload)["sources"][0]["lines"]
+        }
+        omitted = next(n for n in range(1, 1002) if n not in shown)
+        value = proposal()
+        value["evidence"][0].update(start_line=omitted, end_line=omitted)
+        return ModelReply(json.dumps(value).encode(), "local", 100, 100)
+
+    with pytest.raises(ValueError, match="not supplied"):
+        await construct_research(
+            "Alder cancellation notice",
+            (
+                CapturedSource(
+                    "https://example.test/terms", text, "2026-09-06T00:00:00Z"
+                ),
+            ),
+            complete=complete,
+            scope_id="owner",
+            clock=journey_clock,
+            evidence_budget_chars=1000,
+        )
+
+
+def test_construction_excerpt_budget_is_shared_across_sources():
+    from agent.experimental.query_construction import construction_sources
+
+    sources = tuple(
+        CapturedSource(
+            f"https://example.test/{i}",
+            "irrelevant background\n" * 200
+            + f"Research outcome: trial {i} reduced losses.\n",
+            None,
+        )
+        for i in range(8)
+    )
+    selected = construction_sources(sources, "Research outcome reduced losses", 8000)
+    assert len(selected) == 8
+    assert (
+        sum(len(row["text"]) for source in selected for row in source["lines"]) <= 8000
+    )
+    for original, source in zip(sources, selected, strict=True):
+        assert source["lines"]
+        assert any("Research outcome" in row["text"] for row in source["lines"])
+        for row in source["lines"]:
+            assert (
+                row["text"] == original.text.splitlines(keepends=True)[row["line"] - 1]
+            )
+
+
+def test_construction_does_not_present_truncated_line_as_complete():
+    from agent.experimental.query_construction import construction_sources
+
+    source = CapturedSource(None, "relevant " * 1000, None)
+    selected = construction_sources((source,), "relevant", 1000)
+    assert selected[0]["lines"] == []
+    assert selected[0]["omitted_lines"] == 1

@@ -36,7 +36,7 @@ def ledger():
         value.redis.close()
 
 
-def admitted(ledger, policy=None):
+def admitted(ledger, policy=None, max_tokens=2048):
     value = ledger.admit(
         "test-owner",
         str(uuid4()),
@@ -46,7 +46,7 @@ def admitted(ledger, policy=None):
             "research_id": str(uuid4()),
             "execution_mode": "live",
             "model": "configured-test-model",
-            "token_params": {"max_tokens": 2048},
+            "token_params": {"max_tokens": max_tokens},
             "evaluation_time": datetime.now(UTC).isoformat(),
             "policy_version": policy,
         },
@@ -249,7 +249,7 @@ async def test_heartbeat_and_remote_cancel_fence_publication(ledger, monkeypatch
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("policy", [None, "durable-live/2"])
+@pytest.mark.parametrize("policy", [None, "durable-live/2", "durable-live/3"])
 async def test_real_construction_and_review_replay_without_new_model_calls(
     ledger, monkeypatch, policy
 ):
@@ -257,7 +257,7 @@ async def test_real_construction_and_review_replay_without_new_model_calls(
 
     from tests.unit.test_query_construction import TEXT, batch_decisions, proposal
 
-    record = admitted(ledger, policy)
+    record = admitted(ledger, policy, max_tokens=8192)
     model_calls = []
     search_calls = []
 
@@ -283,7 +283,15 @@ async def test_real_construction_and_review_replay_without_new_model_calls(
             pass
 
         async def __call__(self, request):
+            assert request.max_output_tokens == (
+                8192 if policy == "durable-live/3" else 2048
+            )
             value = json.loads(request.payload)
+            if "schema" in value:
+                assert all(
+                    ("omitted_lines" in source) == (policy == "durable-live/3")
+                    for source in value["sources"]
+                )
             model_calls.append(value)
             reply = (
                 {

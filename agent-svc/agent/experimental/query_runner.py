@@ -31,6 +31,8 @@ async def run_query(
     as_of: str | None = None,
     queries: tuple[str, ...] | None = None,
     allow_partial: bool = False,
+    max_output_tokens: int = 2048,
+    evidence_budget_chars: int | None = None,
 ) -> JourneyResult:
     """Run a bounded query plan, retained acquisitions, construction and checks.
 
@@ -150,4 +152,6 @@ async def run_query(
             artifact_set_id=artifact_set_id,
             as_of=as_of,
             acquisition_failures=tuple(failures),
+            max_output_tokens=max_output_tokens,
+            evidence_budget_chars=evidence_budget_chars,
         )
