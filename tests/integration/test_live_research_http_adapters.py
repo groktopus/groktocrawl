@@ -1065,10 +1065,16 @@ async def test_current_undated_sources_explain_failure_and_survive_recovery(
 async def test_source_bounded_live_report_is_explicit_about_current_validity(
     durable_apps, provider_twin
 ):
-    apps, _, _, _, _, cleanup_ids, _ = durable_apps
+    apps, _, _, ledgers, _, cleanup_ids, _ = durable_apps
     async with httpx.AsyncClient(
         transport=httpx.ASGITransport(app=apps[0]), base_url="http://acceptance"
     ) as client:
+        capabilities = await client.get("/experimental/research/v1/capabilities")
+        assert capabilities.status_code == 200
+        assert (
+            capabilities.json()["operations"]["runs"]["policy"]["timeout_seconds"]
+            == 300
+        )
         response = await client.post(
             "/experimental/research/v1/runs",
             headers={"Idempotency-Key": "source-bounded-answer"},
@@ -1076,6 +1082,10 @@ async def test_source_bounded_live_report_is_explicit_about_current_validity(
         )
         assert response.status_code == 202
         admitted = response.json()
+        assert (
+            ledgers[-1].get(admitted["run_id"]).payload["policy_version"]
+            == "durable-live/5"
+        )
         cleanup_ids.append(admitted["research_id"])
         status = await _terminal(client, admitted["status_url"])
         assert status["state"] == "completed", status

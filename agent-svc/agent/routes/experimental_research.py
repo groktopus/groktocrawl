@@ -38,6 +38,7 @@ from ..experimental.durable_research import (
     OutcomeUnknownError,
 )
 from ..experimental.knowledge_checks import HistoricalValidityError
+from ..experimental.live_policy import CURRENT_LIVE_POLICY, execution_timeout_seconds
 from ..experimental.live_runner import run_live
 from ..experimental.publication_gate import UnverifiedResearchError
 from ..experimental.query_construction import CapturedSource
@@ -732,7 +733,9 @@ async def _execute_run(record: _RunRecord) -> None:
             _event(record, "progress", "running", stage="acquisition")
         if record.execution_mode == "live":
             remaining = (
-                claimed.created_at_ms / 1000 + 180 - datetime.now(UTC).timestamp()
+                claimed.created_at_ms / 1000
+                + execution_timeout_seconds(claimed.payload.get("policy_version"))
+                - datetime.now(UTC).timestamp()
             )
             async with asyncio.timeout(max(0, remaining)):
                 result = await run_live(record, record.app)
@@ -1003,7 +1006,9 @@ def capability_document() -> dict[str, Any]:
                     "searches": 3,
                     "sources": 8,
                     "source_bytes": 256_000,
-                    "timeout_seconds": 180,
+                    "timeout_seconds": execution_timeout_seconds(CURRENT_LIVE_POLICY)
+                    if live_creation
+                    else 180,
                     "model_calls": 64,
                     "automatic_ambiguous_call_retry": False,
                     "webhook": live_creation,
@@ -1135,7 +1140,9 @@ async def admit_research_run(
                     "objective": payload.objective,
                     "research_id": str(uuid4()),
                     "execution_mode": "fixture" if fixture else "live",
-                    "policy_version": "durable-live/4",
+                    "policy_version": "durable-live/4"
+                    if fixture
+                    else CURRENT_LIVE_POLICY,
                     "model": model,
                     "token_params": _token_budget_params(),
                     "selected_sources": [asdict(source) for source in selected_sources],

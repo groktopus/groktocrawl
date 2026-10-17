@@ -114,7 +114,7 @@ class ModelReviewAdapter:
     ) -> None:
         for value, ceiling in (
             (max_calls, 128),
-            (timeout_seconds, 120),
+            (timeout_seconds, 300),
             (max_output_tokens, 8192),
         ):
             if type(value) is not int or not 1 <= value <= ceiling:
@@ -348,7 +348,9 @@ class ModelReviewAdapter:
         payload = json.dumps(
             {
                 "input_digest": digest,
-                "check_type": material.get("check", {}).get("check_type", "render_audit"),
+                "check_type": material.get("check", {}).get(
+                    "check_type", "render_audit"
+                ),
                 "allowed_outcomes": list(outcomes),
                 "response_schema": schema,
                 **material,

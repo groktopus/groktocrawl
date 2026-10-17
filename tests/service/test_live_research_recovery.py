@@ -250,7 +250,8 @@ async def test_heartbeat_and_remote_cancel_fence_publication(ledger, monkeypatch
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "policy", [None, "durable-live/2", "durable-live/3", "durable-live/4"]
+    "policy",
+    [None, "durable-live/2", "durable-live/3", "durable-live/4", "durable-live/5"],
 )
 async def test_real_construction_and_review_replay_without_new_model_calls(
     ledger, monkeypatch, policy
@@ -283,23 +284,31 @@ async def test_real_construction_and_review_replay_without_new_model_calls(
     class Transport:
         def __init__(self, *_args, **kwargs):
             assert kwargs.get("timeout", 90) == (
-                180 if policy == "durable-live/4" else 90
+                300
+                if policy == "durable-live/5"
+                else 180
+                if policy == "durable-live/4"
+                else 90
             )
 
         async def __call__(self, request):
             assert request.max_output_tokens == (
-                8192 if policy in {"durable-live/3", "durable-live/4"} else 2048
+                8192
+                if policy in {"durable-live/3", "durable-live/4", "durable-live/5"}
+                else 2048
             )
             value = json.loads(request.payload)
             if "schema" in value:
                 assert all(
                     ("omitted_lines" in source)
-                    == (policy in {"durable-live/3", "durable-live/4"})
+                    == (
+                        policy in {"durable-live/3", "durable-live/4", "durable-live/5"}
+                    )
                     for source in value["sources"]
                 )
             if "schema" in value:
                 assert (value.get("answer_basis") == "captured_sources") == (
-                    policy == "durable-live/4"
+                    policy in {"durable-live/4", "durable-live/5"}
                 )
             model_calls.append(value)
             reply = (
@@ -424,12 +433,18 @@ async def test_evidence_failure_keeps_safe_terminal_details(
 
 
 @pytest.mark.asyncio
-async def test_version_four_shared_deadline_cancels_without_replaying_model(
-    ledger, monkeypatch
+@pytest.mark.parametrize("blocked_phase", ["planning", "construction", "review"])
+@pytest.mark.parametrize(
+    "policy,budget", [("durable-live/4", 180), ("durable-live/5", 300)]
+)
+async def test_admitted_deadline_cancels_without_replaying_model(
+    ledger, monkeypatch, blocked_phase, policy, budget
 ):
-    record = admitted(ledger, "durable-live/4")
+    from tests.unit.test_query_construction import TEXT, batch_decisions, proposal
+
+    record = admitted(ledger, policy)
     saved = ledger.get(record.run_id)
-    fixed_now = datetime.fromtimestamp(saved.created_at_ms / 1000 + 179.98, UTC)
+    fixed_now = datetime.fromtimestamp(saved.created_at_ms / 1000 + budget - 0.5, UTC)
     monkeypatch.setattr(
         live_runner,
         "datetime",
@@ -440,19 +455,65 @@ async def test_version_four_shared_deadline_cancels_without_replaying_model(
     )
     calls = []
 
+    class Search:
+        def __init__(self, *_args, **_kwargs):
+            pass
+
+        async def search(self, *_args, **_kwargs):
+            return [{"url": "https://source.test/pilot"}], SimpleNamespace(
+                empty_result=False
+            )
+
+        async def close(self):
+            pass
+
+    class Scraper:
+        async def scrape(self, *_args, **_kwargs):
+            return {"success": True, "data": {"markdown": TEXT}}
+
     class Transport:
         def __init__(self, *_args, **kwargs):
-            assert kwargs["timeout"] == 180
+            assert kwargs["timeout"] == budget
 
         async def __call__(self, request):
-            calls.append(request)
-            await asyncio.Event().wait()
+            payload = json.loads(request.payload)
+            phase = (
+                "planning"
+                if payload.get("planning")
+                else "construction"
+                if "schema" in payload
+                else "review"
+            )
+            calls.append(phase)
+            if phase == blocked_phase:
+                await asyncio.Event().wait()
+            reply = (
+                {
+                    "reasoning": "Controlled plan",
+                    "research_strategy": "deep",
+                    "focused_queries": [record.objective, "replication", "limitations"],
+                }
+                if phase == "planning"
+                else proposal()
+                if phase == "construction"
+                else batch_decisions(payload)
+            )
+            return ModelReply(json.dumps(reply).encode(), "test-model", 1, 1)
 
     monkeypatch.setattr(live_runner, "ReviewTransport", Transport)
+    monkeypatch.setattr(live_runner, "SearXNGClient", Search)
+    record.app.state.scraper_client = Scraper()
     claim(record)
     with pytest.raises(TimeoutError):
         await live_runner.run_live(record, record.app)
-    assert len(calls) == 1
-    with pytest.raises(OutcomeUnknownError):
+    expected = ["planning", "construction", "review"]
+    assert calls == expected[: expected.index(blocked_phase) + 1]
+    assert ledger.has_pending_dispatch(record.run_id)
+    before = list(calls)
+    # Review's public boundary sanitizes provider errors, including the ledger's
+    # unknown-dispatch error. Both paths must refuse to call the model again.
+    expected_error = ValueError if blocked_phase == "review" else OutcomeUnknownError
+    with pytest.raises(expected_error):
         await live_runner.run_live(record, record.app)
-    assert len(calls) == 1
+    assert calls == before
+    assert ledger.has_pending_dispatch(record.run_id)

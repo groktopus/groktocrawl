@@ -224,6 +224,7 @@ async def research_from_sources(
     max_output_tokens: int = 2048,
     evidence_budget_chars: int | None = None,
     source_bound: bool = False,
+    model_timeout_seconds: int | None = None,
 ) -> JourneyResult:
     """Construct, check and audit a bounded root; no retained publication yet."""
     execution_clock = clock or (lambda: datetime.now(UTC))
@@ -241,12 +242,15 @@ async def research_from_sources(
         max_output_tokens=max_output_tokens,
         evidence_budget_chars=evidence_budget_chars,
         source_bound=source_bound,
+        model_timeout_seconds=model_timeout_seconds,
     )
     adapter = ModelReviewAdapter(
         provider="configured-litellm",
         model=model,
         complete=complete,
-        timeout_seconds=90,
+        timeout_seconds=model_timeout_seconds
+        if model_timeout_seconds is not None
+        else 90,
         max_output_tokens=max_output_tokens,
     )
     mechanical_reviewer = ToolReviewer(
