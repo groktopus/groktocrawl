@@ -5,7 +5,7 @@
 - Scope: newly admitted live durable research
 - Extends: [ADR-0070](0070-execute-live-durable-research.md)
 
-## Problem
+## Context
 
 A useful documentation page often has no publication date. Research can correctly
 explain what that page says without proving that every statement is true today.
@@ -51,6 +51,14 @@ previous research retains renderer version 2.
   about what sources actually say. Rejected for the new source-bound contract.
 - Making a second model attempt after failure would repeat spending without
   correcting the evidence contract. Rejected.
+
+## Consequences
+
+The platform can provide useful, checked descriptions of captured documentation
+without pretending that a capture date proves current truth. Reports must keep
+their source scope visible. Users who need independent present-day confirmation
+still need stronger evidence; this change does not provide that guarantee.
+Versioned admissions preserve old runs at the cost of maintaining both policies.
 
 ## Verification and rollback
 
