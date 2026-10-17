@@ -43,3 +43,17 @@ that historical answer.
 These are final outcomes for that admission. Reading status or recovering the
 run preserves its completed search and model responses; it does not repeat those
 calls. A clearer error is not evidence that the original question was answered.
+
+
+## What a new report establishes
+
+New research describes what its captured sources say. Each report makes that
+scope explicit. A page does not need a publication date for the system to report
+what it said when captured. This does not certify that the page's assertions are
+still true today. Questions that need stronger current evidence must keep that
+limitation visible rather than claiming a complete answer.
+
+The source text, capture dates, citations, and verification results are retained.
+Missing capture dates, unsupported statements, and captures made after a requested
+past date still cannot pass the existing checks. Earlier admissions keep their
+original rules and saved results. See [ADR-0073](../adr/0073-publish-source-bounded-research.md).

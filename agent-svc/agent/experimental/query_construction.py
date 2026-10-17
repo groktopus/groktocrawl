@@ -224,6 +224,7 @@ async def construct_research(
     acquisition_failures: tuple[str, ...] = (),
     max_output_tokens: int = 2048,
     evidence_budget_chars: int | None = None,
+    source_bound: bool = False,
 ) -> ConstructedResearch:
     """One model call, no retries; returned knowledge is NOT verified or publishable."""
     if (
@@ -270,32 +271,59 @@ async def construct_research(
     if type(max_output_tokens) is not int or not 1 <= max_output_tokens <= 8192:
         raise ValueError("invalid construction completion budget")
     presented_sources = construction_sources(sources, objective, evidence_budget_chars)
+    schema = ConstructedContent.model_json_schema()
+    scope_prompt = ""
+    if source_bound:
+        scope = schema["$defs"]["ClaimSelection"]["properties"]["temporal_scope"]
+        scope.pop("enum", None)
+        scope["const"] = "historical"
+        scope_prompt = (
+            "\nAnswer only with statements about the captured sources. Every claim must use "
+            "temporal_scope historical. Do not claim their contents are independently "
+            "confirmed current facts. Preserve disagreements and unknowns. If the objective "
+            "requires present-day confirmation beyond these captures, say so and mark it unresolved."
+        )
     payload = json.dumps(
         {
+            **(
+                {
+                    "answer_basis": "captured_sources",
+                    "source_captures": [
+                        {"source_index": index, "retrieved_at": source.retrieved_at}
+                        for index, source in enumerate(sources, 1)
+                    ],
+                }
+                if source_bound
+                else {}
+            ),
             "objective": objective,
             "as_of": as_of,
             "acquisition_failures": acquisition_failures,
             "as_of_semantics": "Evidence evaluation target only; newly captured text is not an archived capture. Do not invent dates or historical validity.",
             "sources": presented_sources,
-            "schema": ConstructedContent.model_json_schema(),
+            "schema": schema,
         }
     ).encode()
     if len(payload) > MAX_BYTES:
         raise ValueError("construction input exceeds byte limit")
+    prompt = (
+        CONSTRUCTION_PROMPT
+        + scope_prompt
+        + (
+            "\nSources are selected excerpts with original line numbers and possible gaps. Select only contiguous lines actually supplied. Never infer absence or exhaustive coverage from omitted lines."
+            if evidence_budget_chars is not None
+            else ""
+        )
+    )
     async with asyncio.timeout(120):
         reply = await asyncio.ensure_future(
             complete(
                 ReviewRequest(
-                    CONSTRUCTION_PROMPT
-                    + (
-                        "\nSources are selected excerpts with original line numbers and possible gaps. Select only contiguous lines actually supplied. Never infer absence or exhaustive coverage from omitted lines."
-                        if evidence_budget_chars is not None
-                        else ""
-                    ),
+                    prompt,
                     payload,
                     model,
                     max_output_tokens,
-                    ConstructedContent.model_json_schema(),
+                    schema,
                 )
             )
         )
@@ -315,6 +343,8 @@ async def construct_research(
             }
             if not all(n in shown for n in range(item.start_line, item.end_line + 1)):
                 raise ValueError("model evidence was not supplied")
+    if source_bound and any(c.temporal_scope != "historical" for c in content.claims):
+        raise ValueError("source-bounded research requires captured-source statements")
     answer = _selected((content.answer_claim_index,), len(content.claims), "claim")[0]
     now = clock()
     offset = now.utcoffset()
@@ -328,6 +358,13 @@ async def construct_research(
                     {
                         **c.model_dump(
                             mode="json", exclude={"supported_by", "contradicted_by"}
+                        ),
+                        **(
+                            {
+                                "text": "The captured sources report: " + c.text,
+                            }
+                            if source_bound
+                            else {}
                         ),
                         "claim_id": f"claim-{index}",
                         "kind": "source_statement",
@@ -379,7 +416,9 @@ async def construct_research(
                 "created_at": now.isoformat().replace("+00:00", "Z"),
                 "as_of": as_of or now.isoformat().replace("+00:00", "Z"),
                 "objective": objective,
-                "policy_version": "real-research-pilot/3",
+                "policy_version": "real-research-pilot/4"
+                if source_bound
+                else "real-research-pilot/3",
                 "snapshots": [s.model_dump(mode="json") for s in snapshots],
             }
         )
@@ -388,7 +427,9 @@ async def construct_research(
         context,
         tuple(resolved),
         reply,
-        hashlib.sha256(CONSTRUCTION_PROMPT.encode()).hexdigest(),
+        hashlib.sha256(
+            (prompt if source_bound else CONSTRUCTION_PROMPT).encode()
+        ).hexdigest(),
     )
     await admit_knowledge_context(
         json.dumps(

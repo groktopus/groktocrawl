@@ -1135,7 +1135,7 @@ async def admit_research_run(
                     "objective": payload.objective,
                     "research_id": str(uuid4()),
                     "execution_mode": "fixture" if fixture else "live",
-                    "policy_version": "durable-live/3",
+                    "policy_version": "durable-live/4",
                     "model": model,
                     "token_params": _token_budget_params(),
                     "selected_sources": [asdict(source) for source in selected_sources],

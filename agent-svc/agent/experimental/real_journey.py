@@ -132,7 +132,14 @@ async def render_research(
         raise UnverifiedResearchError(freshness=freshness)
     reports = []
     for layer in ("summary", "analysis", "dossier"):
-        text = f"# {layer.title()}\n\nModel-reviewed experimental research.\n\n{context.objective}\n\nCoverage: {knowledge.coverage}.\n\n"
+        coverage_label = (
+            "Coverage of captured sources"
+            if context.policy_version == "real-research-pilot/4"
+            else "Coverage"
+        )
+        text = f"# {layer.title()}\n\nModel-reviewed experimental research.\n\n{context.objective}\n\n{coverage_label}: {knowledge.coverage}.\n\n"
+        if context.policy_version == "real-research-pilot/4":
+            text += "This report describes the captured sources and does not independently confirm present-day validity.\n\n"
         statements = []
         if failures:
             text += f"{len(failures)} additional conclusions could not be verified and are omitted.\n\n"
@@ -216,6 +223,7 @@ async def research_from_sources(
     acquisition_failures: tuple[str, ...] = (),
     max_output_tokens: int = 2048,
     evidence_budget_chars: int | None = None,
+    source_bound: bool = False,
 ) -> JourneyResult:
     """Construct, check and audit a bounded root; no retained publication yet."""
     execution_clock = clock or (lambda: datetime.now(UTC))
@@ -232,6 +240,7 @@ async def research_from_sources(
         acquisition_failures=acquisition_failures,
         max_output_tokens=max_output_tokens,
         evidence_budget_chars=evidence_budget_chars,
+        source_bound=source_bound,
     )
     adapter = ModelReviewAdapter(
         provider="configured-litellm",
@@ -277,11 +286,12 @@ async def research_from_sources(
     async def render(knowledge):
         return await render_research(knowledge, identity)
 
+    render_version = "3" if source_bound else "2"
     auditor = ToolReviewer(
         kind="tool",
         identity="deterministic-research-render-audit",
-        version="2",
-        configuration_digest=text_digest("assessed-claim-pyramid/2"),
+        version=render_version,
+        configuration_digest=text_digest("assessed-claim-pyramid/" + render_version),
     )
 
     async def audit(inspection: RenderInspection) -> ExecutionDecision:
@@ -313,8 +323,10 @@ async def research_from_sources(
             verify=verify,
             renderer=Renderer(
                 identity="assessed-claim-pyramid",
-                version="2",
-                configuration_digest=text_digest("assessed-claim-pyramid/2"),
+                version=render_version,
+                configuration_digest=text_digest(
+                    "assessed-claim-pyramid/" + render_version
+                ),
             ),
             render=render,
             auditor=auditor,

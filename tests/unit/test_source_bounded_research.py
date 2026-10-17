@@ -1,0 +1,138 @@
+"""Captured-source answers do not claim unproved present-day validity."""
+
+import json
+
+import pytest
+from agent.experimental.model_review import ModelReply
+from agent.experimental.query_construction import CapturedSource
+from agent.experimental.real_journey import research_from_sources
+
+from tests.unit.test_query_construction import (
+    QUESTION,
+    TEXT,
+    batch_decisions,
+    journey_clock,
+    proposal,
+)
+
+
+@pytest.mark.asyncio
+async def test_source_bound_report_publishes_only_explicit_captured_statements():
+    calls = []
+
+    async def complete(request):
+        p = json.loads(request.payload)
+        calls.append(p)
+        if "schema" in p:
+            assert p["answer_basis"] == "captured_sources"
+            assert (
+                p["schema"]["$defs"]["ClaimSelection"]["properties"]["temporal_scope"][
+                    "const"
+                ]
+                == "historical"
+            )
+            content = proposal()
+        else:
+            assert all(
+                c["temporal_scope"] == "historical" for c in p["context"]["claims"]
+            )
+            assert all(
+                "captured sources report" in c["text"] for c in p["context"]["claims"]
+            )
+            content = batch_decisions(p)
+        return ModelReply(json.dumps(content).encode(), "test-model", 1, 1)
+
+    result = await research_from_sources(
+        QUESTION,
+        (CapturedSource("https://example.test/note", TEXT, "2026-09-06T00:00:00Z"),),
+        complete=complete,
+        scope_id="test-scope",
+        clock=journey_clock,
+        source_bound=True,
+    )
+    assert len(calls) == 2
+    assert len(result.reports) == 3
+    for report in result.reports:
+        assert (
+            "does not independently confirm present-day validity"
+            in report.body.decode()
+        )
+        assert "captured sources report" in report.body.decode()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "case", ["current_claim", "missing_capture", "past_target", "unsupported"]
+)
+async def test_source_bound_mode_cannot_bypass_verification(case):
+    calls = []
+
+    async def complete(request):
+        p = json.loads(request.payload)
+        calls.append(p)
+        if "schema" in p:
+            content = proposal()
+            if case == "current_claim":
+                content["claims"][0]["temporal_scope"] = "current"
+        else:
+            content = batch_decisions(
+                p, reject="semantic_support" if case == "unsupported" else None
+            )
+        return ModelReply(json.dumps(content).encode(), "test-model", 1, 1)
+
+    with pytest.raises(ValueError):
+        await research_from_sources(
+            QUESTION,
+            (
+                CapturedSource(
+                    "https://example.test/note",
+                    TEXT,
+                    None if case == "missing_capture" else "2026-09-06T00:00:00Z",
+                ),
+            ),
+            complete=complete,
+            scope_id="test-scope",
+            clock=journey_clock,
+            as_of="2026-09-01T00:00:00Z" if case == "past_target" else None,
+            source_bound=True,
+        )
+    assert len(calls) == (1 if case == "current_claim" else 2)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "budget,expected",
+    [
+        (None, "224b934819b5754ee9ecd2f7b22eabfa6dbb518601d29cb30411a2d24236a133"),
+        (32000, "60a61a93edba1e5ab2425ac38fc13c9b6769e591e122fefe3b1cc40cd7b4ff75"),
+    ],
+)
+async def test_previous_policy_model_requests_keep_their_exact_bytes(budget, expected):
+    # Captured from main 306400e6 before adding source-bound mode.
+    import hashlib
+    from dataclasses import asdict
+
+    from agent.experimental.query_construction import construct_research
+
+    async def complete(request):
+        value = asdict(request)
+        value["payload"] = request.payload.decode()
+        assert (
+            hashlib.sha256(
+                json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
+            ).hexdigest()
+            == expected
+        )
+        return ModelReply(json.dumps(proposal()).encode(), "test-model", 1, 1)
+
+    await construct_research(
+        QUESTION,
+        (CapturedSource("https://example.test/note", TEXT, "2026-09-06T00:00:00Z"),),
+        complete=complete,
+        scope_id="test-scope",
+        clock=journey_clock,
+        research_id="research-byte-check",
+        revision_id="revision-byte-check",
+        max_output_tokens=8192,
+        evidence_budget_chars=budget,
+    )
