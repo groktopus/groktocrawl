@@ -3,7 +3,7 @@
 import asyncio
 from dataclasses import dataclass
 
-from .checked_knowledge import admit_checked_history
+from .checked_knowledge import CheckedKnowledge, admit_checked_history
 from .context_sources import ContextSourceResolver
 from .knowledge_checks import HistoricalValidityError, Reviewer
 from .knowledge_context import moment
@@ -16,6 +16,62 @@ from .render_execution import RenderExecutionLedger
 class PublicationCandidate:
     admitted: AdmittedManifest
     fixture_only: bool
+
+
+class UnverifiedResearchError(ValueError):
+    """Safe explanation when a required answer cannot pass existing checks."""
+
+    def __init__(self, *, freshness: bool) -> None:
+        self.reason = (
+            "source_freshness_unverified" if freshness else "answer_support_unverified"
+        )
+        self.message = (
+            "Source freshness could not be verified, so the answer was not published. "
+            "No searches or model calls were repeated."
+            if freshness
+            else "The answer did not pass evidence verification, so it was not published. "
+            "No searches or model calls were repeated."
+        )
+        super().__init__(self.message)
+
+
+def claim_publication_failures(knowledge: CheckedKnowledge) -> dict[str, str]:
+    """Use the same eligibility decision for rendering and final publication."""
+    inputs = {i.input_id: i for i in knowledge.verification_inputs}
+    states = {a.claim_id: a.state for a in knowledge.assessment_links}
+    contested = {
+        c for conflict in knowledge.context.conflicts for c in conflict.claim_ids
+    }
+    failures = {}
+    for claim in knowledge.context.claims:
+        checks = [
+            r
+            for r in knowledge.verifications
+            if inputs[r.input_id].subject_id == claim.claim_id
+        ]
+        assessments = [
+            a
+            for a in knowledge.assessments
+            if inputs[a.input_id].subject_id == claim.claim_id
+        ]
+        if (
+            states.get(claim.claim_id) != "supported"
+            or claim.claim_id in contested
+            or not assessments
+            or any(a.outcome != "supported" for a in assessments)
+            or {inputs[r.input_id].check_type for r in checks}
+            != {"semantic_support", "freshness"}
+            or any(r.verdict != "pass" for r in checks)
+        ):
+            failures[claim.claim_id] = (
+                "source_freshness_unverified"
+                if any(
+                    inputs[r.input_id].check_type == "freshness" and r.verdict != "pass"
+                    for r in checks
+                )
+                else "answer_support_unverified"
+            )
+    return failures
 
 
 def _check_eligibility(admitted: AdmittedManifest) -> None:
@@ -33,10 +89,7 @@ def _check_eligibility(admitted: AdmittedManifest) -> None:
         raise ValueError(
             "publication requires passing structural and conflict/coverage checks"
         )
-    states = {a.claim_id: a.state for a in knowledge.assessment_links}
-    contested = {
-        c for conflict in knowledge.context.conflicts for c in conflict.claim_ids
-    }
+    failures = claim_publication_failures(knowledge)
     for artifact in admitted.manifest.artifacts:
         for statement in artifact.statements:
             expected_evidence: set[str] = set()
@@ -46,20 +99,7 @@ def _check_eligibility(admitted: AdmittedManifest) -> None:
                     for r in knowledge.verifications
                     if inputs[r.input_id].subject_id == claim_id
                 ]
-                assessments = [
-                    a
-                    for a in knowledge.assessments
-                    if inputs[a.input_id].subject_id == claim_id
-                ]
-                if (
-                    states.get(claim_id) != "supported"
-                    or claim_id in contested
-                    or not assessments
-                    or any(a.outcome != "supported" for a in assessments)
-                    or {inputs[r.input_id].check_type for r in checks}
-                    != {"semantic_support", "freshness"}
-                    or any(r.verdict != "pass" for r in checks)
-                ):
+                if claim_id in failures:
                     if (
                         knowledge.context.as_of is not None
                         and moment(knowledge.context.as_of)

@@ -39,6 +39,7 @@ from ..experimental.durable_research import (
 )
 from ..experimental.knowledge_checks import HistoricalValidityError
 from ..experimental.live_runner import run_live
+from ..experimental.publication_gate import UnverifiedResearchError
 from ..experimental.query_construction import CapturedSource
 from ..experimental.source_store import StorageConflictError
 from ..llm import _token_budget_params
@@ -807,6 +808,13 @@ async def _execute_run(record: _RunRecord) -> None:
                 else "fixture_run_failed",
                 "retryable": False,
             }
+            if isinstance(exc, UnverifiedResearchError) and not pending_dispatch:
+                record.error = {
+                    "code": "evidence_not_verified",
+                    "reason": exc.reason,
+                    "message": exc.message,
+                    "retryable": False,
+                }
             failure = _build_event(record, "error", "failed", error=record.error)
             if (
                 record.durable_ledger is not None

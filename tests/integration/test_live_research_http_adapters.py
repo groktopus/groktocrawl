@@ -48,6 +48,7 @@ class LocalProviderTwin:
     """Three local HTTP endpoints with request logs and deterministic responses."""
 
     def __init__(self) -> None:
+        self.current_claim = False
         self.search_requests: list[dict] = []
         self.capture_requests: list[dict] = []
         self.model_requests: list[dict] = []
@@ -202,7 +203,9 @@ class LocalProviderTwin:
                                     "qualifiers": [
                                         "One source captured by the local acceptance twin"
                                     ],
-                                    "temporal_scope": "historical",
+                                    "temporal_scope": "current"
+                                    if owner.current_claim
+                                    else "historical",
                                     "supported_by": [1],
                                     "contradicted_by": [],
                                 }
@@ -217,7 +220,10 @@ class LocalProviderTwin:
                             "decisions": [
                                 {
                                     "check_index": item["check_index"],
-                                    "outcome": "supported"
+                                    "outcome": "indeterminate"
+                                    if owner.current_claim
+                                    and item["check_type"] == "freshness"
+                                    else "supported"
                                     if item["check_type"] == "assessment"
                                     else "pass",
                                     "reason": "Local deterministic acceptance response; not an independent quality judgment.",
@@ -1004,3 +1010,50 @@ async def test_live_retained_source_drives_independent_followup_and_owned_sessio
         if session_id is not None:
             await store.adelete(session_id)
         store.redis.close()
+
+
+@pytest.mark.asyncio
+async def test_current_undated_sources_explain_failure_and_survive_recovery(
+    durable_apps, provider_twin
+):
+    apps, _, _, _, make_app, cleanup_ids, _ = durable_apps
+    provider_twin.current_claim = True
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=apps[0]), base_url="http://acceptance"
+    ) as client:
+        response = await client.post(
+            "/experimental/research/v1/runs",
+            headers={"Idempotency-Key": "unverified-source-freshness"},
+            json={"objective": next(iter(OBJECTIVES))},
+        )
+        assert response.status_code == 202
+        admitted = response.json()
+        cleanup_ids.append(admitted["research_id"])
+        status = await _terminal(client, admitted["status_url"])
+        assert status["state"] == "failed"
+        assert status["result"] is None
+        assert status["error"]["code"] == "evidence_not_verified"
+        assert status["error"]["reason"] == "source_freshness_unverified"
+        assert "Source freshness could not be verified" in status["error"]["message"]
+        assert status["error"]["retryable"] is False
+        counts = (
+            len(provider_twin.model_requests),
+            len(provider_twin.search_requests),
+            len(provider_twin.capture_requests),
+        )
+        assert counts[0] == 3  # planning, construction, review
+        experimental._RUNS.clear()
+        recovered = make_app()
+        apps.append(recovered)
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=recovered), base_url="http://acceptance"
+        ) as fresh:
+            reread = await fresh.get(admitted["status_url"])
+            assert reread.json()["error"] == status["error"]
+            events = await fresh.get(admitted["events_url"])
+            assert "evidence_not_verified" in events.text
+        assert counts == (
+            len(provider_twin.model_requests),
+            len(provider_twin.search_requests),
+            len(provider_twin.capture_requests),
+        )
