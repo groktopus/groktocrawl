@@ -130,6 +130,163 @@ def test_card_grid_fixture_replicates_bug_topology(card_grid_html):
     assert prose.parent is top_list.parent
 
 
+def test_html_to_markdown_preserves_all_rendered_quote_records():
+    """Readability must not silently drop middle records from a rendered list."""
+    from scraper.fetch_quality import _add_quality, html_to_markdown
+
+    records = [
+        (
+            "The world as we have created it is a process of our thinking. It "
+            "cannot be changed without changing our thinking.",
+            "Albert Einstein",
+            "change deep-thoughts thinking world",
+        ),
+        (
+            "It is our choices, Harry, that show what we truly are, far more than "
+            "our abilities.",
+            "J.K. Rowling",
+            "abilities choices",
+        ),
+        (
+            "There are only two ways to live your life. One is as though nothing "
+            "is a miracle. The other is as though everything is a miracle.",
+            "Albert Einstein",
+            "inspirational life live miracle miracles",
+        ),
+        (
+            "The person, be it gentleman or lady, who has not pleasure in a good "
+            "novel, must be intolerably stupid.",
+            "Jane Austen",
+            "aliteracy books classic humor",
+        ),
+        (
+            "Imperfection is beauty, madness is genius and it's better to be "
+            "absolutely ridiculous than absolutely boring.",
+            "Marilyn Monroe",
+            "be-yourself inspirational",
+        ),
+        (
+            "Try not to become a man of success. Rather become a man of value.",
+            "Albert Einstein",
+            "adulthood success value",
+        ),
+        (
+            "It is better to be hated for what you are than to be loved for what "
+            "you are not.",
+            "André Gide",
+            "life love",
+        ),
+        (
+            "I have not failed. I've just found 10,000 ways that won't work.",
+            "Thomas A. Edison",
+            "edison failure inspirational paraphrased",
+        ),
+        (
+            "A woman is like a tea bag; you never know how strong it is until "
+            "it's in hot water.",
+            "Eleanor Roosevelt",
+            "misattributed-eleanor-roosevelt",
+        ),
+        (
+            "A day without sunshine is like, you know, night.",
+            "Steve Martin",
+            "humor obvious simile",
+        ),
+    ]
+    cards = "".join(
+        f'<div class="quote"><span class="text">“{quote}”</span>'
+        f'<span>by <small class="author">{author}</small></span>'
+        '<div class="tags">Tags: '
+        + " ".join(f'<a class="tag">{tag}</a>' for tag in tags.split())
+        + "</div></div>"
+        for quote, author, tags in records
+    )
+    html = (
+        "<html><head><title>Quotes to Scrape</title></head><body>"
+        '<div class="container"><div class="row header-box">'
+        "<h1>Quotes to Scrape</h1></div>"
+        f'{cards}<nav><a href="/js/page/2/">Next</a></nav></div>'
+        '<footer class="footer">Made with love</footer></body></html>'
+    )
+
+    markdown = html_to_markdown(html)
+    result = _add_quality({"markdown": markdown, "raw_html_start": html})
+
+    missing = [author for _quote, author, _tags in records if author not in markdown]
+    assert not missing, f"readability dropped rendered quote records: {missing}"
+    assert "Next" not in markdown
+    assert "Made with love" not in markdown
+    assert result["quality"]["checks"]["completeness"] == "pass"
+
+    incomplete = "\n\n".join(
+        f"“{quote}”\nby {author}\n\nTags: {tags}"
+        for quote, author, tags in records
+        if author not in {"Thomas A. Edison", "Eleanor Roosevelt"}
+    )
+    incomplete_result = _add_quality({"markdown": incomplete, "raw_html_start": html})
+    assert incomplete_result["quality"]["checks"]["completeness"] == "fail"
+
+
+def test_repeated_boilerplate_in_navigation_does_not_trigger_content_recovery(
+    monkeypatch,
+):
+    """Repeated navigation links are chrome, not evidence of dropped records."""
+    import scraper.fetch_quality as fetch_quality
+
+    nav = "".join(
+        f'<li class="nav-item"><a href="/{index}">Navigation item {index}</a></li>'
+        for index in range(8)
+    )
+    ads = "".join(
+        f'<div class="ad-card">Advertisement {index} offers a sponsored product '
+        "with promotional details that are unrelated to the article content.</div>"
+        for index in range(6)
+    )
+    html = (
+        f"<html><body><nav><ul>{nav}</ul></nav>"
+        f'<div class="ad-grid">{ads}</div>'
+        "<main><article><h1>Useful article</h1>"
+        "<p>This article has enough real text to remain the selected content. "
+        "It explains a useful subject in several clear sentences.</p>"
+        "<p>A second paragraph adds context and detail to the same subject.</p>"
+        "</article></main></body></html>"
+    )
+
+    def unexpected_recovery(_html):
+        raise AssertionError("navigation links must not trigger full-page recovery")
+
+    monkeypatch.setattr(fetch_quality, "_full_page_markdown", unexpected_recovery)
+    fetch_quality.html_to_markdown(html)
+
+
+def test_repeated_content_with_emphasis_is_not_reported_missing():
+    """HTML emphasis converted to Markdown still counts as preserved text."""
+    from scraper.extract import _missing_repeated_content_blocks
+
+    records = [
+        f'<div class="record">Record {index} has <strong>important highlighted '
+        f"content</strong> plus enough supporting detail to be a substantial entry "
+        f"number {index}.</div>"
+        for index in range(4)
+    ]
+    html = "<html><body><main>" + "".join(records) + "</main></body></html>"
+    complete = "\n\n".join(
+        f"Record {index} has **important highlighted content** plus enough "
+        f"supporting detail to be a substantial entry number {index}."
+        for index in range(4)
+    )
+
+    assert _missing_repeated_content_blocks(complete, html) == []
+
+    incomplete = complete.replace(
+        "Record 2 has **important highlighted content** plus enough supporting detail to be a substantial entry number 2.",
+        "",
+    )
+    missing = _missing_repeated_content_blocks(incomplete, html)
+    assert len(missing) == 1
+    assert "Record 2" in missing[0]
+
+
 # ── VAL-YIELD-003: card-grid body survives html_to_markdown ──────
 
 

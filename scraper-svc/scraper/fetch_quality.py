@@ -24,6 +24,7 @@ from .barrier import (
 from .extract import (
     MIN_LOW_YIELD_SOURCE_CHARS,  # noqa: F401  (re-exported; see extract.py)
     VOLUME_YIELD_RATIO_FLOOR,
+    _missing_repeated_content_blocks,
     assess_quality,
     is_low_yield_text,
 )
@@ -311,6 +312,25 @@ def html_to_markdown(html: str) -> str:
                 len(recovered),
             )
 
+        # Readability can omit individual cards from a repeated content list
+        # without producing low enough output volume to trigger the general
+        # recovery gate. Recover only when the missing sibling blocks are
+        # substantial page content and the filtered full-page conversion
+        # restores all of them.
+        missing_blocks = _missing_repeated_content_blocks(result, html)
+        if missing_blocks:
+            recovered = _full_page_markdown(html)
+            if recovered and not _missing_repeated_content_blocks(recovered, html):
+                logger.info(
+                    "Repeated-content recovery restored %d omitted blocks",
+                    len(missing_blocks),
+                )
+                return recovered
+            logger.debug(
+                "Repeated-content recovery could not restore %d omitted blocks",
+                len(missing_blocks),
+            )
+
         # Structural fallback: when readability produces little or no output,
         # extract visible text nodes from the full HTML. This handles sites
         # where FlareSolverr returns real HTML but readability-lxml finds no
@@ -368,7 +388,10 @@ def _add_quality(result: dict, html: str = "", title: str = "") -> dict:
     )
     quality = assess_quality(
         markdown,
-        html=html,
+        # Browser tiers retain their complete rendered source in
+        # raw_html_start. Pass it through so completeness can compare repeated
+        # source records with the text that survived readability.
+        html=raw_html,
         url=url,
         title=title,
         html_size=html_size,
