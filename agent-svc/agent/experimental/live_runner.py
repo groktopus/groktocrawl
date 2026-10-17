@@ -17,6 +17,7 @@ from ..session_store import SessionStore
 from ..settings import load_settings
 from .durable_plan import plan_queries
 from .durable_research import OutcomeUnknownError
+from .live_policy import execution_timeout_seconds
 from .model_review import ModelReply
 from .model_transport import ReviewTransport
 from .query_construction import CapturedSource
@@ -33,15 +34,23 @@ async def run_live(record: Any, app: Any):
         raise ValueError("admission unavailable")
     evaluated = datetime.fromisoformat(admitted.payload["evaluation_time"])
     model = admitted.payload["model"]
-    source_bound_policy = admitted.payload.get("policy_version") == "durable-live/4"
+    source_bound_policy = admitted.payload.get("policy_version") in {
+        "durable-live/4",
+        "durable-live/5",
+    }
+    execution_timeout = execution_timeout_seconds(
+        admitted.payload.get("policy_version")
+    )
     bounded_evidence_policy = admitted.payload.get("policy_version") in {
         "durable-live/3",
         "durable-live/4",
+        "durable-live/5",
     }
     planned_policy = admitted.payload.get("policy_version") in {
         "durable-live/2",
         "durable-live/3",
         "durable-live/4",
+        "durable-live/5",
     }
     selected_sources = tuple(
         CapturedSource(**source)
@@ -214,9 +223,9 @@ async def run_live(record: Any, app: Any):
             api_key=app.state.llm_api_key,
             token_parameter=token_parameter,
             token_budget=token_budget,
-            # The outer admission deadline bounds all version-4 work together.
+            # The outer admission deadline bounds all source-bound work together.
             # Do not abandon a valid slow draft at the legacy 90-second limit.
-            timeout=180 if source_bound_policy else 90,
+            timeout=execution_timeout if source_bound_policy else 90,
         )
 
         async def complete(request):
@@ -245,7 +254,11 @@ async def run_live(record: Any, app: Any):
                 **{**values, "content": values["content"].encode("utf-8")}
             )
 
-        remaining = admitted.created_at_ms / 1000 + 180 - datetime.now(UTC).timestamp()
+        remaining = (
+            admitted.created_at_ms / 1000
+            + execution_timeout
+            - datetime.now(UTC).timestamp()
+        )
         if remaining <= 0:
             raise ValueError("research execution deadline expired")
         async with asyncio.timeout(remaining):
@@ -282,4 +295,8 @@ async def run_live(record: Any, app: Any):
                 max_output_tokens=completion_budget,
                 evidence_budget_chars=32000 if bounded_evidence_policy else None,
                 source_bound=source_bound_policy,
+                timeout_seconds=execution_timeout,
+                model_timeout_seconds=execution_timeout
+                if admitted.payload.get("policy_version") == "durable-live/5"
+                else None,
             )

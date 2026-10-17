@@ -101,5 +101,6 @@ An Architecture Decision Record captures an important architectural decision mad
 | 0071 | [Use pgvector for Research Memory with Reversible Rollback](0071-use-pgvector-for-research-memory-with-reversible-rollback.md) | accepted |
 | 0072 | [Recover Legacy Async Jobs with Valkey Leases](0072-valkey-leased-legacy-job-recovery.md) | accepted |
 | 0073 | [Publish research about captured sources with an explicit scope](0073-publish-source-bounded-research.md) | accepted |
+| 0074 | [Give new live research five minutes to finish](0074-use-a-five-minute-live-research-deadline.md) | accepted |
 
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full ADR workflow: when to write an ADR, how to number it, and how to get it reviewed in a PR. Experimental records are linked from the provenance archive, not included in the mainline sequence.

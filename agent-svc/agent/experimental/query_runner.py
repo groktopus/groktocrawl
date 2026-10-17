@@ -34,6 +34,8 @@ async def run_query(
     max_output_tokens: int = 2048,
     evidence_budget_chars: int | None = None,
     source_bound: bool = False,
+    timeout_seconds: int = 180,
+    model_timeout_seconds: int | None = None,
 ) -> JourneyResult:
     """Run a bounded query plan, retained acquisitions, construction and checks.
 
@@ -49,6 +51,8 @@ async def run_query(
         or len(objective) > 10_000
     ):
         raise ValueError("invalid research objective")
+    if type(timeout_seconds) is not int or not 1 <= timeout_seconds <= 300:
+        raise ValueError("invalid research deadline")
     ceiling = 8 if queries is not None else 3
     if type(source_limit) is not int or not 1 <= source_limit <= ceiling:
         raise ValueError("invalid bounded source limit")
@@ -69,7 +73,7 @@ async def run_query(
     seed_bytes = sum(len(source.text.encode()) for source in selected_sources)
     if seed_bytes > 256_000:
         raise ValueError("retained context exceeds research byte budget")
-    async with asyncio.timeout(180):
+    async with asyncio.timeout(timeout_seconds):
         fresh_limit = min(source_limit, 8 - len(selected_sources))
         results = []
         for query in planned if fresh_limit else ():
@@ -156,4 +160,5 @@ async def run_query(
             max_output_tokens=max_output_tokens,
             evidence_budget_chars=evidence_budget_chars,
             source_bound=source_bound,
+            model_timeout_seconds=model_timeout_seconds,
         )

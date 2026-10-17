@@ -225,6 +225,7 @@ async def construct_research(
     max_output_tokens: int = 2048,
     evidence_budget_chars: int | None = None,
     source_bound: bool = False,
+    model_timeout_seconds: int | None = None,
 ) -> ConstructedResearch:
     """One model call, no retries; returned knowledge is NOT verified or publishable."""
     if (
@@ -240,6 +241,12 @@ async def construct_research(
         raise ValueError("construction source budget exceeded")
     if sum(len(s.text.splitlines()) for s in sources) > 10_000:
         raise ValueError("construction source line budget exceeded")
+    if model_timeout_seconds is not None and (
+        not source_bound
+        or type(model_timeout_seconds) is not int
+        or not 1 <= model_timeout_seconds <= 300
+    ):
+        raise ValueError("invalid source-bound model deadline")
     research_id = research_id or str(uuid4())
     revision_id = revision_id or str(uuid4())
     snapshots, resolved = [], []
@@ -315,7 +322,9 @@ async def construct_research(
             else ""
         )
     )
-    async with asyncio.timeout(180 if source_bound else 120):
+    async with asyncio.timeout(
+        model_timeout_seconds if model_timeout_seconds is not None else 120
+    ):
         reply = await asyncio.ensure_future(
             complete(
                 ReviewRequest(

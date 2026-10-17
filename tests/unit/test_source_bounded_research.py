@@ -140,17 +140,29 @@ async def test_previous_policy_model_requests_keep_their_exact_bytes(budget, exp
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "construction_seconds,review_seconds,source_bound,error",
+    "construction_seconds,review_seconds,source_bound,error,budget,discovery_seconds,override",
     [
-        (130, 20, True, None),
-        (20, 130, True, None),
-        (110, 80, True, TimeoutError),
-        (130, 20, False, TimeoutError),
-        (20, 100, False, ValueError),
+        (130, 20, True, None, 180, 0, True),
+        (20, 130, True, None, 180, 0, True),
+        (110, 80, True, TimeoutError, 180, 0, True),
+        (130, 20, False, TimeoutError, 180, 0, False),
+        (20, 100, False, ValueError, 180, 0, False),
+        (153, 35, True, None, 300, 25, True),
+        (153, 35, True, TimeoutError, 180, 25, True),
+        (180, 130, True, TimeoutError, 300, 0, True),
+        (130, 20, True, TimeoutError, 180, 0, False),
+        (20, 100, True, ValueError, 180, 0, False),
     ],
 )
 async def test_model_stages_respect_the_shared_research_deadline(
-    monkeypatch, construction_seconds, review_seconds, source_bound, error
+    monkeypatch,
+    construction_seconds,
+    review_seconds,
+    source_bound,
+    error,
+    budget,
+    discovery_seconds,
+    override,
 ):
     import asyncio
 
@@ -176,6 +188,8 @@ async def test_model_stages_respect_the_shared_research_deadline(
     monkeypatch.setattr(asyncio, "timeout", VirtualTimeout)
 
     async def search(_query, _limit):
+        nonlocal elapsed
+        elapsed += discovery_seconds
         return ("https://example.test/note",)
 
     async def acquire(url):
@@ -199,6 +213,8 @@ async def test_model_stages_respect_the_shared_research_deadline(
             scope_id="test-scope",
             clock=journey_clock,
             source_bound=source_bound,
+            timeout_seconds=budget,
+            model_timeout_seconds=budget if source_bound and override else None,
         )
 
     if error is not None:
@@ -208,4 +224,20 @@ async def test_model_stages_respect_the_shared_research_deadline(
         result = await run()
         assert len(result.reports) == 3
         assert calls == ["construction", "review"]
-        assert elapsed == 150
+        assert elapsed == construction_seconds + review_seconds + discovery_seconds
+
+
+@pytest.mark.parametrize(
+    "policy,expected",
+    [
+        (None, 180),
+        ("durable-live/2", 180),
+        ("durable-live/3", 180),
+        ("durable-live/4", 180),
+        ("durable-live/5", 300),
+    ],
+)
+def test_execution_deadline_is_pinned_to_the_admitted_policy(policy, expected):
+    from agent.experimental.live_policy import execution_timeout_seconds
+
+    assert execution_timeout_seconds(policy) == expected
