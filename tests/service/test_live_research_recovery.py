@@ -281,8 +281,10 @@ async def test_real_construction_and_review_replay_without_new_model_calls(
             return {"success": True, "data": {"markdown": TEXT}}
 
     class Transport:
-        def __init__(self, *_args, **_kwargs):
-            pass
+        def __init__(self, *_args, **kwargs):
+            assert kwargs.get("timeout", 90) == (
+                180 if policy == "durable-live/4" else 90
+            )
 
         async def __call__(self, request):
             assert request.max_output_tokens == (
@@ -419,3 +421,38 @@ async def test_evidence_failure_keeps_safe_terminal_details(
     }
     assert restored.events[-1].error == restored.error
     assert record.artifact_authority.commits == 0
+
+
+@pytest.mark.asyncio
+async def test_version_four_shared_deadline_cancels_without_replaying_model(
+    ledger, monkeypatch
+):
+    record = admitted(ledger, "durable-live/4")
+    saved = ledger.get(record.run_id)
+    fixed_now = datetime.fromtimestamp(saved.created_at_ms / 1000 + 179.98, UTC)
+    monkeypatch.setattr(
+        live_runner,
+        "datetime",
+        SimpleNamespace(
+            now=lambda _tz: fixed_now,
+            fromisoformat=datetime.fromisoformat,
+        ),
+    )
+    calls = []
+
+    class Transport:
+        def __init__(self, *_args, **kwargs):
+            assert kwargs["timeout"] == 180
+
+        async def __call__(self, request):
+            calls.append(request)
+            await asyncio.Event().wait()
+
+    monkeypatch.setattr(live_runner, "ReviewTransport", Transport)
+    claim(record)
+    with pytest.raises(TimeoutError):
+        await live_runner.run_live(record, record.app)
+    assert len(calls) == 1
+    with pytest.raises(OutcomeUnknownError):
+        await live_runner.run_live(record, record.app)
+    assert len(calls) == 1

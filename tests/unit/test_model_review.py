@@ -157,9 +157,7 @@ async def test_transport_requests_strict_schema_when_supplied():
             200,
             json={
                 "model": "local",
-                "choices": [
-                    {"finish_reason": "stop", "message": {"content": "{}"}}
-                ],
+                "choices": [{"finish_reason": "stop", "message": {"content": "{}"}}],
             },
         )
 
@@ -316,3 +314,39 @@ async def test_review_payload_repeats_check_type_and_allowed_outcomes():
     adapter, checked, sources = configured(complete)
     result = await adapter.verify(checked, sources)
     assert result.outcome == "pass"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("timeout, expected", [(None, 90), (180, 180)])
+async def test_transport_allows_slow_reply_only_with_explicit_deadline(
+    timeout, expected
+):
+    calls = []
+
+    def handler(request):
+        read_timeout = request.extensions["timeout"]["read"]
+        calls.append(read_timeout)
+        assert read_timeout == expected
+        # Model a response arriving after 105 seconds without waiting in CI.
+        if read_timeout < 105:
+            raise httpx.ReadTimeout("simulated slow reply", request=request)
+        return httpx.Response(
+            200,
+            json={
+                "model": "actual",
+                "choices": [{"finish_reason": "stop", "message": {"content": "{}"}}],
+            },
+        )
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        options = {} if timeout is None else {"timeout": timeout}
+        transport = ReviewTransport(
+            client, base_url="https://gateway.invalid/v1", api_key="test", **options
+        )
+        request = ReviewRequest("review", b"{}", "local", 32)
+        if timeout is None:
+            with pytest.raises(ValueError, match="transport failed"):
+                await transport(request)
+        else:
+            assert (await transport(request)).content == b"{}"
+    assert calls == [expected]

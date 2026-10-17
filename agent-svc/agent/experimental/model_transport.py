@@ -19,6 +19,7 @@ class ReviewTransport:
         api_key: str,
         token_parameter: str = "max_tokens",
         token_budget: int | None = None,
+        timeout: float = 90,
     ) -> None:
         url = httpx.URL(base_url)
         if (
@@ -40,6 +41,7 @@ class ReviewTransport:
             raise ValueError("invalid configured token budget")
         self._token_parameter = token_parameter
         self._token_budget = token_budget
+        self._timeout = timeout
 
     async def __call__(self, request: ReviewRequest) -> ModelReply:
         payload = {
@@ -72,7 +74,7 @@ class ReviewTransport:
                 json=payload,
                 headers={"Authorization": "Bearer " + self._key},
                 follow_redirects=False,
-                timeout=90,
+                timeout=self._timeout,
             ) as response:
                 response.raise_for_status()
                 body = bytearray()
