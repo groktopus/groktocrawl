@@ -40,7 +40,7 @@ jobs:
       VECTOR_EVAL_POSTGRES_PASSWORD: vector-eval-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - name: Check out fork
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Validate isolated Compose file
         run: docker compose -f compose.vector-evaluation.yml --profile vector-eval config --quiet
