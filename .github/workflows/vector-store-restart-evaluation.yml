@@ -97,7 +97,7 @@ jobs:
 
       - name: Upload restart evidence
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: vector-store-restart-evaluation-${{ github.run_id }}
           path: vector-restart-out/
