@@ -78,7 +78,7 @@ jobs:
 
       - name: Upload provider fault evidence
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: vector-store-fault-evaluation-${{ github.run_id }}
           path: vector-fault-out/
