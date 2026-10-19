@@ -21,7 +21,7 @@ jobs:
       VECTOR_EVAL_RUN_ID: ${{ inputs.run_id || format('restart-{0}', github.run_id) }}
     steps:
       - name: Check out fork
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Validate isolated Compose file
         run: docker compose -f compose.vector-evaluation.yml --profile vector-eval config --quiet
