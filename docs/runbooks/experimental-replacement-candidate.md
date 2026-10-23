@@ -19,8 +19,19 @@ to the standard topology.
 
 `compose.experimental-candidate.yml` sets `name: groktocrawl-x-candidate` and
 names its API service `candidate-agent`. With those defaults, Compose generates
-`groktocrawl-x-candidate-candidate-agent-1`. Explicit `-p` or
-`COMPOSE_PROJECT_NAME` values can override the project portion of that name.
+`groktocrawl-x-candidate-candidate-agent-1`. The update command below also
+passes `-p groktocrawl-x-candidate` explicitly. Compose chooses `-p` before
+`COMPOSE_PROJECT_NAME`, then the top-level `name` from its loaded files; a
+configured `container_name` can replace the generated container name.
+
+A promoted deployment can load private generated Compose files outside Git
+rather than this template. Record the launch arguments and actual file paths,
+then reconcile their project name and service definitions with Docker's Compose
+labels. Do not assume a historical checkout is still an active input. Updating
+the checked-in template cannot rename a deployment that keeps an explicit `-p`
+argument or a private resolved file. This repository does not provide a generator
+for operator-maintained `promotion.private.json` or launch `command.json` files.
+Keep those files private: resolved configuration can contain credentials.
 
 The same file points the candidate portal's `AGENT_BASE_URL` and the MCP
 transport's `GROKTOCRAWL_URL` at `http://candidate-agent:8080`.

@@ -23,8 +23,10 @@ down -v`. PostgreSQL gets a new volume named from the project and
 
 A deployment may run canonical GroktoCrawl while retaining the Compose project
 `groktocrawl-x-candidate` and service names such as `candidate-agent`. Those
-names come from the maintained `compose.experimental-candidate.yml` topology;
-they do not identify the source repository of the running application. See
+names match the retained `compose.experimental-candidate.yml` topology, but the
+active inputs may be an explicit `-p` argument and private generated Compose
+files outside Git. Neither the names nor an old checkout identify the running
+application's source repository or the files currently controlling deployment. See
 [the candidate-topology naming and provenance guidance](experimental-replacement-candidate.md#where-the-legacy-names-come-from).
 
 This runbook's standard service names are not drop-in commands for that topology.
