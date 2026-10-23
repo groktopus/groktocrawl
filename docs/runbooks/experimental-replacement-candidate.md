@@ -1,10 +1,49 @@
-# Experimental replacement candidate
+# Retained candidate deployment topology
 
-This runbook deploys the `groktocrawl-x` replacement candidate as an isolated
-experiment. It does not replace the mainline GroktoCrawl project or switch the
-existing production deployment. The candidate has its own Compose project,
-containers, images, networks, volumes, database, and separately configurable
-published ports.
+The research architecture developed in GroktoCrawl X was adopted into canonical
+GroktoCrawl in [ADR-0069](../adr/0069-adopt-bounded-research-substrate.md) and
+[v1.0.0](https://github.com/groktopus/groktocrawl/releases/tag/v1.0.0).
+This runbook maintains the isolated deployment topology introduced during that
+experiment. Its `groktocrawl-x-candidate` project name and `candidate-*` service
+names are retained compatibility identifiers, not a statement that the running
+application comes from the former X repository.
+
+For a new standard deployment, use `docker-compose.yml` and the
+[mainline migration runbook](mainline-architecture-migration.md) for its storage
+prerequisites. For an existing candidate-topology deployment, preserve its
+resolved configuration, project identity, networks, volumes, database, and
+published ports. Applying this runbook does not switch an existing deployment
+to the standard topology.
+
+## Where the legacy names come from
+
+`compose.experimental-candidate.yml` sets `name: groktocrawl-x-candidate` and
+names its API service `candidate-agent`. With those defaults, Compose generates
+`groktocrawl-x-candidate-candidate-agent-1`. Explicit `-p` or
+`COMPOSE_PROJECT_NAME` values can override the project portion of that name.
+
+The same file points the candidate portal's `AGENT_BASE_URL` and the MCP
+transport's `GROKTOCRAWL_URL` at `http://candidate-agent:8080`.
+`compose.capture-https.yml` extends that service, and
+`deploy/capture-https.cfg` resolves `candidate-agent:8080` through Docker DNS.
+These are connected deployment contracts. Changing only a container or service
+name can break internal routing; changing the project name can select different
+networks and named volumes rather than the existing data.
+
+Identify application source by its image digest and OCI source/revision labels,
+not the container name. Compare the image's platform manifest/config digest with
+the release provenance; a Docker image ID is a config digest, not a multi-platform
+index digest. If labels are missing or overridden, reconcile the exact build
+revision and private resolved deployment configuration before attributing source.
+The [v1.0.1 provenance](https://github.com/groktopus/groktocrawl/releases/download/v1.0.1/release-image-provenance.json)
+records canonical source, revision, and platform digests for all ten release images.
+
+Renaming an existing deployment is a separate operator-led migration: inventory
+project/service identities, external network attachments, proxy/MCP references,
+ports and persistent stores; verify backups and rehearse cutover and rollback
+in isolation. Do not rename the project or services, replace volumes, or use
+`docker compose down -v` as a cosmetic cleanup. Archiving the former X source
+repository does not stop containers or make their stored data disposable.
 
 The first candidate uses PostgreSQL as the authority for retained research
 artifacts and pgvector for semantic serving. Qdrant remains in the candidate as

@@ -19,6 +19,20 @@ project and `.env`. Do not change the Compose project name, rename the existing
 down -v`. PostgreSQL gets a new volume named from the project and
 `research_postgres_data`.
 
+## Existing candidate-topology deployments
+
+A deployment may run canonical GroktoCrawl while retaining the Compose project
+`groktocrawl-x-candidate` and service names such as `candidate-agent`. Those
+names come from the maintained `compose.experimental-candidate.yml` topology;
+they do not identify the source repository of the running application. See
+[the candidate-topology naming and provenance guidance](experimental-replacement-candidate.md#where-the-legacy-names-come-from).
+
+This runbook's standard service names are not drop-in commands for that topology.
+First reconcile the active resolved Compose file, image revision, service names,
+ports and stores. Keep existing project, network and volume identities during
+an application update. Moving to the standard topology or renaming resources
+requires its own backed-up, rehearsed migration and rollback plan.
+
 ## Prepare and back up
 
 1. Pull and review the merged mainline release. Confirm the release contains the
