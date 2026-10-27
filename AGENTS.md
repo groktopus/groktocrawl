@@ -79,7 +79,7 @@ llms.txt, content negotiation, Playwright, FlareSolverr and LLM-assisted recover
 with a conditional Substack browser-service fallback and best-effort outcomes.
 `force_browser` takes a different path; `lightweight_only` stops before the
 browser tier. Barrier recovery is centralized and does not pass barriers to
-LLM recovery (see ADR-0044). This is broader than the original
+LLM recovery in `fetch.py:_recover_from_barrier`. This is broader than the original
 three-tier description; do not assume every URL executes every stage.
 
 Read [ADR-0001](docs/adr/0001-adapter-registry-pre-pipeline-hook.md),
@@ -95,7 +95,8 @@ Use the shared [Harness Engineering procedure](https://github.com/magnus919/agen
 and [Agent Evals and Observability skill](https://github.com/magnus919/agent-skills/blob/main/agent-evals-and-observability/SKILL.md).
 For local installation, load their `SKILL.md` files from the installed skill root.
 Apply the repository-specific [ADR-0076 evaluation contract](docs/adr/0076-bound-research-loop-evaluation.md)
-for research-loop proposals, probes, composition and promotion. Its proposed
+for research-loop proposals, probes, composition and promotion, extending the
+existing answer evals and frozen experiment records it links. Its proposed
 status does not authorize runtime changes, experiments, release or deployment.
 
 ### LLM-agnostic

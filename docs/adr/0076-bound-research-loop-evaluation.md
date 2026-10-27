@@ -21,6 +21,35 @@ remain authoritative. Record whether a candidate targets legacy `research/` or
 `experimental/` execution; do not blend their outcomes or reinterpret existing
 admissions, policy versions, operation receipts or publication gates.
 
+## Existing implementation and evaluation evidence
+
+Extend the existing [answer evaluation harness](../../evals/README.md) and
+[experiment records](../experiments/README.md); do not create a competing corpus,
+runner or acceptance authority. Attach candidate lineage, composition retests and
+complete optimization-cost accounting to the applicable frozen protocol and
+results. Preserve its existing acceptance gates, negative results and scope.
+
+At the reviewed upstream baseline, `research/gaps.py` already receives the original
+query and uses query-aware evidence selection with a 12,000-character budget.
+`research/acquisition.py` retains full markdown and caller rank order;
+`research/discovery.py` constructs context and the source map together. These are
+existing capabilities, not missing features or defects established by this ADR.
+Any proposed change to them needs a current reproduced failure and matched
+comparison against that implementation.
+
+Historical results constrain new hypotheses. [W10 / archived ADR-0081](experimental/groktocrawl-x/0081-select-a-bounded-adaptive-research-policy.md)
+retained fixed retrieval: the full bounded adaptive policy reduced weighted claim
+closure from 86.4% to 53.0% on its anchor and no tested challenger qualified.
+[W12.4](../experiments/evidence-obligations/w12.4-research-log.md) subsequently
+recorded 12 cases, three arms and three repetitions of deterministic replay;
+its obligation/stopping contract was adopted only behind the experimental
+boundary, with fixed retrieval retained pending live calibration. These are
+historical, scoped results, not live effectiveness evidence for this proposal or
+a reason to repeat initial implementation. Reuse their
+[frozen protocol](../experiments/evidence-obligations/w12.4-frozen-protocol.md)
+where relevant and explicitly distinguish replay-contract checks from live
+quality/cost calibration.
+
 ## Decision Drivers
 
 - Preserve grounded answers, source fidelity and explicit failure outcomes.
@@ -108,9 +137,10 @@ access to hidden benchmark rubrics/answers. Verify isolation before replay; if i
 cannot be established, stop and record the blocker. External content and traces
 remain untrusted data.
 
-Examples for a future separately authorized candidate are question-aware gap
-detection, passage selection and stopping on evidence coverage. This ADR changes
-none of those behaviors. Diagnose suspected implementation defects separately;
+Future separately authorized candidates may revise the existing query-aware gap
+checks, passage selection or coverage-based continuation controls only when
+current failures and the existing evidence justify the hypothesis. These areas
+are not initial implementation requests. This ADR changes none of their behavior. Diagnose suspected implementation defects separately;
 a source-inspection suspicion is not a reproduced failure or optimization result.
 
 Submit exact commits, comparison records, unresolved findings and independent
