@@ -1,5 +1,33 @@
 # Pilot outcome: correctness repair, efficacy inconclusive
 
+## Final screening outcome (2026-10-27)
+
+This section supersedes historical readiness and no-dispatch statements below
+and in the preparation handoff. The authorized bounded screening ran once and
+was **inconclusive**. Its first slot failed when a model operation timed out
+without a terminal receipt; the other five scheduled slots remained undispatched.
+No answers completed. Provider completion, cancellation, usage and spend for the
+uncertain operation remain unverified; missing receipts do not establish zero
+cost. No retry, budget reset, replacement case or later screening occurred.
+
+The original exports and reconciliation remain sealed separately for independent
+review. They are not published here. The original time window has expired and
+the frozen runner does not support continuation. Exposed cases are retired from
+future decision sets under ADR-0076. No quality, latency or cost improvement,
+category winner, experimental promotion or production enablement is established.
+
+The independently reproduced gap-error correction, sanitized diagnostics and
+image provenance repair do not rely on a favorable comparison. Experimental
+calibration code remains standalone and absent from application-route imports.
+Existing defaults and all acceptance criteria remain in force. The CI-only
+follow-up prevents optional Docker diagnostics from aborting successful mirror
+setup; actual setup failures and test gates remain mandatory. Runtime CI
+[40558652594](https://github.com/groktopus/groktocrawl/actions/runs/40558652594)
+passed both integration lanes, PostgreSQL storage, protected profiles, twins and
+both runtime gates at the CI-repair head. Fast Tests and Code Quality also passed.
+
+## Historical preparation and development record
+
 Candidate correctness commit: `626b01acb4ab38a5024f32513dd6eac221632ab5`.
 Baseline and route evidence: [baseline.json](baseline.json).
 The actual local execution host is auriga (Darwin); an initial self-SSH probe was
