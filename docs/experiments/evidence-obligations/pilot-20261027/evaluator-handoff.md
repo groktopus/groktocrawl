@@ -1,5 +1,9 @@
 # Parent evaluator handoff
 
+First-screen budget superseded by [screening-protocol.md](screening-protocol.md) and
+[screening-handoff.json](screening-handoff.json). The larger proposal below is historical
+and was not executed or admitted.
+
 The candidate correctness revision is frozen at
 `626b01acb4ab38a5024f32513dd6eac221632ab5`; its code patch does not implement a new
 live retrieval policy. The comparison plan and development corpus are separate.

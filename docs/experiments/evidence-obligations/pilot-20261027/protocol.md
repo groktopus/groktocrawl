@@ -1,5 +1,9 @@
 # Bounded calibration pilot, 2026-10-27
 
+First-screen budget superseded by [screening-protocol.md](screening-protocol.md) and
+[screening-handoff.json](screening-handoff.json). The larger proposal below is historical
+and was not executed or admitted.
+
 Status: development only; live comparison blocked, no promotion decision.
 Parent: W12.4. This extends its calibration record, not its evaluator or runtime
 policy. Repository baseline: upstream `groktopus/groktocrawl` at

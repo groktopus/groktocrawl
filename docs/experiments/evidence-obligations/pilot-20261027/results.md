@@ -107,3 +107,61 @@ Recommendation: retain current defaults for every category. No category benefit
 is established; live evidence remains inconclusive. The gap-error repair is
 reviewable independently and has no claimed quality uplift. Rollout/rollback and
 halt criteria are proposed in the protocol, with parent/owner review required.
+
+## Follow-up: read-only reconciliation and smaller screening boundary
+
+All six original API requests now have log-correlated terminal responses: two
+HTTP 200 and four HTTP 502 after 60-second scraper timeouts. The two successful
+downstream requests have completion records, and their public Python/Greenhouse
+artifacts were recovered by exact cache-key GETs without revalidation or new
+external requests. Python development reference slots now have verified values and
+source hash/span provenance; no parent-held-out data was accessed.
+
+The four failed downstream scraper requests have start records but no terminal
+records in the inspected logs, and their exact source caches are absent. Their
+server-side outcome, any recovery/model work and total cost remain UNKNOWN. No
+repeat is authorized. Raw cache timestamps and container log timestamps are kept
+separately rather than silently normalized. See `capture-reconciliation.json`.
+
+The isolated budget boundary is committed at `80164b6`, with 37 targeted budget
+tests and 87 combined regressions passed, plus Ruff/mypy. It is not deployed or
+imported by API routes. The first screen is now at most two cases x three arms x
+one repetition, 54 service HTTP dispatches, 4,608 requested output-token
+reservations, 216k model-input bytes and 300 seconds wall time. This supersedes
+the larger proposal. See `screening-protocol.md` for the exact scope and opaque
+backend accounting caveat; total provider-attempt/token cost is not falsely closed.
+
+The repository-local runner count of zero does not imply no eligible organization
+runner. Parent identified `saru-groktopus-3` running the earlier pilot Integration
+Tests at head `3b761fa8`. Its exact run/job are retained in `screening-handoff.json`.
+No runner/job was cancelled, preempted or reconfigured.
+
+Full live execution remains NOT READY: the dispatch boundary needs independent
+review, backend retry/fanout accounting needs verification, and a frozen runnable
+three-arm implementation is still required. The existing W12.4 replay cannot be
+misrepresented as a live obligation retriever. Parent retains both hidden cases
+and labels; no questions should be exposed to the editor before readiness closes.
+
+## CI diagnosis and structured-gap follow-up
+
+The exact earlier run `40518326740` is terminal. Integration job `122238017268`
+failed 14 tests: eight mocked research-loop tests and six HTTP stack tests. The
+strict gap-error repair exposed invalid stage responses: synthesis text/plan JSON
+was being returned to the gap analyzer. Local reproduction confirmed eight
+failures and 39 passes in `tests/integration/test_research.py`.
+
+Commit `d36cc84` requests a `topics` object through the existing structured-output
+contract, validates its shape, and retains raw-array compatibility. Stage-specific
+mocks now produce valid gap decisions while all existing assertions remain. The
+default provider twin, scenario versions, evaluator code, corpus pins and reference
+answers were NOT edited. A real-client/default-twin gap regression is included.
+The focused selection passed 115 tests; broad answer eval still matches its pinned
+baseline (11 positive passes and one intentional negative failure). Compose
+validation of the repaired revision is pending normal CI; do not call it green.
+
+The Compose twin manifest correctly reported implementation failure; no separate
+manifest-schema defect was identified. Research-runtime job `122237996428` was
+cancelled during image build at 14:11:46 UTC, before tests; its later manifest
+image lookup errors followed the incomplete build. Cancellation cause is unknown,
+and no manual cancel/preemption/rerun or runner setting change was performed here.
+See `ci-diagnosis.json` for the source-bound distinction.

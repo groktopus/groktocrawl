@@ -1,16 +1,22 @@
 {
-  "status": "development evidence freeze; no heldout comparison authorized by this file",
+  "status": "current development evidence and screening-boundary freeze; live admission not ready",
   "baseline": "8df43e5dbe029a888a2007d9dcf0baf4869657dc",
-  "correctness_candidate": "626b01acb4ab38a5024f32513dd6eac221632ab5",
+  "correctness_candidate": "d36cc84",
   "sha256": {
-    "development-cases.json": "e8fbd192043dc5f37a4c629cfa1a12c1a3cba6f5889cc23f99d35da5ad189307",
-    "protocol.md": "c927349c05e3d009bec56d9e952c9e96fb525eef84b8bfef3d113d31e10b8cc7",
-    "baseline.json": "698cda06da565a5040e0ff9e6f93f49095fa72136526c7144aaae792a67380db",
+    "accounting.json": "729b2ef3e83e4e2ebc70db70c8ecccce42f51caa139f1c8f388218c1ce59f32c",
     "answer-evals.json": "c89868f750720549cf2df3ed2115019b07eb2a159d1aecc8949d8b4785bd3421",
+    "baseline.json": "698cda06da565a5040e0ff9e6f93f49095fa72136526c7144aaae792a67380db",
+    "capture-reconciliation-events.jsonl": "0001f458c7dbc8428417456cce5b06b6814ff11a5830d9a77dde09fb05bfb450",
+    "capture-reconciliation.json": "c0d603fe96f208c8970eb56484a97a26d0a7e4d981d60f64d2a1b6e9d7cf2d25",
+    "ci-diagnosis.json": "1fc1292d0b785eca9b00f66857627bfc1eb628ac66ec11b9e116999cce0f3d31",
+    "development-cases.json": "d74790fa39478554c66e2f86188f88248e5db7e1c9ec4911125e76af6d78c0ba",
+    "evaluator-handoff.md": "e6102787286330b758b919de67af4bbea66888e46d6e6d9869d7d0b7545bc77b",
+    "protocol.md": "4e18955419643ddf5473d72aa2f8f8eeede9faf457b1409c65518529172c2652",
     "replay-analysis.json": "d14c6a4b950541b241701b1d1332b1bcb81f562a527f4e9971541b3e47a0ca4e",
     "replay-run.json": "3ddf6570e1d98c7363bfc93b340f4c6c6e97c95cbddd2fcd0cf24a842ecda4d4",
-    "results.md": "ac53c4f5db4403583a2e13b79c58d10ce66816476c47c1505a5dbea6a3268a5b",
-    "accounting.json": "28069fca67e15c8b0ccfc3ba92fcf5217e6f3817dd34f3a0a1ccf85aece8b730",
-    "evaluator-handoff.md": "5368628ad0ea66bd515e685a86b96c4e0332084a58192bb22248406d81c0524f"
-  }
+    "results.md": "86c747a7fcbffad983870dcfe2a032e63f04ebedfdba8ba8b54ffc071f4a6913",
+    "screening-handoff.json": "4b12ddfccbda321c64e6e0560e034cc59e18263cbd18c424aa0f4ab39dc18646",
+    "screening-protocol.md": "c7554578b9ba6f82cb195fddb584698550146c651412dd9f266804b6cf66e124"
+  },
+  "budget_adapter_commit": "80164b6"
 }

@@ -14,8 +14,8 @@
       "max_client_requests_scheduled": 6,
       "client_retries": 0,
       "client_timeout_seconds": 15,
-      "dispatched_requests": null,
-      "completed_requests": null,
+      "dispatched_requests": 6,
+      "completed_requests": 6,
       "provider_tokens": null,
       "search_calls": 0,
       "fetch_calls": null,
@@ -31,7 +31,12 @@
       },
       "server_operation_cancellation_confirmed": false,
       "source_results_used_as_labels": false,
-      "replayed": false
+      "replayed": false,
+      "api_terminal_200": 2,
+      "api_terminal_502": 4,
+      "downstream_terminal_confirmed": 2,
+      "downstream_unresolved": 4,
+      "read_only_reconciliation": "capture-reconciliation.json"
     }
   ],
   "live_policy_comparison_attempts": 0,

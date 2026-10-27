@@ -1,6 +1,6 @@
 {
   "schema_version": "w12.4-live-calibration-development/1",
-  "status": "unverified reference slots; not gold; no candidate tuning",
+  "status": "development only; technical-cancel facts verified from recovered capture; other expected values pending",
   "cases": [
     {
       "case_id": "health-cv",
@@ -168,23 +168,52 @@
       "expected_facts": [
         {
           "slot": "Python version",
-          "expected_value": null,
-          "verification": "pending authoritative capture"
+          "expected_value": "This is the Python 3.12 asyncio task documentation.",
+          "verification": "verified against recovered authoritative development capture",
+          "support": {
+            "url": "https://docs.python.org/3.12/library/asyncio-task.html",
+            "markdown_sha256": "e5240f3b3dff2e4dd1e2b42f5b4d61ccacda43a12720a5c8a2f3f17940fb6843",
+            "basis": "versioned authoritative URL and captured page identity"
+          }
         },
         {
           "slot": "sibling cancellation behavior",
-          "expected_value": null,
-          "verification": "pending authoritative capture"
+          "expected_value": "A TaskGroup cancels remaining tasks when a child raises an exception other than CancelledError.",
+          "verification": "verified against recovered authoritative development capture",
+          "support": {
+            "url": "https://docs.python.org/3.12/library/asyncio-task.html",
+            "markdown_sha256": "e5240f3b3dff2e4dd1e2b42f5b4d61ccacda43a12720a5c8a2f3f17940fb6843",
+            "character_span": [
+              10443,
+              11050
+            ]
+          }
         },
         {
           "slot": "exception grouping qualifications",
-          "expected_value": null,
-          "verification": "pending authoritative capture"
+          "expected_value": "After waiting for tasks, non-cancellation exceptions are grouped; KeyboardInterrupt and SystemExit have special re-raise behavior.",
+          "verification": "verified against recovered authoritative development capture",
+          "support": {
+            "url": "https://docs.python.org/3.12/library/asyncio-task.html",
+            "markdown_sha256": "e5240f3b3dff2e4dd1e2b42f5b4d61ccacda43a12720a5c8a2f3f17940fb6843",
+            "character_span": [
+              11200,
+              12350
+            ]
+          }
         },
         {
           "slot": "CancelledError and structured concurrency caveat",
-          "expected_value": null,
-          "verification": "pending authoritative capture"
+          "expected_value": "TaskGroup and timeout use cancellation internally; swallowing CancelledError can disrupt them.",
+          "verification": "verified against recovered authoritative development capture",
+          "support": {
+            "url": "https://docs.python.org/3.12/library/asyncio-task.html",
+            "markdown_sha256": "e5240f3b3dff2e4dd1e2b42f5b4d61ccacda43a12720a5c8a2f3f17940fb6843",
+            "character_span": [
+              8520,
+              9210
+            ]
+          }
         }
       ],
       "legitimate_unknowns": [
