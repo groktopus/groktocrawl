@@ -1,193 +1,757 @@
 {
-  "bundle_sha256": "145e1eccfb9a2f699b8bc080eb14c173bf34c112dfa9b2a29af83b8af4c3f69d",
-  "runtime_files": {
-    "agent-svc/agent/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "agent-svc/agent/admission.py": "44ac1668d98c792b0c09b98e53bc608d12e4bca219fd7e8c99f83a0b4e3e15eb",
-    "agent-svc/agent/analytics_exporter.py": "c6581ea7586b8ff05f678e76f7e3f72f70c37b9079d33e202eac659d4ef3e9dd",
-    "agent-svc/agent/api.py": "7187333bc4651149fc8a6ac3bbf5f9d0a974edb7f590627a1d800156b95f4090",
-    "agent-svc/agent/app.py": "44dd18dce4983961354a5382240f5fb0423c263ba468b99384c9a91d403a9394",
-    "agent-svc/agent/auth.py": "83197ab7ee7e21cd18ac48dd10d9d083f08d13b3cfb73d7f0581d95c23d46d4c",
-    "agent-svc/agent/barrier_guard.py": "abf8bfede32540bb5d879d437ea27f4f97775f1a904d0a8d745ae7ad884d21f9",
-    "agent-svc/agent/browser_client.py": "4c07be206c694c3dc0cc160cd1fe493d3b6c6cc3e053eb003706ad3f27864edd",
-    "agent-svc/agent/cancel.py": "509f2ee7ed37d6fc77efed364c0074b9e1759b7574de7952486886bfedcd4000",
-    "agent-svc/agent/crawl_cache.py": "3fcf8fb57c0bb5f82972220555c7e50c77c14a14b0af388bd96bcf028ef7562a",
-    "agent-svc/agent/crawl_stream.py": "5b88a39b89be0921d5a245c151cd8e60ef857e78617d99d8932b78eeb8617323",
-    "agent-svc/agent/crawler.py": "23c9ada5e4eeae0b1da8cd0eabaa32582a2711d3acb8de8a03a821871d88bb49",
-    "agent-svc/agent/date_filters.py": "2c73847d57cb2a85716e05a803835bae1ebc28de11bf3f63780eaa0d4f49d707",
-    "agent-svc/agent/dedup.py": "ec2c02b74b36b616ac2da853494f1109c5883c4fe2a17927c05788682c984471",
-    "agent-svc/agent/exceptions.py": "40c530ba6e5f1fb701056e36f9f4dd3280c4561b9a28dcd75efa081c2802780d",
-    "agent-svc/agent/experimental/__init__.py": "99a9263656392773189003ca8d1f67db645506f091e5483c0c00cb5487fa805f",
-    "agent-svc/agent/experimental/adaptive_runtime.py": "18d81545d46cd49dde0c95aeb27f11aeda1287b7e55b3ae8a4686887298be445",
-    "agent-svc/agent/experimental/answer_units.py": "e50738ec901366dd14be056bba1719aa86a54ef0e24f60035c2b815295a42d8c",
-    "agent-svc/agent/experimental/artifact_authority.py": "47a2fb9c552cea04c5346a038fe429c988a0af839ef8c070116730e44e6a2bf0",
-    "agent-svc/agent/experimental/artifact_bundle.py": "c939c79143b5f16f00010b641da47a3faf0c653f1e80a1375e86acf6660d976d",
-    "agent-svc/agent/experimental/bounded_adaptive_policy.py": "3f90c803f5dea0791d0bdaa0504309ddde6e9cf5bc6d59c654fc312d48cbc086",
-    "agent-svc/agent/experimental/calibration_budget.py": "3a9fb272b8796f67508b678f844fc582b0840c5326754d0d688e9af168f38b79",
-    "agent-svc/agent/experimental/calibration_runner.py": "b7c8e38ae1b0a07d80f8a0563ceaaeb27a9554985dee0d59d7e4cbd64329378a",
-    "agent-svc/agent/experimental/canonical.py": "41907284a1b660463f251f02170be5d91dfa2ad5d005011af3612f48fac8d755",
-    "agent-svc/agent/experimental/capability_runtime.py": "45b2eec8e6013e351d7d57fb50255697548e609ca514da33485275b9761a832a",
-    "agent-svc/agent/experimental/checked_knowledge.py": "03d90d9f613d192bba8673c144f383e2cb4de92af005b76917dfce1d462405ba",
-    "agent-svc/agent/experimental/claim_verification_experiment.py": "f64813d8625836533c026fdafda0f64da50dca3141778e570aa519c339e6a2c1",
-    "agent-svc/agent/experimental/client_protocol.py": "5c72ee81da0f0e978632fb37f98a767ae9b7420448211343957f658d5c9148ba",
-    "agent-svc/agent/experimental/consolidated_bundle.py": "8668369f71bf697fb5a4e53ba26d73b76e7f4aa778ad4ffc4d07a9952a902f9d",
-    "agent-svc/agent/experimental/consolidated_example.py": "3e09f3de60f02c82727dfce2c6b5d1be92aceb4df019ba0a756b6d898fb4444c",
-    "agent-svc/agent/experimental/consolidated_journey.py": "5e509278e9fa0c6a47cc9be6ed947a75eb849b507b0ed71ced4daea70feabef7",
-    "agent-svc/agent/experimental/consolidated_storage_material.py": "77625466b1e12ddd6368274cc5401d1a3e8830536d2b4b213f3a41f65c37b969",
-    "agent-svc/agent/experimental/consolidated_store.py": "82aa899d52da209c31e9190a66eb77b5de81de6c9774df3ec00d55f2af83b1ce",
-    "agent-svc/agent/experimental/context_sources.py": "198c1e95abc32f25f0fcba9c3a5495695942e25be567be84201afafc2a5367fd",
-    "agent-svc/agent/experimental/controller.py": "cf63c64ba8262bc4f756f5a2a87561e65ba6fcc250fdb195fc2a67eb06b9e68f",
-    "agent-svc/agent/experimental/durable_plan.py": "478718098ea25765686210ff2aee2eb9e03725218bb78215d002062f5c7fd817",
-    "agent-svc/agent/experimental/durable_research.py": "c789956740e4d9d5669d00e2e5085023dcd5820663b7a966a7d81d069a7c814e",
-    "agent-svc/agent/experimental/evidence_obligation_experiment.py": "9d4d2c02ee774a6cb2a54dc8e41a96836891e14cbb02dd93964c7ed394639b53",
-    "agent-svc/agent/experimental/execution.py": "0ce99d6da170ac2c4e117fbd1a7532f7c08f086f72afa9a6b74028aa69e346be",
-    "agent-svc/agent/experimental/expiry_store.py": "94b079f9662885d8dd7d7a7a79333db657aad7638e51135dfe7052f3e2a7761d",
-    "agent-svc/agent/experimental/fork_runtime.py": "0991261b53424e7257c7ddf6e7600ecb11230669afb6ba63a72ba8edbac85f71",
-    "agent-svc/agent/experimental/guidance_runtime.py": "a9ac90e1cd55022cb614dccee3259f5dc6710cc341c84c008e7a6d0f809cd30f",
-    "agent-svc/agent/experimental/import_store.py": "6d89bd11e4700a5a3d6552212045c35918d5fae903d13a8c928d30f3ee886891",
-    "agent-svc/agent/experimental/knowledge.py": "a95b1e9a20d78e11457fb9e4482ddea5dd9e4fab77eec06638e22a06b288beae",
-    "agent-svc/agent/experimental/knowledge_checks.py": "db61d7267e91c90060ea6f3e07aaa6a01178122121b8e784ab3dc7e8485bcf9f",
-    "agent-svc/agent/experimental/knowledge_context.py": "e2c75fb6c0439a3305d7525c56caa7e99411b745ebf49e33d0e6cfe61a0672e4",
-    "agent-svc/agent/experimental/knowledge_execution.py": "37d10d8c4768131ca13d473d22be6735f433c9c0272ba7d7d436af84f3de8e50",
-    "agent-svc/agent/experimental/lean_construction.py": "99a2baad263b2be7ce460f1a075c53ff4544ef8b42f15521418df1b0095dc881",
-    "agent-svc/agent/experimental/lean_journey.py": "7ed9f7c3f2d3fcdcc4c11fa728d4c2757c976410048814e6bd9134aae283c64e",
-    "agent-svc/agent/experimental/lean_publication.py": "7d7bf9b1f6e590a702099036395534b796328574546f46c22034d823421b56c6",
-    "agent-svc/agent/experimental/lean_review.py": "7796e4fbe8db21e3bd95b1c8c5a205c8c23ceb9466f8aadb205d891518fd4ef6",
-    "agent-svc/agent/experimental/live_policy.py": "4fc08b8637e3cc0b9289cc2371cc12e9cd7775ee15858c0ee1ea64964b124cec",
-    "agent-svc/agent/experimental/live_runner.py": "187568727ca7118afe02710d8670292a466832c4963742eccbc17f7fa9db816c",
-    "agent-svc/agent/experimental/manifest_outputs.py": "827d44cfb6ec17bb77170415f31fade8b3a83458b827399ce6ac3f82c4af7153",
-    "agent-svc/agent/experimental/mission_experiment.py": "210b2fb7b7293d2a80e64a0f5a787ebe09e02b984f7e427b8427e21d1509ec56",
-    "agent-svc/agent/experimental/model_failure.py": "654281e217c6ecd993a2c532a110f045f120938663c802a2664a9acbbfbfdc14",
-    "agent-svc/agent/experimental/model_review.py": "b8c1f91b5015d5affe322916b72cd0f76d3d85af8af5fd9b487c0b66411320c5",
-    "agent-svc/agent/experimental/model_transport.py": "68bc346a8b9ac6c8682436deff21e5f261ba857adfc1ba5334e113510ae9ff34",
-    "agent-svc/agent/experimental/passage_preparation.py": "572ecca83cfd7d76d0c3280ee7f97d1fc71e61ae9fc20d12fa296b3a228733b3",
-    "agent-svc/agent/experimental/pipeline.py": "d7413fcf8cbf7041a2a28fb535d7482e51c3da0e3421f1e068ccb1c87be403e8",
-    "agent-svc/agent/experimental/publication.py": "28a61d979671c0ac695b3311d177075904edd69c3afe004ad6d0ebb8d2a8c73f",
-    "agent-svc/agent/experimental/publication_gate.py": "1283fd18460e2a095de2b283feb4c9275828fe91bf617e4ac9253d96ec3165bc",
-    "agent-svc/agent/experimental/publication_store.py": "b1c289261d1dc35218cc5268109e89e6a16db6654157437e6fda4aa92e6b769b",
-    "agent-svc/agent/experimental/query_construction.py": "703102cf00e6979e7cc8d7412e823aeaf78d3796e1e8e1557611c03d723f9d1f",
-    "agent-svc/agent/experimental/query_runner.py": "141319f766a2334001b4f34da7c1fefd5944e5663e90171f62590bfa92c12306",
-    "agent-svc/agent/experimental/real_journey.py": "000ffd8cc718d619c7a153274488f0b7ae10c90caa0f916bc8b6590aeef23703",
-    "agent-svc/agent/experimental/recovery_contract.py": "529b3b2246014ca09b2e61c5b22500238190392b75d62a0719ed94e0c51f4803",
-    "agent-svc/agent/experimental/render_execution.py": "12ceda41ce03a054c0c53d9a32801c82c7924ce785bb90d82efc08a09c762a15",
-    "agent-svc/agent/experimental/render_manifest.py": "3f36e177ef692c08c09c330af56abaca690936bcbf0c63757ee78dcba3177e69",
-    "agent-svc/agent/experimental/research_bundle.py": "b9e88a894cd3a78ffa23c68f2d025a87166af27ac745e9a7b962bea6d27858b2",
-    "agent-svc/agent/experimental/research_import_store.py": "4d9c35dcf20d511b34859bdfcf797e6fdca93daa031f542ddb156a796fdcc363",
-    "agent-svc/agent/experimental/research_mission.py": "82ca9b7469d2aad73a3a4a39d026e39a664799fa0f7e1dfe0b348b0ae975b770",
-    "agent-svc/agent/experimental/research_notifications.py": "ca2fd932f05bd4d0e8b05c8b7a426c608476b148ddb32aa0bacd504dd08ea0b1",
-    "agent-svc/agent/experimental/research_publication.py": "430ce70554c35e94e32408d5c2c5aaf0cf9a06b5f132e986ac7dfc3aca2c02c9",
-    "agent-svc/agent/experimental/research_publication_store.py": "2e56ff2e9bd7c0f8dfc3f0af64a8e854c92d2e40e7bfc21d7dc46607908fd54b",
-    "agent-svc/agent/experimental/research_revision.py": "63d3a665530d15919c8697a21a3f216056b9a1e1f445d1d8b762b0446001355d",
-    "agent-svc/agent/experimental/research_store.py": "3843b4bfc317f5a914d39b9b33ae4afabe716be9bbcc6ea5365116bc514b4c38",
-    "agent-svc/agent/experimental/research_thread.py": "19a1d736cf757cce4bef266dacb233a6e218ef9d084331210d8f53bb6fe7b70f",
-    "agent-svc/agent/experimental/revision_store.py": "dbb04aad9c1938935b07513f69370203cb6fac47028bfcc14b336e0ce1be62de",
-    "agent-svc/agent/experimental/revisions.py": "6e70e2496e399944bebb23939060a005359b728fd677134cfe0e64e0cd64eb42",
-    "agent-svc/agent/experimental/runtime_comparison.py": "43f19e8c9f7722778e4b82da11183364e65f98bfc5cc2fa830df7aed732165c0",
-    "agent-svc/agent/experimental/slopsearx_provenance.py": "228003afbc89758259ae56d0b3f13dbaa38067bccd45990a46c7e953ebfd6976",
-    "agent-svc/agent/experimental/slopsearx_provenance_store.py": "c0f2ba387c0ff7429557a62d41bf97c0055f5fd82733d48b9ba23de561e61111",
-    "agent-svc/agent/experimental/source_store.py": "645f7f1374d859884d86c6347d47ea9f67905a506a16af6c4254ea5813e65d08",
-    "agent-svc/agent/experimental/specialist_runtime.py": "08c36a985b7b252e11391dc9c008834ad9c8acba3d5537a792d6a6a7a679f186",
-    "agent-svc/agent/experimental/specialist_value_experiment.py": "c76c6262873b2dfe12f50bf96a279f72598af4545139b16efa9430814584ea6e",
-    "agent-svc/agent/experimental/storage_admission.py": "e2370b49b5fd23583bfccfd7b71e89798b3d7f935b765170bf14e69d4b8105ab",
-    "agent-svc/agent/experimental/typesafe_shadow.py": "2ed45ec2fb32d72df0a853c83a15edf69e9521a2f3cc1c6c1028f7e4c99fc735",
-    "agent-svc/agent/experimental/verification.py": "ec8964700f3ba88ad74108ca3dcac7899bef50545a02c1ba7581b2709b0012de",
-    "agent-svc/agent/followup.py": "f18ed40fd874dbecae14ded82e1e9b75f63125bb66a7a0467b155ebc5741a967",
-    "agent-svc/agent/health.py": "da05e31c57e3ecb35dc8309b59c5df1367a5503154eac26458976012f9ebd9cb",
-    "agent-svc/agent/job_execution.py": "e8a9827b64290b8d823359397191df4c74cbff10d82b664dfdcc9b3025e92e9f",
-    "agent-svc/agent/link_extractor.py": "1a187e653c580c48f2f1d3fd9903ca1a68fdf216f2ca765d63f86fd0572d9e95",
-    "agent-svc/agent/llm.py": "1913677755d7418b8c0c0871b124a7457750cf2158faf8471e19527f1ed353cc",
-    "agent-svc/agent/llmstxt.py": "4f39a29d64c534e250c19fd6639a1068f1b47e200fafd92cb5977b7fc33def0c",
-    "agent-svc/agent/metrics.py": "4715a9e4bc5248c8cb5165842345e0145a8ea645ad6cd43b7420541753f97900",
-    "agent-svc/agent/models.py": "4528c81227c28a481b245341868443c8da2b567bd5fdc9fc9b5a311551bc4716",
-    "agent-svc/agent/monitor.py": "5cf675b72db8a4e8d900dfbd18c1149aab2832eac76607b1bd4941a3781424d6",
-    "agent-svc/agent/nl_params.py": "05df1a21a60551512e3f4e8e289f6f54e25b3cbe291784abb095437cd9090b99",
-    "agent-svc/agent/planner.py": "d75f04a48d3a57dc0df6000eefa34943a61b271489ed4f6b4a4ccb2d5ef1d22d",
-    "agent-svc/agent/rate_limiter.py": "7d01548b4c7e60d29b5964b876118407e082ed312500ce364a469c51743b2e86",
-    "agent-svc/agent/research/__init__.py": "ed2488b6ff6c7b96cf415731a934344e4faef255e38dee2f757b83fbfc931e57",
-    "agent-svc/agent/research/acquisition.py": "62bfdb03dee1140c55a5fce61f9dcfaf5beb0338464cd402682472f94e9da70c",
-    "agent-svc/agent/research/citations.py": "200a24a7fb4be44559c7c983dccf83cdf0a4a113bbe73f0a4054e0894f040527",
-    "agent-svc/agent/research/contents.py": "869e8129841c1cfcacb2f2ea04dcb477216e15117b71c3f61a298e343a57705e",
-    "agent-svc/agent/research/discovery.py": "29374e7e2e11339fde159aaf4ae66468190640c232a8ccc676c621d4249cf54c",
-    "agent-svc/agent/research/enrich.py": "9907cdbd047a1474a7f68a1b7c589453710289ba165126a914d70f6c8d8c883b",
-    "agent-svc/agent/research/events.py": "680c6c710a1600c4986e3d13854a579938f0eb5b31ea209512335c7167d77f40",
-    "agent-svc/agent/research/evidence.py": "c7b2e11f76341bd21f1d902982c722d294237774409398c1e6473708e9e89e5e",
-    "agent-svc/agent/research/gaps.py": "d8b7705d029c3e4d0fbbe984d1d48be7d97d1b36700c3db91db1bd9495e6b111",
-    "agent-svc/agent/research/hybrid.py": "fb3156b4f5608278f54c5e95d990d24db69ffadb24f6d85370745eded310278a",
-    "agent-svc/agent/research/jev_filter.py": "dc96e5797072bfe802241876c5ab358c309ddb7a8595d104cb77c90a392caecc",
-    "agent-svc/agent/research/loop.py": "8ab09f6ef86d4d5e7395d079f18eb89cd20ee8709c6bd01f7113b24e919acdbb",
-    "agent-svc/agent/research/memory.py": "a04c947d2b5f6b35f8f8b444d7300143841351bfa6967b3f4960e0815b0dccc4",
-    "agent-svc/agent/research/plan.py": "047e4ac9e3d88b8ffa8f041b464302dfc69d4be7c60a1ad0c4bfdf74a2ad91f3",
-    "agent-svc/agent/research/prompts.py": "4d06724ecfb08ecf53c1d1acd6267661331ba10ddf6392946dea24485da595da",
-    "agent-svc/agent/research/rerank.py": "ffabad0f918cb73665208eb4f64d05cb948f8889a20e7a598ebb1c4dec9e2d96",
-    "agent-svc/agent/research/scoring.py": "23265c14218de1959ef00aca675ea5b759b66be2dcf6493eaafc640b15f556c9",
-    "agent-svc/agent/research/search.py": "2012e42a8ac70a995efbfbbb4494130553bb78236cfec82ac574d27db431abe3",
-    "agent-svc/agent/research/similar.py": "e0da0e1cb10e9c86f5f87f3b94a6aa64e7758c3c4330860e80535a261cbe5ea7",
-    "agent-svc/agent/research/sources.py": "652805b24367aff9e3e0046273533109db8b4ce9b6d3bacd52e3fe760f8251e1",
-    "agent-svc/agent/research/state.py": "49cae0b7b593a342da613dee7aa0c67e3ab2fb0f4f4907e90f8b816329762438",
-    "agent-svc/agent/research/streaming.py": "d7aeed4d5f351d5e2607186bd9542155fde7743c4b3bb0a40c6751ce5caf3de9",
-    "agent-svc/agent/research/utils.py": "6608c7e9412bcdbd17229debc97ca81001607adabba4e840791d28b987f98832",
-    "agent-svc/agent/research_memory.py": "ed02b879e2746f8ced78553a29e48a2796706a271baeff2464fd35350f1e3cf4",
-    "agent-svc/agent/research_memory_migration.py": "91bca373bb78041696918204f8aac76ce3cc1909896ca9d1f3ab652b5eeb4df3",
-    "agent-svc/agent/research_memory_pgvector.py": "1d5681352c00c8ed8665ecb11a7adc1e3f61c53e64424e19365ba3f7161ebac4",
-    "agent-svc/agent/research_sources.py": "730b65fbfc1020ca40ab05c46f2c2e707b49cc21080918c1eed29a621c85eeca",
-    "agent-svc/agent/retry.py": "8c01568c19e29773f81ed794206443e67ac02078813421d0c4cf79132707884c",
-    "agent-svc/agent/routes/__init__.py": "0c31bcce70e43de3a7b17ce8d3ee01bfe47b8606128e61d5c245bee4f5f05aa2",
-    "agent-svc/agent/routes/_helpers.py": "8d4e0e02d9fcaab4359836eb18e2b37f7aa50bf39044218a35583e3f8e60c840",
-    "agent-svc/agent/routes/activity.py": "43d92f2affedfbd61264734950e7ba1679a869b00c7023b0fc50ded6ecc760fe",
-    "agent-svc/agent/routes/agent.py": "4a3fdf1a3ebe875beac47452e69114355a1987977cf2de68fefeb55bc138ff5b",
-    "agent-svc/agent/routes/browser.py": "6e85d18b79c09e65f783c394c9692ec6488e0f99d814d9355c99d31e878988d0",
-    "agent-svc/agent/routes/citations.py": "9c5391aeb70918aeca14875996985d13ddbe524a2f3afd27b81d450a063bca67",
-    "agent-svc/agent/routes/crawl.py": "299a300b1eebc803cfb519224829da6cb8920b3337984cc26b0d4dff04f26c8b",
-    "agent-svc/agent/routes/documents.py": "f84b78d22205c5139ef6701b2d5b684160f3834c23079608d2bd3874d4a032da",
-    "agent-svc/agent/routes/enrich.py": "8f4e169e7ce393d518cc740cc1bc1f839f0e51a86f9b2ba1b2da3bec20a9f935",
-    "agent-svc/agent/routes/experimental_research.py": "47e68661dc5505bd69d375c5dba1c02730049e5133652ea569a6cf35520c9a7a",
-    "agent-svc/agent/routes/extract.py": "b4b49de993dae2c7fbd39219401e32e8995eb693d8fc7283f535a9298bf34861",
-    "agent-svc/agent/routes/find_similar.py": "8b47afce0dcb0af0473fb9363d47fd5fd6ae38ac9a0f3bea082031b248450633",
-    "agent-svc/agent/routes/followup.py": "4ee0e81a0f9645926731f889224dabd9cfbfae78dc462b9e22f20ff4c0276887",
-    "agent-svc/agent/routes/llmstxt.py": "e6f364674d569ec3478f0887e8c817697aa1ca1d110dd47a85ae9d24d84c54ae",
-    "agent-svc/agent/routes/map.py": "ecc7078e142a7bb9b25b09f47571803245eca7bade8468994933f81cc0d8e7bd",
-    "agent-svc/agent/routes/monitor.py": "6a3e247f116a8dc9b2e8b9e1cb50691d8d840b339006f0316924f9f2aef48733",
-    "agent-svc/agent/routes/parse.py": "78245c767e6918eebdff0f2fd836729876708c2b3994a9191dda5d0ca828124d",
-    "agent-svc/agent/routes/plan.py": "8c51e62fdca751f8ff1bfefcaa8a46343cbf9575c30284750e0494197bbafafd",
-    "agent-svc/agent/routes/research_memory.py": "096083e4503d6f3a6356d3cf5be314b9865004970fd09d9cbad31017e61baf07",
-    "agent-svc/agent/routes/scrape.py": "ce4cd116bf15bf4191fb71aa3dff61b1cb57b47ddccebb2c4e91e60bb564140e",
-    "agent-svc/agent/routes/search.py": "bfbe0b4cf6d755bbfb453f1dfda0cbd4afdd6cc62a5a9ce50848385626a3e28c",
-    "agent-svc/agent/routes/session.py": "3d008b9bfa2af1e69f8c1707d1cb3cc5014f8ae8dec1923ee205eab6e5660603",
-    "agent-svc/agent/routes/webhook.py": "7fc6ae459ac547c40e4ad2953fc482ca30e1a2429ed0e1eca564730e9464ccb4",
-    "agent-svc/agent/scraper_client.py": "34b0939c50f7641f4de48d5bedc71d6a2ba25a7b28dc04c8b1c0fe14c23ec637",
-    "agent-svc/agent/search_metadata.py": "35ee4e71e8d85e390dd3129a59d1cbaadb5c18786ce1a3c69c5b46edf284ad61",
-    "agent-svc/agent/searxng_client.py": "60dbe01368b48cb32cfdfd0989a372475f12b8206a0933b1416c75c6f42a5496",
-    "agent-svc/agent/semantic_client.py": "72378e5d170c02862c0d160e2fac231ef4363c190489ac98b9aeaf3712ea82c3",
-    "agent-svc/agent/session.py": "22c3a412779d49950fa34c4fb4f696bf66acb7c1a9a2bc008aaa0ca9f324dea9",
-    "agent-svc/agent/session_documents.py": "0f2136dcbe5142af78d1e373aeb7435f7aa506c4ca2b1de3bf522d9f7cc6a8e1",
-    "agent-svc/agent/session_scope.py": "fe173787e1dd36bce3a987bdb586cb4adc430a3516aefb8b4d5843860db0d4df",
-    "agent-svc/agent/session_store.py": "4ae9ba1c0c91a75359f4a6265378da27c9753bf82a47cb5b3729da14cb4bb1c9",
-    "agent-svc/agent/settings.py": "e2fb46c8883046e04cdb396c7798ae995521d50e7d49d735f4cfa494f6563af9",
-    "agent-svc/agent/sitemap_parser.py": "b40e65131b043c3bdac307f3a1877575659ceaeac0c25628c92f9cb812fa0637",
-    "agent-svc/agent/store.py": "9c589efabc64dd9d7c2327112efe9cee2ff8f5def21775a18eb4d421720c04e6",
-    "agent-svc/agent/tasks.py": "181f3ed229c6f7b61f110173bca15f650dc68ad3f9b2117cd3f0383188cd77be",
-    "agent-svc/agent/tests/test_claim_verification_experiment.py": "b1ca7da9b996866aa375188333b6ff463a8d254403a29423342de599851fb3ab",
-    "agent-svc/agent/tests/test_research_thread.py": "6e148ceda0b60777ede63b48376a95e2a2f63bb61449d78ada325f3c0eb0b40d",
-    "agent-svc/agent/tests/test_stack.py": "90e59cfc887898c2595005b727effe65582afd3eb6327dbb8270497de6ad2ab4",
-    "agent-svc/agent/webhook.py": "2b7abc922471c5b99b121214d3337d10942a86997af855ef09479c55c1b793b3",
-    "agent-svc/agent/worker.py": "133fbd6718aaf5531bd0ba2f40c3f4b4e5e707028dfd903cdd13be6b51e8f051",
-    "agent-svc/agent/workload_metrics.py": "73a939590e972920bab5bca5d0394520900c6ac109e9441c61a76cde625ad6f1",
-    "agent-svc/pyproject.toml": "d0faa9195b57e4c74f7756c1d86c6faac3d8aa60002cff4fd2383672e9e47ce3",
-    "common/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "common/admission.py": "a28c12e666d3f4df4fd2c61c4813a6ec26e723394dab68cebdf4d726332d6b1a",
-    "common/analytics.py": "0d72b277139d9b47fecc4c0f395726f267b6d5232bb0113a0983b51d467f52a3",
-    "common/capture_destination.py": "9380735c1b83967bd07ae0ac80d3cd8f9f6692c12ee737fa3f603931523f0512",
-    "common/circuit_breaker.py": "2de26dc0891dfb86cb0c5ac690b49ca249b13b17fdce85388c5546ccc5a35571",
-    "common/features.py": "10a5b2528f462895cd26c8a23035c282591e229fddc8f999d42a854228bba250",
-    "common/logging.py": "19447055fd354e4a9690b7902fac01a26c5b5487814161d68f6306bbd3cada54",
-    "common/metrics.py": "6cc646396f0543a170b188f11647b548983d9949713d55450f60c7fd4afb4cc6",
-    "common/middleware.py": "7c184a5ccbad36c915c30688958b45f24e78245d66e019a65ad1c0d839b1edce",
-    "common/private_uds.py": "602bc0765abc77c9c7512ea449048a7b66b69b8664111775a73976e53be82a35",
-    "common/retry.py": "5af27071df3b3bad84791db3efe52c5d235be0cb5852eddb2ed394c85e125259",
-    "common/stage_metrics.py": "ff89599d65eb81b8bab02bd03d7de9ec8c1d5a23111da37845cc5bee202cbfe0",
-    "common/url.py": "e6fd70a0fe16a4991bb164ce8fabf5caf8cd0be3507b367c7adedc9835d274c7",
-    "pyproject.toml": "ad6e1d6737014623fa20ba8a468f1194c30f7c44cbde91a27e6b36dda7fd7064",
-    "scripts/run_w12_live_screen.py": "e12624d73d6de5987f1419ff1db9da6514a33d2a3c8f05558f3e3acc272967ac",
-    "scripts/w12_calibration_worker.py": "ec49ecf8cf899b2aa66c9b6895ff74bb107bfeb29c7703f576f58b8c46a23dcd",
-    "uv.lock": "c96dcb1730fb91a01c5cf4df4e132d450940ca68aeab13c5eb4bc922ab2846a2"
-  }
+  "bundle_sha256": "cd8bec802a5d3e52a250d3a20b9f6670e6a7a17b3ba3e58477236390a1797c82",
+  "runtime_files": [
+    {
+      "path": "agent-svc/agent/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "agent-svc/agent/admission.py",
+      "sha256": "44ac1668d98c792b0c09b98e53bc608d12e4bca219fd7e8c99f83a0b4e3e15eb"
+    },
+    {
+      "path": "agent-svc/agent/analytics_exporter.py",
+      "sha256": "c6581ea7586b8ff05f678e76f7e3f72f70c37b9079d33e202eac659d4ef3e9dd"
+    },
+    {
+      "path": "agent-svc/agent/api.py",
+      "sha256": "7187333bc4651149fc8a6ac3bbf5f9d0a974edb7f590627a1d800156b95f4090"
+    },
+    {
+      "path": "agent-svc/agent/app.py",
+      "sha256": "44dd18dce4983961354a5382240f5fb0423c263ba468b99384c9a91d403a9394"
+    },
+    {
+      "path": "agent-svc/agent/auth.py",
+      "sha256": "83197ab7ee7e21cd18ac48dd10d9d083f08d13b3cfb73d7f0581d95c23d46d4c"
+    },
+    {
+      "path": "agent-svc/agent/barrier_guard.py",
+      "sha256": "abf8bfede32540bb5d879d437ea27f4f97775f1a904d0a8d745ae7ad884d21f9"
+    },
+    {
+      "path": "agent-svc/agent/browser_client.py",
+      "sha256": "4c07be206c694c3dc0cc160cd1fe493d3b6c6cc3e053eb003706ad3f27864edd"
+    },
+    {
+      "path": "agent-svc/agent/cancel.py",
+      "sha256": "509f2ee7ed37d6fc77efed364c0074b9e1759b7574de7952486886bfedcd4000"
+    },
+    {
+      "path": "agent-svc/agent/crawl_cache.py",
+      "sha256": "3fcf8fb57c0bb5f82972220555c7e50c77c14a14b0af388bd96bcf028ef7562a"
+    },
+    {
+      "path": "agent-svc/agent/crawl_stream.py",
+      "sha256": "5b88a39b89be0921d5a245c151cd8e60ef857e78617d99d8932b78eeb8617323"
+    },
+    {
+      "path": "agent-svc/agent/crawler.py",
+      "sha256": "23c9ada5e4eeae0b1da8cd0eabaa32582a2711d3acb8de8a03a821871d88bb49"
+    },
+    {
+      "path": "agent-svc/agent/date_filters.py",
+      "sha256": "2c73847d57cb2a85716e05a803835bae1ebc28de11bf3f63780eaa0d4f49d707"
+    },
+    {
+      "path": "agent-svc/agent/dedup.py",
+      "sha256": "ec2c02b74b36b616ac2da853494f1109c5883c4fe2a17927c05788682c984471"
+    },
+    {
+      "path": "agent-svc/agent/exceptions.py",
+      "sha256": "40c530ba6e5f1fb701056e36f9f4dd3280c4561b9a28dcd75efa081c2802780d"
+    },
+    {
+      "path": "agent-svc/agent/experimental/__init__.py",
+      "sha256": "99a9263656392773189003ca8d1f67db645506f091e5483c0c00cb5487fa805f"
+    },
+    {
+      "path": "agent-svc/agent/experimental/adaptive_runtime.py",
+      "sha256": "18d81545d46cd49dde0c95aeb27f11aeda1287b7e55b3ae8a4686887298be445"
+    },
+    {
+      "path": "agent-svc/agent/experimental/answer_units.py",
+      "sha256": "e50738ec901366dd14be056bba1719aa86a54ef0e24f60035c2b815295a42d8c"
+    },
+    {
+      "path": "agent-svc/agent/experimental/artifact_authority.py",
+      "sha256": "47a2fb9c552cea04c5346a038fe429c988a0af839ef8c070116730e44e6a2bf0"
+    },
+    {
+      "path": "agent-svc/agent/experimental/artifact_bundle.py",
+      "sha256": "c939c79143b5f16f00010b641da47a3faf0c653f1e80a1375e86acf6660d976d"
+    },
+    {
+      "path": "agent-svc/agent/experimental/bounded_adaptive_policy.py",
+      "sha256": "3f90c803f5dea0791d0bdaa0504309ddde6e9cf5bc6d59c654fc312d48cbc086"
+    },
+    {
+      "path": "agent-svc/agent/experimental/calibration_budget.py",
+      "sha256": "3a9fb272b8796f67508b678f844fc582b0840c5326754d0d688e9af168f38b79"
+    },
+    {
+      "path": "agent-svc/agent/experimental/calibration_runner.py",
+      "sha256": "b7c8e38ae1b0a07d80f8a0563ceaaeb27a9554985dee0d59d7e4cbd64329378a"
+    },
+    {
+      "path": "agent-svc/agent/experimental/canonical.py",
+      "sha256": "41907284a1b660463f251f02170be5d91dfa2ad5d005011af3612f48fac8d755"
+    },
+    {
+      "path": "agent-svc/agent/experimental/capability_runtime.py",
+      "sha256": "45b2eec8e6013e351d7d57fb50255697548e609ca514da33485275b9761a832a"
+    },
+    {
+      "path": "agent-svc/agent/experimental/checked_knowledge.py",
+      "sha256": "03d90d9f613d192bba8673c144f383e2cb4de92af005b76917dfce1d462405ba"
+    },
+    {
+      "path": "agent-svc/agent/experimental/claim_verification_experiment.py",
+      "sha256": "f64813d8625836533c026fdafda0f64da50dca3141778e570aa519c339e6a2c1"
+    },
+    {
+      "path": "agent-svc/agent/experimental/client_protocol.py",
+      "sha256": "5c72ee81da0f0e978632fb37f98a767ae9b7420448211343957f658d5c9148ba"
+    },
+    {
+      "path": "agent-svc/agent/experimental/consolidated_bundle.py",
+      "sha256": "8668369f71bf697fb5a4e53ba26d73b76e7f4aa778ad4ffc4d07a9952a902f9d"
+    },
+    {
+      "path": "agent-svc/agent/experimental/consolidated_example.py",
+      "sha256": "3e09f3de60f02c82727dfce2c6b5d1be92aceb4df019ba0a756b6d898fb4444c"
+    },
+    {
+      "path": "agent-svc/agent/experimental/consolidated_journey.py",
+      "sha256": "5e509278e9fa0c6a47cc9be6ed947a75eb849b507b0ed71ced4daea70feabef7"
+    },
+    {
+      "path": "agent-svc/agent/experimental/consolidated_storage_material.py",
+      "sha256": "77625466b1e12ddd6368274cc5401d1a3e8830536d2b4b213f3a41f65c37b969"
+    },
+    {
+      "path": "agent-svc/agent/experimental/consolidated_store.py",
+      "sha256": "82aa899d52da209c31e9190a66eb77b5de81de6c9774df3ec00d55f2af83b1ce"
+    },
+    {
+      "path": "agent-svc/agent/experimental/context_sources.py",
+      "sha256": "198c1e95abc32f25f0fcba9c3a5495695942e25be567be84201afafc2a5367fd"
+    },
+    {
+      "path": "agent-svc/agent/experimental/controller.py",
+      "sha256": "cf63c64ba8262bc4f756f5a2a87561e65ba6fcc250fdb195fc2a67eb06b9e68f"
+    },
+    {
+      "path": "agent-svc/agent/experimental/durable_plan.py",
+      "sha256": "478718098ea25765686210ff2aee2eb9e03725218bb78215d002062f5c7fd817"
+    },
+    {
+      "path": "agent-svc/agent/experimental/durable_research.py",
+      "sha256": "c789956740e4d9d5669d00e2e5085023dcd5820663b7a966a7d81d069a7c814e"
+    },
+    {
+      "path": "agent-svc/agent/experimental/evidence_obligation_experiment.py",
+      "sha256": "9d4d2c02ee774a6cb2a54dc8e41a96836891e14cbb02dd93964c7ed394639b53"
+    },
+    {
+      "path": "agent-svc/agent/experimental/execution.py",
+      "sha256": "0ce99d6da170ac2c4e117fbd1a7532f7c08f086f72afa9a6b74028aa69e346be"
+    },
+    {
+      "path": "agent-svc/agent/experimental/expiry_store.py",
+      "sha256": "94b079f9662885d8dd7d7a7a79333db657aad7638e51135dfe7052f3e2a7761d"
+    },
+    {
+      "path": "agent-svc/agent/experimental/fork_runtime.py",
+      "sha256": "0991261b53424e7257c7ddf6e7600ecb11230669afb6ba63a72ba8edbac85f71"
+    },
+    {
+      "path": "agent-svc/agent/experimental/guidance_runtime.py",
+      "sha256": "a9ac90e1cd55022cb614dccee3259f5dc6710cc341c84c008e7a6d0f809cd30f"
+    },
+    {
+      "path": "agent-svc/agent/experimental/import_store.py",
+      "sha256": "6d89bd11e4700a5a3d6552212045c35918d5fae903d13a8c928d30f3ee886891"
+    },
+    {
+      "path": "agent-svc/agent/experimental/knowledge.py",
+      "sha256": "a95b1e9a20d78e11457fb9e4482ddea5dd9e4fab77eec06638e22a06b288beae"
+    },
+    {
+      "path": "agent-svc/agent/experimental/knowledge_checks.py",
+      "sha256": "db61d7267e91c90060ea6f3e07aaa6a01178122121b8e784ab3dc7e8485bcf9f"
+    },
+    {
+      "path": "agent-svc/agent/experimental/knowledge_context.py",
+      "sha256": "e2c75fb6c0439a3305d7525c56caa7e99411b745ebf49e33d0e6cfe61a0672e4"
+    },
+    {
+      "path": "agent-svc/agent/experimental/knowledge_execution.py",
+      "sha256": "37d10d8c4768131ca13d473d22be6735f433c9c0272ba7d7d436af84f3de8e50"
+    },
+    {
+      "path": "agent-svc/agent/experimental/lean_construction.py",
+      "sha256": "99a2baad263b2be7ce460f1a075c53ff4544ef8b42f15521418df1b0095dc881"
+    },
+    {
+      "path": "agent-svc/agent/experimental/lean_journey.py",
+      "sha256": "7ed9f7c3f2d3fcdcc4c11fa728d4c2757c976410048814e6bd9134aae283c64e"
+    },
+    {
+      "path": "agent-svc/agent/experimental/lean_publication.py",
+      "sha256": "7d7bf9b1f6e590a702099036395534b796328574546f46c22034d823421b56c6"
+    },
+    {
+      "path": "agent-svc/agent/experimental/lean_review.py",
+      "sha256": "7796e4fbe8db21e3bd95b1c8c5a205c8c23ceb9466f8aadb205d891518fd4ef6"
+    },
+    {
+      "path": "agent-svc/agent/experimental/live_policy.py",
+      "sha256": "4fc08b8637e3cc0b9289cc2371cc12e9cd7775ee15858c0ee1ea64964b124cec"
+    },
+    {
+      "path": "agent-svc/agent/experimental/live_runner.py",
+      "sha256": "187568727ca7118afe02710d8670292a466832c4963742eccbc17f7fa9db816c"
+    },
+    {
+      "path": "agent-svc/agent/experimental/manifest_outputs.py",
+      "sha256": "827d44cfb6ec17bb77170415f31fade8b3a83458b827399ce6ac3f82c4af7153"
+    },
+    {
+      "path": "agent-svc/agent/experimental/mission_experiment.py",
+      "sha256": "210b2fb7b7293d2a80e64a0f5a787ebe09e02b984f7e427b8427e21d1509ec56"
+    },
+    {
+      "path": "agent-svc/agent/experimental/model_failure.py",
+      "sha256": "654281e217c6ecd993a2c532a110f045f120938663c802a2664a9acbbfbfdc14"
+    },
+    {
+      "path": "agent-svc/agent/experimental/model_review.py",
+      "sha256": "b8c1f91b5015d5affe322916b72cd0f76d3d85af8af5fd9b487c0b66411320c5"
+    },
+    {
+      "path": "agent-svc/agent/experimental/model_transport.py",
+      "sha256": "68bc346a8b9ac6c8682436deff21e5f261ba857adfc1ba5334e113510ae9ff34"
+    },
+    {
+      "path": "agent-svc/agent/experimental/passage_preparation.py",
+      "sha256": "572ecca83cfd7d76d0c3280ee7f97d1fc71e61ae9fc20d12fa296b3a228733b3"
+    },
+    {
+      "path": "agent-svc/agent/experimental/pipeline.py",
+      "sha256": "d7413fcf8cbf7041a2a28fb535d7482e51c3da0e3421f1e068ccb1c87be403e8"
+    },
+    {
+      "path": "agent-svc/agent/experimental/publication.py",
+      "sha256": "28a61d979671c0ac695b3311d177075904edd69c3afe004ad6d0ebb8d2a8c73f"
+    },
+    {
+      "path": "agent-svc/agent/experimental/publication_gate.py",
+      "sha256": "1283fd18460e2a095de2b283feb4c9275828fe91bf617e4ac9253d96ec3165bc"
+    },
+    {
+      "path": "agent-svc/agent/experimental/publication_store.py",
+      "sha256": "b1c289261d1dc35218cc5268109e89e6a16db6654157437e6fda4aa92e6b769b"
+    },
+    {
+      "path": "agent-svc/agent/experimental/query_construction.py",
+      "sha256": "703102cf00e6979e7cc8d7412e823aeaf78d3796e1e8e1557611c03d723f9d1f"
+    },
+    {
+      "path": "agent-svc/agent/experimental/query_runner.py",
+      "sha256": "141319f766a2334001b4f34da7c1fefd5944e5663e90171f62590bfa92c12306"
+    },
+    {
+      "path": "agent-svc/agent/experimental/real_journey.py",
+      "sha256": "000ffd8cc718d619c7a153274488f0b7ae10c90caa0f916bc8b6590aeef23703"
+    },
+    {
+      "path": "agent-svc/agent/experimental/recovery_contract.py",
+      "sha256": "529b3b2246014ca09b2e61c5b22500238190392b75d62a0719ed94e0c51f4803"
+    },
+    {
+      "path": "agent-svc/agent/experimental/render_execution.py",
+      "sha256": "12ceda41ce03a054c0c53d9a32801c82c7924ce785bb90d82efc08a09c762a15"
+    },
+    {
+      "path": "agent-svc/agent/experimental/render_manifest.py",
+      "sha256": "3f36e177ef692c08c09c330af56abaca690936bcbf0c63757ee78dcba3177e69"
+    },
+    {
+      "path": "agent-svc/agent/experimental/research_bundle.py",
+      "sha256": "b9e88a894cd3a78ffa23c68f2d025a87166af27ac745e9a7b962bea6d27858b2"
+    },
+    {
+      "path": "agent-svc/agent/experimental/research_import_store.py",
+      "sha256": "4d9c35dcf20d511b34859bdfcf797e6fdca93daa031f542ddb156a796fdcc363"
+    },
+    {
+      "path": "agent-svc/agent/experimental/research_mission.py",
+      "sha256": "82ca9b7469d2aad73a3a4a39d026e39a664799fa0f7e1dfe0b348b0ae975b770"
+    },
+    {
+      "path": "agent-svc/agent/experimental/research_notifications.py",
+      "sha256": "ca2fd932f05bd4d0e8b05c8b7a426c608476b148ddb32aa0bacd504dd08ea0b1"
+    },
+    {
+      "path": "agent-svc/agent/experimental/research_publication.py",
+      "sha256": "430ce70554c35e94e32408d5c2c5aaf0cf9a06b5f132e986ac7dfc3aca2c02c9"
+    },
+    {
+      "path": "agent-svc/agent/experimental/research_publication_store.py",
+      "sha256": "2e56ff2e9bd7c0f8dfc3f0af64a8e854c92d2e40e7bfc21d7dc46607908fd54b"
+    },
+    {
+      "path": "agent-svc/agent/experimental/research_revision.py",
+      "sha256": "63d3a665530d15919c8697a21a3f216056b9a1e1f445d1d8b762b0446001355d"
+    },
+    {
+      "path": "agent-svc/agent/experimental/research_store.py",
+      "sha256": "3843b4bfc317f5a914d39b9b33ae4afabe716be9bbcc6ea5365116bc514b4c38"
+    },
+    {
+      "path": "agent-svc/agent/experimental/research_thread.py",
+      "sha256": "19a1d736cf757cce4bef266dacb233a6e218ef9d084331210d8f53bb6fe7b70f"
+    },
+    {
+      "path": "agent-svc/agent/experimental/revision_store.py",
+      "sha256": "dbb04aad9c1938935b07513f69370203cb6fac47028bfcc14b336e0ce1be62de"
+    },
+    {
+      "path": "agent-svc/agent/experimental/revisions.py",
+      "sha256": "6e70e2496e399944bebb23939060a005359b728fd677134cfe0e64e0cd64eb42"
+    },
+    {
+      "path": "agent-svc/agent/experimental/runtime_comparison.py",
+      "sha256": "43f19e8c9f7722778e4b82da11183364e65f98bfc5cc2fa830df7aed732165c0"
+    },
+    {
+      "path": "agent-svc/agent/experimental/slopsearx_provenance.py",
+      "sha256": "228003afbc89758259ae56d0b3f13dbaa38067bccd45990a46c7e953ebfd6976"
+    },
+    {
+      "path": "agent-svc/agent/experimental/slopsearx_provenance_store.py",
+      "sha256": "c0f2ba387c0ff7429557a62d41bf97c0055f5fd82733d48b9ba23de561e61111"
+    },
+    {
+      "path": "agent-svc/agent/experimental/source_store.py",
+      "sha256": "645f7f1374d859884d86c6347d47ea9f67905a506a16af6c4254ea5813e65d08"
+    },
+    {
+      "path": "agent-svc/agent/experimental/specialist_runtime.py",
+      "sha256": "08c36a985b7b252e11391dc9c008834ad9c8acba3d5537a792d6a6a7a679f186"
+    },
+    {
+      "path": "agent-svc/agent/experimental/specialist_value_experiment.py",
+      "sha256": "c76c6262873b2dfe12f50bf96a279f72598af4545139b16efa9430814584ea6e"
+    },
+    {
+      "path": "agent-svc/agent/experimental/storage_admission.py",
+      "sha256": "e2370b49b5fd23583bfccfd7b71e89798b3d7f935b765170bf14e69d4b8105ab"
+    },
+    {
+      "path": "agent-svc/agent/experimental/typesafe_shadow.py",
+      "sha256": "2ed45ec2fb32d72df0a853c83a15edf69e9521a2f3cc1c6c1028f7e4c99fc735"
+    },
+    {
+      "path": "agent-svc/agent/experimental/verification.py",
+      "sha256": "ec8964700f3ba88ad74108ca3dcac7899bef50545a02c1ba7581b2709b0012de"
+    },
+    {
+      "path": "agent-svc/agent/followup.py",
+      "sha256": "f18ed40fd874dbecae14ded82e1e9b75f63125bb66a7a0467b155ebc5741a967"
+    },
+    {
+      "path": "agent-svc/agent/health.py",
+      "sha256": "da05e31c57e3ecb35dc8309b59c5df1367a5503154eac26458976012f9ebd9cb"
+    },
+    {
+      "path": "agent-svc/agent/job_execution.py",
+      "sha256": "e8a9827b64290b8d823359397191df4c74cbff10d82b664dfdcc9b3025e92e9f"
+    },
+    {
+      "path": "agent-svc/agent/link_extractor.py",
+      "sha256": "1a187e653c580c48f2f1d3fd9903ca1a68fdf216f2ca765d63f86fd0572d9e95"
+    },
+    {
+      "path": "agent-svc/agent/llm.py",
+      "sha256": "1913677755d7418b8c0c0871b124a7457750cf2158faf8471e19527f1ed353cc"
+    },
+    {
+      "path": "agent-svc/agent/llmstxt.py",
+      "sha256": "4f39a29d64c534e250c19fd6639a1068f1b47e200fafd92cb5977b7fc33def0c"
+    },
+    {
+      "path": "agent-svc/agent/metrics.py",
+      "sha256": "4715a9e4bc5248c8cb5165842345e0145a8ea645ad6cd43b7420541753f97900"
+    },
+    {
+      "path": "agent-svc/agent/models.py",
+      "sha256": "4528c81227c28a481b245341868443c8da2b567bd5fdc9fc9b5a311551bc4716"
+    },
+    {
+      "path": "agent-svc/agent/monitor.py",
+      "sha256": "5cf675b72db8a4e8d900dfbd18c1149aab2832eac76607b1bd4941a3781424d6"
+    },
+    {
+      "path": "agent-svc/agent/nl_params.py",
+      "sha256": "05df1a21a60551512e3f4e8e289f6f54e25b3cbe291784abb095437cd9090b99"
+    },
+    {
+      "path": "agent-svc/agent/planner.py",
+      "sha256": "d75f04a48d3a57dc0df6000eefa34943a61b271489ed4f6b4a4ccb2d5ef1d22d"
+    },
+    {
+      "path": "agent-svc/agent/rate_limiter.py",
+      "sha256": "7d01548b4c7e60d29b5964b876118407e082ed312500ce364a469c51743b2e86"
+    },
+    {
+      "path": "agent-svc/agent/research/__init__.py",
+      "sha256": "ed2488b6ff6c7b96cf415731a934344e4faef255e38dee2f757b83fbfc931e57"
+    },
+    {
+      "path": "agent-svc/agent/research/acquisition.py",
+      "sha256": "62bfdb03dee1140c55a5fce61f9dcfaf5beb0338464cd402682472f94e9da70c"
+    },
+    {
+      "path": "agent-svc/agent/research/citations.py",
+      "sha256": "200a24a7fb4be44559c7c983dccf83cdf0a4a113bbe73f0a4054e0894f040527"
+    },
+    {
+      "path": "agent-svc/agent/research/contents.py",
+      "sha256": "869e8129841c1cfcacb2f2ea04dcb477216e15117b71c3f61a298e343a57705e"
+    },
+    {
+      "path": "agent-svc/agent/research/discovery.py",
+      "sha256": "29374e7e2e11339fde159aaf4ae66468190640c232a8ccc676c621d4249cf54c"
+    },
+    {
+      "path": "agent-svc/agent/research/enrich.py",
+      "sha256": "9907cdbd047a1474a7f68a1b7c589453710289ba165126a914d70f6c8d8c883b"
+    },
+    {
+      "path": "agent-svc/agent/research/events.py",
+      "sha256": "680c6c710a1600c4986e3d13854a579938f0eb5b31ea209512335c7167d77f40"
+    },
+    {
+      "path": "agent-svc/agent/research/evidence.py",
+      "sha256": "c7b2e11f76341bd21f1d902982c722d294237774409398c1e6473708e9e89e5e"
+    },
+    {
+      "path": "agent-svc/agent/research/gaps.py",
+      "sha256": "d8b7705d029c3e4d0fbbe984d1d48be7d97d1b36700c3db91db1bd9495e6b111"
+    },
+    {
+      "path": "agent-svc/agent/research/hybrid.py",
+      "sha256": "fb3156b4f5608278f54c5e95d990d24db69ffadb24f6d85370745eded310278a"
+    },
+    {
+      "path": "agent-svc/agent/research/jev_filter.py",
+      "sha256": "dc96e5797072bfe802241876c5ab358c309ddb7a8595d104cb77c90a392caecc"
+    },
+    {
+      "path": "agent-svc/agent/research/loop.py",
+      "sha256": "8ab09f6ef86d4d5e7395d079f18eb89cd20ee8709c6bd01f7113b24e919acdbb"
+    },
+    {
+      "path": "agent-svc/agent/research/memory.py",
+      "sha256": "a04c947d2b5f6b35f8f8b444d7300143841351bfa6967b3f4960e0815b0dccc4"
+    },
+    {
+      "path": "agent-svc/agent/research/plan.py",
+      "sha256": "047e4ac9e3d88b8ffa8f041b464302dfc69d4be7c60a1ad0c4bfdf74a2ad91f3"
+    },
+    {
+      "path": "agent-svc/agent/research/prompts.py",
+      "sha256": "4d06724ecfb08ecf53c1d1acd6267661331ba10ddf6392946dea24485da595da"
+    },
+    {
+      "path": "agent-svc/agent/research/rerank.py",
+      "sha256": "ffabad0f918cb73665208eb4f64d05cb948f8889a20e7a598ebb1c4dec9e2d96"
+    },
+    {
+      "path": "agent-svc/agent/research/scoring.py",
+      "sha256": "23265c14218de1959ef00aca675ea5b759b66be2dcf6493eaafc640b15f556c9"
+    },
+    {
+      "path": "agent-svc/agent/research/search.py",
+      "sha256": "2012e42a8ac70a995efbfbbb4494130553bb78236cfec82ac574d27db431abe3"
+    },
+    {
+      "path": "agent-svc/agent/research/similar.py",
+      "sha256": "e0da0e1cb10e9c86f5f87f3b94a6aa64e7758c3c4330860e80535a261cbe5ea7"
+    },
+    {
+      "path": "agent-svc/agent/research/sources.py",
+      "sha256": "652805b24367aff9e3e0046273533109db8b4ce9b6d3bacd52e3fe760f8251e1"
+    },
+    {
+      "path": "agent-svc/agent/research/state.py",
+      "sha256": "49cae0b7b593a342da613dee7aa0c67e3ab2fb0f4f4907e90f8b816329762438"
+    },
+    {
+      "path": "agent-svc/agent/research/streaming.py",
+      "sha256": "d7aeed4d5f351d5e2607186bd9542155fde7743c4b3bb0a40c6751ce5caf3de9"
+    },
+    {
+      "path": "agent-svc/agent/research/utils.py",
+      "sha256": "6608c7e9412bcdbd17229debc97ca81001607adabba4e840791d28b987f98832"
+    },
+    {
+      "path": "agent-svc/agent/research_memory.py",
+      "sha256": "ed02b879e2746f8ced78553a29e48a2796706a271baeff2464fd35350f1e3cf4"
+    },
+    {
+      "path": "agent-svc/agent/research_memory_migration.py",
+      "sha256": "91bca373bb78041696918204f8aac76ce3cc1909896ca9d1f3ab652b5eeb4df3"
+    },
+    {
+      "path": "agent-svc/agent/research_memory_pgvector.py",
+      "sha256": "1d5681352c00c8ed8665ecb11a7adc1e3f61c53e64424e19365ba3f7161ebac4"
+    },
+    {
+      "path": "agent-svc/agent/research_sources.py",
+      "sha256": "730b65fbfc1020ca40ab05c46f2c2e707b49cc21080918c1eed29a621c85eeca"
+    },
+    {
+      "path": "agent-svc/agent/retry.py",
+      "sha256": "8c01568c19e29773f81ed794206443e67ac02078813421d0c4cf79132707884c"
+    },
+    {
+      "path": "agent-svc/agent/routes/__init__.py",
+      "sha256": "0c31bcce70e43de3a7b17ce8d3ee01bfe47b8606128e61d5c245bee4f5f05aa2"
+    },
+    {
+      "path": "agent-svc/agent/routes/_helpers.py",
+      "sha256": "8d4e0e02d9fcaab4359836eb18e2b37f7aa50bf39044218a35583e3f8e60c840"
+    },
+    {
+      "path": "agent-svc/agent/routes/activity.py",
+      "sha256": "43d92f2affedfbd61264734950e7ba1679a869b00c7023b0fc50ded6ecc760fe"
+    },
+    {
+      "path": "agent-svc/agent/routes/agent.py",
+      "sha256": "4a3fdf1a3ebe875beac47452e69114355a1987977cf2de68fefeb55bc138ff5b"
+    },
+    {
+      "path": "agent-svc/agent/routes/browser.py",
+      "sha256": "6e85d18b79c09e65f783c394c9692ec6488e0f99d814d9355c99d31e878988d0"
+    },
+    {
+      "path": "agent-svc/agent/routes/citations.py",
+      "sha256": "9c5391aeb70918aeca14875996985d13ddbe524a2f3afd27b81d450a063bca67"
+    },
+    {
+      "path": "agent-svc/agent/routes/crawl.py",
+      "sha256": "299a300b1eebc803cfb519224829da6cb8920b3337984cc26b0d4dff04f26c8b"
+    },
+    {
+      "path": "agent-svc/agent/routes/documents.py",
+      "sha256": "f84b78d22205c5139ef6701b2d5b684160f3834c23079608d2bd3874d4a032da"
+    },
+    {
+      "path": "agent-svc/agent/routes/enrich.py",
+      "sha256": "8f4e169e7ce393d518cc740cc1bc1f839f0e51a86f9b2ba1b2da3bec20a9f935"
+    },
+    {
+      "path": "agent-svc/agent/routes/experimental_research.py",
+      "sha256": "47e68661dc5505bd69d375c5dba1c02730049e5133652ea569a6cf35520c9a7a"
+    },
+    {
+      "path": "agent-svc/agent/routes/extract.py",
+      "sha256": "b4b49de993dae2c7fbd39219401e32e8995eb693d8fc7283f535a9298bf34861"
+    },
+    {
+      "path": "agent-svc/agent/routes/find_similar.py",
+      "sha256": "8b47afce0dcb0af0473fb9363d47fd5fd6ae38ac9a0f3bea082031b248450633"
+    },
+    {
+      "path": "agent-svc/agent/routes/followup.py",
+      "sha256": "4ee0e81a0f9645926731f889224dabd9cfbfae78dc462b9e22f20ff4c0276887"
+    },
+    {
+      "path": "agent-svc/agent/routes/llmstxt.py",
+      "sha256": "e6f364674d569ec3478f0887e8c817697aa1ca1d110dd47a85ae9d24d84c54ae"
+    },
+    {
+      "path": "agent-svc/agent/routes/map.py",
+      "sha256": "ecc7078e142a7bb9b25b09f47571803245eca7bade8468994933f81cc0d8e7bd"
+    },
+    {
+      "path": "agent-svc/agent/routes/monitor.py",
+      "sha256": "6a3e247f116a8dc9b2e8b9e1cb50691d8d840b339006f0316924f9f2aef48733"
+    },
+    {
+      "path": "agent-svc/agent/routes/parse.py",
+      "sha256": "78245c767e6918eebdff0f2fd836729876708c2b3994a9191dda5d0ca828124d"
+    },
+    {
+      "path": "agent-svc/agent/routes/plan.py",
+      "sha256": "8c51e62fdca751f8ff1bfefcaa8a46343cbf9575c30284750e0494197bbafafd"
+    },
+    {
+      "path": "agent-svc/agent/routes/research_memory.py",
+      "sha256": "096083e4503d6f3a6356d3cf5be314b9865004970fd09d9cbad31017e61baf07"
+    },
+    {
+      "path": "agent-svc/agent/routes/scrape.py",
+      "sha256": "ce4cd116bf15bf4191fb71aa3dff61b1cb57b47ddccebb2c4e91e60bb564140e"
+    },
+    {
+      "path": "agent-svc/agent/routes/search.py",
+      "sha256": "bfbe0b4cf6d755bbfb453f1dfda0cbd4afdd6cc62a5a9ce50848385626a3e28c"
+    },
+    {
+      "path": "agent-svc/agent/routes/session.py",
+      "sha256": "3d008b9bfa2af1e69f8c1707d1cb3cc5014f8ae8dec1923ee205eab6e5660603"
+    },
+    {
+      "path": "agent-svc/agent/routes/webhook.py",
+      "sha256": "7fc6ae459ac547c40e4ad2953fc482ca30e1a2429ed0e1eca564730e9464ccb4"
+    },
+    {
+      "path": "agent-svc/agent/scraper_client.py",
+      "sha256": "34b0939c50f7641f4de48d5bedc71d6a2ba25a7b28dc04c8b1c0fe14c23ec637"
+    },
+    {
+      "path": "agent-svc/agent/search_metadata.py",
+      "sha256": "35ee4e71e8d85e390dd3129a59d1cbaadb5c18786ce1a3c69c5b46edf284ad61"
+    },
+    {
+      "path": "agent-svc/agent/searxng_client.py",
+      "sha256": "60dbe01368b48cb32cfdfd0989a372475f12b8206a0933b1416c75c6f42a5496"
+    },
+    {
+      "path": "agent-svc/agent/semantic_client.py",
+      "sha256": "72378e5d170c02862c0d160e2fac231ef4363c190489ac98b9aeaf3712ea82c3"
+    },
+    {
+      "path": "agent-svc/agent/session.py",
+      "sha256": "22c3a412779d49950fa34c4fb4f696bf66acb7c1a9a2bc008aaa0ca9f324dea9"
+    },
+    {
+      "path": "agent-svc/agent/session_documents.py",
+      "sha256": "0f2136dcbe5142af78d1e373aeb7435f7aa506c4ca2b1de3bf522d9f7cc6a8e1"
+    },
+    {
+      "path": "agent-svc/agent/session_scope.py",
+      "sha256": "fe173787e1dd36bce3a987bdb586cb4adc430a3516aefb8b4d5843860db0d4df"
+    },
+    {
+      "path": "agent-svc/agent/session_store.py",
+      "sha256": "4ae9ba1c0c91a75359f4a6265378da27c9753bf82a47cb5b3729da14cb4bb1c9"
+    },
+    {
+      "path": "agent-svc/agent/settings.py",
+      "sha256": "e2fb46c8883046e04cdb396c7798ae995521d50e7d49d735f4cfa494f6563af9"
+    },
+    {
+      "path": "agent-svc/agent/sitemap_parser.py",
+      "sha256": "b40e65131b043c3bdac307f3a1877575659ceaeac0c25628c92f9cb812fa0637"
+    },
+    {
+      "path": "agent-svc/agent/store.py",
+      "sha256": "9c589efabc64dd9d7c2327112efe9cee2ff8f5def21775a18eb4d421720c04e6"
+    },
+    {
+      "path": "agent-svc/agent/tasks.py",
+      "sha256": "181f3ed229c6f7b61f110173bca15f650dc68ad3f9b2117cd3f0383188cd77be"
+    },
+    {
+      "path": "agent-svc/agent/tests/test_claim_verification_experiment.py",
+      "sha256": "b1ca7da9b996866aa375188333b6ff463a8d254403a29423342de599851fb3ab"
+    },
+    {
+      "path": "agent-svc/agent/tests/test_research_thread.py",
+      "sha256": "6e148ceda0b60777ede63b48376a95e2a2f63bb61449d78ada325f3c0eb0b40d"
+    },
+    {
+      "path": "agent-svc/agent/tests/test_stack.py",
+      "sha256": "90e59cfc887898c2595005b727effe65582afd3eb6327dbb8270497de6ad2ab4"
+    },
+    {
+      "path": "agent-svc/agent/webhook.py",
+      "sha256": "2b7abc922471c5b99b121214d3337d10942a86997af855ef09479c55c1b793b3"
+    },
+    {
+      "path": "agent-svc/agent/worker.py",
+      "sha256": "133fbd6718aaf5531bd0ba2f40c3f4b4e5e707028dfd903cdd13be6b51e8f051"
+    },
+    {
+      "path": "agent-svc/agent/workload_metrics.py",
+      "sha256": "73a939590e972920bab5bca5d0394520900c6ac109e9441c61a76cde625ad6f1"
+    },
+    {
+      "path": "agent-svc/pyproject.toml",
+      "sha256": "d0faa9195b57e4c74f7756c1d86c6faac3d8aa60002cff4fd2383672e9e47ce3"
+    },
+    {
+      "path": "common/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "common/admission.py",
+      "sha256": "a28c12e666d3f4df4fd2c61c4813a6ec26e723394dab68cebdf4d726332d6b1a"
+    },
+    {
+      "path": "common/analytics.py",
+      "sha256": "0d72b277139d9b47fecc4c0f395726f267b6d5232bb0113a0983b51d467f52a3"
+    },
+    {
+      "path": "common/capture_destination.py",
+      "sha256": "9380735c1b83967bd07ae0ac80d3cd8f9f6692c12ee737fa3f603931523f0512"
+    },
+    {
+      "path": "common/circuit_breaker.py",
+      "sha256": "2de26dc0891dfb86cb0c5ac690b49ca249b13b17fdce85388c5546ccc5a35571"
+    },
+    {
+      "path": "common/features.py",
+      "sha256": "10a5b2528f462895cd26c8a23035c282591e229fddc8f999d42a854228bba250"
+    },
+    {
+      "path": "common/logging.py",
+      "sha256": "19447055fd354e4a9690b7902fac01a26c5b5487814161d68f6306bbd3cada54"
+    },
+    {
+      "path": "common/metrics.py",
+      "sha256": "6cc646396f0543a170b188f11647b548983d9949713d55450f60c7fd4afb4cc6"
+    },
+    {
+      "path": "common/middleware.py",
+      "sha256": "7c184a5ccbad36c915c30688958b45f24e78245d66e019a65ad1c0d839b1edce"
+    },
+    {
+      "path": "common/private_uds.py",
+      "sha256": "602bc0765abc77c9c7512ea449048a7b66b69b8664111775a73976e53be82a35"
+    },
+    {
+      "path": "common/retry.py",
+      "sha256": "5af27071df3b3bad84791db3efe52c5d235be0cb5852eddb2ed394c85e125259"
+    },
+    {
+      "path": "common/stage_metrics.py",
+      "sha256": "ff89599d65eb81b8bab02bd03d7de9ec8c1d5a23111da37845cc5bee202cbfe0"
+    },
+    {
+      "path": "common/url.py",
+      "sha256": "e6fd70a0fe16a4991bb164ce8fabf5caf8cd0be3507b367c7adedc9835d274c7"
+    },
+    {
+      "path": "pyproject.toml",
+      "sha256": "ad6e1d6737014623fa20ba8a468f1194c30f7c44cbde91a27e6b36dda7fd7064"
+    },
+    {
+      "path": "scripts/run_w12_live_screen.py",
+      "sha256": "e12624d73d6de5987f1419ff1db9da6514a33d2a3c8f05558f3e3acc272967ac"
+    },
+    {
+      "path": "scripts/w12_calibration_worker.py",
+      "sha256": "751e1535c2bd801ee22c3729f1c16d465a0c0876eecf2b6775dde2429992df9f"
+    },
+    {
+      "path": "uv.lock",
+      "sha256": "c96dcb1730fb91a01c5cf4df4e132d450940ca68aeab13c5eb4bc922ab2846a2"
+    }
+  ]
 }

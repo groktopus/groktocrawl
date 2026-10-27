@@ -1,6 +1,11 @@
 {
   "agent": {
     "role": "agent",
+    "route_sha256": {
+      "completion": "a4d18430bb5506c572dc66d312070d15fde918d387bdd45e585a28d49f4e8699",
+      "search": "cbbe09abca469827e32a21e7850bab73546cc8e96b7b7ae48ad63a5d20e98c89",
+      "proxy_environment": "cc0108beafed312fda56012036e615a4b72c99a777c01a021fc424431ea7eef5"
+    },
     "model": "free",
     "jev_enabled": false,
     "thinking": false,
@@ -30,6 +35,7 @@
     "role": "source",
     "protected_source": false,
     "compatibility_proxy_configured": false,
+    "environment_proxy_configured": false,
     "politeness_enabled": false,
     "distributed_politeness": false,
     "source_sha256": {

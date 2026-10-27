@@ -1,10 +1,11 @@
 # Runner preparation checkpoint
 
-Candidate commit: `0a0946c`. Runtime bundle SHA-256:
-`145e1eccfb9a2f699b8bc080eb14c173bf34c112dfa9b2a29af83b8af4c3f69d`.
+Candidate commit: `e75a884`. Reviewed runtime bundle SHA-256:
+`cd8bec802a5d3e52a250d3a20b9f6670e6a7a17b3ba3e58477236390a1797c82`.
+The manifest uses path/sha256 records; reconstruct admission runtime_files by path.
 The runner is implemented, not executed live. No parent questions/labels received.
 
-Completed: 66 focused runner/worker/budget/admission tests passed, Ruff passed,
+Completed: 69 focused runner/worker/budget/admission tests passed, Ruff passed,
 and mypy passed for four runtime modules. Installed search offline probe confirms
 one explicit Brave API request per search with no hidden specialist/suggestion
 calls in the inspected frozen configuration. The model proxy offline probe confirms
@@ -52,10 +53,37 @@ slots remain explicit. No grader or reference-answer implementation is included.
 
 Independent local reviewer found and reproduced two P2s in the earlier adapter:
 URL-alias exclusion bypass and cleanup outside the deadline. Both now have fixes
-and regression tests. Second scoped review of this full candidate is IN PROGRESS;
-this checkpoint is not independent approval. No live dispatch is authorized.
+and regression tests. Final independent review confirms both further P2s (endpoint/proxy binding and robots scheme/port) resolved, with no additional P1/P2. Reviewed bundle matches above. No live dispatch is authorized.
 
 Published head `5d8bdd3` runtime run `40525388378` reached terminal SUCCESS,
 including Integration Tests, research-runtime Integration Tests and PostgreSQL
 Storage Probes. No job was manually canceled/preempted or blindly rerun. CI for
 this new candidate remains separate and must not be inferred from that green run.
+
+
+## Scoped repair investigation and remaining approval
+
+The installed provider retries 422 repair if global drop_params is true OR request
+drop_params is true. Request false cannot override global true. The full installed
+proxy route probe with explicit request false still dispatched caps [8, null]. A
+detached-process-only global false probe dispatched one capped request for every
+synthetic status, including 422. All HTTP was mocked with sockets denied: zero real
+provider calls, no server configuration/route/credential changes. Existing request
+retry controls cannot intercept this inner repair; post-response checks are too late.
+No supported request-local repair switch has been established for this version.
+
+Minimal additional authorization: an isolated temporary instance of the existing
+gateway image/configuration with only drop_params=false and a runner-only endpoint
+binding to it. Preserve the model, authentication and access controls; reuse existing
+server-side credential mounts without exposing secret values, create no public
+listener, and remove the instance after the bounded screen. This instance and scoped
+route binding require explicit approval and have NOT been created. Production settings
+remain unchanged. Once approved, freeze/review its exact configuration and repeat the
+offline admission probes before receiving holdout questions. No budget increase or
+admission waiver is proposed. Earlier unresolved operations remain excluded.
+
+Head 4891c5a Code Quality found an unreachable test-generator yield and two false
+positive secret findings on public code hashes. The generator now yields before
+raising; the manifest stores path/sha256 records. Security checks and protected
+fixtures are unchanged. Updated 69 focused tests, Ruff, and mypy on four runner
+modules pass. New-head CI remains separately required.
