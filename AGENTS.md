@@ -207,11 +207,14 @@ and no blocking (P1/P2) findings remain — do not iterate until the bot reports
 The workflow uses Nous Portal's `openai/gpt-6-luna` through `NOUS_API_KEY`. The Droid action's debug
 artifact upload is disabled because its `~/.factory` files can contain resolved provider credentials.
 
-**Merging to `main`:** gated by the `main review policy` ruleset (1 approving review + resolved review
-threads). Because the AI reviewer does not approve and human approval is often unavailable to automated
-agents, the maintainer (`magnus919`) is a configured bypass actor. Merge with:
-`gh pr merge <PR> --merge --delete-branch --admin`
-only after CI is green and review findings are addressed.
+**Merging to `main`:** the sole-maintainer `main review policy` requires a pull request
+and resolved review threads, with zero mandatory approving reviews and no separate
+last-push or unattributed-change approval requirement. GitHub cannot record an
+author's approval of their own PR; retain substantive self-review evidence instead.
+The separate `main required checks` ruleset still requires strict `Code Quality Gate`
+and `Runtime Gate` checks and prohibits force pushes and branch deletion. Merge
+normally only after applicable checks pass and review findings are addressed;
+do not treat this policy as permission to bypass checks or merge without user authority.
 
 ## Making Changes
 
