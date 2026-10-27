@@ -219,7 +219,14 @@ def main() -> int:
         if changed
         else "Docker Hub mirror already configured."
     )
-    print(json.dumps({"docker_runtime": docker_runtime_info()}, sort_keys=True))
+    # Configuration/restart above remains mandatory. These bounded labels are
+    # diagnostic only; a slow daemon must reach the actual build/test checks.
+    try:
+        runtime = docker_runtime_info()
+    except (subprocess.SubprocessError, OSError, ValueError, RuntimeError) as exc:
+        # Never emit subprocess output or exception text: either can hold secrets.
+        runtime = {"status": "unavailable", "error_type": type(exc).__name__}
+    print(json.dumps({"docker_runtime": runtime}, sort_keys=True))
     return 0
 
 

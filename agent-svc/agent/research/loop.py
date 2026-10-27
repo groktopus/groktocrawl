@@ -466,15 +466,36 @@ async def _run_research_events(
             if pass_count == 1 and max_passes > 1:
                 # Count novel successful acquisitions; reuse remains free.
                 budget_spent = max_credits is not None and credits_used >= max_credits
-                gap_topics = (
-                    []
-                    if budget_spent
-                    else await _detect_gaps(
+                if budget_spent:
+                    coverage["gap_check"] = {"status": "budget_exhausted"}
+                    break
+                try:
+                    gap_topics = await _detect_gaps(
                         combined_context, llm, original_query=prompt
                     )
-                )
+                except (ProviderOutputError, RetryableRateLimitError) as exc:
+                    if not stream_tokens:
+                        raise
+                    coverage["gap_check"] = {"status": "failed"}
+                    gap_error: ResearchEvent = {
+                        "type": "error",
+                        "classification": (
+                            "retryable"
+                            if isinstance(exc, RetryableRateLimitError)
+                            else "non_retryable"
+                        ),
+                        "content": exc.detail,
+                        "coverage": coverage,
+                    }
+                    if isinstance(exc, RetryableRateLimitError):
+                        gap_error["retry_after_seconds"] = exc.retry_after_seconds
+                    yield gap_error
+                    return
+                coverage["gap_check"] = {
+                    "status": "gaps" if gap_topics else "adequate",
+                }
                 if not gap_topics:
-                    break  # Coverage is adequate, done
+                    break
                 max_passes = 2  # Enable second pass
 
         yield {"type": "status", "state": "synthesizing"}

@@ -1,0 +1,100 @@
+{
+  "canonical_descriptor_sha256": "a65890d9119708bf4c406a634f6baa3131aa03c82770c6ea166fa9d65a50a1f8",
+  "public_summary": {
+    "agent": {
+      "role": "agent",
+      "route_sha256": {
+        "completion": "a4d18430bb5506c572dc66d312070d15fde918d387bdd45e585a28d49f4e8699",
+        "search": "cbbe09abca469827e32a21e7850bab73546cc8e96b7b7ae48ad63a5d20e98c89",
+        "proxy_environment": "cc0108beafed312fda56012036e615a4b72c99a777c01a021fc424431ea7eef5"
+      },
+      "model": "free",
+      "jev_enabled": false,
+      "thinking": false,
+      "token_parameter": "max_tokens",
+      "source_sha256": {
+        "/app/agent/llm.py": "1913677755d7418b8c0c0871b124a7457750cf2158faf8471e19527f1ed353cc",
+        "/app/agent/searxng_client.py": "60dbe01368b48cb32cfdfd0989a372475f12b8206a0933b1416c75c6f42a5496",
+        "/app/agent/settings.py": "e2fb46c8883046e04cdb396c7798ae995521d50e7d49d735f4cfa494f6563af9"
+      }
+    },
+    "search": {
+      "role": "search",
+      "enabled": true,
+      "max_results": 20,
+      "timeout_ms": 5000,
+      "api_key_configured": true,
+      "suggestions": false,
+      "jev_or_rerank_env": false,
+      "source_sha256": {
+        "/app/engines/brave.py": "a37c499cd64d5484bee627fb392232c3bf3c9daf04a178b26e758f62f49de95a",
+        "/app/slopsearx/service.py": "dd690ecb2a1ce120e23255bbfb47cfbe190907155287bd73882f55f9f4badb5e",
+        "/app/slopsearx/adapter.py": "5883a35c48d0dad1077306fbda21997ee1d32116a8c03633a6b762de0c26d6f3",
+        "/app/slopsearx/config.py": "593645e50f2981cdd0d2ed1c24d6cf93b86297ea810c1f8ab92b130c76bea126"
+      }
+    },
+    "source": {
+      "role": "source",
+      "protected_source": false,
+      "compatibility_proxy_configured": false,
+      "environment_proxy_configured": false,
+      "politeness_enabled": false,
+      "distributed_politeness": false,
+      "source_sha256": {
+        "/app/scraper/source_http.py": "080c261e8c2f60aebccab074f6c8489f2fb3ff777e389c121c9a425fa6df2982",
+        "/app/scraper/politeness.py": "151b185a832658dec7ea782e37607c6689a9865a8a195ebd1ce70c9a7c5cae7a",
+        "/app/scraper/fetch.py": "17df3f97e445737ee86777bc3d866071549bd7f35bb2034276b888922901c39c",
+        "/app/scraper/fetch_quality.py": "a5676a9a1d2d31634aec424f445af3d8c0e849267b192d0b62918e5d737fb76a",
+        "/app/scraper/extract.py": "d3f9fa5a567d3113b099bc002d6f1de4d519fa755fd8c9be04cf23a8e4a86053",
+        "/app/scraper/fetch_tiers.py": "451cf87414292f427828335cd94884daafc329315df5d19bbd0898b80c895f7a",
+        "/app/common/url.py": "e6fd70a0fe16a4991bb164ce8fabf5caf8cd0be3507b367c7adedc9835d274c7",
+        "/app/scraper/proxy.py": "66cf352cd37315e889024b6262b44563940eca11bc61f75c6294588a7686b91b"
+      }
+    },
+    "gateway": {
+      "role": "gateway",
+      "version": "1.100.0",
+      "drop_params": true,
+      "callbacks_observability_only": true,
+      "pre_call_rules_configured": false,
+      "retry_policy_configured": false,
+      "free_models": [
+        "openai/ornith/ornith-1.5-122b:free"
+      ],
+      "declared_costs": [
+        {
+          "input_cost_per_token": 0.0,
+          "output_cost_per_token": 0.0
+        }
+      ],
+      "source_sha256": {
+        "router_retries": "9d5955044a4bef91350049164f2d03a6cc038098e7b497ef304f0438049dbb22",
+        "proxy_request_route": "9f31878f9113291279d421409553c21742c0021a49c798038a724629b4c9397d",
+        "async_provider": "568f5db2e3683a48a50251a02453d4bade5ade5aa557f283296725ac0eeae86c"
+      },
+      "policy_snapshot_sha256": "e0a9e318d2ee1c58f3013b79b88d19f67cd1731be29e52b20de975d360b1141c",
+      "config_sha256": "38336145082680fb0a103de8f84628564e3f59ca4d8317f3d8af8f2557588a65",
+      "isolated_mode": "router_process",
+      "effective_drop_params": false,
+      "policy_http_per_model": 1,
+      "provider_http_per_model": 1,
+      "model_gateway_http_per_model": 0,
+      "concurrency_scope": "process_local",
+      "policy_events": [
+        {
+          "kind": "policy_http",
+          "state": "response_complete",
+          "status_code": 200,
+          "bytes": 1316
+        },
+        {
+          "kind": "policy_http",
+          "state": "response_complete",
+          "status_code": 200,
+          "bytes": 2126
+        }
+      ]
+    }
+  },
+  "note": "The canonical SHA covers the complete runtime descriptor including policy_snapshot; the public summary omits its redundant model-policy digests. No private binding or original-key fingerprint is present in either exported descriptor."
+}

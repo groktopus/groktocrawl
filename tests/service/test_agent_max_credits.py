@@ -93,7 +93,11 @@ class TestRunResearchMaxCredits:
         searxng.close = AsyncMock()
 
         llm = MagicMock()
-        llm.generate = AsyncMock(return_value="answer [1]")
+        llm.generate = AsyncMock(
+            side_effect=lambda **kwargs: (
+                "[]" if kwargs.get("stage") == "gap_detection" else "answer [1]"
+            )
+        )
         llm.close = AsyncMock()
 
         scraper = _make_scraper()
@@ -457,6 +461,7 @@ class TestRunResearchBudgetExhaustion:
             )
 
         assert result["result"] == "answer [1]"
+        assert result["coverage"]["gap_check"] == {"status": "budget_exhausted"}
         # Budget fully consumed by pass 1 (min_sources=3 of 3 candidates):
         # no gap-detection LLM call and exactly ONE synthesis call — pass 2
         # must not run redundant searches/synthesis on an exhausted budget.

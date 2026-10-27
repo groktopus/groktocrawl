@@ -1,0 +1,1881 @@
+{
+  "baseline": {
+    "artifact_path": null,
+    "baseline_selection": "broad",
+    "baseline_suite_version": "answer-evals-v1",
+    "diff": [],
+    "match": true
+  },
+  "cases": [
+    {
+      "artifact_path": "eval-out/broad/boundary-004-answer-compact.json",
+      "case_id": "boundary-004-answer-compact",
+      "case_path": "cases/boundary-004-answer-compact.json",
+      "error": null,
+      "expected": {
+        "abstain_expected": false,
+        "abstain_qualifier": null,
+        "allowable_source_urls": [
+          "http://test-site:8000/pricing"
+        ],
+        "citations": [
+          {
+            "citation_index": 1,
+            "claim_id": "pricing-pro",
+            "source_url": "http://test-site:8000/pricing"
+          }
+        ],
+        "prohibited_claims": [
+          "Pro: $0"
+        ],
+        "protocol": {
+          "status": 200,
+          "success": true
+        },
+        "required_claims": [
+          "Pro plan costs $10"
+        ]
+      },
+      "fixture": {
+        "llm_base_url_host": "llm-fixture",
+        "llm_fixture": {
+          "fixture_version": "v2",
+          "scenario": "grounded-answer",
+          "scenario_version": "v1",
+          "service": "llm-svc"
+        },
+        "model": "fixture-model",
+        "search_fixture": {
+          "fixture_version": "v3",
+          "scenario": "healthy",
+          "scenario_version": "v1",
+          "service": "slopsearx-fixture"
+        }
+      },
+      "graders": [
+        {
+          "id": "check_protocol",
+          "version": "v1"
+        },
+        {
+          "id": "check_sources_present",
+          "version": "v1"
+        },
+        {
+          "id": "check_citation_shape",
+          "version": "v1"
+        },
+        {
+          "id": "check_citation_support",
+          "version": "v1"
+        },
+        {
+          "id": "check_required_claims",
+          "version": "v1"
+        },
+        {
+          "id": "check_prohibited_claims",
+          "version": "v1"
+        },
+        {
+          "id": "check_abstention",
+          "version": "v1"
+        },
+        {
+          "id": "check_citation_integrity",
+          "version": "v1"
+        }
+      ],
+      "latency_ms": 108,
+      "observed": {
+        "answer": "The Fixture Site pricing page states the Pro plan costs $10 per month. [1](http://test-site:8000/pricing)",
+        "citations": [
+          {
+            "index": 1,
+            "url": "http://test-site:8000/pricing"
+          }
+        ],
+        "error": null,
+        "latency_ms": 20,
+        "protocol": {
+          "status": 200,
+          "success": true
+        },
+        "sources": [
+          {
+            "engine": "brave",
+            "engines": [
+              "brave"
+            ],
+            "relevance": "Deterministic fixture result 0.",
+            "title": "Fixture Pricing",
+            "url": "http://test-site:8000/pricing"
+          }
+        ]
+      },
+      "outcome": "pass",
+      "request_hash": "sha256:336418bf99361e7e64915899a289033cd77cf44dbeb9b164dc436ed5b97a0619",
+      "scenario_use": {
+        "llm_entry_count": 1,
+        "llm_observed_scenarios": [
+          "grounded-answer"
+        ],
+        "llm_scenario": "grounded-answer",
+        "search_entry_count": 1,
+        "search_observed_scenarios": [
+          "healthy"
+        ],
+        "search_scenario": "healthy"
+      },
+      "timeout": false,
+      "verdicts": [
+        {
+          "detail": {
+            "expected_status": 200,
+            "expected_success": true,
+            "observed_status": 200,
+            "observed_success": true
+          },
+          "grader": "check_protocol",
+          "message": "protocol matches: observed status=200 success=True, expected status=200 success=True",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {
+            "source_count": 1
+          },
+          "grader": "check_sources_present",
+          "message": "1 allowed, unique sources",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_citation_shape",
+          "message": "1 citations shape-checked",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_citation_support",
+          "message": "1 claim(s) supported by pinned content",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_required_claims",
+          "message": "1 required claim(s) present",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_prohibited_claims",
+          "message": "1 prohibited claim(s) absent",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_abstention",
+          "message": "answer present and not an abstention",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_citation_integrity",
+          "message": "all citation markers resolve",
+          "pass": true,
+          "version": "v1"
+        }
+      ]
+    },
+    {
+      "artifact_path": "eval-out/broad/boundary-009-answer-server-error.json",
+      "case_id": "boundary-009-answer-server-error",
+      "case_path": "cases/boundary-009-answer-server-error.json",
+      "error": null,
+      "expected": {
+        "abstain_expected": false,
+        "abstain_qualifier": null,
+        "allowable_source_urls": [
+          "http://test-site:8000/pricing"
+        ],
+        "citations": [],
+        "prohibited_claims": [],
+        "protocol": {
+          "status": 503,
+          "success": false
+        },
+        "required_claims": []
+      },
+      "fixture": {
+        "llm_base_url_host": "llm-fixture",
+        "llm_fixture": {
+          "fixture_version": "v2",
+          "scenario": "server-error",
+          "scenario_version": "v1",
+          "service": "llm-svc"
+        },
+        "model": "fixture-model",
+        "search_fixture": {
+          "fixture_version": "v3",
+          "scenario": "healthy",
+          "scenario_version": "v1",
+          "service": "slopsearx-fixture"
+        }
+      },
+      "graders": [
+        {
+          "id": "check_protocol",
+          "version": "v1"
+        }
+      ],
+      "latency_ms": 34,
+      "observed": {
+        "answer": "",
+        "citations": [],
+        "error": "LLM provider returned HTTP 503",
+        "latency_ms": 13,
+        "protocol": {
+          "status": 503,
+          "success": false
+        },
+        "sources": []
+      },
+      "outcome": "pass",
+      "request_hash": "sha256:9ec18213a9c480754d325e7e48d05f68b7a7d6c6701fd8179295fbcb0adb098c",
+      "scenario_use": {
+        "llm_entry_count": 1,
+        "llm_observed_scenarios": [
+          "server-error"
+        ],
+        "llm_scenario": "server-error",
+        "search_entry_count": 1,
+        "search_observed_scenarios": [
+          "healthy"
+        ],
+        "search_scenario": "healthy"
+      },
+      "timeout": false,
+      "verdicts": [
+        {
+          "detail": {
+            "expected_status": 503,
+            "expected_success": false,
+            "observed_status": 503,
+            "observed_success": false
+          },
+          "grader": "check_protocol",
+          "message": "protocol matches: observed status=503 success=False, expected status=503 success=False",
+          "pass": true,
+          "version": "v1"
+        }
+      ]
+    },
+    {
+      "artifact_path": "eval-out/broad/boundary-010-answer-rate-limit.json",
+      "case_id": "boundary-010-answer-rate-limit",
+      "case_path": "cases/boundary-010-answer-rate-limit.json",
+      "error": null,
+      "expected": {
+        "abstain_expected": false,
+        "abstain_qualifier": null,
+        "allowable_source_urls": [
+          "http://test-site:8000/pricing"
+        ],
+        "citations": [],
+        "prohibited_claims": [],
+        "protocol": {
+          "status": 429,
+          "success": false
+        },
+        "required_claims": []
+      },
+      "fixture": {
+        "llm_base_url_host": "llm-fixture",
+        "llm_fixture": {
+          "fixture_version": "v2",
+          "scenario": "rate-limit",
+          "scenario_version": "v1",
+          "service": "llm-svc"
+        },
+        "model": "fixture-model",
+        "search_fixture": {
+          "fixture_version": "v3",
+          "scenario": "healthy",
+          "scenario_version": "v1",
+          "service": "slopsearx-fixture"
+        }
+      },
+      "graders": [
+        {
+          "id": "check_protocol",
+          "version": "v1"
+        }
+      ],
+      "latency_ms": 33,
+      "observed": {
+        "answer": "",
+        "citations": [],
+        "error": "rate limited: LLM provider rate limit exceeded",
+        "latency_ms": 13,
+        "protocol": {
+          "status": 429,
+          "success": false
+        },
+        "sources": []
+      },
+      "outcome": "pass",
+      "request_hash": "sha256:d9e1784e59af28bd200c1e3b8c4190b3648dcf184a4f18081a34fdb45dbb152c",
+      "scenario_use": {
+        "llm_entry_count": 1,
+        "llm_observed_scenarios": [
+          "rate-limit"
+        ],
+        "llm_scenario": "rate-limit",
+        "search_entry_count": 1,
+        "search_observed_scenarios": [
+          "healthy"
+        ],
+        "search_scenario": "healthy"
+      },
+      "timeout": false,
+      "verdicts": [
+        {
+          "detail": {
+            "expected_status": 429,
+            "expected_success": false,
+            "observed_status": 429,
+            "observed_success": false
+          },
+          "grader": "check_protocol",
+          "message": "protocol matches: observed status=429 success=False, expected status=429 success=False",
+          "pass": true,
+          "version": "v1"
+        }
+      ]
+    },
+    {
+      "artifact_path": "eval-out/broad/boundary-012-research-multi-source.json",
+      "case_id": "boundary-012-research-multi-source",
+      "case_path": "cases/boundary-012-research-multi-source.json",
+      "error": null,
+      "expected": {
+        "abstain_expected": false,
+        "abstain_qualifier": null,
+        "allowable_source_urls": [
+          "http://test-site:8000/pricing",
+          "http://test-site:8000/pricing-v2"
+        ],
+        "citations": [],
+        "prohibited_claims": [
+          "Pro: $99"
+        ],
+        "protocol": {
+          "status": 200,
+          "success": true
+        },
+        "required_claims": [
+          "Pro plan costs $10"
+        ]
+      },
+      "fixture": {
+        "llm_base_url_host": "llm-fixture",
+        "llm_fixture": {
+          "fixture_version": "v2",
+          "scenario": "grounded-answer",
+          "scenario_version": "v1",
+          "service": "llm-svc"
+        },
+        "model": "fixture-model",
+        "search_fixture": {
+          "fixture_version": "v3",
+          "scenario": "contradictory-sources",
+          "scenario_version": "v1",
+          "service": "slopsearx-fixture"
+        }
+      },
+      "graders": [
+        {
+          "id": "check_protocol",
+          "version": "v1"
+        },
+        {
+          "id": "check_sources_present",
+          "version": "v1"
+        },
+        {
+          "id": "check_citation_shape",
+          "version": "v1"
+        },
+        {
+          "id": "check_citation_support",
+          "version": "v1"
+        },
+        {
+          "id": "check_required_claims",
+          "version": "v1"
+        },
+        {
+          "id": "check_prohibited_claims",
+          "version": "v1"
+        },
+        {
+          "id": "check_abstention",
+          "version": "v1"
+        },
+        {
+          "id": "check_citation_integrity",
+          "version": "v1"
+        }
+      ],
+      "latency_ms": 32,
+      "observed": {
+        "answer": "The Fixture Site pricing page states the Pro plan costs $10 per month. [1]",
+        "citations": [
+          {
+            "index": 1,
+            "url": "http://test-site:8000/pricing"
+          }
+        ],
+        "error": null,
+        "latency_ms": 12,
+        "protocol": {
+          "status": 200,
+          "success": true
+        },
+        "sources": [
+          {
+            "relevance": "",
+            "title": "",
+            "url": "http://test-site:8000/pricing"
+          },
+          {
+            "relevance": "",
+            "title": "",
+            "url": "http://test-site:8000/pricing-v2"
+          }
+        ]
+      },
+      "outcome": "pass",
+      "request_hash": "sha256:37751a2706aae9a700a7d0e451b7bd85f0844a81214093d6720892afdc2944fd",
+      "scenario_use": {
+        "llm_entry_count": 2,
+        "llm_observed_scenarios": [
+          "grounded-answer"
+        ],
+        "llm_scenario": "grounded-answer",
+        "search_entry_count": 1,
+        "search_observed_scenarios": [
+          "contradictory-sources"
+        ],
+        "search_scenario": "contradictory-sources"
+      },
+      "timeout": false,
+      "verdicts": [
+        {
+          "detail": {
+            "expected_status": 200,
+            "expected_success": true,
+            "observed_status": 200,
+            "observed_success": true
+          },
+          "grader": "check_protocol",
+          "message": "protocol matches: observed status=200 success=True, expected status=200 success=True",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {
+            "source_count": 2
+          },
+          "grader": "check_sources_present",
+          "message": "2 allowed, unique sources",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_citation_shape",
+          "message": "1 citations shape-checked",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_citation_support",
+          "message": "no declared citations to support-check",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_required_claims",
+          "message": "1 required claim(s) present",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_prohibited_claims",
+          "message": "1 prohibited claim(s) absent",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_abstention",
+          "message": "answer present and not an abstention",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_citation_integrity",
+          "message": "all citation markers resolve",
+          "pass": true,
+          "version": "v1"
+        }
+      ]
+    },
+    {
+      "artifact_path": "eval-out/broad/negative-005-answer-miscited.json",
+      "case_id": "negative-005-answer-miscited",
+      "case_path": "cases/negative-005-answer-miscited.json",
+      "error": null,
+      "expected": {
+        "abstain_expected": false,
+        "abstain_qualifier": null,
+        "allowable_source_urls": [
+          "http://test-site:8000/pricing",
+          "http://test-site:8000/pricing-v2"
+        ],
+        "citations": [
+          {
+            "citation_index": 1,
+            "claim_id": "pricing-pro",
+            "source_url": "http://test-site:8000/pricing"
+          }
+        ],
+        "prohibited_claims": [],
+        "protocol": {
+          "status": 200,
+          "success": true
+        },
+        "required_claims": []
+      },
+      "fixture": {
+        "llm_base_url_host": "llm-fixture",
+        "llm_fixture": {
+          "fixture_version": "v2",
+          "scenario": "miscited",
+          "scenario_version": "v1",
+          "service": "llm-svc"
+        },
+        "model": "fixture-model",
+        "search_fixture": {
+          "fixture_version": "v3",
+          "scenario": "contradictory-sources",
+          "scenario_version": "v1",
+          "service": "slopsearx-fixture"
+        }
+      },
+      "graders": [
+        {
+          "id": "check_protocol",
+          "version": "v1"
+        },
+        {
+          "id": "check_sources_present",
+          "version": "v1"
+        },
+        {
+          "id": "check_citation_shape",
+          "version": "v1"
+        },
+        {
+          "id": "check_citation_support",
+          "version": "v1"
+        },
+        {
+          "id": "check_required_claims",
+          "version": "v1"
+        },
+        {
+          "id": "check_prohibited_claims",
+          "version": "v1"
+        },
+        {
+          "id": "check_abstention",
+          "version": "v1"
+        },
+        {
+          "id": "check_citation_integrity",
+          "version": "v1"
+        }
+      ],
+      "latency_ms": 31,
+      "observed": {
+        "answer": "The Fixture Site Pro plan costs $10 per month. [2]",
+        "citations": [
+          {
+            "index": 2,
+            "url": "http://test-site:8000/pricing-v2"
+          }
+        ],
+        "error": null,
+        "latency_ms": 10,
+        "protocol": {
+          "status": 200,
+          "success": true
+        },
+        "sources": [
+          {
+            "engine": "brave",
+            "engines": [
+              "brave"
+            ],
+            "relevance": "Fixture pricing page: Free: $0, Pro: $10, Business: $25.",
+            "title": "Fixture Pricing",
+            "url": "http://test-site:8000/pricing"
+          },
+          {
+            "engine": "google",
+            "engines": [
+              "google"
+            ],
+            "relevance": "Fixture pricing-v2 page: Pro: $99.",
+            "title": "Fixture Pricing V2",
+            "url": "http://test-site:8000/pricing-v2"
+          }
+        ]
+      },
+      "outcome": "fail",
+      "request_hash": "sha256:a7a1255004d12f4e9e833a8527a574fe7897777cd30bfd9ea76e5e27a0fe20f8",
+      "scenario_use": {
+        "llm_entry_count": 1,
+        "llm_observed_scenarios": [
+          "miscited"
+        ],
+        "llm_scenario": "miscited",
+        "search_entry_count": 1,
+        "search_observed_scenarios": [
+          "contradictory-sources"
+        ],
+        "search_scenario": "contradictory-sources"
+      },
+      "timeout": false,
+      "verdicts": [
+        {
+          "detail": {
+            "expected_status": 200,
+            "expected_success": true,
+            "observed_status": 200,
+            "observed_success": true
+          },
+          "grader": "check_protocol",
+          "message": "protocol matches: observed status=200 success=True, expected status=200 success=True",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {
+            "source_count": 2
+          },
+          "grader": "check_sources_present",
+          "message": "2 allowed, unique sources",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_citation_shape",
+          "message": "1 citations shape-checked",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {
+            "failures": [
+              {
+                "claim_id": "pricing-pro",
+                "criterion": "citation_index_to_source_url",
+                "index": 1,
+                "resolved_url": null,
+                "source_url": "http://test-site:8000/pricing"
+              }
+            ]
+          },
+          "grader": "check_citation_support",
+          "message": "1 citation-support failure(s)",
+          "pass": false,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_required_claims",
+          "message": "0 required claim(s) present",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_prohibited_claims",
+          "message": "0 prohibited claim(s) absent",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_abstention",
+          "message": "answer present and not an abstention",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_citation_integrity",
+          "message": "all citation markers resolve",
+          "pass": true,
+          "version": "v1"
+        }
+      ]
+    },
+    {
+      "artifact_path": "eval-out/broad/negative-006-answer-empty-search.json",
+      "case_id": "negative-006-answer-empty-search",
+      "case_path": "cases/negative-006-answer-empty-search.json",
+      "error": null,
+      "expected": {
+        "abstain_expected": true,
+        "abstain_qualifier": "insufficient",
+        "allowable_source_urls": [],
+        "citations": [],
+        "prohibited_claims": [],
+        "protocol": {
+          "status": 200,
+          "success": true
+        },
+        "required_claims": []
+      },
+      "fixture": {
+        "llm_base_url_host": "llm-fixture",
+        "llm_fixture": {
+          "fixture_version": "v2",
+          "scenario": "grounded-answer",
+          "scenario_version": "v1",
+          "service": "llm-svc"
+        },
+        "model": "fixture-model",
+        "search_fixture": {
+          "fixture_version": "v3",
+          "scenario": "zero-results",
+          "scenario_version": "v1",
+          "service": "slopsearx-fixture"
+        }
+      },
+      "graders": [
+        {
+          "id": "check_protocol",
+          "version": "v1"
+        },
+        {
+          "id": "check_abstention",
+          "version": "v1"
+        },
+        {
+          "id": "check_required_claims",
+          "version": "v1"
+        },
+        {
+          "id": "check_prohibited_claims",
+          "version": "v1"
+        }
+      ],
+      "latency_ms": 29,
+      "observed": {
+        "answer": "I was unable to find or scrape any relevant web pages to answer your question.",
+        "citations": [],
+        "error": null,
+        "latency_ms": 8,
+        "protocol": {
+          "status": 200,
+          "success": true
+        },
+        "sources": []
+      },
+      "outcome": "pass",
+      "request_hash": "sha256:97ef3f1be00da2b2ff17b61d8331d17a12a9bdf9db4966bbf5a11ffd7091ba2c",
+      "scenario_use": {
+        "llm_entry_count": 0,
+        "llm_observed_scenarios": [],
+        "llm_scenario": "grounded-answer",
+        "search_entry_count": 1,
+        "search_observed_scenarios": [
+          "zero-results"
+        ],
+        "search_scenario": "zero-results"
+      },
+      "timeout": false,
+      "verdicts": [
+        {
+          "detail": {
+            "expected_status": 200,
+            "expected_success": true,
+            "observed_status": 200,
+            "observed_success": true
+          },
+          "grader": "check_protocol",
+          "message": "protocol matches: observed status=200 success=True, expected status=200 success=True",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {
+            "empty": false,
+            "qualifier": "insufficient"
+          },
+          "grader": "check_abstention",
+          "message": "insufficient-evidence abstention detected",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_required_claims",
+          "message": "0 required claim(s) present",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_prohibited_claims",
+          "message": "0 prohibited claim(s) absent",
+          "pass": true,
+          "version": "v1"
+        }
+      ]
+    },
+    {
+      "artifact_path": "eval-out/broad/negative-007-answer-contradictory.json",
+      "case_id": "negative-007-answer-contradictory",
+      "case_path": "cases/negative-007-answer-contradictory.json",
+      "error": null,
+      "expected": {
+        "abstain_expected": true,
+        "abstain_qualifier": "contradictory",
+        "allowable_source_urls": [
+          "http://test-site:8000/pricing",
+          "http://test-site:8000/pricing-v2"
+        ],
+        "citations": [],
+        "prohibited_claims": [],
+        "protocol": {
+          "status": 200,
+          "success": true
+        },
+        "required_claims": []
+      },
+      "fixture": {
+        "llm_base_url_host": "llm-fixture",
+        "llm_fixture": {
+          "fixture_version": "v2",
+          "scenario": "contradictory-evidence",
+          "scenario_version": "v1",
+          "service": "llm-svc"
+        },
+        "model": "fixture-model",
+        "search_fixture": {
+          "fixture_version": "v3",
+          "scenario": "contradictory-sources",
+          "scenario_version": "v1",
+          "service": "slopsearx-fixture"
+        }
+      },
+      "graders": [
+        {
+          "id": "check_protocol",
+          "version": "v1"
+        },
+        {
+          "id": "check_abstention",
+          "version": "v1"
+        },
+        {
+          "id": "check_required_claims",
+          "version": "v1"
+        },
+        {
+          "id": "check_prohibited_claims",
+          "version": "v1"
+        }
+      ],
+      "latency_ms": 31,
+      "observed": {
+        "answer": "The retrieved sources conflict: the pricing page says Pro costs $10 while the pricing-v2 page says Pro costs $99. Because the evidence is contradictory, I cannot provide a confident answer.",
+        "citations": [],
+        "error": null,
+        "latency_ms": 10,
+        "protocol": {
+          "status": 200,
+          "success": true
+        },
+        "sources": [
+          {
+            "engine": "brave",
+            "engines": [
+              "brave"
+            ],
+            "relevance": "Fixture pricing page: Free: $0, Pro: $10, Business: $25.",
+            "title": "Fixture Pricing",
+            "url": "http://test-site:8000/pricing"
+          },
+          {
+            "engine": "google",
+            "engines": [
+              "google"
+            ],
+            "relevance": "Fixture pricing-v2 page: Pro: $99.",
+            "title": "Fixture Pricing V2",
+            "url": "http://test-site:8000/pricing-v2"
+          }
+        ]
+      },
+      "outcome": "pass",
+      "request_hash": "sha256:33f70a5a71dd779984ddfde6bc556217bf798f185351dd3a9e9131aeb2f87705",
+      "scenario_use": {
+        "llm_entry_count": 1,
+        "llm_observed_scenarios": [
+          "contradictory-evidence"
+        ],
+        "llm_scenario": "contradictory-evidence",
+        "search_entry_count": 1,
+        "search_observed_scenarios": [
+          "contradictory-sources"
+        ],
+        "search_scenario": "contradictory-sources"
+      },
+      "timeout": false,
+      "verdicts": [
+        {
+          "detail": {
+            "expected_status": 200,
+            "expected_success": true,
+            "observed_status": 200,
+            "observed_success": true
+          },
+          "grader": "check_protocol",
+          "message": "protocol matches: observed status=200 success=True, expected status=200 success=True",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {
+            "empty": false,
+            "qualifier": "contradictory"
+          },
+          "grader": "check_abstention",
+          "message": "contradictory-evidence qualification/abstention detected",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_required_claims",
+          "message": "0 required claim(s) present",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_prohibited_claims",
+          "message": "0 prohibited claim(s) absent",
+          "pass": true,
+          "version": "v1"
+        }
+      ]
+    },
+    {
+      "artifact_path": "eval-out/broad/negative-008-research-contradictory.json",
+      "case_id": "negative-008-research-contradictory",
+      "case_path": "cases/negative-008-research-contradictory.json",
+      "error": null,
+      "expected": {
+        "abstain_expected": true,
+        "abstain_qualifier": "contradictory",
+        "allowable_source_urls": [
+          "http://test-site:8000/pricing",
+          "http://test-site:8000/pricing-v2"
+        ],
+        "citations": [],
+        "prohibited_claims": [],
+        "protocol": {
+          "status": 200,
+          "success": true
+        },
+        "required_claims": []
+      },
+      "fixture": {
+        "llm_base_url_host": "llm-fixture",
+        "llm_fixture": {
+          "fixture_version": "v2",
+          "scenario": "contradictory-evidence",
+          "scenario_version": "v1",
+          "service": "llm-svc"
+        },
+        "model": "fixture-model",
+        "search_fixture": {
+          "fixture_version": "v3",
+          "scenario": "contradictory-sources",
+          "scenario_version": "v1",
+          "service": "slopsearx-fixture"
+        }
+      },
+      "graders": [
+        {
+          "id": "check_protocol",
+          "version": "v1"
+        },
+        {
+          "id": "check_abstention",
+          "version": "v1"
+        },
+        {
+          "id": "check_required_claims",
+          "version": "v1"
+        },
+        {
+          "id": "check_prohibited_claims",
+          "version": "v1"
+        }
+      ],
+      "latency_ms": 34,
+      "observed": {
+        "answer": "The retrieved sources conflict: the pricing page says Pro costs $10 while the pricing-v2 page says Pro costs $99. Because the evidence is contradictory, I cannot provide a confident answer.",
+        "citations": [],
+        "error": null,
+        "latency_ms": 12,
+        "protocol": {
+          "status": 200,
+          "success": true
+        },
+        "sources": [
+          {
+            "relevance": "",
+            "title": "",
+            "url": "http://test-site:8000/pricing"
+          },
+          {
+            "relevance": "",
+            "title": "",
+            "url": "http://test-site:8000/pricing-v2"
+          }
+        ]
+      },
+      "outcome": "pass",
+      "request_hash": "sha256:87ea85c29eddcdb944118863a690d4bf997ef5f8e3a46304d6743f3c656c8693",
+      "scenario_use": {
+        "llm_entry_count": 2,
+        "llm_observed_scenarios": [
+          "contradictory-evidence"
+        ],
+        "llm_scenario": "contradictory-evidence",
+        "search_entry_count": 1,
+        "search_observed_scenarios": [
+          "contradictory-sources"
+        ],
+        "search_scenario": "contradictory-sources"
+      },
+      "timeout": false,
+      "verdicts": [
+        {
+          "detail": {
+            "expected_status": 200,
+            "expected_success": true,
+            "observed_status": 200,
+            "observed_success": true
+          },
+          "grader": "check_protocol",
+          "message": "protocol matches: observed status=200 success=True, expected status=200 success=True",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {
+            "empty": false,
+            "qualifier": "contradictory"
+          },
+          "grader": "check_abstention",
+          "message": "contradictory-evidence qualification/abstention detected",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_required_claims",
+          "message": "0 required claim(s) present",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_prohibited_claims",
+          "message": "0 prohibited claim(s) absent",
+          "pass": true,
+          "version": "v1"
+        }
+      ]
+    },
+    {
+      "artifact_path": "eval-out/broad/positive-001-answer-grounded.json",
+      "case_id": "positive-001-answer-grounded",
+      "case_path": "cases/positive-001-answer-grounded.json",
+      "error": null,
+      "expected": {
+        "abstain_expected": false,
+        "abstain_qualifier": null,
+        "allowable_source_urls": [
+          "http://test-site:8000/pricing"
+        ],
+        "citations": [
+          {
+            "citation_index": 1,
+            "claim_id": "pricing-pro",
+            "source_url": "http://test-site:8000/pricing"
+          }
+        ],
+        "prohibited_claims": [
+          "Pro: $0",
+          "Pro: $99"
+        ],
+        "protocol": {
+          "status": 200,
+          "success": true
+        },
+        "required_claims": [
+          "Pro plan costs $10"
+        ]
+      },
+      "fixture": {
+        "llm_base_url_host": "llm-fixture",
+        "llm_fixture": {
+          "fixture_version": "v2",
+          "scenario": "grounded-answer",
+          "scenario_version": "v1",
+          "service": "llm-svc"
+        },
+        "model": "fixture-model",
+        "search_fixture": {
+          "fixture_version": "v3",
+          "scenario": "healthy",
+          "scenario_version": "v1",
+          "service": "slopsearx-fixture"
+        }
+      },
+      "graders": [
+        {
+          "id": "check_protocol",
+          "version": "v1"
+        },
+        {
+          "id": "check_sources_present",
+          "version": "v1"
+        },
+        {
+          "id": "check_citation_shape",
+          "version": "v1"
+        },
+        {
+          "id": "check_citation_support",
+          "version": "v1"
+        },
+        {
+          "id": "check_required_claims",
+          "version": "v1"
+        },
+        {
+          "id": "check_prohibited_claims",
+          "version": "v1"
+        },
+        {
+          "id": "check_abstention",
+          "version": "v1"
+        },
+        {
+          "id": "check_citation_integrity",
+          "version": "v1"
+        }
+      ],
+      "latency_ms": 34,
+      "observed": {
+        "answer": "The Fixture Site pricing page states the Pro plan costs $10 per month. [1]",
+        "citations": [
+          {
+            "index": 1,
+            "url": "http://test-site:8000/pricing"
+          }
+        ],
+        "error": null,
+        "latency_ms": 13,
+        "protocol": {
+          "status": 200,
+          "success": true
+        },
+        "sources": [
+          {
+            "engine": "brave",
+            "engines": [
+              "brave"
+            ],
+            "relevance": "Deterministic fixture result 0.",
+            "title": "Fixture Pricing",
+            "url": "http://test-site:8000/pricing"
+          }
+        ]
+      },
+      "outcome": "pass",
+      "request_hash": "sha256:7aea75f4cb0af916e3f2b6fedc9aac5a4b5e83a788e6f8d466ac9c26d66236f3",
+      "scenario_use": {
+        "llm_entry_count": 1,
+        "llm_observed_scenarios": [
+          "grounded-answer"
+        ],
+        "llm_scenario": "grounded-answer",
+        "search_entry_count": 1,
+        "search_observed_scenarios": [
+          "healthy"
+        ],
+        "search_scenario": "healthy"
+      },
+      "timeout": false,
+      "verdicts": [
+        {
+          "detail": {
+            "expected_status": 200,
+            "expected_success": true,
+            "observed_status": 200,
+            "observed_success": true
+          },
+          "grader": "check_protocol",
+          "message": "protocol matches: observed status=200 success=True, expected status=200 success=True",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {
+            "source_count": 1
+          },
+          "grader": "check_sources_present",
+          "message": "1 allowed, unique sources",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_citation_shape",
+          "message": "1 citations shape-checked",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_citation_support",
+          "message": "1 claim(s) supported by pinned content",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_required_claims",
+          "message": "1 required claim(s) present",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_prohibited_claims",
+          "message": "2 prohibited claim(s) absent",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_abstention",
+          "message": "answer present and not an abstention",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_citation_integrity",
+          "message": "all citation markers resolve",
+          "pass": true,
+          "version": "v1"
+        }
+      ]
+    },
+    {
+      "artifact_path": "eval-out/broad/positive-002-answer-claims.json",
+      "case_id": "positive-002-answer-claims",
+      "case_path": "cases/positive-002-answer-claims.json",
+      "error": null,
+      "expected": {
+        "abstain_expected": false,
+        "abstain_qualifier": null,
+        "allowable_source_urls": [
+          "http://test-site:8000/pricing"
+        ],
+        "citations": [],
+        "prohibited_claims": [
+          "Pro: $99"
+        ],
+        "protocol": {
+          "status": 200,
+          "success": true
+        },
+        "required_claims": [
+          "Pro plan costs $10"
+        ]
+      },
+      "fixture": {
+        "llm_base_url_host": "llm-fixture",
+        "llm_fixture": {
+          "fixture_version": "v2",
+          "scenario": "grounded-answer",
+          "scenario_version": "v1",
+          "service": "llm-svc"
+        },
+        "model": "fixture-model",
+        "search_fixture": {
+          "fixture_version": "v3",
+          "scenario": "healthy",
+          "scenario_version": "v1",
+          "service": "slopsearx-fixture"
+        }
+      },
+      "graders": [
+        {
+          "id": "check_protocol",
+          "version": "v1"
+        },
+        {
+          "id": "check_sources_present",
+          "version": "v1"
+        },
+        {
+          "id": "check_citation_shape",
+          "version": "v1"
+        },
+        {
+          "id": "check_citation_support",
+          "version": "v1"
+        },
+        {
+          "id": "check_required_claims",
+          "version": "v1"
+        },
+        {
+          "id": "check_prohibited_claims",
+          "version": "v1"
+        },
+        {
+          "id": "check_abstention",
+          "version": "v1"
+        },
+        {
+          "id": "check_citation_integrity",
+          "version": "v1"
+        }
+      ],
+      "latency_ms": 36,
+      "observed": {
+        "answer": "The Fixture Site pricing page states the Pro plan costs $10 per month. [1]",
+        "citations": [
+          {
+            "index": 1,
+            "url": "http://test-site:8000/pricing"
+          }
+        ],
+        "error": null,
+        "latency_ms": 13,
+        "protocol": {
+          "status": 200,
+          "success": true
+        },
+        "sources": [
+          {
+            "engine": "brave",
+            "engines": [
+              "brave"
+            ],
+            "relevance": "Deterministic fixture result 0.",
+            "title": "Fixture Pricing",
+            "url": "http://test-site:8000/pricing"
+          }
+        ]
+      },
+      "outcome": "pass",
+      "request_hash": "sha256:8380c01453b2b188a0d93f088b5db045a2d89921c7e3495b6c78101f4622bcc2",
+      "scenario_use": {
+        "llm_entry_count": 1,
+        "llm_observed_scenarios": [
+          "grounded-answer"
+        ],
+        "llm_scenario": "grounded-answer",
+        "search_entry_count": 1,
+        "search_observed_scenarios": [
+          "healthy"
+        ],
+        "search_scenario": "healthy"
+      },
+      "timeout": false,
+      "verdicts": [
+        {
+          "detail": {
+            "expected_status": 200,
+            "expected_success": true,
+            "observed_status": 200,
+            "observed_success": true
+          },
+          "grader": "check_protocol",
+          "message": "protocol matches: observed status=200 success=True, expected status=200 success=True",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {
+            "source_count": 1
+          },
+          "grader": "check_sources_present",
+          "message": "1 allowed, unique sources",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_citation_shape",
+          "message": "1 citations shape-checked",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_citation_support",
+          "message": "no declared citations to support-check",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_required_claims",
+          "message": "1 required claim(s) present",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_prohibited_claims",
+          "message": "1 prohibited claim(s) absent",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_abstention",
+          "message": "answer present and not an abstention",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_citation_integrity",
+          "message": "all citation markers resolve",
+          "pass": true,
+          "version": "v1"
+        }
+      ]
+    },
+    {
+      "artifact_path": "eval-out/broad/positive-003-research-grounded.json",
+      "case_id": "positive-003-research-grounded",
+      "case_path": "cases/positive-003-research-grounded.json",
+      "error": null,
+      "expected": {
+        "abstain_expected": false,
+        "abstain_qualifier": null,
+        "allowable_source_urls": [
+          "http://test-site:8000/pricing"
+        ],
+        "citations": [
+          {
+            "citation_index": 1,
+            "claim_id": "pricing-pro",
+            "source_url": "http://test-site:8000/pricing"
+          }
+        ],
+        "prohibited_claims": [
+          "Pro: $99"
+        ],
+        "protocol": {
+          "status": 200,
+          "success": true
+        },
+        "required_claims": [
+          "Pro plan costs $10"
+        ]
+      },
+      "fixture": {
+        "llm_base_url_host": "llm-fixture",
+        "llm_fixture": {
+          "fixture_version": "v2",
+          "scenario": "grounded-answer",
+          "scenario_version": "v1",
+          "service": "llm-svc"
+        },
+        "model": "fixture-model",
+        "search_fixture": {
+          "fixture_version": "v3",
+          "scenario": "partial-degraded",
+          "scenario_version": "v1",
+          "service": "slopsearx-fixture"
+        }
+      },
+      "graders": [
+        {
+          "id": "check_protocol",
+          "version": "v1"
+        },
+        {
+          "id": "check_sources_present",
+          "version": "v1"
+        },
+        {
+          "id": "check_citation_shape",
+          "version": "v1"
+        },
+        {
+          "id": "check_citation_support",
+          "version": "v1"
+        },
+        {
+          "id": "check_required_claims",
+          "version": "v1"
+        },
+        {
+          "id": "check_prohibited_claims",
+          "version": "v1"
+        },
+        {
+          "id": "check_abstention",
+          "version": "v1"
+        },
+        {
+          "id": "check_citation_integrity",
+          "version": "v1"
+        }
+      ],
+      "latency_ms": 34,
+      "observed": {
+        "answer": "The Fixture Site pricing page states the Pro plan costs $10 per month. [1]",
+        "citations": [
+          {
+            "index": 1,
+            "url": "http://test-site:8000/pricing"
+          }
+        ],
+        "error": null,
+        "latency_ms": 12,
+        "protocol": {
+          "status": 200,
+          "success": true
+        },
+        "sources": [
+          {
+            "relevance": "",
+            "title": "",
+            "url": "http://test-site:8000/pricing"
+          }
+        ]
+      },
+      "outcome": "pass",
+      "request_hash": "sha256:a32eb7e40cad631773d3ac1074d8d5f3ed4915d63f549c0f208dce3660c0d53c",
+      "scenario_use": {
+        "llm_entry_count": 2,
+        "llm_observed_scenarios": [
+          "grounded-answer"
+        ],
+        "llm_scenario": "grounded-answer",
+        "search_entry_count": 1,
+        "search_observed_scenarios": [
+          "partial-degraded"
+        ],
+        "search_scenario": "partial-degraded"
+      },
+      "timeout": false,
+      "verdicts": [
+        {
+          "detail": {
+            "expected_status": 200,
+            "expected_success": true,
+            "observed_status": 200,
+            "observed_success": true
+          },
+          "grader": "check_protocol",
+          "message": "protocol matches: observed status=200 success=True, expected status=200 success=True",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {
+            "source_count": 1
+          },
+          "grader": "check_sources_present",
+          "message": "1 allowed, unique sources",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_citation_shape",
+          "message": "1 citations shape-checked",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_citation_support",
+          "message": "1 claim(s) supported by pinned content",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_required_claims",
+          "message": "1 required claim(s) present",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_prohibited_claims",
+          "message": "1 prohibited claim(s) absent",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_abstention",
+          "message": "answer present and not an abstention",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_citation_integrity",
+          "message": "all citation markers resolve",
+          "pass": true,
+          "version": "v1"
+        }
+      ]
+    },
+    {
+      "artifact_path": "eval-out/broad/positive-011-research-claims.json",
+      "case_id": "positive-011-research-claims",
+      "case_path": "cases/positive-011-research-claims.json",
+      "error": null,
+      "expected": {
+        "abstain_expected": false,
+        "abstain_qualifier": null,
+        "allowable_source_urls": [
+          "http://test-site:8000/pricing"
+        ],
+        "citations": [],
+        "prohibited_claims": [
+          "Pro: $99"
+        ],
+        "protocol": {
+          "status": 200,
+          "success": true
+        },
+        "required_claims": [
+          "Pro plan costs $10"
+        ]
+      },
+      "fixture": {
+        "llm_base_url_host": "llm-fixture",
+        "llm_fixture": {
+          "fixture_version": "v2",
+          "scenario": "grounded-answer",
+          "scenario_version": "v1",
+          "service": "llm-svc"
+        },
+        "model": "fixture-model",
+        "search_fixture": {
+          "fixture_version": "v3",
+          "scenario": "partial-degraded",
+          "scenario_version": "v1",
+          "service": "slopsearx-fixture"
+        }
+      },
+      "graders": [
+        {
+          "id": "check_protocol",
+          "version": "v1"
+        },
+        {
+          "id": "check_sources_present",
+          "version": "v1"
+        },
+        {
+          "id": "check_citation_shape",
+          "version": "v1"
+        },
+        {
+          "id": "check_citation_support",
+          "version": "v1"
+        },
+        {
+          "id": "check_required_claims",
+          "version": "v1"
+        },
+        {
+          "id": "check_prohibited_claims",
+          "version": "v1"
+        },
+        {
+          "id": "check_abstention",
+          "version": "v1"
+        },
+        {
+          "id": "check_citation_integrity",
+          "version": "v1"
+        }
+      ],
+      "latency_ms": 33,
+      "observed": {
+        "answer": "The Fixture Site pricing page states the Pro plan costs $10 per month. [1]",
+        "citations": [
+          {
+            "index": 1,
+            "url": "http://test-site:8000/pricing"
+          }
+        ],
+        "error": null,
+        "latency_ms": 12,
+        "protocol": {
+          "status": 200,
+          "success": true
+        },
+        "sources": [
+          {
+            "relevance": "",
+            "title": "",
+            "url": "http://test-site:8000/pricing"
+          }
+        ]
+      },
+      "outcome": "pass",
+      "request_hash": "sha256:484961245c61c36f036b9c0cd577854808b812610516642c8f968fd4d1a5de9c",
+      "scenario_use": {
+        "llm_entry_count": 2,
+        "llm_observed_scenarios": [
+          "grounded-answer"
+        ],
+        "llm_scenario": "grounded-answer",
+        "search_entry_count": 1,
+        "search_observed_scenarios": [
+          "partial-degraded"
+        ],
+        "search_scenario": "partial-degraded"
+      },
+      "timeout": false,
+      "verdicts": [
+        {
+          "detail": {
+            "expected_status": 200,
+            "expected_success": true,
+            "observed_status": 200,
+            "observed_success": true
+          },
+          "grader": "check_protocol",
+          "message": "protocol matches: observed status=200 success=True, expected status=200 success=True",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {
+            "source_count": 1
+          },
+          "grader": "check_sources_present",
+          "message": "1 allowed, unique sources",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_citation_shape",
+          "message": "1 citations shape-checked",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_citation_support",
+          "message": "no declared citations to support-check",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_required_claims",
+          "message": "1 required claim(s) present",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_prohibited_claims",
+          "message": "1 prohibited claim(s) absent",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_abstention",
+          "message": "answer present and not an abstention",
+          "pass": true,
+          "version": "v1"
+        },
+        {
+          "detail": {},
+          "grader": "check_citation_integrity",
+          "message": "all citation markers resolve",
+          "pass": true,
+          "version": "v1"
+        }
+      ]
+    }
+  ],
+  "provenance_path": "eval-out/broad/provenance.json",
+  "run_id": "local-1-1793109637",
+  "selection": "broad",
+  "suite_version": "answer-evals-v1",
+  "summary": {
+    "failed": 1,
+    "negative_ratio": {
+      "abstain": 3,
+      "negative": 4,
+      "negative_or_abstention": 4,
+      "ratio": 0.3333333333333333,
+      "total": 12
+    },
+    "passed": 11,
+    "total": 12
+  },
+  "target": null
+}

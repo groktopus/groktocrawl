@@ -254,3 +254,55 @@ def test_cli_refuses_to_run_outside_hosted_linux(monkeypatch) -> None:
     monkeypatch.delenv("RUNNER_OS", raising=False)
 
     assert prefetch.main(["--group", "runtime"]) == 2
+
+
+@pytest.mark.parametrize("raises", [True, False])
+def test_failed_pull_retains_safe_stage_and_category_without_raw_output(raises):
+    image, digest = next(iter(prefetch.PIN_GROUPS["storage"].items()))
+    ref = f"mirror.gcr.io/{prefetch._canonical_hub_repository(image)}@{digest}"
+    command = ["docker", "pull", "--quiet", ref]
+
+    def fail(*args, **kwargs):
+        if raises:
+            raise subprocess.CalledProcessError(
+                1, command, stderr="TOOMANYREQUESTS secret-value"
+            )
+        return subprocess.CompletedProcess(
+            command, 1, "private-compose-value", "TOOMANYREQUESTS secret-value"
+        )
+
+    with pytest.raises(prefetch.PrefetchError) as caught:
+        prefetch._run(command, runner=fail)
+    assert caught.value.diagnostic == {
+        "operation": "pull",
+        "public_reference": ref,
+        "error_type": "CalledProcessError",
+        "returncode": 1,
+        "category": "registry_rate_limit",
+    }
+    assert "secret-value" not in json.dumps(caught.value.diagnostic)
+    assert "private-compose-value" not in str(caught.value)
+
+
+def test_cli_writes_failure_receipt_without_retrying(monkeypatch, tmp_path, capsys):
+    for key, value in {
+        "GITHUB_ACTIONS": "true",
+        "RUNNER_ENVIRONMENT": "github-hosted",
+        "RUNNER_OS": "Linux",
+    }.items():
+        monkeypatch.setenv(key, value)
+    calls = []
+
+    def fail(*args, **kwargs):
+        calls.append(1)
+        raise prefetch.PrefetchError(
+            "Docker image prefetch command failed",
+            diagnostic={"operation": "pull", "category": "timeout"},
+        )
+
+    monkeypatch.setattr(prefetch, "prefetch_images", fail)
+    receipt = tmp_path / "failed.json"
+    assert prefetch.main(["--group", "storage", "--receipt", str(receipt)]) == 1
+    assert len(calls) == 1
+    assert json.loads(receipt.read_text())["diagnostic"]["category"] == "timeout"
+    assert json.loads(capsys.readouterr().err)["status"] == "failed"

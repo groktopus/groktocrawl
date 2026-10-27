@@ -51,6 +51,61 @@ _IMAGE_ID_RE = re.compile(r"sha256:[0-9a-f]{64}\Z")
 class PrefetchError(RuntimeError):
     """A bounded, sanitized prefetch failure."""
 
+    def __init__(self, message: str, *, diagnostic: dict[str, object] | None = None):
+        super().__init__(message)
+        self.diagnostic = diagnostic or {}
+
+
+def _command_failure(command: Sequence[str], error: BaseException) -> PrefetchError:
+    # Never publish raw subprocess output: Compose output may contain credentials.
+    operation = "unknown"
+    public_reference = None
+    if command[:3] == ["docker", "pull", "--quiet"]:
+        operation = "pull"
+    elif command[:3] == ["docker", "image", "inspect"]:
+        operation = "inspect"
+    elif command[:2] == ["docker", "tag"]:
+        operation = "tag"
+    elif command[:2] == ["docker", "compose"]:
+        operation = "compose_config"
+    known_refs = {
+        ref
+        for pins in PIN_GROUPS.values()
+        for image, digest in pins.items()
+        for ref in (image, f"mirror.gcr.io/{_canonical_hub_repository(image)}@{digest}")
+    }
+    public_reference = next((arg for arg in command if arg in known_refs), None)
+    stderr = getattr(error, "stderr", "") or ""
+    if isinstance(stderr, bytes):
+        stderr = stderr.decode("utf-8", errors="replace")
+    stderr = stderr.lower()
+    category = "unclassified"
+    for phrase, name in (
+        ("toomanyrequests", "registry_rate_limit"),
+        ("too many requests", "registry_rate_limit"),
+        ("manifest unknown", "manifest_unknown"),
+        ("not found", "not_found"),
+        ("cannot connect to the docker daemon", "daemon_unavailable"),
+        ("no space left", "disk_full"),
+        ("permission denied", "permission_denied"),
+        ("certificate", "tls_certificate"),
+        ("timeout", "timeout"),
+        ("unexpected eof", "unexpected_eof"),
+    ):
+        if phrase in stderr:
+            category = name
+            break
+    if isinstance(error, subprocess.TimeoutExpired):
+        category = "timeout"
+    diagnostic = {
+        "operation": operation,
+        "public_reference": public_reference,
+        "error_type": type(error).__name__,
+        "returncode": getattr(error, "returncode", None),
+        "category": category,
+    }
+    return PrefetchError("Docker image prefetch command failed", diagnostic=diagnostic)
+
 
 def _run(
     command: Sequence[str],
@@ -68,9 +123,14 @@ def _run(
             timeout=timeout,
         )
     except (OSError, subprocess.SubprocessError) as exc:
-        raise PrefetchError("Docker image prefetch command failed") from exc
+        raise _command_failure(command, exc) from exc
     if not allow_failure and result.returncode != 0:
-        raise PrefetchError("Docker image prefetch command failed")
+        raise _command_failure(
+            command,
+            subprocess.CalledProcessError(
+                result.returncode, command, stderr=result.stderr
+            ),
+        )
     return result
 
 
@@ -340,7 +400,16 @@ def main(argv: Sequence[str] | None = None) -> int:
             receipt_path=args.receipt,
         )
     except PrefetchError as exc:
-        print(str(exc), file=sys.stderr)
+        diagnostic = {
+            "schema_version": 1,
+            "status": "failed",
+            "group": args.group,
+            "message": str(exc),
+            "diagnostic": exc.diagnostic,
+        }
+        if args.receipt is not None:
+            _write_receipt(args.receipt, diagnostic)
+        print(json.dumps(diagnostic, sort_keys=True), file=sys.stderr)
         return 1
     print(
         "CI public image prefetch complete: "

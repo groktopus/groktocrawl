@@ -1,0 +1,19 @@
+{
+  "schema_version": "w12.4-first-screen-admission/3",
+  "owner_authorized_live_dispatch": false,
+  "independent_review_no_open_p1_p2": false,
+  "evaluator_isolation_confirmed": false,
+  "runtime_files": {},
+  "bundle_sha256": "347e422b1d879b395473b65b5b853be18b1ffc749e55e7ff6b0a00edc4f01298",
+  "reviewed_bundle_sha256": "347e422b1d879b395473b65b5b853be18b1ffc749e55e7ff6b0a00edc4f01298",
+  "backend_descriptor_sha256": "a65890d9119708bf4c406a634f6baa3131aa03c82770c6ea166fa9d65a50a1f8",
+  "blocked_source_sha256": [
+    "39f88574788ea664ec0de2a973cdea83e5c6cdc74a88e85d0222eae9792fdcec",
+    "68da66f4fb9230736a18588f2d6a0ace43a2dc790645cb66398d58970c5b0aa7",
+    "b1b13a12aee75c6ecc20fb910c724cdfd1e4d841add5e14d1dd4a2006727a9ad",
+    "8f8a36c6770dd5499495908626510f8c1c1942bd9498bb620a3ca4bb40439c24"
+  ],
+  "model_provider_attempt_upper_per_call": 1,
+  "search_provider_attempt_upper_per_call": 1,
+  "source_get_upper_per_call": 2
+}

@@ -1,0 +1,111 @@
+{
+  "schema_version": "obligation-replay-analysis/1",
+  "decision": "adopt_experimental_obligation_control",
+  "passing_repetitions": 3,
+  "required_passing_repetitions": 2,
+  "repetitions": [
+    {
+      "repetition": 0,
+      "policies": {
+        "fixed": {
+          "challenge_weighted_closure": 0.0,
+          "admitted_precision": 1.0,
+          "unsupported_high_importance": 10,
+          "queries": 12,
+          "post_gain_queries": 0
+        },
+        "w10_diagnostic": {
+          "challenge_weighted_closure": 0.0,
+          "admitted_precision": 1.0,
+          "unsupported_high_importance": 10,
+          "queries": 24,
+          "post_gain_queries": 12
+        },
+        "obligation": {
+          "challenge_weighted_closure": 0.9,
+          "admitted_precision": 1.0,
+          "unsupported_high_importance": 1,
+          "queries": 22,
+          "post_gain_queries": 1
+        }
+      },
+      "treatment_post_gain_rate": 0.045454545454545456,
+      "gate": {
+        "closure_delta_at_least_10_points": true,
+        "no_extra_unsupported_high_importance": true,
+        "precision_within_5_points": true,
+        "post_gain_queries_at_most_10_percent": true
+      },
+      "passed": true
+    },
+    {
+      "repetition": 1,
+      "policies": {
+        "fixed": {
+          "challenge_weighted_closure": 0.0,
+          "admitted_precision": 1.0,
+          "unsupported_high_importance": 10,
+          "queries": 12,
+          "post_gain_queries": 0
+        },
+        "w10_diagnostic": {
+          "challenge_weighted_closure": 0.0,
+          "admitted_precision": 1.0,
+          "unsupported_high_importance": 10,
+          "queries": 24,
+          "post_gain_queries": 12
+        },
+        "obligation": {
+          "challenge_weighted_closure": 0.9,
+          "admitted_precision": 1.0,
+          "unsupported_high_importance": 1,
+          "queries": 22,
+          "post_gain_queries": 1
+        }
+      },
+      "treatment_post_gain_rate": 0.045454545454545456,
+      "gate": {
+        "closure_delta_at_least_10_points": true,
+        "no_extra_unsupported_high_importance": true,
+        "precision_within_5_points": true,
+        "post_gain_queries_at_most_10_percent": true
+      },
+      "passed": true
+    },
+    {
+      "repetition": 2,
+      "policies": {
+        "fixed": {
+          "challenge_weighted_closure": 0.0,
+          "admitted_precision": 1.0,
+          "unsupported_high_importance": 10,
+          "queries": 12,
+          "post_gain_queries": 0
+        },
+        "w10_diagnostic": {
+          "challenge_weighted_closure": 0.0,
+          "admitted_precision": 1.0,
+          "unsupported_high_importance": 10,
+          "queries": 24,
+          "post_gain_queries": 12
+        },
+        "obligation": {
+          "challenge_weighted_closure": 0.9,
+          "admitted_precision": 1.0,
+          "unsupported_high_importance": 1,
+          "queries": 22,
+          "post_gain_queries": 1
+        }
+      },
+      "treatment_post_gain_rate": 0.045454545454545456,
+      "gate": {
+        "closure_delta_at_least_10_points": true,
+        "no_extra_unsupported_high_importance": true,
+        "precision_within_5_points": true,
+        "post_gain_queries_at_most_10_percent": true
+      },
+      "passed": true
+    }
+  ],
+  "external_validity": "Frozen synthetic replay establishes deterministic policy behavior only; live retrieval prevalence and effect size remain unproven."
+}

@@ -1,0 +1,39 @@
+{
+  "schema_version": "w12.4-pilot-ci-diagnosis/1",
+  "run_id": 40518326740,
+  "head": "3b761fa8daed7dd2b99856e1470dab3ae05659e0",
+  "integration_job": 122238017268,
+  "failures": {
+    "count": 14,
+    "mocked_research_failures": 8,
+    "http_stack_failures": 6,
+    "root_cause": "Gap checker now rejects invalid JSON. Research mocks and default provider twin received no structured gap request and returned synthesis text or plan JSON.",
+    "before_local_reproduction": "tests/integration/test_research.py: 8 failed, 39 passed",
+    "repair_commit": "d36cc84",
+    "repair": "Request topics object using existing LLM structured-output contract; strictly validate topics; retain legacy raw arrays; supply stage-valid mock responses without changing test assertions.",
+    "protected_evaluator_or_fixture_edits": false,
+    "focused_verification": "115 passed including real-client/default-twin contract",
+    "broad_answer_eval": "11 pass, 1 intentional negative; pinned broad baseline matches"
+  },
+  "compose_twin_manifest": {
+    "artifact_id": 12743410001,
+    "outcome": {
+      "result": "failure",
+      "failure_source": "implementation",
+      "test_outcome": "failure",
+      "failure_detail": "unavailable",
+      "started_at": "2026-10-27T14:39:21.432562+00:00",
+      "finished_at": "2026-10-27T14:39:23.878790+00:00"
+    },
+    "interpretation": "Records implementation test failure; no independent JSON-schema failure identified."
+  },
+  "research_runtime": {
+    "job": 122237996428,
+    "outcome": "cancelled_during_image_build",
+    "cancellation_utc": "2026-10-27T14:11:46Z",
+    "assertion_failures_from_tests": null,
+    "subsequent_manifest_failure": "Images absent after canceled build; secondary diagnostic failure.",
+    "cancellation_cause": "unknown; no manual cancel, retry, preemption or settings change performed by this task"
+  },
+  "new_head_compose_verification": "pending normal CI for repaired code, not claimed green"
+}

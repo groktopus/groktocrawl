@@ -1,0 +1,97 @@
+{
+  "schema_version": "w12.4-first-screen-handoff/1",
+  "readiness": "not_ready_for_questions_or_live_dispatch",
+  "upstream": "groktopus/groktocrawl",
+  "baseline_commit": "8df43e5dbe029a888a2007d9dcf0baf4869657dc",
+  "correctness_commit": "d36cc84",
+  "budget_adapter_commit": "c46678f",
+  "artifact_sha256": {
+    "budget_adapter": "417dcddb58a3dbc5e846236b2085df11b03d0084259779f5f08186d7f354412a",
+    "budget_tests": "4273f099e80c0ae39f5870c6ad95866bcb117ec77d4ee5eebadffdb39d1ed9d3",
+    "current_route": "8ab09f6ef86d4d5e7395d079f18eb89cd20ee8709c6bd01f7113b24e919acdbb",
+    "current_gaps": "d8b7705d029c3e4d0fbbe984d1d48be7d97d1b36700c3db91db1bd9495e6b111",
+    "existing_replay_policy": "9d4d2c02ee774a6cb2a54dc8e41a96836891e14cbb02dd93964c7ed394639b53"
+  },
+  "cases": 2,
+  "arms": [
+    "current_route",
+    "fixed_diagnostic_control",
+    "obligation_bounded"
+  ],
+  "repetitions": 1,
+  "max_attempts": 6,
+  "caps": {
+    "search_http_dispatches": 12,
+    "acquisition_http_dispatches": 24,
+    "model_http_dispatches": 18,
+    "total_service_http_dispatches": 54,
+    "requested_output_token_reservations": 4608,
+    "model_input_utf8_bytes": 216000,
+    "per_request_seconds": 15,
+    "per_attempt_seconds": 45,
+    "experiment_wall_seconds": 300,
+    "new_paid_service_spend_usd": 0
+  },
+  "accounting_scope": "service_http_boundary; total provider/search/fetch cost incomplete",
+  "model": {
+    "alias": "free",
+    "resolved_target": "openai/ornith/ornith-1.5-122b:free",
+    "temperature": 0.3,
+    "request_scoped_max_tokens": 256,
+    "request_scoped_num_retries": 0,
+    "request_scoped_max_retries": 0,
+    "request_scoped_disable_fallbacks": true,
+    "provider_attempt_count_verified": false
+  },
+  "blocked_source_sha256": [
+    "39f88574788ea664ec0de2a973cdea83e5c6cdc74a88e85d0222eae9792fdcec",
+    "68da66f4fb9230736a18588f2d6a0ace43a2dc790645cb66398d58970c5b0aa7",
+    "b1b13a12aee75c6ecc20fb910c724cdfd1e4d841add5e14d1dd4a2006727a9ad",
+    "8f8a36c6770dd5499495908626510f8c1c1942bd9498bb620a3ca4bb40439c24"
+  ],
+  "question_packet_schema": {
+    "schema_version": "w12.4-first-screen-queries/1",
+    "experiment_id": "parent-assigned-opaque-id",
+    "frozen_runner_sha256": "required complete runnable artifact hash before exposure",
+    "cases": [
+      {
+        "case_id": "opaque-1",
+        "question": "public question only"
+      },
+      {
+        "case_id": "opaque-2",
+        "question": "public question only"
+      }
+    ]
+  },
+  "question_packet_rules": [
+    "Exactly two unique case IDs; question strings at most 4096 characters.",
+    "No expected values, labels, source truth, evaluator code or rubric paths.",
+    "No candidate edits after question exposure until parent grading is formally closed.",
+    "Question exposure must not be used to tune the adapter or replace failed cases."
+  ],
+  "readiness_blockers": [
+    "Independent review of budget adapter and exact isolated-client installation.",
+    "Frozen runnable three-arm implementation; existing W12.4 replay is not a live obligation adapter.",
+    "Verified backend retry/fanout/cancellation accounting; provider format-retry loop remains opaque.",
+    "Parent verification of evaluator isolation and private source/label retention."
+  ],
+  "runner_ci": {
+    "repo_local_registered_runners": 0,
+    "repo_local_count_is_not_org_capacity": true,
+    "parent_identified_org_runner": "saru-groktopus-3",
+    "running_earlier_pilot_run": null,
+    "running_head": "3b761fa8daed7dd2b99856e1470dab3ae05659e0",
+    "job_id": 122238017268,
+    "observed_step": "Run integration tests",
+    "no_cancel_or_preemption": true,
+    "terminal_earlier_pilot_run": 40518326740,
+    "terminal_job_id": 122238017268,
+    "terminal_result": "14 integration failures caused by invalid gap-stage fixture responses; locally reproduced and repaired at d36cc84",
+    "cancelled_research_runtime_job": 122237996428,
+    "cancellation_reason": "unknown; canceled during image build, before tests",
+    "retry_policy": "new code revision only; no manual blind rerun"
+  },
+  "correctness_parent_commit": "626b01acb4ab38a5024f32513dd6eac221632ab5",
+  "budget_adapter_parent_commit": "80164b6"
+}

@@ -188,6 +188,42 @@ def _digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _running_container_image(service: str) -> str:
+    """Resolve the actual running image, independently of mutable image tags."""
+    container_ids = subprocess.check_output(
+        ["docker", "compose", "ps", "--status", "running", "-q", service],
+        text=True,
+        timeout=15,
+    ).split()
+    if not container_ids:
+        raise ValueError("No running service container")
+    states = subprocess.check_output(
+        [
+            "docker",
+            "inspect",
+            "--format",
+            "{{.State.Running}} {{.Image}}",
+            *container_ids,
+        ],
+        text=True,
+        timeout=15,
+    ).splitlines()
+    if len(states) != len(container_ids):
+        raise ValueError("Container image receipt incomplete")
+    images = set()
+    for state in states:
+        parts = state.split()
+        if len(parts) != 2 or parts[0] != "true" or not parts[1].startswith("sha256:"):
+            raise ValueError("Running container image unavailable")
+        digest = parts[1][7:]
+        if len(digest) != 64 or any(c not in "0123456789abcdef" for c in digest):
+            raise ValueError("Container image digest malformed")
+        images.add(parts[1])
+    if len(images) != 1:
+        raise ValueError("Service replicas use different images")
+    return images.pop()
+
+
 def _image_records(execution_mode: str) -> list[dict[str, object]]:
     if execution_mode in {"hosted", "live"} and not os.environ.get(
         "TWIN_RECORD_IMAGES"
@@ -214,15 +250,17 @@ def _image_records(execution_mode: str) -> list[dict[str, object]]:
         image_id = "unavailable"
         repo_digest = None
         try:
-            service_id = subprocess.check_output(
-                ["docker", "compose", "images", "-q", name], text=True
-            ).strip()
-            if service_id:
-                reference = service_id
-            image_id = subprocess.check_output(
-                ["docker", "image", "inspect", "--format", "{{.Id}}", reference],
-                text=True,
-            ).strip()
+            if execution_mode == "compose":
+                # A service name is not an image reference. Capture the
+                # running container's immutable Image even when Compose's
+                # image/tag inventory cannot resolve that service.
+                reference = _running_container_image(name)
+                image_id = reference
+            else:
+                image_id = subprocess.check_output(
+                    ["docker", "image", "inspect", "--format", "{{.Id}}", reference],
+                    text=True,
+                ).strip()
             digests = subprocess.check_output(
                 [
                     "docker",
@@ -238,9 +276,10 @@ def _image_records(execution_mode: str) -> list[dict[str, object]]:
             repo_digest = parsed[0] if parsed else None
         except (
             OSError,
-            subprocess.CalledProcessError,
+            subprocess.SubprocessError,
             json.JSONDecodeError,
             IndexError,
+            ValueError,
         ):
             pass
         records.append(

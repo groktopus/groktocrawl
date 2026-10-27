@@ -1,15 +1,17 @@
 """Gap detection for research coverage analysis."""
 
 import json
-import logging
 import time
 
 from common.stage_metrics import observe_elapsed
 
-from ..llm import LLMClient
+from ..llm import LLMClient, ProviderOutputError
 from .evidence import build_evidence_async
 
-logger = logging.getLogger(__name__)
+
+class GapDetectionError(ProviderOutputError):
+    """The gap analyzer did not produce a valid coverage decision."""
+
 
 _GAP_SECONDS = "groktocrawl_research_gap_detection_seconds"
 _GAP_SECONDS_HELP = "Research gap-detection LLM call latency"
@@ -31,7 +33,7 @@ async def _detect_gaps(
     started = time.monotonic()
     try:
         if not combined_context:
-            return []
+            raise GapDetectionError("Gap detection requires nonempty evidence")
 
         query_context = (
             f'Original research query: "{original_query}"\n\n' if original_query else ""
@@ -45,23 +47,49 @@ async def _detect_gaps(
             f"{query_context}Analyze the following research context and identify specific topics, "
             "angles, or aspects of the original query that are NOT adequately covered "
             "by the gathered sources. Focus on what's missing or thin, not what's present. "
-            "Return a JSON array of topic strings (max 5) that would make good follow-up search queries. "
-            "Return [] if you're satisfied with coverage.\n\n"
+            "Return a JSON object with a topics array of strings (max 5) that would make good follow-up search queries. "
+            'Return {"topics": []} if you\'re satisfied with coverage.\n\n'
             f"Context:\n{selected['context']}"
         )
+        # Provider errors (including rate limits and cancellation) retain their
+        # existing contracts. They must never become an adequate-coverage vote.
+        result = await llm.generate(
+            system_prompt="You are a research gap analyzer.",
+            user_prompt=gap_check_prompt,
+            stage="gap_detection",
+            schema={
+                "type": "object",
+                "properties": {
+                    "topics": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "maxItems": 5,
+                    }
+                },
+                "required": ["topics"],
+                "additionalProperties": False,
+            },
+        )
         try:
-            result = await llm.generate(
-                system_prompt="You are a research gap analyzer.",
-                user_prompt=gap_check_prompt,
-                stage="gap_detection",
-            )
             cleaned = result.strip().removeprefix("```json").removesuffix("```").strip()
             gaps = json.loads(cleaned)
-            if isinstance(gaps, list) and len(gaps) <= 5:
-                return [g for g in gaps if isinstance(g, str)]
-            return []
-        except (json.JSONDecodeError, Exception) as e:
-            logger.warning("Gap detection failed: %s", e)
-            return []
+            if isinstance(gaps, dict):
+                if set(gaps) != {"topics"}:
+                    raise GapDetectionError(
+                        "Gap detection returned an invalid topic object"
+                    )
+                gaps = gaps["topics"]
+            # Retain compatibility with providers returning the former raw array.
+
+        except (json.JSONDecodeError, AttributeError) as exc:
+            raise GapDetectionError("Gap detection returned invalid JSON") from exc
+        if (
+            not isinstance(gaps, list)
+            or len(gaps) > 5
+            or any(not isinstance(gap, str) or not gap.strip() for gap in gaps)
+        ):
+            raise GapDetectionError("Gap detection returned an invalid topic list")
+        return [gap.strip() for gap in gaps]
+
     finally:
         observe_elapsed(_GAP_SECONDS, _GAP_SECONDS_HELP, {}, started)
