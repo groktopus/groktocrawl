@@ -30,6 +30,61 @@ from .session_store import SessionStore
 
 logger = logging.getLogger(__name__)
 
+
+def _session_scrape_diagnostic(
+    url: str, result: dict | None = None, *, exception: Exception | None = None
+) -> dict:
+    """Bounded failure metadata; never log source URLs or upstream prose."""
+    result = result or {}
+    data = result.get("data") or {}
+    if not isinstance(data, dict):
+        data = {}
+    error = result.get("error")
+    nested = error if isinstance(error, dict) else {}
+    code = result.get("error_code") or nested.get("code")
+    allowed_codes = {
+        "CAPACITY_EXCEEDED",
+        "CAPTCHA_UNRESOLVED",
+        "BARRIER_DETECTED",
+        "PRIVATE_URL_BLOCKED",
+        "SOURCE_DESTINATION_VALIDATION_UNAVAILABLE",
+        "UPSTREAM_ERROR",
+        "BROWSER_ERROR",
+        "SCRAPE_FAILED",
+        "TIMEOUT",
+    }
+    status = result.get("status_code", nested.get("status_code"))
+    quality = data.get("quality")
+    checks = quality.get("checks") if isinstance(quality, dict) else None
+    block = checks.get("block_detected") if isinstance(checks, dict) else None
+    return {
+        "source_sha256": hashlib.sha256(url.encode()).hexdigest(),
+        "stage": "exception" if exception is not None else "client_result",
+        "exception_kind": (
+            "timeout" if isinstance(exception, TimeoutError) else "other"
+        )
+        if exception is not None
+        else None,
+        "success": result.get("success") is True,
+        "markdown_present": bool(data.get("markdown")),
+        "warning_present": bool(result.get("warning")),
+        "block_detected": block
+        if isinstance(block, str) and block in {"pass", "warn", "fail"}
+        else "unknown",
+        "error_code": code
+        if isinstance(code, str) and code in allowed_codes
+        else "other"
+        if code
+        else None,
+        "status_code": status
+        if isinstance(status, int)
+        and not isinstance(status, bool)
+        and 100 <= status <= 599
+        else None,
+        "error_present": bool(error),
+    }
+
+
 # ── Session query system prompt ────────────────────────────────
 
 SESSION_QUERY_SYSTEM_PROMPT = """You are GroktoCrawl, a session-aware research agent. Your
@@ -667,11 +722,21 @@ class SessionManager:
                                 "source": result["data"].get("source", "unknown"),
                                 "char_count": len(result["data"]["markdown"]),
                             }
-                        if result.get("success") and is_barrier_flagged(result):
-                            log_refusal(url, result)
+                        logger.warning(
+                            "Session scrape yielded no usable ref: %s",
+                            json.dumps(
+                                _session_scrape_diagnostic(url, result), sort_keys=True
+                            ),
+                        )
                         return None
                     except Exception as e:
-                        logger.warning("Scrape failed for %s: %s", url, e)
+                        logger.warning(
+                            "Session scrape failed: %s",
+                            json.dumps(
+                                _session_scrape_diagnostic(url, exception=e),
+                                sort_keys=True,
+                            ),
+                        )
                         return None
 
             tasks = [_scrape_one(url) for url in urls]
