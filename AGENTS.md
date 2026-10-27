@@ -33,7 +33,7 @@ groktocrawl/
 ├── scraper-svc/        # URL → markdown service
 │   └── scraper/
 │       ├── app.py      # FastAPI, single /scrape endpoint
-│       ├── fetch.py    # Three-tier fetch strategy (+ adapter dispatch)
+│       ├── fetch.py    # Multi-tier fetch/recovery orchestration (+ adapters)
 │       ├── extract.py  # HTML → markdown conversion + content quality gates (ADR-0016)
 │       └── adapters/   # Site-specific content handlers (auto-registered)
 ├── llm-svc/            # LLM fixture for local testing
@@ -70,20 +70,34 @@ in `docs/runbooks/research-memory-pgvector.md` before selecting PostgreSQL.
 The semantic page index's `VECTOR_STORE_MODE` is separate; `pgvector_only`
 means the page-index service has no Qdrant runtime dependency.
 
-### Three-tier smart scraper
+### Multi-tier smart scraper
 
-Tier 1: Check `/llms.txt` at the site root (one GET, whole site in markdown)
-Tier 2: Request with `Accept: text/markdown` header (per-page markdown)
-Tier 3: Playwright render + readability extraction
+Treat `scraper-svc/scraper/fetch.py:smart_scrape()` as the current orchestration
+source. Adapters run before the normal pipeline; cache, binary-content handling,
+quality gates and politeness also affect dispatch. The normal path includes
+llms.txt, content negotiation, Playwright, FlareSolverr and LLM-assisted recovery,
+with a conditional Substack browser-service fallback and best-effort outcomes.
+`force_browser` takes a different path; `lightweight_only` stops before the
+browser tier. Barrier recovery is centralized and does not pass barriers to
+LLM recovery in `fetch.py:_recover_from_barrier`. This is broader than the original
+three-tier description; do not assume every URL executes every stage.
 
-**Adapters run before tier 1.** When a URL matches a registered adapter, the adapter handles extraction with its own optimized fallback chain. If the adapter fails, the standard tier pipeline runs as normal. See `scraper-svc/scraper/adapters/base.py` for the adapter framework and `scraper-svc/scraper/adapters/` for available adapters.
+Read [ADR-0001](docs/adr/0001-adapter-registry-pre-pipeline-hook.md),
+[ADR-0010](docs/adr/0010-five-tier-scraper-with-llm-recovery.md),
+[ADR-0016](docs/adr/0016-extraction-quality-gates.md) and
+[ADR-0036](docs/adr/0036-split-scraper-fetch-modules.md), checking their statuses
+and current code. Available handlers live in `scraper-svc/scraper/adapters/`;
+avoid relying on a fixed adapter count.
 
-**Current adapter categories (22 total):**
-- **File/structured:** gutenberg (Project Gutenberg books as chapter-structured markdown), shopify (bypasses UCP content-negotiation trap on Shopify blog/content pages), youtube, bluesky, substack
-- **Code:** github (file/repo), github-social (issues/PRs/discussions/releases)
-- **Vulnerability/CVE:** nvd (NVD API, enriched), cveorg (MITRE CVE Program, authoritative)
-- **Security/threat intelligence:** abuseipdb, censys, crtsh, exploitdb, hibp, mitreattack, otx, shodan, virustotal, vulncheck
-- **Shared fallback:** `_helpers.py` provides `scrape_page()` for readability-lxml extraction, used by all security adapters
+### Research-loop changes
+
+Use the shared [Harness Engineering procedure](https://github.com/magnus919/agent-skills/blob/main/harness-engineering/references/verification-and-improvement.md)
+and [Agent Evals and Observability skill](https://github.com/magnus919/agent-skills/blob/main/agent-evals-and-observability/SKILL.md).
+For local installation, load their `SKILL.md` files from the installed skill root.
+Apply the repository-specific [ADR-0076 evaluation contract](docs/adr/0076-bound-research-loop-evaluation.md)
+for research-loop proposals, probes, composition and promotion, extending the
+existing answer evals and frozen experiment records it links. Its proposed
+status does not authorize runtime changes, experiments, release or deployment.
 
 ### LLM-agnostic
 
@@ -193,11 +207,14 @@ and no blocking (P1/P2) findings remain — do not iterate until the bot reports
 The workflow uses Nous Portal's `openai/gpt-6-luna` through `NOUS_API_KEY`. The Droid action's debug
 artifact upload is disabled because its `~/.factory` files can contain resolved provider credentials.
 
-**Merging to `main`:** gated by the `main review policy` ruleset (1 approving review + resolved review
-threads). Because the AI reviewer does not approve and human approval is often unavailable to automated
-agents, the maintainer (`magnus919`) is a configured bypass actor. Merge with:
-`gh pr merge <PR> --merge --delete-branch --admin`
-only after CI is green and review findings are addressed.
+**Merging to `main`:** the sole-maintainer `main review policy` requires a pull request
+and resolved review threads, with zero mandatory approving reviews and no separate
+last-push or unattributed-change approval requirement. GitHub cannot record an
+author's approval of their own PR; retain substantive self-review evidence instead.
+The separate `main required checks` ruleset still requires strict `Code Quality Gate`
+and `Runtime Gate` checks and prohibits force pushes and branch deletion. Merge
+normally only after applicable checks pass and review findings are addressed;
+do not treat this policy as permission to bypass checks or merge without user authority.
 
 ## Making Changes
 
@@ -220,7 +237,10 @@ See `.env.sample` for all configurable variables. The `.env` file is loaded by `
 
 ## graphify
 
-This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+A local knowledge graph may be available at graphify-out/ with god nodes, community
+structure, and cross-file relationships. If its report or graph is absent, state
+that limitation and use current source and ADRs; do not assert unavailable
+artifacts were read.
 
 When the user types `/graphify`, invoke the `skill` tool with `skill: "graphify"` before doing anything else.
 

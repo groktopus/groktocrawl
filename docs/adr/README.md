@@ -105,4 +105,6 @@ An Architecture Decision Record captures an important architectural decision mad
 
 | 0075 | [Retain known model output-limit failures](0075-retain-known-model-output-limit-receipts.md) | accepted |
 
+| 0076 | [Bound Research-Loop Evaluation Before Promotion](0076-bound-research-loop-evaluation.md) | proposed |
+
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full ADR workflow: when to write an ADR, how to number it, and how to get it reviewed in a PR. Experimental records are linked from the provenance archive, not included in the mainline sequence.
