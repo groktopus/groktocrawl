@@ -18,8 +18,11 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
+from urllib.parse import unquote, urlsplit, urlunsplit
 
 import httpx
+
+from ..research.sources import normalize_source_url
 
 Kind = Literal["search", "acquire", "model"]
 
@@ -27,7 +30,7 @@ _SCREENING_MAXIMA = {
     "attempts": 6,
     "search_per_attempt": 2,
     "acquire_per_attempt": 4,
-    "model_per_attempt": 3,
+    "model_per_attempt": 4,
     "output_tokens_per_dispatch": 256,
     "model_input_bytes_per_dispatch": 12000,
     "response_bytes_per_dispatch": 1024 * 1024,
@@ -35,6 +38,17 @@ _SCREENING_MAXIMA = {
     "attempt_seconds": 45,
     "experiment_seconds": 300,
 }
+
+
+def unresolved_source_key(url: str) -> str:
+    """Conservative exclusion only; never a positive evidence identity.
+
+    Queries, fragments and trailing slashes may be retry aliases for these known
+    unresolved pages. Reject aliases rather than risk repeating their acquisition.
+    """
+    parsed = urlsplit(normalize_source_url(url))
+    path = unquote(parsed.path).rstrip("/") or "/"
+    return urlunsplit((parsed.scheme, parsed.netloc, path, "", ""))
 
 
 class CalibrationStoppedError(RuntimeError):
@@ -48,7 +62,7 @@ class ScreeningCaps:
     attempts: int = 6
     search_per_attempt: int = 2
     acquire_per_attempt: int = 4
-    model_per_attempt: int = 3
+    model_per_attempt: int = 4
     output_tokens_per_dispatch: int = 256
     model_input_bytes_per_dispatch: int = 12000
     response_bytes_per_dispatch: int = 1024 * 1024
@@ -232,6 +246,11 @@ def inspect_journal(path: Path) -> dict[str, Any]:
     }
 
 
+def _consume_cleanup_result(task: asyncio.Task) -> None:
+    if not task.cancelled():
+        task.exception()
+
+
 class BudgetedTransport(httpx.AsyncBaseTransport):
     """Count every actual HTTP send, including any caller retries.
 
@@ -277,7 +296,9 @@ class BudgetedTransport(httpx.AsyncBaseTransport):
             self.ledger._stop("invalid_request_shape")
         if self.kind == "acquire":
             if (
-                hashlib.sha256(str(body.get("url", "")).encode()).hexdigest()
+                hashlib.sha256(
+                    unresolved_source_key(str(body.get("url", ""))).encode()
+                ).hexdigest()
                 in self.blocked_source_sha256
             ):
                 self.ledger._stop("unresolved_previous_source_operation")
@@ -304,6 +325,7 @@ class BudgetedTransport(httpx.AsyncBaseTransport):
             "num_retries",
             "max_retries",
             "disable_fallbacks",
+            "model_group_retry_policy",
         }:
             self.ledger._stop("unsupported_model_request_options")
         if body.get("temperature", 0.3) != 0.3:
@@ -324,6 +346,7 @@ class BudgetedTransport(httpx.AsyncBaseTransport):
         body["num_retries"] = 0
         body["max_retries"] = 0
         body["disable_fallbacks"] = True
+        body["model_group_retry_policy"] = {}
         encoded = json.dumps(body, ensure_ascii=False, separators=(",", ":")).encode()
         if len(encoded) > self.ledger.caps.model_input_bytes_per_dispatch:
             self.ledger._stop("model_input_byte_cap")
@@ -340,7 +363,9 @@ class BudgetedTransport(httpx.AsyncBaseTransport):
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
         bounded = self._bounded_request(request)
         operation_id = self.ledger.reserve(self.kind, bounded)
+        bounded.headers["X-W12-Operation-ID"] = operation_id
         response: httpx.Response | None = None
+        deadline = asyncio.get_running_loop().time() + self.ledger.remaining_seconds()
         try:
             async with asyncio.timeout(self.ledger.remaining_seconds()):
                 response = await self.inner.handle_async_request(bounded)
@@ -358,7 +383,14 @@ class BudgetedTransport(httpx.AsyncBaseTransport):
         finally:
             if response is not None:
                 try:
-                    await response.aclose()
+                    close_task = asyncio.create_task(response.aclose())
+                    remaining = max(0.0, deadline - asyncio.get_running_loop().time())
+                    done, _ = await asyncio.wait({close_task}, timeout=remaining)
+                    if not done:
+                        close_task.cancel()
+                        close_task.add_done_callback(_consume_cleanup_result)
+                        raise CalibrationStoppedError("response_cleanup_deadline")
+                    close_task.result()
                 except BaseException as exc:
                     if self.ledger.halted is None:
                         self.ledger.unknown(

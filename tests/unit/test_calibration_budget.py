@@ -14,6 +14,7 @@ from agent.experimental.calibration_budget import (
     ExclusiveJournal,
     ScreeningCaps,
     inspect_journal,
+    unresolved_source_key,
 )
 
 MODEL = "https://configured-gateway.example/v1/chat/completions"
@@ -57,7 +58,7 @@ async def test_reservation_is_journaled_before_send_and_bounds_are_request_local
 
     transport = BudgetedTransport(book, "model", MODEL, httpx.MockTransport(send))
     async with httpx.AsyncClient(transport=transport) as client:
-        for _ in range(3):
+        for _ in range(4):
             response = await client.post(
                 MODEL,
                 json=model_request(),
@@ -66,14 +67,14 @@ async def test_reservation_is_journaled_before_send_and_bounds_are_request_local
             assert response.json()["usage"]["completion_tokens"] == 4
         with pytest.raises(CalibrationStoppedError, match="model_cap"):
             await client.post(MODEL, json=model_request())
-    assert len(seen) == 3 and all(x["max_tokens"] == 256 for x in seen)
+    assert len(seen) == 4 and all(x["max_tokens"] == 256 for x in seen)
     assert all(
         x["num_retries"] == x["max_retries"] == 0 and x["disable_fallbacks"] is True
         for x in seen
     )
     assert "DO-NOT-LOG" not in json.dumps(log)
     assert "public question" not in json.dumps(log)
-    assert sum(x.get("output_token_reservation", 0) for x in log) == 768
+    assert sum(x.get("output_token_reservation", 0) for x in log) == 1024
 
 
 @pytest.mark.asyncio
@@ -181,7 +182,9 @@ async def test_unbounded_acquisition_is_rejected_before_dispatch(body):
 async def test_previous_unresolved_source_cannot_be_replayed():
     book, _ = ledger()
     source = "https://public.example/unresolved"
-    hashes = frozenset({hashlib.sha256(source.encode()).hexdigest()})
+    hashes = frozenset(
+        {hashlib.sha256(unresolved_source_key(source).encode()).hexdigest()}
+    )
     transport = BudgetedTransport(
         book,
         "acquire",
@@ -399,11 +402,11 @@ async def test_six_attempts_cannot_exceed_global_token_reservation():
             ),
         )
         async with httpx.AsyncClient(transport=transport) as client:
-            for _ in range(3):
+            for _ in range(4):
                 await client.post(MODEL, json=model_request())
         book.finish_attempt("completed")
-    assert sum(x.get("output_token_reservation", 0) for x in log) == 4608
-    assert len([x for x in log if x["state"] == "dispatch_reserved"]) == 18
+    assert sum(x.get("output_token_reservation", 0) for x in log) == 6144
+    assert len([x for x in log if x["state"] == "dispatch_reserved"]) == 24
     with pytest.raises(CalibrationStoppedError):
         book.start_attempt("more")
 
@@ -461,7 +464,7 @@ async def test_other_dispatch_caps_are_enforced_before_send(kind, cap):
     "override",
     [
         {"attempts": 7},
-        {"model_per_attempt": 4},
+        {"model_per_attempt": 5},
         {"output_tokens_per_dispatch": 257},
         {"experiment_seconds": 301},
         {"request_seconds": float("nan")},
@@ -553,3 +556,58 @@ async def test_close_failure_cannot_leave_dispatch_unlatched():
         with pytest.raises(CalibrationStoppedError, match="outcome_unknown"):
             await client.post(MODEL, json=model_request())
     assert log[-1]["state"] == "outcome_unknown"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "variant",
+    [
+        "https://public.example/unresolved#section",
+        "https://PUBLIC.EXAMPLE:443/unresolved",
+    ],
+)
+async def test_canonical_unresolved_resource_variants_never_dispatch(variant):
+    book, _ = ledger()
+    blocked = frozenset(
+        {
+            hashlib.sha256(
+                unresolved_source_key("https://public.example/unresolved").encode()
+            ).hexdigest()
+        }
+    )
+    transport = BudgetedTransport(
+        book,
+        "acquire",
+        SCRAPE,
+        httpx.MockTransport(lambda r: pytest.fail("equivalent resource must not send")),
+        blocked_source_sha256=blocked,
+    )
+    async with httpx.AsyncClient(transport=transport) as client:
+        with pytest.raises(CalibrationStoppedError, match="unresolved_previous"):
+            await client.post(SCRAPE, json={"url": variant, "lightweight_only": True})
+
+
+@pytest.mark.asyncio
+async def test_hanging_cleanup_respects_original_request_deadline():
+    book, _ = ledger(caps=ScreeningCaps(request_seconds=0.01))
+
+    class BrokenStream(httpx.AsyncByteStream):
+        async def __aiter__(self):
+            raise httpx.ReadError("stream interrupted")
+            yield b""
+
+        async def aclose(self):
+            await asyncio.Event().wait()
+
+    transport = BudgetedTransport(
+        book,
+        "model",
+        MODEL,
+        httpx.MockTransport(
+            lambda r: httpx.Response(200, stream=BrokenStream(), headers=RECEIPTS)
+        ),
+    )
+    async with httpx.AsyncClient(transport=transport) as client:
+        with pytest.raises(CalibrationStoppedError, match="response_cleanup_deadline"):
+            await asyncio.wait_for(client.post(MODEL, json=model_request()), 0.1)
+    assert book.halted == "outcome_unknown"
