@@ -39,6 +39,7 @@ RUNTIME_FILES = tuple(
         + [
             "scripts/run_w12_live_screen.py",
             "scripts/w12_calibration_worker.py",
+            "scripts/w12_router_worker.py",
             "pyproject.toml",
             "agent-svc/pyproject.toml",
             "uv.lock",
@@ -70,7 +71,7 @@ def validate_admission(value: dict, hashes: dict[str, str]) -> None:
     if any(value.get(key) is not True for key in required):
         raise ValueError("parent admission is not complete; do not load questions")
     if (
-        value.get("schema_version") != "w12.4-first-screen-admission/2"
+        value.get("schema_version") != "w12.4-first-screen-admission/3"
         or value.get("runtime_files") != hashes
         or value.get("bundle_sha256") != bundle_hash(hashes)
     ):
@@ -124,10 +125,22 @@ def validate_backends(values: dict) -> None:
         or source["environment_proxy_configured"]
     ):
         raise ValueError("origin-coordination accounting needs a new reviewed freeze")
-    if gateway["drop_params"]:
+    if (
+        gateway.get("isolated_mode") != "router_process"
+        or gateway.get("effective_drop_params") is not False
+    ):
         raise ValueError(
             "gateway format-repair may remove max_tokens; live admission blocked"
         )
+    if (
+        gateway.get("policy_http_per_model") != 1
+        or gateway.get("provider_http_per_model") != 1
+        or gateway.get("model_gateway_http_per_model") != 0
+        or gateway.get("concurrency_scope") != "process_local"
+        or not isinstance(gateway.get("policy_snapshot_sha256"), str)
+        or len(gateway["policy_snapshot_sha256"]) != 64
+    ):
+        raise ValueError("isolated policy accounting drift")
     if (
         gateway["free_models"] != ["openai/ornith/ornith-1.5-122b:free"]
         or gateway["retry_policy_configured"]
@@ -196,7 +209,8 @@ async def run(args) -> None:
             "scheduled_attempts": 6,
             "status": "started",
             "lower_call_ceiling": {
-                "model_gateway_http": 24,
+                "model_gateway_http": 0,
+                "policy_report_http": 24,
                 "model_provider_http": 24,
                 "search_service_http": 12,
                 "brave_api_http": 12,

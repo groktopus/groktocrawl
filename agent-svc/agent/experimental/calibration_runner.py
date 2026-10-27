@@ -48,13 +48,15 @@ class SSHBackend:
             raise ValueError("only the existing authorized host is supported")
         self.host = host
         self.worker_source = (root / "scripts/w12_calibration_worker.py").read_text()
-        self.budget_source = (
-            root / "agent-svc/agent/experimental/calibration_budget.py"
-        ).read_text()
+        self.router_source = (root / "scripts/w12_router_worker.py").read_text()
+        self._user_binding: str | None = None
+        self._key_fingerprint: str | None = None
+        self._router_freeze: dict[str, str] | None = None
         self.receipts: list[dict[str, Any]] = []
         self.receipt_sink: Callable[[dict[str, Any]], None] | None = None
         self.book: CalibrationLedger | None = None
         self._source_lock = asyncio.Lock()
+        self._model_lock = asyncio.Lock()
 
     async def _call(
         self,
@@ -83,19 +85,43 @@ class SSHBackend:
         if self.book is not None and self.book.halted:
             raise CalibrationStoppedError(self.book.halted)
         operation_id = operation_id or str(uuid.uuid4())
-        loader = "import sys,types,json;"
-        if kind == "model":
+        router_operation = kind == "model" or (kind == "describe" and role == "gateway")
+        loader = "import sys,types,json,os;os.environ['LITELLM_LOCAL_MODEL_COST_MAP']='True';"
+        if router_operation:
             loader += (
-                "import agent.experimental; m=types.ModuleType('agent.experimental.calibration_budget');sys.modules[m.__name__]=m;"
-                + f"exec(compile({self.budget_source!r},'<frozen-budget>','exec'),m.__dict__);"
+                "r=types.ModuleType('__pilot_router__');sys.modules[r.__name__]=r;"
+                + f"exec(compile({self.router_source!r},'<frozen-router>','exec'),r.__dict__);"
             )
+            container = "litellm-gateway"
         loader += (
             "n={'__name__':'__pilot_worker__'};"
             + f"exec(compile({self.worker_source!r},'<frozen-worker>','exec'),n);n['main']()"
         )
-        command = shlex.join(
-            ["docker", "exec", "-i", container, "python", "-c", loader]
-        )
+        argv = ["docker", "exec", "-i", container, "python", "-c", loader]
+        if router_operation:
+            # Original identity stays in server-side process memory and stdin pipes.
+            # No key is returned to the operator, written to disk or placed in argv.
+            identity_reader = (
+                "import json;from agent.settings import load_settings;"
+                "s=load_settings();"
+                "assert s.llm_model=='free' and not s.typesafe_api_key;"
+                "print(json.dumps({'key':s.llm_api_key}))"
+            )
+            wrapper = (
+                "import json,subprocess,sys;packet=json.load(sys.stdin);"
+                + f"identity=json.loads(subprocess.check_output({['docker', 'exec', 'groktocrawl-agent-svc-1', 'python', '-c', identity_reader]!r}));"
+                "packet['_client_key']=identity['key'];"
+                + f"p=subprocess.run({argv!r},input=json.dumps(packet).encode());sys.exit(p.returncode)"
+            )
+            command = shlex.join(["python3", "-c", wrapper])
+        else:
+            command = shlex.join(argv)
+        if kind == "model" and (
+            self._user_binding is None
+            or self._key_fingerprint is None
+            or self._router_freeze is None
+        ):
+            raise CalibrationStoppedError("policy preflight missing")
         process = await asyncio.create_subprocess_exec(
             "ssh",
             "-o",
@@ -114,6 +140,12 @@ class SSHBackend:
             "body": body,
             "role": role,
         }
+        if kind == "model":
+            packet.update(
+                _user_binding=self._user_binding,
+                _original_key_fingerprint=self._key_fingerprint,
+                _router_freeze=self._router_freeze,
+            )
         try:
             assert (
                 process.stdin is not None
@@ -149,14 +181,42 @@ class SSHBackend:
             if process.returncode or len(frames) != 1:
                 raise CalibrationStoppedError("worker receipt unavailable")
             receipt = json.loads(frames[0])
+            if receipt.get("operation_id") != operation_id:
+                raise CalibrationStoppedError("worker operation identity mismatch")
             if (
-                receipt.get("operation_id") != operation_id
-                or receipt.get("state") != "terminal"
+                kind == "describe"
+                and role == "gateway"
+                and isinstance(receipt.get("result"), dict)
             ):
-                raise CalibrationStoppedError("worker outcome unknown")
+                result = receipt["result"]
+                private_binding = result.pop("_private_user_binding", None)
+                private_key_fingerprint = result.pop("_private_key_fingerprint", None)
+                if receipt.get("state") == "terminal":
+                    if (
+                        not isinstance(private_binding, str)
+                        or not isinstance(private_key_fingerprint, str)
+                        or len(private_key_fingerprint) != 64
+                    ):
+                        raise CalibrationStoppedError(
+                            "private identity preflight missing"
+                        )
+                    self._user_binding, self._key_fingerprint = (
+                        private_binding,
+                        private_key_fingerprint,
+                    )
+                    self._router_freeze = {
+                        name: result[name]
+                        for name in ("config_sha256", "policy_snapshot_sha256")
+                    }
             if self.receipt_sink is not None:
                 self.receipt_sink(receipt)
             self.receipts.append(receipt)
+            if kind == "model" and receipt.get("state") == "failed":
+                return receipt["result"]
+            if receipt.get("state") != "terminal":
+                raise CalibrationStoppedError(
+                    f"worker outcome unknown: {receipt.get('error_type')} {receipt.get('refusal_reason') or ''}"
+                )
             return receipt["result"]
         except BaseException:
             if process.returncode is None:
@@ -172,6 +232,11 @@ class SSHBackend:
         role: str | None = None,
         operation_id: str | None = None,
     ) -> dict[str, Any]:
+        if kind == "model":
+            async with self._model_lock:
+                return await self._call(
+                    kind, body, role=role, operation_id=operation_id
+                )
         if kind == "acquire":
             async with self._source_lock:
                 return await self._call(

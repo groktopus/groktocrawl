@@ -30,7 +30,14 @@ def descriptors():
             "environment_proxy_configured": False,
         },
         "gateway": {
-            "drop_params": False,
+            "drop_params": True,
+            "isolated_mode": "router_process",
+            "effective_drop_params": False,
+            "policy_http_per_model": 1,
+            "provider_http_per_model": 1,
+            "model_gateway_http_per_model": 0,
+            "concurrency_scope": "process_local",
+            "policy_snapshot_sha256": "a" * 64,
             "free_models": ["openai/ornith/ornith-1.5-122b:free"],
             "retry_policy_configured": False,
             "callbacks_observability_only": True,
@@ -44,7 +51,7 @@ def admission():
     hashes = cli.artifact_hashes()
     digest = cli.bundle_hash(hashes)
     return {
-        "schema_version": "w12.4-first-screen-admission/2",
+        "schema_version": "w12.4-first-screen-admission/3",
         "owner_authorized_live_dispatch": True,
         "independent_review_no_open_p1_p2": True,
         "evaluator_isolation_confirmed": True,
@@ -62,7 +69,7 @@ def admission():
 def test_gateway_cap_dropping_is_a_hard_admission_failure():
     values = descriptors()
     cli.validate_backends(values)
-    values["gateway"]["drop_params"] = True
+    values["gateway"]["effective_drop_params"] = True
     with pytest.raises(ValueError, match="may remove max_tokens"):
         cli.validate_backends(values)
 
@@ -70,7 +77,7 @@ def test_gateway_cap_dropping_is_a_hard_admission_failure():
 @pytest.mark.asyncio
 async def test_bad_backend_never_opens_question_packet(monkeypatch, tmp_path):
     values = descriptors()
-    values["gateway"]["drop_params"] = True
+    values["gateway"]["effective_drop_params"] = True
 
     class DescribeOnly:
         def __init__(self, *args):

@@ -211,3 +211,78 @@ def test_question_packet_rejects_labels_extra_cases_and_duplicates(change):
     change(value)
     with pytest.raises(ValueError):
         validate_questions(value)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("unknown", [True, False])
+async def test_worker_receipts_are_retained_and_private_binding_is_not_exported(
+    monkeypatch, unknown
+):
+    from pathlib import Path
+    from types import SimpleNamespace
+
+    from agent.experimental.calibration_budget import CalibrationStoppedError
+    from agent.experimental.calibration_runner import SSHBackend
+
+    packet = {}
+    state = SimpleNamespace(returncode=None)
+
+    class Writer:
+        def write(self, data):
+            packet.update(json.loads(data))
+
+        async def drain(self):
+            pass
+
+        def close(self):
+            pass
+
+    class Reader:
+        def __init__(self, stderr=False):
+            self.sent, self.stderr = False, stderr
+
+        async def read(self, limit):
+            if self.sent or self.stderr:
+                return b""
+            self.sent = True
+            receipt = {
+                "operation_id": packet["operation_id"],
+                "state": "outcome_unknown" if unknown else "terminal",
+                "events": [{"state": "reserved"}],
+                "result": {
+                    "_private_user_binding": "private-binding",
+                    "_private_key_fingerprint": "c" * 64,
+                    "config_sha256": "a" * 64,
+                    "policy_snapshot_sha256": "b" * 64,
+                },
+            }
+            return b"W12_RECEIPT:" + json.dumps(receipt).encode() + b"\n"
+
+    async def wait():
+        state.returncode = 0
+
+    state.stdin, state.stdout, state.stderr, state.wait = (
+        Writer(),
+        Reader(),
+        Reader(True),
+        wait,
+    )
+
+    async def create(*args, **kwargs):
+        return state
+
+    monkeypatch.setattr("asyncio.create_subprocess_exec", create)
+    backend = SSHBackend(Path(__file__).resolve().parents[2])
+    retained = []
+    backend.receipt_sink = retained.append
+    if unknown:
+        with pytest.raises(CalibrationStoppedError, match="worker outcome unknown"):
+            await backend.call("describe", {}, role="gateway")
+        assert retained[0]["state"] == "outcome_unknown"
+        assert "private-binding" not in json.dumps(retained)
+        assert "c" * 64 not in json.dumps(retained)
+    else:
+        result = await backend.call("describe", {}, role="gateway")
+        assert "private-binding" not in json.dumps(result)
+        assert "private-binding" not in json.dumps(retained)
+        assert backend._user_binding == "private-binding"

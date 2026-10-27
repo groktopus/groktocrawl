@@ -523,15 +523,27 @@ async def acquire(body: dict[str, Any]) -> dict[str, Any]:
 async def operation(packet: dict[str, Any]) -> dict[str, Any]:
     kind = packet["kind"]
     if kind == "describe":
-        return describe(packet["role"])
+        result = describe(packet["role"])
+        if packet["role"] == "gateway":
+            import __pilot_router__
+
+            result.update(await __pilot_router__.describe_policy(packet["_client_key"]))
+        return result
+    if kind == "model":
+        import __pilot_router__
+
+        return await __pilot_router__.run_model(packet)
     if kind == "acquire":
         return await acquire(packet["body"])
     return await service_request(kind, packet["body"])
 
 
 def main() -> None:
+    import signal
     import sys
 
+    signal.signal(signal.SIGALRM, lambda *_: os._exit(124))
+    signal.alarm(15)  # This detached worker only; no service process is changed.
     packet = json.load(sys.stdin)
     try:
         result = asyncio.run(asyncio.wait_for(operation(packet), 14))
@@ -541,10 +553,38 @@ def main() -> None:
             "result": result,
         }
     except BaseException as exc:
+        events = packet.get("_router_events", [])
+        known_router_failure = packet.get("kind") == "model" and (
+            (
+                bool(events)
+                and all(event.get("state") == "response_complete" for event in events)
+            )
+            or (not events and type(exc).__name__ == "PolicyRefusedError")
+        )
         output = {
             "operation_id": packet.get("operation_id"),
-            "state": "outcome_unknown",
+            "state": "failed" if known_router_failure else "outcome_unknown",
             "error_type": type(exc).__name__,
+            "refusal_reason": str(exc)
+            if type(exc).__name__ == "PolicyRefusedError"
+            else None,
+            "events": packet.get("_router_events", []),
         }
+        if known_router_failure:
+            output["result"] = {
+                "status_code": 502,
+                "body": {"error": {"type": type(exc).__name__}},
+                "headers": {
+                    "x-litellm-attempted-retries": "0",
+                    "x-litellm-attempted-fallbacks": "0",
+                },
+                "events": events,
+                "lower_call_upper": {
+                    "model_gateway_http": 0,
+                    "policy_http": 1,
+                    "model_provider_http": 1,
+                },
+            }
+    signal.alarm(0)
     sys.stdout.write("W12_RECEIPT:" + json.dumps(output) + "\n")
     sys.stdout.flush()
