@@ -593,8 +593,8 @@ async def test_hanging_cleanup_respects_original_request_deadline():
 
     class BrokenStream(httpx.AsyncByteStream):
         async def __aiter__(self):
-            raise httpx.ReadError("stream interrupted")
             yield b""
+            raise httpx.ReadError("stream interrupted")
 
         async def aclose(self):
             await asyncio.Event().wait()

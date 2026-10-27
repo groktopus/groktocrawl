@@ -101,6 +101,7 @@ async def check(status):
                 "model": "free",
                 "messages": [{"role": "user", "content": "synthetic probe"}],
                 "max_tokens": 8,
+                "drop_params": False,
                 "num_retries": 0,
                 "max_retries": 0,
                 "disable_fallbacks": True,
@@ -139,6 +140,7 @@ async def main():
                 "real_socket_connects_denied": blocked_connects,
                 "real_provider_calls": 0,
                 "drop_params": litellm.drop_params,
+                "request_drop_params": False,
                 "token_cap_removal_reproduced": any(
                     None in x["requested_token_caps"] for x in results
                 ),

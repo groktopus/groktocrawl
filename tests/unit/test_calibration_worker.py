@@ -83,8 +83,17 @@ async def test_failed_robots_refuses_page_without_fallback(monkeypatch, robots_s
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "origin",
+    [
+        "http://public.example",
+        "http://public.example:8080",
+        "https://public.example:8443",
+    ],
+)
 async def test_robots_disallow_is_enforced_even_if_deployed_manager_is_disabled(
     monkeypatch,
+    origin,
 ):
     from scraper import fetch, source_http
 
@@ -104,8 +113,23 @@ async def test_robots_disallow_is_enforced_even_if_deployed_manager_is_disabled(
             transport=httpx.MockTransport(respond), **kwargs
         ),
     )
-    result = await acquire(
-        {"url": "https://public.example/page", "blocked_source_sha256": []}
-    )
+    result = await acquire({"url": origin + "/page", "blocked_source_sha256": []})
+    assert sent == [origin + "/robots.txt"]
     assert result["success"] is False and result["error"] == "robots disallow"
     assert len(sent) == 1
+
+
+def test_actual_agent_routes_are_bound_without_disclosing_urls():
+    from types import SimpleNamespace
+
+    from scripts.w12_calibration_worker import agent_routes
+
+    settings = SimpleNamespace(
+        llm_base_url="https://gateway.example/v1", searxng_url="http://search.example"
+    )
+    before = agent_routes(settings)
+    settings.llm_base_url = "https://other.example/v1"
+    assert agent_routes(settings)["completion"] != before["completion"]
+    settings.searxng_url = "http://other-search.example"
+    assert agent_routes(settings)["search"] != before["search"]
+    assert all(len(value) == 64 for value in before.values())

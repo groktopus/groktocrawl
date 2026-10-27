@@ -51,6 +51,42 @@ def _hash_files(paths: list[str]) -> dict[str, str]:
     return {p: hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in paths}
 
 
+def agent_routes(settings: Any) -> dict[str, str]:
+    """Bind the actual caller endpoints and environment proxy routing, without disclosure."""
+    import httpx
+    from agent.llm import LLMClient
+
+    for value in (settings.llm_base_url, settings.searxng_url):
+        parsed = httpx.URL(value)
+        if parsed.username or parsed.password:
+            raise ValueError("embedded endpoint credentials refused")
+    model = LLMClient.__new__(LLMClient)
+    model.base_url = settings.llm_base_url
+    routes = {
+        "completion": model._completion_url(),
+        "search": f"{settings.searxng_url.rstrip('/')}/search",
+        "proxy_environment": json.dumps(
+            {
+                key: os.getenv(key, "")
+                for key in (
+                    "HTTP_PROXY",
+                    "HTTPS_PROXY",
+                    "ALL_PROXY",
+                    "NO_PROXY",
+                    "http_proxy",
+                    "https_proxy",
+                    "all_proxy",
+                    "no_proxy",
+                )
+            },
+            sort_keys=True,
+        ),
+    }
+    return {
+        key: hashlib.sha256(value.encode()).hexdigest() for key, value in routes.items()
+    }
+
+
 def describe(role: str) -> dict[str, Any]:
     if role == "search":
         from slopsearx.config import load_config
@@ -171,6 +207,7 @@ def describe(role: str) -> dict[str, Any]:
     s = load_settings()
     return {
         "role": "agent",
+        "route_sha256": agent_routes(s),
         "model": s.llm_model,
         "jev_enabled": bool(s.typesafe_api_key),
         "thinking": s.llm_enable_thinking,
@@ -376,7 +413,10 @@ async def acquire(body: dict[str, Any]) -> dict[str, Any]:
     manager = PolitenessManager()
     parsed = urlsplit(url)
     domain = manager._domain_from_url(url)
-    robots_url = f"https://{domain}/robots.txt"
+    parsed_origin = urlsplit(url)
+    robots_url = urlunsplit(
+        (parsed_origin.scheme, parsed_origin.netloc, "/robots.txt", "", "")
+    )
     try:
         status, robots_body, _ = await reads.get(robots_url, role="robots")
         counts["robots_http"] = 1
