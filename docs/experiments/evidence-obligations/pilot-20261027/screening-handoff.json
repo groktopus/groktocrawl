@@ -4,10 +4,10 @@
   "upstream": "groktopus/groktocrawl",
   "baseline_commit": "8df43e5dbe029a888a2007d9dcf0baf4869657dc",
   "correctness_commit": "d36cc84",
-  "budget_adapter_commit": "80164b6",
+  "budget_adapter_commit": "c46678f",
   "artifact_sha256": {
-    "budget_adapter": "490e95265c77578364ad2d8730c8a6b031b9305cf07f29bf043b7c7fc40737a4",
-    "budget_tests": "ceba800b1b76c2da5bd2d2a5cf09ecb3ddda1785fbf08d5128d9a674dc8fb707",
+    "budget_adapter": "417dcddb58a3dbc5e846236b2085df11b03d0084259779f5f08186d7f354412a",
+    "budget_tests": "4273f099e80c0ae39f5870c6ad95866bcb117ec77d4ee5eebadffdb39d1ed9d3",
     "current_route": "8ab09f6ef86d4d5e7395d079f18eb89cd20ee8709c6bd01f7113b24e919acdbb",
     "current_gaps": "d8b7705d029c3e4d0fbbe984d1d48be7d97d1b36700c3db91db1bd9495e6b111",
     "existing_replay_policy": "9d4d2c02ee774a6cb2a54dc8e41a96836891e14cbb02dd93964c7ed394639b53"
@@ -92,5 +92,6 @@
     "cancellation_reason": "unknown; canceled during image build, before tests",
     "retry_policy": "new code revision only; no manual blind rerun"
   },
-  "correctness_parent_commit": "626b01acb4ab38a5024f32513dd6eac221632ab5"
+  "correctness_parent_commit": "626b01acb4ab38a5024f32513dd6eac221632ab5",
+  "budget_adapter_parent_commit": "80164b6"
 }

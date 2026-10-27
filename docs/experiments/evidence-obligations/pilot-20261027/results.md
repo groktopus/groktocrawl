@@ -123,7 +123,7 @@ server-side outcome, any recovery/model work and total cost remain UNKNOWN. No
 repeat is authorized. Raw cache timestamps and container log timestamps are kept
 separately rather than silently normalized. See `capture-reconciliation.json`.
 
-The isolated budget boundary is committed at `80164b6`, with 37 targeted budget
+The isolated budget boundary is committed at `80164b6`, with 38 targeted budget
 tests and 87 combined regressions passed, plus Ruff/mypy. It is not deployed or
 imported by API routes. The first screen is now at most two cases x three arms x
 one repetition, 54 service HTTP dispatches, 4,608 requested output-token

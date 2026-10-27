@@ -117,7 +117,7 @@ not permission to relax acceptance criteria or manufacture a live winner.
 
 ## Checks completed
 
-37 budget-boundary tests exercise pre-send reservation, exclusive journal recovery,
+38 budget-boundary tests exercise pre-send reservation, exclusive journal recovery,
 concurrent oversubscription, timeouts, cancellation, missing usage/receipts,
 request-local caps, preserved proxy mounts, forbidden endpoint/model/format changes,
 previous unresolved-source refusal and the real upstream LLM client under fixtures.
@@ -131,5 +131,6 @@ correctness candidate. It uses the existing structured-output request contract f
 gap detection; no protected twin/evaluator/corpus file was changed. Its focused
 115-test selection and unchanged broad answer-eval baseline pass as documented
 in `ci-diagnosis.json`; Compose checks for the repaired head are still pending.
-The budget adapter remains frozen at `80164b6`. No parent questions were received
+The budget adapter follow-up is frozen at `c46678f` (parent `80164b6`),
+including the tested response-cleanup failure latch. No parent questions were received
 and no candidate was tuned on held-out inputs during this follow-up.
