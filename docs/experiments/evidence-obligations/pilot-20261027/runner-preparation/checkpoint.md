@@ -1,89 +1,94 @@
-# Runner preparation checkpoint
+# Reviewed isolated screening runner
 
-Candidate commit: `e75a884`. Reviewed runtime bundle SHA-256:
-`cd8bec802a5d3e52a250d3a20b9f6670e6a7a17b3ba3e58477236390a1797c82`.
-The manifest uses path/sha256 records; reconstruct admission runtime_files by path.
-The runner is implemented, not executed live. No parent questions/labels received.
+Runtime implementation commit: `abdebda` (plus diagnostic parent `a1913c3`).
+Reviewed runtime SHA-256: `347e422b1d879b395473b65b5b853be18b1ffc749e55e7ff6b0a00edc4f01298`.
+Canonical backend descriptor SHA-256: `a65890d9119708bf4c406a634f6baa3131aa03c82770c6ea166fa9d65a50a1f8`.
+Helper SHA-256: `45885f6d9ad453121306dd27d364b0dbaedb38134bac299a21eca4661a75b3a9`.
+Gateway config SHA-256: `38336145082680fb0a103de8f84628564e3f59ca4d8317f3d8af8f2557588a65`.
+Independent implementation review: no open P1/P2. 95 focused offline tests, Ruff,
+and five-module mypy pass. The installed-worker probe matches this exact helper:
+all synthetic 200/400/422/429/503 responses use one policy fixture read and one
+provider fixture request with cap256, temperature0.3 and existing attribution tag;
+zero real provider calls and zero real socket connection attempts. Normal-auth
+configuration/policy preflight succeeds. No heldout queries/labels received and no
+live screening dispatched. Earlier protocol/handoff blockers are superseded here.
 
-Completed: 69 focused runner/worker/budget/admission tests passed, Ruff passed,
-and mypy passed for four runtime modules. Installed search offline probe confirms
-one explicit Brave API request per search with no hidden specialist/suggestion
-calls in the inspected frozen configuration. The model proxy offline probe confirms
-explicit no-retry settings win key-style overrides, but global `drop_params=true`
-can remove `max_tokens` on a second 422 repair request: observed caps `[8, null]`.
-All provider responses were mocked and real socket connects denied. Zero real
-provider/source/search calls occurred during these probes.
+## Isolated execution and unchanged limits
 
-**Live admission is blocked.** `run_w12_live_screen.py` refuses this gateway before
-reading a question packet. There is no valid finite requested output-token ceiling
-on the currently configured repair path. Do not change production settings or route
-around authentication. An owner-reviewed isolated route that cannot drop the cap is
-needed before a new backend freeze can be admitted. A simple client timeout does
-not cancel already dispatched work. No uncertain operation was repeated.
+Each model RPC uses a detached Python Router process in the existing gateway
+container/image. It starts no proxy app, database client, listener or new identity.
+Provider credentials remain in existing configured server-side process environment.
+The original client key is used only through normal server authorization; no master
+credential is substituted. A preflight self-key/self-user report supplies a private
+binding and original-key fingerprint held only in operator memory, stripped before
+any descriptor/journal export. No credential file, authentication-table copy or
+new Docker resource is created. Each child exits after its RPC, with a 15-second
+hard process watchdog; SDK closure does not claim upstream cancellation.
 
-The three arms are `current_route` (upstream deep loop under the common restricted
-profile), `fixed_diagnostic_control` (upstream focused loop), and
-`obligation_bounded` (live W12.4-style named-fact continuation, existing admission
-predicate, exact quote provenance, provisional materiality/closure, first no-gain
-stop). Materiality remains a runtime proposal, not independent verification.
-All use one explicit existing Brave engine, 2 results per query, common model/
-sampler, 4k evidence context, and the same strict generic acquisition profile.
-The main scraper's protected-source mode is off; the worker preserves its existing
-public-destination guard and configured routing and adds mandatory fresh robots,
-no redirects/adapters/cache/browser/recovery. This is explicitly a modified common
-acquisition profile, not a claim about uncapped production performance. The lab
-scraper has different source provenance and was inspected read-only, not used.
+Before every provider dispatch, one existing self-user report freshly authenticates
+the original identity and correlates its current key record in memory. Both key and
+user model authorization and all recognized policy restrictions are checked. Unknown
+fields, changed identity/policy/configuration, expiry/revocation, a new applicable
+budget/rate/route restriction, failed verification or ambiguity stop before dispatch.
+Observed key/user budgets, TPM/RPM, expiry and other scope bindings are null/empty;
+free is explicitly allowed. The configured global parallel limit50 uses local_only
+cache operations; the pilot's model lock permits one concurrent operation. Its12k
+request-byte bound is stricter than configured64MiB. The free entry and provider
+route are preserved, including existing attribution. The child alone sets
+parameter-dropping false. It uses the installed local pricing map and disables
+library telemetry; proxy observability startup is absent and pilot journals retain
+usage/provenance. Production process/configuration remain unchanged.
 
-Conditional ceilings for an admissible no-cap-dropping backend: six attempts,
-12 search RPCs, 24 acquisition RPCs, 24 model RPCs (60 logical operations); at most
-12 Brave API HTTP calls, 48 source/robots GETs and 24 provider HTTP calls = 84
-Internet application HTTP requests, or 120 including model/search service requests.
-Token reservations: 6,144 requested output tokens, 288k serialized gateway input
-bytes, 45 seconds per attempt and 300 seconds hard process deadline. These are
-conditional proposed limits; they are NOT valid admission for today's gateway.
-TCP/TLS/DNS/observability packets are outside these application-dispatch counts.
-Actual total billing remains unknown, never zero by assumption.
+The final SDK transport verifies the merged model/cap/sampler/body/endpoint, bounds
+bytes and permits at most one actual provider request. Policy read1 replaces the
+former model-gateway HTTP request1, so each model RPC still costs at most2 HTTP
+operations including provider1. Ceilings stay six attempts (two cases, three arms,
+one repetition), 12 search RPCs,24 acquisitions,24 model RPCs:60 logical operations,
+120 total application HTTP /84 Internet HTTP,6144 requested output tokens,288k
+serialized model-input bytes,45 seconds per attempt and300 seconds per experiment.
+TCP/TLS/DNS and existing observability are outside application HTTP counts. Actual
+billing is not assumed zero. Unknown downstream outcomes globally stop further
+work and are not replayed. Known failed responses retain typed receipts. Failures
+and undispatched slots remain in the six-slot denominator.
 
-Exports are exclusive local JSONL artifacts: `run-manifest.jsonl` (six planned
-slots, bundle and budgets), `dispatches.jsonl` (fsynced intents before sending),
-`backend-receipts.jsonl` (incremental child receipts), `attempts.jsonl` (exact answer,
-source bodies/hashes/quote provenance and failures, grading parent-pending).
-A watchdog exit or unresolved receipt prohibits replay; scheduled but undispatched
-slots remain explicit. No grader or reference-answer implementation is included.
+## Parent handoff
 
-Independent local reviewer found and reproduced two P2s in the earlier adapter:
-URL-alias exclusion bypass and cleanup outside the deadline. Both now have fixes
-and regression tests. Final independent review confirms both further P2s (endpoint/proxy binding and robots scheme/port) resolved, with no additional P1/P2. Reviewed bundle matches above. No live dispatch is authorized.
+Parent supplies only a packet with schema_version `w12.4-first-screen-queries/1`,
+experiment_id, frozen_runner_sha256 equal to the bundle above, and exactly two cases
+containing only case_id/question (question max4096characters). Parent retains labels,
+expected facts, source ground truth and evaluation code in its separate workspace.
+No candidate edits after query exposure until grading closes.
 
-Published head `5d8bdd3` runtime run `40525388378` reached terminal SUCCESS,
-including Integration Tests, research-runtime Integration Tests and PostgreSQL
-Storage Probes. No job was manually canceled/preempted or blindly rerun. CI for
-this new candidate remains separate and must not be inferred from that green run.
+Materialize admission-template.json by reconstructing runtime_files as the mapping
+of path to sha256 from runtime-freeze.json records. Parent attests the three boolean
+fields; they remain false in the template, so it cannot start a run accidentally.
+Canonical backend hash above is compared before questions are read. The committed
+backend file is a public summary, not the bytes to hash for admission. No private
+identity/fingerprint is required from the parent. The original four unresolved
+source hashes remain in the template and are never repeated.
 
+Exports: exclusive `run-manifest.jsonl`, `dispatches.jsonl`,
+`backend-receipts.jsonl`, `attempts.jsonl`. They include six scheduled slots,
+per-operation reservations/receipts, exact answers, captured sources and hashes,
+usage/failure provenance, and parent-pending grading. They contain no credentials
+or authentication records. Baseline arm means current upstream deep loop under
+the common restricted acquisition profile, not uncapped deployed performance.
+Other arms are fixed focused control and existing W12.4 obligation-bounded
+continuation; materiality/closure remain provisional until parent verification.
+No category benefit or runtime promotion is established.
 
-## Scoped repair investigation and remaining approval
+## CI evidence and diagnostic limitation
 
-The installed provider retries 422 repair if global drop_params is true OR request
-drop_params is true. Request false cannot override global true. The full installed
-proxy route probe with explicit request false still dispatched caps [8, null]. A
-detached-process-only global false probe dispatched one capped request for every
-synthetic status, including 422. All HTTP was mocked with sockets denied: zero real
-provider calls, no server configuration/route/credential changes. Existing request
-retry controls cannot intercept this inner repair; post-response checks are too late.
-No supported request-local repair switch has been established for this version.
-
-Minimal additional authorization: an isolated temporary instance of the existing
-gateway image/configuration with only drop_params=false and a runner-only endpoint
-binding to it. Preserve the model, authentication and access controls; reuse existing
-server-side credential mounts without exposing secret values, create no public
-listener, and remove the instance after the bounded screen. This instance and scoped
-route binding require explicit approval and have NOT been created. Production settings
-remain unchanged. Once approved, freeze/review its exact configuration and repeat the
-offline admission probes before receiving holdout questions. No budget increase or
-admission waiver is proposed. Earlier unresolved operations remain excluded.
-
-Head 4891c5a Code Quality found an unreachable test-generator yield and two false
-positive secret findings on public code hashes. The generator now yields before
-raising; the manifest stores path/sha256 records. Security checks and protected
-fixtures are unchanged. Updated 69 focused tests, Ruff, and mypy on four runner
-modules pass. New-head CI remains separately required.
+Run40538348585 at e4a0ee6 is TERMINAL FAILURE. Hosted research-runtime integration,
+PostgreSQL storage, protected profiles, twins and their research gate passed. Main
+integration:2842passed,8failed,162skipped; failures seed scraped refs before deepen
+behavior. Original source-failure receipts were not retained, so their actual source
+cause remains unknown. A separate confirmed provenance defect inspected service
+names instead of running containers when Compose image inventory was empty.
+Commit a1913c3 adds typed sanitized session failures and fixes actual running-image
+provenance, retaining all criteria/assertions/fixtures.78 targeted diagnostic tests
+and46 final focused tests passed; independent review found no P1/P2. These changes
+do not claim to fix the8source-seeding failures. New-head CI must be tracked separately.
+Prior storage-prefetch failure did not recur: unchanged pins fetched and verified;
+old discarded stderr cannot support a retrospective registry/daemon cause. No blind
+rerun, cancellation, runner-setting change or gate weakening occurred.

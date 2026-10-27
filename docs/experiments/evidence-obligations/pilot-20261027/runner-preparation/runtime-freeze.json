@@ -1,5 +1,5 @@
 {
-  "bundle_sha256": "cd8bec802a5d3e52a250d3a20b9f6670e6a7a17b3ba3e58477236390a1797c82",
+  "bundle_sha256": "347e422b1d879b395473b65b5b853be18b1ffc749e55e7ff6b0a00edc4f01298",
   "runtime_files": [
     {
       "path": "agent-svc/agent/__init__.py",
@@ -91,7 +91,7 @@
     },
     {
       "path": "agent-svc/agent/experimental/calibration_runner.py",
-      "sha256": "b7c8e38ae1b0a07d80f8a0563ceaaeb27a9554985dee0d59d7e4cbd64329378a"
+      "sha256": "0573472e51c00253f44fe4e3d1c29d326f2c5235fe5bcd37f3a5d8b94f2fad65"
     },
     {
       "path": "agent-svc/agent/experimental/canonical.py",
@@ -627,7 +627,7 @@
     },
     {
       "path": "agent-svc/agent/session.py",
-      "sha256": "22c3a412779d49950fa34c4fb4f696bf66acb7c1a9a2bc008aaa0ca9f324dea9"
+      "sha256": "f5624467d6e7d662b97b732a5728689b2c2f8c45c6fb76a3b6eba174f2daba98"
     },
     {
       "path": "agent-svc/agent/session_documents.py",
@@ -743,11 +743,15 @@
     },
     {
       "path": "scripts/run_w12_live_screen.py",
-      "sha256": "e12624d73d6de5987f1419ff1db9da6514a33d2a3c8f05558f3e3acc272967ac"
+      "sha256": "a4defb75c66ea2a95dbd648a7a18f62e293e3204430e9b7efbc6de71fa50dad8"
     },
     {
       "path": "scripts/w12_calibration_worker.py",
-      "sha256": "751e1535c2bd801ee22c3729f1c16d465a0c0876eecf2b6775dde2429992df9f"
+      "sha256": "cb6d07ef02cdf4b34f406feb991810ca364cbb2047af10712b4f203fd3065bf9"
+    },
+    {
+      "path": "scripts/w12_router_worker.py",
+      "sha256": "45885f6d9ad453121306dd27d364b0dbaedb38134bac299a21eca4661a75b3a9"
     },
     {
       "path": "uv.lock",
