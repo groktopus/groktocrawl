@@ -5,6 +5,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 
+def _gap_aware_generation(mock):
+    async def generate(**kwargs):
+        return "[]" if kwargs.get("stage") == "gap_detection" else mock.return_value
+
+    mock.side_effect = generate
+
+
 class TestValidateJsonIfSchema:
     def setup_method(self):
         from agent.research import _validate_json_if_schema
@@ -206,6 +213,7 @@ class TestRunResearch:
 
         llm = MagicMock()
         llm.generate = AsyncMock()
+        _gap_aware_generation(llm.generate)
         llm.close = AsyncMock()
 
         return searxng, scraper, llm
@@ -651,6 +659,7 @@ class TestRunResearchStream:
 
         llm = MagicMock()
         llm.generate = AsyncMock()
+        _gap_aware_generation(llm.generate)
         llm.generate.return_value = (
             '{"research_strategy": "focused", "focused_queries": ["What is AI?"]}'
         )
@@ -758,6 +767,7 @@ class TestRunResearchStream:
 
         llm = MagicMock()
         llm.generate = AsyncMock(return_value='{"key": "value"}')
+        _gap_aware_generation(llm.generate)
         llm.close = AsyncMock()
 
         schema = {"type": "object", "properties": {"key": {"type": "string"}}}
@@ -813,6 +823,7 @@ class TestRunResearchStream:
 
         llm = MagicMock()
         llm.generate = AsyncMock()
+        _gap_aware_generation(llm.generate)
         llm.generate.return_value = (
             '{"research_strategy": "focused", "focused_queries": ["Anything?"]}'
         )
@@ -865,6 +876,7 @@ class TestRunResearchStream:
 
         llm = MagicMock()
         llm.generate = AsyncMock()
+        _gap_aware_generation(llm.generate)
         llm.generate.return_value = (
             '{"research_strategy": "focused", "focused_queries": ["Test"]}'
         )

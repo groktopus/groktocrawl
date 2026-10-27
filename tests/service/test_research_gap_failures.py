@@ -125,3 +125,42 @@ async def test_successful_gap_decision_is_explicit(has_gaps, status):
             )
         ]
     assert events[-1]["coverage"]["gap_check"] == {"status": status}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "response,expected",
+    [(' {"topics": []} ', []), ('{"topics": ["missing fact"]}', ["missing fact"])],
+)
+async def test_structured_gap_object_is_validated(response, expected):
+    llm = AsyncMock()
+    llm.generate.return_value = response
+    assert await gaps._detect_gaps("evidence", llm, "question") == expected
+    assert llm.generate.call_args.kwargs["schema"]["required"] == ["topics"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "response", ['{"topics": [], "extra": true}', '{"topics": null}', '{"topics": [1]}']
+)
+async def test_invalid_structured_gap_object_fails(response):
+    llm = AsyncMock()
+    llm.generate.return_value = response
+    with pytest.raises(gaps.GapDetectionError):
+        await gaps._detect_gaps("evidence", llm, "question")
+
+
+@pytest.mark.asyncio
+async def test_real_client_default_twin_obeys_requested_gap_schema():
+    import httpx
+    from agent.llm import LLMClient
+    from llm_svc.app import create_app
+
+    llm = LLMClient("http://fixture/v1", "", "fixture-model")
+    await llm._client.aclose()
+    llm._client = httpx.AsyncClient(transport=httpx.ASGITransport(app=create_app()))
+    try:
+        topics = await gaps._detect_gaps("authoritative source text", llm, "question")
+    finally:
+        await llm.close()
+    assert isinstance(topics, list) and all(isinstance(topic, str) for topic in topics)
