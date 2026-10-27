@@ -357,7 +357,14 @@ class BudgetedTransport(httpx.AsyncBaseTransport):
             raise
         finally:
             if response is not None:
-                await response.aclose()
+                try:
+                    await response.aclose()
+                except BaseException as exc:
+                    if self.ledger.halted is None:
+                        self.ledger.unknown(
+                            operation_id, f"response_close_{type(exc).__name__}"
+                        )
+                    raise
         receipts = {
             key: response.headers.get(key)
             for key in (

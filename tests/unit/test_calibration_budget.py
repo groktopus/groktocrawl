@@ -526,3 +526,30 @@ async def test_model_routing_and_sampling_cannot_change(options):
     async with httpx.AsyncClient(transport=transport) as client:
         with pytest.raises(CalibrationStoppedError):
             await client.post(MODEL, json=model_request(**options))
+
+
+@pytest.mark.asyncio
+async def test_close_failure_cannot_leave_dispatch_unlatched():
+    book, log = ledger()
+
+    class BrokenClose(httpx.AsyncByteStream):
+        async def __aiter__(self):
+            yield json.dumps(model_response()).encode()
+
+        async def aclose(self):
+            raise httpx.CloseError("close failed")
+
+    transport = BudgetedTransport(
+        book,
+        "model",
+        MODEL,
+        httpx.MockTransport(
+            lambda r: httpx.Response(200, stream=BrokenClose(), headers=RECEIPTS)
+        ),
+    )
+    async with httpx.AsyncClient(transport=transport) as client:
+        with pytest.raises(httpx.CloseError):
+            await client.post(MODEL, json=model_request())
+        with pytest.raises(CalibrationStoppedError, match="outcome_unknown"):
+            await client.post(MODEL, json=model_request())
+    assert log[-1]["state"] == "outcome_unknown"
