@@ -191,3 +191,46 @@ def test_topology_precreated_service_does_not_restart_docker() -> None:
     job = match.group(1)
     assert "services:" in job
     assert "Configure hosted-runner Docker Hub cache" not in job
+
+
+@pytest.mark.parametrize(
+    "failure",
+    [
+        subprocess.TimeoutExpired(["docker", "info"], 5, output="private-output"),
+        subprocess.CalledProcessError(1, ["docker", "info"], stderr="private-error"),
+        RuntimeError("private-invalid-label"),
+    ],
+)
+def test_optional_diagnostics_do_not_abort_successful_setup(
+    monkeypatch, capsys, failure
+):
+    monkeypatch.setattr("sys.argv", ["configure_ci_dockerhub_mirror.py", "--as-root"])
+    monkeypatch.setattr(mirror, "hosted_linux_runner", lambda _: True)
+    monkeypatch.setattr(mirror, "configure_for_runner", lambda *a, **kw: True)
+
+    def unavailable():
+        raise failure
+
+    monkeypatch.setattr(mirror, "docker_runtime_info", unavailable)
+    assert mirror.main() == 0
+    output = capsys.readouterr().out
+    report = json.loads(output.splitlines()[-1])
+    assert report == {
+        "docker_runtime": {
+            "status": "unavailable",
+            "error_type": type(failure).__name__,
+        }
+    }
+    assert "private" not in output
+
+
+def test_mirror_setup_failure_still_aborts(monkeypatch):
+    monkeypatch.setattr("sys.argv", ["configure_ci_dockerhub_mirror.py", "--as-root"])
+    monkeypatch.setattr(mirror, "hosted_linux_runner", lambda _: True)
+
+    def failed_setup(*a, **kw):
+        raise subprocess.CalledProcessError(1, ["systemctl", "restart", "docker"])
+
+    monkeypatch.setattr(mirror, "configure_for_runner", failed_setup)
+    with pytest.raises(subprocess.CalledProcessError):
+        mirror.main()
