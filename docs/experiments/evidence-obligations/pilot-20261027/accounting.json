@@ -1,0 +1,41 @@
+{
+  "schema_version": "pilot-operation-accounting/1",
+  "records": [
+    {
+      "id": "capture-import",
+      "outcome": "failed_before_dispatch",
+      "reason": "requests dependency absent",
+      "external_dispatches": 0,
+      "cost_usd": null
+    },
+    {
+      "id": "capture-httpx",
+      "outcome": "interrupted_with_uncertain_downstream_outcome",
+      "max_client_requests_scheduled": 6,
+      "client_retries": 0,
+      "client_timeout_seconds": 15,
+      "dispatched_requests": null,
+      "completed_requests": null,
+      "provider_tokens": null,
+      "search_calls": 0,
+      "fetch_calls": null,
+      "browser_calls": null,
+      "model_calls": null,
+      "cost_usd": null,
+      "script_sha256": "5ff7ded0ebb8094d861c8beb48a352b98365eb2cb161bdb54a04d39e9ba54e6f",
+      "stopped_process": {
+        "container": "groktocrawl-agent-svc-1",
+        "pid": 192275,
+        "cmdline_verified": "python -",
+        "termination_confirmed": true
+      },
+      "server_operation_cancellation_confirmed": false,
+      "source_results_used_as_labels": false,
+      "replayed": false
+    }
+  ],
+  "live_policy_comparison_attempts": 0,
+  "editor_cost_usd": null,
+  "replay_cost_usd": null,
+  "billing_verified": false
+}

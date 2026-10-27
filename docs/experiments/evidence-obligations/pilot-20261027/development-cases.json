@@ -1,0 +1,304 @@
+{
+  "schema_version": "w12.4-live-calibration-development/1",
+  "status": "unverified reference slots; not gold; no candidate tuning",
+  "cases": [
+    {
+      "case_id": "health-cv",
+      "split": "development",
+      "category": "healthcare evidence comparison",
+      "question": "Compare the SELECT and STEP 1 semaglutide trials: populations, primary endpoints, dose, duration and limits on comparing outcomes across trials.",
+      "authoritative_reference_urls": [
+        "https://pubmed.ncbi.nlm.nih.gov/37952131/",
+        "https://pubmed.ncbi.nlm.nih.gov/33567185/"
+      ],
+      "expected_facts": [
+        {
+          "slot": "trial identity and date",
+          "expected_value": null,
+          "verification": "pending authoritative capture"
+        },
+        {
+          "slot": "diabetes and cardiovascular eligibility",
+          "expected_value": null,
+          "verification": "pending authoritative capture"
+        },
+        {
+          "slot": "dose and followup",
+          "expected_value": null,
+          "verification": "pending authoritative capture"
+        },
+        {
+          "slot": "primary endpoint and reported estimate",
+          "expected_value": null,
+          "verification": "pending authoritative capture"
+        },
+        {
+          "slot": "adverse events and applicability",
+          "expected_value": null,
+          "verification": "pending authoritative capture"
+        }
+      ],
+      "legitimate_unknowns": [
+        "Do not infer head-to-head superiority from separate populations or endpoints."
+      ],
+      "citation_criteria": [
+        "Exact captured page URL and timestamp.",
+        "Verbatim supporting passage plus hash/span; preserve material qualifications.",
+        "No support credit for snippets, wrong entity, or related uncited page."
+      ]
+    },
+    {
+      "case_id": "health-missing",
+      "split": "development",
+      "category": "healthcare missing fact",
+      "question": "Do these SELECT and STEP 1 abstracts establish which treatment is best for an individual patient with unspecified history? Explain what is and is not established.",
+      "authoritative_reference_urls": [
+        "https://pubmed.ncbi.nlm.nih.gov/37952131/",
+        "https://pubmed.ncbi.nlm.nih.gov/33567185/"
+      ],
+      "expected_facts": [
+        {
+          "slot": "population and intervention",
+          "expected_value": null,
+          "verification": "pending authoritative capture"
+        },
+        {
+          "slot": "study-level evidence versus individual treatment decision",
+          "expected_value": null,
+          "verification": "pending authoritative capture"
+        }
+      ],
+      "legitimate_unknowns": [
+        "Individual preference and suitability are unknown.",
+        "Unreported subgroup data must remain unknown."
+      ],
+      "citation_criteria": [
+        "Exact captured page URL and timestamp.",
+        "Verbatim supporting passage plus hash/span; preserve material qualifications.",
+        "No support credit for snippets, wrong entity, or related uncited page."
+      ]
+    },
+    {
+      "case_id": "ats-exact",
+      "split": "development",
+      "category": "ATS exact fields",
+      "question": "At the capture timestamp, inspect the first currently returned public GitLab Greenhouse job. Report its job ID, exact title, location, published salary currency/range/period and exact job URL.",
+      "authoritative_reference_urls": [
+        "https://boards-api.greenhouse.io/v1/boards/gitlab/jobs?content=true"
+      ],
+      "expected_facts": [
+        {
+          "slot": "capture timestamp and board identity",
+          "expected_value": null,
+          "verification": "pending authoritative capture"
+        },
+        {
+          "slot": "exact returned job ID and title",
+          "expected_value": null,
+          "verification": "pending authoritative capture"
+        },
+        {
+          "slot": "exact location and remote restrictions",
+          "expected_value": null,
+          "verification": "pending authoritative capture"
+        },
+        {
+          "slot": "salary range currency and period if explicitly published",
+          "expected_value": null,
+          "verification": "pending authoritative capture"
+        },
+        {
+          "slot": "exact cited job URL",
+          "expected_value": null,
+          "verification": "pending authoritative capture"
+        }
+      ],
+      "legitimate_unknowns": [
+        "If board or listing is unavailable, do not substitute a role.",
+        "Salary not published is unknown, never an inferred market salary."
+      ],
+      "citation_criteria": [
+        "Exact captured page URL and timestamp.",
+        "Verbatim supporting passage plus hash/span; preserve material qualifications.",
+        "No support credit for snippets, wrong entity, or related uncited page."
+      ]
+    },
+    {
+      "case_id": "ats-stale",
+      "split": "development",
+      "category": "ATS conflicting or outdated role",
+      "question": "Can a cached search snippet establish that a role is still open, in a specified location, or has a stated salary when its current authoritative ATS page is unavailable?",
+      "authoritative_reference_urls": [
+        "https://developers.greenhouse.io/job-board.html"
+      ],
+      "expected_facts": [
+        {
+          "slot": "distinguish search snippet from current job record",
+          "expected_value": null,
+          "verification": "pending authoritative capture"
+        },
+        {
+          "slot": "exact current-page access status",
+          "expected_value": null,
+          "verification": "pending authoritative capture"
+        },
+        {
+          "slot": "capture date versus publication date",
+          "expected_value": null,
+          "verification": "pending authoritative capture"
+        }
+      ],
+      "legitimate_unknowns": [
+        "Current vacancy, location and pay remain unverified without the exact listing."
+      ],
+      "citation_criteria": [
+        "Exact captured page URL and timestamp.",
+        "Verbatim supporting passage plus hash/span; preserve material qualifications.",
+        "No support credit for snippets, wrong entity, or related uncited page."
+      ]
+    },
+    {
+      "case_id": "technical-cancel",
+      "split": "development",
+      "category": "technical docs",
+      "question": "For Python 3.12 asyncio.TaskGroup, explain how non-cancellation child exceptions affect sibling tasks and how swallowing CancelledError affects structured concurrency.",
+      "authoritative_reference_urls": [
+        "https://docs.python.org/3.12/library/asyncio-task.html"
+      ],
+      "expected_facts": [
+        {
+          "slot": "Python version",
+          "expected_value": null,
+          "verification": "pending authoritative capture"
+        },
+        {
+          "slot": "sibling cancellation behavior",
+          "expected_value": null,
+          "verification": "pending authoritative capture"
+        },
+        {
+          "slot": "exception grouping qualifications",
+          "expected_value": null,
+          "verification": "pending authoritative capture"
+        },
+        {
+          "slot": "CancelledError and structured concurrency caveat",
+          "expected_value": null,
+          "verification": "pending authoritative capture"
+        }
+      ],
+      "legitimate_unknowns": [
+        "Do not claim behavior of other Python versions without separate evidence."
+      ],
+      "citation_criteria": [
+        "Exact captured page URL and timestamp.",
+        "Verbatim supporting passage plus hash/span; preserve material qualifications.",
+        "No support credit for snippets, wrong entity, or related uncited page."
+      ]
+    },
+    {
+      "case_id": "long-rfc",
+      "split": "development",
+      "category": "long article late evidence",
+      "question": "Using RFC 9110, explain idempotent methods, automatic retry limits and why a client must not automatically retry non-idempotent requests without additional knowledge.",
+      "authoritative_reference_urls": [
+        "https://www.rfc-editor.org/rfc/rfc9110.html"
+      ],
+      "expected_facts": [
+        {
+          "slot": "definition in section 9.2.2",
+          "expected_value": null,
+          "verification": "pending authoritative capture"
+        },
+        {
+          "slot": "safe methods plus PUT and DELETE",
+          "expected_value": null,
+          "verification": "pending authoritative capture"
+        },
+        {
+          "slot": "retry qualifications and non-idempotent restriction",
+          "expected_value": null,
+          "verification": "pending authoritative capture"
+        }
+      ],
+      "legitimate_unknowns": [
+        "Idempotency does not imply identical response bodies or absence of side effects."
+      ],
+      "citation_criteria": [
+        "Exact captured page URL and timestamp.",
+        "Verbatim supporting passage plus hash/span; preserve material qualifications.",
+        "No support credit for snippets, wrong entity, or related uncited page."
+      ]
+    },
+    {
+      "case_id": "conflict-rfc",
+      "split": "development",
+      "category": "conflicting outdated sources",
+      "question": "Which portions of RFC 7231 are superseded by RFC 9110, and what source should support a current claim about HTTP semantics?",
+      "authoritative_reference_urls": [
+        "https://www.rfc-editor.org/rfc/rfc9110.html",
+        "https://www.rfc-editor.org/rfc/rfc7231.html"
+      ],
+      "expected_facts": [
+        {
+          "slot": "RFC identities and publication dates",
+          "expected_value": null,
+          "verification": "pending authoritative capture"
+        },
+        {
+          "slot": "explicit obsoletes relationship",
+          "expected_value": null,
+          "verification": "pending authoritative capture"
+        },
+        {
+          "slot": "current section for claimed semantics",
+          "expected_value": null,
+          "verification": "pending authoritative capture"
+        }
+      ],
+      "legitimate_unknowns": [
+        "Do not treat an old RFC as current merely because search ranks it first."
+      ],
+      "citation_criteria": [
+        "Exact captured page URL and timestamp.",
+        "Verbatim supporting passage plus hash/span; preserve material qualifications.",
+        "No support credit for snippets, wrong entity, or related uncited page."
+      ]
+    },
+    {
+      "case_id": "access-failure",
+      "split": "development",
+      "category": "missing facts and access failure",
+      "question": "When the authoritative requested public page cannot be acquired because of an access block or timeout, state what can be verified and what remains unknown.",
+      "authoritative_reference_urls": [
+        "https://example.com/"
+      ],
+      "expected_facts": [
+        {
+          "slot": "retain actual access error or timeout receipt",
+          "expected_value": null,
+          "verification": "pending authoritative capture"
+        },
+        {
+          "slot": "distinguish unavailable evidence from empty evidence",
+          "expected_value": null,
+          "verification": "pending authoritative capture"
+        },
+        {
+          "slot": "avoid fabricated page contents",
+          "expected_value": null,
+          "verification": "pending authoritative capture"
+        }
+      ],
+      "legitimate_unknowns": [
+        "Access failures are not evidence of absence.",
+        "No bypass of access barriers; do not invent an access failure for a successful fetch."
+      ],
+      "citation_criteria": [
+        "Exact captured page URL and timestamp.",
+        "Verbatim supporting passage plus hash/span; preserve material qualifications.",
+        "No support credit for snippets, wrong entity, or related uncited page."
+      ]
+    }
+  ]
+}

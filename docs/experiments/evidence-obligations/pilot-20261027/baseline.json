@@ -1,0 +1,40 @@
+{
+  "inspected_at": "2026-10-27",
+  "execution_host": "auriga",
+  "execution_os": "Darwin",
+  "upstream": "groktopus/groktocrawl",
+  "checkout_base": "8df43e5dbe029a888a2007d9dcf0baf4869657dc",
+  "production_host": "gpuslut01",
+  "container": "groktocrawl-agent-svc-1",
+  "image_id": "sha256:f377c1222e59bcc8807213decd9ec7daf229116d165ebc6034b97aff48023ec3",
+  "image_source_label": "https://github.com/groktopus/groktocrawl",
+  "image_revision_label": "9ee349563edddaee9d9d563e29eb11d9f7922379",
+  "code_sha256_matching_checkout_base": {
+    "agent/research/gaps.py": "a96cb62726e4629af3bcff0f327b90f86c27859338c29e5734d136e3e14a7700",
+    "agent/research/loop.py": "9be2996dad50c9945099b52d6b5e60bf8c431a2215d97ee56bf8dc2ecf8c40c6",
+    "agent/routes/agent.py": "4a3fdf1a3ebe875beac47452e69114355a1987977cf2de68fefeb55bc138ff5b",
+    "agent/settings.py": "e2fb46c8883046e04cdb396c7798ae995521d50e7d49d735f4cfa494f6563af9"
+  },
+  "route": "legacy /v2/agent -> worker.run_research or streaming research loop; experimental durable HTTP route is separate",
+  "configured_model_alias": "free",
+  "gateway_resolved_model": "openai/ornith/ornith-1.5-122b:free",
+  "declared_input_cost_per_token": 0.0,
+  "declared_output_cost_per_token": 0.0,
+  "actual_provider_billing_verified": false,
+  "llm_token_parameter": "max_tokens",
+  "llm_max_tokens": 8192,
+  "llm_call_timeout_seconds": 300,
+  "gateway_model_timeout_seconds": 600,
+  "max_searches_per_request": 5,
+  "llm_admission_limit": 32,
+  "experimental_flags": {
+    "FEATURE_EXPERIMENTAL_RESEARCH": true,
+    "FEATURE_EXPERIMENTAL_RESEARCH_RUNS": true,
+    "FEATURE_EXPERIMENTAL_RESEARCH_POSTGRES_ARTIFACTS": true,
+    "FEATURE_EXPERIMENTAL_RESEARCH_DURABLE": true,
+    "FEATURE_EXPERIMENTAL_RESEARCH_FIXTURE_RUNS": false
+  },
+  "production_restarted": false,
+  "production_configuration_changed": false,
+  "production_runtime_deployed": false
+}

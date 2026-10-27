@@ -1,0 +1,15 @@
+{
+  "status": "development evidence freeze; no heldout comparison authorized by this file",
+  "baseline": "8df43e5dbe029a888a2007d9dcf0baf4869657dc",
+  "correctness_candidate": "626b01acb4ab38a5024f32513dd6eac221632ab5",
+  "sha256": {
+    "development-cases.json": "e8fbd192043dc5f37a4c629cfa1a12c1a3cba6f5889cc23f99d35da5ad189307",
+    "protocol.md": "c927349c05e3d009bec56d9e952c9e96fb525eef84b8bfef3d113d31e10b8cc7",
+    "baseline.json": "698cda06da565a5040e0ff9e6f93f49095fa72136526c7144aaae792a67380db",
+    "answer-evals.json": "c89868f750720549cf2df3ed2115019b07eb2a159d1aecc8949d8b4785bd3421",
+    "replay-analysis.json": "d14c6a4b950541b241701b1d1332b1bcb81f562a527f4e9971541b3e47a0ca4e",
+    "replay-run.json": "3ddf6570e1d98c7363bfc93b340f4c6c6e97c95cbddd2fcd0cf24a842ecda4d4",
+    "results.md": "ac53c4f5db4403583a2e13b79c58d10ce66816476c47c1505a5dbea6a3268a5b",
+    "accounting.json": "28069fca67e15c8b0ccfc3ba92fcf5217e6f3817dd34f3a0a1ccf85aece8b730"
+  }
+}
