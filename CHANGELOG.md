@@ -2,6 +2,72 @@
 
 All notable changes to GroktoCrawl are documented in this file.
 
+## [1.1.0](https://github.com/groktopus/groktocrawl/compare/v1.0.1...v1.1.0) (2026-10-27)
+
+
+### Features
+
+* **evals:** add fail-closed isolated calibration dispatch budget ([80164b6](https://github.com/groktopus/groktocrawl/commit/80164b6107b1a7328a97d680f829f2796ed9f56a))
+* **evals:** implement guarded three-arm runner with hard admission gates ([0a0946c](https://github.com/groktopus/groktocrawl/commit/0a0946cf11c27dd46188843a0e4342b8e0f8545f))
+* isolate bounded Router calls behind original identity policy checks ([abdebda](https://github.com/groktopus/groktocrawl/commit/abdebda2befa67acb9ceb0253609c47cf74851ed))
+
+
+### Bug Fixes
+
+* bind calibration routes and preserve robots origin ([e75a884](https://github.com/groktopus/groktocrawl/commit/e75a884b7419c63e9fd79b7893ff498b2e571cb3))
+* bind session citation keys to response indices ([45b7191](https://github.com/groktopus/groktocrawl/commit/45b71910da14976640b579e45c9f540539b8e5d8))
+* **ci:** pass supported reasoning setting to Luna reviewer ([fc4f8af](https://github.com/groktopus/groktocrawl/commit/fc4f8af73d301f6586a7d70c1cd207fa4986a036))
+* **ci:** pass supported reasoning setting to Luna reviewer ([13bd833](https://github.com/groktopus/groktocrawl/commit/13bd833ab21b271fdf03709fe2da2258c1d1d487))
+* **ci:** pass supported reasoning setting to Luna reviewer ([19c4676](https://github.com/groktopus/groktocrawl/commit/19c467652da0939260831b52fb533c1e7de6347e))
+* **ci:** pass supported reasoning setting to Luna reviewer ([83858d6](https://github.com/groktopus/groktocrawl/commit/83858d6a506e226702492d0d891a7594780cfa6a))
+* **ci:** pass supported reasoning setting to Luna reviewer ([208216c](https://github.com/groktopus/groktocrawl/commit/208216c840f8b99b713f71f54caea55556951248))
+* **ci:** pass supported reasoning setting to Luna reviewer ([2bfbb87](https://github.com/groktopus/groktocrawl/commit/2bfbb87dd1be639ca643936ae0d4aa98bf68c6f6))
+* **ci:** preserve durable teardown assertion ([e0207b2](https://github.com/groktopus/groktocrawl/commit/e0207b27f6e8fe814993f8129e622bf4b58fe07f))
+* **ci:** tear down all runtime fixture profiles ([ef02e0f](https://github.com/groktopus/groktocrawl/commit/ef02e0f9aad88a2b028de77a646c8231d83ae428))
+* **ci:** tear down all runtime fixture profiles ([c5df9f1](https://github.com/groktopus/groktocrawl/commit/c5df9f1805c1e18b1dcb880c7c78a050b6a02098))
+* **evals:** latch dispatch stop if response cleanup fails ([c46678f](https://github.com/groktopus/groktocrawl/commit/c46678fa139beb380bf1af30220c731c2c56c1de))
+* explain research verification failures before publication ([90c5d3b](https://github.com/groktopus/groktocrawl/commit/90c5d3bc9a35d24623a1e1ffe6bd860dd02863e3))
+* ground session document citations in query keys ([479a7cf](https://github.com/groktopus/groktocrawl/commit/479a7cf7dfe5edc37f0fb38fb1a5b78dd5d1c4a2))
+* keep optional Docker diagnostics from aborting CI setup ([9718759](https://github.com/groktopus/groktocrawl/commit/97187596e76aecb3771b22b22a03ece4d5a5c965))
+* keep session notes out of resolvable citations ([dd88562](https://github.com/groktopus/groktocrawl/commit/dd885626aa3a1bc4c5c8c2ac4b71e4115e08d2ca))
+* preserve topic coverage in focused research ([4e70a91](https://github.com/groktopus/groktocrawl/commit/4e70a91c11711aaca02dea581172eb08a138f018))
+* preserve typed session failures and running image receipts ([a1913c3](https://github.com/groktopus/groktocrawl/commit/a1913c36fd8adfdbf079a5832e973a98f2ef6acc))
+* publish verified research about captured sources ([d2611fd](https://github.com/groktopus/groktocrawl/commit/d2611fde5467ebe10f5de6219f4f51f4392ba581))
+* **research:** distinguish failed gap checks; record bounded pilot ([2522ca9](https://github.com/groktopus/groktocrawl/commit/2522ca94079ab14d38d526a3c2f54a54b54690c7))
+* **research:** honor completion budget and bound construction input ([fb73f9b](https://github.com/groktopus/groktocrawl/commit/fb73f9bda17d2a2ccfc70df65f4b7a595896278d))
+* **research:** keep failed gap checks distinct from adequate coverage ([626b01a](https://github.com/groktopus/groktocrawl/commit/626b01acb4ab38a5024f32513dd6eac221632ab5))
+* **research:** request structured gap decisions and repair stage mocks ([d36cc84](https://github.com/groktopus/groktocrawl/commit/d36cc8498171b2fe8a8b9936b1bf870610f55ebc))
+* retain known model output-limit failures without replay ([1f4ee3e](https://github.com/groktopus/groktocrawl/commit/1f4ee3e2c0ec70010f5fe1c5bfba850ce933ed91))
+* retain sanitized CI image prefetch failure receipts ([e4a0ee6](https://github.com/groktopus/groktocrawl/commit/e4a0ee6140a72017f903a1a96a78ab418d6fa598))
+* **scraper:** normalize formatting in completeness checks ([8904748](https://github.com/groktopus/groktocrawl/commit/8904748df3f79d52cba97875b026beb56d8a3197))
+* **scraper:** preserve repeated rendered content records ([773a76a](https://github.com/groktopus/groktocrawl/commit/773a76a62963dd0916f036ee09af3fa17277ae8c))
+* share the durable deadline across model stages ([38996d6](https://github.com/groktopus/groktocrawl/commit/38996d6f55f2817ea09dcd10bb9a5c274778db8b))
+* version a five-minute deadline for new research jobs ([5efeef0](https://github.com/groktopus/groktocrawl/commit/5efeef0b4f3e6a05eeedccc072d24d92a708aaa2))
+
+
+### Documentation
+
+* align merge guidance with approved maintainer policy ([0103abf](https://github.com/groktopus/groktocrawl/commit/0103abf042259a0a4f33c7e372bdd221b0999036))
+* confirm 1.0.1 publication and stable image verification ([7517b1e](https://github.com/groktopus/groktocrawl/commit/7517b1e1d32070ebbb735a5ee5ecd895fe548395))
+* define bounded research-loop evaluation contract ([8df43e5](https://github.com/groktopus/groktocrawl/commit/8df43e5dbe029a888a2007d9dcf0baf4869657dc))
+* define bounded research-loop evaluation contract ([71aa3bc](https://github.com/groktopus/groktocrawl/commit/71aa3bcf42b28028877aeb921c101ececce302d0))
+* **evals:** define parent-owned isolated evaluator handoff ([520b9d1](https://github.com/groktopus/groktocrawl/commit/520b9d123e4b9a4031dd6f62b6b667e15e362578))
+* **evals:** reconcile capture receipts and freeze smaller screening gate ([cb05bb5](https://github.com/groktopus/groktocrawl/commit/cb05bb5b0cdaae69ca9549c19ef3f3a839d7f2b2))
+* **evals:** record bounded pilot baseline, replay and live blockers ([3b761fa](https://github.com/groktopus/groktocrawl/commit/3b761fa8daed7dd2b99856e1470dab3ae05659e0))
+* **evals:** record runner checkpoint and reproduced token-cap blocker ([4891c5a](https://github.com/groktopus/groktocrawl/commit/4891c5a5f06c842f67a0f06f8c508fdb4346dbca))
+* **evals:** refresh reviewed cleanup-latch artifact freeze ([5d8bdd3](https://github.com/groktopus/groktocrawl/commit/5d8bdd38b9267e17b4064748b829aebf039e0d9d))
+* follow required ADR section headings ([9fbd688](https://github.com/groktopus/groktocrawl/commit/9fbd688d67d198758ef3c43b459b56cb90ef8b8f))
+* freeze reviewed Router screening backend and admission handoff ([5436e52](https://github.com/groktopus/groktocrawl/commit/5436e5269b3bba733f5e3f5ddae0e1dea2743576))
+* freeze reviewed runner and record scoped gateway blocker ([ea21ae9](https://github.com/groktopus/groktocrawl/commit/ea21ae99341acc4a9beca950be4a8ba414928069))
+* ground research evaluation contract in existing evidence ([df14e25](https://github.com/groktopus/groktocrawl/commit/df14e2556526715a87249b5d3d0c006fea72ba49))
+* record 1.0.1 cleanup and deployment verification ([370f635](https://github.com/groktopus/groktocrawl/commit/370f635c33460cf7afdc33c4aefce1cf7566c794))
+* record halted screening and final CI evidence ([d9582d6](https://github.com/groktopus/groktocrawl/commit/d9582d6f1fae3e78ee125dbe9faee438e97868e9))
+
+
+### Tests
+
+* align focused comparison query expectation ([758cefa](https://github.com/groktopus/groktocrawl/commit/758cefa0d52c69fd6083bd7f74a113f3d1a392bd))
+
 ## [1.0.1](https://github.com/groktopus/groktocrawl/compare/v1.0.0...v1.0.1) (2026-10-16)
 
 GroktoCrawl 1.0.0 shipped its new durable research endpoint connected to demonstration data. That was a release defect. This patch connects it to configured search, page capture and model services, and completes the related workflows that were left unfinished. The existing `/v2/agent` research endpoint was already using real services.
