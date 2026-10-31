@@ -1438,6 +1438,60 @@ class TestCmdParseWithUploadId:
         stdout = _capture_stdout(cmd_parse, mock_client, mock_args)
         assert "pu-dry-1" in stdout or "dry-run" in stdout.lower()
 
+    def test_cmd_parse_warns_on_degraded_result(self):
+        """A degraded parse surfaces its warning codes on stderr."""
+        cmd_parse = _cli_ns["cmd_parse"]
+        mock_args = MagicMock()
+        mock_args.upload_id = "pu-degraded-1"
+        mock_args.filepath = None
+        mock_args.output = None
+        mock_args.dry_run = False
+        mock_client = MagicMock()
+        mock_client.dry_run = False
+        mock_client.parse_with_upload_id.return_value = {
+            "success": True,
+            "data": {
+                "markdown": "garbled scan text",
+                "metadata": {
+                    "degraded": True,
+                    "warnings": ["low_ocr_confidence"],
+                },
+            },
+        }
+        stderr = _capture_stderr(cmd_parse, mock_client, mock_args)
+        assert "degraded" in stderr
+        assert "low_ocr_confidence" in stderr
+
+    def test_cmd_parse_json_output_keeps_degraded_warning_in_payload(self):
+        """--json leaves stderr clean; metadata carries the warning."""
+        cmd_parse = _cli_ns["cmd_parse"]
+        mock_args = MagicMock()
+        mock_args.upload_id = "pu-degraded-json"
+        mock_args.filepath = None
+        mock_args.output = None
+        mock_args.dry_run = False
+        mock_client = MagicMock()
+        mock_client.dry_run = False
+        mock_client.parse_with_upload_id.return_value = {
+            "success": True,
+            "data": {
+                "markdown": "garbled scan text",
+                "metadata": {
+                    "degraded": True,
+                    "warnings": ["low_ocr_confidence"],
+                },
+            },
+        }
+        original_json = _cli_ns["JSON_OUTPUT"]
+        _cli_ns["JSON_OUTPUT"] = True
+        try:
+            stdout = _capture_stdout(cmd_parse, mock_client, mock_args)
+            stderr = _capture_stderr(cmd_parse, mock_client, mock_args)
+        finally:
+            _cli_ns["JSON_OUTPUT"] = original_json
+        assert "degraded" not in stderr
+        assert json.loads(stdout.strip())["data"]["metadata"]["degraded"] is True
+
 
 # ── parse-upload parser tests ─────────────────────────────────────────────────
 

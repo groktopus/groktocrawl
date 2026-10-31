@@ -72,6 +72,8 @@ The plan endpoints create and retrieve a consentable research plan; execution st
 
 Use the two-step parse flow when an upload must be staged: `PUT /v2/parse/upload/{upload_id}`, then `POST /v2/parse` referencing that ID. Browser routes create, execute against, list, and destroy short-lived Playwright sessions.
 
+`POST /v2/parse` keeps its `{success, data: {markdown, metadata}, error}` envelope. When local OCR runs, `metadata.ocr` reports `engine`, `pages_processed`, `words`, `mean_confidence` and `min_page_confidence` (0.0–1.0), `low_confidence_pages`, `threshold`, and `quality` (`ok`, `low`, `empty`, or `unavailable`); `pages_processed` reflects the existing first-10-pages OCR cap. Retained OCR text below `PARSE_OCR_MIN_CONFIDENCE` (default `0.60`) is still returned, but `metadata.degraded` is `true` and `metadata.warnings` contains `low_ocr_confidence`. A document that yields no text at all also sets `metadata.degraded` with `no_text_extracted`; an absent `metadata.degraded` means no degradation was detected. Confidence measures recognition, not semantic correctness, and a low local score never triggers the opt-in hosted OCR path. The CLI withholds this warning under `--json`, where the full metadata remains available.
+
 ## Compatibility
 
 GroktoCrawl targets Firecrawl v2 request/response conventions for its compatible operations. GroktoCrawl-specific facilities—plans, sessions, research memory, citation resolution, enrichment, semantic similarity, portal support, and MCP—extend that surface. Do not infer unsupported Firecrawl options from compatibility language; consult `/openapi.json` for accepted fields.

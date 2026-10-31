@@ -91,6 +91,93 @@ SUPPORTED_FORMATS = {
 }
 
 
+# ---- OCR quality ----
+
+DEFAULT_OCR_MIN_CONFIDENCE = 0.60
+OCR_ENGINE = "tesseract"
+
+
+def _ocr_min_confidence() -> float:
+    """Return the effective low-confidence threshold on the 0.0-1.0 scale.
+
+    Invalid configuration falls back to the documented default instead of
+    failing a parse; the misconfiguration is logged for operators.
+    """
+    raw = os.getenv("PARSE_OCR_MIN_CONFIDENCE", "").strip()
+    if not raw:
+        return DEFAULT_OCR_MIN_CONFIDENCE
+    try:
+        value = float(raw)
+    except ValueError:
+        logger.warning("Invalid PARSE_OCR_MIN_CONFIDENCE=%r; using default", raw)
+        return DEFAULT_OCR_MIN_CONFIDENCE
+    if not 0.0 <= value <= 1.0:
+        logger.warning(
+            "PARSE_OCR_MIN_CONFIDENCE=%r outside 0.0-1.0; using default", raw
+        )
+        return DEFAULT_OCR_MIN_CONFIDENCE
+    return value
+
+
+def _coerce_confidence(value: Any) -> float | None:
+    """Normalize one tesseract confidence to 0.0-1.0, or None if unusable."""
+    try:
+        confidence = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not 0.0 <= confidence <= 100.0:
+        return None
+    return confidence / 100.0
+
+
+def _ocr_page(image: Any) -> tuple[str, float | None, int]:
+    """Run one tesseract pass and return (text, mean confidence, word count).
+
+    ``image_to_data`` yields word text and confidence from the same tesseract
+    invocation; reconstructing lines avoids a second OCR pass purely to obtain
+    confidence. Rows with no usable confidence contribute text but no sample.
+    """
+    import pytesseract
+
+    data = pytesseract.image_to_data(
+        image, lang="eng", output_type=pytesseract.Output.DICT
+    )
+    if not isinstance(data, dict):
+        return "", None, 0
+    texts = data.get("text", [])
+    confidences = data.get("conf", [])
+    line_numbers = data.get("line_num", [])
+    block_numbers = data.get("block_num", [])
+
+    lines: list[str] = []
+    current: list[str] = []
+    current_key: tuple[Any, Any] | None = None
+    measured: list[float] = []
+    for index, raw_text in enumerate(texts):
+        word = str(raw_text).strip()
+        if not word:
+            continue
+        key = (
+            block_numbers[index] if index < len(block_numbers) else 0,
+            line_numbers[index] if index < len(line_numbers) else 0,
+        )
+        if current_key is not None and key != current_key:
+            lines.append(" ".join(current))
+            current = []
+        current.append(word)
+        current_key = key
+        confidence = _coerce_confidence(
+            confidences[index] if index < len(confidences) else None
+        )
+        if confidence is not None:
+            measured.append(confidence)
+    if current:
+        lines.append(" ".join(current))
+
+    mean = sum(measured) / len(measured) if measured else None
+    return "\n".join(lines), mean, len(measured)
+
+
 # ---- Individual parsers ----
 
 
@@ -119,9 +206,10 @@ def _parse_pdf(content: bytes, filename: str, ocr: str = "local") -> dict:
         logger.warning("pypdf failed: %s", e)
 
     # Tier 2: local OCR is the default; hosted mode is deliberately separate.
+    ocr_info: dict[str, Any] | None = None
     if ocr != "hosted" and (not text_extracted or len("".join(markdown_parts)) < 100):
+        threshold = _ocr_min_confidence()
         try:
-            import pytesseract
             from pdf2image import convert_from_bytes
 
             images = convert_from_bytes(
@@ -131,19 +219,74 @@ def _parse_pdf(content: bytes, filename: str, ocr: str = "local") -> dict:
                 last_page=min(10, metadata.get("pages", 10)),
             )
             ocr_parts = []
+            page_confidences: list[float | None] = []
+            word_count = 0
+            confidence_total = 0.0
+            confidence_samples = 0
             for i, img in enumerate(images):
-                text = pytesseract.image_to_string(img, lang="eng")
+                text, mean_confidence, words = _ocr_page(img)
                 ocr_parts.append(f"--- Page {i + 1} ---\n\n{text}")
-            if ocr_parts:
-                ocr_text = "\n\n".join(ocr_parts).strip()
-                if len(ocr_text) > 50:
-                    markdown_parts = [ocr_text]
-                    metadata["extraction"] = "local_ocr"
-                    text_extracted = True
+                page_confidences.append(mean_confidence)
+                word_count += words
+                if mean_confidence is not None and words:
+                    confidence_total += mean_confidence * words
+                    confidence_samples += words
+            ocr_text = "\n\n".join(ocr_parts).strip()
+            measured = [value for value in page_confidences if value is not None]
+            mean_confidence = (
+                round(confidence_total / confidence_samples, 4)
+                if confidence_samples
+                else None
+            )
+            low_pages = [
+                index + 1
+                for index, value in enumerate(page_confidences)
+                if value is not None and value < threshold
+            ]
+            if mean_confidence is None:
+                quality = "unassessed"
+            elif mean_confidence < threshold:
+                quality = "low"
+            else:
+                quality = "ok"
+            ocr_info = {
+                "engine": OCR_ENGINE,
+                "pages_processed": len(images),
+                "words": word_count,
+                "mean_confidence": mean_confidence,
+                "min_page_confidence": round(min(measured), 4) if measured else None,
+                "low_confidence_pages": low_pages,
+                "threshold": threshold,
+                "quality": quality,
+            }
+            if len(ocr_text) > 50:
+                markdown_parts = [ocr_text]
+                metadata["extraction"] = "local_ocr"
+                text_extracted = True
+                if quality == "low":
+                    metadata["degraded"] = True
+                    metadata.setdefault("warnings", []).append("low_ocr_confidence")
+                elif quality == "unassessed":
+                    metadata["degraded"] = True
+                    metadata.setdefault("warnings", []).append(
+                        "ocr_confidence_unassessed"
+                    )
+            else:
+                ocr_info["quality"] = "empty"
         except ImportError:
             logger.warning("pytesseract/pdf2image not available, skipping OCR")
+            ocr_info = {
+                "engine": OCR_ENGINE,
+                "threshold": threshold,
+                "quality": "unavailable",
+            }
         except Exception as e:
             logger.warning("OCR failed: %s", e)
+            ocr_info = {
+                "engine": OCR_ENGINE,
+                "threshold": threshold,
+                "quality": "unavailable",
+            }
 
     # Tier 3: Table extraction for PDFs with tables
     try:
@@ -168,6 +311,8 @@ def _parse_pdf(content: bytes, filename: str, ocr: str = "local") -> dict:
         logger.debug("Table extraction failed: %s", e)
 
     markdown = "\n\n".join(markdown_parts).strip()
+    if ocr_info is not None:
+        metadata["ocr"] = ocr_info
     if ocr == "hosted" and not text_extracted:
         api_url = os.getenv("PARSE_HOSTED_OCR_API_URL")
         if not api_url:
@@ -192,6 +337,12 @@ def _parse_pdf(content: bytes, filename: str, ocr: str = "local") -> dict:
             raise HTTPException(
                 status_code=422, detail=f"Hosted OCR failed: {e}"
             ) from e
+    if not markdown:
+        # The caller must not infer a clean parse from an empty document.
+        metadata["degraded"] = True
+        warnings = metadata.setdefault("warnings", [])
+        if "no_text_extracted" not in warnings:
+            warnings.append("no_text_extracted")
     return {"markdown": markdown, "metadata": metadata}
 
 
