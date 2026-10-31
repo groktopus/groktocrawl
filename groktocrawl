@@ -3341,6 +3341,18 @@ def cmd_document(client: Client, args: argparse.Namespace) -> None:
         die(error)
 
 
+def _warn_if_degraded_parse(data: Any) -> None:
+    """Surface a degraded parse result on stderr without changing the payload."""
+    if JSON_OUTPUT or not isinstance(data, dict):
+        return
+    metadata = data.get("metadata")
+    if not isinstance(metadata, dict) or not metadata.get("degraded"):
+        return
+    codes = metadata.get("warnings")
+    detail = ", ".join(str(code) for code in codes) if isinstance(codes, list) else ""
+    warn(f"parse result is degraded{f' [{detail}]' if detail else ''}")
+
+
 def cmd_parse(client: Client, args: argparse.Namespace) -> None:
     """Parse a document file to markdown via the server."""
     if args.upload_id:
@@ -3358,6 +3370,7 @@ def cmd_parse(client: Client, args: argparse.Namespace) -> None:
             die(f"Parse failed: {result.get('error', 'unknown error')}")
         data = result.get("data", {})
         markdown = data.get("markdown", data.get("text", ""))
+        _warn_if_degraded_parse(data)
         if JSON_OUTPUT:
             emit("", result)
             return
@@ -3392,6 +3405,7 @@ def cmd_parse(client: Client, args: argparse.Namespace) -> None:
 
     data = result.get("data", {})
     markdown = data.get("markdown", data.get("text", ""))
+    _warn_if_degraded_parse(data)
 
     if JSON_OUTPUT:
         emit("", result)
