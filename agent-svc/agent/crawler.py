@@ -209,7 +209,7 @@ class CrawlOptions:
     allow_subdomains: bool = False
     allow_external_links: bool = False
     crawl_entire_domain: bool = False
-    max_duration_seconds: int = 1800
+    max_duration_seconds: int = 0
     idle_timeout_seconds: int = 300
     max_concurrency: int = 3
     delay: float | None = None
@@ -663,10 +663,14 @@ class CrawlEngine:
                         logger.info("Crawl %s cancelled via Redis status check", job_id)
                         break
 
-                # Maximum duration timeout check
+                # Maximum duration timeout check (0 = disabled; the idle
+                # timeout above is the real stall detector — ADR-0077).
                 now = time.monotonic()
                 elapsed = now - crawl_start_time
-                if elapsed > self.options.max_duration_seconds:
+                if (
+                    self.options.max_duration_seconds > 0
+                    and elapsed > self.options.max_duration_seconds
+                ):
                     logger.warning(
                         "Crawl %s exceeded max duration of %ds (elapsed=%.1fs)",
                         job_id,
@@ -847,7 +851,8 @@ class CrawlEngine:
             "filtered": len(self._filtered_out),
             "robots_blocked": len(self._robots_blocked),
             "fetch_failed": sum(
-                value in {"timeout", "dns_error", "http_error", "scrape_error", "cache_miss"}
+                value
+                in {"timeout", "dns_error", "http_error", "scrape_error", "cache_miss"}
                 for value in error_types
             ),
             "barrier_rejected": error_types.count("barrier_detected"),

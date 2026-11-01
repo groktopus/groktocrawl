@@ -38,7 +38,10 @@ API_URL: str = os.environ.get(
 )
 API_KEY: str | None = os.environ.get("GROKTOCRAWL_API_KEY") or None
 PORT: int = int(os.environ.get("MCP_PORT", "8002"))
-DEFAULT_TIMEOUT: float = float(os.environ.get("HTTP_TIMEOUT", "60"))
+# Client patience bound for a single upstream call, not a service limit.
+# Synchronous synthesis (answer) can legitimately exceed the old 60s
+# default under load, so the default is generous and env-overridable.
+DEFAULT_TIMEOUT: float = float(os.environ.get("HTTP_TIMEOUT", "300"))
 _SERVER_START_TIME: float = time.time()
 
 # ── Shared state ───────────────────────────────────────────────────
@@ -264,7 +267,8 @@ async def search(
 
     Args:
         query: The search query string.
-        limit: Maximum number of results to return (1–100, default 5).
+        limit: Maximum number of results to return (1–1000; the
+            upstream API rejects values outside that range, default 5).
         sources: Optional source-type filter (e.g. web, news, images).
         categories: Optional content-category filter (e.g. research,
             github, pdf, news, science, it).

@@ -1403,11 +1403,16 @@ class TestRateLimitRetry:
         assert call_count == 3
 
     def test_429_retry_after_clamped(self):
-        """Retry-After is clamped to the bounded max wait."""
+        """Retry-After is clamped to the bounded max wait.
+
+        The ceiling must span at least one server admission window (ADR-0053
+        clamps server-provided delays to 60s), otherwise the client gives up
+        while it is still throttled.
+        """
         import groktocrawl_client
 
         assert groktocrawl_client._MIN_RETRY_WAIT_SECONDS >= 1.0
-        assert groktocrawl_client._MAX_RETRY_WAIT_SECONDS <= 10.0
+        assert groktocrawl_client._MAX_RETRY_WAIT_SECONDS == 60.0
 
 
 # ── SSRF guard for server-side downloads (parse tool) ─────────────

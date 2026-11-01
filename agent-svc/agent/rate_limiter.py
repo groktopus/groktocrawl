@@ -25,6 +25,8 @@ class SlidingWindowRateLimiter:
     issues do not block legitimate traffic.
     """
 
+    enabled = True
+
     def __init__(self, redis: object, limit: int, window_seconds: int) -> None:
         self.redis = redis
         self.limit = limit
@@ -110,3 +112,46 @@ class SlidingWindowRateLimiter:
                 f"Rate limit values must be positive: limit={limit}, window={window}"
             )
         return limit, window
+
+
+#: Values of ``AGENT_SEARCH_RATE_LIMIT`` that disable admission limiting.
+DISABLED_RATE_LIMIT_VALUES = frozenset({"", "off", "none", "disabled", "0"})
+
+
+class DisabledRateLimiter:
+    """No-op limiter used when per-client admission limiting is turned off.
+
+    Exposes the same surface as :class:`SlidingWindowRateLimiter` so route
+    handlers do not branch on limiter type: ``check()`` always admits, and
+    callers suppress the ``X-*-Rate-Remaining`` headers by testing
+    ``enabled``.
+    """
+
+    enabled = False
+    limit = 0
+    window = 0
+
+    async def check(self, key: str) -> tuple[bool, int]:
+        return True, 0
+
+    def retry_after_seconds(self, now: float | None = None) -> int:
+        return 0
+
+    def reset_at_iso(self, now: float | None = None) -> str | None:
+        return None
+
+
+def build_rate_limiter(
+    redis: object, limit_str: str
+) -> SlidingWindowRateLimiter | DisabledRateLimiter:
+    """Build a limiter from a ``AGENT_SEARCH_RATE_LIMIT``-style spec.
+
+    An empty spec (or ``off``/``none``/``disabled``/``0``) disables admission
+    limiting. Rate limiting exists to protect metered provider budgets, not an
+    internal capacity bound, so it is opt-in (ADR-0077).
+    """
+    normalized = (limit_str or "").strip().lower()
+    if normalized in DISABLED_RATE_LIMIT_VALUES:
+        return DisabledRateLimiter()
+    limit, window = SlidingWindowRateLimiter.parse_limit(normalized)
+    return SlidingWindowRateLimiter(redis, limit, window)

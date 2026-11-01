@@ -24,7 +24,12 @@ from ..models import (
 )
 from ..research_memory import compute_fingerprint
 from ..store import JobStore
-from ._helpers import _derive_user_id, _get_client_ip, _resolve_output_schema
+from ._helpers import (
+    _apply_rate_headers,
+    _derive_user_id,
+    _get_client_ip,
+    _resolve_output_schema,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -152,10 +157,10 @@ async def _handle_agent_streaming(
     should fall through to the sync (create-and-poll) path.
     """
     rate_limiter = request.app.state.rate_limiter
-    headers = {
-        "X-Search-Budget": f"{max_searches}/{max_searches}",
-        "X-Search-Rate-Remaining": f"{rate_remaining}/{rate_limiter.limit}",
-    }
+    headers: dict[str, str] = {}
+    _apply_rate_headers(
+        headers, rate_limiter, rate_remaining, max_searches=max_searches
+    )
 
     # ── Cache HIT + streaming: return cached artifact as SSE ─────
     if cache_hit_data is not None and body.stream:
@@ -329,9 +334,7 @@ async def create_agent(request: Request, body: AgentRequest, response: Response)
 
     # ── Mode: plan — generate a research plan ──
     if body.mode == "plan":
-        response.headers["X-Search-Rate-Remaining"] = (
-            f"{rate_remaining}/{rate_limiter.limit}"
-        )
+        _apply_rate_headers(response.headers, rate_limiter, rate_remaining)
         from .plan import _handle_plan_mode
 
         return await _handle_plan_mode(request, body, response)
@@ -396,9 +399,8 @@ async def create_agent(request: Request, body: AgentRequest, response: Response)
         ),
     )
 
-    response.headers["X-Search-Budget"] = f"{max_searches}/{max_searches}"
-    response.headers["X-Search-Rate-Remaining"] = (
-        f"{rate_remaining}/{rate_limiter.limit}"
+    _apply_rate_headers(
+        response.headers, rate_limiter, rate_remaining, max_searches=max_searches
     )
     return AgentCreateResponse(id=job_id)
 
@@ -503,10 +505,10 @@ async def answer(request: Request, body: AnswerRequest, response: Response) -> A
             async for chunk in _serialize_answer_stream(events):
                 yield chunk
 
-        headers = {
-            "X-Search-Budget": f"{max_searches}/{max_searches}",
-            "X-Search-Rate-Remaining": f"{rate_remaining}/{rate_limiter.limit}",
-        }
+        headers: dict[str, str] = {}
+        _apply_rate_headers(
+            headers, rate_limiter, rate_remaining, max_searches=max_searches
+        )
         return StreamingResponse(  # type: ignore[return-value]
             event_stream(), media_type="text/event-stream", headers=headers
         )
@@ -534,9 +536,8 @@ async def answer(request: Request, body: AnswerRequest, response: Response) -> A
         evidence_budget_chars=body.evidence_budget_chars,
         include_source_content=body.include_source_content,
     )
-    response.headers["X-Search-Budget"] = f"{max_searches}/{max_searches}"
-    response.headers["X-Search-Rate-Remaining"] = (
-        f"{rate_remaining}/{rate_limiter.limit}"
+    _apply_rate_headers(
+        response.headers, rate_limiter, rate_remaining, max_searches=max_searches
     )
     return AnswerResponse(
         success=True,

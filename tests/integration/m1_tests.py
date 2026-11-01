@@ -539,10 +539,13 @@ def test_agent_rate_limit_with_output_schema():
         return  # Rate limiter is working — test passes
 
     assert r.status_code == 200
-    assert "X-Search-Rate-Remaining" in r.headers, (
-        f"Rate limit header missing. Headers: {dict(r.headers)}"
-    )
-    assert "X-Search-Budget" in r.headers, "Search budget header missing"
+    # ADR-0077: these headers are emitted only when the corresponding cap is
+    # configured. A default deployment disables both, so the contract is
+    # "present and well-formed when configured", not "always present".
+    for header in ("X-Search-Rate-Remaining", "X-Search-Budget"):
+        value = r.headers.get(header)
+        if value is not None:
+            assert "/" in value, f"{header} malformed: {value!r}"
 
 
 def test_agent_llm_health_check_streaming():

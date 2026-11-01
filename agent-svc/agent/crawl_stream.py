@@ -63,7 +63,7 @@ async def crawl_event_stream(
     ignore_robots_txt: bool = False,
     robots_user_agent: str | None = None,
     scrape_options: dict | None = None,
-    max_duration_seconds: int = 1800,
+    max_duration_seconds: int = 0,
     idle_timeout_seconds: int = 300,
 ) -> AsyncGenerator[str, None]:
     """Run a crawl and yield SSE-formatted event strings.

@@ -77,9 +77,10 @@ async def create_crawl(
             reset_at=rate_limiter.reset_at_iso(),
         )
 
-    response.headers["X-Crawl-Rate-Remaining"] = (
-        f"{rate_remaining}/{rate_limiter.limit}"
-    )
+    if getattr(rate_limiter, "enabled", False):
+        response.headers["X-Crawl-Rate-Remaining"] = (
+            f"{rate_remaining}/{rate_limiter.limit}"
+        )
 
     # ── NL→params: derive from prompt, merge with explicit params ──
     include_paths = body.include_paths

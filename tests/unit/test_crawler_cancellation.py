@@ -233,17 +233,50 @@ async def test_run_start_url_failure_returns_result():
 
 
 @pytest.mark.asyncio
-async def test_run_raises_timeout_when_max_duration_exceeded():
+async def test_run_raises_timeout_when_max_duration_exceeded(monkeypatch):
     from agent.crawler import CrawlEngine, CrawlOptions
 
+    # Deterministic clock: every reading advances 10s, so the first
+    # elapsed-time check already exceeds the 5s cap regardless of call order.
+    ticks = {"now": 0.0}
+
+    def _clock() -> float:
+        ticks["now"] += 10.0
+        return ticks["now"]
+
+    monkeypatch.setattr("agent.crawler.time.monotonic", _clock)
+
+    scraper = MagicMock()
+    scraper.scrape = AsyncMock(
+        return_value={"success": True, "data": {"markdown": "# x", "metadata": {}}}
+    )
     engine = CrawlEngine(
-        MagicMock(),
+        scraper,
         options=CrawlOptions(
-            max_pages=10, max_depth=0, sitemap_mode="skip", max_duration_seconds=-1
+            max_pages=10, max_depth=1, sitemap_mode="skip", max_duration_seconds=5
         ),
     )
     with pytest.raises(TimeoutError):
         await engine.run("http://example.com/")
+
+
+@pytest.mark.asyncio
+async def test_zero_max_duration_disables_the_wall_clock_cap():
+    """ADR-0077: 0 means unbounded; the idle timeout is the stall detector."""
+    from agent.crawler import CrawlEngine, CrawlOptions
+
+    scraper = MagicMock()
+    scraper.scrape = AsyncMock(
+        return_value={"success": True, "data": {"markdown": "# x", "metadata": {}}}
+    )
+    engine = CrawlEngine(
+        scraper,
+        options=CrawlOptions(
+            max_pages=1, max_depth=0, sitemap_mode="skip", max_duration_seconds=0
+        ),
+    )
+    result = await engine.run("http://example.com/")
+    assert len(result.pages) == 1
 
 
 @pytest.mark.asyncio

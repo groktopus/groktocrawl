@@ -138,6 +138,13 @@ class AdmissionController:
             raise ValueError("weight must be positive")
 
         limit = self._limits[resource_class]
+        if limit == 0:
+            # No budget configured: the class is unlimited (ADR-0077). Keep the
+            # active counter and gauge symmetric with release() so operators can
+            # still observe concurrency.
+            self._active[resource_class] += weight
+            self._set_active(resource_class)
+            return
         if weight > limit:
             self._reject(resource_class)
             raise AdmissionRejectedError(

@@ -106,6 +106,7 @@ An Architecture Decision Record captures an important architectural decision mad
 | 0075 | [Retain known model output-limit failures](0075-retain-known-model-output-limit-receipts.md) | accepted |
 
 | 0076 | [Bound Research-Loop Evaluation Before Promotion](0076-bound-research-loop-evaluation.md) | proposed |
+| 0077 | [Make Request-Rate Caps Opt-In and Keep Only Capacity-Evidenced Limits](0077-capacity-evidenced-resource-limits.md) | accepted |
 
 | 0077 | [Admit and enforce a source scope for durable research](0077-admit-source-scope-for-durable-research.md) | accepted |
 

@@ -86,7 +86,7 @@ def _parse_retry_after(value: str | None) -> float | None:
 class SearXNGClient:
     """Client for the SearXNG search engine JSON API."""
 
-    def __init__(self, base_url: str = "http://searxng:8080", max_searches: int = 5):
+    def __init__(self, base_url: str = "http://searxng:8080", max_searches: int = 0):
         self.base_url = base_url.rstrip("/")
         self._client = httpx.AsyncClient(
             timeout=15,
@@ -98,6 +98,28 @@ class SearXNGClient:
         )
         self._search_count = 0
         self._max_searches = max_searches
+
+    def _reserve_search_slot(self) -> None:
+        """Reserve one search call for this request.
+
+        A ``max_searches`` of 0 means unbounded: the count is a local
+        convenience ceiling, not a capacity bound, and must not silently fail
+        a request (ADR-0077). A positive budget raises ``RateLimitedError``
+        once exhausted.
+        """
+        from .exceptions import RateLimitedError
+
+        if self._max_searches > 0 and self._search_count >= self._max_searches:
+            raise RateLimitedError(
+                detail=(
+                    f"Search budget exceeded: {self._search_count}/{self._max_searches}"
+                ),
+                details={
+                    "budget_used": self._search_count,
+                    "budget_max": self._max_searches,
+                },
+            )
+        self._search_count += 1
 
     @staticmethod
     def _translate(
@@ -186,8 +208,9 @@ class SearXNGClient:
         the upstream can choose engines for the query. Explicit ``sources`` and
         ``categories`` are merged via ``_translate()`` and passed upstream.
 
-        Enforces a per-request search budget. Raises ``RateLimitedError``
-        when the budget is exhausted.
+        Enforces a per-request search budget when ``max_searches`` is
+        positive. Raises ``RateLimitedError`` when the budget is exhausted.
+        A ``max_searches`` of 0 disables the budget (ADR-0077).
 
         ``raise_on_rate_limit`` opts into the retryable downstream
         classification (ADR-0053): when the upstream answers HTTP 429, the
@@ -221,18 +244,11 @@ class SearXNGClient:
 
         try:
             # ── Per-request search budget check ────────────────────
-            if self._search_count >= self._max_searches:
+            try:
+                self._reserve_search_slot()
+            except RateLimitedError:
                 outcome = "rate_limited"
-                raise RateLimitedError(
-                    detail=(
-                        f"Search budget exceeded: {self._search_count}/{self._max_searches}"
-                    ),
-                    details={
-                        "budget_used": self._search_count,
-                        "budget_max": self._max_searches,
-                    },
-                )
-            self._search_count += 1
+                raise
 
             params = {
                 "q": query,

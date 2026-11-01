@@ -166,7 +166,7 @@ async def sweep_memory(request: Request) -> dict[str, Any]:
     """
     # Rate limit: one sweep per 60s per client IP
     client_ip = _get_client_ip(request)
-    rate_limiter = request.app.state.rate_limiter
+    rate_limiter = request.app.state.memory_sweep_limiter
     allowed, _remaining = await rate_limiter.check(f"{client_ip}:memory_sweep")
     if not allowed:
         raise RateLimitedError(
