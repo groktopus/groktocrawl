@@ -3076,10 +3076,10 @@ def test_crawl_cancel_completed_job_returns_error():
 def test_crawl_rate_limit_respected():
     """Per-client rate limit on crawl creation is respected (429 on excess).
     VAL-CROSS-039: Rate limiter blocks excessive crawl creations.
+
+    Admission limiting is opt-in (ADR-0077), so a default stack admits these
+    requests; CI configures ``AGENT_SEARCH_RATE_LIMIT`` for determinism.
     """
-    # Make many concurrent crawl requests to trigger rate limiting
-    # The rate limit is typically 60/min by default — we won't hit it
-    # with a few requests, but we can verify the rate limit header exists
     job_id = _start_crawl(
         {
             "url": TEST_SITE + "/pricing",
@@ -4820,10 +4820,13 @@ def test_agent_rate_limit_with_output_schema():
         return  # Rate limiter is working — test passes
 
     assert r.status_code == 200
-    assert "X-Search-Rate-Remaining" in r.headers, (
-        f"Rate limit header missing. Headers: {dict(r.headers)}"
-    )
-    assert "X-Search-Budget" in r.headers, "Search budget header missing"
+    # ADR-0077: these headers are emitted only when the corresponding cap is
+    # configured. A default deployment disables both, so the contract is
+    # "present and well-formed when configured", not "always present".
+    for header in ("X-Search-Rate-Remaining", "X-Search-Budget"):
+        value = r.headers.get(header)
+        if value is not None:
+            assert "/" in value, f"{header} malformed: {value!r}"
 
 
 def test_agent_llm_health_check_streaming():
