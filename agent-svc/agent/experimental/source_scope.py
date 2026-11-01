@@ -126,6 +126,19 @@ class SourceScope(BaseModel):
     seed_urls: tuple[str, ...] = Field(default=(), max_length=_MAX_SEEDS)
     allowed_hosts: tuple[str, ...] = Field(default=(), max_length=_MAX_ALLOWED_HOSTS)
 
+    @field_validator("seed_urls", "allowed_hosts", mode="before")
+    @classmethod
+    def _normalize_empty_collection(cls, value: object) -> object:
+        """Accept the durable ledger's cjson representation of an empty array.
+
+        Valkey's claim script round-trips the admitted payload through Lua
+        ``cjson``, which encodes an empty JSON array as ``{}``. Non-empty arrays
+        remain arrays, and a non-empty object is still rejected below.
+        """
+        if isinstance(value, dict) and not value:
+            return ()
+        return value
+
     @field_validator("seed_urls")
     @classmethod
     def _validate_seeds(cls, values: tuple[str, ...]) -> tuple[str, ...]:

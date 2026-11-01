@@ -1195,9 +1195,14 @@ async def admit_research_run(
             "events": [accepted_event.model_dump(mode="json")],
         }
         if payload.source_scope is not None:
-            admitted_payload["source_scope"] = payload.source_scope.model_dump(
-                mode="json"
-            )
+            # The durable claim script round-trips the payload through Lua
+            # cjson, which encodes an empty array as {}. Persist only populated
+            # collections so scope validation survives that round trip.
+            admitted_payload["source_scope"] = {
+                key: value
+                for key, value in payload.source_scope.model_dump(mode="json").items()
+                if value != []
+            }
         try:
             admitted = durable.admit(
                 scope,

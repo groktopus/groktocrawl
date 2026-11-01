@@ -60,6 +60,27 @@ def test_allowlist_requires_hosts_and_seed_in_scope() -> None:
     assert scope.seed_urls == (SEED,)
 
 
+def test_empty_cjson_object_is_treated_as_an_empty_collection() -> None:
+    # The durable claim script round-trips payloads through Lua cjson, which
+    # encodes an empty JSON array as an empty object.
+    scope = SourceScope.model_validate(
+        {
+            "mode": "seeds_only",
+            "seed_urls": [SEED],
+            "allowed_hosts": {},
+        }
+    )
+    assert scope.allowed_hosts == ()
+    with pytest.raises(ValidationError):
+        SourceScope.model_validate(
+            {
+                "mode": "seeds_only",
+                "seed_urls": [SEED],
+                "allowed_hosts": {"example.org": True},
+            }
+        )
+
+
 def test_canonicalization_and_exact_seed_matching() -> None:
     scope = SourceScope(
         mode="seeds_only",
