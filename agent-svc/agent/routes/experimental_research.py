@@ -38,11 +38,19 @@ from ..experimental.durable_research import (
     OutcomeUnknownError,
 )
 from ..experimental.knowledge_checks import HistoricalValidityError
-from ..experimental.live_policy import CURRENT_LIVE_POLICY, execution_timeout_seconds
+from ..experimental.live_policy import (
+    CURRENT_LIVE_POLICY,
+    SCOPED_LIVE_POLICY,
+    execution_timeout_seconds,
+)
 from ..experimental.live_runner import run_live
 from ..experimental.model_failure import ModelOutputLimitError
 from ..experimental.publication_gate import UnverifiedResearchError
 from ..experimental.query_construction import CapturedSource
+from ..experimental.source_scope import (
+    SourceScope,
+    SourceScopeUnavailableError,
+)
 from ..experimental.source_store import StorageConflictError
 from ..llm import _token_budget_params
 from ..session_scope import request_scope
@@ -56,8 +64,11 @@ _MAX_DURABLE_TERMINAL_PAYLOAD_BYTES = 1_048_576
 class CreateResearchRunRequest(BaseModel):
     """Bounded objective-driven research admission request."""
 
+    model_config = ConfigDict(extra="forbid")
+
     protocol_version: Literal["research/1"] = "research/1"
     objective: str = Field(min_length=1, max_length=10_000)
+    source_scope: SourceScope | None = None
     as_of: datetime | None = None
     webhook: str | None = None
 
@@ -826,6 +837,16 @@ async def _execute_run(record: _RunRecord) -> None:
                     "message": exc.message,
                     "retryable": False,
                 }
+            if isinstance(exc, SourceScopeUnavailableError) and not pending_dispatch:
+                record.error = {
+                    "code": "source_scope_unavailable",
+                    "message": (
+                        "No permitted research source could be acquired. "
+                        "No out-of-scope source was substituted."
+                    ),
+                    "coverage": "insufficient",
+                    "retryable": False,
+                }
             failure = _build_event(record, "error", "failed", error=record.error)
             if (
                 record.durable_ledger is not None
@@ -1022,6 +1043,14 @@ def capability_document() -> dict[str, Any]:
                     "webhook": live_creation,
                     "as_of": live_creation,
                     "as_of_semantics": "evidence_evaluation_target_not_historical_capture",
+                    "source_scope": {
+                        "available": live_creation,
+                        "modes": ["open", "seeds_only", "allowlist"],
+                        "seed_urls": 8,
+                        "allowed_hosts": 20,
+                        "enforcement": "seed_and_allowed_host_acquisition",
+                        "redirect_effective_url_enforced": False,
+                    },
                 },
             },
             "artifacts": {
@@ -1072,6 +1101,11 @@ async def admit_research_run(
             status_code=422, detail="Selected evidence exceeds research context budget"
         )
     fixture = is_enabled("experimental_research_fixture_runs")
+    if fixture and payload.source_scope is not None:
+        raise HTTPException(
+            status_code=422,
+            detail="Fixture runs cannot enforce a source scope",
+        )
     if fixture and payload.webhook is not None:
         raise HTTPException(
             status_code=422, detail="Fixture runs do not dispatch webhooks"
@@ -1122,7 +1156,9 @@ async def admit_research_run(
                 status_code=503,
                 detail="Artifact evidence schema 16 required before admission",
             ) from exc
-    admitted_input = payload.model_dump_json().encode()
+    admitted_input = payload.model_dump_json(
+        exclude={"source_scope"} if payload.source_scope is None else None
+    ).encode()
     if selected_sources:
         admitted_input += json.dumps(
             [asdict(source) for source in selected_sources], sort_keys=True
@@ -1138,32 +1174,37 @@ async def admit_research_run(
             event="accepted",
             state="accepted",
         )
+        admitted_payload: dict[str, Any] = {
+            "objective": payload.objective,
+            "research_id": str(uuid4()),
+            "execution_mode": "fixture" if fixture else "live",
+            "policy_version": "durable-live/4"
+            if fixture
+            else SCOPED_LIVE_POLICY
+            if payload.source_scope is not None
+            else CURRENT_LIVE_POLICY,
+            "model": model,
+            "token_params": _token_budget_params(),
+            "selected_sources": [asdict(source) for source in selected_sources],
+            "session_scope": request_scope(request),
+            "evaluation_time": datetime.now(UTC).isoformat(),
+            "as_of": payload.as_of.astimezone(UTC).isoformat().replace("+00:00", "Z")
+            if payload.as_of
+            else None,
+            "webhook": payload.webhook,
+            "events": [accepted_event.model_dump(mode="json")],
+        }
+        if payload.source_scope is not None:
+            admitted_payload["source_scope"] = payload.source_scope.model_dump(
+                mode="json"
+            )
         try:
             admitted = durable.admit(
                 scope,
                 key,
                 digest,
                 run_id=selected_run_id,
-                payload={
-                    "objective": payload.objective,
-                    "research_id": str(uuid4()),
-                    "execution_mode": "fixture" if fixture else "live",
-                    "policy_version": "durable-live/4"
-                    if fixture
-                    else CURRENT_LIVE_POLICY,
-                    "model": model,
-                    "token_params": _token_budget_params(),
-                    "selected_sources": [asdict(source) for source in selected_sources],
-                    "session_scope": request_scope(request),
-                    "evaluation_time": datetime.now(UTC).isoformat(),
-                    "as_of": payload.as_of.astimezone(UTC)
-                    .isoformat()
-                    .replace("+00:00", "Z")
-                    if payload.as_of
-                    else None,
-                    "webhook": payload.webhook,
-                    "events": [accepted_event.model_dump(mode="json")],
-                },
+                payload=admitted_payload,
             )
         except DurableConflictError as exc:
             raise HTTPException(

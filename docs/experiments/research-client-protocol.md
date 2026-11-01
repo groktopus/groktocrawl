@@ -53,6 +53,12 @@ Idempotency-Key: price-check-001
 }
 ```
 
+An optional `source_scope` bounds discovery and citation. `mode` is `open`
+(default), `seeds_only` (no search, exact seed URLs), or `allowlist` (search
+only within the allowed hosts); `seed_urls` and `allowed_hosts` are bounded
+lists. Unknown request fields are rejected, and a scoped admission is pinned to
+`durable-live/6`. See the [durable research guide](../guides/durable-research.md#source-scope).
+
 Successful admission returns 202, a Location header for polling, and:
 
 ```json

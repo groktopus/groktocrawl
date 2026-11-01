@@ -1296,12 +1296,18 @@ class GroktocrawlClient:
         return await self._get("/experimental/research/v1/capabilities")
 
     async def experimental_research_create(
-        self, objective: str, idempotency_key: str, webhook: str | None = None
+        self,
+        objective: str,
+        idempotency_key: str,
+        webhook: str | None = None,
+        source_scope: dict[str, Any] | None = None,
     ) -> dict:
         """Admit one bounded research run in the server-configured mode."""
         body: dict[str, Any] = {"objective": objective}
         if webhook is not None:
             body["webhook"] = webhook
+        if source_scope is not None:
+            body["source_scope"] = source_scope
         return await self._request_with_headers(
             "POST",
             "/experimental/research/v1/runs",

@@ -265,6 +265,33 @@ class TestSearchRetrievalContract:
         assert result["run_id"] == "run-1"
         assert request.call_args.kwargs["headers"]["Idempotency-Key"] == "stable-key"
 
+    def test_experimental_create_sends_source_scope(self, client):
+        response = MagicMock()
+        response.status_code = 202
+        response.json.return_value = {"run_id": "run-1", "state": "accepted"}
+        response.headers = {}
+        response.url = "http://test-server:8080/experimental/research/v1/runs"
+
+        import requests as requests_module
+
+        with patch.object(requests_module, "request", return_value=response) as request:
+            result = client.experimental_research_create(
+                "objective",
+                idempotency_key="stable-key",
+                source_scope={
+                    "mode": "seeds_only",
+                    "seed_urls": [
+                        "https://docs.python.org/3/tutorial/introduction.html"
+                    ],
+                },
+            )
+
+        assert result["run_id"] == "run-1"
+        assert request.call_args.kwargs["json"]["source_scope"] == {
+            "mode": "seeds_only",
+            "seed_urls": ["https://docs.python.org/3/tutorial/introduction.html"],
+        }
+
 
 class TestClientCrawl:
     """Tests for Client.crawl() parameter mapping."""

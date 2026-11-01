@@ -251,7 +251,14 @@ async def test_heartbeat_and_remote_cancel_fence_publication(ledger, monkeypatch
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "policy",
-    [None, "durable-live/2", "durable-live/3", "durable-live/4", "durable-live/5"],
+    [
+        None,
+        "durable-live/2",
+        "durable-live/3",
+        "durable-live/4",
+        "durable-live/5",
+        "durable-live/6",
+    ],
 )
 async def test_real_construction_and_review_replay_without_new_model_calls(
     ledger, monkeypatch, policy
@@ -285,7 +292,7 @@ async def test_real_construction_and_review_replay_without_new_model_calls(
         def __init__(self, *_args, **kwargs):
             assert kwargs.get("timeout", 90) == (
                 300
-                if policy == "durable-live/5"
+                if policy in {"durable-live/5", "durable-live/6"}
                 else 180
                 if policy == "durable-live/4"
                 else 90
@@ -294,7 +301,13 @@ async def test_real_construction_and_review_replay_without_new_model_calls(
         async def __call__(self, request):
             assert request.max_output_tokens == (
                 8192
-                if policy in {"durable-live/3", "durable-live/4", "durable-live/5"}
+                if policy
+                in {
+                    "durable-live/3",
+                    "durable-live/4",
+                    "durable-live/5",
+                    "durable-live/6",
+                }
                 else 2048
             )
             value = json.loads(request.payload)
@@ -302,13 +315,19 @@ async def test_real_construction_and_review_replay_without_new_model_calls(
                 assert all(
                     ("omitted_lines" in source)
                     == (
-                        policy in {"durable-live/3", "durable-live/4", "durable-live/5"}
+                        policy
+                        in {
+                            "durable-live/3",
+                            "durable-live/4",
+                            "durable-live/5",
+                            "durable-live/6",
+                        }
                     )
                     for source in value["sources"]
                 )
             if "schema" in value:
                 assert (value.get("answer_basis") == "captured_sources") == (
-                    policy in {"durable-live/4", "durable-live/5"}
+                    policy in {"durable-live/4", "durable-live/5", "durable-live/6"}
                 )
             model_calls.append(value)
             reply = (
@@ -435,7 +454,12 @@ async def test_evidence_failure_keeps_safe_terminal_details(
 @pytest.mark.asyncio
 @pytest.mark.parametrize("blocked_phase", ["planning", "construction", "review"])
 @pytest.mark.parametrize(
-    "policy,budget", [("durable-live/4", 180), ("durable-live/5", 300)]
+    "policy,budget",
+    [
+        ("durable-live/4", 180),
+        ("durable-live/5", 300),
+        ("durable-live/6", 300),
+    ],
 )
 async def test_admitted_deadline_cancels_without_replaying_model(
     ledger, monkeypatch, blocked_phase, policy, budget
