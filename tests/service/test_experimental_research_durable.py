@@ -128,6 +128,37 @@ async def test_status_recovers_from_durable_terminal_projection(app: FastAPI) ->
 
 
 @pytest.mark.asyncio
+async def test_admission_rejects_unknown_and_fixture_scope_fields(
+    app: FastAPI,
+) -> None:
+    async with await _client(app) as client:
+        unknown = await client.post(
+            "/experimental/research/v1/runs",
+            headers={"Idempotency-Key": "unknown-scope-field"},
+            json={
+                "objective": "Unknown scope field",
+                "urls": ["https://docs.python.org/3/tutorial/introduction.html"],
+            },
+        )
+        assert unknown.status_code == 422
+        scoped_fixture = await client.post(
+            "/experimental/research/v1/runs",
+            headers={"Idempotency-Key": "fixture-scope"},
+            json={
+                "objective": "Fixture scope",
+                "source_scope": {
+                    "mode": "seeds_only",
+                    "seed_urls": [
+                        "https://docs.python.org/3/tutorial/introduction.html"
+                    ],
+                },
+            },
+        )
+        assert scoped_fixture.status_code == 422
+        assert "Fixture runs cannot enforce" in scoped_fixture.text
+
+
+@pytest.mark.asyncio
 async def test_cancel_persists_durable_terminal_state(
     app: FastAPI, monkeypatch: pytest.MonkeyPatch
 ) -> None:

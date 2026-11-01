@@ -23,6 +23,7 @@ from .model_review import ModelReply
 from .model_transport import ReviewTransport
 from .query_construction import CapturedSource
 from .query_runner import run_query
+from .source_scope import SourceScope, SourceScopeUnavailableError
 
 
 async def run_live(record: Any, app: Any):
@@ -38,6 +39,7 @@ async def run_live(record: Any, app: Any):
     source_bound_policy = admitted.payload.get("policy_version") in {
         "durable-live/4",
         "durable-live/5",
+        "durable-live/6",
     }
     execution_timeout = execution_timeout_seconds(
         admitted.payload.get("policy_version")
@@ -46,17 +48,26 @@ async def run_live(record: Any, app: Any):
         "durable-live/3",
         "durable-live/4",
         "durable-live/5",
+        "durable-live/6",
     }
     planned_policy = admitted.payload.get("policy_version") in {
         "durable-live/2",
         "durable-live/3",
         "durable-live/4",
         "durable-live/5",
+        "durable-live/6",
     }
+    scope = SourceScope.model_validate(admitted.payload.get("source_scope") or {})
     selected_sources = tuple(
         CapturedSource(**source)
         for source in admitted.payload.get("selected_sources", [])
     )
+    if scope.constrained and any(
+        not scope.permits_url(source.url) for source in selected_sources
+    ):
+        raise SourceScopeUnavailableError(
+            "selected evidence is outside the admitted source scope"
+        )
 
     async def validate_selected():
         for source in selected_sources:
@@ -282,7 +293,9 @@ async def run_live(record: Any, app: Any):
             raise ValueError("research execution deadline expired")
         async with asyncio.timeout(remaining):
             queries = (
-                await plan_queries(
+                (record.objective,)
+                if scope.mode == "seeds_only"
+                else await plan_queries(
                     record.objective,
                     complete=complete,
                     model=model,
@@ -307,15 +320,22 @@ async def run_live(record: Any, app: Any):
                     uuid5(NAMESPACE_URL, f"groktocrawl-x:artifact-set:{record.run_id}")
                 ),
                 selected_sources=selected_sources,
+                seed_urls=scope.seed_urls,
+                allowed_hosts=scope.allowed_hosts,
+                discover=scope.mode != "seeds_only",
                 as_of=admitted.payload.get("as_of"),
                 queries=queries,
-                source_limit=8 if queries is not None else 3,
+                source_limit=8 if queries is not None or scope.constrained else 3,
                 allow_partial=planned_policy,
                 max_output_tokens=completion_budget,
                 evidence_budget_chars=32000 if bounded_evidence_policy else None,
                 source_bound=source_bound_policy,
                 timeout_seconds=execution_timeout,
                 model_timeout_seconds=execution_timeout
-                if admitted.payload.get("policy_version") == "durable-live/5"
+                if admitted.payload.get("policy_version")
+                in {
+                    "durable-live/5",
+                    "durable-live/6",
+                }
                 else None,
             )

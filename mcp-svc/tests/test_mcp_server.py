@@ -607,10 +607,16 @@ class TestToolCallRouting:
         captured: dict[str, Any] = {}
 
         async def _fake_create(
-            objective: str, idempotency_key: str, webhook: str | None = None
+            objective: str,
+            idempotency_key: str,
+            webhook: str | None = None,
+            source_scope: dict | None = None,
         ) -> dict:
             captured.update(
-                objective=objective, idempotency_key=idempotency_key, webhook=webhook
+                objective=objective,
+                idempotency_key=idempotency_key,
+                webhook=webhook,
+                source_scope=source_scope,
             )
             return {"run_id": "run-1", "state": "accepted"}
 
@@ -627,6 +633,39 @@ class TestToolCallRouting:
             "objective": "objective",
             "idempotency_key": "stable-key",
             "webhook": None,
+            "source_scope": None,
+        }
+
+    async def test_research_create_maps_source_scope(self, monkeypatch):
+        captured: dict[str, Any] = {}
+
+        async def _fake_create(
+            objective: str,
+            idempotency_key: str,
+            webhook: str | None = None,
+            source_scope: dict | None = None,
+        ) -> dict:
+            captured["source_scope"] = source_scope
+            return {"run_id": "run-1", "state": "accepted"}
+
+        monkeypatch.setattr(
+            __import__("mcp_server", fromlist=["_client"])._client,
+            "experimental_research_create",
+            _fake_create,
+        )
+        await mcp.call_tool(
+            "research_create",
+            {
+                "objective": "objective",
+                "idempotency_key": "stable-key",
+                "seed_urls": ["https://docs.python.org/3/tutorial/introduction.html"],
+                "allowed_hosts": ["docs.python.org"],
+            },
+        )
+        assert captured["source_scope"] == {
+            "mode": "allowlist",
+            "seed_urls": ["https://docs.python.org/3/tutorial/introduction.html"],
+            "allowed_hosts": ["docs.python.org"],
         }
 
     async def test_research_artifact_routes_to_client(self, monkeypatch):
