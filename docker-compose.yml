@@ -478,7 +478,7 @@ services:
       - MCP_ALLOWED_ORIGINS=${MCP_ALLOWED_ORIGINS:-}
       - SESSION_TTL=${SESSION_TTL:-3600}
       - SESSION_SWEEP_INTERVAL=${SESSION_SWEEP_INTERVAL:-300}
-      - HTTP_TIMEOUT=${HTTP_TIMEOUT:-60}
+      - HTTP_TIMEOUT=${HTTP_TIMEOUT:-300}
     depends_on:
       - agent-svc
     restart: unless-stopped

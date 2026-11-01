@@ -27,7 +27,7 @@ from .exceptions import GroktoCrawlError, RateLimitedError
 from .health import check_all
 from .llm import LLMClient
 from .models import ErrorDetail, ErrorResponse
-from .rate_limiter import SlidingWindowRateLimiter
+from .rate_limiter import SlidingWindowRateLimiter, build_rate_limiter
 from .research_memory import (
     DEFAULT_SWEEP_INTERVAL_SECONDS,
     ResearchMemory,
@@ -147,11 +147,16 @@ def create_app() -> FastAPI:
             provenance_transport, profile=settings.slopsearx_provenance_profile
         )
 
-    # ── Rate limiter ──────────────────────────────────────────────
-    rate_limit_count, rate_limit_window = SlidingWindowRateLimiter.parse_limit(
-        settings.search_rate_limit
-    )
-    rate_limiter = SlidingWindowRateLimiter(conn, rate_limit_count, rate_limit_window)
+    # ── Rate limiters ────────────────────────────────────────────
+    # Per-client admission limiting is opt-in (ADR-0077): an empty
+    # AGENT_SEARCH_RATE_LIMIT yields a no-op limiter, because request-rate
+    # caps protect metered provider budgets rather than an internal capacity
+    # bound.
+    rate_limiter = build_rate_limiter(conn, settings.search_rate_limit)
+    # The research-memory sweep is an admin maintenance operation (a full
+    # vector-index scan), not agent workload, so it keeps a fixed one-per-
+    # minute guard regardless of the admission-limit setting.
+    memory_sweep_limiter = SlidingWindowRateLimiter(conn, limit=1, window_seconds=60)
 
     # ── Metrics initialization ────────────────────────────────────
     METRICS.counter("search_calls_total", "Total search calls", ["status"])
@@ -201,6 +206,7 @@ def create_app() -> FastAPI:
         semantic_url=settings.semantic_url,
     )
     app.state.rate_limiter = rate_limiter
+    app.state.memory_sweep_limiter = memory_sweep_limiter
     app.state.max_searches_per_request = settings.max_searches_per_request
     app.state.task_tracker = TaskTracker()
     from .admission import get_admission

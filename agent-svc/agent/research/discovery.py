@@ -422,12 +422,25 @@ async def _scrape_all_discovery_urls(
     )
 
 
+def apply_search_budget(queries: list[str], max_searches_per_request: int) -> list[str]:
+    """Return the queries a request may run.
+
+    ``max_searches_per_request`` bounds how many searches one request may
+    issue. A value of 0 (the default) means unbounded: the budget is a local
+    convenience ceiling, not a capacity bound, and must not silently drop
+    queries the planner asked for (ADR-0077).
+    """
+    if max_searches_per_request <= 0:
+        return list(queries)
+    return list(queries[:max_searches_per_request])
+
+
 async def _run_multi_query_discover_and_scrape(
     queries: list[str],
     urls: list[str] | None,
     searxng: SearXNGClient,
     scraper: ScraperClient,
-    max_searches_per_request: int = 5,
+    max_searches_per_request: int = 0,
     scrape_options: dict | None = None,
     max_credits: int | None = None,
     source_registry: SourceRegistry | None = None,
@@ -466,16 +479,16 @@ async def _run_multi_query_discover_and_scrape(
         if outcome in outcome_counts:
             outcome_counts[outcome] += 1
 
-    # Truncate to search budget
-    budget = min(len(queries), max_searches_per_request)
-    queries_to_run = queries[:budget]
+    # Truncate to the configured search budget (0 = unbounded)
+    queries_to_run = apply_search_budget(queries, max_searches_per_request)
 
     if not target_urls and queries_to_run:
         streamed_acquisition = True
         logger.info(
-            "Multi-query research: running %d search queries (budget=%d)",
+            "Multi-query research: running %d of %d search queries (budget=%s)",
             len(queries_to_run),
-            max_searches_per_request,
+            len(queries),
+            "unbounded" if max_searches_per_request <= 0 else max_searches_per_request,
         )
 
         search_tasks = {
@@ -711,7 +724,7 @@ async def _run_research_discover_and_scrape(
     urls: list[str] | None,
     searxng: SearXNGClient,
     scraper: ScraperClient,
-    max_searches_per_request: int = 5,
+    max_searches_per_request: int = 0,
     scrape_options: dict | None = None,
     max_credits: int | None = None,
     source_registry: SourceRegistry | None = None,
@@ -992,7 +1005,7 @@ async def _run_answer_discover_and_scrape(
     llm_api_key: str,
     llm_model: str,
     requested_model: str | None,
-    max_searches_per_request: int = 5,
+    max_searches_per_request: int = 0,
     evidence_budget_chars: int = 32_000,
 ) -> dict:
     """Search → rerank → filter → scrape → context-building for answer.

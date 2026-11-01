@@ -64,10 +64,18 @@ class AgentSettings(BaseModel):
     )
     api_key: str = Field(default="", alias="API_KEY")
     webhook_secret: str = Field(default="", alias="WEBHOOK_SECRET")
+    # 0 disables the per-request search budget. The value is not a capacity
+    # bound: it truncates the planner's own query list (see
+    # ``research.discovery``), so a non-zero default silently drops subqueries
+    # a caller asked for. Set it only when a specific deployment needs a local
+    # search-count ceiling (see ADR-0077).
     max_searches_per_request: int = Field(
-        default=5, alias="AGENT_MAX_SEARCHES_PER_REQUEST"
+        default=0, alias="AGENT_MAX_SEARCHES_PER_REQUEST", ge=0
     )
-    search_rate_limit: str = Field(default="10/60s", alias="AGENT_SEARCH_RATE_LIMIT")
+    # Empty / "off" / "none" / "0" disables per-client admission rate limiting.
+    # The limiter protects a metered search provider budget, not an internal
+    # capacity bound, so it is opt-in (see ADR-0077).
+    search_rate_limit: str = Field(default="", alias="AGENT_SEARCH_RATE_LIMIT")
     # Job-time retry policy for downstream 429 RATE_LIMITED conditions
     # (ADR-0053). Maximum total attempts for the blocked operation;
     # the fallback delay is used when the downstream response carries no
@@ -80,8 +88,11 @@ class AgentSettings(BaseModel):
     job_retry_max_wait_seconds: float = Field(
         default=60.0, alias="JOB_RETRY_MAX_WAIT_SECONDS", ge=0
     )
+    # 0 disables the wall-clock cap. The idle timeout below is the stall
+    # detector that actually distinguishes a stuck crawl from a large one;
+    # a wall-clock cap only truncates legitimate long crawls (ADR-0077).
     crawl_max_duration_seconds: int = Field(
-        default=1800, alias="CRAWL_MAX_DURATION_SECONDS"
+        default=0, alias="CRAWL_MAX_DURATION_SECONDS", ge=0
     )
     crawl_idle_timeout_seconds: int = Field(
         default=300, alias="CRAWL_IDLE_TIMEOUT_SECONDS"
@@ -91,12 +102,20 @@ class AgentSettings(BaseModel):
         default=5_242_880, alias="RESEARCH_MEMORY_MAX_ARTIFACT_BYTES"
     )
     # Global weighted admission budgets (ADR-0051). Values are weighted
-    # units; per-operation weights are fetch=1, llm=4, browser=8.
+    # units; per-operation weights are fetch=1, llm=4, browser=8. 0 means no
+    # budget (unlimited), which is the default: the admitted numbers were
+    # never derived from a capacity measurement (ADR-0051 deferred its load
+    # test), so they must be opted into rather than silently throttling
+    # legitimate concurrent agent work (ADR-0077). Physical browser capacity
+    # is still bounded inside scraper-svc by SCRAPER_MAX_BROWSER_CONCURRENCY
+    # and the browser pool.
     admission_light_fetch_limit: int = Field(
-        default=64, alias="ADMISSION_LIGHT_FETCH_LIMIT"
+        default=0, alias="ADMISSION_LIGHT_FETCH_LIMIT", ge=0
     )
-    admission_browser_limit: int = Field(default=32, alias="ADMISSION_BROWSER_LIMIT")
-    admission_llm_limit: int = Field(default=32, alias="ADMISSION_LLM_LIMIT")
+    admission_browser_limit: int = Field(
+        default=0, alias="ADMISSION_BROWSER_LIMIT", ge=0
+    )
+    admission_llm_limit: int = Field(default=0, alias="ADMISSION_LLM_LIMIT", ge=0)
 
 
 @functools.cache

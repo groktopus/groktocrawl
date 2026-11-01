@@ -19,8 +19,11 @@ logger = logging.getLogger(__name__)
 # retries cannot duplicate side effects.
 _MAX_429_RETRIES = 2
 # Ceiling for any single 429 backoff wait, and floor for a missing/zero
-# Retry-After, so a retry can never become a hot loop.
-_MAX_RETRY_WAIT_SECONDS = 10.0
+# Retry-After, so a retry can never become a hot loop. The ceiling matches the
+# server's admission window (ADR-0053 clamps server-provided delays to 60s), so
+# the retry budget can actually span one rejected window instead of giving up
+# after ~20s while the client is still throttled.
+_MAX_RETRY_WAIT_SECONDS = 60.0
 _MIN_RETRY_WAIT_SECONDS = 1.0
 
 # SSRF guard limits for server-side document downloads (parse tool).

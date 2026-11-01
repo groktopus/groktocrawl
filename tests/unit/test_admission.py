@@ -156,12 +156,38 @@ class TestResourceClasses:
 
 
 class TestAgentAdmissionSingleton:
-    def test_get_admission_reads_settings(self):
+    def test_get_admission_reads_settings(self, monkeypatch):
         from agent.admission import get_admission, reset_admission
+        from agent.settings import load_settings
 
+        load_settings.cache_clear()
+        monkeypatch.setenv("ADMISSION_LIGHT_FETCH_LIMIT", "64")
+        monkeypatch.setenv("ADMISSION_BROWSER_LIMIT", "32")
+        monkeypatch.setenv("ADMISSION_LLM_LIMIT", "32")
         reset_admission()
         controller = get_admission()
         assert controller.budget_for("lightweight_fetch") == 64
         assert controller.budget_for("browser") == 32
         assert controller.budget_for("llm") == 32
         reset_admission()
+        load_settings.cache_clear()
+
+    def test_admission_budgets_default_to_unlimited(self, monkeypatch):
+        """ADR-0077: unset admission budgets no longer throttle by default."""
+        from agent.admission import get_admission, reset_admission
+        from agent.settings import load_settings
+
+        for key in (
+            "ADMISSION_LIGHT_FETCH_LIMIT",
+            "ADMISSION_BROWSER_LIMIT",
+            "ADMISSION_LLM_LIMIT",
+        ):
+            monkeypatch.delenv(key, raising=False)
+        load_settings.cache_clear()
+        reset_admission()
+        controller = get_admission()
+        assert controller.budget_for("lightweight_fetch") == 0
+        assert controller.budget_for("browser") == 0
+        assert controller.budget_for("llm") == 0
+        reset_admission()
+        load_settings.cache_clear()

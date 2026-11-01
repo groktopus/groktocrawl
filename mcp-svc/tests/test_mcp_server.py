@@ -1837,14 +1837,14 @@ class TestEnvVarDefaults:
         assert mcp_server.API_URL == "http://agent-svc:8000"
 
     def test_http_timeout_default(self, monkeypatch):
-        """HTTP_TIMEOUT defaults to 60."""
+        """HTTP_TIMEOUT defaults to a generous client patience bound."""
         monkeypatch.delenv("HTTP_TIMEOUT", raising=False)
         import importlib
 
         import mcp_server
 
         importlib.reload(mcp_server)
-        assert mcp_server.DEFAULT_TIMEOUT == 60.0
+        assert mcp_server.DEFAULT_TIMEOUT == 300.0
 
     def test_mcp_port_default(self, monkeypatch):
         """MCP_PORT defaults to 8002."""

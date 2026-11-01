@@ -118,3 +118,38 @@ async def _index_scrape(url: str, title: str, content: str, request: Request) ->
     finally:
         if semantic is not None:
             await semantic.close()
+
+
+# ── Rate-limit response headers ───────────────────────────────
+# Per-client admission limiting is opt-in (ADR-0077). These helpers keep
+# handlers free of "is the limiter enabled" branching and avoid emitting
+# misleading ``0/0`` values when limiting or the search budget is disabled.
+
+
+def _search_budget_header(max_searches: int) -> str | None:
+    """Return the ``X-Search-Budget`` value, or None when unbounded."""
+    return None if max_searches <= 0 else f"{max_searches}/{max_searches}"
+
+
+def _rate_remaining_header(limiter: Any, remaining: int) -> str | None:
+    """Return the per-client rate-remaining value, or None when disabled."""
+    if not getattr(limiter, "enabled", False):
+        return None
+    return f"{remaining}/{limiter.limit}"
+
+
+def _apply_rate_headers(
+    target: Any,
+    limiter: Any,
+    remaining: int,
+    *,
+    max_searches: int | None = None,
+) -> None:
+    """Set the search budget/rate headers on a Response or header dict."""
+    if max_searches is not None:
+        budget = _search_budget_header(max_searches)
+        if budget is not None:
+            target["X-Search-Budget"] = budget
+    rate_remaining = _rate_remaining_header(limiter, remaining)
+    if rate_remaining is not None:
+        target["X-Search-Rate-Remaining"] = rate_remaining

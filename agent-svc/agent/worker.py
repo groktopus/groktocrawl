@@ -920,11 +920,15 @@ async def _process_batch_scrape_async(
         set_token(task_tracker.cancel_token(job_id))
     scraper = ScraperClient(scraper_url)
 
-    # Inner scheduling bound: the per-request max_concurrency AND the global
-    # lightweight-fetch admission budget (fetch weight = 1). The admission
-    # controller in ScraperClient.scrape() is the outer cap across jobs.
-    effective_concurrency = max(
-        1, min(max_concurrency, get_admission().budget_for("lightweight_fetch"))
+    # Inner scheduling bound: the per-request max_concurrency, optionally
+    # narrowed by the global lightweight-fetch admission budget (fetch weight
+    # = 1). A budget of 0 means unlimited (ADR-0077), so use the per-request
+    # value directly in that case.
+    light_fetch_budget = get_admission().budget_for("lightweight_fetch")
+    effective_concurrency = (
+        max(1, max_concurrency)
+        if light_fetch_budget <= 0
+        else max(1, min(max_concurrency, light_fetch_budget))
     )
 
     async def work_fn() -> dict[str, Any]:
