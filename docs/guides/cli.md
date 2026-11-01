@@ -75,6 +75,20 @@ server's execution mode. With live research enabled, create and watch a run:
 ./groktocrawl research watch RUN_ID
 ```
 
+Bound sources with repeatable flags:
+
+```bash
+./groktocrawl research create "Verify what 2 ** 7 evaluates to" \
+  --idempotency-key source-scope-001 \
+  --seed-url https://docs.python.org/3/tutorial/introduction.html \
+  --source-mode seeds_only
+```
+
+`--allowed-host example.org` matches that host and its subdomains. When
+`--source-mode` is omitted, a seed implies `seeds_only` and an allowed host
+implies `allowlist`. See the
+[durable research contract](durable-research.md#source-scope).
+
 Save the idempotency key before sending; reuse it only for the same request.
 `research status` and `cancel` manage runs. `show`, `evidence`, `download`,
 `delete` and `attach` work with retained outputs; their required

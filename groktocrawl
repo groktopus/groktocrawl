@@ -788,11 +788,14 @@ class Client:
         *,
         idempotency_key: str,
         webhook: str | None = None,
+        source_scope: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Admit one bounded research run in the server-configured mode."""
         body: dict[str, Any] = {"objective": objective}
         if webhook:
             body["webhook"] = webhook
+        if source_scope is not None:
+            body["source_scope"] = source_scope
         return self._request(
             "POST",
             "/experimental/research/v1/runs",
@@ -2186,10 +2189,21 @@ def cmd_research(client: Client, args: argparse.Namespace) -> None:
             )
             emit("Named research workspace action", result)
         elif action == "create":
+            source_scope = None
+            if args.seed_url or args.allowed_host or args.source_mode:
+                mode = args.source_mode or (
+                    "allowlist" if args.allowed_host else "seeds_only"
+                )
+                source_scope = {
+                    "mode": mode,
+                    "seed_urls": args.seed_url or [],
+                    "allowed_hosts": args.allowed_host or [],
+                }
             result = client.experimental_research_create(
                 args.objective,
                 idempotency_key=args.idempotency_key,
                 webhook=args.webhook,
+                source_scope=source_scope,
             )
             emit(f"Research run admitted: {result.get('run_id', '?')}", result)
         elif action in {"status", "watch"}:
@@ -3834,6 +3848,21 @@ def make_parser() -> argparse.ArgumentParser:
         "--idempotency-key", required=True, help="Stable key for safe admission retries"
     )
     p_research_create.add_argument("--webhook", help="Optional completion webhook")
+    p_research_create.add_argument(
+        "--seed-url",
+        action="append",
+        help="Repeatable permitted seed URL (maximum 8)",
+    )
+    p_research_create.add_argument(
+        "--allowed-host",
+        action="append",
+        help="Repeatable allowed host and its subdomains (maximum 20)",
+    )
+    p_research_create.add_argument(
+        "--source-mode",
+        choices=("open", "seeds_only", "allowlist"),
+        help="Source boundary mode; inferred from seeds/hosts when omitted",
+    )
     for action, help_text in (
         ("status", "Read authoritative run status"),
         ("watch", "Poll until the run reaches a terminal state"),

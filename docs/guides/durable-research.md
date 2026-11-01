@@ -12,12 +12,51 @@ curl "$GROKTOCRAWL_URL/experimental/research/v1/runs" \
 
 Persist the idempotency key before sending. Retrying the same scoped request returns the same admission; changed input with that key returns 409. Poll the returned `status_url`. A completed result points to the checked knowledge, exact retained sources and three report layers. Known capture failures can yield insufficient coverage. Invalid construction or failed verification is a failed run, not a successful research result.
 
-New live admissions use policy `durable-live/5`: at most three model-planned queries, eight total sources, 256,000 source bytes, 64 model calls and five minutes from admission. Selected retained evidence consumes the same source/byte budget and retains its original provenance. Planning, capture, drafting and review share that five-minute allowance. This is a finite execution limit, not a speed target or a guarantee of a complete answer. Earlier admissions retain their original overall and stage limits. There are no automatic model retries. See [ADR-0074](../adr/0074-use-a-five-minute-live-research-deadline.md) for the measured reason and rollback requirements.
+New live admissions use policy `durable-live/5`, or `durable-live/6` when a source scope is supplied: at most three model-planned queries, eight total sources, 256,000 source bytes, 64 model calls and five minutes from admission. Selected retained evidence consumes the same source/byte budget and retains its original provenance. Planning, capture, drafting and review share that five-minute allowance. This is a finite execution limit, not a speed target or a guarantee of a complete answer. Earlier admissions retain their original overall and stage limits. There are no automatic model retries. See [ADR-0074](../adr/0074-use-a-five-minute-live-research-deadline.md) for the measured reason and rollback requirements.
+
+## Source scope
+
+Pass an optional `source_scope` to bound discovery and citation. Unknown request
+fields are rejected rather than ignored.
+
+```bash
+curl "$GROKTOCRAWL_URL/experimental/research/v1/runs" \
+  -H "Authorization: Bearer $GROKTOCRAWL_API_KEY" \
+  -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: research-source-scope-001' \
+  -d '{
+    "objective":"Using only the official tutorial, verify what 2 ** 7 evaluates to.",
+    "source_scope":{
+      "mode":"seeds_only",
+      "seed_urls":["https://docs.python.org/3/tutorial/introduction.html"]
+    }
+  }'
+```
+
+- `open` (default) leaves search and acquisition unchanged.
+- `seeds_only` acquires exactly the supplied URLs (1–8) and performs no search
+  or model planning call.
+- `allowlist` searches only within 1–20 allowed DNS hosts (exact host and
+  subdomains) and may add seed URLs that are themselves in scope.
+
+Seeds count against the eight-source and 256,000-byte budgets. When no permitted
+source can be acquired, the run ends as `failed` with
+`code: "source_scope_unavailable"`, `coverage: "insufficient"`, and no
+out-of-scope source is substituted. A permitted source that is captured but does
+not answer the question can still produce the existing insufficient-coverage
+report.
+
+The scraper follows redirects and reports the requested URL. An allowed URL that
+redirects to another host is captured under the requested identity; effective-URL
+enforcement is not claimed in this version. See
+[ADR-0077](../adr/0077-admit-source-scope-for-durable-research.md).
 
 For direct HTTP run creation, an optional `as_of`, such as `"2026-09-01T00:00:00Z"`, evaluates evidence at that target time. It must include a timezone and cannot be in the future. It does not select a historical search index or recover archived pages. A newly captured page does not prove what was true before its capture; a run lacking eligible evidence fails with `historical_validity_unestablished`. Unknown retrieval dates remain unknown. Historical evidence must still pass support and other verification checks.
 
-CLI `research create` and MCP `research_create` currently accept the objective,
-idempotency key and optional webhook; use HTTP to set `as_of` at creation.
+CLI `research create` accepts `--seed-url`, `--allowed-host`, and
+`--source-mode`; MCP `research_create` accepts `seed_urls`, `allowed_hosts`, and
+`source_mode`. When the mode is omitted, seeds imply `seeds_only` and allowed
+hosts imply `allowlist`. Use HTTP to set `as_of` at creation.
 
 External call intents and exact completed responses are retained before dependent work starts. Restart reuses completed responses. An interrupted dispatch with no saved response fails as `outcome_unknown`; automatic replay could spend again and is prohibited. Cancellation fences later operations and publication, while an already sent external request cannot be recalled. A PostgreSQL result committed before interruption is reconciled without another research call.
 

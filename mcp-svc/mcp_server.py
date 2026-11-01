@@ -567,11 +567,27 @@ async def research_capabilities() -> str:
 
 @mcp.tool(annotations=_RO)
 async def research_create(
-    objective: str, idempotency_key: str, webhook: str | None = None
+    objective: str,
+    idempotency_key: str,
+    webhook: str | None = None,
+    seed_urls: list[str] | None = None,
+    allowed_hosts: list[str] | None = None,
+    source_mode: str | None = None,
 ) -> str:
-    """Admit one bounded experimental research run."""
+    """Admit one bounded experimental research run.
+
+    ``source_mode`` is ``open``, ``seeds_only``, or ``allowlist``. When omitted,
+    seeds imply ``seeds_only`` and allowed hosts imply ``allowlist``.
+    """
+    source_scope = None
+    if seed_urls or allowed_hosts or source_mode:
+        source_scope = {
+            "mode": source_mode or ("allowlist" if allowed_hosts else "seeds_only"),
+            "seed_urls": seed_urls or [],
+            "allowed_hosts": allowed_hosts or [],
+        }
     result = await _client.experimental_research_create(
-        objective, idempotency_key, webhook
+        objective, idempotency_key, webhook, source_scope=source_scope
     )
     _ensure_success(result)
     return _resp(result)

@@ -833,6 +833,7 @@ class TestExpandedSurface:
         def _handler(request: httpx.Request) -> httpx.Response:
             captured["path"] = request.url.path
             captured["key"] = request.headers.get("idempotency-key")
+            captured["body"] = json.loads(request.content)
             return httpx.Response(
                 202,
                 json={"run_id": "run-1", "state": "accepted"},
@@ -854,7 +855,40 @@ class TestExpandedSurface:
         assert captured == {
             "path": "/experimental/research/v1/runs",
             "key": "stable-key",
+            "body": {"objective": "objective"},
         }
+
+    def test_experimental_research_create_sends_source_scope(self):
+        captured: dict[str, Any] = {}
+
+        def _handler(request: httpx.Request) -> httpx.Response:
+            captured["body"] = json.loads(request.content)
+            return httpx.Response(
+                202,
+                json={"run_id": "run-1", "state": "accepted"},
+                request=request,
+            )
+
+        client = GroktocrawlClient(base_url="http://test:8080", api_key=None)
+        client._client = httpx.AsyncClient(
+            base_url=client._base_url,
+            headers=client._headers(),
+            transport=httpx.MockTransport(_handler),
+        )
+
+        asyncio.run(
+            client.experimental_research_create(
+                "objective",
+                "stable-key",
+                source_scope={
+                    "mode": "seeds_only",
+                    "seed_urls": [
+                        "https://docs.python.org/3/tutorial/introduction.html"
+                    ],
+                },
+            )
+        )
+        assert captured["body"]["source_scope"]["mode"] == "seeds_only"
 
     def test_experimental_research_artifact_returns_exact_bytes(self):
         client = GroktocrawlClient(base_url="http://test:8080", api_key=None)

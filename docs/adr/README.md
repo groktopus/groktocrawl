@@ -108,4 +108,6 @@ An Architecture Decision Record captures an important architectural decision mad
 | 0076 | [Bound Research-Loop Evaluation Before Promotion](0076-bound-research-loop-evaluation.md) | proposed |
 | 0077 | [Make Request-Rate Caps Opt-In and Keep Only Capacity-Evidenced Limits](0077-capacity-evidenced-resource-limits.md) | accepted |
 
+| 0077 | [Admit and enforce a source scope for durable research](0077-admit-source-scope-for-durable-research.md) | accepted |
+
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full ADR workflow: when to write an ADR, how to number it, and how to get it reviewed in a PR. Experimental records are linked from the provenance archive, not included in the mainline sequence.
