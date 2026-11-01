@@ -226,6 +226,57 @@ async def test_allowlist_excludes_a_tempting_out_of_scope_result() -> None:
 
 
 @pytest.mark.asyncio
+async def test_eight_retained_sources_need_no_search() -> None:
+    selected = tuple(
+        CapturedSource(
+            f"https://source.test/{index}",
+            TEXT,
+            "2026-09-06T00:00:00Z",
+        )
+        for index in range(8)
+    )
+
+    async def search(*_args):
+        raise AssertionError("eight retained sources must not search")
+
+    async def acquire(_url):
+        raise AssertionError("eight retained sources must not acquire")
+
+    result = await run_query(
+        QUESTION,
+        search=search,
+        acquire=acquire,
+        complete=_complete,
+        scope_id="owner",
+        selected_sources=selected,
+        clock=lambda: datetime(2026, 9, 7, tzinfo=UTC),
+    )
+    assert len(result.sources) == 8
+
+
+@pytest.mark.asyncio
+async def test_allowlist_with_no_permitted_result_is_scope_unavailable() -> None:
+    async def search(*_args):
+        return ("https://outside.test/tempting",)
+
+    async def acquire(_url):
+        raise AssertionError("out-of-scope result must not be acquired")
+
+    with pytest.raises(SourceScopeUnavailableError):
+        await run_query(
+            QUESTION,
+            search=search,
+            acquire=acquire,
+            complete=_complete,
+            scope_id="owner",
+            allowed_hosts=("allowed.test",),
+            queries=(QUESTION,),
+            source_limit=8,
+            allow_partial=True,
+        )
+
+
+@pytest.mark.asyncio
 async def test_unavailable_permitted_source_fails_without_substitution() -> None:
     async def search(*_args):
         raise AssertionError("seeds_only must not search")

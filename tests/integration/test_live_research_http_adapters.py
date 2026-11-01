@@ -655,6 +655,28 @@ async def test_seeds_only_run_never_searches_and_cites_only_seed(
         assert response.status_code == 202, response.text
         admission = response.json()
         cleanup_research_ids.append(admission["research_id"])
+        duplicate = await client.post(
+            "/experimental/research/v1/runs",
+            headers={"Idempotency-Key": "seeds-only-official"},
+            json={
+                "objective": objective,
+                "source_scope": {"mode": "seeds_only", "seed_urls": [seed]},
+            },
+        )
+        assert duplicate.status_code == 202
+        assert duplicate.json()["run_id"] == admission["run_id"]
+        conflict = await client.post(
+            "/experimental/research/v1/runs",
+            headers={"Idempotency-Key": "seeds-only-official"},
+            json={
+                "objective": objective,
+                "source_scope": {
+                    "mode": "allowlist",
+                    "allowed_hosts": ["research.test"],
+                },
+            },
+        )
+        assert conflict.status_code == 409
         status = await _terminal(client, admission["status_url"])
         assert status["state"] == "completed", status
         workspace = await client.get(
@@ -710,6 +732,41 @@ async def test_unavailable_permitted_source_fails_with_explicit_scope_error(
     assert [item["url"] for item in provider_twin.capture_requests] == [
         "https://research.test/missing"
     ]
+
+
+@pytest.mark.asyncio
+async def test_allowlist_with_no_permitted_result_fails_explicitly(
+    durable_apps, provider_twin: LocalProviderTwin
+):
+    apps, _, _, _, _, cleanup_research_ids, _ = durable_apps
+    app = apps[0]
+    objective = next(iter(OBJECTIVES))
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app),
+        base_url="http://acceptance",
+        headers={"Authorization": "Bearer live-http-acceptance-owner"},
+    ) as client:
+        response = await client.post(
+            "/experimental/research/v1/runs",
+            headers={"Idempotency-Key": "allowlist-no-match"},
+            json={
+                "objective": objective,
+                "source_scope": {
+                    "mode": "allowlist",
+                    "allowed_hosts": ["allowed.test"],
+                },
+            },
+        )
+        assert response.status_code == 202, response.text
+        admission = response.json()
+        cleanup_research_ids.append(admission["research_id"])
+        status = await _terminal(client, admission["status_url"])
+        assert status["state"] == "failed", status
+        assert status["error"]["code"] == "source_scope_unavailable"
+        assert status["error"]["coverage"] == "insufficient"
+
+    assert provider_twin.search_requests
+    assert provider_twin.capture_requests == []
 
 
 @pytest.mark.asyncio

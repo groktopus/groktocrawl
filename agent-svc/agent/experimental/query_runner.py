@@ -89,15 +89,15 @@ async def run_query(
         not url_host_allowed(seed, allowed_hosts) for seed in seed_urls
     ):
         raise ValueError("seed URL is outside the allowed hosts")
-    if len(seed_urls) + len(selected_sources) > source_limit:
-        raise ValueError("seed and retained sources exceed the bounded source limit")
     if len(seed_urls) + len(selected_sources) > 8:
         raise ValueError("seed and retained sources exceed the research source budget")
     seed_bytes = sum(len(source.text.encode()) for source in selected_sources)
     if seed_bytes > 256_000:
         raise ValueError("retained context exceeds research byte budget")
     async with asyncio.timeout(timeout_seconds):
-        fresh_limit = min(source_limit, 8 - len(selected_sources) - len(seed_urls))
+        fresh_limit = max(
+            0, min(source_limit, 8 - len(selected_sources) - len(seed_urls))
+        )
         if not discover:
             fresh_limit = 0
         results = []
@@ -121,7 +121,9 @@ async def run_query(
         owner = asyncio.current_task()
         if owner is not None and owner.cancelling():
             raise asyncio.CancelledError
-        minimum_fresh = 0 if selected_sources or seed_urls or not discover else 1
+        minimum_fresh = (
+            0 if selected_sources or seed_urls or allowed_hosts or not discover else 1
+        )
         if not isinstance(urls, tuple) or not minimum_fresh <= len(urls) <= fresh_limit:
             raise ValueError("search did not return a bounded source plan")
         if len(set(urls)) != len(urls):
