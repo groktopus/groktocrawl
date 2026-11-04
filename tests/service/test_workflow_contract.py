@@ -551,7 +551,9 @@ def test_full_integration_steps_allow_report_headroom_without_relaxing_test_time
         workflow = yaml.safe_load((root / ".github/workflows" / filename).read_text())
         job = workflow["jobs"]["integration-tests"]
         step = next(s for s in job["steps"] if s.get("name") == "Run integration tests")
-        assert step["timeout-minutes"] == 30
+        # 45 minutes leaves headroom for QA/report collection and host contention;
+        # the pytest per-test ceiling below must stay at 120s regardless.
+        assert step["timeout-minutes"] == 45
         assert "--timeout=120" in step["run"]
         assert 'docker cp "$svc:/app/coverage/." coverage/' in step["run"]
         assert 'exit "$pytest_status"' in step["run"]
