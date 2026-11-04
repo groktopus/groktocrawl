@@ -226,5 +226,5 @@ fast-tests = [
     # Runtime acceptance dispatches the actual MCP tools, not a client mock.
     "mcp==1.27.0",
     "rfc8785==0.1.4",
-    "psycopg[binary]==3.3.5",
+    "psycopg[binary]==3.3.6",
 ]
