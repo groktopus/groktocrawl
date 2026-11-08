@@ -110,4 +110,6 @@ An Architecture Decision Record captures an important architectural decision mad
 
 | 0077 | [Admit and enforce a source scope for durable research](0077-admit-source-scope-for-durable-research.md) | accepted |
 
+| 0078 | [Correct completed citation-invalid synthesis once](0078-correct-completed-citation-invalid-synthesis.md) | accepted |
+
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full ADR workflow: when to write an ADR, how to number it, and how to get it reviewed in a PR. Experimental records are linked from the provenance archive, not included in the mainline sequence.

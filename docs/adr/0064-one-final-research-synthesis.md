@@ -1,6 +1,6 @@
 # One Final Research Synthesis
 
-- Status: accepted
+- Status: partially superseded by [ADR-0078](0078-correct-completed-citation-invalid-synthesis.md) for legacy Markdown correction attempts and answer-token timing
 - Deciders: GroktoCrawl maintainers
 - Date: 2026-09-04
 

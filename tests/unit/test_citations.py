@@ -305,3 +305,75 @@ def test_inline_replay_clears_scanner_cursors():
 def test_many_blank_line_inline_restarts_do_not_recurse():
     answer = "`x\n\n" * 1100
     assert _apply_citation_style(answer, [], CitationStyle.inline) == (answer, [])
+
+
+@pytest.mark.parametrize("style", list(CitationStyle))
+@pytest.mark.parametrize("label", ["2026 Texas election results", "3 ways to improve"])
+def test_numeric_leading_markdown_title_is_not_a_citation(style, label):
+    answer = f"[{label}](https://example.test/article)"
+    assert _apply_citation_style(answer, SOURCES, style) == (answer, [])
+    for split in range(len(answer) + 1):
+        normalizer = CitationNormalizer(SOURCES, style)
+        actual = normalizer.feed(answer[:split]) + normalizer.feed(answer[split:])
+        actual += normalizer.finish(answer)
+        assert actual == answer
+        assert normalizer.citations == []
+
+
+@pytest.mark.parametrize(
+    "answer",
+    [
+        "[1e3](https://example.test/one)",
+        "[1, bad](https://example.test/one)",
+        "[1 - 2](https://example.test/one)",
+        "[2026 Texas results](unfinished",
+        "[2026 Texas results]",
+        "[01 title](https://example.test/one)",
+    ],
+)
+def test_numeric_title_exception_does_not_weaken_invalid_markers(answer):
+    with pytest.raises(CitationValidationError):
+        _apply_citation_style(answer, SOURCES, CitationStyle.inline)
+
+
+@pytest.mark.parametrize("suffix", ["[election]", "[]"])
+def test_descriptive_numeric_reference_links_match_every_chunk(suffix):
+    answer = "[2026 Texas election results]" + suffix
+    for split in range(len(answer) + 1):
+        normalizer = CitationNormalizer(SOURCES, CitationStyle.inline)
+        actual = normalizer.feed(answer[:split]) + normalizer.feed(answer[split:])
+        actual += normalizer.finish(answer)
+        assert actual == answer
+        assert normalizer.citations == []
+
+
+def test_citation_metric_samples_exist_before_first_failure_and_init_is_idempotent(
+    monkeypatch,
+):
+    from agent.research import citation_recovery, citations
+
+    from common.metrics import MetricsCollector
+
+    collector = MetricsCollector()
+    monkeypatch.setattr(citation_recovery, "METRICS", collector)
+    monkeypatch.setattr(citations, "METRICS", collector)
+    citation_recovery.initialize_citation_metrics()
+    before = collector.generate_openmetrics()
+    for style in ("inline", "compact"):
+        for outcome in ("valid", "normalized", "invalid"):
+            assert (
+                f'groktocrawl_citation_validation_total{{outcome="{outcome}",style="{style}"}} 0.0'
+                in before
+            )
+    with pytest.raises(CitationValidationError):
+        _apply_citation_style("Bad [3].", SOURCES, CitationStyle.inline)
+    citation_recovery.initialize_citation_metrics()
+    after = collector.generate_openmetrics()
+    assert (
+        'groktocrawl_citation_validation_total{outcome="invalid",style="inline"} 1.0'
+        in after
+    )
+    assert (
+        'groktocrawl_citation_validation_total{outcome="invalid",style="compact"} 0.0'
+        in after
+    )
