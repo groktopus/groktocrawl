@@ -29,6 +29,7 @@ async def test_full_source_export_coexists_with_bounded_evidence_and_coverage(
     )
 
     async def generate_stream(**_kwargs):
+        yield {"type": "token", "content": "answer [1]"}
         yield {"type": "done", "full_content": "answer [1]"}
 
     clients[2].generate_stream = MagicMock(side_effect=generate_stream)

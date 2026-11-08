@@ -26,12 +26,12 @@ from collections.abc import Callable
 GRADER_VERSIONS: dict[str, str] = {
     "check_protocol": "v1",
     "check_sources_present": "v1",
-    "check_citation_shape": "v1",
+    "check_citation_shape": "v2",
     "check_citation_support": "v1",
     "check_required_claims": "v1",
     "check_prohibited_claims": "v1",
     "check_abstention": "v1",
-    "check_citation_integrity": "v1",
+    "check_citation_integrity": "v2",
 }
 
 _MARKER = re.compile(r"\[(\d+)\]")
@@ -121,42 +121,249 @@ def check_sources_present(result: dict, case: dict) -> dict:
     )
 
 
-def check_citation_shape(result: dict, case: dict) -> dict:
-    """Every citation index is in range and maps to the indexed source."""
+def _citation_prose(answer: str) -> str:
+    """Mask Markdown literals independently of the runtime citation parser."""
+    lines = answer.splitlines(keepends=True)
+    fence: tuple[str, int] | None = None
+    paragraph_open = False
+    visible: list[str] = []
+    fence_line = re.compile(r"^( {0,3})(`{3,}|~{3,})(.*?)(?:\r?\n)?$")
+    for line in lines:
+        content = line.rstrip("\r\n")
+        delimiter = fence_line.match(content)
+        if fence is not None:
+            visible.append(" " * len(line))
+            if (
+                delimiter
+                and delimiter[2][0] == fence[0]
+                and len(delimiter[2]) >= fence[1]
+                and not delimiter[3].strip()
+            ):
+                fence = None
+            continue
+        if delimiter:
+            character = delimiter[2][0]
+            info = delimiter[3]
+            # CommonMark forbids backticks in a backtick fence's info string.
+            if character == "~" or "`" not in info:
+                fence = (character, len(delimiter[2]))
+                paragraph_open = False
+                visible.append(" " * len(line))
+                continue
+        if not content.strip():
+            visible.append(line)
+            paragraph_open = False
+            continue
+        if (line.startswith("\t") or line.startswith("    ")) and not paragraph_open:
+            visible.append(" " * len(line))
+            continue
+        visible.append(line)
+        paragraph_open = True
+
+    text = list("".join(visible))
+    # Escaped punctuation is opaque. Masking each slash run leaves the next
+    # character visible only when the number of backslashes is even.
+    position = 0
+    while position < len(text):
+        if text[position] != "\\":
+            position += 1
+            continue
+        end = position
+        while end < len(text) and text[end] == "\\":
+            end += 1
+        for index in range(position, end):
+            text[index] = " "
+        if (end - position) % 2 == 1 and end < len(text):
+            text[end] = " "
+            end += 1
+        position = end
+
+    # Mask exact-length inline backtick spans, without treating an unmatched
+    # delimiter as a reason to hide the rest of the answer.
+    position = 0
+    while position < len(text):
+        if text[position] != "`":
+            position += 1
+            continue
+        run_end = position
+        while run_end < len(text) and text[run_end] == "`":
+            run_end += 1
+        run_length = run_end - position
+        search = run_end
+        closing: tuple[int, int] | None = None
+        while search < len(text):
+            if text[search] != "`":
+                search += 1
+                continue
+            candidate_end = search
+            while candidate_end < len(text) and text[candidate_end] == "`":
+                candidate_end += 1
+            if candidate_end - search == run_length:
+                closing = (search, candidate_end)
+                break
+            search = candidate_end
+        if closing is None:
+            position = run_end
+            continue
+        if re.search(r"\n[ \t\r]*\n", "".join(text[run_end : closing[0]])):
+            position = run_end
+            continue
+        for index in range(position, closing[1]):
+            text[index] = " "
+        position = closing[1]
+    return "".join(text)
+
+
+def _balanced_bracket_end(text: str, start: int) -> int | None:
+    """Return the matching bracket while respecting nested labels and escapes."""
+    depth = 1
+    position = start + 1
+    while position < len(text):
+        if text[position] == "\\":
+            position += 2
+            continue
+        if text[position] == "[":
+            depth += 1
+        elif text[position] == "]":
+            depth -= 1
+            if depth == 0:
+                return position
+        position += 1
+    return None
+
+
+def _markdown_destination_end(text: str, start: int) -> int | None:
+    """Return the closing paren for a simple or angle-delimited destination."""
+    if start >= len(text) or text[start] != "(":
+        return None
+    if start + 1 < len(text) and text[start + 1] == "<":
+        angle_end = text.find(">", start + 2)
+        if angle_end < 0 or angle_end + 1 >= len(text):
+            return None
+        return angle_end + 1 if text[angle_end + 1] == ")" else None
+    depth = 1
+    position = start + 1
+    while position < len(text):
+        if text[position] == "\\":
+            position += 2
+            continue
+        if text[position] == "(":
+            depth += 1
+        elif text[position] == ")":
+            depth -= 1
+            if depth == 0:
+                return position
+        position += 1
+    return None
+
+
+def _numeric_citation_prefix(label: str) -> bool:
+    return bool(re.match(r"\s*[+\-]?\d", label))
+
+
+def _citation_violations(result: dict, case: dict) -> list[dict]:
+    """Validate canonical prose and metadata without calling production code.
+
+    Numeric groups/ranges are noncanonical final output. Numeric-looking bare
+    arrays are citations; literal examples must be escaped or in code.
+    """
     sources = result.get("sources") or []
     citations = result.get("citations") or []
-    style = case.get("citation_style") or "inline"
-    answer = result.get("answer") or ""
-    if citations is None:
-        return _verdict(False, "citations list missing")
-    if not citations:
-        return _verdict(True, "no citations to shape-check")
+    compact = case.get("citation_style") == "compact"
+    text = _citation_prose(result.get("answer") or "")
+    bad: list[dict] = []
+    observed: set[int] = set()
+    pos = 0
+    while pos < len(text):
+        if text[pos] != "[":
+            pos += 1
+            continue
+        image = pos > 0 and text[pos - 1] == "!"
+        end = _balanced_bracket_end(text, pos)
+        if end is None:
+            if _numeric_citation_prefix(text[pos + 1 :]):
+                bad.append({"reason": "incomplete_numeric_marker"})
+            pos += 1
+            continue
+
+        label = text[pos + 1 : end]
+        numeric = _numeric_citation_prefix(label)
+        next_pos = end + 1
+        url = None
+        if next_pos < len(text) and text[next_pos] == "(":
+            destination_end = _markdown_destination_end(text, next_pos)
+            if destination_end is None:
+                if numeric and not image:
+                    bad.append({"reason": "incomplete_citation_url"})
+                pos = next_pos + 1
+                continue
+            destination = text[next_pos + 1 : destination_end]
+            if destination.startswith("<") and destination.endswith(">"):
+                destination = destination[1:-1]
+            url = destination
+            next_pos = destination_end + 1
+
+        # Ordinary labels (including embedded numeric examples) and images are
+        # Markdown, not source claims. Skip their reference label and target.
+        if image or not numeric:
+            if next_pos < len(text) and text[next_pos] == "[":
+                reference_end = _balanced_bracket_end(text, next_pos)
+                if reference_end is not None:
+                    next_pos = reference_end + 1
+            pos = next_pos
+            continue
+
+        if not re.fullmatch(r"[1-9][0-9]*", label):
+            bad.append({"reason": "noncanonical_numeric_marker", "marker": label})
+            pos = next_pos
+            continue
+
+        # Compare decimal strings before int conversion so pathological input
+        # cannot escape the grader as Python's max-digits exception.
+        maximum = str(len(sources))
+        if len(label) > len(maximum) or (
+            len(label) == len(maximum) and label > maximum
+        ):
+            bad.append({"index": None, "reason": "out_of_range"})
+            pos = next_pos
+            continue
+        index = int(label)
+        observed.add(index)
+        if not 1 <= index <= len(sources):
+            bad.append({"index": index, "reason": "out_of_range"})
+        elif url is not None and url != sources[index - 1].get("url"):
+            bad.append({"index": index, "reason": "citation_url_mismatch"})
+        if compact and url is None:
+            bad.append({"index": index, "reason": "missing_compact_url"})
+        pos = next_pos
+
+    declared: set[int] = set()
     for citation in citations:
         index = citation.get("index")
-        url = citation.get("url", "")
-        if not isinstance(index, int) or not (1 <= index <= len(sources)):
-            return _verdict(
-                False,
-                f"citation index {index} out of range for {len(sources)} sources",
-                {"index": index, "source_count": len(sources)},
-            )
-        source_url = sources[index - 1].get("url", "")
-        if url != source_url:
-            return _verdict(
-                False,
-                f"citation index {index} url {url} != source {source_url}",
-                {"index": index, "url": url, "source_url": source_url},
-            )
-        if style == "compact":
-            marker = f"[{index}]({url})"
-            if marker not in answer:
-                return _verdict(
-                    False,
-                    f"compact marker {marker} absent from answer",
-                    {"index": index, "url": url},
-                )
+        if type(index) is not int or not 1 <= index <= len(sources):
+            bad.append({"reason": "invalid_metadata_index", "index": index})
+            continue
+        if index in declared:
+            bad.append({"reason": "duplicate_metadata", "index": index})
+        declared.add(index)
+        if citation.get("url") != sources[index - 1].get("url"):
+            bad.append({"reason": "metadata_url_mismatch", "index": index})
+        if index not in observed:
+            bad.append({"reason": "extraneous_metadata", "index": index})
+    if not compact:
+        for index in sorted(observed - declared):
+            bad.append({"reason": "no_citation_returned", "index": index})
+    return bad
 
-    return _verdict(True, f"{len(citations)} citations shape-checked")
+
+def check_citation_shape(result: dict, case: dict) -> dict:
+    """Canonical markers and metadata agree with the fixed source ordering."""
+    bad = _citation_violations(result, case)
+    return _verdict(
+        not bad,
+        f"{len(bad)} citation shape violation(s)" if bad else "citation shape valid",
+        {"violations": bad},
+    )
 
 
 def check_citation_support(result: dict, case: dict) -> dict:
@@ -313,26 +520,13 @@ def check_abstention(result: dict, case: dict) -> dict:
 
 
 def check_citation_integrity(result: dict, case: dict) -> dict:
-    """No ``[N]`` marker in the answer is out of range or unmapped to a source."""
-    sources = result.get("sources") or []
-    citations = result.get("citations") or []
-    citation_indices = {c.get("index") for c in citations}
-    answer = result.get("answer") or ""
-    bad: list[dict] = []
-    for match in _MARKER.finditer(answer):
-        index = int(match.group(1))
-        if not (1 <= index <= len(sources)):
-            bad.append(
-                {"index": index, "reason": "out_of_range", "source_count": len(sources)}
-            )
-            continue
-        if index not in citation_indices:
-            bad.append({"index": index, "reason": "no_citation_returned"})
-    if bad:
-        return _verdict(
-            False, f"{len(bad)} integrity violation(s)", {"violations": bad}
-        )
-    return _verdict(True, "all citation markers resolve")
+    """Every prose citation resolves, without hidden or fabricated metadata."""
+    bad = _citation_violations(result, case)
+    return _verdict(
+        not bad,
+        f"{len(bad)} integrity violation(s)" if bad else "all citation markers resolve",
+        {"violations": bad},
+    )
 
 
 GRADERS: dict[str, Callable[[dict, dict], dict]] = {

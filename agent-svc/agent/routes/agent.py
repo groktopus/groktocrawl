@@ -59,7 +59,7 @@ async def _serialize_answer_stream(
                 payload["source_contents"] = event["source_contents"]
         elif event["type"] == "error":
             payload = {"type": "error", "content": event["content"]}
-            for key in ("classification", "retry_after_seconds"):
+            for key in ("classification", "retry_after_seconds", "error_code"):
                 if key in event:
                     payload[key] = event[key]
             yield f"data: {json.dumps(payload)}\n\n"

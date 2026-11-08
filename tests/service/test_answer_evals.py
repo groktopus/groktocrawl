@@ -1085,3 +1085,162 @@ def test_endpoint_allowlist_preflight():
 async def test_http_smoke_rejects_off_allowlist_host():
     with pytest.raises(routing.EndpointAllowlistError):
         await harness.http_smoke("http://evil.example.com", timeout=1)
+
+
+@pytest.mark.parametrize(
+    "grader", [grading.check_citation_shape, grading.check_citation_integrity]
+)
+@pytest.mark.parametrize(
+    "marker",
+    [
+        "[1, 2]",
+        "[1,2]",
+        "[1-2]",
+        "[1;2]",
+        "[1,]",
+        "[0]",
+        "[-1]",
+        "[01]",
+        "[3]",
+        "[1",
+        "[1](unfinished",
+    ],
+)
+def test_citation_graders_reject_noncanonical_numeric_output(grader, marker):
+    result = _result(
+        answer=f"Claim {marker}",
+        sources=[{"url": PRICING}, {"url": DOCS}],
+        citations=[{"index": 1, "url": PRICING}],
+    )
+    assert grader(result, _case())["pass"] is False
+
+
+@pytest.mark.parametrize(
+    "grader", [grading.check_citation_shape, grading.check_citation_integrity]
+)
+@pytest.mark.parametrize("style", ["inline", "compact"])
+def test_citation_graders_reject_spoofed_compact_url(grader, style):
+    result = _result(
+        answer=f"Claim [1]({DOCS})",
+        sources=[{"url": PRICING}],
+        citations=[{"index": 1, "url": PRICING}],
+    )
+    assert grader(result, _case(citation_style=style))["pass"] is False
+
+
+@pytest.mark.parametrize(
+    "grader", [grading.check_citation_shape, grading.check_citation_integrity]
+)
+@pytest.mark.parametrize(
+    "metadata",
+    [
+        [],
+        [{"index": 1, "url": PRICING}, {"index": 1, "url": PRICING}],
+        [{"index": 1, "url": PRICING}, {"index": 2, "url": DOCS}],
+        [{"index": True, "url": PRICING}],
+        [{"index": 1, "url": DOCS}],
+    ],
+)
+def test_inline_citation_metadata_must_exactly_describe_markers(grader, metadata):
+    result = _result(
+        answer="Claim [1]",
+        sources=[{"url": PRICING}, {"url": DOCS}],
+        citations=metadata,
+    )
+    assert grader(result, _case())["pass"] is False
+
+
+@pytest.mark.parametrize(
+    "grader", [grading.check_citation_shape, grading.check_citation_integrity]
+)
+def test_compact_citations_can_omit_redundant_metadata(grader):
+    url = "https://example.test/path_(detail)"
+    result = _result(
+        answer=f"Claim [1]({url}) and again [1]({url})", sources=[{"url": url}]
+    )
+    assert grader(result, _case(citation_style="compact"))["pass"] is True
+
+
+@pytest.mark.parametrize(
+    "grader", [grading.check_citation_shape, grading.check_citation_integrity]
+)
+@pytest.mark.parametrize(
+    "literal",
+    [
+        "`[999] [1, 2]`",
+        "``literal `[999]` [1-2]``",
+        "```python\nx = [999]\n```",
+        "~~~~\n[999]\n~~~\n[999]\n~~~~",
+        r"\[999] and \[1, 2]",
+        "![999](https://example.test/image)",
+        "[ordinary label](https://example.test/[999])",
+        "[ordinary reference][999]",
+        "[an example [999]](https://example.test)",
+    ],
+)
+def test_citation_graders_ignore_markdown_literals(grader, literal):
+    result = _result(
+        answer=f"{literal}\nActual claim [1]",
+        sources=[{"url": PRICING}],
+        citations=[{"index": 1, "url": PRICING}],
+    )
+    assert grader(result, _case())["pass"] is True
+
+
+@pytest.mark.parametrize(
+    "grader", [grading.check_citation_shape, grading.check_citation_integrity]
+)
+def test_even_backslashes_do_not_escape_numeric_marker(grader):
+    result = _result(answer=r"\\[999]", sources=[{"url": PRICING}])
+    assert grader(result, _case())["pass"] is False
+
+
+def test_citation_grader_versions_identify_stronger_contract():
+    assert grading.GRADER_VERSIONS["check_citation_shape"] == "v2"
+    assert grading.GRADER_VERSIONS["check_citation_integrity"] == "v2"
+
+
+@pytest.mark.parametrize(
+    "grader", [grading.check_citation_shape, grading.check_citation_integrity]
+)
+def test_citation_graders_reject_citations_hidden_in_malformed_markup(grader):
+    for answer in (
+        "[ordinary](https://example.test/unclosed and claim [999].",
+        "[ordinary][unclosed and claim [999].",
+        "Claim text\n    supported [999].",
+        "unmatched `\n\nClaim [999]\n\n`",
+    ):
+        result = _result(answer=answer, sources=[{"url": PRICING}])
+        assert grader(result, _case())["pass"] is False, answer
+
+
+def test_citation_graders_accept_angle_delimited_unbalanced_url():
+    url = "https://example.test/a)b"
+    result = _result(answer=f"Claim [1](<{url}>)", sources=[{"url": url}])
+    assert (
+        grading.check_citation_shape(result, _case(citation_style="compact"))["pass"]
+        is True
+    )
+    assert (
+        grading.check_citation_integrity(result, _case(citation_style="compact"))[
+            "pass"
+        ]
+        is True
+    )
+
+
+@pytest.mark.parametrize(
+    "grader", [grading.check_citation_shape, grading.check_citation_integrity]
+)
+def test_citation_graders_handle_extremely_long_indices_without_crashing(grader):
+    result = _result(answer=f"Claim [{'9' * 4301}]", sources=[{"url": PRICING}])
+    assert grader(result, _case())["pass"] is False
+
+
+def test_citation_grader_ignores_inline_ticks_at_line_start():
+    result = _result(
+        answer="```[999]``` Claim [1]",
+        sources=[{"url": PRICING}],
+        citations=[{"index": 1, "url": PRICING}],
+    )
+    assert grading.check_citation_shape(result, _case())["pass"] is True

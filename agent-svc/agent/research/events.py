@@ -30,6 +30,7 @@ ResearchEvent = TypedDict(
         "chars": NotRequired[int],
         "content": NotRequired[str],
         "classification": NotRequired[str],
+        "error_code": NotRequired[str],
         "retry_after_seconds": NotRequired[float | None],
         "result": NotRequired[str],
         "source_details": NotRequired[list[dict[str, Any]]],

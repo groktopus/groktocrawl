@@ -78,6 +78,13 @@ class StructuredOutputError(UpstreamError):
     detail = "LLM structured output was invalid"
 
 
+class CitationValidationError(UpstreamError):
+    """The LLM produced citation syntax that cannot be safely resolved."""
+
+    error_code = "CITATION_INVALID"
+    detail = "LLM output contained invalid citations"
+
+
 class ProviderOutputError(UpstreamError):
     """The provider returned an invalid or unusable completion envelope."""
 

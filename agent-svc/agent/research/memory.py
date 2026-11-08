@@ -79,6 +79,7 @@ async def finalize_and_admit(
     requested_model: str | None = None,
     user_id: str | None = None,
     fingerprint: str | None = None,
+    has_schema: bool = False,
 ) -> dict[str, Any]:
     """Apply citation transform and admit a ``run_research`` result to memory.
 
@@ -86,9 +87,11 @@ async def finalize_and_admit(
     truth for the completed response payload.
     """
     source_details = result.get("source_details", [])
-    result_text, _ = _apply_citation_style(
-        result["result"], source_details, citation_style
-    )
+    result_text = result["result"]
+    if not has_schema:
+        result_text, _ = _apply_citation_style(
+            result_text, source_details, citation_style
+        )
     result["result"] = result_text
     memory_sources = source_details or result.get("sources", [])
 
@@ -174,4 +177,5 @@ async def refresh_research_memory(
         requested_model=requested_model,
         user_id=user_id,
         fingerprint=fingerprint,
+        has_schema=bool(schema),
     )
