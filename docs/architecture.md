@@ -2,25 +2,30 @@
 
 ## System context
 
+This is a capability map, not an inventory of a running deployment. Dashed
+storage edges depend on the selected vector modes; Qdrant is not a required
+service in the [PostgreSQL-only topology](#postgresql-only-vector-topology).
+The repository keeps Qdrant defaults for installations that have not migrated.
+
 ```mermaid
 flowchart LR
     client["API clients / CLI / portal / MCP clients"] --> agent["agent-svc\nFastAPI public API"]
     agent <--> valkey[("Valkey\njobs, sessions, cache")]
     agent --> scraper["scraper-svc\nfetch and extraction"]
     agent --> search["SlopSearX\nweb discovery"]
-    agent --> semantic["semantic-svc\nembeddings and reranking"]
-    semantic <--> qdrant[("Qdrant\nvector index")]
-    semantic -. pgvector modes .-> postgres[("PostgreSQL\nretained research and vector projections")]
-    agent <-->|durable research| postgres
-    agent -. research memory vector mode .-> postgres
-    agent -. default research memory vectors .-> qdrant
     agent --> llm["OpenAI-compatible LLM"]
+    agent --> parse["parse-svc\ndocument parsing"]
+    agent --> semantic["semantic-svc\nembeddings and reranking"]
+    semantic -. Qdrant modes .-> qdrant[("Qdrant\noptional vector service")]
+    semantic -. PostgreSQL modes .-> postgres[("PostgreSQL\nretained research and vector projections")]
+    agent <-->|durable research| postgres
+    agent -. PostgreSQL research-memory modes .-> postgres
+    agent -. Qdrant research-memory modes .-> qdrant
     scraper --> browser["browser-svc\nPlaywright sessions"]
     scraper -. optional .-> flare["FlareSolverr"]
     portal["portal-svc"] --> agent
     mcp["mcp-svc"] --> agent
     ofelia["Ofelia scheduler"] -. monitor runs .-> agent
-    agent --> parse["parse-svc\ndocument parsing"]
 ```
 
 `agent-svc` owns the public `/v2` API, authorization, request IDs, health and metrics. It composes domain routers from `agent/routes/`, owns background tasks through `TaskTracker`, and stores persistent job records in Valkey. Jobs are processed in-process with `asyncio.create_task()`; there is no external job owner or worker queue.
@@ -48,7 +53,7 @@ After process loss:
 
 - An old record without an execution marker is treated as `OUTCOME_UNKNOWN`; a newly queued record may be dispatched once through the fenced owner.
 - A cancellation request atomically records cancellation and revokes the current fence. The worker task itself remains process-local.
-- Partial artifacts already written to Valkey, Qdrant, or another downstream system can remain; there is no transaction or rollback across those stores.
+- Partial artifacts already written to Valkey, the selected vector store, or another downstream system can remain; there is no transaction or rollback across those stores.
 - Completion and failure webhook intent is committed with the terminal state and replayed at-least-once with the original `webhookId`; receivers must deduplicate it.
 
 This is fail-closed recovery, not general resumability or exactly-once execution. The owner and remaining consistency limits are specified in [ADR-0072](adr/0072-valkey-leased-legacy-job-recovery.md), which updates the historical decision in [ADR-0047](adr/0047-defer-restart-safe-execution.md). Operators should follow the [Interrupted Jobs runbook](runbooks/interrupted-jobs.md). This boundary extends the best-effort decision in [ADR-0035](adr/0035-graceful-shutdown.md).
@@ -97,7 +102,59 @@ Adapters cover publishing and media, source code and GitHub social content, recr
 
 ## Semantic retrieval
 
-`semantic-svc` loads its embedding model during application lifespan and exposes embedding, reranking, index, migration, retention, and search routers. Qdrant persists named-vector collections by default; `VECTOR_STORE_MODE=pgvector_only` serves the semantic page index from PostgreSQL without Qdrant probes or writes. The `pgvector-only` Compose profile starts PostgreSQL and `semantic-svc` without enabling the Qdrant profile. `GET /ready` checks only the active serving store. Compose uses `/ready` for routing readiness. `agent-svc` treats indexing as best effort, so a semantic-service outage does not fail a scrape or crawl request.
+`semantic-svc` loads its embedding model during application lifespan and exposes embedding, reranking, index, migration, retention, and search routers. The page index uses the configured `VECTOR_STORE_MODE`; it does not always require Qdrant. `GET /ready` gates readiness on the active serving store. In `pgvector` mode it also reports Qdrant's rollback-copy readiness, while `pgvector_only` makes no Qdrant probes or writes. Compose uses `/ready` for routing readiness. `agent-svc` treats indexing as best effort, so a semantic-service outage does not fail a scrape or crawl request.
+
+### Storage modes
+
+The two vector indexes are configured and migrated independently. In
+particular, `pgvector` has different Qdrant dependencies in the two services:
+
+| Index and setting | Mode | Serving store | Write path / Qdrant dependency |
+|---|---|---|---|
+| Semantic pages: `VECTOR_STORE_MODE` | `qdrant` (default) | Qdrant | Qdrant |
+| Semantic pages: `VECTOR_STORE_MODE` | `shadow_pgvector` | Qdrant | Qdrant plus a PostgreSQL shadow projection |
+| Semantic pages: `VECTOR_STORE_MODE` | `pgvector` | PostgreSQL | PostgreSQL plus Qdrant writes for rollback; Qdrant is still contacted |
+| Semantic pages: `VECTOR_STORE_MODE` | `pgvector_only` | PostgreSQL | PostgreSQL only; no Qdrant probes or writes |
+| Research memory: `RESEARCH_MEMORY_VECTOR_MODE` | `qdrant` (default) | Qdrant | Qdrant |
+| Research memory: `RESEARCH_MEMORY_VECTOR_MODE` | `shadow_pgvector` | Qdrant | Qdrant plus a PostgreSQL shadow projection |
+| Research memory: `RESEARCH_MEMORY_VECTOR_MODE` | `pgvector` | PostgreSQL | PostgreSQL only; no Qdrant access |
+
+These are vector projections, not the full research artifacts. Research-memory
+artifact JSON and TTL remain in Valkey in every mode. Durable research sources,
+knowledge and reports have their own PostgreSQL storage contract.
+
+### PostgreSQL-only vector topology
+
+After each index's backfill and parity checks, the combination below removes
+Qdrant from both vector paths. It describes an explicitly configured topology,
+not an assertion that an existing deployment has completed its migration.
+
+```mermaid
+flowchart LR
+    agent["agent-svc\nRESEARCH_MEMORY_VECTOR_MODE=pgvector"]
+    semantic["semantic-svc\nVECTOR_STORE_MODE=pgvector_only"]
+    valkey[("Valkey\njobs, sessions, cache\nresearch-memory artifacts and TTL")]
+    postgres[("PostgreSQL + pgvector")]
+    agent <-->|artifact storage| valkey
+    agent -->|embeddings and page retrieval| semantic
+    agent <-->|research-memory vector projection| postgres
+    semantic <-->|semantic page projection| postgres
+    agent <-->|durable research sources and reports| postgres
+```
+
+Use the `pgvector-only` Compose profile to enable PostgreSQL and `semantic-svc`
+without enabling Qdrant. Profiles select services; they do **not** change either
+mode setting. The `indexing` and `durable-research` profiles still enable Qdrant
+for compatibility and rollback-copy modes. The PostgreSQL-only profile does
+not stop an already running Qdrant container or delete its data.
+
+Check the effective service settings and readiness, and retain a verified
+migration receipt before describing a deployment as migrated. Follow
+[ADR-0071](adr/0071-use-pgvector-for-research-memory-with-reversible-rollback.md)
+and the [storage migration runbook](runbooks/research-memory-pgvector.md) for
+separate backfills, parity verification and reverse-copy rollback. Selecting
+one PostgreSQL mode does not migrate the other index or authorize deleting
+Qdrant data.
 
 ## Performance telemetry
 
@@ -107,7 +164,7 @@ Stage-level latency and capacity signals are recorded with bounded labels and ex
 
 - Valkey is the shared state boundary for jobs, monitor/session data, caches, research execution receipts and callback delivery.
 - PostgreSQL is the authority for durable research sources, knowledge and reports. Its vector projections are separate from that retained-evidence contract.
-- Qdrant is the default persistent vector-index boundary. PostgreSQL/pgvector is an explicit alternative; its two indexes have separate schemas, modes, and backfills as documented in ADR-0071.
+- The configured vector stores own the two vector projections. Qdrant remains the compatibility default and a supported migration/rollback store, but is not a runtime dependency when research memory uses `pgvector` and semantic pages use `pgvector_only`. The indexes have separate schemas, modes, and backfills as documented in ADR-0071.
 - SlopSearX and the configured LLM are external capabilities; their availability is surfaced through health checks and request failures/degradation.
 - `portal-svc` and `mcp-svc` are thin clients of the public agent API; they do not own duplicate business logic.
 - `ofelia` triggers scheduled monitor execution through the agent service.
