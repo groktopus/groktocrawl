@@ -104,7 +104,7 @@ When the stack is running, FastAPI publishes the canonical request/response sche
 
 ## Architecture at a glance
 
-`agent-svc` is the public API and coordinator. It persists job state and research-memory artifacts in Valkey, calls `scraper-svc` and SlopSearX, uses `semantic-svc` for page-vector retrieval, and delegates synthesis to an OpenAI-compatible LLM. The semantic index defaults to Qdrant and can use PostgreSQL/pgvector in its explicit PostgreSQL-only mode. Research-memory vectors have their own Qdrant/shadow/pgvector modes. Supporting services provide browser sessions, document parsing, the portal, scheduled monitors, and MCP access. See the [architecture guide](docs/architecture.md) for the service graph and boundaries.
+`agent-svc` is the public API and coordinator. It persists job state and research-memory artifacts in Valkey, calls `scraper-svc` and SlopSearX, uses `semantic-svc` for page-vector retrieval, and delegates synthesis to an OpenAI-compatible LLM. The semantic index defaults to Qdrant and can use PostgreSQL/pgvector in its explicit PostgreSQL-only mode. Research-memory vectors have their own Qdrant/shadow/pgvector modes. Supporting services provide browser sessions, document parsing, the portal, scheduled monitors, and MCP access. See the [architecture guide](docs/architecture.md) for the service graph and boundaries, including the [PostgreSQL-only vector topology](docs/architecture.md#postgresql-only-vector-topology) and its explicit configuration requirements.
 
 ## Adapters
 
