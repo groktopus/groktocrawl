@@ -256,12 +256,11 @@ async def test_job_acceptance_boundary(case):
 async def test_stream_live_count_is_at_generator_consumption():
     from agent.research.streaming import stream_research_live
 
-    async def empty_pipeline(**kwargs):
-        if False:
-            yield {}
+    async def fixture_pipeline(**kwargs):
+        yield {"type": "status", "state": "fixture"}
 
     with (
-        patch("agent.research.streaming.run_research_stream", empty_pipeline),
+        patch("agent.research.streaming.run_research_stream", fixture_pipeline),
         patch("agent.research.streaming.record_execution") as execution,
     ):
         stream = stream_research_live(
@@ -279,7 +278,11 @@ async def test_stream_live_count_is_at_generator_consumption():
             citation_style=CitationStyle.inline,
         )
         execution.assert_not_called()
-        _ = [event async for event in stream]
+        events = [event async for event in stream]
+        assert json.loads(events[0].removeprefix("data: ")) == {
+            "type": "status",
+            "state": "fixture",
+        }
         execution.assert_called_once_with("stream", "live")
 
 
