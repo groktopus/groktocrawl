@@ -3,7 +3,7 @@
 import logging
 import re
 import time
-from typing import Any
+from typing import Any, NoReturn
 
 from ..exceptions import CitationValidationError
 from ..metrics import METRICS
@@ -146,7 +146,9 @@ class CitationNormalizer:
             ["style", "outcome"],
         ).observe(labels, self._processing_seconds)
 
-    def _invalid(self, detail: str = "LLM output contained invalid citations") -> None:
+    def _invalid(
+        self, detail: str = "LLM output contained invalid citations"
+    ) -> NoReturn:
         raise CitationValidationError(detail)
 
     @staticmethod
@@ -329,10 +331,15 @@ class CitationNormalizer:
             self._used_indices.add(index)
 
         if self._style_name == "compact":
-            normalized = "".join(
-                f"[{index}]({self._format_compact_destination(self._source_urls[index - 1])})"
-                for index in indices
-            )
+            compact_markers = []
+            for index in indices:
+                source_url = self._source_urls[index - 1]
+                if not isinstance(source_url, str) or not source_url:
+                    self._invalid()
+                compact_markers.append(
+                    f"[{index}]({self._format_compact_destination(source_url)})"
+                )
+            normalized = "".join(compact_markers)
         else:
             normalized = "".join(f"[{index}]" for index in indices)
         if normalized != original:
