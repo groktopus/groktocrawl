@@ -35,9 +35,12 @@ def test_synthetic_current_pin_fixture_is_valid(tmp_path):
     assert errors == []
 
 
-def test_historical_frozen_preflight_rejects_changed_uv_lock_pin():
+def test_historical_frozen_preflight_reports_changed_lock_and_grader_pins():
     errors = MODULE.validate_manifest(draft(), Path(__file__).parents[2])
-    assert errors == ["file_pins[2] digest does not match target"]
+    assert errors == [
+        "file_pins[2] digest does not match target",
+        "file_pins[5] digest does not match target",
+    ]
 
 
 def test_missing_file_pin_is_rejected_without_reading_arbitrary_paths():

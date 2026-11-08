@@ -340,7 +340,8 @@ async def _process_agent_async(
                     result_text = entry.get("artifact", "")
                     from .research import _apply_citation_style
 
-                    result_text, _ = _apply_citation_style(result_text, sources, cs)
+                    if not schema_:
+                        result_text, _ = _apply_citation_style(result_text, sources, cs)
 
                     cached_payload: dict[str, Any] = {
                         "result": result_text,
@@ -401,7 +402,8 @@ async def _process_agent_async(
                     result_text = entry.get("artifact", "")
                     from .research import _apply_citation_style
 
-                    result_text, _ = _apply_citation_style(result_text, sources, cs)
+                    if not schema_:
+                        result_text, _ = _apply_citation_style(result_text, sources, cs)
                     stale_payload: dict[str, Any] = {
                         "result": result_text,
                         "sources": [s.get("url", "") for s in sources],
@@ -575,6 +577,7 @@ async def _process_agent_async(
         # admit the post-transform artifact to research memory.
         result = await finalize_and_admit(
             research_memory,
+            has_schema=bool(schema_),
             prompt=prompt,
             result=result,
             llm_model=llm_model,

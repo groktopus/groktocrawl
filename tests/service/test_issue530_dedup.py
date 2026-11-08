@@ -335,6 +335,7 @@ async def test_answer_stream_reuses_rerank_content():
     scraper = TrackingScraper()
 
     async def _stream(*args, **kwargs):
+        yield {"type": "token", "content": "Based on [1] the answer."}
         yield {"type": "done", "full_content": "Based on [1] the answer."}
 
     llm = MagicMock()

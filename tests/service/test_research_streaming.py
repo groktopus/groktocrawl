@@ -53,7 +53,7 @@ class TestLiveResearchStreamingAdmission:
         yield {"type": "status", "state": "planning"}
         yield {
             "type": "done",
-            "result": "Answer [1]",
+            "result": "Answer [1](https://example.com)",
             "sources": ["https://example.com"],
             "source_details": [
                 {"url": "https://example.com", "title": "Example", "source": "test"}

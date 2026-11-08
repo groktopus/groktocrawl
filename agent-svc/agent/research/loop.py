@@ -4,7 +4,6 @@ run_answer_stream, run_extract."""
 import asyncio
 import contextlib
 import logging
-import re
 import time
 from collections.abc import AsyncGenerator
 from typing import Any, cast
@@ -12,6 +11,7 @@ from typing import Any, cast
 from common.stage_metrics import StreamTiming, observe_elapsed
 
 from ..exceptions import (
+    CitationValidationError,
     ProviderOutputError,
     RetryableRateLimitError,
     StructuredOutputError,
@@ -22,7 +22,11 @@ from ..scraper_client import ScraperClient
 from ..search_metadata import search_metadata
 from ..searxng_client import SearXNGClient
 from ..settings import load_settings
-from .citations import _apply_citation_style, _build_answer_user_prompt
+from .citations import (
+    CitationNormalizer,
+    _apply_citation_style,
+    _build_answer_user_prompt,
+)
 from .discovery import (
     _build_answer_context,
     _run_answer_discover_and_scrape,
@@ -134,6 +138,9 @@ def _research_error_event(event: dict[str, Any]) -> ResearchEvent:
         "type": "error",
         "content": str(event.get("content", "LLM provider failed")),
     }
+    error_code = event.get("error_code")
+    if isinstance(error_code, str):
+        result["error_code"] = error_code
     classification = event.get("classification")
     if isinstance(classification, str):
         result["classification"] = classification
@@ -543,6 +550,9 @@ async def _run_research_events(
                     return
                 raise
             if not schema and not stream_tokens:
+                answer, _ = _apply_citation_style(
+                    answer, all_source_details, citation_style or CitationStyle.inline
+                )
                 yield {
                     "type": "sources",
                     "sources": [s["url"] for s in all_source_details],
@@ -553,6 +563,10 @@ async def _run_research_events(
                 "sources": [s["url"] for s in all_source_details],
             }
             answer = ""
+            normalizer = CitationNormalizer(
+                all_source_details, citation_style or CitationStyle.inline
+            )
+            provider_full_content = None
             async for event in llm.generate_stream(
                 system_prompt=synthesis_prompt,
                 user_prompt=prompt,
@@ -560,13 +574,19 @@ async def _run_research_events(
                 stage="synthesis",
             ):
                 if event["type"] == "token":
-                    answer += event["content"]
-                    yield {"type": "token", "content": event["content"]}
+                    content = normalizer.feed(event["content"])
+                    answer += content
+                    if content:
+                        yield {"type": "token", "content": content}
                 elif event["type"] == "error":
                     yield _research_error_event(event)
                     return
                 elif event["type"] == "done":
-                    answer = event["full_content"]
+                    provider_full_content = event["full_content"]
+            tail = normalizer.finish(provider_full_content)
+            answer += tail
+            if tail:
+                yield {"type": "token", "content": tail}
 
         source_list = [source["url"] for source in all_source_details]
         if schema:
@@ -594,6 +614,15 @@ async def _run_research_events(
         coverage["scope"] = "bounded_discovery_not_exhaustive"
         done_event["coverage"] = coverage
         yield done_event
+    except CitationValidationError as exc:
+        if not stream_tokens:
+            raise
+        yield {
+            "type": "error",
+            "content": exc.detail,
+            "error_code": exc.error_code,
+            "classification": "non_retryable",
+        }
     finally:
         if jev_filter is not None:
             await jev_filter.close()
@@ -880,14 +909,8 @@ async def run_answer(
         if not output_schema:
             answer, citations = _apply_citation_style(answer, source_map, cs)
         else:
+            # Structured output is opaque to the Markdown citation grammar.
             citations: list[dict] = []  # type: ignore[no-redef]
-            # For structured output, collect source URLs but don't apply citation styles
-            seen_indices: set[int] = set()
-            for match in re.finditer(r"\[(\d+)\]", answer):
-                idx = int(match.group(1))
-                if idx not in seen_indices and 1 <= idx <= len(source_map):
-                    seen_indices.add(idx)
-                    citations.append({"index": idx, "url": source_map[idx - 1]["url"]})
 
         elapsed = int((time.monotonic() - start) * 1000)
 
@@ -1070,6 +1093,8 @@ async def run_answer_stream(
         else:
             user_prompt = _build_answer_user_prompt(query, cs)
             full_answer = ""
+            normalizer = CitationNormalizer(source_map, cs)
+            provider_full_content = None
             async for event in llm.generate_stream(
                 system_prompt=ANSWER_SYSTEM_PROMPT,
                 user_prompt=user_prompt,
@@ -1077,26 +1102,28 @@ async def run_answer_stream(
                 stage="answer",
             ):
                 if event["type"] == "token":
-                    timing.on_first_token()
-                    full_answer += event["content"]
-                    yield {"type": "token", "content": event["content"]}
+                    content = normalizer.feed(event["content"])
+                    full_answer += content
+                    if content:
+                        timing.on_first_token()
+                        yield {"type": "token", "content": content}
                 elif event["type"] == "error":
                     yield dict(_research_error_event(event))
                     return
                 elif event["type"] == "done":
-                    full_answer = event["full_content"]
+                    provider_full_content = event["full_content"]
+            tail = normalizer.finish(provider_full_content)
+            full_answer += tail
+            if tail:
+                timing.on_first_token()
+                yield {"type": "token", "content": tail}
 
         # Step 5: Apply citation style post-processing
         if not output_schema:
-            full_answer, citations = _apply_citation_style(full_answer, source_map, cs)
+            citations = normalizer.citations
         else:
+            # Structured output is opaque to the Markdown citation grammar.
             citations: list[dict] = []  # type: ignore[no-redef]
-            seen_indices: set[int] = set()
-            for match in re.finditer(r"\[(\d+)\]", full_answer):
-                idx = int(match.group(1))
-                if idx not in seen_indices and 1 <= idx <= len(source_map):
-                    seen_indices.add(idx)
-                    citations.append({"index": idx, "url": source_map[idx - 1]["url"]})
 
         elapsed = int((time.monotonic() - start) * 1000)
         yield {
@@ -1112,6 +1139,13 @@ async def run_answer_stream(
             "latency_ms": elapsed,
         }
 
+    except CitationValidationError as exc:
+        yield {
+            "type": "error",
+            "content": exc.detail,
+            "error_code": exc.error_code,
+            "classification": "non_retryable",
+        }
     finally:
         await searxng.close()
         await scraper.close()

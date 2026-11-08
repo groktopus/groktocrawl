@@ -40,9 +40,9 @@ This missing middle is what Exa's `/answer` endpoint provides — it is the sing
 
 ### A. Synchronous single-turn endpoint with SSE streaming *(chosen)*
 
-A single `POST /v2/answer` endpoint that returns synchronously. Internally runs search → scrape top N results → LLM synthesis → citation parsing. Optional `stream: true` flag switches to Server-Sent Events for real-time token delivery.
+A single `POST /v2/answer` endpoint that returns synchronously. Internally runs search → scrape top N results → LLM synthesis → deterministic citation normalization and validation. Optional `stream: true` flag switches to Server-Sent Events for real-time token delivery.
 
-**Pipeline:** `request → SearXNG search → scrape excerpts → build numbered context → LLM call (grounded) → regex citation extraction → response`
+**Pipeline:** `request → SearXNG search → scrape excerpts → freeze numbered source map → one grounded LLM call → incremental citation normalization and validation → response`
 
 **Positive:**
 - Fits 1-3s latency target (single LLM call, no iterative search/scrape loop)
@@ -53,7 +53,7 @@ A single `POST /v2/answer` endpoint that returns synchronously. Internally runs 
 
 **Negative:**
 - LLM response time dominates latency for complex queries
-- Citation parsing is regex-based rather than structured LLM output — fragile if LLM uses non-standard citation format
+- Citation syntax still depends on the LLM following the `[N]` prompt, but invalid output is rejected deterministically instead of being converted into guessed metadata
 - No retry mechanism — entire request must be retried on failure
 
 ### B. Async job-based endpoint with webhook (existing pattern)
@@ -108,7 +108,8 @@ SSE streaming is an optional overlay on the synchronous path, not a separate pro
 - **Search results:** 1-20 sources (default 5), controlled by `num_sources` parameter
 - **Scraping:** Only excerpts are used (first 8000 chars per source) — not full-page content
 - **LLM prompt:** Dedicated `ANSWER_SYSTEM_PROMPT` — concise, citation-focused, distinct from the full research agent prompt
-- **Citation format:** Inline `[N]` markers in the answer text, resolved to URLs in the structured response via regex
+- **Citation format:** Numeric `[N]` markers are validated against the frozen source ordering. Grouped markers normalize to individual references, compact links must match the corresponding URL, and metadata is derived only from validated markers.
+- **Streaming citation contract (issue #708):** The source map is copied before synthesis and remains fixed for the entire response. Tokens are normalized as they arrive, while ambiguous marker prefixes are held until complete. At provider completion, concatenated token text must exactly equal the provider's final text. Unknown/zero/noncanonical indices, URL mismatches, incomplete numeric markers, missing final completion, or token/final mismatch terminate with `CITATION_INVALID`; no successful `done` event or memory admission follows. Structured JSON is passed through unchanged. No second synthesis, corrective generation, or retry is performed, in keeping with [ADR-0064](0064-one-final-research-synthesis.md).
 - **Latency tracking:** `latency_ms` field returned in both sync and streaming modes
 - **Auth header fix:** The LLM client's unconditional `Authorization: Bearer` header was changed to conditional (only sent when `api_key` is non-empty). This was necessary because the LLM fixture (and some LLM backends) reject empty Bearer tokens. Discovered during integration testing.
 
@@ -157,7 +158,7 @@ A new async generator method on `LLMClient` that supports SSE-style token-by-tok
 ### Negative Consequences
 
 * Breaks from ADR-012's webhook pattern — every **async** endpoint gets webhooks, but this endpoint is deliberately synchronous. Consumers expecting the async pattern will need to adjust.
-* Citation quality depends on the LLM following the `[N]` format instruction — if the LLM uses a different citation style (footnotes, parenthetical URLs), the regex parser returns empty citations. Mitigation: the sources list is always returned regardless of citation parsing success.
+* The LLM may still use an unsupported citation style (such as footnotes or parenthetical URLs). The deterministic validator then returns a bounded `CITATION_INVALID` error rather than a successful answer with incomplete or guessed citation metadata. The caller can retry the request itself.
 * Search + scrape + LLM latency is additive. Scraping is the dominant cost (~90% of wall time) — each URL traverses up to three scraper tiers (llms.txt → Accept: text/markdown → Playwright). Concurrent scraping (semaphore=2, 20s per-URL timeout) provides ~20% speedup over sequential. Real-world latency for a 3-source answer is 5-25s, exceeding the original 1-3s target.
 * **Dead-air UX gap** — the `sources` SSE event fires only after all scraping completes. For multi-source queries this creates 1-3 minutes of dead air. **Mitigation (PR #135):** the `sources_pending` SSE event fires immediately after search results are available, showing URLs in a loading state before scraping begins. Eliminates perceived dead air even when total latency remains unchanged.
 * No webhook/retry — callers must handle failures themselves.
@@ -172,7 +173,7 @@ Three quality goals drive the answer endpoint design, distinct from the research
 | **Citation Accuracy** | Every factual claim in the answer maps to a source URL the LLM actually used. No hallucinated sources or claims unsupported by context. | Precision of cited sources against provided context >95% | High |
 | **Graceful Degradation** | Search returns no results, or scraping fails on all sources. The endpoint returns a clear "no information found" message rather than hallucinating. | Zero hallucinated answers when context is empty | Critical |
 
-**Tradeoff:** Citation accuracy (using regex `[N]` extraction) is less robust than structured JSON output from the LLM, but avoids requiring every LLM backend to support `response_format`. If citation quality becomes a problem, the endpoint can be extended with a two-pass approach (LLM writes answer with markers → second LLM call extracts structured citations).
+**Tradeoff:** Citation syntax is validated deterministically against the frozen source map, but this does not independently prove that a cited source supports each claim. Structured JSON output remains opaque to the Markdown citation grammar. Invalid or mismatched markers terminate with `CITATION_INVALID`; the service does not invent references, retry synthesis, or revise an answer. This preserves [ADR-0064](0064-one-final-research-synthesis.md)'s one-final-synthesis contract.
 
 ## Constraints (arc42 §2)
 
@@ -188,10 +189,10 @@ Three quality goals drive the answer endpoint design, distinct from the research
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
-| LLM produces citations in wrong format (footnotes, parenthetical URLs, no markers) | Medium | Answer returned with empty citations list | Sources list is always returned independently of citation parsing. The consumer can cross-reference by position. Logged at WARNING level for monitoring. |
+| LLM produces citations in wrong format, uses an unknown index, or supplies a mismatched compact URL | Medium | Request ends with a bounded citation validation error; no successful `done` event or memory admission | Validate incrementally against the fixed source map, emit `CITATION_INVALID` on invalid syntax, and do not retry or fabricate references. |
 | Latency exceeds 5s due to slow LLM backend | Medium | Caller timeout or poor UX | The endpoint does not hard-fail on slow LLM responses. Streaming mode mitigates perceived latency. Recommendation: configure a fast LLM model for the answer endpoint vs a deep reasoning model for the agent. |
 | Empty context after search + scrape | Low-Medium | No sources to ground answer | Graceful: returns "No relevant web pages found" with empty sources/citations and a `latency_ms` value. |
-| Citation regex matches `[N]` in the source content itself (e.g., a Wikipedia footnote) | Low | Spurious citation entry in the citations list | The regex parses the LLM's *output*, not the source content. The LLM generates `[N]` markers only when instructed. Low false-positive risk. |
+| Citation parsing mistakes Markdown examples, code, or ordinary links for source references | Low | A literal example could be normalized or rejected | The incremental parser preserves fenced/indented/inline code, escaped markers, images, and ordinary Markdown labels; sync and SSE paths share the same parser and final-text parity check. |
 | SSE connection drops mid-stream | Low | Partial answer delivered | The SSE path does not support resumption. Callers must handle incomplete streams by retrying with `stream: false` (sync mode). The latency field in the `done` event indicates whether the full pipeline completed. |
 
 ## Glossary (arc42 §10)
@@ -270,7 +271,7 @@ flowchart LR
         SCRAPE["ScraperClient.scrape()\nscraper_client.py"]
         CONTEXT["Context Builder\nnumber sources + excerpts"]
         LLM_CLIENT["LLMClient.generate()\nLLMClient.generate_stream()\nllm.py"]
-        CITE["Citation Parser\nregex [N] extraction"]
+        CITE["Incremental citation normalizer\nfixed source map + validation"]
 
         ROUTE --> SEARCH
         SEARCH --> SCRAPE

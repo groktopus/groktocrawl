@@ -11,6 +11,7 @@ from typing import Any
 
 from common.stage_metrics import StreamTiming
 
+from ..exceptions import CitationValidationError
 from ..models import CitationStyle
 from .citations import _apply_citation_style
 from .loop import run_research_stream
@@ -41,8 +42,22 @@ async def stream_cached_artifact(
     """
     stream_start = _time.monotonic()
 
-    # Apply citation style
-    transformed_text, _ = _apply_citation_style(artifact_text, sources, citation_style)
+    # Structured JSON is opaque to the Markdown citation grammar.
+    transformed_text = artifact_text
+    if not has_schema:
+        try:
+            transformed_text, _ = _apply_citation_style(
+                artifact_text, sources, citation_style
+            )
+        except CitationValidationError as exc:
+            payload = {
+                "type": "error",
+                "content": exc.detail,
+                "error_code": exc.error_code,
+                "classification": "non_retryable",
+            }
+            yield f"data: {json.dumps(payload)}\n\n"
+            return
 
     # Schema mode (schema or output_schema): skip token replay,
     # emit only done event (matches non-cached schema streaming behavior)
@@ -172,13 +187,11 @@ async def stream_research_live(
             timing.on_first_token()
             yield f"data: {json.dumps({'type': 'token', 'content': event['content']})}\n\n"
         elif event["type"] == "done":
-            # Apply citation_style to transform result text markers
+            # The synthesis loop has already emitted this canonical Markdown.
             source_details = event.get("source_details", [])
             cs = citation_style
 
-            transformed_result, _ = _apply_citation_style(
-                event["result"], source_details, cs
-            )
+            transformed_result = event["result"]
             if research_memory is not None:
                 await admit_research_memory(
                     research_memory,
@@ -227,6 +240,9 @@ async def stream_research_live(
                 "type": "error",
                 "content": event.get("content", "LLM provider failed"),
             }
+            error_code = event.get("error_code")
+            if isinstance(error_code, str):
+                payload["error_code"] = error_code
             classification = event.get("classification")
             if isinstance(classification, str):
                 payload["classification"] = classification
