@@ -336,15 +336,15 @@ def test_numeric_title_exception_does_not_weaken_invalid_markers(answer):
         _apply_citation_style(answer, SOURCES, CitationStyle.inline)
 
 
-@pytest.mark.parametrize("suffix", ["[election]", "[]"])
-def test_descriptive_numeric_reference_links_match_every_chunk(suffix):
+@pytest.mark.parametrize("suffix", ["[missing]", "[]", "[1]"])
+def test_descriptive_numeric_reference_tails_fail_closed_at_every_split(suffix):
     answer = "[2026 Texas election results]" + suffix
     for split in range(len(answer) + 1):
         normalizer = CitationNormalizer(SOURCES, CitationStyle.inline)
-        actual = normalizer.feed(answer[:split]) + normalizer.feed(answer[split:])
-        actual += normalizer.finish(answer)
-        assert actual == answer
-        assert normalizer.citations == []
+        with pytest.raises(CitationValidationError):
+            normalizer.feed(answer[:split])
+            normalizer.feed(answer[split:])
+            normalizer.finish(answer)
 
 
 def test_citation_metric_samples_exist_before_first_failure_and_init_is_idempotent(

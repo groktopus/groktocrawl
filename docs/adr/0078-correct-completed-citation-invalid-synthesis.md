@@ -43,7 +43,8 @@ unchanged. This is not replay permission for ambiguous paid operations.
 
 A numeric-leading label is ordinary Markdown only when it starts with a canonical
 positive integer, horizontal whitespace and a descriptive word, and has a complete
-inline link or reference-link tail. Numeric-only markers and ambiguous numeric
+inline link destination. Reference-link forms remain fail-closed because a
+closed reference tail alone does not establish a defined destination. Numeric-only markers and ambiguous numeric
 forms (`[01]`, `[1e3]`, `[1-2]`, `[1, bad]`) remain fail-closed, even when linked.
 Bare or incomplete descriptive numeric labels also remain fail-closed. Code,
 escapes, image labels and existing nonnumeric Markdown behavior are retained.

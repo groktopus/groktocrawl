@@ -747,23 +747,11 @@ class CitationNormalizer:
                     elif after_label == len(text) and not final:
                         break
 
-                    # A descriptive numeric-leading label is ordinary Markdown
-                    # only with a complete link or reference tail. Bare/malformed
-                    # numeric labels still fail closed.
+                    # Descriptive numeric labels need a complete inline URL.
+                    # A closed reference tail alone does not prove that a
+                    # definition exists, so reference forms remain fail-closed.
                     if descriptive and not image and link_end is None:
-                        reference_end = (
-                            self._bracket_end(text, after_label)
-                            if after_label < len(text) and text[after_label] == "["
-                            else None
-                        )
-                        if reference_end is None:
-                            if (
-                                not final
-                                and after_label < len(text)
-                                and text[after_label] == "["
-                            ):
-                                break
-                            self._invalid()
+                        self._invalid()
 
                     if indices is not None:
                         marker_end = (
