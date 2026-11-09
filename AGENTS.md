@@ -119,7 +119,7 @@ Optional `output_schema` enables structured extraction from search results (sing
 
 `POST /v2/agent` now supports SSE streaming via `stream: true`. Two-phase protocol:
 - **Discovery:** `sources_pending` (search results found), `source_scraped` (URL fetched) — shown as they happen
-- **Synthesis:** `token` events stream the LLM's output token by token
+- **Synthesis:** Markdown candidate text is buffered through completion and citation validation. At most one citation-only corrective generation reuses the same evidence; only accepted text is emitted as `token` events. See [ADR-0078](docs/adr/0078-correct-completed-citation-invalid-synthesis.md).
 - **Final:** `done` event with full `result`, `sources` list, and `latency_ms`
 
 When `stream` is omitted, the existing create→poll pattern is used. The CLI defaults to streaming with `--sync` to opt out.

@@ -14,6 +14,30 @@ _ACTIVE_HELP = "Number of currently in-flight jobs by workload class"
 _CANCELLED_HELP = "Total jobs cancelled by workload class"
 
 
+def initialize_job_metrics() -> None:
+    """Expose bounded legacy job counters before their first observed event.
+
+    Zero increments preserve existing values if multiple apps share a collector.
+    Rate queries still need a scrape before the first event; historical missing
+    samples cannot be reconstructed by initialization.
+    """
+    for name, description in (
+        ("jobs_submitted_total", "Total jobs submitted"),
+        ("jobs_completed_total", "Total completed jobs"),
+        ("jobs_failed_total", "Total failed jobs"),
+    ):
+        counter = METRICS.counter(name, description, ["type"])
+        for kind in (
+            "agent",
+            "crawl",
+            "batch_scrape",
+            "extract",
+            "llmstxt",
+            "plan_execute",
+        ):
+            counter.inc({"type": kind}, 0)
+
+
 def active_jobs_gauge():
     return METRICS.gauge("groktocrawl_active_jobs", _ACTIVE_HELP, ["type"])
 
