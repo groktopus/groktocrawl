@@ -106,13 +106,15 @@ def synthesis(kind, style=CitationStyle.compact, schema=None):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("kind", ["answer", "research"])
 @pytest.mark.parametrize("style", list(CitationStyle))
-async def test_tokens_arrive_before_provider_finishes_and_equal_done(
+async def test_sources_arrive_live_but_answer_waits_for_validation_and_equals_done(
     synthesis_clients, kind, style
 ):
     llm, search, scraper = synthesis_clients
     release = asyncio.Event()
+    started = asyncio.Event()
 
     async def provider(**kwargs):
+        started.set()
         yield {"type": "token", "content": "Claim [1,"}
         await release.wait()
         yield {"type": "token", "content": " 2] is supported."}
@@ -121,13 +123,17 @@ async def test_tokens_arrive_before_provider_finishes_and_equal_done(
     llm.generate_stream = MagicMock(side_effect=provider)
     stream = synthesis(kind, style)
     events = []
-    while not events or events[-1]["type"] != "token":
-        events.append(await asyncio.wait_for(anext(stream), 2))
-    assert not release.is_set()
-    assert events[-1]["content"] == "Claim "
+
+    async def consume():
+        async for event in stream:
+            events.append(event)
+
+    task = asyncio.create_task(consume())
+    await asyncio.wait_for(started.wait(), 2)
+    assert not any(event["type"] == "token" for event in events)
     assert any(event["type"] == "sources" for event in events)
     release.set()
-    events.extend([event async for event in stream])
+    await asyncio.wait_for(task, 2)
     expected = (
         "Claim [1](https://example.com/one)[2](https://example.com/two) is supported."
         if style == CitationStyle.compact
@@ -197,7 +203,8 @@ async def test_invalid_citations_terminate_public_sse(
     assert not any(event["type"] == "done" for event in events)
     assert "data: [DONE]\n\n" not in frames
     memory.store.assert_not_called()
-    llm.generate_stream.assert_called_once()
+    assert llm.generate_stream.call_count == (2 if text == full else 1)
+    assert not any(event["type"] == "token" for event in events)
 
 
 @pytest.mark.asyncio
@@ -216,7 +223,7 @@ async def test_provider_error_does_not_flush_pending_citation(synthesis_clients,
     llm.generate_stream = provider
     events = [event async for event in synthesis(kind)]
     assert events[-1]["type"] == "error"
-    assert "".join(e["content"] for e in events if e["type"] == "token") == "Claim "
+    assert "".join(e["content"] for e in events if e["type"] == "token") == ""
     assert not any(e["type"] == "done" for e in events)
 
 
@@ -324,7 +331,9 @@ async def test_finalize_schema_preserves_json_in_memory():
 
 
 @pytest.mark.asyncio
-async def test_sync_answer_rejects_invalid_citations_without_retry(synthesis_clients):
+async def test_sync_answer_rejects_invalid_citations_after_one_correction(
+    synthesis_clients,
+):
     llm, _, _ = synthesis_clients
     llm.generate = AsyncMock(return_value="Claim [3].")
 
@@ -332,7 +341,7 @@ async def test_sync_answer_rejects_invalid_citations_without_retry(synthesis_cli
         await run_answer("question", llm_model="fixture")
 
     assert getattr(exc.value, "error_code", None) == "CITATION_INVALID"
-    llm.generate.assert_awaited_once()
+    assert llm.generate.await_count == 2
 
 
 @pytest.mark.asyncio
@@ -350,3 +359,316 @@ async def test_sync_answer_schema_keeps_json_opaque(synthesis_clients):
 
     assert result["answer"] == raw
     assert result["citations"] == []
+
+
+@pytest.mark.asyncio
+async def test_sync_answer_corrects_citations_once_with_same_evidence(
+    synthesis_clients,
+):
+    llm, _, _ = synthesis_clients
+    llm.generate = AsyncMock(side_effect=["Wrong [3].", "Correct [1]."])
+    result = await run_answer("question", llm_model="fixture")
+    assert result["answer"] == "Correct [1]."
+    assert llm.generate.await_count == 2
+    first, second = [call.kwargs for call in llm.generate.await_args_list]
+    assert first["context"] == second["context"] == "source context"
+    assert first["user_prompt"] in second["user_prompt"]
+    assert "citation" in second["user_prompt"].lower()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("kind", ["answer", "research"])
+@pytest.mark.parametrize("style", list(CitationStyle))
+async def test_stream_corrects_completed_invalid_candidate_without_leaking_text(
+    synthesis_clients, kind, style
+):
+    llm, _, _ = synthesis_clients
+    attempts = []
+
+    async def provider(**kwargs):
+        attempts.append(kwargs)
+        text = "Failed draft [3]." if len(attempts) == 1 else "Accepted [1]."
+        for char in text:
+            yield {"type": "token", "content": char}
+        yield {"type": "done", "full_content": text}
+
+    llm.generate_stream = provider
+    events = [event async for event in synthesis(kind, style)]
+    assert len(attempts) == 2
+    assert attempts[0]["context"] == attempts[1]["context"]
+    assert attempts[0]["system_prompt"] == attempts[1]["system_prompt"]
+    assert attempts[0]["user_prompt"] in attempts[1]["user_prompt"]
+    assert "Failed draft" not in attempts[1]["user_prompt"]
+    assert len([e for e in events if e["type"] == "sources"]) == 1
+    text = "".join(e["content"] for e in events if e["type"] == "token")
+    expected = (
+        "Accepted [1](https://example.com/one)."
+        if style == CitationStyle.compact
+        else "Accepted [1]."
+    )
+    assert text == expected
+    assert events[-1]["answer" if kind == "answer" else "result"] == expected
+    assert not any(e["type"] == "error" for e in events)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("kind", ["answer", "research"])
+@pytest.mark.parametrize(
+    "failure", ["missing_done", "mismatch", "transport", "rate_limit"]
+)
+async def test_invalid_early_marker_then_provider_failure_never_retries(
+    synthesis_clients, kind, failure
+):
+    llm, _, _ = synthesis_clients
+
+    async def provider(**kwargs):
+        yield {"type": "token", "content": "Invalid [999]."}
+        if failure == "mismatch":
+            yield {"type": "done", "full_content": "Different [1]."}
+        elif failure in {"transport", "rate_limit"}:
+            yield {
+                "type": "error",
+                "content": "upstream failure",
+                "classification": "retryable"
+                if failure == "rate_limit"
+                else "non_retryable",
+                **({"retry_after_seconds": 5} if failure == "rate_limit" else {}),
+            }
+
+    llm.generate_stream = MagicMock(side_effect=provider)
+    events = [event async for event in synthesis(kind)]
+    llm.generate_stream.assert_called_once()
+    assert events[-1]["type"] == "error"
+    if failure == "rate_limit":
+        assert events[-1]["classification"] == "retryable"
+        assert events[-1]["retry_after_seconds"] == 5
+    assert not any(e["type"] in {"token", "done"} for e in events)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("successful", [False, True])
+async def test_polling_research_corrects_only_synthesis(synthesis_clients, successful):
+    llm, _, _ = synthesis_clients
+    llm.generate = AsyncMock(
+        side_effect=["Draft [3].", "Final [1]." if successful else "Bad [3]."]
+    )
+    stream = _run_research_events(
+        "question",
+        llm_model="fixture",
+        search_type="focused",
+        stream_tokens=False,
+    )
+    if successful:
+        events = [event async for event in stream]
+        assert events[-1]["result"] == "Final [1]."
+    else:
+        with pytest.raises(CitationValidationError):
+            [event async for event in stream]
+    assert llm.generate.await_count == 2
+    assert all(
+        call.kwargs["stage"] == "synthesis" for call in llm.generate.await_args_list
+    )
+    assert (
+        llm.generate.await_args_list[0].kwargs["context"]
+        == llm.generate.await_args_list[1].kwargs["context"]
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("kind", ["answer", "research"])
+async def test_cancellation_during_corrective_attempt_discards_both_drafts(
+    synthesis_clients, kind
+):
+    llm, search, scraper = synthesis_clients
+    correcting = asyncio.Event()
+    cancelled = asyncio.Event()
+    attempts = 0
+
+    async def provider(**kwargs):
+        nonlocal attempts
+        attempts += 1
+        yield {"type": "token", "content": "Draft [3]."}
+        if attempts == 1:
+            yield {"type": "done", "full_content": "Draft [3]."}
+        else:
+            correcting.set()
+            try:
+                await asyncio.Event().wait()
+            finally:
+                cancelled.set()
+
+    llm.generate_stream = provider
+    events = []
+
+    async def consume():
+        async for event in synthesis(kind):
+            events.append(event)
+
+    task = asyncio.create_task(consume())
+    await asyncio.wait_for(correcting.wait(), 2)
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    assert attempts == 2
+    assert cancelled.is_set()
+    assert not any(e["type"] in {"token", "done"} for e in events)
+    for client in (llm, search, scraper):
+        client.close.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("streaming", [False, True])
+@pytest.mark.parametrize("recovered", [False, True])
+async def test_answer_http_boundary_publishes_only_verified_candidate(
+    synthesis_clients, streaming, recovered
+):
+    from types import SimpleNamespace
+
+    import httpx
+    from agent.app import groktocrawl_error_handler
+    from agent.exceptions import GroktoCrawlError
+    from agent.routes.agent import router
+    from fastapi import FastAPI
+
+    llm, _, _ = synthesis_clients
+    responses = [
+        "Private rejected draft [3].",
+        "Accepted [1]." if recovered else "Still invalid [3].",
+    ]
+    llm.generate = AsyncMock(side_effect=responses)
+    calls = 0
+
+    async def provider(**kwargs):
+        nonlocal calls
+        text = responses[calls]
+        calls += 1
+        yield {"type": "token", "content": text}
+        yield {"type": "done", "full_content": text}
+
+    llm.generate_stream = provider
+    app = FastAPI()
+    app.include_router(router)
+    app.add_exception_handler(GroktoCrawlError, groktocrawl_error_handler)
+    for key, value in {
+        "rate_limiter": SimpleNamespace(
+            check=AsyncMock(return_value=(True, 9)), limit=10
+        ),
+        "max_searches_per_request": 5,
+        "searxng_url": "http://search.fixture",
+        "scraper_url": "http://scraper.fixture",
+        "semantic_url": "http://semantic.fixture",
+        "llm_base_url": "http://llm.fixture",
+        "llm_api_key": "",
+        "llm_model": "fixture",
+    }.items():
+        setattr(app.state, key, value)
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app), base_url="http://test"
+    ) as client:
+        response = await client.post(
+            "/v2/answer", json={"query": "question", "stream": streaming}
+        )
+    assert "Private rejected draft" not in response.text
+    assert (calls if streaming else llm.generate.await_count) == 2
+    if streaming:
+        assert response.status_code == 200
+        events = [
+            json.loads(line[6:])
+            for line in response.text.splitlines()
+            if line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        assert events[-1]["type"] == ("done" if recovered else "error")
+        if recovered:
+            assert events[-1]["answer"] == "Accepted [1]."
+            assert (
+                "".join(e["content"] for e in events if e["type"] == "token")
+                == "Accepted [1]."
+            )
+        else:
+            assert events[-1]["error_code"] == "CITATION_INVALID"
+            assert not any(e["type"] == "token" for e in events)
+            assert "data: [DONE]" not in response.text
+    else:
+        assert response.status_code == (200 if recovered else 502)
+        if recovered:
+            assert response.json()["answer"] == "Accepted [1]."
+        else:
+            assert response.json()["error_code"] == "CITATION_INVALID"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("error_kind", ["provider", "rate_limit"])
+async def test_sync_provider_failures_are_not_citation_retries(
+    synthesis_clients, error_kind
+):
+    from agent.exceptions import ProviderOutputError, RetryableRateLimitError
+
+    llm, _, _ = synthesis_clients
+    error = (
+        ProviderOutputError()
+        if error_kind == "provider"
+        else RetryableRateLimitError(retry_after_seconds=5)
+    )
+    llm.generate = AsyncMock(side_effect=error)
+    with pytest.raises(type(error)):
+        await run_answer("question", llm_model="fixture")
+    llm.generate.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "responses,outcome,calls",
+    [
+        (["Valid [1]."], None, 1),
+        (["Invalid [3].", "Valid [1]."], "succeeded", 2),
+        (["Invalid [3].", "Invalid [3]."], "exhausted", 2),
+    ],
+)
+async def test_recovery_metrics_and_frozen_source_identity(
+    monkeypatch, responses, outcome, calls
+):
+    from agent.research import citation_recovery
+
+    from common.metrics import MetricsCollector
+
+    collector = MetricsCollector()
+    monkeypatch.setattr(citation_recovery, "METRICS", collector)
+    citation_recovery.initialize_citation_metrics()
+    sources = [dict(source) for source in SOURCES]
+    count = 0
+
+    async def generate(**kwargs):
+        nonlocal count
+        text = responses[count]
+        count += 1
+        sources[0]["url"] = "https://changed.invalid"
+        return text
+
+    llm = MagicMock(generate=AsyncMock(side_effect=generate))
+    invocation = citation_recovery.generate_cited_answer(
+        llm,
+        system_prompt="grounded",
+        user_prompt="question",
+        context="evidence",
+        source_map=sources,
+        citation_style=CitationStyle.compact,
+        stage="answer",
+    )
+    if outcome == "exhausted":
+        with pytest.raises(CitationValidationError):
+            await invocation
+    else:
+        answer, citations = await invocation
+        assert answer == "Valid [1](https://example.com/one)."
+        assert citations == [{"index": 1, "url": "https://example.com/one"}]
+    assert llm.generate.await_count == calls
+    metrics = collector.generate_openmetrics()
+    assert (
+        f'groktocrawl_citation_recovery_total{{outcome="attempted",stage="answer"}} {float(calls - 1)}'
+        in metrics
+    )
+    for metric_outcome in ("succeeded", "exhausted"):
+        assert (
+            f'groktocrawl_citation_recovery_total{{outcome="{metric_outcome}",stage="answer"}} {float(outcome == metric_outcome)}'
+            in metrics
+        )

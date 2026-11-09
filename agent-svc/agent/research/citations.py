@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 _GROUPED_MARKER = re.compile(r"([1-9][0-9]*)(?:[ \t]*,[ \t]*([1-9][0-9]*))*\Z")
 _CANONICAL_MARKER = re.compile(r"[1-9][0-9]*\Z")
 _NUMERIC_PREFIX = re.compile(r"\s*[+-]?[0-9]")
+_DESCRIPTIVE_NUMERIC_LABEL = re.compile(r"[1-9][0-9]*[ \t]+[^\W\d_]", re.UNICODE)
 
 
 def _build_answer_user_prompt(query: str, citation_style: Any) -> str:
@@ -724,7 +725,10 @@ class CitationNormalizer:
                         continue
 
                     label = text[position + 1 : closing]
-                    indices = None if image else self._parse_indices(label)
+                    descriptive = bool(_DESCRIPTIVE_NUMERIC_LABEL.match(label))
+                    indices = (
+                        None if image or descriptive else self._parse_indices(label)
+                    )
                     after_label = closing + 1
                     link_url = None
                     link_end = None
@@ -742,6 +746,12 @@ class CitationNormalizer:
                         link_url = self._extract_link_url(text, after_label, link_end)
                     elif after_label == len(text) and not final:
                         break
+
+                    # Descriptive numeric labels need a complete inline URL.
+                    # A closed reference tail alone does not prove that a
+                    # definition exists, so reference forms remain fail-closed.
+                    if descriptive and not image and link_end is None:
+                        self._invalid()
 
                     if indices is not None:
                         marker_end = (
