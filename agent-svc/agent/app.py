@@ -160,9 +160,11 @@ def create_app() -> FastAPI:
 
     # ── Metrics initialization ────────────────────────────────────
     from .research.citation_recovery import initialize_citation_metrics
+    from .research_cache_metrics import initialize_research_cache_metrics
     from .workload_metrics import initialize_job_metrics
 
     initialize_citation_metrics()
+    initialize_research_cache_metrics()
     initialize_job_metrics()
     METRICS.counter("search_calls_total", "Total search calls", ["status"])
     # Info metric for version identification (kept for backward compat)

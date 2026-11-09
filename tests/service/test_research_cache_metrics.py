@@ -338,3 +338,67 @@ async def test_stream_serialization_failure_is_not_accepted_replay():
                 )
             ]
         execution.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_cache_counter_initialization_is_bounded_and_preserves_first_events(
+    monkeypatch,
+):
+    from agent import research_cache_metrics
+
+    from common import stage_metrics
+    from common.metrics import MetricsCollector
+
+    collector = MetricsCollector()
+    monkeypatch.setattr(research_cache_metrics, "METRICS", collector)
+    monkeypatch.setattr(stage_metrics, "METRICS", collector)
+    research_cache_metrics.initialize_research_cache_metrics()
+    before = collector.generate_openmetrics()
+    samples = [
+        line for line in before.splitlines() if line and not line.startswith("#")
+    ]
+    assert len(samples) == 35
+    assert all(line.endswith(" 0.0") for line in samples)
+    assert "_seconds" not in before
+    assert 'boundary="stream",reason="publication"' not in before
+    assert 'boundary="query",reason="citation"' not in before
+    assert 'freshness="fresh",mode="job",path="live"' not in before
+    for outcome in ("fresh", "aging", "stale", "miss", "error", "cancelled"):
+        assert (
+            f'groktocrawl_research_memory_lookup_total{{outcome="{outcome}"}} 0.0'
+            in before
+        )
+
+    entry = _stored_entry("m")
+    memory, _ = _make_memory({"memory:m:data": json.dumps(entry)}, [_result("m")])
+    assert (await memory.query("q"))["hit"]
+    research_cache_metrics.record_execution("job", "replay", "fresh")
+    research_cache_metrics.record_bypass("stream", "force_fresh")
+    research_cache_metrics.record_rejection("stream", "citation")
+    after_event = collector.generate_openmetrics()
+    research_cache_metrics.initialize_research_cache_metrics()
+    assert collector.generate_openmetrics() == after_event
+    for series in (
+        'research_memory_lookup_total{outcome="fresh"}',
+        'agent_execution_total{freshness="fresh",mode="job",path="replay"}',
+        'research_memory_bypass_total{mode="stream",reason="force_fresh"}',
+        'research_memory_rejections_total{boundary="stream",reason="citation"}',
+    ):
+        assert f"groktocrawl_{series} 1.0" in after_event
+    assert "research_memory_replay_seconds" not in after_event
+
+
+def test_app_creation_exposes_cache_counter_zero_samples(monkeypatch):
+    from agent import app, research_cache_metrics
+
+    from common.metrics import MetricsCollector
+
+    collector = MetricsCollector()
+    monkeypatch.setattr(research_cache_metrics, "METRICS", collector)
+    for name in ("ScraperClient", "SearXNGClient", "LLMClient"):
+        monkeypatch.setattr(app, name, MagicMock())
+    app.create_app()
+    assert (
+        'groktocrawl_agent_execution_total{freshness="none",mode="stream",path="live"} 0.0'
+        in collector.generate_openmetrics()
+    )

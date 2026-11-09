@@ -672,3 +672,44 @@ async def test_recovery_metrics_and_frozen_source_identity(
             f'groktocrawl_citation_recovery_total{{outcome="{metric_outcome}",stage="answer"}} {float(outcome == metric_outcome)}'
             in metrics
         )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("successful", [False, True])
+async def test_citation_correction_stays_one_live_execution(
+    synthesis_clients, successful
+):
+    from agent.research.streaming import stream_research_live
+
+    llm, _, _ = synthesis_clients
+    answers = iter(["Draft [3].", "Final [1]." if successful else "Bad [3]."])
+
+    async def provider(**kwargs):
+        text = next(answers)
+        yield {"type": "token", "content": text}
+        yield {"type": "done", "full_content": text}
+
+    llm.generate_stream = MagicMock(side_effect=provider)
+    with patch("agent.research.streaming.record_execution") as execution:
+        events = [
+            event
+            async for event in stream_research_live(
+                prompt="question",
+                urls=None,
+                schema=None,
+                searxng_url="http://search",
+                scraper_url="http://scraper",
+                llm_base_url="http://llm",
+                llm_api_key="fixture",
+                llm_model="fixture",
+                requested_model=None,
+                max_searches_per_request=1,
+                include_images=False,
+                citation_style=CitationStyle.inline,
+                search_type="focused",
+            )
+        ]
+        execution.assert_called_once_with("stream", "live")
+    assert llm.generate_stream.call_count == 2
+    assert any('"type": "done"' in event for event in events) == successful
+    assert any('"type": "error"' in event for event in events) != successful

@@ -103,6 +103,13 @@ Additional bounded metrics distinguish why candidates do not become responses:
 | `groktocrawl_agent_execution_total` | `mode=job` or `stream`, `path=live` or `replay`, `freshness=none` for live and `fresh`, `aging`, or `stale` for replay. Live counts pipeline starts. Replay counts successful job publication or preparation of the cached SSE `done` event, after citation validation. |
 | `groktocrawl_research_memory_replay_seconds` | `mode`, `freshness`: accepted replay preparation through job publication or cached SSE `done` preparation. Excludes memory lookup, webhook delivery, and SWR refresh. Streaming duration includes consumer backpressure while yielding cached tokens. |
 
+At app creation, these counters (including lookup outcomes) expose bounded zero
+samples using idempotent zero increments, alongside citation and job counters.
+Initialization does not reset existing events or add histogram observations. A
+scrape before traffic is still necessary to observe the first rate transition.
+Citation correction stays within a single live execution start; its additional
+LLM call and outcomes remain visible in citation-recovery and LLM metrics.
+
 All values are fixed categories; no prompts, URLs, user identifiers, models,
 fingerprints, memory IDs, or exception messages appear in these labels. Freshness
 from an artifact is normalized to the bounded set (unknown becomes `none`). The
