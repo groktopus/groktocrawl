@@ -13,7 +13,7 @@ immediately. Retrying an entire job would repeat acquisition; retrying synthesis
 after emitting its prefix would concatenate incompatible answers in clients that
 have no revision/reset protocol. The citation parser also rejected ordinary
 numeric-leading Markdown titles such as `[2026 Texas election results](url)`.
-Validation counters were created on first use, so a rate query could miss the
+Validation and terminal job counters were created on first use, so a rate query could miss the
 first transition when its first observed sample was already one.
 
 ## Decision
@@ -49,7 +49,8 @@ forms (`[01]`, `[1e3]`, `[1-2]`, `[1, bad]`) remain fail-closed, even when linke
 Bare or incomplete descriptive numeric labels also remain fail-closed. Code,
 escapes, image labels and existing nonnumeric Markdown behavior are retained.
 
-At application creation, expose all bounded style/outcome validation counter
+At application creation, expose submitted/completed/failed counters for each
+existing bounded legacy job type, plus all bounded style/outcome validation counter
 samples and stage/outcome correction counter samples with an idempotent zero
 increment. Never reset existing counts. `groktocrawl_citation_recovery_total`
 distinguishes `attempted`, `succeeded`, and `exhausted`; ordinary LLM counters retain

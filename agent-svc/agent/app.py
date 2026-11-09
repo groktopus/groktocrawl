@@ -160,8 +160,10 @@ def create_app() -> FastAPI:
 
     # ── Metrics initialization ────────────────────────────────────
     from .research.citation_recovery import initialize_citation_metrics
+    from .workload_metrics import initialize_job_metrics
 
     initialize_citation_metrics()
+    initialize_job_metrics()
     METRICS.counter("search_calls_total", "Total search calls", ["status"])
     # Info metric for version identification (kept for backward compat)
     METRICS.gauge("groktocrawl_info", "GroktoCrawl version info").set(value=1.0)
