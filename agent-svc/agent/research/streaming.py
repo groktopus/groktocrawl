@@ -13,6 +13,7 @@ from common.stage_metrics import StreamTiming
 
 from ..exceptions import CitationValidationError
 from ..models import CitationStyle
+from ..research_cache_metrics import record_execution, record_rejection
 from .citations import _apply_citation_style
 from .loop import run_research_stream
 from .memory import admit_research_memory
@@ -50,6 +51,7 @@ async def stream_cached_artifact(
                 artifact_text, sources, citation_style
             )
         except CitationValidationError as exc:
+            record_rejection("stream", "citation")
             payload = {
                 "type": "error",
                 "content": exc.detail,
@@ -98,7 +100,9 @@ async def stream_cached_artifact(
         done_payload["source_details"] = []
     else:
         done_payload["source_details"] = sources
-    yield f"data: {json.dumps(done_payload)}\n\n"
+    done_event = f"data: {json.dumps(done_payload)}\n\n"
+    record_execution("stream", "replay", freshness, started=stream_start)
+    yield done_event
 
     # ── Stale-while-revalidate: await the single-flight refresh ──
     if refresh_awaitable is not None:
@@ -157,6 +161,7 @@ async def stream_research_live(
     # sentinels emitted before any real work; TTFB must reflect the first
     # content-bearing event, not the planning placeholder.
     _content_events = {"sources_pending", "source_scraped", "sources", "token", "done"}
+    record_execution("stream", "live")
     async for event in run_research_stream(
         prompt=prompt,
         urls=urls,

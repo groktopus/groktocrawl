@@ -33,6 +33,7 @@ from redis import Redis
 from common.metrics import METRICS
 from common.stage_metrics import inc_counter, observe_elapsed, set_gauge
 
+from .research_cache_metrics import record_rejection
 from .research_memory_pgvector import MemoryVector, PgvectorResearchMemoryStore
 
 logger = logging.getLogger(__name__)
@@ -490,6 +491,7 @@ class ResearchMemory:
             for result in results:
                 score = float(result.get("score", 0))
                 if score < self.threshold:
+                    record_rejection("query", "similarity")
                     logger.debug(
                         "Best Qdrant match below threshold: %.3f < %.2f",
                         score,
@@ -500,6 +502,7 @@ class ResearchMemory:
                 payload = result.get("payload", {})
                 memory_id = payload.get("memory_id", "")
                 if not memory_id:
+                    record_rejection("query", "missing_id")
                     continue
 
                 try:
@@ -511,6 +514,7 @@ class ResearchMemory:
                     )
                     return {"hit": False}
                 if artifact_raw is None:
+                    record_rejection("query", "missing_artifact")
                     # Valkey key expired — skip; sweep will clean it up later
                     logger.debug(
                         "Valkey key missing for memory_id=%s, skipping", memory_id
@@ -520,6 +524,7 @@ class ResearchMemory:
                 try:
                     artifact = json.loads(artifact_raw)
                 except (json.JSONDecodeError, TypeError):
+                    record_rejection("query", "invalid_artifact")
                     logger.debug("Unparseable artifact for memory_id=%s", memory_id)
                     continue
 
@@ -528,6 +533,7 @@ class ResearchMemory:
                     stored_fingerprint = artifact.get("fingerprint", "")
                     if not stored_fingerprint or stored_fingerprint != fingerprint:
                         incompatible_seen = True
+                        record_rejection("query", "compatibility")
                         logger.debug(
                             "Fingerprint mismatch for memory_id=%s, skipping",
                             memory_id,
@@ -537,6 +543,7 @@ class ResearchMemory:
                 # ── Freshness from stored timestamps ─────────────────
                 freshness_meta = _entry_freshness(artifact)
                 if freshness_meta is None:
+                    record_rejection("query", "freshness")
                     logger.debug(
                         "Invalid or expired freshness metadata for memory_id=%s, "
                         "skipping",
@@ -547,6 +554,7 @@ class ResearchMemory:
 
                 # ── Caller age gate ──────────────────────────────────
                 if max_age_hours is not None and age_hours > max_age_hours:
+                    record_rejection("query", "max_age")
                     logger.debug(
                         "memory_id=%s too old (age=%.2fh > max=%.2fh), skipping",
                         memory_id,
@@ -583,6 +591,12 @@ class ResearchMemory:
             if incompatible_seen:
                 return {"hit": False, "compatibility": "incompatible"}
             return {"hit": False}
+        except asyncio.CancelledError:
+            outcome = "cancelled"
+            raise
+        except Exception:
+            outcome = "error"
+            raise
         finally:
             observe_elapsed(
                 _MEMORY_LOOKUP_SECONDS, _MEMORY_LOOKUP_SECONDS_HELP, {}, started

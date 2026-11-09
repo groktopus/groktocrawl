@@ -81,3 +81,63 @@ the internal `SourceArtifact`, not exported as metric labels.
    ```bash
    groktocrawl --server "$GROKTOCRAWL_API_URL" --json search "observability probe" --limit 1
    ```
+
+## Research-memory cache baselines
+
+Lookup candidates and accepted answer replay are different boundaries. The existing
+`groktocrawl_research_memory_lookup_total{outcome}` and
+`groktocrawl_research_memory_lookup_seconds` remain the single query-level signals.
+Outcomes are `fresh`, `aging`, `stale`, `miss`, `error`, and `cancelled`. These include raw debug
+queries and batch queries as well as agent lookups; they are **not an agent request
+cache-hit rate**. A stale candidate may still require live research. Unexpected
+query exceptions retain their propagation behavior and are counted as `error`,
+not misses. Cancellation propagates unchanged and is counted separately as `cancelled`.
+
+Additional bounded metrics distinguish why candidates do not become responses:
+
+| Metric | Labels and meaning |
+|---|---|
+| `groktocrawl_research_memory_rejections_total` | `boundary=query`: `reason=similarity`, `missing_id`, `missing_artifact`, `invalid_artifact`, `compatibility`, `freshness` (invalid/expired timestamps), or `max_age`. One increment per rejected candidate examined, not per request. |
+| Same rejection counter | `boundary=job` or `stream`: `stale_policy` when stale replay is not permitted, `citation` when citation validation rejects replay. Job replay also records `error` for preparation/publication exceptions and `publication` when the job store refuses completion. |
+| `groktocrawl_research_memory_bypass_total` | `mode=job` or `stream`, `reason=force_fresh`, `source_content`, or `unavailable` (no memory instance). One increment when the lookup is deliberately skipped. `force_fresh` takes precedence, then `source_content`, then `unavailable`. No backend-health probe is added. |
+| `groktocrawl_agent_execution_total` | `mode=job` or `stream`, `path=live` or `replay`, `freshness=none` for live and `fresh`, `aging`, or `stale` for replay. Live counts pipeline starts. Replay counts successful job publication or preparation of the cached SSE `done` event, after citation validation. |
+| `groktocrawl_research_memory_replay_seconds` | `mode`, `freshness`: accepted replay preparation through job publication or cached SSE `done` preparation. Excludes memory lookup, webhook delivery, and SWR refresh. Streaming duration includes consumer backpressure while yielding cached tokens. |
+
+At app creation, these counters (including lookup outcomes) expose bounded zero
+samples using idempotent zero increments, alongside citation and job counters.
+Initialization does not reset existing events or add histogram observations. A
+scrape before traffic is still necessary to observe the first rate transition.
+Citation correction stays within a single live execution start; its additional
+LLM call and outcomes remain visible in citation-recovery and LLM metrics.
+
+All values are fixed categories; no prompts, URLs, user identifiers, models,
+fingerprints, memory IDs, or exception messages appear in these labels. Freshness
+from an artifact is normalized to the bounded set (unknown becomes `none`). The
+query rejection counter stops at the first failed gate for each examined candidate;
+one query can reject several candidates and still return a later hit. Candidates
+below the first below-threshold result are not visited and are not counted.
+
+Example baseline PromQL:
+
+```promql
+sum by (outcome) (rate(groktocrawl_research_memory_lookup_total[5m]))
+sum by (boundary, reason) (rate(groktocrawl_research_memory_rejections_total[5m]))
+sum by (mode, reason) (rate(groktocrawl_research_memory_bypass_total[5m]))
+sum by (mode, path, freshness) (rate(groktocrawl_agent_execution_total[5m]))
+sum by (mode) (rate(groktocrawl_research_memory_replay_seconds_sum[5m]))
+/ sum by (mode) (rate(groktocrawl_research_memory_replay_seconds_count[5m]))
+```
+
+The final expression is mean accepted replay duration, not a percentile. Histogram
+percentiles above the largest finite bucket are censored and must not be displayed
+as an exact tail-latency estimate.
+
+These are execution-boundary baselines, not SLOs, delivery acknowledgments, or
+unique-request success denominators. Job retries can start the live pipeline more
+than once. Existing error fallbacks after publication may also start live work;
+these metrics do not change that behavior. An SSE consumer disconnecting before
+`done` is not an accepted replay in this counter, and yielding `done` does not prove
+client receipt. SWR background refresh is excluded from the agent execution counter
+and retains normal underlying research-stage telemetry. Cache-served jobs still
+bypass the normal worker lifecycle instrumentation; the dedicated replay timing
+does not repair or claim parity with `job_duration_seconds`/active-job metrics.

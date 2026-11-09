@@ -12,10 +12,16 @@ from typing import Any
 from .admission import get_admission
 from .barrier_guard import is_barrier_flagged, log_refusal
 from .cancel import JobCancelledError, raise_if_cancelled, set_token
-from .exceptions import RetryableRateLimitError
+from .exceptions import CitationValidationError, RetryableRateLimitError
 from .metrics import METRICS
 from .research import run_extract, run_research
 from .research.memory import finalize_and_admit, refresh_research_memory
+from .research_cache_metrics import (
+    BypassReason,
+    record_bypass,
+    record_execution,
+    record_rejection,
+)
 from .retry import (
     RetryPolicy,
     clamp_retry_delay,
@@ -317,7 +323,8 @@ async def _process_agent_async(
 
     # ── Research Memory — check cache before pipeline ──────────────
     stale_cache_hit: dict | None = None
-    if not force_fresh and not include_source_content:
+    replay_started: float | None = None
+    if not force_fresh and not include_source_content and research_memory is not None:
         try:
             cache_result = await research_memory.query(
                 prompt=prompt,
@@ -326,6 +333,7 @@ async def _process_agent_async(
                 max_stale_hours=max_stale_hours if stale_while_revalidate else None,
             )
             if cache_result["hit"]:
+                replay_started = time.monotonic()
                 freshness = cache_result.get("freshness", "stale")
                 if freshness == "fresh" or freshness == "aging":
                     # Cache hit is fresh or aging — return cached result directly
@@ -373,7 +381,7 @@ async def _process_agent_async(
                             )
                         cached_payload["sources_compact"] = compact_sources
                         cached_payload["source_details"] = []
-                    _complete_with_webhook_intent(
+                    published = _complete_with_webhook_intent(
                         store,
                         job_id,
                         cached_payload,
@@ -381,6 +389,13 @@ async def _process_agent_async(
                             webhook_config, "completed", job_id, cached_payload
                         ),
                     )
+                    if published:
+                        record_execution(
+                            "job", "replay", freshness, started=replay_started
+                        )
+                    else:
+                        record_rejection("job", "publication")
+                    replay_started = None
                     await deliver_webhook(
                         webhook_config, "completed", job_id, cached_payload
                     )
@@ -432,7 +447,7 @@ async def _process_agent_async(
                             )
                         stale_payload["sources_compact"] = compact_sources
                         stale_payload["source_details"] = []
-                    _complete_with_webhook_intent(
+                    published = _complete_with_webhook_intent(
                         store,
                         job_id,
                         stale_payload,
@@ -440,6 +455,13 @@ async def _process_agent_async(
                             webhook_config, "completed", job_id, stale_payload
                         ),
                     )
+                    if published:
+                        record_execution(
+                            "job", "replay", freshness, started=replay_started
+                        )
+                    else:
+                        record_rejection("job", "publication")
+                    replay_started = None
                     await deliver_webhook(
                         webhook_config, "completed", job_id, stale_payload
                     )
@@ -522,10 +544,16 @@ async def _process_agent_async(
                         freshness,
                         job_id,
                     )
+                    record_rejection("job", "stale_policy")
                     stale_cache_hit = cache_result
             else:
                 logger.debug("Research memory miss for agent %s", job_id)
-        except Exception:
+        except Exception as exc:
+            if replay_started is not None:
+                record_rejection(
+                    "job",
+                    "citation" if isinstance(exc, CitationValidationError) else "error",
+                )
             logger.warning(
                 "Research memory lookup failed for agent %s — proceeding with "
                 "normal pipeline",
@@ -533,9 +561,18 @@ async def _process_agent_async(
                 exc_info=True,
             )
     else:
+        bypass_reason: BypassReason = (
+            "force_fresh"
+            if force_fresh
+            else "source_content"
+            if include_source_content
+            else "unavailable"
+        )
+        record_bypass("job", bypass_reason)
         logger.info(
-            "force_fresh=True for agent %s — bypassing research memory cache",
+            "Bypassing research memory cache for agent %s (%s)",
             job_id,
+            bypass_reason,
         )
 
     async def work_fn() -> dict[str, Any]:
@@ -548,6 +585,7 @@ async def _process_agent_async(
             logger.info("Agent job %s cancelled before research", job_id)
             raise JobCancelledError("agent job cancelled via DELETE")
 
+        record_execution("job", "live")
         result = await run_research(
             prompt=prompt,
             urls=urls,

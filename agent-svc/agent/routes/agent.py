@@ -22,6 +22,7 @@ from ..models import (
     CitationStyle,
     Source,
 )
+from ..research_cache_metrics import record_bypass, record_rejection
 from ..research_memory import compute_fingerprint
 from ..store import JobStore
 from ._helpers import (
@@ -106,14 +107,19 @@ async def _lookup_agent_cache(
     or ``None`` on miss / incompatible / stale / error.
     """
     if body.force_fresh:
+        record_bypass("stream", "force_fresh")
         return None
     if body.include_source_content:
+        record_bypass("stream", "source_content")
         # Research Memory stores compact source metadata, not scraped bodies.
         # An export request must execute acquisition so the response can carry
         # the requested source content.
         return None
     try:
         memory = request.app.state.research_memory
+        if memory is None:
+            record_bypass("stream", "unavailable")
+            return None
         memory_scope = os.environ.get("RESEARCH_MEMORY_SCOPE", "global")
         user_id = _derive_user_id(request)
         cache_result = await memory.query(
@@ -134,6 +140,7 @@ async def _lookup_agent_cache(
                 and cache_result.get("swr_eligible")
             ):
                 return cache_result
+            record_rejection("stream", "stale_policy")
         return None
     except Exception:
         logger.warning(
