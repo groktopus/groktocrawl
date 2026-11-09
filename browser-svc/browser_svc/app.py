@@ -21,6 +21,7 @@ from fastapi.responses import JSONResponse, PlainTextResponse
 from playwright.async_api import async_playwright
 from pydantic import BaseModel
 
+from common.browser_metrics import append_metrics
 from common.logging import setup_logging
 from common.metrics import METRICS
 from common.middleware import add_request_id_middleware
@@ -28,6 +29,7 @@ from common.stage_metrics import inc_counter, set_gauge
 from common.url import extract_domain, is_private_host
 
 from . import lifecycle
+from .capacity_metrics import CapacityMetrics
 from .cookie_rpc import DEFAULT_COOKIE_RPC_SOCKET, CookieRPCClient
 from .lifecycle import BrowserOwner
 from .process_health import process_capacity
@@ -224,6 +226,7 @@ _owners: dict[str, BrowserOwner] = {}
 _cleanup_task: asyncio.Task | None = None
 _shutting_down = False
 _update_active_sessions_gauge()
+_capacity_metrics = CapacityMetrics()
 
 
 class SessionData:
@@ -349,6 +352,7 @@ async def _retire_owner(session_id: str, owner: BrowserOwner) -> None:
         _owners.pop(session_id, None)
     else:
         owner.phase = "quarantined"
+        _capacity_metrics.increment("cleanup_incomplete_total")
         logger.error("Browser cleanup incomplete; admission disabled until restart")
 
 
@@ -453,8 +457,16 @@ async def health():
 @app.get("/metrics")
 async def metrics():
     """Prometheus-compatible OpenMetrics endpoint."""
+    capacity = process_capacity()
+    snapshot = _capacity_metrics.render(
+        capacity=capacity,
+        phases=(owner.phase for owner in _owners.values()),
+        limit=lifecycle.MAX_SESSIONS,
+        admission=_admission_reason(capacity) is None,
+    )
+    _update_active_sessions_gauge()
     return PlainTextResponse(
-        METRICS.generate_openmetrics(),
+        append_metrics(METRICS.generate_openmetrics(), snapshot),
         media_type="application/openmetrics-text; version=1.0.0",
     )
 
@@ -521,6 +533,7 @@ async def create_browser(req: BrowserCreateRequest):
     """Reserve capacity before starting work and publish only complete sessions."""
     reason = _admission_reason(process_capacity())
     if reason is not None:
+        _capacity_metrics.increment("admission_rejections_total", reason)
         raise HTTPException(status_code=503, detail=reason)
     session_id = str(uuid.uuid4())
     owner = BrowserOwner()
@@ -545,6 +558,12 @@ async def create_browser(req: BrowserCreateRequest):
         logger.info("Created browser session %s (TTL: %ds)", session_id, req.ttl)
         return BrowserCreateResponse(id=session_id)
     except BaseException as exc:
+        failure_reason = "error"
+        if isinstance(exc, asyncio.CancelledError):
+            failure_reason = "cancelled"
+        elif isinstance(exc, HTTPException) and exc.status_code == 504:
+            failure_reason = "timeout"
+        _capacity_metrics.increment("creation_failures_total", failure_reason)
         cleanup = _begin_cleanup(session_id, owner)
         # Cleanup is independently owned; repeated request cancellation cannot
         # abandon it or free its capacity reservation prematurely.

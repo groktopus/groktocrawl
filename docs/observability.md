@@ -141,3 +141,12 @@ client receipt. SWR background refresh is excluded from the agent execution coun
 and retains normal underlying research-stage telemetry. Cache-served jobs still
 bypass the normal worker lifecycle instrumentation; the dedicated replay timing
 does not repair or claim parity with `job_duration_seconds`/active-job metrics.
+
+## Browser capacity relay
+
+Browser capacity and lifecycle metrics are relayed through the existing agent
+scrape. See the [browser-capacity runbook](runbooks/browser-capacity.md) for metric
+semantics, an additive dashboard candidate renderer, ownership/rollback boundaries
+and pending live verification. Collection health is distinct from admission
+availability; missing browser data is never synthesized as zero. Deployment
+labels, datasource UIDs and generated dashboard candidates remain private overlays.

@@ -10,6 +10,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, PlainTextResponse, Response
 from redis import Redis
 
+from common.browser_metrics import append_metrics
 from common.features import is_enabled
 from common.logging import setup_logging
 from common.metrics import METRICS
@@ -23,6 +24,7 @@ from .auth import (
     SECURITY_WARNING_HEADER,
     verify_api_key,
 )
+from .browser_metrics import BrowserMetricsRelay
 from .exceptions import GroktoCrawlError, RateLimitedError
 from .health import check_all
 from .llm import LLMClient
@@ -302,6 +304,11 @@ def create_app() -> FastAPI:
 
         return result
 
+    browser_metrics_relay = BrowserMetricsRelay(
+        socket_path=os.environ.get("BROWSER_CONTROL_SOCKET") or None
+    )
+    app.state.browser_metrics_relay = browser_metrics_relay
+
     # ── Metrics endpoint (always unauthenticated) ────────────────
     @app.get("/metrics")
     async def metrics() -> PlainTextResponse:
@@ -324,7 +331,9 @@ def create_app() -> FastAPI:
             )
 
         return PlainTextResponse(
-            content=METRICS.generate_openmetrics(),
+            content=append_metrics(
+                METRICS.generate_openmetrics(), await browser_metrics_relay.collect()
+            ),
             media_type="application/openmetrics-text; version=1.0.0",
         )
 
