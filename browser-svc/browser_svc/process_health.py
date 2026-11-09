@@ -8,6 +8,23 @@ MIN_TASK_HEADROOM = 100
 CGROUP_ROOTS = (Path("/sys/fs/cgroup"), Path("/sys/fs/cgroup/pids"))
 
 
+def _limit_events(root: Path) -> int | None:
+    """Read the raw cgroup-lifetime counter, independently of admission health."""
+    try:
+        with (root / "pids.events").open(encoding="ascii") as stream:
+            text = stream.read(1024)
+        if len(text) >= 1024:
+            return None
+        values = [line.split() for line in text.splitlines()]
+        matches = [parts for parts in values if parts and parts[0] == "max"]
+        if len(matches) != 1 or len(matches[0]) != 2:
+            return None
+        value = int(matches[0][1])
+        return value if value >= 0 else None
+    except (OSError, UnicodeError, ValueError):
+        return None
+
+
 def process_capacity(roots: tuple[Path, ...] = CGROUP_ROOTS) -> dict[str, object]:
     """Read bounded v2/v1 controller values without exposing host details."""
     for root in roots:
@@ -32,6 +49,7 @@ def process_capacity(roots: tuple[Path, ...] = CGROUP_ROOTS) -> dict[str, object
             if pressured
             else "process_budget_available",
             "current_tasks": current,
+            "limit_events": _limit_events(root),
             "task_limit": limit,
             "available_tasks": headroom,
             "minimum_task_headroom": MIN_TASK_HEADROOM,
