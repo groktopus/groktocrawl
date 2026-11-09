@@ -2,9 +2,9 @@
 
 from pathlib import Path
 
-# Conservative reserve for a Playwright driver plus a Chromium session. This
+# Measured Chromium session growth was 91 tasks; reserve 100 for one launch. This
 # detects capacity pressure, not guaranteed readiness or OS-wide exhaustion.
-MIN_TASK_HEADROOM = 16
+MIN_TASK_HEADROOM = 100
 CGROUP_ROOTS = (Path("/sys/fs/cgroup"), Path("/sys/fs/cgroup/pids"))
 
 

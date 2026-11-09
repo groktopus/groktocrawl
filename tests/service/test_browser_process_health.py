@@ -13,6 +13,12 @@ import browser_svc.app as browser_app
 from browser_svc.process_health import MIN_TASK_HEADROOM, process_capacity
 
 
+@pytest.fixture(autouse=True)
+def isolate_lifecycle(monkeypatch):
+    monkeypatch.setattr(browser_app, "_owners", {})
+    monkeypatch.setattr(browser_app, "_shutting_down", False)
+
+
 def _budget(root, current="7", limit="256"):
     root.mkdir(parents=True, exist_ok=True)
     (root / "pids.current").write_text(current)
@@ -21,7 +27,15 @@ def _budget(root, current="7", limit="256"):
 
 
 @pytest.mark.parametrize(
-    "current,limit", [("256", "256"), ("257", "256"), ("250", "256"), ("1", "0")]
+    "current,limit",
+    [
+        ("256", "256"),
+        ("257", "256"),
+        ("250", "256"),
+        ("219", "256"),
+        ("157", "256"),
+        ("1", "0"),
+    ],
 )
 @pytest.mark.asyncio
 async def test_exhausted_budget_degrades_transport_without_launch(
@@ -47,7 +61,7 @@ async def test_exhausted_budget_degrades_transport_without_launch(
 
 
 @pytest.mark.parametrize(
-    "current,limit", [("7", "256"), ("240", "256"), ("1000", "max")]
+    "current,limit", [("7", "256"), ("156", "256"), ("1000", "max")]
 )
 def test_ordinary_and_unlimited_budget(tmp_path, current, limit):
     result = process_capacity(_budget(tmp_path, current, limit))
