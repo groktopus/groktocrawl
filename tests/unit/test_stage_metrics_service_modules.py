@@ -50,10 +50,12 @@ async def test_scrape_tier_metrics_are_bounded(monkeypatch):
 # ── Browser-svc capacity signals ──────────────────────────────────
 
 
-def test_browser_active_sessions_and_destroyed_reason_metrics():
+def test_browser_active_sessions_and_destroyed_reason_metrics(monkeypatch):
     import browser_svc.app as bapp
 
     bapp._sessions.clear()
+    monkeypatch.setattr(bapp, "_owners", {})
+    monkeypatch.setattr(bapp, "_shutting_down", False)
     bapp._update_active_sessions_gauge()
     bapp._record_session_destroyed("expired")
 
@@ -69,13 +71,12 @@ async def test_browser_destroy_expired_records_reason(monkeypatch):
     from browser_svc.app import SessionData
 
     bapp._sessions.clear()
+    monkeypatch.setattr(bapp, "_owners", {})
+    monkeypatch.setattr(bapp, "_shutting_down", False)
     session = SessionData(object(), object(), object(), ttl=300, playwright=object())
     bapp._sessions["sid"] = session
 
-    async def cleanup(*_args, **_kwargs):
-        return None
-
-    monkeypatch.setattr(bapp, "_cleanup_resources", cleanup)
+    monkeypatch.setattr(bapp.BrowserOwner, "close", AsyncMock(return_value=True))
 
     await bapp._destroy_session("sid", reason="expired")
 
@@ -90,6 +91,8 @@ async def test_browser_execute_expired_records_reason(monkeypatch):
     from browser_svc.app import BrowserExecuteRequest, SessionData
 
     bapp._sessions.clear()
+    monkeypatch.setattr(bapp, "_owners", {})
+    monkeypatch.setattr(bapp, "_shutting_down", False)
     session = SessionData(object(), object(), object(), ttl=-1, playwright=object())
     bapp._sessions["sid"] = session
 
@@ -113,6 +116,8 @@ async def test_browser_list_expired_records_reason(monkeypatch):
     from browser_svc.app import SessionData
 
     bapp._sessions.clear()
+    monkeypatch.setattr(bapp, "_owners", {})
+    monkeypatch.setattr(bapp, "_shutting_down", False)
     session = SessionData(object(), object(), object(), ttl=-1, playwright=object())
     bapp._sessions["sid"] = session
 
@@ -135,6 +140,8 @@ async def test_browser_create_success_records_active_sessions(monkeypatch):
     from browser_svc.app import BrowserCreateRequest
 
     bapp._sessions.clear()
+    monkeypatch.setattr(bapp, "_owners", {})
+    monkeypatch.setattr(bapp, "_shutting_down", False)
 
     page = MagicMock()
     page.add_init_script = AsyncMock()
@@ -185,6 +192,8 @@ async def test_browser_create_failure_does_not_count_as_destroyed(monkeypatch):
     from browser_svc.app import BrowserCreateRequest
 
     bapp._sessions.clear()
+    monkeypatch.setattr(bapp, "_owners", {})
+    monkeypatch.setattr(bapp, "_shutting_down", False)
     bapp._update_active_sessions_gauge()
 
     def fail_start(*_args, **_kwargs):

@@ -593,7 +593,9 @@ class TestPlaywrightControllerLifecycle:
     """Browser sessions retain and clean up their Playwright controller."""
 
     @pytest.fixture(autouse=True)
-    def clear_sessions(self):
+    def clear_sessions(self, monkeypatch):
+        monkeypatch.setattr(browser_app, "_owners", {})
+        monkeypatch.setattr(browser_app, "_shutting_down", False)
         browser_app._sessions.clear()
         yield
         browser_app._sessions.clear()

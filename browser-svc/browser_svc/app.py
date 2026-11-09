@@ -27,7 +27,9 @@ from common.middleware import add_request_id_middleware
 from common.stage_metrics import inc_counter, set_gauge
 from common.url import extract_domain, is_private_host
 
+from . import lifecycle
 from .cookie_rpc import DEFAULT_COOKIE_RPC_SOCKET, CookieRPCClient
+from .lifecycle import BrowserOwner
 from .process_health import process_capacity
 from .settings import load_settings
 
@@ -218,6 +220,9 @@ def _record_session_destroyed(reason: str) -> None:
 # In-memory session store
 _sessions: dict[str, "SessionData"] = {}
 _CLEANUP_INTERVAL = 30  # seconds
+_owners: dict[str, BrowserOwner] = {}
+_cleanup_task: asyncio.Task | None = None
+_shutting_down = False
 _update_active_sessions_gauge()
 
 
@@ -291,6 +296,8 @@ class BrowserListResponse(BaseModel):
 
 @app.on_event("startup")
 async def startup():
+    global _cleanup_task, _shutting_down
+    _shutting_down = False
     if _protected_renderer_enabled():
         if os.environ.get("BROWSER_CAPTURE_FIREWALL_READY") != "1":
             raise RuntimeError("protected renderer firewall is not active")
@@ -299,7 +306,7 @@ async def startup():
         )
         app.state.redis = CookieRPCClient(cookie_socket)
         logger.info("Protected renderer started with private cookie RPC")
-        asyncio.create_task(_cleanup_loop())
+        _cleanup_task = asyncio.create_task(_cleanup_loop())
         return
 
     # Connect to Valkey/Redis for cookie persistence
@@ -324,7 +331,7 @@ async def startup():
             e,
         )
         app.state.redis = None
-    asyncio.create_task(_cleanup_loop())
+    _cleanup_task = asyncio.create_task(_cleanup_loop())
 
 
 async def _cleanup_loop():
@@ -337,8 +344,23 @@ async def _cleanup_loop():
             await _destroy_session(sid, reason="expired")
 
 
+async def _retire_owner(session_id: str, owner: BrowserOwner) -> None:
+    if await owner.close():
+        _owners.pop(session_id, None)
+    else:
+        owner.phase = "quarantined"
+        logger.error("Browser cleanup incomplete; admission disabled until restart")
+
+
+def _begin_cleanup(session_id: str, owner: BrowserOwner) -> asyncio.Task:
+    if owner.cleanup is None:
+        owner.phase = "closing"
+        owner.cleanup = asyncio.create_task(_retire_owner(session_id, owner))
+    return owner.cleanup
+
+
 async def _destroy_session(session_id: str, reason: str = "deleted") -> None:
-    """Close and remove a browser session."""
+    """Retire a session once, retaining capacity until cleanup has completed."""
     session = _sessions.pop(session_id, None)
     if session is None:
         return
@@ -348,41 +370,82 @@ async def _destroy_session(session_id: str, reason: str = "deleted") -> None:
             "browser_sessions_expired_total", "Total browser sessions expired"
         ).inc()
     _update_active_sessions_gauge()
-    await _cleanup_resources(
-        session_id,
-        session.page,
-        session.context,
-        session.browser,
-        session.playwright,
-    )
+    owner = _owners.get(session_id)
+    if owner is None:
+        owner = BrowserOwner(
+            page=session.page,
+            context=session.context,
+            browser=session.browser,
+            playwright=session.playwright,
+        )
+        _owners[session_id] = owner
+    await asyncio.shield(_begin_cleanup(session_id, owner))
 
 
-async def _cleanup_resources(
-    session_id: str, page, context, browser, playwright
-) -> None:
-    """Close session resources independently so one failure cannot leak another."""
-    for name, resource, method in (
-        ("page", page, "close"),
-        ("context", context, "close"),
-        ("browser", browser, "close"),
-        ("Playwright controller", playwright, "stop"),
-    ):
-        if resource is None:
-            continue
-        try:
-            await getattr(resource, method)()
-        except Exception as e:
-            logger.warning("Error closing %s for session %s: %s", name, session_id, e)
+@app.on_event("shutdown")
+async def shutdown():
+    global _shutting_down
+    _shutting_down = True
+    if _cleanup_task is not None:
+        _cleanup_task.cancel()
+        await asyncio.gather(_cleanup_task, return_exceptions=True)
+    for session_id in list(_sessions):
+        # Schedule every retirement before awaiting any of them.
+        session = _sessions.pop(session_id)
+        _record_session_destroyed("shutdown")
+        owner = _owners.setdefault(
+            session_id,
+            BrowserOwner(
+                page=session.page,
+                context=session.context,
+                browser=session.browser,
+                playwright=session.playwright,
+            ),
+        )
+        _begin_cleanup(session_id, owner)
+    _update_active_sessions_gauge()
+    tasks = [_begin_cleanup(sid, owner) for sid, owner in list(_owners.items())]
+    if tasks:
+        await asyncio.gather(*(asyncio.shield(task) for task in tasks))
+    redis = getattr(app.state, "redis", None)
+    close = getattr(redis, "aclose", None)
+    if close is not None:
+        owner = BrowserOwner()
+        await owner.bounded(close(), lifecycle.CLOSE_TIMEOUT)
+
+
+def _admission_reason(capacity: dict) -> str | None:
+    if _shutting_down:
+        return "shutting_down"
+    if any(owner.phase == "quarantined" for owner in _owners.values()):
+        return "cleanup_incomplete"
+    if any(owner.phase == "creating" for owner in _owners.values()):
+        return "creation_in_progress"
+    if len(_owners) >= lifecycle.MAX_SESSIONS:
+        return "session_capacity_reached"
+    if capacity["state"] == "degraded":
+        return "process_capacity_low"
+    return None
 
 
 @app.get("/health")
 async def health():
     capacity = process_capacity()
-    degraded = capacity["state"] == "degraded"
+    reason = _admission_reason(capacity)
+    degraded = reason is not None
     payload = {
         "status": "degraded" if degraded else "ok",
         "active_sessions": len(_sessions),
         "process_capacity": capacity,
+        "admission": {
+            "state": "unavailable" if degraded else "available",
+            "reason": reason,
+            "creating": sum(o.phase == "creating" for o in _owners.values()),
+            "closing": sum(o.phase == "closing" for o in _owners.values()),
+            "quarantined": sum(o.phase == "quarantined" for o in _owners.values()),
+            "reserved": len(_owners),
+            "limit": lifecycle.MAX_SESSIONS,
+        },
     }
     return JSONResponse(payload, status_code=503 if degraded else 200)
 
@@ -396,84 +459,104 @@ async def metrics():
     )
 
 
+async def _initialize_browser(owner: BrowserOwner) -> None:
+    await owner.start()
+    owner.browser = await owner.playwright.chromium.launch(**_chromium_launch_options())
+    owner.context = await owner.browser.new_context(
+        viewport={
+            "width": 1920 + random.randint(-5, 5),
+            "height": 1080 + random.randint(-5, 5),
+        },
+        user_agent=REAL_CHROME_UA,
+        locale="en-US",
+        timezone_id="America/New_York",
+        permissions=["geolocation"],
+    )
+    owner.page = await owner.context.new_page()
+    # Hide Playwright automation signals from bot detection
+    await owner.page.add_init_script("""() => {
+        // Override navigator properties
+        Object.defineProperty(navigator, 'webdriver', {
+            get: () => undefined
+        });
+
+        // Real Chrome reports 5 plugins (Chrome PDF Plugin, Chrome PDF Viewer, Native Client, etc.)
+        Object.defineProperty(navigator, 'plugins', {
+            get: () => [
+                { name: 'Chrome PDF Plugin', filename: 'internal-pdf-viewer' },
+                { name: 'Chrome PDF Viewer', filename: 'mhjfbmdgcfjbbpaeojofohoefgiehjai' },
+                { name: 'Native Client', filename: 'internal-nacl-plugin' },
+            ],
+        });
+
+        // Real Chrome reports these languages
+        Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
+
+        // Typical modern hardware concurrency (8 cores is most common)
+        Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 8 });
+
+        // Add chrome.runtime (real Chrome has it, headless Playwright doesn't)
+        if (window.chrome) {
+            window.chrome.runtime = {};
+        }
+
+        // Override WebGL vendor/renderer to look like a real GPU
+        const getParameter = WebGLRenderingContext.prototype.getParameter;
+        WebGLRenderingContext.prototype.getParameter = function(parameter) {
+            // UNMASKED_VENDOR_WEBGL
+            if (parameter === 37445) {
+                return 'Intel Inc.';
+            }
+            // UNMASKED_RENDERER_WEBGL
+            if (parameter === 37446) {
+                return 'Intel Iris OpenGL Engine';
+            }
+            return getParameter.call(this, parameter);
+        };
+    }""")
+
+
 @app.post("/browsers", response_model=BrowserCreateResponse)
 async def create_browser(req: BrowserCreateRequest):
-    """Create a new headless browser session."""
+    """Reserve capacity before starting work and publish only complete sessions."""
+    reason = _admission_reason(process_capacity())
+    if reason is not None:
+        raise HTTPException(status_code=503, detail=reason)
     session_id = str(uuid.uuid4())
-    p = browser = context = page = None
-
+    owner = BrowserOwner()
+    _owners[session_id] = owner
     try:
-        p = await async_playwright().start()
-        browser = await p.chromium.launch(**_chromium_launch_options())
-        context = await browser.new_context(
-            viewport={
-                "width": 1920 + random.randint(-5, 5),
-                "height": 1080 + random.randint(-5, 5),
-            },
-            user_agent=REAL_CHROME_UA,
-            locale="en-US",
-            timezone_id="America/New_York",
-            permissions=["geolocation"],
+        owner.manager = async_playwright()
+        owner.creation = asyncio.create_task(_initialize_browser(owner))
+        done, _ = await asyncio.wait({owner.creation}, timeout=lifecycle.CREATE_TIMEOUT)
+        if not done:
+            raise HTTPException(status_code=504, detail="Browser creation timed out")
+        owner.creation.result()
+        if _shutting_down or owner.phase != "creating":
+            raise HTTPException(status_code=503, detail="Browser service is stopping")
+        _sessions[session_id] = SessionData(
+            owner.browser, owner.context, owner.page, req.ttl, owner.playwright
         )
-        page = await context.new_page()
-        # Hide Playwright automation signals from bot detection
-        await page.add_init_script("""() => {
-            // Override navigator properties
-            Object.defineProperty(navigator, 'webdriver', {
-                get: () => undefined
-            });
-
-            // Real Chrome reports 5 plugins (Chrome PDF Plugin, Chrome PDF Viewer, Native Client, etc.)
-            Object.defineProperty(navigator, 'plugins', {
-                get: () => [
-                    { name: 'Chrome PDF Plugin', filename: 'internal-pdf-viewer' },
-                    { name: 'Chrome PDF Viewer', filename: 'mhjfbmdgcfjbbpaeojofohoefgiehjai' },
-                    { name: 'Native Client', filename: 'internal-nacl-plugin' },
-                ],
-            });
-
-            // Real Chrome reports these languages
-            Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
-
-            // Typical modern hardware concurrency (8 cores is most common)
-            Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 8 });
-
-            // Add chrome.runtime (real Chrome has it, headless Playwright doesn't)
-            if (window.chrome) {
-                window.chrome.runtime = {};
-            }
-
-            // Override WebGL vendor/renderer to look like a real GPU
-            const getParameter = WebGLRenderingContext.prototype.getParameter;
-            WebGLRenderingContext.prototype.getParameter = function(parameter) {
-                // UNMASKED_VENDOR_WEBGL
-                if (parameter === 37445) {
-                    return 'Intel Inc.';
-                }
-                // UNMASKED_RENDERER_WEBGL
-                if (parameter === 37446) {
-                    return 'Intel Iris OpenGL Engine';
-                }
-                return getParameter.call(this, parameter);
-            };
-        }""")
-        session = SessionData(browser, context, page, req.ttl, p)
-        _sessions[session_id] = session
+        owner.phase = "active"
         METRICS.counter(
             "browser_sessions_created_total", "Total browser sessions created"
         ).inc()
         _update_active_sessions_gauge()
         logger.info("Created browser session %s (TTL: %ds)", session_id, req.ttl)
         return BrowserCreateResponse(id=session_id)
-    except Exception as e:
-        # The session was never added to ``_sessions``, so it must not be
-        # counted as destroyed. The failure is already observable via the
-        # flat ``browser_sessions_created_total`` counter + the 500 response.
-        await _cleanup_resources(session_id, page, context, browser, p)
-        logger.error("Failed to create browser session: %s", e)
+    except BaseException as exc:
+        cleanup = _begin_cleanup(session_id, owner)
+        # Cleanup is independently owned; repeated request cancellation cannot
+        # abandon it or free its capacity reservation prematurely.
+        await asyncio.shield(cleanup)
+        if isinstance(exc, (asyncio.CancelledError, HTTPException)):
+            raise
+        if not isinstance(exc, Exception):
+            raise
+        logger.error("Failed to create browser session: %s", exc)
         raise HTTPException(
-            status_code=500, detail=f"Failed to create browser session: {e}"
-        )
+            status_code=500, detail=f"Failed to create browser session: {exc}"
+        ) from exc
 
 
 @app.post("/browsers/{session_id}/execute", response_model=BrowserExecuteResponse)
