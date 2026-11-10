@@ -64,6 +64,30 @@ def test_calibration_is_trusted_only_and_does_not_rewrite_fixtures():
     assert "BRAVE_API_KEY" in workflow and "LLM_API_KEY" in workflow
 
 
+def test_scraper_installs_node_runtime_dependency_before_playwright():
+    dockerfile = (Path(__file__).parents[2] / "scraper-svc/Dockerfile").read_text()
+    # Playwright's bundled Node needs libatomic before even install-deps can run.
+    commands = dockerfile.replace("\\\n", " ").splitlines()
+    install_atomic = next(
+        (
+            index
+            for index, command in enumerate(commands)
+            if command.startswith("RUN ")
+            and "apt-get install" in command
+            and "libatomic1" in command.split()
+        ),
+        None,
+    )
+    assert install_atomic is not None
+    playwright_commands = [
+        index
+        for index, command in enumerate(commands)
+        if command.startswith("RUN ") and "python -m playwright" in command
+    ]
+    assert playwright_commands
+    assert all(install_atomic < index for index in playwright_commands)
+
+
 def test_required_twin_images_are_immutable():
     root = Path(__file__).parents[2]
     compose = (root / "docker-compose.yml").read_text()
@@ -298,13 +322,15 @@ def test_answer_evals_workflow_is_advisory_and_not_pr_gated():
     )
     assert "timeout-minutes: 30" in workflow
     assert "--selection broad" in workflow
-    assert "--http-smoke http://127.0.0.1:8084" in workflow
+    assert '--http-smoke "${AGENT_FIXTURE_BASE_URL}"' in workflow
     assert "scripts/run_answer_evals.py" in workflow
     assert "Upload eval provenance artifact" in workflow
     assert "actions/upload-artifact" in workflow
     assert "if: always()" in workflow
     assert "Tear down eval fixture stack" in workflow
-    assert "docker compose down --remove-orphans" in workflow
+    assert (
+        "docker compose --profile fixture down --volumes --remove-orphans" in workflow
+    )
     # The eval is advisory — it must not be wired as a required PR check.
     assert "required" not in parsed
     docker = (root / ".github/workflows/docker.yml").read_text()
@@ -315,6 +341,121 @@ def test_answer_evals_workflow_is_advisory_and_not_pr_gated():
         "needs: [changes, twin-contracts, integration-tests, research-runtime]"
         in runtime_gate
     )
+
+
+def test_answer_evals_isolates_project_images_ports_and_teardown():
+    root = Path(__file__).parents[2]
+    workflow = yaml.safe_load((root / ".github/workflows/answer-evals.yml").read_text())
+    job = workflow["jobs"]["answer-evals"]
+    assert job["env"]["COMPOSE_PROJECT_NAME"] == (
+        "groktocrawl-answer-evals-${{ github.run_id }}-${{ github.run_attempt }}"
+    )
+    assert job["env"]["COMPOSE_FILE"] == ("docker-compose.yml:compose.answer-evals.yml")
+    steps = {step.get("name"): step for step in job["steps"]}
+    names = list(steps)
+    start = steps["Build and start fixture stack"]["run"]
+    teardown = steps["Tear down eval fixture stack"]
+    assert set(re.findall(r"--profile ([a-z-]+)", start)) <= set(
+        re.findall(r"--profile ([a-z-]+)", teardown["run"])
+    )
+    assert teardown["if"] == "always()"
+    assert "|| true" not in teardown["run"]
+    assert "--volumes" in teardown["run"]
+    assert "--rmi local" in teardown["run"]
+    assert "Force-remove stale project containers" not in steps
+    assert not re.search(r"docker (?:system|container|volume|image) prune", repr(job))
+    assert (
+        names.index("Build and start fixture stack")
+        < names.index("Discover fixture endpoints")
+        < names.index("Wait for fixture stack")
+    )
+    for name in (
+        "AGENT_FIXTURE_BASE_URL",
+        "LLM_FIXTURE_BASE_URL",
+        "SEARCH_FIXTURE_BASE_URL",
+    ):
+        assert f'os.environ["{name}"]' in steps["Wait for fixture stack"]["run"]
+    assert (
+        "${AGENT_FIXTURE_BASE_URL}"
+        in steps["Run broad answer/research eval (in-process) + HTTP smoke"]["run"]
+    )
+
+    # Inspect tags as well as values: an ordinary list merge retains fixed ports.
+    compose = yaml.compose((root / "compose.answer-evals.yml").read_text())
+    services = {key.value: value for key, value in compose.value}["services"]
+    services = {
+        key.value: {k.value: v for k, v in value.value} for key, value in services.value
+    }
+    for name in ("scraper-svc", "agent-svc-fixture"):
+        assert services[name]["image"].tag == "!reset"
+        assert services[name]["image"].value == "null"
+    for name in ("scraper-svc", "test-site"):
+        assert services[name]["ports"].tag == "!reset"
+        assert services[name]["ports"].value == []
+    for name, port in (
+        ("llm-svc", "8011"),
+        ("slopsearx-fixture", "8080"),
+        ("agent-svc-fixture", "8080"),
+    ):
+        ports = services[name]["ports"]
+        assert ports.tag == "!override"
+        assert len(ports.value) == 1
+        config = {key.value: value.value for key, value in ports.value[0].value}
+        assert config == {"target": port, "host_ip": "127.0.0.1"}
+
+
+@pytest.mark.parametrize(
+    "failure", ["", "foreign-host", "missing-port", "command-error"]
+)
+def test_answer_evals_discovers_only_valid_loopback_endpoints(tmp_path, failure):
+    root = Path(__file__).parents[2]
+    workflow = yaml.safe_load((root / ".github/workflows/answer-evals.yml").read_text())
+    discover = next(
+        step["run"]
+        for step in workflow["jobs"]["answer-evals"]["steps"]
+        if step.get("name") == "Discover fixture endpoints"
+    )
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    docker = bin_dir / "docker"
+    docker.write_text(
+        f"#!{sys.executable}\n"
+        "import os, sys\n"
+        "assert sys.argv[1:3] == ['compose', 'port']\n"
+        "ports = {'agent-svc-fixture': ('8080', 49101), 'llm-svc': ('8011', 49102), "
+        "'slopsearx-fixture': ('8080', 49103)}\n"
+        "expected, port = ports[sys.argv[3]]\n"
+        "assert sys.argv[4] == expected\n"
+        "failure = os.environ['DISCOVERY_FAILURE'] if sys.argv[3] == 'slopsearx-fixture' else ''\n"
+        "if failure == 'command-error': sys.exit(1)\n"
+        "print('0.0.0.0:49103' if failure == 'foreign-host' else "
+        "'127.0.0.1' if failure == 'missing-port' else f'127.0.0.1:{port}')\n"
+    )
+    docker.chmod(0o755)
+    env_file = tmp_path / "github-env"
+    env_file.write_text("EXISTING=value\n")
+    result = subprocess.run(
+        ["bash", "-e", "-c", discover],
+        env={
+            **os.environ,
+            "PATH": f"{bin_dir}:{os.environ['PATH']}",
+            "GITHUB_ENV": str(env_file),
+            "DISCOVERY_FAILURE": failure,
+        },
+        capture_output=True,
+        text=True,
+    )
+    if failure:
+        assert result.returncode != 0
+        assert env_file.read_text() == "EXISTING=value\n"
+    else:
+        assert result.returncode == 0, result.stderr
+        assert env_file.read_text().splitlines() == [
+            "EXISTING=value",
+            "AGENT_FIXTURE_BASE_URL=http://127.0.0.1:49101",
+            "LLM_FIXTURE_BASE_URL=http://127.0.0.1:49102",
+            "SEARCH_FIXTURE_BASE_URL=http://127.0.0.1:49103",
+        ]
 
 
 def test_compose_run_id_and_failure_provenance_are_unambiguous():
