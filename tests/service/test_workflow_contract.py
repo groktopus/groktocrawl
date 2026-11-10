@@ -64,8 +64,9 @@ def test_calibration_is_trusted_only_and_does_not_rewrite_fixtures():
     assert "BRAVE_API_KEY" in workflow and "LLM_API_KEY" in workflow
 
 
-def test_scraper_installs_node_runtime_dependency_before_playwright():
-    dockerfile = (Path(__file__).parents[2] / "scraper-svc/Dockerfile").read_text()
+@pytest.mark.parametrize("service", ["scraper-svc", "browser-svc"])
+def test_images_install_node_runtime_dependency_before_playwright(service):
+    dockerfile = (Path(__file__).parents[2] / service / "Dockerfile").read_text()
     # Playwright's bundled Node needs libatomic before even install-deps can run.
     commands = dockerfile.replace("\\\n", " ").splitlines()
     install_atomic = next(
