@@ -30,6 +30,10 @@ jobs:
     concurrency:
       group: groktocrawl-answer-evals-${{ github.ref }}
       cancel-in-progress: false
+    # No default-project cleanup: this daemon also hosts unrelated workloads.
+    env:
+      COMPOSE_PROJECT_NAME: groktocrawl-answer-evals-${{ github.run_id }}-${{ github.run_attempt }}
+      COMPOSE_FILE: docker-compose.yml:compose.answer-evals.yml
     steps:
       - uses: actions/checkout@v7
         with:
@@ -53,9 +57,6 @@ jobs:
           echo "SCRAPER_PRIVATE_URL_ALLOWLIST=test-site,tier3-fixture" >> .env
           echo "AGENT_SEARCH_RATE_LIMIT=1000/1s" >> .env
 
-      - name: Force-remove stale project containers
-        run: docker compose down --remove-orphans --timeout 30 || true
-
       - name: Build and start fixture stack
         run: |
           docker compose build --no-cache llm-svc
@@ -64,12 +65,45 @@ jobs:
           docker compose --profile fixture up -d --force-recreate llm-svc test-site slopsearx-fixture agent-svc-fixture
         timeout-minutes: 15
 
+      - name: Discover fixture endpoints
+        run: |
+          python3 - <<'PY'
+          import os
+          import subprocess
+          from urllib.parse import urlsplit
+
+          endpoints = (
+              ("AGENT_FIXTURE_BASE_URL", "agent-svc-fixture", "8080"),
+              ("LLM_FIXTURE_BASE_URL", "llm-svc", "8011"),
+              ("SEARCH_FIXTURE_BASE_URL", "slopsearx-fixture", "8080"),
+          )
+          exports = []
+          for name, service, port in endpoints:
+              address = subprocess.check_output(
+                  ["docker", "compose", "port", service, port], text=True
+              ).strip()
+              url = "http://" + address
+              parsed = urlsplit(url)
+              if parsed.hostname != "127.0.0.1" or not parsed.port:
+                  raise SystemExit(f"invalid loopback endpoint for {service}")
+              exports.append(f"{name}={url}")
+          with open(os.environ["GITHUB_ENV"], "a") as handle:
+              handle.write("\n".join(exports) + "\n")
+          PY
+
       - name: Wait for fixture stack
         run: |
           python3 - <<'PY'
+          import os
           import time
           import urllib.request
-          for url in ("http://127.0.0.1:8084/health", "http://127.0.0.1:8011/health", "http://127.0.0.1:8083/health"):
+          endpoints = (
+              os.environ["AGENT_FIXTURE_BASE_URL"],
+              os.environ["LLM_FIXTURE_BASE_URL"],
+              os.environ["SEARCH_FIXTURE_BASE_URL"],
+          )
+          for endpoint in endpoints:
+              url = endpoint + "/health"
               deadline = time.monotonic() + 120
               while time.monotonic() < deadline:
                   try:
@@ -89,7 +123,7 @@ jobs:
           set +e
           uv run --no-sync python3 scripts/run_answer_evals.py --selection broad \
             --output-dir eval-out/broad \
-            --http-smoke http://127.0.0.1:8084
+            --http-smoke "${AGENT_FIXTURE_BASE_URL}"
           status=$?
           # Advisory: the scheduled/manual run reports, it does not gate PRs.
           exit "$status"
@@ -104,4 +138,6 @@ jobs:
 
       - name: Tear down eval fixture stack
         if: always()
-        run: docker compose down --remove-orphans --timeout 30 || true
+        # Include every started profile. Remove only this run's disposable data
+        # and auto-named build images, never the shared default project.
+        run: docker compose --profile fixture down --volumes --remove-orphans --rmi local --timeout 30

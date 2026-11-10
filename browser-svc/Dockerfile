@@ -1,7 +1,8 @@
 FROM python:3.13-slim
 
+# Playwright's bundled Node needs libatomic before its install commands can run.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends iptables passwd \
+    && apt-get install -y --no-install-recommends iptables passwd libatomic1 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

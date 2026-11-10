@@ -1,6 +1,7 @@
 FROM python:3.13-slim
 
-RUN apt-get update && apt-get install -y --no-install-recommends iptables util-linux tini \
+# Playwright's bundled Node needs libatomic before its install commands can run.
+RUN apt-get update && apt-get install -y --no-install-recommends iptables util-linux tini libatomic1 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

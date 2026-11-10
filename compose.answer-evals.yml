@@ -1,0 +1,22 @@
+# Only the scheduled/manual answer-eval lane selects this override.
+# Compose derives image, network, container, and volume names from its run-scoped
+# project. Docker assigns published ports atomically on the shared daemon.
+services:
+  scraper-svc:
+    image: !reset null
+    ports: !reset []
+  test-site:
+    ports: !reset []
+  llm-svc:
+    ports: !override
+      - target: 8011
+        host_ip: 127.0.0.1
+  slopsearx-fixture:
+    ports: !override
+      - target: 8080
+        host_ip: 127.0.0.1
+  agent-svc-fixture:
+    image: !reset null
+    ports: !override
+      - target: 8080
+        host_ip: 127.0.0.1
