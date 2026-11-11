@@ -3,7 +3,6 @@
 import subprocess
 import sys
 import time
-from types import SimpleNamespace
 
 import pytest
 from parse_svc import pagewise
@@ -21,10 +20,9 @@ def state(tmp_path, monkeypatch):
 def fake_pdf(monkeypatch, texts):
     monkeypatch.setattr(
         pagewise,
-        "PdfReader",
-        lambda _: SimpleNamespace(
-            is_encrypted=False,
-            pages=[SimpleNamespace(extract_text=lambda t=t: t) for t in texts],
+        "native_page",
+        lambda source, number, timeout: (
+            {"pages": len(texts)} if number == 0 else {"text": texts[number - 1]}
         ),
     )
     monkeypatch.setattr(
@@ -155,8 +153,8 @@ def test_gemma_single_image_receipt_and_no_history(state, model, monkeypatch):
 
     calls = []
 
-    def post(self, url, **kwargs):
-        calls.append(kwargs["json"])
+    def post(payload, timeout):
+        calls.append(payload)
         return httpx.Response(
             200,
             json={
@@ -166,7 +164,7 @@ def test_gemma_single_image_receipt_and_no_history(state, model, monkeypatch):
             },
         )
 
-    monkeypatch.setattr(httpx.Client, "post", post)
+    monkeypatch.setattr("parse_svc.vision_ocr.model_post", post)
     result = vision_ocr.transcribe(
         Image.new("RGB", (20, 20)),
         model,
@@ -198,7 +196,7 @@ def test_timeout_blocks_subsequent_dispatch_across_execution(state, model, monke
         calls.append(1)
         raise httpx.ReadTimeout("secret provider detail")
 
-    monkeypatch.setattr(httpx.Client, "post", post)
+    monkeypatch.setattr("parse_svc.vision_ocr.model_post", post)
     for _ in range(2):
         with pytest.raises(LaneUncertainError):
             transcribe(
@@ -225,7 +223,7 @@ def test_known_retry_budget_persisted(state, model, monkeypatch):
         calls.append(1)
         return httpx.Response(503)
 
-    monkeypatch.setattr(httpx.Client, "post", post)
+    monkeypatch.setattr("parse_svc.vision_ocr.model_post", post)
     for _ in range(2):
         with pytest.raises(CheckpointError):
             transcribe(
@@ -247,8 +245,7 @@ def test_truncated_receipt_not_complete(state, model, monkeypatch):
     from parse_svc.vision_ocr import transcribe
 
     monkeypatch.setattr(
-        httpx.Client,
-        "post",
+        "parse_svc.vision_ocr.model_post",
         lambda *a, **k: httpx.Response(
             200,
             json={
@@ -291,7 +288,15 @@ def test_reconcile_requires_idle_and_retains_history(state, model, monkeypatch):
     import httpx
     from parse_svc.vision_ocr import reconcile_idle
 
-    state.begin_dispatch("test", 1, {})
+    state.begin_dispatch(
+        "test",
+        1,
+        {
+            "endpoint": model.base_url,
+            "model": model.model,
+            "model_revision": model.revision,
+        },
+    )
 
     def busy(*a, **k):
         return httpx.Response(
@@ -339,3 +344,92 @@ def test_partial_resume_reuses_completed_pages_only(state, monkeypatch):
     second = pagewise.parse_pdf_pages(b"doc", "a.pdf", scope="one")
     assert second["metadata"]["coverage"]["status"] == "complete"
     assert second["metadata"]["coverage"]["cached_pages"] == 1
+
+
+def test_142_page_metadata_compact_and_no_transcript_duplication(state, monkeypatch):
+    import json
+
+    fake_pdf(monkeypatch, ["native text " * 1000] * 142)
+    result = pagewise.parse_pdf_pages(b"doc", "long.pdf", scope="one")
+    metadata = result["metadata"]
+    assert len(json.dumps(metadata).encode()) < 40 * 1024
+    assert metadata["page_results_omitted"] == 0
+    assert len(metadata["page_results"]) == 142
+    assert all(
+        "text" not in r and "source_sha256" not in r for r in metadata["page_results"]
+    )
+
+
+def test_native_worker_hard_deadline(tmp_path, monkeypatch):
+    # A deliberately stalled parser import runs in a real, killable child.
+    import os
+
+    from parse_svc.checkpoints import DeadlineExceededError
+
+    (tmp_path / "pypdf.py").write_text("import time\ntime.sleep(30)\n")
+    monkeypatch.setenv(
+        "PYTHONPATH", str(tmp_path) + os.pathsep + os.environ.get("PYTHONPATH", "")
+    )
+    started = time.monotonic()
+    with pytest.raises(DeadlineExceededError):
+        pagewise.native_page(tmp_path / "irrelevant.pdf", 0, 0.2)
+    assert time.monotonic() - started < 2
+
+
+def test_model_worker_slow_body_absolute_deadline(state, model, monkeypatch):
+    import threading
+    from dataclasses import replace
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+    from parse_svc.vision_ocr import transcribe
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_POST(self):
+            self.rfile.read(int(self.headers["content-length"]))
+            self.send_response(200)
+            self.end_headers()
+            try:
+                for _ in range(100):
+                    self.wfile.write(b" ")
+                    self.wfile.flush()
+                    time.sleep(0.05)
+            except (BrokenPipeError, ConnectionResetError):
+                pass
+
+        def log_message(self, *a):
+            pass
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    url = f"http://127.0.0.1:{server.server_port}/v1"
+    monkeypatch.setenv("PARSE_OCR_BASE_URL", url)
+    model = replace(model, base_url=url)
+    started = time.monotonic()
+    try:
+        with pytest.raises(LaneUncertainError):
+            transcribe(
+                Image.new("RGB", (20, 20)), model, state, "test", 1, started + 0.7, {}
+            )
+        assert time.monotonic() - started < 2
+        assert state.lane_marker()
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def test_reconciliation_rejects_changed_backend(state, model):
+    from parse_svc.vision_ocr import reconcile_idle
+
+    state.begin_dispatch(
+        "test",
+        1,
+        {
+            "endpoint": "http://127.0.0.2/v1",
+            "model": model.model,
+            "model_revision": model.revision,
+        },
+    )
+    with pytest.raises(LaneUncertainError, match="identity_mismatch"):
+        reconcile_idle(state, model)
+    assert state.lane_marker()

@@ -1,7 +1,6 @@
 """Bounded synchronous PDF extraction with scope-isolated page receipts."""
 
 import hashlib
-import io
 import json
 import os
 import subprocess
@@ -14,10 +13,25 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from pypdf import PdfReader
-
 from .checkpoints import CheckpointError, Checkpoints, DeadlineExceededError
-from .vision_ocr import OcrSettings, positive_env, transcribe
+from .vision_ocr import PROMPT_VERSION, OcrSettings, positive_env, transcribe
+
+
+def native_page(source: Path, number: int, timeout: float) -> dict:
+    if timeout <= 0:
+        raise DeadlineExceededError("document_deadline")
+    try:
+        result = subprocess.run(
+            [sys.executable, "-m", "parse_svc.native_worker", str(source), str(number)],
+            capture_output=True,
+            timeout=timeout,
+            check=True,
+        )
+        return json.loads(result.stdout)
+    except subprocess.TimeoutExpired as exc:
+        raise DeadlineExceededError("native_extraction_timeout") from exc
+    except (subprocess.CalledProcessError, ValueError) as exc:
+        raise CheckpointError("native_pdf_invalid_or_output_limit") from exc
 
 
 def usable_native(text: str) -> bool:
@@ -231,11 +245,49 @@ def _assemble(
         "extraction_sha256": hashlib.sha256(markdown.encode()).hexdigest(),
         "extraction": "pagewise",
         "coverage": coverage,
-        "page_results": records,
+        "page_results": [
+            {
+                key: record[key]
+                for key in (
+                    "page_number",
+                    "status",
+                    "engine",
+                    "confidence",
+                    "markdown_start",
+                    "markdown_end",
+                    "warnings",
+                    "cached",
+                    "attempts",
+                    "tables_found",
+                )
+                if key in record
+            }
+            for record in records
+        ],
+        "extraction_version": "pagewise-v1",
         "checkpoint_persistent": persistent,
         "budget_seconds": budget,
         "force_ocr": force_ocr,
     }
+    settings = OcrSettings.load()
+    metadata["extraction_policy"] = {
+        "backend": settings.backend,
+        "model": settings.model,
+        "model_revision": settings.revision,
+        "prompt_version": PROMPT_VERSION,
+        "render_max_edge": settings.render_edge,
+        "render_dpi": 150,
+    }
+    # Keep downstream bounded metadata usable; all receipts remain in the ledger.
+    kept = []
+    size = 0
+    for receipt in metadata["page_results"]:
+        size += len(json.dumps(receipt).encode())
+        if size > 48 * 1024:
+            break
+        kept.append(receipt)
+    metadata["page_results_omitted"] = len(records) - len(kept)
+    metadata["page_results"] = kept
     if coverage["status"] != "complete" or warnings:
         metadata["degraded"] = True
         metadata["warnings"] = warnings or ["incomplete_page_coverage"]
@@ -253,21 +305,22 @@ def parse_pdf_pages(
     settings = OcrSettings.load()
     if settings.backend == "gemma":
         settings.validate_model()
-    reader = PdfReader(io.BytesIO(content))
-    if reader.is_encrypted:
-        raise CheckpointError("encrypted_pdf")
-    count = len(reader.pages)
-    if not count:
-        raise CheckpointError("empty_pdf")
-    budget = min(
-        settings.document_max, 30 + count * settings.page_timeout * settings.attempts
-    )
-    deadline = time.monotonic() + budget
+    started = time.monotonic()
     persistent_root = os.getenv("PARSE_STATE_DIR")
     source_hash = hashlib.sha256(content).hexdigest()
     scope = scope or uuid.uuid4().hex
     cancelled = cancelled or threading.Event()
     with tempfile.TemporaryDirectory(prefix="parse-") as temporary:
+        source_path = Path(temporary) / "source.pdf"
+        source_path.write_bytes(content)
+        count = native_page(source_path, 0, min(30, settings.document_max))["pages"]
+        if not 0 < count <= positive_env("PARSE_MAX_PAGES", 1024):
+            raise CheckpointError("pdf_page_limit_exceeded")
+        budget = min(
+            settings.document_max,
+            30 + count * settings.page_timeout * settings.attempts,
+        )
+        deadline = started + budget
         store = Checkpoints(
             Path(persistent_root or temporary),
             positive_env("PARSE_STATE_MAX_BYTES", 1073741824),
@@ -279,7 +332,7 @@ def parse_pdf_pages(
         records = []
         with store.execution_lock(execution, deadline):
             store.admit(execution, scope, content, policy, count)
-            for index, page in enumerate(reader.pages):
+            for index in range(count):
                 number = index + 1
                 provenance = {
                     "page_number": number,
@@ -304,7 +357,11 @@ def parse_pdf_pages(
                     )
                     continue
                 try:
-                    native = page.extract_text() or ""
+                    native = native_page(
+                        source_path,
+                        number,
+                        min(settings.page_timeout, deadline - time.monotonic()),
+                    )["text"]
                     record = _extract_page(
                         content,
                         native,

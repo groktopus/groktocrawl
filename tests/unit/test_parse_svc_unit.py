@@ -400,7 +400,7 @@ class TestParsePdf:
         assert hits == []
 
     def test_corrupt_pdf_graceful(self):
-        from pypdf.errors import PdfReadError
+        from parse_svc.checkpoints import CheckpointError
 
-        with pytest.raises(PdfReadError):
+        with pytest.raises(CheckpointError):
             _parse_pdf(b"not a pdf at all", "bad.pdf")

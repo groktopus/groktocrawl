@@ -5,6 +5,8 @@ import io
 import ipaddress
 import json
 import os
+import subprocess
+import sys
 import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -152,6 +154,19 @@ def image_payload(image: Any, settings: OcrSettings) -> dict[str, Any]:
     }
 
 
+def model_post(payload: dict[str, Any], timeout: float) -> httpx.Response:
+    """Absolute wall bound, unlike httpx's per-I/O inactivity timeouts."""
+    process = subprocess.run(
+        [sys.executable, "-m", "parse_svc.model_worker"],
+        input=json.dumps(payload).encode(),
+        capture_output=True,
+        timeout=timeout,
+        check=True,
+    )
+    receipt = json.loads(process.stdout)
+    return httpx.Response(receipt["status"], content=receipt["body"])
+
+
 def transcribe(
     image: Any,
     settings: OcrSettings,
@@ -183,6 +198,7 @@ def transcribe(
                     "started_at": started,
                     "model": settings.model,
                     "model_revision": settings.revision,
+                    "endpoint": settings.base_url,
                 },
             )
             receipt: dict[str, Any] = {
@@ -191,19 +207,16 @@ def transcribe(
                 "model_revision": settings.revision,
             }
             try:
-                with httpx.Client(
-                    timeout=min(
-                        settings.page_timeout, max(0.01, deadline - time.monotonic())
-                    ),
-                    follow_redirects=False,
-                    trust_env=False,
-                ) as client:
-                    response = client.post(
-                        settings.base_url + "/chat/completions",
-                        json=payload,
-                        headers=headers(),
-                    )
-            except (httpx.TransportError, OSError) as exc:
+                response = model_post(
+                    payload,
+                    min(settings.page_timeout, max(0.01, deadline - time.monotonic())),
+                )
+            except (
+                subprocess.SubprocessError,
+                ValueError,
+                httpx.TransportError,
+                OSError,
+            ) as exc:
                 # Never clear uncertainty merely because our client stopped waiting.
                 raise LaneUncertainError("ocr_dispatch_outcome_unknown") from exc
             receipt.update(
@@ -268,8 +281,15 @@ def reconcile_idle(store: Checkpoints, settings: OcrSettings) -> bool:
     """Operator-only reconciliation, never a request parameter or health inference."""
     settings.validate_model()
     with store.lane_lock(time.monotonic() + 5):
-        if not store.lane_marker():
+        marker = store.lane_marker()
+        if not marker:
             return False
+        if (
+            marker.get("endpoint"),
+            marker.get("model"),
+            marker.get("model_revision"),
+        ) != (settings.base_url, settings.model, settings.revision):
+            raise LaneUncertainError("reconciliation_backend_identity_mismatch")
         parsed = urlsplit(settings.base_url)
         metrics_url = f"{parsed.scheme}://{parsed.netloc}/metrics"
         observations = []
