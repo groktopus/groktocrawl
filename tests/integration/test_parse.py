@@ -6,10 +6,8 @@ the unchanged /parse response shape, and health/metrics.
 
 import io
 import shutil
-import sys
 from contextlib import contextmanager
 from pathlib import Path
-from types import ModuleType, SimpleNamespace
 from unittest.mock import patch
 
 import pytest
@@ -26,16 +24,6 @@ _FIXTURES = Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "anydoc
 
 def _require_real_ocr() -> None:
     """Skip the real-engine checks where tesseract is not installed."""
-    try:
-        import pytesseract  # noqa: F401
-    except ImportError:
-        governed_skip(
-            "real OCR dependencies (pytesseract) are not installed",
-            owner="repository-maintainer",
-            issue="#689",
-            classification="retained",
-            environment="parse-svc image or a host with pytesseract and Poppler",
-        )
     if any(shutil.which(binary) is None for binary in ("tesseract", "pdftoppm")):
         governed_skip(
             "the tesseract or pdftoppm binary is not installed",
@@ -49,35 +37,24 @@ def _require_real_ocr() -> None:
 @contextmanager
 def _ocr_stub(pages: list[list[list[tuple[str, float]]]]):
     """Replace tesseract with deterministic word/confidence rows."""
-    pytesseract = ModuleType("pytesseract")
-    pytesseract.Output = SimpleNamespace(DICT="dict")
-
-    def image_to_data(image, lang=None, output_type=None, timeout=None):
-        assert output_type == "dict"
-        rows: dict[str, list] = {
-            "block_num": [],
-            "line_num": [],
-            "conf": [],
-            "text": [],
-        }
-        for line_index, line in enumerate(pages[image.info["page_index"]]):
-            for word, confidence in line:
-                rows["block_num"].append(1)
-                rows["line_num"].append(line_index + 1)
-                rows["conf"].append(confidence)
-                rows["text"].append(word)
-        return rows
-
-    pytesseract.image_to_data = image_to_data
 
     def render(content, number, settings, deadline):
         image = Image.new("RGB", (20, 20), "black")
         image.info["page_index"] = number - 1
         return image
 
+    def ocr(image, timeout, lock_path):
+        lines = pages[image.info["page_index"]]
+        words = [pair for line in lines for pair in line]
+        return (
+            "\n".join(" ".join(w for w, c in line) for line in lines),
+            sum(c for w, c in words) / len(words) / 100,
+            len(words),
+        )
+
     with (
-        patch.dict(sys.modules, {"pytesseract": pytesseract}),
         patch("parse_svc.pagewise.render_page", side_effect=render),
+        patch("parse_svc.pagewise.tesseract_page", side_effect=ocr),
     ):
         yield
 

@@ -6,13 +6,10 @@ and the PDF OCR fallback path.
 """
 
 import json
-import sys
 import threading
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from types import ModuleType, SimpleNamespace
-from unittest.mock import patch
 
 import pytest
 from fastapi import HTTPException
@@ -64,40 +61,6 @@ def _hosted_parse_stub(status: int, body: dict):
         server.shutdown()
         server.server_close()
         thread.join(timeout=2)
-
-
-def _tesseract_rows(pages: list[list[list[tuple[str, float]]]]) -> ModuleType:
-    """Build a fake pytesseract module with one row set per page image.
-
-    Each page is a list of lines; each line is a list of ``(word, confidence)``
-    tuples using tesseract's 0-100 scale. ``convert_from_bytes`` returns page
-    indexes so the fake engine can select the matching rows.
-    """
-    module = ModuleType("pytesseract")
-    module.Output = SimpleNamespace(DICT="dict")
-
-    def image_to_data(image, lang=None, output_type=None, timeout=None):
-        assert output_type == "dict"
-        data: dict[str, list] = {
-            "level": [],
-            "block_num": [],
-            "line_num": [],
-            "word_num": [],
-            "conf": [],
-            "text": [],
-        }
-        for line_index, line in enumerate(pages[image]):
-            for word_index, (word, confidence) in enumerate(line):
-                data["level"].append(5)
-                data["block_num"].append(1)
-                data["line_num"].append(line_index + 1)
-                data["word_num"].append(word_index + 1)
-                data["conf"].append(confidence)
-                data["text"].append(word)
-        return data
-
-    module.image_to_data = image_to_data
-    return module
 
 
 class TestExt:
@@ -279,23 +242,11 @@ class TestParsePdf:
         assert result["metadata"]["coverage"]["status"] == expected
 
     def test_threshold_configuration(self, monkeypatch):
-        from parse_svc.vision_ocr import OcrSettings
+        from parse_svc.settings import OcrSettings
 
         for value, expected in [("not-a-number", 0.6), ("2", 0.6), (".95", 0.95)]:
             monkeypatch.setenv("PARSE_OCR_MIN_CONFIDENCE", value)
             assert OcrSettings.load().min_confidence == expected
-
-    def test_ocr_page_reconstructs_lines_and_ignores_unscored_rows(self):
-        from parse_svc.pagewise import tesseract_page
-
-        fake = _tesseract_rows(
-            [[[("hello", 80), ("world", 60)], [("", -1)], [("second", 100)]]]
-        )
-        with patch.dict(sys.modules, {"pytesseract": fake}):
-            text, mean, words = tesseract_page(0, 30)
-        assert text == "hello world\nsecond"
-        assert mean == pytest.approx(0.8)
-        assert words == 3
 
     def test_hosted_ocr_uses_real_anydoc_binding_and_sends_whole_pdf(self, monkeypatch):
         content = _load("scanned-image-only.pdf")

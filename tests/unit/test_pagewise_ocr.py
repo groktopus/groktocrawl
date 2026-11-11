@@ -6,7 +6,7 @@ import time
 
 import pytest
 from parse_svc import pagewise
-from parse_svc.checkpoints import Checkpoints, LaneUncertainError
+from parse_svc.checkpoints import Checkpoints
 from PIL import Image
 
 
@@ -83,39 +83,6 @@ def test_render_proven_blank(state, monkeypatch):
     assert result["metadata"]["coverage"]["status"] == "complete"
 
 
-def test_real_process_crash_leaves_unknown_marker_and_source(state):
-    state.admit("a", "scope", b"original source", "settings", 1)
-    code = """import sys,time
-from pathlib import Path
-from parse_svc.checkpoints import Checkpoints
-s=Checkpoints(Path(sys.argv[1]),10**7,604800)
-with s.lane_lock(time.monotonic()+3):
- s.begin_dispatch('a',1,{'started_at':time.time()})
- print('dispatched',flush=True)
- time.sleep(60)
-"""
-    proc = subprocess.Popen(
-        [sys.executable, "-c", code, str(state.root)], stdout=subprocess.PIPE, text=True
-    )
-    try:
-        assert proc.stdout.readline().strip() == "dispatched"
-        proc.kill()
-        proc.wait(timeout=5)
-        with state.lane_lock(time.monotonic() + 2):
-            with pytest.raises(LaneUncertainError):
-                state.begin_dispatch("a", 1, {})
-        assert state.attempts("a", 1)[0]["outcome"] == "unknown"
-        with state.connect() as db:
-            assert (
-                db.execute("SELECT source FROM executions").fetchone()[0]
-                == b"original source"
-            )
-    finally:
-        if proc.poll() is None:
-            proc.kill()
-            proc.wait()
-
-
 def test_real_process_global_lock_serializes(state, tmp_path):
     log = tmp_path / "calls"
     code = """import sys,time
@@ -135,133 +102,6 @@ with s.lane_lock(time.monotonic()+5):
     assert log.read_text().splitlines() == ["start", "end"] * 3
 
 
-@pytest.fixture
-def model(state, monkeypatch):
-    from parse_svc.vision_ocr import OcrSettings
-
-    monkeypatch.setenv("PARSE_OCR_BACKEND", "gemma")
-    monkeypatch.setenv("PARSE_OCR_BASE_URL", "http://127.0.0.1:8000/v1")
-    monkeypatch.setenv("PARSE_OCR_MODEL", "test-gemma")
-    monkeypatch.setenv("PARSE_OCR_MODEL_REVISION", "test-revision")
-    state.admit("test", "scope", b"original", "policy", 1)
-    return OcrSettings.load()
-
-
-def test_gemma_single_image_receipt_and_no_history(state, model, monkeypatch):
-    import httpx
-    from parse_svc import vision_ocr
-
-    calls = []
-
-    def post(payload, timeout):
-        calls.append(payload)
-        return httpx.Response(
-            200,
-            json={
-                "choices": [
-                    {"message": {"content": "faithful words"}, "finish_reason": "stop"}
-                ]
-            },
-        )
-
-    monkeypatch.setattr("parse_svc.vision_ocr.model_post", post)
-    result = vision_ocr.transcribe(
-        Image.new("RGB", (20, 20)),
-        model,
-        state,
-        "test",
-        1,
-        time.monotonic() + 5,
-        {"page_number": 1},
-    )
-    assert result["status"] == "complete"
-    assert result["model_revision"] == "test-revision"
-    assert len(calls[0]["messages"]) == 1
-    assert len(calls[0]["messages"][0]["content"]) == 2
-    assert calls[0]["messages"][0]["content"][1]["image_url"]["url"].startswith(
-        "data:image/png;base64,"
-    )
-    assert "tools" not in calls[0]
-    assert state.page("test", 1)["text"] == "faithful words"
-    assert state.lane_marker() is None
-
-
-def test_timeout_blocks_subsequent_dispatch_across_execution(state, model, monkeypatch):
-    import httpx
-    from parse_svc.vision_ocr import transcribe
-
-    calls = []
-
-    def post(*args, **kwargs):
-        calls.append(1)
-        raise httpx.ReadTimeout("secret provider detail")
-
-    monkeypatch.setattr("parse_svc.vision_ocr.model_post", post)
-    for _ in range(2):
-        with pytest.raises(LaneUncertainError):
-            transcribe(
-                Image.new("RGB", (20, 20)),
-                model,
-                state,
-                "test",
-                1,
-                time.monotonic() + 5,
-                {},
-            )
-    assert len(calls) == 1
-    assert state.lane_marker()["outcome"] == "unknown"
-
-
-def test_known_retry_budget_persisted(state, model, monkeypatch):
-    import httpx
-    from parse_svc.checkpoints import CheckpointError
-    from parse_svc.vision_ocr import transcribe
-
-    calls = []
-
-    def post(*a, **k):
-        calls.append(1)
-        return httpx.Response(503)
-
-    monkeypatch.setattr("parse_svc.vision_ocr.model_post", post)
-    for _ in range(2):
-        with pytest.raises(CheckpointError):
-            transcribe(
-                Image.new("RGB", (20, 20)),
-                model,
-                state,
-                "test",
-                1,
-                time.monotonic() + 5,
-                {},
-            )
-    assert len(calls) == 2
-    assert len(state.attempts("test", 1)) == 2
-    assert state.lane_marker() is None
-
-
-def test_truncated_receipt_not_complete(state, model, monkeypatch):
-    import httpx
-    from parse_svc.vision_ocr import transcribe
-
-    monkeypatch.setattr(
-        "parse_svc.vision_ocr.model_post",
-        lambda *a, **k: httpx.Response(
-            200,
-            json={
-                "choices": [
-                    {"message": {"content": "partial"}, "finish_reason": "length"}
-                ]
-            },
-        ),
-    )
-    result = transcribe(
-        Image.new("RGB", (20, 20)), model, state, "test", 1, time.monotonic() + 5, {}
-    )
-    assert result["status"] == "truncated"
-    assert state.page("test", 1)["status"] == "truncated"
-
-
 def test_disconnected_skips_unstarted_pages(state, monkeypatch):
     import threading
 
@@ -271,58 +111,6 @@ def test_disconnected_skips_unstarted_pages(state, monkeypatch):
     result = pagewise.parse_pdf_pages(b"doc", "a.pdf", cancelled=event)
     assert result["metadata"]["coverage"]["skipped_pages"] == 3
     assert result["metadata"]["coverage"]["status"] == "failed"
-
-
-def test_retention_never_deletes_unknown_lane(state):
-    state.admit("test", "scope", b"source", "policy", 1)
-    state.begin_dispatch("test", 1, {})
-    with state.connect() as db:
-        db.execute("UPDATE executions SET accessed=0")
-    state.cleanup()
-    assert state.lane_marker()
-    with state.connect() as db:
-        assert db.execute("SELECT count(*) FROM executions").fetchone()[0] == 1
-
-
-def test_reconcile_requires_idle_and_retains_history(state, model, monkeypatch):
-    import httpx
-    from parse_svc.vision_ocr import reconcile_idle
-
-    state.begin_dispatch(
-        "test",
-        1,
-        {
-            "endpoint": model.base_url,
-            "model": model.model,
-            "model_revision": model.revision,
-        },
-    )
-
-    def busy(*a, **k):
-        return httpx.Response(
-            200,
-            request=httpx.Request("GET", "http://localhost/metrics"),
-            text="vllm:num_requests_running 1\nvllm:num_requests_waiting 0",
-        )
-
-    monkeypatch.setattr(httpx.Client, "get", busy)
-    with pytest.raises(LaneUncertainError):
-        reconcile_idle(state, model)
-    assert state.lane_marker()
-
-    def idle(*a, **k):
-        return httpx.Response(
-            200,
-            request=httpx.Request("GET", "http://localhost/metrics"),
-            text="vllm:num_requests_running 0\nvllm:num_requests_waiting 0",
-        )
-
-    monkeypatch.setattr(httpx.Client, "get", idle)
-    assert reconcile_idle(state, model)
-    assert state.lane_marker() is None
-    assert len(state.attempts("test", 1)) == 1
-    with state.connect() as db:
-        assert db.execute("SELECT count(*) FROM reconciliations").fetchone()[0] == 1
 
 
 def test_capacity_fail_closed(tmp_path):
@@ -376,70 +164,11 @@ def test_native_worker_hard_deadline(tmp_path, monkeypatch):
     assert time.monotonic() - started < 2
 
 
-def test_model_worker_slow_body_absolute_deadline(state, model, monkeypatch):
-    import threading
-    from dataclasses import replace
-    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-
-    from parse_svc.vision_ocr import transcribe
-
-    class Handler(BaseHTTPRequestHandler):
-        def do_POST(self):
-            self.rfile.read(int(self.headers["content-length"]))
-            self.send_response(200)
-            self.end_headers()
-            try:
-                for _ in range(100):
-                    self.wfile.write(b" ")
-                    self.wfile.flush()
-                    time.sleep(0.05)
-            except (BrokenPipeError, ConnectionResetError):
-                pass
-
-        def log_message(self, *a):
-            pass
-
-    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
-    url = f"http://127.0.0.1:{server.server_port}/v1"
-    monkeypatch.setenv("PARSE_OCR_BASE_URL", url)
-    model = replace(model, base_url=url)
-    started = time.monotonic()
-    try:
-        with pytest.raises(LaneUncertainError):
-            transcribe(
-                Image.new("RGB", (20, 20)), model, state, "test", 1, started + 0.7, {}
-            )
-        assert time.monotonic() - started < 2
-        assert state.lane_marker()
-    finally:
-        server.shutdown()
-        server.server_close()
-
-
-def test_reconciliation_rejects_changed_backend(state, model):
-    from parse_svc.vision_ocr import reconcile_idle
-
-    state.begin_dispatch(
-        "test",
-        1,
-        {
-            "endpoint": "http://127.0.0.2/v1",
-            "model": model.model,
-            "model_revision": model.revision,
-        },
-    )
-    with pytest.raises(LaneUncertainError, match="identity_mismatch"):
-        reconcile_idle(state, model)
-    assert state.lane_marker()
-
-
 def test_renderer_hard_deadline_without_pdfinfo(tmp_path, monkeypatch):
     import os
 
     from parse_svc.checkpoints import DeadlineExceededError
-    from parse_svc.vision_ocr import OcrSettings
+    from parse_svc.settings import OcrSettings
 
     executable = tmp_path / "pdftoppm"
     executable.write_text("#!" + sys.executable + "\nimport time\ntime.sleep(30)\n")
@@ -451,7 +180,7 @@ def test_renderer_hard_deadline_without_pdfinfo(tmp_path, monkeypatch):
     assert time.monotonic() - start < 2
 
 
-def test_sparse_native_values_survive_both_ocr_failures(state, model, monkeypatch):
+def test_sparse_native_values_survive_ocr_failures(state, monkeypatch):
     from parse_svc.checkpoints import CheckpointError
 
     fake_pdf(monkeypatch, ["Revenue 2025 $42M"])
@@ -459,7 +188,6 @@ def test_sparse_native_values_survive_both_ocr_failures(state, model, monkeypatc
     def fail(*args, **kwargs):
         raise CheckpointError("test_ocr_failure")
 
-    monkeypatch.setattr(pagewise, "transcribe", fail)
     monkeypatch.setattr(pagewise, "tesseract_page", fail)
     result = pagewise.parse_pdf_pages(b"doc", "table.pdf", scope="one")
     assert "Revenue 2025 $42M" in result["markdown"]
@@ -478,3 +206,28 @@ def test_sparse_native_does_not_replace_partial_ocr(state, monkeypatch):
     assert "operating profit $9M" in result["markdown"]
     assert result["markdown"].count("Revenue $42M") == 1
     assert result["metadata"]["coverage"]["status"] == "failed"
+
+
+def test_cpu_attempt_budget_survives_resubmission(state, monkeypatch):
+    fake_pdf(monkeypatch, [""])
+    calls = []
+
+    def fail(*args):
+        calls.append(1)
+        raise subprocess.CalledProcessError(1, "tesseract")
+
+    monkeypatch.setattr(pagewise, "tesseract_page", fail)
+    for _ in range(2):
+        result = pagewise.parse_pdf_pages(b"doc", "a.pdf", scope="same")
+        assert result["metadata"]["coverage"]["status"] == "failed"
+    assert len(calls) == 2
+
+
+def test_cpu_checkpoint_source_and_started_attempt_retained(state):
+    state.admit("test", "scope", b"exact source", "policy", 1)
+    state.begin_attempt("test", 1, 2)
+    assert state.attempts("test", 1)[0]["outcome"] == "started"
+    with state.connect() as db:
+        assert (
+            db.execute("SELECT source FROM executions").fetchone()[0] == b"exact source"
+        )

@@ -21,10 +21,6 @@ class DeadlineExceededError(CheckpointError):
     """The admitted execution window expired."""
 
 
-class LaneUncertainError(CheckpointError):
-    """A previous model dispatch has no retained terminal response."""
-
-
 @contextmanager
 def file_lock(path: Path, deadline: float) -> Iterator[None]:
     """Keep the kernel lock until the synchronous operation really finishes."""
@@ -54,7 +50,7 @@ class Checkpoints:
         self.db = root / "pages.sqlite3"
         with self.connect() as db:
             version = db.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, 1):
+            if version not in (0, 2):
                 raise CheckpointError("unsupported_checkpoint_schema")
             db.executescript("""
                 CREATE TABLE IF NOT EXISTS executions (
@@ -69,11 +65,7 @@ class Checkpoints:
                     execution TEXT NOT NULL REFERENCES executions(id) ON DELETE CASCADE,
                     number INTEGER NOT NULL, ordinal INTEGER NOT NULL,
                     receipt TEXT NOT NULL, PRIMARY KEY(execution, number, ordinal));
-                CREATE TABLE IF NOT EXISTS lane (
-                    id INTEGER PRIMARY KEY CHECK(id=1), marker TEXT NOT NULL);
-                CREATE TABLE IF NOT EXISTS reconciliations (
-                    created REAL NOT NULL, marker TEXT NOT NULL, evidence TEXT NOT NULL);
-                PRAGMA user_version=1;
+                PRAGMA user_version=2;
             """)
         os.chmod(self.db, 0o600)
 
@@ -175,16 +167,9 @@ class Checkpoints:
             ).fetchall()
         return [json.loads(row[0]) for row in rows]
 
-    def lane_marker(self) -> dict[str, Any] | None:
-        with self.connect() as db:
-            row = db.execute("SELECT marker FROM lane WHERE id=1").fetchone()
-        return json.loads(row[0]) if row else None
-
-    def begin_dispatch(self, execution: str, number: int, marker: dict[str, Any]):
+    def begin_attempt(self, execution: str, number: int, limit: int):
         with self.connect() as db:
             db.execute("BEGIN IMMEDIATE")
-            if db.execute("SELECT 1 FROM lane WHERE id=1").fetchone():
-                raise LaneUncertainError("ocr_lane_outcome_unknown")
             ordinal = (
                 db.execute(
                     "SELECT count(*) FROM attempts WHERE execution=? AND number=?",
@@ -192,79 +177,43 @@ class Checkpoints:
                 ).fetchone()[0]
                 + 1
             )
-            receipt = {**marker, "ordinal": ordinal, "outcome": "unknown"}
+            if ordinal > limit:
+                raise CheckpointError("page_attempts_exhausted")
             db.execute(
                 "INSERT INTO attempts VALUES (?,?,?,?)",
-                (execution, number, ordinal, json.dumps(receipt)),
-            )
-            db.execute(
-                "INSERT INTO lane VALUES (1,?)",
                 (
-                    json.dumps(
-                        {**receipt, "execution": execution, "page_number": number}
-                    ),
+                    execution,
+                    number,
+                    ordinal,
+                    json.dumps({"outcome": "started", "started_at": time.time()}),
                 ),
             )
             return ordinal
 
-    def finish_dispatch(
-        self,
-        execution: str,
-        number: int,
-        ordinal: int,
-        receipt: dict[str, Any],
-        result: dict[str, Any] | None = None,
-    ):
+    def finish_attempt(self, execution: str, number: int, ordinal: int, outcome: str):
         with self.connect() as db:
-            db.execute("BEGIN IMMEDIATE")
-            row = db.execute("SELECT marker FROM lane WHERE id=1").fetchone()
-            marker = json.loads(row[0]) if row else {}
-            if (
-                marker.get("execution"),
-                marker.get("page_number"),
-                marker.get("ordinal"),
-            ) != (execution, number, ordinal):
-                raise LaneUncertainError("ocr_receipt_owner_mismatch")
             db.execute(
                 "UPDATE attempts SET receipt=? WHERE execution=? AND number=? AND ordinal=?",
                 (
-                    json.dumps({**receipt, "ordinal": ordinal}),
+                    json.dumps({"outcome": outcome, "completed_at": time.time()}),
                     execution,
                     number,
                     ordinal,
                 ),
             )
-            if result is not None:
-                self._save(db, execution, number, result)
-            db.execute("DELETE FROM lane WHERE id=1")
-
-    def reconcile(self, evidence: dict[str, Any]):
-        """Caller must hold the lane lock and prove idle via trusted metrics."""
-        with self.connect() as db:
-            db.execute("BEGIN IMMEDIATE")
-            row = db.execute("SELECT marker FROM lane WHERE id=1").fetchone()
-            if row:
-                db.execute(
-                    "INSERT INTO reconciliations VALUES (?,?,?)",
-                    (time.time(), row[0], json.dumps(evidence)),
-                )
-                db.execute("DELETE FROM lane WHERE id=1")
 
     def cleanup(self):
-        """Only expired unlocked executions; uncertain lane evidence never expires."""
-        marker = self.lane_marker() or {}
+        """Only expired unlocked executions."""
         with self.connect() as db:
             rows = db.execute(
                 "SELECT id FROM executions WHERE accessed<?", (time.time() - self.ttl,)
             ).fetchall()
         for (execution,) in rows:
-            if execution == marker.get("execution"):
-                continue
             try:
                 with self.execution_lock(execution, time.monotonic()):
                     with self.connect() as db:
                         db.execute(
-                            "DELETE FROM executions WHERE id=? AND accessed<? AND id NOT IN (SELECT json_extract(marker,'$.execution') FROM lane)",
+                            "DELETE FROM executions WHERE id=? AND accessed<?",
                             (execution, time.time() - self.ttl),
                         )
             except DeadlineExceededError:

@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any
 
 from .checkpoints import CheckpointError, Checkpoints, DeadlineExceededError
-from .vision_ocr import PROMPT_VERSION, OcrSettings, positive_env, transcribe
+from .settings import PARSER_REVISION, OcrSettings, positive_env
 
 
 def native_page(source: Path, number: int, timeout: float) -> dict:
@@ -90,34 +90,27 @@ def blank_image(image: Any) -> bool:
     return image.convert("L").getextrema()[0] >= 250
 
 
-def tesseract_page(image: Any, timeout: float) -> tuple[str, float | None, int]:
-    import pytesseract
-
-    data = pytesseract.image_to_data(
-        image, lang="eng", output_type=pytesseract.Output.DICT, timeout=timeout
+def tesseract_page(
+    image: Any, timeout: float, lock_path: Path
+) -> tuple[str, float | None, int]:
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    # Supervisor enforces its own absolute deadline, kills/reaps Tesseract and
+    # retains the global lock independently of this request process lifetime.
+    process = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "parse_svc.ocr_worker",
+            str(lock_path),
+            str(time.monotonic() + timeout),
+        ],
+        input=buffer.getvalue(),
+        capture_output=True,
+        check=True,
     )
-    lines: dict[tuple[int, int, int], list[str]] = {}
-    confidences = []
-    for i, word in enumerate(data.get("text", [])):
-        if not str(word).strip():
-            continue
-        key = tuple(
-            (data.get(field) or [0] * len(data["text"]))[i]
-            for field in ("block_num", "par_num", "line_num")
-        )
-        lines.setdefault(key, []).append(str(word))
-        try:
-            confidence = float(data["conf"][i])
-            if 0 <= confidence <= 100:
-                confidences.append(confidence / 100)
-        except (ValueError, TypeError, KeyError, IndexError):
-            pass
-    text = "\n".join(" ".join(words) for words in lines.values())
-    return (
-        text,
-        sum(confidences) / len(confidences) if confidences else None,
-        len(confidences),
-    )
+    text, confidence, words = json.loads(process.stdout)
+    return text, confidence, words
 
 
 def _failed(provenance: dict[str, Any], reason: str) -> dict[str, Any]:
@@ -172,19 +165,27 @@ def _extract_page(
     warnings: list[str] = []
     if cancelled.is_set():
         raise DeadlineExceededError("caller_disconnected")
-    if settings.backend == "gemma":
-        try:
-            return transcribe(
-                image, settings, store, execution, number, deadline, provenance
+    while True:
+        remaining = min(settings.page_timeout, deadline - time.monotonic())
+        if remaining <= 0 or cancelled.is_set():
+            raise DeadlineExceededError(
+                "document_deadline" if not cancelled.is_set() else "caller_disconnected"
             )
-        except CheckpointError as exc:
-            warnings = [str(exc), "tesseract_fallback"]
-    remaining = min(settings.page_timeout, deadline - time.monotonic())
-    if remaining <= 0 or cancelled.is_set():
-        raise DeadlineExceededError(
-            "document_deadline" if not cancelled.is_set() else "caller_disconnected"
-        )
-    text, confidence, words = tesseract_page(image, remaining)
+        ordinal = store.begin_attempt(execution, number, settings.attempts)
+        try:
+            text, confidence, words = tesseract_page(
+                image,
+                remaining,
+                store.root / "ocr.lock"
+                if os.getenv("PARSE_STATE_DIR")
+                else Path(tempfile.gettempdir()) / "groktocrawl-ocr.lock",
+            )
+            store.finish_attempt(execution, number, ordinal, "completed")
+            break
+        except (subprocess.SubprocessError, OSError, ValueError):
+            store.finish_attempt(execution, number, ordinal, "failed")
+            if ordinal >= settings.attempts:
+                raise CheckpointError("tesseract_failed") from None
     quality = (
         "empty"
         if not text.strip()
@@ -249,7 +250,6 @@ def _assemble(
         "skipped_pages": statuses["skipped"],
         "blank_pages": statuses["blank"],
         "native_pages": engines["native"],
-        "gemma_pages": engines["gemma"],
         "tesseract_pages": engines["tesseract"],
         "cached_pages": sum(bool(r.get("cached")) for r in records),
     }
@@ -287,12 +287,10 @@ def _assemble(
     }
     settings = OcrSettings.load()
     metadata["extraction_policy"] = {
-        "backend": settings.backend,
-        "model": settings.model,
-        "model_revision": settings.revision,
-        "prompt_version": PROMPT_VERSION,
+        "parser_revision": PARSER_REVISION,
         "render_max_edge": settings.render_edge,
         "render_dpi": 150,
+        "ocr_engine": "tesseract",
     }
     # Keep downstream bounded metadata usable; all receipts remain in the ledger.
     kept = []
@@ -319,8 +317,6 @@ def parse_pdf_pages(
 ) -> dict[str, Any]:
     """Resume only committed compatible pages; explicit resubmission starts a window."""
     settings = OcrSettings.load()
-    if settings.backend == "gemma":
-        settings.validate_model()
     started = time.monotonic()
     persistent_root = os.getenv("PARSE_STATE_DIR")
     source_hash = hashlib.sha256(content).hexdigest()
