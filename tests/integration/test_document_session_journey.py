@@ -125,7 +125,8 @@ async def test_pdf_upload_parse_question_citation_and_delete(
             ref_id = uploaded.json()["ref_id"]
             selected.append(ref_id)
             assert uploaded.json()["file_digest"] == hashlib.sha256(content).hexdigest()
-            assert uploaded.json()["extraction"]["extraction"] == "pypdf"
+            assert uploaded.json()["extraction"]["extraction"] == "pagewise"
+            assert uploaded.json()["extraction"]["coverage"]["status"] == "complete"
             queried = await client.post(
                 f"/v2/session/{session_id}/step",
                 json={
