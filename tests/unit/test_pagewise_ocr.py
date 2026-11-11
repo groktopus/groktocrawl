@@ -13,7 +13,6 @@ from PIL import Image
 @pytest.fixture
 def state(tmp_path, monkeypatch):
     monkeypatch.setenv("PARSE_STATE_DIR", str(tmp_path))
-    monkeypatch.setenv("PARSE_OCR_BACKEND", "tesseract")
     return Checkpoints(tmp_path, 10**7, 604800)
 
 
@@ -221,6 +220,7 @@ def test_cpu_attempt_budget_survives_resubmission(state, monkeypatch):
         result = pagewise.parse_pdf_pages(b"doc", "a.pdf", scope="same")
         assert result["metadata"]["coverage"]["status"] == "failed"
     assert len(calls) == 2
+    assert result["metadata"]["page_results"][0]["attempts"] == 2
 
 
 def test_cpu_checkpoint_source_and_started_attempt_retained(state):

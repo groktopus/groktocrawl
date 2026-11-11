@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 from .checkpoints import CheckpointError, Checkpoints, DeadlineExceededError
+from .process import bounded_run
 from .settings import PARSER_REVISION, OcrSettings, positive_env
 
 
@@ -22,11 +23,9 @@ def native_page(source: Path, number: int, timeout: float) -> dict:
     if timeout <= 0:
         raise DeadlineExceededError("document_deadline")
     try:
-        result = subprocess.run(
+        result = bounded_run(
             [sys.executable, "-m", "parse_svc.native_worker", str(source), str(number)],
-            capture_output=True,
             timeout=timeout,
-            check=True,
         )
         return json.loads(result.stdout)
     except subprocess.TimeoutExpired as exc:
@@ -51,7 +50,7 @@ def render_page(content: bytes, number: int, settings: OcrSettings, deadline: fl
         raise DeadlineExceededError("document_deadline")
     # Invoke Poppler directly: pdf2image has an untimed pdfinfo preflight.
     try:
-        process = subprocess.run(
+        process = bounded_run(
             [
                 "pdftoppm",
                 "-f",
@@ -67,9 +66,7 @@ def render_page(content: bytes, number: int, settings: OcrSettings, deadline: fl
                 "-",
             ],
             input=content,
-            capture_output=True,
             timeout=remaining,
-            check=True,
         )
     except subprocess.TimeoutExpired as exc:
         raise DeadlineExceededError("render_timeout") from exc
@@ -97,7 +94,7 @@ def tesseract_page(
     image.save(buffer, format="PNG")
     # Supervisor enforces its own absolute deadline, kills/reaps Tesseract and
     # retains the global lock independently of this request process lifetime.
-    process = subprocess.run(
+    process = bounded_run(
         [
             sys.executable,
             "-m",
@@ -106,8 +103,7 @@ def tesseract_page(
             str(time.monotonic() + timeout),
         ],
         input=buffer.getvalue(),
-        capture_output=True,
-        check=True,
+        timeout=timeout + 2,
     )
     text, confidence, words = json.loads(process.stdout)
     return text, confidence, words
@@ -397,6 +393,7 @@ def parse_pdf_pages(
                         else "page_extraction_failed"
                     )
                     record = _failed(provenance, reason)
+                record["attempts"] = len(store.attempts(execution, number))
                 # Sparse native values remain evidence even when too short to
                 # qualify as a complete page. Never replace useful OCR output.
                 if (
@@ -421,7 +418,7 @@ def parse_pdf_pages(
                             with tempfile.NamedTemporaryFile(suffix=".pdf") as source:
                                 source.write(content)
                                 source.flush()
-                                process = subprocess.run(
+                                process = bounded_run(
                                     [
                                         sys.executable,
                                         "-m",
@@ -429,9 +426,7 @@ def parse_pdf_pages(
                                         source.name,
                                         str(number),
                                     ],
-                                    capture_output=True,
                                     timeout=remaining,
-                                    check=True,
                                 )
                             tables = json.loads(process.stdout)
                             if tables:

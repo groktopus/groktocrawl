@@ -106,3 +106,41 @@ def test_supervisor_kills_timed_out_child_then_releases_lane(cpu):
     output, error = successor.communicate(timeout=6)
     assert successor.returncode == 0, error
     assert "Hello world" in output
+
+
+@pytest.mark.parametrize("stream", ["stdout", "stderr"])
+def test_oversized_tesseract_output_killed_reaped_and_lane_reusable(cpu, stream):
+    root, env, start = cpu
+    executable = root / "tesseract"
+    executable.write_text(
+        "#!"
+        + sys.executable
+        + '\nimport os,sys,time\nfrom pathlib import Path\nPath(os.environ["OCR_TEST_ROOT"],"floodpid").write_text(str(os.getpid()))\nsys.stdin.buffer.read()\nwhile True:\n sys.'
+        + stream
+        + '.write("x"*65536)\n sys.'
+        + stream
+        + ".flush()\n"
+    )
+    first = start()
+    first.communicate(timeout=8)
+    assert first.returncode != 0
+    child = int((root / "floodpid").read_text())
+    with pytest.raises(ProcessLookupError):
+        os.kill(child, 0)
+    executable.write_text("#!" + sys.executable + "\n" + FAKE_TESSERACT)
+    env["OCR_TEST_SLEEP"] = "0"
+    second = start()
+    output, error = second.communicate(timeout=6)
+    assert second.returncode == 0, error
+    assert "Hello world" in output
+
+
+def test_bounded_table_process_output(tmp_path):
+    from parse_svc.process import bounded_run
+
+    with pytest.raises(subprocess.SubprocessError, match="output_limit"):
+        bounded_run(
+            [sys.executable, "-c", 'import sys;sys.stdout.write("x"*2000000)'],
+            timeout=3,
+            output_limit=1024,
+        )

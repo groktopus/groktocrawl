@@ -1,13 +1,32 @@
 """CPU PDF extraction policy and cache identity."""
 
+import hashlib
 import json
 import os
+import subprocess
 from dataclasses import asdict, dataclass
+from functools import lru_cache
 from importlib.metadata import version
 
 from .checkpoints import CheckpointError
+from .process import bounded_run
 
 PARSER_REVISION = "cpu-pagewise-v2-poppler150-tesseract-tsv-eng"
+
+
+@lru_cache(maxsize=1)
+def engine_identity():
+    versions = {}
+    for name, args in (
+        ("tesseract", ["tesseract", "--version"]),
+        ("poppler", ["pdftoppm", "-v"]),
+    ):
+        try:
+            result = bounded_run(args, timeout=2, output_limit=65536)
+            versions[name] = hashlib.sha256(result.stdout + result.stderr).hexdigest()
+        except (OSError, subprocess.SubprocessError):
+            versions[name] = "unavailable"
+    return versions
 
 
 def positive_env(name: str, default: int) -> int:
@@ -46,7 +65,7 @@ class OcrSettings:
             positive_env("PARSE_PAGE_TIMEOUT_SECONDS", 30),
             positive_env("PARSE_DOCUMENT_MAX_SECONDS", 1800),
             retries + 1,
-            positive_env("PARSE_RENDER_MAX_EDGE", 2400),
+            positive_env("PARSE_RENDER_MAX_EDGE", 2000),
             threshold,
         )
 
@@ -56,6 +75,7 @@ class OcrSettings:
                 **asdict(self),
                 "parser_revision": PARSER_REVISION,
                 "pypdf": version("pypdf"),
+                "engines": engine_identity(),
                 "force_ocr": force_ocr,
                 "tables": os.getenv("PARSE_EXTRACT_TABLES", "false").lower() == "true",
             },

@@ -1,4 +1,4 @@
-"""Single-host page receipts and conservative model admission (ADR-0079)."""
+"""Single-host page receipts and bounded CPU OCR attempts (ADR-0079)."""
 
 import fcntl
 import hashlib
@@ -40,7 +40,7 @@ def file_lock(path: Path, deadline: float) -> Iterator[None]:
 
 
 class Checkpoints:
-    """SQLite transactions never span rendering or model network calls."""
+    """SQLite transactions never span rendering or CPU OCR subprocess calls."""
 
     def __init__(self, root: Path, max_bytes: int, ttl: int):
         self.root = root

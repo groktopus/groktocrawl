@@ -4,10 +4,11 @@ import csv
 import fcntl
 import io
 import json
-import subprocess
 import sys
 import time
 from pathlib import Path
+
+from .process import bounded_run
 
 
 def main():
@@ -25,11 +26,9 @@ def main():
                 time.sleep(0.02)
         # The actual child also inherits the descriptor, so even supervisor
         # termination cannot admit another OCR while this child remains alive.
-        result = subprocess.run(
+        result = bounded_run(
             ["tesseract", "stdin", "stdout", "-l", "eng", "tsv"],
             input=image,
-            capture_output=True,
-            check=True,
             timeout=max(0.001, deadline - time.monotonic()),
             pass_fds=(lock.fileno(),),
         )
