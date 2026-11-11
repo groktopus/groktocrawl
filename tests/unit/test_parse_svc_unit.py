@@ -17,10 +17,7 @@ from unittest.mock import patch
 import pytest
 from fastapi import HTTPException
 from parse_svc.app import (
-    _coerce_confidence,
     _ext,
-    _ocr_min_confidence,
-    _ocr_page,
     _parse_anydoc,
     _parse_pdf,
     _parse_text,
@@ -79,7 +76,7 @@ def _tesseract_rows(pages: list[list[list[tuple[str, float]]]]) -> ModuleType:
     module = ModuleType("pytesseract")
     module.Output = SimpleNamespace(DICT="dict")
 
-    def image_to_data(image, lang=None, output_type=None):
+    def image_to_data(image, lang=None, output_type=None, timeout=None):
         assert output_type == "dict"
         data: dict[str, list] = {
             "level": [],
@@ -283,120 +280,45 @@ class TestParsePdf:
         assert "metadata" in result
         assert result["metadata"]["format"] == "pdf"
 
-    def test_scanned_pdf_falls_through_to_ocr(self):
-        # Simulate a scanned/image-only PDF: pypdf extracts no text, so the
-        # OCR tier must run (tesseract/pdf2image patched in-process).
-        text = "This is OCR-extracted text from a scanned page. " * 3
-        pages = [[_line(text, 92.5)]]
-        content = _load("scanned-image-only.pdf")
-        with _patch_ocr(pages):
-            result = _parse_pdf(content, "scan.pdf")
-        assert result["metadata"].get("extraction") == "local_ocr"
-        assert "OCR-extracted" in result["markdown"]
-        assert result["metadata"]["ocr"]["quality"] == "ok"
-        assert result["metadata"]["ocr"]["mean_confidence"] == 0.925
-        assert result["metadata"]["ocr"]["words"] == 24
-        assert result["metadata"].get("degraded") is None
-        assert "warnings" not in result["metadata"]
-
-    def test_low_confidence_ocr_is_flagged_but_text_is_preserved(self):
-        pages = [
-            [
-                _line("ASCIT formnat Sor Network Interchange", 31.0),
-                _line("garbled scan output remains", 34.0),
-            ]
-        ]
-        with _patch_ocr(pages):
-            result = _parse_pdf(_load("scanned-image-only.pdf"), "scan.pdf")
-
-        assert "ASCIT formnat" in result["markdown"]
-        assert result["metadata"]["extraction"] == "local_ocr"
-        assert result["metadata"]["ocr"]["quality"] == "low"
-        assert result["metadata"]["ocr"]["threshold"] == 0.60
-        assert result["metadata"]["ocr"]["low_confidence_pages"] == [1]
-        assert result["metadata"]["degraded"] is True
-        assert result["metadata"]["warnings"] == ["low_ocr_confidence"]
-
-    def test_low_confidence_page_is_reported_by_number(self):
-        pages = [
-            [_line("clearly readable first page text", 95.0)],
-            [_line("badly degraded second page text", 25.0)],
-        ]
-        with _patch_ocr(pages):
-            result = _parse_pdf(_load("scanned-image-only.pdf"), "scan.pdf")
-
-        ocr = result["metadata"]["ocr"]
-        assert ocr["pages_processed"] == 2
-        assert ocr["low_confidence_pages"] == [2]
-        assert ocr["min_page_confidence"] == 0.25
-        assert ocr["mean_confidence"] == pytest.approx(0.6, abs=0.001)
-        assert result["metadata"].get("degraded") is None
-
-    def test_confidence_threshold_env_override(self, monkeypatch):
-        monkeypatch.setenv("PARSE_OCR_MIN_CONFIDENCE", "0.95")
-        pages = [[_line("usually acceptable scan output text", 90.0)]]
-        with _patch_ocr(pages):
-            result = _parse_pdf(_load("scanned-image-only.pdf"), "scan.pdf")
-
-        assert result["metadata"]["ocr"]["threshold"] == 0.95
-        assert result["metadata"]["ocr"]["quality"] == "low"
-        assert result["metadata"]["degraded"] is True
-
-    def test_invalid_confidence_threshold_falls_back_to_default(
-        self, monkeypatch, caplog
+    @pytest.mark.parametrize(
+        "confidence,expected", [(0.95, "complete"), (0.2, "failed"), (None, "failed")]
+    )
+    def test_page_confidence_controls_completion(
+        self, monkeypatch, confidence, expected
     ):
-        monkeypatch.setenv("PARSE_OCR_MIN_CONFIDENCE", "not-a-number")
-        assert _ocr_min_confidence() == 0.60
-        monkeypatch.setenv("PARSE_OCR_MIN_CONFIDENCE", "2.0")
-        assert _ocr_min_confidence() == 0.60
-        assert "PARSE_OCR_MIN_CONFIDENCE" in caplog.text
+        from parse_svc import pagewise
+        from PIL import Image
 
-    def test_ocr_without_confidence_samples_is_not_called_clean(self):
-        pages = [[[("x" * 60, -1.0)]]]
-        with _patch_ocr(pages):
-            result = _parse_pdf(_load("scanned-image-only.pdf"), "scan.pdf")
+        monkeypatch.setattr(
+            pagewise, "render_page", lambda *a: Image.new("RGB", (20, 20), "black")
+        )
+        monkeypatch.setattr(
+            pagewise,
+            "tesseract_page",
+            lambda *a: ("preserved scan text", confidence, 3),
+        )
+        result = _parse_pdf(_load("scanned-image-only.pdf"), "scan.pdf")
+        assert "preserved scan text" in result["markdown"]
+        assert result["metadata"]["coverage"]["status"] == expected
 
-        assert result["metadata"]["ocr"]["quality"] == "unassessed"
-        assert result["metadata"]["degraded"] is True
-        assert result["metadata"]["warnings"] == ["ocr_confidence_unassessed"]
+    def test_threshold_configuration(self, monkeypatch):
+        from parse_svc.vision_ocr import OcrSettings
 
-    def test_empty_ocr_output_is_marked_degraded(self):
-        with _patch_ocr([[]]):
-            result = _parse_pdf(_load("scanned-image-only.pdf"), "scan.pdf")
-
-        assert result["metadata"]["ocr"]["quality"] == "empty"
-        assert result["metadata"]["degraded"] is True
-        assert "no_text_extracted" in result["metadata"]["warnings"]
-        assert result["metadata"].get("extraction") != "local_ocr"
-
-    def test_missing_ocr_engine_is_reported_unavailable(self):
-        with patch.dict(
-            sys.modules,
-            {"pdf2image": _fake_pdf2image(1), "pytesseract": None},
-        ):
-            result = _parse_pdf(_load("scanned-image-only.pdf"), "scan.pdf")
-
-        assert result["metadata"]["ocr"]["quality"] == "unavailable"
-        assert result["metadata"]["degraded"] is True
-        assert "no_text_extracted" in result["metadata"]["warnings"]
+        for value, expected in [("not-a-number", 0.6), ("2", 0.6), (".95", 0.95)]:
+            monkeypatch.setenv("PARSE_OCR_MIN_CONFIDENCE", value)
+            assert OcrSettings.load().min_confidence == expected
 
     def test_ocr_page_reconstructs_lines_and_ignores_unscored_rows(self):
+        from parse_svc.pagewise import tesseract_page
+
         fake = _tesseract_rows(
-            [[[("hello", 80.0), ("world", 60.0)], [("", -1.0)], [("second", 100.0)]]]
+            [[[("hello", 80), ("world", 60)], [("", -1)], [("second", 100)]]]
         )
         with patch.dict(sys.modules, {"pytesseract": fake}):
-            text, mean, words = _ocr_page(0)
-
+            text, mean, words = tesseract_page(0, 30)
         assert text == "hello world\nsecond"
         assert mean == pytest.approx(0.8)
         assert words == 3
-
-    def test_coerce_confidence_rejects_out_of_range_values(self):
-        assert _coerce_confidence(95) == 0.95
-        assert _coerce_confidence("62.5") == 0.625
-        assert _coerce_confidence(-1) is None
-        assert _coerce_confidence(101) is None
-        assert _coerce_confidence("n/a") is None
 
     def test_hosted_ocr_uses_real_anydoc_binding_and_sends_whole_pdf(self, monkeypatch):
         content = _load("scanned-image-only.pdf")
@@ -409,7 +331,7 @@ class TestParsePdf:
 
         assert result["markdown"] == "# Hosted scan"
         assert result["metadata"]["extraction"] == "anydoc_hosted_ocr"
-        assert result["metadata"].get("degraded") is None
+        assert not result["metadata"].get("degraded")
         assert "warnings" not in result["metadata"]
         assert len(hits) == 1
         assert hits[0]["path"] == "/v2/parse"
@@ -473,11 +395,12 @@ class TestParsePdf:
             with _patch_ocr(pages):
                 result = _parse_pdf(content, "scan.pdf")
 
-        assert result["metadata"]["extraction"] == "local_ocr"
+        assert result["metadata"]["extraction"] == "pagewise"
         assert result["metadata"]["degraded"] is True
         assert hits == []
 
     def test_corrupt_pdf_graceful(self):
-        result = _parse_pdf(b"not a pdf at all", "bad.pdf")
-        assert "markdown" in result
-        assert "metadata" in result
+        from pypdf.errors import PdfReadError
+
+        with pytest.raises(PdfReadError):
+            _parse_pdf(b"not a pdf at all", "bad.pdf")

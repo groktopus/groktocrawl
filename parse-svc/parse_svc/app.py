@@ -5,14 +5,17 @@ ebooks, and CSV are converted by firecrawl-anydoc; PDFs use a text-extraction
 tier with an OCR fallback for scanned or image-only files.
 """
 
+import asyncio
+import contextlib
 import io
 import logging
 import os
+import threading
 from pathlib import Path
 from typing import Any
 
 import anydoc
-from fastapi import FastAPI, HTTPException, UploadFile
+from fastapi import FastAPI, HTTPException, Request, UploadFile
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 
@@ -91,259 +94,57 @@ SUPPORTED_FORMATS = {
 }
 
 
-# ---- OCR quality ----
-
-DEFAULT_OCR_MIN_CONFIDENCE = 0.60
-OCR_ENGINE = "tesseract"
-
-
-def _ocr_min_confidence() -> float:
-    """Return the effective low-confidence threshold on the 0.0-1.0 scale.
-
-    Invalid configuration falls back to the documented default instead of
-    failing a parse; the misconfiguration is logged for operators.
-    """
-    raw = os.getenv("PARSE_OCR_MIN_CONFIDENCE", "").strip()
-    if not raw:
-        return DEFAULT_OCR_MIN_CONFIDENCE
-    try:
-        value = float(raw)
-    except ValueError:
-        logger.warning("Invalid PARSE_OCR_MIN_CONFIDENCE=%r; using default", raw)
-        return DEFAULT_OCR_MIN_CONFIDENCE
-    if not 0.0 <= value <= 1.0:
-        logger.warning(
-            "PARSE_OCR_MIN_CONFIDENCE=%r outside 0.0-1.0; using default", raw
-        )
-        return DEFAULT_OCR_MIN_CONFIDENCE
-    return value
-
-
-def _coerce_confidence(value: Any) -> float | None:
-    """Normalize one tesseract confidence to 0.0-1.0, or None if unusable."""
-    try:
-        confidence = float(value)
-    except (TypeError, ValueError):
-        return None
-    if not 0.0 <= confidence <= 100.0:
-        return None
-    return confidence / 100.0
-
-
-def _ocr_page(image: Any) -> tuple[str, float | None, int]:
-    """Run one tesseract pass and return (text, mean confidence, word count).
-
-    ``image_to_data`` yields word text and confidence from the same tesseract
-    invocation; reconstructing lines avoids a second OCR pass purely to obtain
-    confidence. Rows with no usable confidence contribute text but no sample.
-    """
-    import pytesseract
-
-    data = pytesseract.image_to_data(
-        image, lang="eng", output_type=pytesseract.Output.DICT
-    )
-    if not isinstance(data, dict):
-        return "", None, 0
-    texts = data.get("text", [])
-    confidences = data.get("conf", [])
-    line_numbers = data.get("line_num", [])
-    block_numbers = data.get("block_num", [])
-
-    lines: list[str] = []
-    current: list[str] = []
-    current_key: tuple[Any, Any] | None = None
-    measured: list[float] = []
-    for index, raw_text in enumerate(texts):
-        word = str(raw_text).strip()
-        if not word:
-            continue
-        key = (
-            block_numbers[index] if index < len(block_numbers) else 0,
-            line_numbers[index] if index < len(line_numbers) else 0,
-        )
-        if current_key is not None and key != current_key:
-            lines.append(" ".join(current))
-            current = []
-        current.append(word)
-        current_key = key
-        confidence = _coerce_confidence(
-            confidences[index] if index < len(confidences) else None
-        )
-        if confidence is not None:
-            measured.append(confidence)
-    if current:
-        lines.append(" ".join(current))
-
-    mean = sum(measured) / len(measured) if measured else None
-    return "\n".join(lines), mean, len(measured)
-
-
 # ---- Individual parsers ----
 
 
-def _parse_pdf(content: bytes, filename: str, ocr: str = "local") -> dict:
-    """Parse PDF locally first, with optional explicit hosted OCR."""
-    markdown_parts = []
-    metadata: dict[str, Any] = {"format": "pdf", "filename": filename}
-    text_extracted = False
+def _parse_pdf(content: bytes, filename: str, ocr: str = "local", **options) -> dict:
+    """Pagewise local extraction; hosted conversion requires explicit opt-in."""
+    if ocr != "hosted":
+        from parse_svc.pagewise import parse_pdf_pages
 
-    # Tier 1: pypdf text extraction
+        return parse_pdf_pages(content, filename, **options)
+    from pypdf import PdfReader
+
+    reader = PdfReader(io.BytesIO(content))
+    texts = [page.extract_text() or "" for page in reader.pages]
+    if texts and all(text.strip() for text in texts) and len("".join(texts)) > 50:
+        return {
+            "markdown": "\n\n".join(texts),
+            "metadata": {
+                "format": "pdf",
+                "filename": filename,
+                "pages": len(texts),
+                "extraction": "pypdf",
+                "coverage": {"status": "complete"},
+            },
+        }
+    api_url = os.getenv("PARSE_HOSTED_OCR_API_URL")
+    if not api_url:
+        raise HTTPException(
+            422, "Hosted OCR is not configured; set PARSE_HOSTED_OCR_API_URL"
+        )
+    if not api_url.startswith(("http://", "https://")):
+        raise HTTPException(422, "Invalid hosted OCR API URL")
+    kwargs = {"ocr": "hosted", "api_url": api_url}
+    api_key = os.getenv("PARSE_HOSTED_OCR_API_KEY") or os.getenv("FIRECRAWL_API_KEY")
+    if api_key:
+        kwargs["api_key"] = api_key
     try:
-        from pypdf import PdfReader
-
-        reader = PdfReader(io.BytesIO(content))
-        metadata["pages"] = len(reader.pages)
-        pages_text = []
-        for page in reader.pages:
-            text = page.extract_text() or ""
-            pages_text.append(text)
-        full_text = "\n\n".join(pages_text).strip()
-        if len(full_text) > 50:
-            markdown_parts.append(full_text)
-            text_extracted = True
-            metadata["extraction"] = "pypdf"
-    except Exception as e:
-        logger.warning("pypdf failed: %s", e)
-
-    # Tier 2: local OCR is the default; hosted mode is deliberately separate.
-    ocr_info: dict[str, Any] | None = None
-    if ocr != "hosted" and (not text_extracted or len("".join(markdown_parts)) < 100):
-        threshold = _ocr_min_confidence()
-        try:
-            from pdf2image import convert_from_bytes
-
-            images = convert_from_bytes(
-                content,
-                dpi=300,
-                first_page=1,
-                last_page=min(10, metadata.get("pages", 10)),
-            )
-            ocr_parts = []
-            page_confidences: list[float | None] = []
-            word_count = 0
-            confidence_total = 0.0
-            confidence_samples = 0
-            for i, img in enumerate(images):
-                text, mean_confidence, words = _ocr_page(img)
-                ocr_parts.append(f"--- Page {i + 1} ---\n\n{text}")
-                page_confidences.append(mean_confidence)
-                word_count += words
-                if mean_confidence is not None and words:
-                    confidence_total += mean_confidence * words
-                    confidence_samples += words
-            ocr_text = "\n\n".join(ocr_parts).strip()
-            measured = [value for value in page_confidences if value is not None]
-            mean_confidence = (
-                round(confidence_total / confidence_samples, 4)
-                if confidence_samples
-                else None
-            )
-            low_pages = [
-                index + 1
-                for index, value in enumerate(page_confidences)
-                if value is not None and value < threshold
-            ]
-            if mean_confidence is None:
-                quality = "unassessed"
-            elif mean_confidence < threshold:
-                quality = "low"
-            else:
-                quality = "ok"
-            ocr_info = {
-                "engine": OCR_ENGINE,
-                "pages_processed": len(images),
-                "words": word_count,
-                "mean_confidence": mean_confidence,
-                "min_page_confidence": round(min(measured), 4) if measured else None,
-                "low_confidence_pages": low_pages,
-                "threshold": threshold,
-                "quality": quality,
-            }
-            if len(ocr_text) > 50:
-                markdown_parts = [ocr_text]
-                metadata["extraction"] = "local_ocr"
-                text_extracted = True
-                if quality == "low":
-                    metadata["degraded"] = True
-                    metadata.setdefault("warnings", []).append("low_ocr_confidence")
-                elif quality == "unassessed":
-                    metadata["degraded"] = True
-                    metadata.setdefault("warnings", []).append(
-                        "ocr_confidence_unassessed"
-                    )
-            else:
-                ocr_info["quality"] = "empty"
-        except ImportError:
-            logger.warning("pytesseract/pdf2image not available, skipping OCR")
-            ocr_info = {
-                "engine": OCR_ENGINE,
-                "threshold": threshold,
-                "quality": "unavailable",
-            }
-        except Exception as e:
-            logger.warning("OCR failed: %s", e)
-            ocr_info = {
-                "engine": OCR_ENGINE,
-                "threshold": threshold,
-                "quality": "unavailable",
-            }
-
-    # Tier 3: Table extraction for PDFs with tables
-    try:
-        import camelot
-
-        tables = camelot.read_pdf(io.BytesIO(content), pages="all", flavor="lattice")
-        if len(tables) > 0:
-            from tabulate import tabulate
-
-            table_md_parts = []
-            for _i, table in enumerate(tables):
-                md = tabulate(table.df, headers="keys", tablefmt="github")
-                table_md_parts.append(md)
-            if table_md_parts:
-                markdown_parts.append(
-                    "\n\n### Extracted Tables\n\n" + "\n\n".join(table_md_parts)
-                )
-                metadata["tables_found"] = len(tables)
-    except ImportError:
-        logger.debug("camelot not available, skipping table extraction")
-    except Exception as e:
-        logger.debug("Table extraction failed: %s", e)
-
-    markdown = "\n\n".join(markdown_parts).strip()
-    if ocr_info is not None:
-        metadata["ocr"] = ocr_info
-    if ocr == "hosted" and not text_extracted:
-        api_url = os.getenv("PARSE_HOSTED_OCR_API_URL")
-        if not api_url:
-            raise HTTPException(
-                status_code=422,
-                detail="Hosted OCR is not configured; set PARSE_HOSTED_OCR_API_URL",
-            )
-        if not api_url.startswith(("http://", "https://")):
-            raise HTTPException(status_code=422, detail="Invalid hosted OCR API URL")
-        try:
-            api_key = os.getenv("PARSE_HOSTED_OCR_API_KEY") or os.getenv(
-                "FIRECRAWL_API_KEY"
-            )
-            kwargs = {"ocr": "hosted", "api_url": api_url}
-            if api_key:
-                kwargs["api_key"] = api_key
-            markdown = anydoc.to_markdown_bytes(content, **kwargs).strip()
-            metadata["extraction"] = "anydoc_hosted_ocr"
-        except anydoc.HostedError as e:
-            raise HTTPException(status_code=502, detail="Hosted OCR failed") from e
-        except anydoc.ConvertError as e:
-            raise HTTPException(
-                status_code=422, detail=f"Hosted OCR failed: {e}"
-            ) from e
-    if not markdown:
-        # The caller must not infer a clean parse from an empty document.
-        metadata["degraded"] = True
-        warnings = metadata.setdefault("warnings", [])
-        if "no_text_extracted" not in warnings:
-            warnings.append("no_text_extracted")
-    return {"markdown": markdown, "metadata": metadata}
+        markdown = anydoc.to_markdown_bytes(content, **kwargs).strip()
+    except anydoc.HostedError as exc:
+        raise HTTPException(502, "Hosted OCR failed") from exc
+    except anydoc.ConvertError as exc:
+        raise HTTPException(422, "Hosted OCR failed") from exc
+    return {
+        "markdown": markdown,
+        "metadata": {
+            "format": "pdf",
+            "filename": filename,
+            "extraction": "anydoc_hosted_ocr",
+            "degraded": not bool(markdown),
+            "coverage": {"status": "complete" if markdown else "failed"},
+        },
+    }
 
 
 def _parse_text(content: bytes, filename: str) -> dict:
@@ -400,7 +201,7 @@ async def metrics():
 
 
 @app.post("/parse", response_model=ParseResponse)
-async def parse_file(file: UploadFile, ocr: str = "local"):
+async def parse_file(request: Request, file: UploadFile):
     """Upload a file and get its content as markdown."""
     if not file.filename:
         raise HTTPException(status_code=400, detail="No filename provided")
@@ -426,15 +227,46 @@ async def parse_file(file: UploadFile, ocr: str = "local"):
 
     logger.info("Parsing %s (%s, %d bytes)", file.filename, ext, len(content))
 
+    form = await request.form()
+    query_ocr, form_ocr = request.query_params.get("ocr"), form.get("ocr")
+    if query_ocr and form_ocr and query_ocr != form_ocr:
+        raise HTTPException(422, "Conflicting OCR selectors")
+    ocr = query_ocr or form_ocr or "local"
+    force_ocr = (
+        str(
+            form.get("force_ocr", request.query_params.get("force_ocr", "false"))
+        ).lower()
+        == "true"
+    )
+    scope = request.headers.get("X-Parse-Scope", "")
+    if scope and (len(scope) != 64 or any(c not in "0123456789abcdef" for c in scope)):
+        raise HTTPException(422, "Invalid parse scope")
     if ocr not in {"local", "hosted"}:
         raise HTTPException(status_code=422, detail="ocr must be 'local' or 'hosted'")
 
     parser = PARSERS[ext]
+    cancelled = threading.Event()
+
+    async def watch_disconnect():
+        while not cancelled.is_set():
+            await asyncio.sleep(0.25)
+            if await request.is_disconnected():
+                cancelled.set()
+
+    watcher = asyncio.create_task(watch_disconnect())
     try:
         if ext == "pdf":
-            result = _parse_pdf(content, file.filename, ocr=ocr)
+            result = await asyncio.to_thread(
+                _parse_pdf,
+                content,
+                file.filename,
+                ocr=ocr,
+                scope=scope,
+                force_ocr=force_ocr,
+                cancelled=cancelled,
+            )
         else:
-            result = parser(content, file.filename)
+            result = await asyncio.to_thread(parser, content, file.filename)
         md = result.get("markdown", "")
         meta = result.get("metadata", {})
         meta["size_bytes"] = len(content)
@@ -444,3 +276,8 @@ async def parse_file(file: UploadFile, ocr: str = "local"):
     except Exception as e:
         logger.exception("Parse failed for %s", file.filename)
         return ParseResponse(success=False, error=str(e))
+    finally:
+        cancelled.set()
+        watcher.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await watcher
