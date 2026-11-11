@@ -1016,6 +1016,7 @@ class GroktocrawlClient:
             parse_resp = await client.post(
                 "/v2/parse",
                 files={"file": (filename, file_content, dl_content_type)},
+                timeout=float(os.getenv("PARSE_DOCUMENT_MAX_SECONDS", "1800")) + 60,
             )
             parse_resp.raise_for_status()
             return parse_resp.json()
@@ -1434,6 +1435,7 @@ class GroktocrawlClient:
             response = await client.post(
                 f"/v2/session/{quote(session_id, safe='')}/documents",
                 data={"upload_id": upload_id},
+                timeout=float(os.getenv("PARSE_DOCUMENT_MAX_SECONDS", "1800")) + 60,
             )
         else:
             if content_base64 is None or len(content_base64) > 4 * (
@@ -1446,7 +1448,7 @@ class GroktocrawlClient:
             response = await client.post(
                 f"/v2/session/{quote(session_id, safe='')}/documents",
                 files={"file": (filename, content, media_type)},
-                timeout=120,
+                timeout=float(os.getenv("PARSE_DOCUMENT_MAX_SECONDS", "1800")) + 60,
             )
         if response.status_code >= 400:
             return self._error_result(

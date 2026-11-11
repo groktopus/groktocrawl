@@ -360,6 +360,7 @@ services:
         condition: service_healthy
         required: false
     environment:
+      - PARSE_DOCUMENT_MAX_SECONDS=${PARSE_DOCUMENT_MAX_SECONDS:-1800}
       - DURABLE_RESEARCH_POSTGRES_DSN=${DURABLE_RESEARCH_POSTGRES_DSN:-postgresql://groktocrawl@research-postgres:5432/groktocrawl}
       - RESEARCH_MEMORY_VECTOR_MODE=${RESEARCH_MEMORY_VECTOR_MODE:-qdrant}
       - RESEARCH_MEMORY_PGVECTOR_DSN=${RESEARCH_MEMORY_PGVECTOR_DSN:-postgresql://groktocrawl@research-postgres:5432/groktocrawl}
@@ -457,6 +458,17 @@ services:
       dockerfile: parse-svc/Dockerfile
     image: ghcr.io/groktopus/groktocrawl-parse
     restart: unless-stopped
+    environment:
+      PARSE_EXTRACT_TABLES: ${PARSE_EXTRACT_TABLES:-false}
+      PARSE_STATE_DIR: /var/lib/groktocrawl-parse
+      PARSE_PAGE_TIMEOUT_SECONDS: ${PARSE_PAGE_TIMEOUT_SECONDS:-30}
+      PARSE_DOCUMENT_MAX_SECONDS: ${PARSE_DOCUMENT_MAX_SECONDS:-1800}
+      PARSE_PAGE_RETRIES: ${PARSE_PAGE_RETRIES:-1}
+      PARSE_RENDER_MAX_EDGE: ${PARSE_RENDER_MAX_EDGE:-2000}
+      PARSE_STATE_TTL_SECONDS: ${PARSE_STATE_TTL_SECONDS:-604800}
+      PARSE_STATE_MAX_BYTES: ${PARSE_STATE_MAX_BYTES:-1073741824}
+    volumes:
+      - parse_state:/var/lib/groktocrawl-parse
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8013/health', timeout=3)"]
       interval: 10s
@@ -479,6 +491,7 @@ services:
       - SESSION_TTL=${SESSION_TTL:-3600}
       - SESSION_SWEEP_INTERVAL=${SESSION_SWEEP_INTERVAL:-300}
       - HTTP_TIMEOUT=${HTTP_TIMEOUT:-300}
+      - PARSE_DOCUMENT_MAX_SECONDS=${PARSE_DOCUMENT_MAX_SECONDS:-1800}
     depends_on:
       - agent-svc
     restart: unless-stopped
@@ -489,6 +502,7 @@ secrets:
     file: ${DURABLE_RESEARCH_POSTGRES_PASSWORD_FILE:-/dev/null}
 
 volumes:
+  parse_state:
   research_postgres_data:
   valkey_data:
   qdrant_data:

@@ -10,8 +10,9 @@ WORKDIR /app
 COPY parse-svc/pyproject.toml .
 RUN pip install --no-cache-dir -e .
 
-# Heavy/optional deps — install separately so failures don't block the build
-RUN pip install --no-cache-dir pytesseract pdf2image tabula-py camelot-py 2>/dev/null || true
+
+# Optional table extraction; never blocks baseline OCR installation.
+RUN pip install --no-cache-dir camelot-py || true
 
 COPY parse-svc/parse_svc/ parse_svc/
 COPY common/ common/

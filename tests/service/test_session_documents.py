@@ -74,7 +74,7 @@ def document_app(monkeypatch):
     store = DocumentStore()
     monkeypatch.setattr(documents, "SessionStore", lambda **_kwargs: store)
 
-    async def parse_fixture(content, filename, _media_type):
+    async def parse_fixture(content, filename, _media_type, _headers=None):
         parser = (
             _parse_pdf
             if filename.endswith(".pdf")
@@ -117,9 +117,10 @@ async def test_real_pdf_table_and_docx_heading_admission_exact_passages(document
         pdf = await attach(client)
         assert pdf.status_code == 200
         pdf_meta = pdf.json()
-        assert pdf_meta["extraction"]["extraction"] == "pypdf"
+        assert pdf_meta["extraction"]["extraction"] == "pagewise"
         assert pdf_meta["extraction"]["pages"] == 1
-        assert pdf_meta["anchors"] == []  # pypdf supplies no passage/page mapping.
+        assert pdf_meta["anchors"][0]["label"] == "--- Page 1 ---"
+        assert pdf_meta["extraction"]["coverage"]["status"] == "complete"
         text = store.refs[pdf_meta["ref_id"]]["markdown"]
         assert "Research | 12000 | 11000" in text
         assert pdf_meta["content_digest"] == hashlib.sha256(text.encode()).hexdigest()
@@ -227,7 +228,8 @@ async def test_expired_or_foreign_staged_upload_is_explicit_and_not_parsed(
 ):
     app, _store = document_app
     monkeypatch.setattr("redis.Redis.from_url", lambda *_args, **_kwargs: object())
-    monkeypatch.setattr(documents, "_consume_upload", lambda *_args: None)
+    monkeypatch.setattr(documents, "_ack_upload", lambda *_args: True)
+    monkeypatch.setattr(documents, "_read_upload", lambda *_args: None)
     async with httpx.AsyncClient(
         transport=httpx.ASGITransport(app=app), base_url="http://fixture"
     ) as client:
@@ -326,9 +328,10 @@ async def test_staged_document_admission_retains_actual_filename_and_media_type(
 ):
     app, _store = document_app
     monkeypatch.setattr("redis.Redis.from_url", lambda *_args, **_kwargs: object())
+    monkeypatch.setattr(documents, "_ack_upload", lambda *_args: True)
     monkeypatch.setattr(
         documents,
-        "_consume_upload",
+        "_read_upload",
         lambda *_args: (b"Private text", "text/plain", "retained-name.txt"),
     )
     async with httpx.AsyncClient(

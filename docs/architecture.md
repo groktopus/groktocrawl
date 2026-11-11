@@ -82,6 +82,19 @@ changed source records are not silently replaced. An explicit follow-up starts
 a separate investigation; previewing one does not run research. These paths
 share the API through CLI and MCP clients.
 
+## Pagewise PDF extraction target
+
+[ADR-0079](adr/0079-extract-pdf-evidence-page-by-page.md) establishes the next parse
+architecture before implementation: native text or local Tesseract OCR selected per
+page, parse-owned durable page checkpoints on a single-host volume, one shared OCR
+admission lane, and explicit partial/interrupted coverage. The agent forwards authenticated scope through the existing synchronous parse API;
+parse-svc owns source bytes, execution and ordered page receipts. Re-submission reuses
+committed pages; this is not a new background job API. This does not change the generic legacy
+job recovery or research ledger contracts above. See the [interface and failure
+contract](specs/pagewise-pdf-extraction.md) and [rollout runbook](runbooks/pagewise-pdf-extraction.md).
+These are target contracts until the implementation and production verification
+are recorded; the current synchronous parse route alone is not resumable.
+
 ## Scraping pipeline
 
 ```mermaid

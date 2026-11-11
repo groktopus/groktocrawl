@@ -1746,6 +1746,7 @@ async def test_document_client_bytes_and_scoped_metadata_workflow():
         assert calls[-1].headers["Authorization"] == "Bearer fixture-key"
         assert b'filename="report.pdf"' in calls[-1].content
         assert b"private file bytes" in calls[-1].content
+        assert calls[-1].extensions["timeout"]["read"] == 1860
         await client.document_list("session")
         assert calls[-1].method == "GET"
         await client.document_read("session", "doc_fixture", 4, 16)
@@ -1805,6 +1806,7 @@ async def test_staged_attachment_does_not_read_remote_url_or_local_path():
         await client.document_attach("session", "unused", upload_id="scoped-upload")
         assert calls[0].url.host == "fixture"
         assert calls[0].content == b"upload_id=scoped-upload"
+        assert calls[0].extensions["timeout"]["read"] == 1860
         assert len(calls) == 1
     finally:
         await client.close()

@@ -7,7 +7,7 @@ from uuid import uuid4
 
 import pytest
 from agent.exceptions import NotFoundError
-from agent.routes.parse import _consume_upload, _stage_upload
+from agent.routes.parse import _ack_upload, _read_upload, _stage_upload
 from agent.session_scope import authorize_session, request_scope
 from agent.session_store import SessionStore
 from redis import Redis
@@ -48,7 +48,7 @@ def storage():
     store.redis.close()
 
 
-def test_staged_upload_owner_and_single_use_are_atomic(storage):
+def test_staged_upload_read_and_versioned_ack_are_atomic(storage):
     _store, redis, _sessions, uploads = storage
     upload_id = str(uuid4())
     uploads.append(upload_id)
@@ -62,14 +62,31 @@ def test_staged_upload_owner_and_single_use_are_atomic(storage):
     assert _stage_upload(
         redis, upload_id, "owner", b"private", "text/plain", "private.txt"
     )
-    assert _consume_upload(redis, upload_id, "foreign") is None
+    assert _read_upload(redis, upload_id, "foreign") is None
     assert redis.get(prefix + ":data") == b"private"
-    assert _consume_upload(redis, upload_id, "owner") == (
+    assert _read_upload(redis, upload_id, "owner") == (
         b"private",
         "text/plain",
         "private.txt",
     )
-    assert _consume_upload(redis, upload_id, "owner") is None
+    # Reading never consumes bytes; only an owner/exact-version acknowledgement does.
+    assert _read_upload(redis, upload_id, "owner")[0] == b"private"
+    assert not _ack_upload(
+        redis, upload_id, "foreign", b"private", "text/plain", "private.txt"
+    )
+    assert _stage_upload(redis, upload_id, "owner", b"newer", "text/plain", "new.txt")
+    assert not _ack_upload(
+        redis, upload_id, "owner", b"private", "text/plain", "private.txt"
+    )
+    assert _read_upload(redis, upload_id, "owner")[0] == b"newer"
+    assert _stage_upload(
+        redis, upload_id, "owner", b"newer", "application/pdf", "corrected.pdf"
+    )
+    assert not _ack_upload(redis, upload_id, "owner", b"newer", "text/plain", "new.txt")
+    assert _ack_upload(
+        redis, upload_id, "owner", b"newer", "application/pdf", "corrected.pdf"
+    )
+    assert _read_upload(redis, upload_id, "owner") is None
     assert not redis.exists(prefix + ":owner")
 
 
@@ -81,7 +98,7 @@ def test_expired_upload_cannot_be_resurrected_by_late_staging(storage):
         redis, upload_id, "owner", b"private", "text/plain", "private.txt"
     )
     assert not redis.exists(f"parse:upload:{upload_id}:data")
-    assert _consume_upload(redis, upload_id, "owner") is None
+    assert _read_upload(redis, upload_id, "owner") is None
 
 
 @pytest.mark.asyncio
@@ -171,7 +188,7 @@ async def test_actual_upload_reservation_transfer_and_document_admission(
     monkeypatch.setattr(documents, "_get_redis_url", lambda _request: url)
     monkeypatch.setattr(documents, "SessionStore", lambda **_kwargs: store)
 
-    async def extract(content, filename, _media_type):
+    async def extract(content, filename, _media_type, _headers=None):
         return {
             "success": True,
             "data": {
@@ -244,7 +261,7 @@ async def test_actual_upload_reservation_transfer_and_document_admission(
             await client.put(f"/v2/parse/upload/{next_upload}", content=b"123")
         ).status_code == 400
         assert (
-            _consume_upload(
+            _read_upload(
                 _redis,
                 next_upload,
                 request_scope(SimpleNamespace(headers={"X-API-Key": "owner-fixture"})),
@@ -363,7 +380,7 @@ async def test_mixed_local_document_and_web_question_resolves_exact_citation_spa
     references = []
     generations = []
 
-    async def parse_local(content, filename, _media_type):
+    async def parse_local(content, filename, _media_type, _headers=None):
         parser = (
             _parse_pdf
             if filename.endswith(".pdf")

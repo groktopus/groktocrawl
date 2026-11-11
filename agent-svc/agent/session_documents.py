@@ -75,6 +75,13 @@ def document_ref(
         or len(json.dumps(metadata).encode()) > MAX_EXTRACTION_METADATA_BYTES
     ):
         raise UpstreamError(detail="Document extraction metadata exceeds its bound")
+    coverage = metadata.get("coverage", {})
+    if not isinstance(coverage, dict):
+        raise UpstreamError(detail="Document extraction coverage is malformed")
+    if coverage.get("status", "complete") != "complete":
+        raise UpstreamError(
+            detail="Document extraction is incomplete; resubmit to resume completed page checkpoints"
+        )
     name = safe_filename(filename)
     anchors = extraction_anchors(markdown)
     if len(json.dumps(anchors).encode()) > MAX_EXTRACTION_METADATA_BYTES:

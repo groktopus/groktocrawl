@@ -1541,7 +1541,7 @@ class Client:
                 files={"file": f},
                 data={"ocr": ocr},
                 headers=headers,
-                timeout=120,
+                timeout=float(os.getenv("PARSE_DOCUMENT_MAX_SECONDS", "1800")) + 60,
             )
         if resp.status_code >= 400:
             try:
@@ -1573,7 +1573,10 @@ class Client:
         headers = {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
         if upload_id:
             response = requests.post(
-                url, data={"upload_id": upload_id}, headers=headers, timeout=120
+                url,
+                data={"upload_id": upload_id},
+                headers=headers,
+                timeout=float(os.getenv("PARSE_DOCUMENT_MAX_SECONDS", "1800")) + 60,
             )
         elif filepath:
             with open(filepath, "rb") as handle:
@@ -1585,7 +1588,7 @@ class Client:
                 url,
                 files={"file": (os.path.basename(filepath), body, media_type)},
                 headers=headers,
-                timeout=120,
+                timeout=float(os.getenv("PARSE_DOCUMENT_MAX_SECONDS", "1800")) + 60,
             )
         else:
             raise ApiError("Provide a file or --upload-id")
@@ -1620,7 +1623,7 @@ class Client:
                 "X-Filename": filename,
                 **({"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}),
             },
-            timeout=120,
+            timeout=float(os.getenv("PARSE_DOCUMENT_MAX_SECONDS", "1800")) + 60,
         )
         if resp.status_code >= 400:
             try:
@@ -1646,7 +1649,10 @@ class Client:
             }
         headers = {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
         resp = requests.post(
-            url, data={"upload_id": upload_id}, headers=headers, timeout=120
+            url,
+            data={"upload_id": upload_id},
+            headers=headers,
+            timeout=float(os.getenv("PARSE_DOCUMENT_MAX_SECONDS", "1800")) + 60,
         )
         if resp.status_code >= 400:
             try:

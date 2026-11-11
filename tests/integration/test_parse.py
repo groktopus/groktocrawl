@@ -6,15 +6,14 @@ the unchanged /parse response shape, and health/metrics.
 
 import io
 import shutil
-import sys
 from contextlib import contextmanager
 from pathlib import Path
-from types import ModuleType, SimpleNamespace
 from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
 from parse_svc.app import MAX_SIZE_MB, app
+from PIL import Image
 
 from tests.outcome_governance import governed_skip
 
@@ -25,53 +24,38 @@ _FIXTURES = Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "anydoc
 
 def _require_real_ocr() -> None:
     """Skip the real-engine checks where tesseract is not installed."""
-    try:
-        import pdf2image  # noqa: F401
-        import pytesseract  # noqa: F401
-    except ImportError:
+    if any(shutil.which(binary) is None for binary in ("tesseract", "pdftoppm")):
         governed_skip(
-            "real OCR dependencies (pytesseract/pdf2image) are not installed",
+            "the tesseract or pdftoppm binary is not installed",
             owner="repository-maintainer",
             issue="#689",
             classification="retained",
-            environment="parse-svc image or a host with pytesseract and pdf2image",
-        )
-    if shutil.which("tesseract") is None:
-        governed_skip(
-            "the tesseract binary is not installed",
-            owner="repository-maintainer",
-            issue="#689",
-            classification="retained",
-            environment="parse-svc image or a host with the tesseract binary",
+            environment="parse-svc image or a host with tesseract and pdftoppm binaries",
         )
 
 
 @contextmanager
 def _ocr_stub(pages: list[list[list[tuple[str, float]]]]):
     """Replace tesseract with deterministic word/confidence rows."""
-    pdf2image = ModuleType("pdf2image")
-    pdf2image.convert_from_bytes = lambda *args, **kwargs: list(range(len(pages)))
-    pytesseract = ModuleType("pytesseract")
-    pytesseract.Output = SimpleNamespace(DICT="dict")
 
-    def image_to_data(image, lang=None, output_type=None):
-        assert output_type == "dict"
-        rows: dict[str, list] = {
-            "block_num": [],
-            "line_num": [],
-            "conf": [],
-            "text": [],
-        }
-        for line_index, line in enumerate(pages[image]):
-            for word, confidence in line:
-                rows["block_num"].append(1)
-                rows["line_num"].append(line_index + 1)
-                rows["conf"].append(confidence)
-                rows["text"].append(word)
-        return rows
+    def render(content, number, settings, deadline):
+        image = Image.new("RGB", (20, 20), "black")
+        image.info["page_index"] = number - 1
+        return image
 
-    pytesseract.image_to_data = image_to_data
-    with patch.dict(sys.modules, {"pdf2image": pdf2image, "pytesseract": pytesseract}):
+    def ocr(image, timeout, lock_path):
+        lines = pages[image.info["page_index"]]
+        words = [pair for line in lines for pair in line]
+        return (
+            "\n".join(" ".join(w for w, c in line) for line in lines),
+            sum(c for w, c in words) / len(words) / 100,
+            len(words),
+        )
+
+    with (
+        patch("parse_svc.pagewise.render_page", side_effect=render),
+        patch("parse_svc.pagewise.tesseract_page", side_effect=ocr),
+    ):
         yield
 
 
@@ -250,7 +234,7 @@ def test_scanned_pdf_not_raw_noise():
     data = resp.json()
     assert data["success"] is True
     assert data["data"]["metadata"]["format"] == "pdf"
-    if data["data"]["metadata"].get("ocr", {}).get("quality") == "unavailable":
+    if data["data"]["metadata"]["coverage"]["status"] != "complete":
         assert data["data"]["metadata"]["degraded"] is True
 
 
@@ -267,8 +251,9 @@ def test_low_confidence_ocr_response_keeps_envelope_and_flags_degraded():
     assert body["success"] is True
     assert "ASCIT formnat" in body["data"]["markdown"]
     metadata = body["data"]["metadata"]
-    assert metadata["extraction"] == "local_ocr"
-    assert metadata["ocr"]["quality"] == "low"
+    assert metadata["extraction"] == "pagewise"
+    assert metadata["page_results"][0]["confidence"] == pytest.approx(0.31)
+    assert metadata["coverage"]["status"] == "failed"
     assert metadata["degraded"] is True
     assert metadata["warnings"] == ["low_ocr_confidence"]
 
@@ -279,9 +264,11 @@ def test_scanned_readable_fixture_has_expected_ocr_text():
     resp = _upload("scanned-readable.pdf", "application/pdf")
     assert resp.status_code == 200
     metadata = resp.json()["data"]["metadata"]
-    assert metadata["extraction"] == "local_ocr"
+    assert metadata["extraction"] == "pagewise"
     assert "ASCII format for Network Interchange" in resp.json()["data"]["markdown"]
-    assert metadata["ocr"]["quality"] == "ok"
+    assert metadata["coverage"]["status"] == "complete"
+    assert metadata["page_results"][0]["engine"] == "tesseract"
+    assert metadata["page_results"][0]["confidence"] >= 0.6
     assert metadata.get("degraded") is None
 
 
@@ -291,7 +278,8 @@ def test_scanned_degraded_fixture_is_flagged():
     resp = _upload("scanned-degraded.pdf", "application/pdf")
     assert resp.status_code == 200
     metadata = resp.json()["data"]["metadata"]
-    assert metadata["ocr"]["quality"] != "ok"
+    assert metadata["coverage"]["status"] != "complete"
+    assert metadata["page_results"][0]["status"] == "failed"
     assert metadata["degraded"] is True
 
 

@@ -16,6 +16,6 @@ dependencies = [
 
 [tool.deptry.per_rule_ignores]
 # Uvicorn is the container entry point. FastAPI loads multipart support dynamically,
-# Pillow supports optional OCR, and the three imports below are optional enrichments.
-DEP001 = ["pytesseract", "pdf2image", "camelot"]
-DEP002 = ["uvicorn", "python-multipart", "pillow"]
+# Camelot is an optional enrichment installed separately in the image.
+DEP001 = ["camelot"]
+DEP002 = ["uvicorn", "python-multipart"]
