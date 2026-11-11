@@ -58,3 +58,45 @@ model's vision capability or changing other model consumers.
 Observe queue wait, active OCR count, completed/failed/skipped pages, engine/fallback
 counts, retry/unknown dispatches, page latency, output-token exhaustion and total execution
 age. Label metrics with bounded categories, not source URLs, filenames or private text.
+
+## Current controls
+
+The default CPU backend remains `PARSE_OCR_BACKEND=tesseract`. To select the local
+vision model, configure `gemma`, an explicit private/loopback IP endpoint ending
+in `/v1`, the served model name, and immutable model revision. Mount its credential
+through `PARSE_OCR_API_KEY_FILE`; do not use a shared model-router alias. The
+`PARSE_STATE_DIR` volume is mandatory for Gemma. Checkpoints retain the original
+source as a SQLite BLOB, not a separately managed source file.
+
+Default limits are 30 seconds per model call, two lifetime attempts per page,
+1,800 seconds per document, 2,000 pixels on the rendered image's longest edge,
+and 4,096 completion tokens. The document allowance is page-proportional up to
+that maximum. Agent, CLI and MCP parsing/attachment transports allow the document
+maximum plus 60 seconds; configure reverse proxies consistently. A partial result
+is not eligible for session admission. Repeat the same scoped source submission
+to reuse completed pages; no background job is silently created.
+
+State expires after seven days of inactivity and is capped at 1 GiB by default.
+Active or uncertain executions are not removed by expiry cleanup. Capacity
+exhaustion rejects admission instead of evicting unresolved work. Back up the
+checkpoint database and preserve its volume during rollback.
+
+`PARSE_EXTRACT_TABLES=true` enables optional page-bounded Camelot enrichment. It is
+off by default: native text does not promise table layout, while Gemma transcription
+is used only on pages selected for OCR. The unused Tabula installation is removed;
+Tesseract, Poppler and optional Camelot remain available.
+
+### Reconcile an uncertain dispatch
+
+First quiesce other producers of requests to the shared model endpoint. Confirm
+that the backend is healthy and that stopping producers will not interrupt an
+unrelated task. Then, inside the configured parser container:
+
+```sh
+docker compose exec parse-svc python -m parse_svc.reconcile --confirm-quiesced
+```
+
+The command holds the same global admission lock, checks running and waiting model
+requests twice, and records the decision before clearing the marker. It refuses
+non-idle/unavailable metrics. It does not reset page attempt history. Do not run
+it as an automatic retry handler or claim a timed-out request never ran.

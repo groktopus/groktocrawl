@@ -22,7 +22,7 @@ replay every completed page after interruption, or manufacture complete coverage
 ## Decision
 
 Keep document extraction in `parse-svc`; do not introduce an OCR broker, GPU model
-service, or database server. Use a parse-owned SQLite ledger and source files on a
+service, or database server. Use a parse-owned SQLite ledger and source BLOBs on a
 persistent local volume. This deployment is **one parse service on one host**;
 processes sharing its volume coordinate through file locks. Horizontal placement
 on independent hosts/volumes is unsupported and must not be advertised as globally

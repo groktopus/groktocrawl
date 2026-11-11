@@ -52,7 +52,7 @@ verify production proxy limits. Do not introduce an arbitrary hidden page cap.
 
 ## Page contract
 
-Retain original bytes/checkpoints for a documented configurable retention period.
+Retain original bytes/checkpoints as atomic SQLite records for `PARSE_STATE_TTL_SECONDS` (default seven days). `PARSE_STATE_MAX_BYTES` defaults to 1 GiB and bounds retained source/result payload; operators must also monitor filesystem headroom.
 Cleanup only inactive expired executions, never active/uncertain lane evidence; enforce
 volume capacity before accepting source bytes and fail explicitly on storage exhaustion.
 Checkpoint schema migrations are versioned and non-destructive.
@@ -91,7 +91,7 @@ page separators without altering the retained source bytes/digest.
 
 SQLite commits source/execution acceptance, page completion and terminal projection
 atomically within their respective local transactions. Inference/render/network calls
-occur outside transactions. Execution ownership generations fence stale writes. At-least-once
+occur outside transactions. Lifetime document locks fence concurrent/stale writers on the supported single-host shared volume. At-least-once
 execution scheduling is harmless only when committed page receipts are checked before
 inference; duplicate callers must not duplicate active work.
 
@@ -132,3 +132,11 @@ not be treated by downstream research as full source coverage.
 - Existing synchronous parsing, sessions and digests remain compatible.
 - Real long-report extraction: page count/coverage and retained page citations. Native
   full-document success alone is not evidence that Gemma read every page.
+
+## Session snapshot compatibility
+
+A session keeps its first admitted extraction for identical original bytes. A repeat
+attachment reports `duplicate: true` and returns that existing snapshot, even when
+a new parser policy produced different text. A new session is needed to adopt a
+new extraction without changing existing citation offsets. Generic parsing may
+return a new policy-versioned extraction independently.

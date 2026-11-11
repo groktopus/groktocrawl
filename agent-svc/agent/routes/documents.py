@@ -19,7 +19,14 @@ from ..session_documents import (
 from ..session_scope import authorize_session, request_scope
 from ..session_store import SessionStore
 from ._helpers import _get_redis_url
-from .parse import PARSE_SVC_URL, _consume_upload, _parse_upstream_response
+from .parse import (
+    PARSE_SVC_URL,
+    _ack_upload,
+    _parse_upstream_response,
+    _read_upload,
+    parse_headers,
+    parse_timeout,
+)
 
 router = APIRouter()
 MAX_MULTIPART_OVERHEAD_BYTES = 64 * 1024
@@ -66,14 +73,18 @@ def _metadata(ref_id: str, ref: dict[str, Any]) -> dict[str, Any]:
 
 
 async def _parse_document(
-    content: bytes, filename: str, media_type: str
+    content: bytes,
+    filename: str,
+    media_type: str,
+    headers: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Use only the established Parse service; no arbitrary acquisition URL."""
-    async with httpx.AsyncClient(timeout=120) as client:
+    async with httpx.AsyncClient(timeout=parse_timeout()) as client:
         response = await client.post(
             f"{PARSE_SVC_URL}/parse",
             files={"file": (filename, content, media_type)},
             data={"ocr": "local"},
+            headers=headers,
         )
     return _parse_upstream_response(response)
 
@@ -123,7 +134,7 @@ async def attach_session_document(session_id: str, request: Request) -> dict[str
 
             redis = Redis.from_url(_get_redis_url(request), decode_responses=False)
             consumed = await asyncio.to_thread(
-                _consume_upload, redis, upload_id, request_scope(request)
+                _read_upload, redis, upload_id, request_scope(request)
             )
             if consumed is None:
                 raise NotFoundError(
@@ -140,8 +151,11 @@ async def attach_session_document(session_id: str, request: Request) -> dict[str
         raise InvalidRequestError(
             detail="Document exceeds 10 MiB admission limit or is empty"
         )
+    original_filename = filename
     filename = safe_filename(filename)
-    parsed = await _parse_document(content, filename, media_type)
+    parsed = await _parse_document(
+        content, filename, media_type, parse_headers(request)
+    )
     ref_id, ref = await asyncio.to_thread(
         document_ref,
         session_id,
@@ -153,6 +167,16 @@ async def attach_session_document(session_id: str, request: Request) -> dict[str
     async with _document_lock(store, session_id, request):
         refs = await store.aget_refs(session_id)
         if ref_id in refs:
+            if isinstance(upload_id, str):
+                await asyncio.to_thread(
+                    _ack_upload,
+                    redis,
+                    upload_id,
+                    request_scope(request),
+                    content,
+                    media_type,
+                    original_filename,
+                )
             return {
                 "session_id": session_id,
                 "duplicate": True,
@@ -163,6 +187,16 @@ async def attach_session_document(session_id: str, request: Request) -> dict[str
             raise NotFoundError(
                 detail="Session expired or was deleted before admission"
             )
+    if isinstance(upload_id, str):
+        await asyncio.to_thread(
+            _ack_upload,
+            redis,
+            upload_id,
+            request_scope(request),
+            content,
+            media_type,
+            original_filename,
+        )
     return {"session_id": session_id, "duplicate": False, **_metadata(ref_id, ref)}
 
 

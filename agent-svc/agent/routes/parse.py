@@ -1,12 +1,17 @@
 """Parse route handlers — file upload and content extraction."""
 
 import asyncio
+import hashlib
 import logging
+import math
+import os
 import uuid
+from collections.abc import MutableMapping
 from typing import Any
 
 import httpx
 from fastapi import APIRouter, Request
+from starlette.datastructures import UploadFile
 
 from ..exceptions import InvalidRequestError, NotFoundError, UpstreamError
 from ..models import ParseResponse, ParseUploadUrlResponse
@@ -21,23 +26,52 @@ PARSE_SVC_URL = "http://parse-svc:8013"
 PARSE_UPLOAD_TTL = 3 * 60 * 60  # 3 hours, matches parse-svc/config.py
 PARSE_MAX_UPLOAD_BYTES = 50 * 1024 * 1024
 
-# Lua script: atomically get and delete the upload data.
-# Prevents race conditions where two concurrent parse requests
-# with the same upload_id both retrieve and process the file.
-_ATOMIC_GETDEL_SCRIPT = """
-if #KEYS > 4 then
-    local owner = redis.call('GET', KEYS[5]) or 'anonymous'
-    if owner ~= ARGV[1] then return nil end
-end
+# Read staged bytes without consuming them: extraction may be partial or interrupted.
+_READ_UPLOAD_SCRIPT = """
+local owner = redis.call('GET', KEYS[5]) or 'anonymous'
+if owner ~= ARGV[1] then return nil end
 local data = redis.call('GET', KEYS[1])
-if data then
-    local content_type = redis.call('GET', KEYS[2])
-    local filename = redis.call('GET', KEYS[3])
-    redis.call('DEL', unpack(KEYS))
-    return {data, content_type or false, filename or false}
-end
-return nil
+if not data then return nil end
+return {data, redis.call('GET', KEYS[2]) or false,
+        redis.call('GET', KEYS[3]) or false}
 """
+_ACK_UPLOAD_SCRIPT = """
+local owner = redis.call('GET', KEYS[5]) or 'anonymous'
+local data = redis.call('GET', KEYS[1])
+if owner ~= ARGV[1] or not data or redis.sha1hex(data) ~= ARGV[2] then return 0 end
+if (redis.call('GET', KEYS[2]) or 'application/octet-stream') ~= ARGV[3] then return 0 end
+if (redis.call('GET', KEYS[3]) or 'uploaded_file') ~= ARGV[4] then return 0 end
+return redis.call('DEL', unpack(KEYS))
+"""
+
+
+def parse_timeout() -> float:
+    """Transport exceeds the parser's bounded document execution allowance."""
+    value = float(os.getenv("PARSE_DOCUMENT_MAX_SECONDS", "1800"))
+    if not math.isfinite(value) or value <= 0:
+        raise ValueError("PARSE_DOCUMENT_MAX_SECONDS must be positive and finite")
+    return value + 60
+
+
+def parse_headers(request: Request) -> dict[str, str]:
+    return {
+        "X-Parse-Scope": hashlib.sha256(request_scope(request).encode()).hexdigest()
+    }
+
+
+def parse_complete(payload: dict[str, Any]) -> bool:
+    data = payload.get("data")
+    if payload.get("success") is not True or not isinstance(data, dict):
+        return False
+    if not isinstance(data.get("markdown"), str):
+        return False
+    metadata = data.get("metadata", {})
+    if not isinstance(metadata, dict):
+        return False
+    coverage = metadata.get("coverage", {})
+    return (
+        isinstance(coverage, dict) and coverage.get("status", "complete") == "complete"
+    )
 
 
 def _stage_upload(
@@ -74,34 +108,52 @@ def _stage_upload(
     )
 
 
-def _consume_upload(
-    r: Any, upload_id: str, scope_id: str | None = None
-) -> tuple[bytes, str, str] | None:
-    """Atomically consume staged bytes and the metadata needed to parse them."""
-    keys = [
-        f"parse:upload:{upload_id}:data",
-        f"parse:upload:{upload_id}:content_type",
-        f"parse:upload:{upload_id}:filename",
-        f"parse:upload:{upload_id}",
+def _upload_keys(upload_id: str) -> list[str]:
+    prefix = f"parse:upload:{upload_id}"
+    return [
+        prefix + suffix
+        for suffix in (":data", ":content_type", ":filename", "", ":owner")
     ]
-    if scope_id is not None:
-        keys.append(f"parse:upload:{upload_id}:owner")
-        consumed = r.register_script(_ATOMIC_GETDEL_SCRIPT)(keys=keys, args=[scope_id])
-    else:
-        consumed = r.register_script(_ATOMIC_GETDEL_SCRIPT)(keys=keys)
-    if not consumed:
-        return None
 
-    content, content_type_raw, filename_raw = consumed
-    content_type = (
-        content_type_raw.decode()
-        if isinstance(content_type_raw, bytes)
-        else "application/octet-stream"
+
+def _read_upload(
+    r: Any, upload_id: str, scope_id: str = "anonymous"
+) -> tuple[bytes, str, str] | None:
+    result = r.register_script(_READ_UPLOAD_SCRIPT)(
+        keys=_upload_keys(upload_id), args=[scope_id]
     )
-    filename = (
-        filename_raw.decode() if isinstance(filename_raw, bytes) else "uploaded_file"
+    if not result:
+        return None
+    content, content_type, filename = result
+    return (
+        content,
+        content_type.decode()
+        if isinstance(content_type, bytes)
+        else "application/octet-stream",
+        filename.decode() if isinstance(filename, bytes) else "uploaded_file",
     )
-    return content, content_type, filename
+
+
+def _ack_upload(
+    r: Any,
+    upload_id: str,
+    scope_id: str,
+    content: bytes,
+    content_type: str,
+    filename: str,
+) -> bool:
+    """Delete only matching successfully processed bytes and metadata."""
+    return bool(
+        r.register_script(_ACK_UPLOAD_SCRIPT)(
+            keys=_upload_keys(upload_id),
+            args=[
+                scope_id,
+                hashlib.sha1(content, usedforsecurity=False).hexdigest(),
+                content_type,
+                filename,
+            ],
+        )
+    )
 
 
 def _parse_upstream_response(resp: httpx.Response) -> Any:
@@ -113,11 +165,22 @@ def _parse_upstream_response(resp: httpx.Response) -> Any:
             detail="Parse service returned invalid response",
             details={"status_code": resp.status_code},
         ) from exc
+    if not isinstance(payload, dict):
+        raise UpstreamError(detail="Parse service returned invalid response")
     if resp.status_code >= 400:
         raise UpstreamError(
             detail=str(payload.get("detail", "Parse service request failed")),
             details={"status_code": resp.status_code},
         )
+    if payload.get("success") is True:
+        data = payload.get("data")
+        if not isinstance(data, dict) or not isinstance(data.get("markdown"), str):
+            raise UpstreamError(detail="Parse service returned invalid extraction")
+        metadata = data.get("metadata", {})
+        if not isinstance(metadata, dict) or not isinstance(
+            metadata.get("coverage", {}), dict
+        ):
+            raise UpstreamError(detail="Parse service returned invalid coverage")
     return payload
 
 
@@ -203,55 +266,88 @@ async def parse_file(request: Request) -> Any:
     ``ocr=hosted`` is an explicit opt-in and is forwarded only when the caller
     requests hosted OCR. The parse service remains local-first by default.
     """
-    form = await request.form()
-    form_ocr = form.get("ocr", "local")
-    ocr = form_ocr if isinstance(form_ocr, str) else "local"
-    if ocr not in {"local", "hosted"}:
-        raise InvalidRequestError(detail="ocr must be 'local' or 'hosted'")
+    received = 0
 
-    # Two-step mode: retrieve pre-uploaded file from Valkey
-    upload_id_raw = form.get("upload_id")
-    upload_id_str = upload_id_raw if isinstance(upload_id_raw, str) else None
-    if upload_id_str:
-        from redis import Redis
-
-        r = Redis.from_url(_get_redis_url(request), decode_responses=False)
-        consumed = await asyncio.to_thread(
-            _consume_upload, r, upload_id_str, request_scope(request)
-        )
-        if consumed is None:
+    async def bounded_receive() -> MutableMapping[str, Any]:
+        nonlocal received
+        message = await request.receive()
+        received += len(message.get("body", b""))
+        if received > PARSE_MAX_UPLOAD_BYTES + 64 * 1024:
             raise InvalidRequestError(
-                detail="Upload data not found or expired",
-                details={"upload_id": upload_id_str},
+                detail="Upload multipart transfer exceeds 50 MiB limit"
             )
-        content, content_type, filename = consumed
+        return message
 
-        async with httpx.AsyncClient(timeout=120) as client:
+    bounded_request = Request(request.scope, receive=bounded_receive)
+    async with bounded_request.form(max_files=1, max_fields=3) as form:
+        query_ocr = request.query_params.get("ocr")
+        if query_ocr is not None and "ocr" in form and query_ocr != form["ocr"]:
+            raise InvalidRequestError(detail="Conflicting query/form OCR mode")
+        form_ocr = form.get("ocr", query_ocr or "local")
+        ocr = form_ocr if isinstance(form_ocr, str) else "local"
+        if ocr not in {"local", "hosted"}:
+            raise InvalidRequestError(detail="ocr must be 'local' or 'hosted'")
+
+        # Two-step mode: retrieve pre-uploaded file from Valkey
+        upload_id_raw = form.get("upload_id")
+        upload_id_str = upload_id_raw if isinstance(upload_id_raw, str) else None
+        if upload_id_str:
+            from redis import Redis
+
+            r = Redis.from_url(_get_redis_url(request), decode_responses=False)
+            consumed = await asyncio.to_thread(
+                _read_upload, r, upload_id_str, request_scope(request)
+            )
+            if consumed is None:
+                raise InvalidRequestError(
+                    detail="Upload data not found or expired",
+                    details={"upload_id": upload_id_str},
+                )
+            content, content_type, filename = consumed
+
+            async with httpx.AsyncClient(timeout=parse_timeout()) as client:
+                resp = await client.post(
+                    f"{PARSE_SVC_URL}/parse",
+                    files={"file": (filename, content, content_type)},
+                    data={"ocr": ocr},
+                    headers=parse_headers(request),
+                )
+                payload = _parse_upstream_response(resp)
+                if parse_complete(payload):
+                    await asyncio.to_thread(
+                        _ack_upload,
+                        r,
+                        upload_id_str,
+                        request_scope(request),
+                        content,
+                        content_type,
+                        filename,
+                    )
+                return payload
+
+        # Direct mode: file in multipart form
+        if "file" not in form:
+            raise InvalidRequestError(
+                detail="No file provided. Use multipart form with 'file' field."
+            )
+
+        upload = form["file"]  # type: ignore[union-attr]
+        if not isinstance(upload, UploadFile):
+            raise InvalidRequestError(detail="file must be an uploaded file")
+        content = await upload.read(PARSE_MAX_UPLOAD_BYTES + 1)  # type: ignore[union-attr]
+        if len(content) > PARSE_MAX_UPLOAD_BYTES:
+            raise InvalidRequestError(detail="Upload exceeds 50 MiB limit")
+        async with httpx.AsyncClient(timeout=parse_timeout()) as client:
             resp = await client.post(
                 f"{PARSE_SVC_URL}/parse",
-                files={"file": (filename, content, content_type)},
+                files={
+                    "file": (
+                        upload.filename or "file",  # type: ignore[union-attr]
+                        content,
+                        upload.content_type or "application/octet-stream",  # type: ignore[union-attr]
+                    )
+                },
                 data={"ocr": ocr},
+                headers=parse_headers(request),
             )
             return _parse_upstream_response(resp)
-
-    # Direct mode: file in multipart form
-    if "file" not in form:
-        raise InvalidRequestError(
-            detail="No file provided. Use multipart form with 'file' field."
-        )
-
-    upload = form["file"]  # type: ignore[union-attr]
-    content = await upload.read()  # type: ignore[union-attr]
-    async with httpx.AsyncClient(timeout=120) as client:
-        resp = await client.post(
-            f"{PARSE_SVC_URL}/parse",
-            files={
-                "file": (
-                    upload.filename or "file",  # type: ignore[union-attr]
-                    content,
-                    upload.content_type or "application/octet-stream",  # type: ignore[union-attr]
-                )
-            },
-            data={"ocr": ocr},
-        )
-        return _parse_upstream_response(resp)
