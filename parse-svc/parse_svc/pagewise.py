@@ -372,6 +372,7 @@ def parse_pdf_pages(
                         }
                     )
                     continue
+                native = ""
                 try:
                     native = native_page(
                         source_path,
@@ -400,6 +401,20 @@ def parse_pdf_pages(
                         else "page_extraction_failed"
                     )
                     record = _failed(provenance, reason)
+                # Sparse native values remain evidence even when too short to
+                # qualify as a complete page. Never replace useful OCR output.
+                if (
+                    record["status"] in {"failed", "truncated", "skipped"}
+                    and native.strip()
+                ):
+                    native = native.strip()
+                    if native not in record["text"]:
+                        if not record["text"].strip():
+                            record["engine"] = "native"
+                        record["text"] += (
+                            "\n\n### Partial native text\n\n" if record["text"] else ""
+                        ) + native
+                        record["warnings"].append("native_text_incomplete")
                 if (
                     os.getenv("PARSE_EXTRACT_TABLES", "false").lower() == "true"
                     and record["status"] == "complete"

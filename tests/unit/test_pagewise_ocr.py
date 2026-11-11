@@ -449,3 +449,32 @@ def test_renderer_hard_deadline_without_pdfinfo(tmp_path, monkeypatch):
     with pytest.raises(DeadlineExceededError, match="render_timeout"):
         pagewise.render_page(b"pdf", 1, OcrSettings.load(), start + 0.2)
     assert time.monotonic() - start < 2
+
+
+def test_sparse_native_values_survive_both_ocr_failures(state, model, monkeypatch):
+    from parse_svc.checkpoints import CheckpointError
+
+    fake_pdf(monkeypatch, ["Revenue 2025 $42M"])
+
+    def fail(*args, **kwargs):
+        raise CheckpointError("test_ocr_failure")
+
+    monkeypatch.setattr(pagewise, "transcribe", fail)
+    monkeypatch.setattr(pagewise, "tesseract_page", fail)
+    result = pagewise.parse_pdf_pages(b"doc", "table.pdf", scope="one")
+    assert "Revenue 2025 $42M" in result["markdown"]
+    assert result["metadata"]["coverage"]["status"] == "failed"
+    assert "native_text_incomplete" in result["metadata"]["page_results"][0]["warnings"]
+
+
+def test_sparse_native_does_not_replace_partial_ocr(state, monkeypatch):
+    fake_pdf(monkeypatch, ["Revenue $42M"])
+    monkeypatch.setattr(
+        pagewise,
+        "tesseract_page",
+        lambda *a: ("Revenue $42M and operating profit $9M", 0.3, 7),
+    )
+    result = pagewise.parse_pdf_pages(b"doc", "table.pdf", scope="one")
+    assert "operating profit $9M" in result["markdown"]
+    assert result["markdown"].count("Revenue $42M") == 1
+    assert result["metadata"]["coverage"]["status"] == "failed"
