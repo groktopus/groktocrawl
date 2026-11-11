@@ -461,22 +461,14 @@ services:
     environment:
       PARSE_EXTRACT_TABLES: ${PARSE_EXTRACT_TABLES:-false}
       PARSE_STATE_DIR: /var/lib/groktocrawl-parse
-      PARSE_OCR_BACKEND: ${PARSE_OCR_BACKEND:-tesseract}
-      PARSE_OCR_BASE_URL: ${PARSE_OCR_BASE_URL:-}
-      PARSE_OCR_MODEL: ${PARSE_OCR_MODEL:-}
-      PARSE_OCR_MODEL_REVISION: ${PARSE_OCR_MODEL_REVISION:-}
-      PARSE_OCR_API_KEY_FILE: /run/secrets/parse_ocr_api_key
       PARSE_PAGE_TIMEOUT_SECONDS: ${PARSE_PAGE_TIMEOUT_SECONDS:-30}
       PARSE_DOCUMENT_MAX_SECONDS: ${PARSE_DOCUMENT_MAX_SECONDS:-1800}
       PARSE_PAGE_RETRIES: ${PARSE_PAGE_RETRIES:-1}
       PARSE_RENDER_MAX_EDGE: ${PARSE_RENDER_MAX_EDGE:-2000}
-      PARSE_OCR_MAX_TOKENS: ${PARSE_OCR_MAX_TOKENS:-4096}
       PARSE_STATE_TTL_SECONDS: ${PARSE_STATE_TTL_SECONDS:-604800}
       PARSE_STATE_MAX_BYTES: ${PARSE_STATE_MAX_BYTES:-1073741824}
     volumes:
       - parse_state:/var/lib/groktocrawl-parse
-    secrets:
-      - parse_ocr_api_key
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8013/health', timeout=3)"]
       interval: 10s
@@ -506,8 +498,6 @@ services:
     stop_grace_period: 35s
 
 secrets:
-  parse_ocr_api_key:
-    file: ${PARSE_OCR_API_KEY_FILE:-/dev/null}
   research_postgres_password:
     file: ${DURABLE_RESEARCH_POSTGRES_PASSWORD_FILE:-/dev/null}
 

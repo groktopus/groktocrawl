@@ -176,12 +176,6 @@ def test_self_hosted_research_inputs_use_only_owned_named_volumes():
     overlay = yaml.load(
         (ROOT / "compose.ci-research-inputs.yml").read_text(), Loader=ComposeLoader
     )
-    # CPU-only parser needs no model credential in CI; global secrets are reset.
-    parser = overlay["services"].pop("parse-svc")
-    assert parser == {
-        "secrets": [],
-        "environment": {"PARSE_OCR_API_KEY_FILE": "", "PARSE_OCR_BACKEND": "tesseract"},
-    }
     assert set(overlay["services"]) == {
         "research-postgres",
         "agent-svc",
