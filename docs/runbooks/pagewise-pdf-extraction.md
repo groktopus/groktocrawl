@@ -1,116 +1,69 @@
 # Pagewise PDF Extraction: Rollout and Recovery
 
-This is the rollout contract for [ADR-0079](../adr/0079-extract-pdf-evidence-page-by-page.md).
-Implementation-specific commands and measured evidence must be added by the release
-PR before promotion; this page does not imply unimplemented controls are available.
+The [ADR-0079](../adr/0079-extract-pdf-evidence-page-by-page.md) local pipeline uses
+native extraction plus Tesseract. Runtime simplification follows this revised contract;
+release evidence must name the actual merged revision and observed results.
 
-## Deployment requirements
+## Deployment
 
-- One parse-service deployment on a host, with a persistent local checkpoint volume
-  shared by its processes. Keep SQLite, original bytes, atomic page records and lock
-  files on that volume. Do not place lock/SQLite files on a storage backend whose
-  POSIX locking/durability semantics have not been verified.
-- Use a dedicated explicit local OCR endpoint/model/revision, secret-mounted credential
-  and versioned prompt/render policy. Never copy credentials or private hostnames into
-  public docs/evidence. No generic model-router fallback to an external provider.
-- Set the OCR lane to one in-flight request initially. This is an OCR admission bound,
-  not isolation from other clients of the shared model server. Tune only with measured
-  shared-load evidence, not the model's configured sequence count alone.
-- Validate page count, original byte size and bounded render pixels before dispatch.
-  Configure per-page attempts/timeouts and page-proportional document budget; expose
-  any rejected admission or partial coverage. Back up ledger plus source artifacts
-  consistently before a schema migration; keep migrations additive/versioned.
+- Deploy one parse-service owner per host with its processes sharing a persistent local
+  SQLite/lock volume. Verify local POSIX locking and filesystem durability; do not
+  claim coordination across independent hosts or volumes.
+- No OCR model endpoint, model token, GPU slot or backend-reconciliation job is needed.
+  Do not alter the existing shared vLLM service or other consumers.
+- Preserve the original PDF as a scoped SQLite BLOB and checkpoint completed pages.
+  Default retention is seven inactive days and a 1 GiB logical payload cap; monitor
+  free space. Cleanup skips active executions; do not delete old receipts during rollback.
+- Start with one globally coordinated local OCR worker. Bound native parsing, page
+  rendering, Tesseract and optional Camelot in local subprocesses. Timeouts kill/reap
+  children before releasing capacity; validate parent-death cleanup too.
+- Default page attempts are 30 seconds each, two lifetime attempts/page. Document
+  budget grows with page count up to 1,800 seconds. Parse caller transports allow
+  that maximum plus 60 seconds. Configure proxies consistently and record failures.
+- Rendering longest edge defaults to 2,000 pixels. Admission rejects more than 1,024
+  physical pages explicitly, native output is capped at 10 MiB/page, and output from
+  local OCR/table subprocesses is bounded. No silent first-ten-page truncation.
+- `PARSE_EXTRACT_TABLES=true` enables optional page-bounded Camelot enrichment; off by
+  default. Preserve Tesseract, Poppler and Camelot where used. Remove unused Tabula
+  installation and replaced model-specific code/config only after reference review.
 
-## Promotion evidence
+## Promotion
 
-1. Run targeted unit, integration and failure-boundary suites; include existing parse,
-   upload, session/source digest, webhook and authorization regressions.
-2. Build candidate images and identify exact commit/image digest. Inspect Compose and
-   confirm persistent storage is mounted, model health is good and no secrets are in
-   public changes. Keep prior image/config and checkpoint schema rollback compatibility.
-3. Deploy through protected merged revisions, not a dirty local checkout. Start with a
-   synthetic mixed PDF proving per-page selection, page 11+ and exact table numbers.
-4. Fetch a long public annual report from its publisher. Retain URL, retrieval time,
-   SHA-256 and physical page count. Run normal extraction and report native versus OCR
-   page counts. Rasterize selected representative pages into a separate image-only test
-   PDF for real OCR coverage; record that transformation and do not call it the original.
-5. Check first/middle/final page evidence, table values, ordering, progress, latency,
-   token/memory pressure, interruption/retry and shared-model responsiveness. Never
-   infer full OCR success from a native-text-only annual report run.
-6. Inventory old code/config removed and justify each removal. Preserve the CPU fallback,
-   converters, source retention, current working uploads and unrelated infrastructure.
+1. Run unit/service and real-process interruption/storage tests plus existing parsing,
+   staged-upload, session digest/citation and explicit hosted compatibility regressions.
+2. Inspect candidate Compose/state mounts; retain prior image/config and compatible
+   checkpoint backup. No secrets/private fixtures in source or public evidence.
+3. Merge only after protected checks and independent review. Deploy exact merged images,
+   not a dirty checkout. Verify health and a mixed fixture including page 11+.
+4. Fetch a long public annual report from its publisher; retain URL/date/SHA-256/bytes/
+   physical page count. Run normal extraction and reconcile all page dispositions.
+5. Rasterize selected real report pages as a clearly labeled image-only derivative,
+   retaining original-page mapping. Run Tesseract and compare table values, columns,
+   footnotes and first/middle/final evidence to the source. Native-report success alone
+   does not prove OCR quality; report native and OCR coverage separately.
+6. Repeat extraction to prove checkpoint reuse. Exercise timeout/interruption and verify
+   no orphan child overlaps the next OCR worker. Measure page latency, CPU/RAM, queue
+   wait and coverage. Do not make GPU/model performance claims for this CPU path.
+7. Inventory removals: obsolete model adapter/worker/reconciliation/config and old PDF
+   switch/cutoff. Keep source data, existing working non-PDF/hosted paths and unrelated
+   services. Record exact production revision, health, rollback and evidence links.
 
-## Interruption and rollback
+## Recovery and rollback
 
-An interrupted execution retains completed page checkpoints. A dispatched page without a
-known result and its global uncertainty marker require reconciliation: establish
-backend idle through trusted operator evidence (or restart it deliberately within
-approved operational scope), record the decision, then explicitly retry. Do not clear
-an uncertainty marker merely because a file lock/lease is no longer held. Retry does
-not erase attempt history, source identity, prior warnings or previously stored outputs.
+Re-submit the same scoped source to reuse complete pages. A timed-out/killed page remains
+incomplete; attempt history is retained. There is no backend-idle reconciliation step.
+Verify local children have terminated/reaped before restoring OCR admission. Do not
+clear locks manually while their owner may still run. Repeated local tool failures
+remain explicit partial/error outcomes, not a reason to send documents to a model.
 
-For repeated failures, stop new OCR admission, retain the ledger/source volume, and
-restore the previous parse image/config. Do not delete checkpoints or downgrade an
-incompatible ledger. Native/Tesseract fallback can be used only with truthful method
-and coverage metadata. A rollback of parse-svc does not require disabling the shared
-model's vision capability or changing other model consumers.
+For rollback, stop new extraction, allow or terminate/reap current workers, retain the
+checkpoint volume, and restore the prior parse image/config. Do not downgrade an
+incompatible SQLite schema or delete sources. Preserve any model-related historical
+state without activating its removed code path; storage cleanup follows normal
+retention, not ad hoc deletion. The vLLM configuration is outside this rollback.
 
-Observe queue wait, active OCR count, completed/failed/skipped pages, engine/fallback
-counts, retry/unknown dispatches, page latency, output-token exhaustion and total execution
-age. Label metrics with bounded categories, not source URLs, filenames or private text.
-
-## Current controls
-
-The default CPU backend remains `PARSE_OCR_BACKEND=tesseract`. To select the local
-vision model, configure `gemma`, an explicit private/loopback IP endpoint ending
-in `/v1`, the served model name, and immutable model revision. Mount its credential
-through `PARSE_OCR_API_KEY_FILE`; do not use a shared model-router alias. The
-`PARSE_STATE_DIR` volume is mandatory for Gemma. Checkpoints retain the original
-source as a SQLite BLOB, not a separately managed source file.
-
-Default limits are 30 seconds per model call, two lifetime attempts per page,
-1,800 seconds per document, 2,000 pixels on the rendered image's longest edge,
-and 4,096 completion tokens. The document allowance is page-proportional up to
-that maximum. Agent, CLI and MCP parsing/attachment transports allow the document
-maximum plus 60 seconds; configure reverse proxies consistently. A partial result
-is not eligible for session admission. Repeat the same scoped source submission
-to reuse completed pages; no background job is silently created.
-
-State expires after seven days of inactivity and is capped at 1 GiB by default.
-Active or uncertain executions are not removed by expiry cleanup. Capacity
-exhaustion rejects admission instead of evicting unresolved work. Back up the
-checkpoint database and preserve its volume during rollback.
-
-`PARSE_EXTRACT_TABLES=true` enables optional page-bounded Camelot enrichment. It is
-off by default: native text does not promise table layout, while Gemma transcription
-is used only on pages selected for OCR. The unused Tabula installation is removed;
-Tesseract, Poppler and optional Camelot remain available.
-
-### Reconcile an uncertain dispatch
-
-First quiesce other producers of requests to the shared model endpoint. Confirm
-that the backend is healthy and that stopping producers will not interrupt an
-unrelated task. Then, inside the configured parser container:
-
-```sh
-docker compose exec parse-svc python -m parse_svc.reconcile --confirm-quiesced
-```
-
-The command holds the same global admission lock, checks running and waiting model
-requests twice, and records the decision before clearing the marker. It refuses
-non-idle/unavailable metrics. It does not reset page attempt history. Do not run
-it as an automatic retry handler or claim a timed-out request never ran.
-
-Native PDF inspection/extraction and model HTTP execute in killable subprocesses,
-so page/document timeouts are total deadlines rather than socket inactivity timers.
-A killed model client still leaves the dispatch uncertain until reconciliation.
-The model response is capped at 2 MiB, individual native page text at 10 MiB, and
-PDF admission at 1,024 physical pages. Larger documents are rejected, not truncated.
-Reconciliation requires the endpoint, model and revision recorded at dispatch to
-match current settings; changing backends does not clear another backend's work.
-
-Response page receipts share invariant provenance at document level and do not
-repeat page text. Receipts are capped at 48 KiB with an explicit
-`page_results_omitted` count if needed; Markdown still contains all processed pages
-and full receipts remain in the retained checkpoint database. A 142-page receipt
-manifest is included in regression tests below the session's 64 KiB metadata cap.
+Observe bounded-category metrics for queue wait, active local OCR, page dispositions,
+engine, retry/process failures, timeouts and execution age. Do not log private text,
+filenames or source URLs as metric labels. Response manifests may report omitted page
+receipts due to their metadata bound; full receipts remain retained and coverage must
+still reconcile exactly.

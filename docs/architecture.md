@@ -85,7 +85,7 @@ share the API through CLI and MCP clients.
 ## Pagewise PDF extraction target
 
 [ADR-0079](adr/0079-extract-pdf-evidence-page-by-page.md) establishes the next parse
-architecture before implementation: native text or local vision OCR selected per
+architecture before implementation: native text or local Tesseract OCR selected per
 page, parse-owned durable page checkpoints on a single-host volume, one shared OCR
 admission lane, and explicit partial/interrupted coverage. The agent forwards authenticated scope through the existing synchronous parse API;
 parse-svc owns source bytes, execution and ordered page receipts. Re-submission reuses

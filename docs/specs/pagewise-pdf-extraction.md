@@ -1,142 +1,116 @@
 # Pagewise PDF Extraction Contract
 
-Status: implementation contract for [ADR-0079](../adr/0079-extract-pdf-evidence-page-by-page.md);
-not a claim that the routes below are already deployed.
+Revised contract for [ADR-0079](../adr/0079-extract-pdf-evidence-page-by-page.md).
+The local pipeline is native text plus Tesseract only. This document precedes the
+runtime simplification and is not itself production-verification evidence.
 
-## Ownership and interfaces
+## Interfaces and scope
 
-Keep synchronous `POST /v2/parse` and existing CLI/MCP behavior. No new async job
-endpoint or webhook contract is introduced. Re-submission of the same source under
-the same scope and extraction policy reuses committed page results. This does not
-promise work will continue after a client disconnect; only committed checkpoints
-are recoverable. Once disconnected, do not start more work where cancellation is
-observable; a started operation may still finish and must retain its known receipt.
+Keep synchronous `POST /v2/parse` and existing CLI/MCP behavior. No async job,
+webhook or polling API is introduced. Explicit re-submission of identical source
+bytes under the same scope/policy reuses committed page results. It does not promise
+background completion after disconnect or automatic replay following a restart.
 
-`agent-svc` derives `X-Parse-Scope` as SHA-256 of authenticated request scope; callers
-cannot supply a trusted value. Forward it through generic parse and session document
-paths; parse-svc is private-only. Cache IDs, state paths and lookup keys include scope.
-Never share existence/output/timing information across scopes. Private checkpoints
-are not exposed through a new unscoped API.
+The agent derives `X-Parse-Scope` as SHA-256 of authenticated caller scope and forwards
+it through generic parsing/session document paths. External callers cannot choose a
+trusted scope. Parse-svc remains private-only. State keys include scope; no cross-scope
+result access, existence disclosure or reuse of private content is allowed.
 
-Preserve `ocr=local|hosted` compatibility. Normalize query/form forwarding consistently:
-the current agent sends multipart while parse-svc reads query parameters. Support the
-existing query spelling and multipart form, rejecting conflicting values. Dedicated
-`PARSE_OCR_BACKEND=tesseract|gemma` selects the local backend; no public model override
-or silent external fallback is permitted. A local force-OCR evaluation option may be
-provided, explicitly identified in output; it must not relabel native extraction.
+Preserve `ocr=local|hosted` compatibility, with consistent query/form normalization
+and rejection of conflicting values. `local` means native-text extraction and local
+Tesseract, not a configurable model adapter. `hosted` remains a separate explicit
+legacy opt-in; missing local tools must never invoke it implicitly. Force-OCR mode is
+an evaluation option and must label engine/selection truthfully.
 
-Persist original bytes and execution identity before model dispatch. Do not consume
-staged uploads before work starts: retain them until complete success or their
-existing documented expiry. Record original source digest separately from extracted
-content digest and preserve current session attachment limits/authorization. Existing
-source retention APIs must not be repurposed as binary PDF storage without a separate
-contract change.
+Retain original bytes before extraction and staged upload bytes until complete success
+or documented expiry. Preserve original file digest separately from extraction digest,
+current session limits and authorization. Source storage for text-only research
+artifacts is not repurposed as a binary-PDF store.
 
-## Configuration contract
+## Budgets and storage
 
-Use `PARSE_OCR_BACKEND`, `PARSE_OCR_BASE_URL`, `PARSE_OCR_MODEL`,
-`PARSE_OCR_MODEL_REVISION`, `PARSE_OCR_API_KEY_FILE`, `PARSE_STATE_DIR`,
+Retain `PARSE_STATE_DIR`, `PARSE_STATE_TTL_SECONDS`, `PARSE_STATE_MAX_BYTES`,
 `PARSE_PAGE_TIMEOUT_SECONDS`, `PARSE_DOCUMENT_MAX_SECONDS`, `PARSE_PAGE_RETRIES`,
-`PARSE_RENDER_MAX_EDGE`, and `PARSE_OCR_MAX_TOKENS`.
-`PARSE_OCR_BACKEND` defaults to `tesseract`; `PARSE_STATE_DIR` is required for Gemma,
-while legacy CPU-only deployments may retain stateless compatibility. Persisted
-pagewise mode is the production target, not an implicit claim for stateless callers. Initial proposed defaults are a 30-second page attempt timeout, one retry (two total
-attempts/page), 4,096 output tokens, and a document allowance of
-`min(1800 seconds, 30 seconds + physical_pages * 60 seconds)`. These are provisional
-operational guardrails requiring the rollout measurements, not throughput claims.
-The per-document allowance grows with actual page count; the ceiling and attempt
-settings are configurable. Queue waits count. Matching configurable agent/session/
-CLI/MCP parse transport ceilings use the configured document maximum plus 60 seconds
-(initially 1,860 seconds), not the old 120-second bottleneck. Document and
-verify production proxy limits. Do not introduce an arbitrary hidden page cap.
+`PARSE_RENDER_MAX_EDGE`, and optional `PARSE_EXTRACT_TABLES`. Remove model endpoint,
+model revision, API-key, response-token and model-backend selection configuration.
+Legacy CPU-only deployments may use stateless compatibility; production page receipts
+require the configured durable state volume.
 
-## Page contract
+Initial configurable guardrails: 30 seconds per page attempt, one retry (two lifetime
+attempts/page), a document allowance of `min(1800 seconds, 30 + physical_pages * 60)`,
+and a 2,000-pixel rendered longest edge. Queue wait counts against remaining allowance.
+These are operational bounds requiring rollout evidence, not throughput promises.
+Agent/session/CLI/MCP transport ceilings use document maximum plus 60 seconds
+(initially 1,860 seconds); verify reverse-proxy limits align. PDF admission rejects
+more than 1,024 pages explicitly, rather than truncating. Native page text is bounded
+at 10 MiB. Bound local output for OCR/table workers as well.
 
-Retain original bytes/checkpoints as atomic SQLite records for `PARSE_STATE_TTL_SECONDS` (default seven days). `PARSE_STATE_MAX_BYTES` defaults to 1 GiB and bounds retained source/result payload; operators must also monitor filesystem headroom.
-Cleanup only inactive expired executions, never active/uncertain lane evidence; enforce
-volume capacity before accepting source bytes and fail explicitly on storage exhaustion.
-Checkpoint schema migrations are versioned and non-destructive.
+SQLite source BLOBs/page receipts expire after seven days of inactivity by default;
+logical retained payload is capped at 1 GiB with filesystem headroom monitored too.
+Cleanup skips active/locked executions. Capacity exhaustion rejects admission rather
+than deleting active work. Version schema migrations; preserve prior receipts/source
+bytes and prevent incompatible policy fingerprints from being reused. Old unused
+model-policy state is not a reason for destructive migration.
 
-The ledger records execution scope, source SHA-256, original filename/media type, physical
-page count, policy/schema version and source retention. A page checkpoint key includes
-scope, source digest, one-based physical page index, engine/model identity, model
-revision where known, prompt version, rendering policy and output schema. Changed
-model/prompt/render policy cannot silently reuse an incompatible OCR result.
+## Page evidence
 
-Each page contains:
+Checkpoint identity includes caller scope, original source SHA-256, physical page
+index, extraction/engine version, rendering policy and schema. Changing selection or
+OCR settings invalidates reuse. Each result records physical one-based page number,
+status, engine (`native` or `tesseract`), attempts, timing, original source identity,
+render dimensions where applicable and specific warnings. Table enrichment is marked
+separately, not claimed as original text. Native/Tesseract coordinates and confidence
+are included only when measured; printed page labels differ from physical indexes.
 
-- `page_number` (one-based physical PDF index), page result status and text/Markdown;
-- engine (`native`, `gemma`, `tesseract`) and extraction version/provenance;
-- attempts, request/result timestamps, latency and bounded failure classification;
-- render dimensions/DPI when applicable and source digest;
-- warnings such as output truncation, unreadable text or fallback;
-- native/Tesseract coordinates only when actually measured. Do not invent bounding
-  boxes or numeric confidence for Gemma. Printed page labels, when captured, are
-  separate from physical page indexes.
+Select extraction per page. Preserve usable sparse native text if OCR fails, but mark
+the page/result degraded rather than erasing evidence or claiming full extraction.
+A blank page requires explicit evidence; empty extraction alone does not prove blank.
+Render one page at a time with bounded pixels, not the full document in memory.
+Do not double-count native and OCR copies as independent evidence. Assemble Markdown
+in physical page order with page markers while retaining original byte identity.
 
-Use page-local native-text quality checks, not whole-document length. Empty/scanned
-pages route to OCR; blank pages remain explicitly classified rather than omitted.
-A force-OCR mode exists for evaluation without mislabeling ordinary digital extraction.
-Render one page at a time with pixel/DPI bounds; never materialize an entire long PDF
-as a list of images. Dense-page crops are a later explicit policy, not hidden retries.
+Response receipts share invariant provenance at document level and omit repeated page
+text. A 48 KiB manifest ceiling reports `page_results_omitted` explicitly if exceeded;
+full page receipts remain in retained state and all processed text remains in Markdown.
+This keeps 142-page metadata compatible with the session's 64 KiB cap without implying
+that a response manifest contains evidence it omitted.
 
-The OCR prompt requests faithful transcription and marks illegible text; no summaries,
-instructions, inferred values or tool execution. Each call contains one page image.
-Bound response tokens; `finish_reason=length` is incomplete, not a successful page.
-An empty output is not proof of a blank page. Do not merge native and OCR copies of
-the same page as independent evidence. Assembling Markdown preserves page order and
-page separators without altering the retained source bytes/digest.
+## Process ownership and recovery
 
-## Execution and failure semantics
+One same-host shared-volume document lock serializes identical document work. A shared
+local-OCR lock admits one OCR worker initially across distinct documents/processes.
+Use a lock-owning worker lifetime that covers render/Tesseract child execution: terminate
+and reap the process group on deadline, cancellation or interrupted ownership before
+capacity is released. Parent exit must not leave an orphan OCR child executing after
+another worker obtains the lock. A file-lock unit test alone is insufficient; exercise
+this with actual child processes. No remote dispatch marker, backend-idle probe or
+reconciliation command remains in the CPU pipeline.
 
-SQLite commits source/execution acceptance, page completion and terminal projection
-atomically within their respective local transactions. Inference/render/network calls
-occur outside transactions. Lifetime document locks fence concurrent/stale writers on the supported single-host shared volume. At-least-once
-execution scheduling is harmless only when committed page receipts are checked before
-inference; duplicate callers must not duplicate active work.
+Commit acceptance, page receipts and final coverage within local transactions, but
+run subprocesses outside them. Re-submission checks committed receipts before starting
+work and preserves attempt counts. Explicit caller re-submission may admit a new
+bounded document window; automatic HTTP retries must not silently reset budgets or
+exhausted page attempts. Interrupted work cannot publish a successful page receipt.
+Cancelled/disconnected callers cannot trigger further pages where cancellation is
+observable; a completed late checkpoint is reusable, not proof a response was delivered.
 
-The shared volume lock and durable global in-flight record jointly guard the OCR lane.
-An operator reconciliation command must inspect trusted backend running/waiting request
-metrics (both zero), acquire the same lock, recheck and record the reconciliation;
-health=200 is not idle evidence. No request boolean may clear the marker. Other model
-consumers must be quiescent during reconciliation. If metrics cannot prove idle, a
-deliberate approved backend restart is the alternative.
-A process exit releases the kernel lock but leaves a dispatched/unknown marker. New
-workers do not reuse that lane until the backend is demonstrably idle or the backend
-has been safely restarted, and the reconciliation is recorded. Operators do not delete
-markers blindly. Transient failures with known no-dispatch/completed failure outcomes
-can retry within the page attempt/deadline budget; unknown dispatches cannot.
-
-Define distinct queue/admission, render, inference and whole-document deadlines. The
-admitted document allowance is computed from actual page count and per-page attempt
-allowance plus startup/queue allowance. Progress reports remaining/expired budget;
-Explicit caller re-submission admits a new bounded document execution window while
-preserving completed pages and per-page attempt history. It cannot reset exhausted
-page attempts. Automatic transport retries must not silently create a fresh window. Observable caller cancellation, expired document budget, lost ownership
-or an open circuit prevents another dispatch. Fallback remains observable and follows admitted
-policy; a missing local endpoint must not fall through to a public/free/general model.
-
-Result coverage distinguishes `complete`, `partial`, `interrupted` and `failed`.
-Complete means every physical page has an acceptable result or
-explicitly verified blank result. Partial includes every missing/failed page and must
-not be treated by downstream research as full source coverage.
-
-## Required evidence
-
-- Mixed native/scanned PDF, blank pages, page 11+, ordered table/numeric transcription.
-- Scope isolation; duplicate submission, concurrent callers and idempotency conflict.
-- Restart after page completion reuses it; interruption before/after dispatch preserves
-  uncertainty and prevents an overlapping OCR call; reconciliation permits resume.
-- Disconnect/re-submit races, stale publication fences, unavailable ledger/lock storage.
-- Page/document deadline, retry exhaustion, truncation, model error and CPU fallback.
-- Existing synchronous parsing, sessions and digests remain compatible.
-- Real long-report extraction: page count/coverage and retained page citations. Native
-  full-document success alone is not evidence that Gemma read every page.
+Classify local tool absence, malformed/encrypted PDF, timeout, process failure and
+output exhaustion. Retry only bounded retryable failures; keep successful pages.
+Coverage states distinguish complete, partial, interrupted and failed. Complete requires
+every physical page to have an acceptable result or verified blank disposition.
+Downstream sessions reject partial admission rather than presenting full coverage.
 
 ## Session snapshot compatibility
 
-A session keeps its first admitted extraction for identical original bytes. A repeat
-attachment reports `duplicate: true` and returns that existing snapshot, even when
-a new parser policy produced different text. A new session is needed to adopt a
-new extraction without changing existing citation offsets. Generic parsing may
-return a new policy-versioned extraction independently.
+A session keeps its first admitted extraction for identical original bytes. Repeat
+attachment returns that existing snapshot with `duplicate: true`; a new session is
+needed to adopt changed extraction without altering citation offsets. Generic parsing
+may return a policy-versioned extraction independently.
+
+## Required evidence
+
+Mixed digital/scanned pages; page 11 and final-page coverage; sparse/blank text; scoped
+cache isolation and concurrent duplicate submissions; killed child cleanup before lane
+release; completed-page reuse after restart; bounded retry/deadline/output failures;
+retained staged uploads; no model/remote fallback; existing sessions/non-PDF/hosted
+compatibility; long public report accounting and a real raster-only Tesseract sample.
