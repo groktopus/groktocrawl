@@ -125,12 +125,11 @@ def _parse_pdf(content: bytes, filename: str, ocr: str = "local", **options) -> 
         )
     if not api_url.startswith(("http://", "https://")):
         raise HTTPException(422, "Invalid hosted OCR API URL")
-    kwargs = {"ocr": "hosted", "api_url": api_url}
     api_key = os.getenv("PARSE_HOSTED_OCR_API_KEY") or os.getenv("FIRECRAWL_API_KEY")
-    if api_key:
-        kwargs["api_key"] = api_key
     try:
-        markdown = anydoc.to_markdown_bytes(content, **kwargs).strip()
+        markdown = anydoc.to_markdown_bytes(
+            content, ocr="hosted", api_url=api_url, api_key=api_key
+        ).strip()
     except anydoc.HostedError as exc:
         raise HTTPException(502, "Hosted OCR failed") from exc
     except anydoc.ConvertError as exc:

@@ -31,7 +31,8 @@ def usable_native(text: str) -> bool:
 def render_page(content: bytes, number: int, settings: OcrSettings, deadline: float):
     from pdf2image import convert_from_bytes
 
-    remaining = min(settings.page_timeout, deadline - time.monotonic())
+    # Floor rather than round up: renderer timeout must not exceed the budget.
+    remaining = int(min(settings.page_timeout, deadline - time.monotonic()))
     if remaining <= 0:
         raise DeadlineExceededError("document_deadline")
     images = convert_from_bytes(
