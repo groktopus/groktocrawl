@@ -100,3 +100,17 @@ The command holds the same global admission lock, checks running and waiting mod
 requests twice, and records the decision before clearing the marker. It refuses
 non-idle/unavailable metrics. It does not reset page attempt history. Do not run
 it as an automatic retry handler or claim a timed-out request never ran.
+
+Native PDF inspection/extraction and model HTTP execute in killable subprocesses,
+so page/document timeouts are total deadlines rather than socket inactivity timers.
+A killed model client still leaves the dispatch uncertain until reconciliation.
+The model response is capped at 2 MiB, individual native page text at 10 MiB, and
+PDF admission at 1,024 physical pages. Larger documents are rejected, not truncated.
+Reconciliation requires the endpoint, model and revision recorded at dispatch to
+match current settings; changing backends does not clear another backend's work.
+
+Response page receipts share invariant provenance at document level and do not
+repeat page text. Receipts are capped at 48 KiB with an explicit
+`page_results_omitted` count if needed; Markdown still contains all processed pages
+and full receipts remain in the retained checkpoint database. A 142-page receipt
+manifest is included in regression tests below the session's 64 KiB metadata cap.
