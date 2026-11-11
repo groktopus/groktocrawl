@@ -433,3 +433,19 @@ def test_reconciliation_rejects_changed_backend(state, model):
     with pytest.raises(LaneUncertainError, match="identity_mismatch"):
         reconcile_idle(state, model)
     assert state.lane_marker()
+
+
+def test_renderer_hard_deadline_without_pdfinfo(tmp_path, monkeypatch):
+    import os
+
+    from parse_svc.checkpoints import DeadlineExceededError
+    from parse_svc.vision_ocr import OcrSettings
+
+    executable = tmp_path / "pdftoppm"
+    executable.write_text("#!" + sys.executable + "\nimport time\ntime.sleep(30)\n")
+    executable.chmod(0o700)
+    monkeypatch.setenv("PATH", str(tmp_path) + os.pathsep + os.environ["PATH"])
+    start = time.monotonic()
+    with pytest.raises(DeadlineExceededError, match="render_timeout"):
+        pagewise.render_page(b"pdf", 1, OcrSettings.load(), start + 0.2)
+    assert time.monotonic() - start < 2

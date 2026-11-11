@@ -100,29 +100,6 @@ def _tesseract_rows(pages: list[list[list[tuple[str, float]]]]) -> ModuleType:
     return module
 
 
-def _fake_pdf2image(pages: int = 1) -> ModuleType:
-    module = ModuleType("pdf2image")
-    module.convert_from_bytes = lambda *args, **kwargs: list(range(pages))
-    return module
-
-
-def _patch_ocr(pages: list[list[list[tuple[str, float]]]]) -> object:
-    return patch.dict(
-        sys.modules,
-        {
-            "pdf2image": _fake_pdf2image(len(pages)),
-            "pytesseract": _tesseract_rows(pages),
-        },
-    )
-
-
-def _line(text: str, confidence: float) -> list[tuple[str, float]]:
-    return [(word, confidence) for word in text.split()]
-
-
-# ── _ext ──────────────────────────────────────────────────────────────────
-
-
 class TestExt:
     """Extension extraction from various filenames."""
 
@@ -387,13 +364,20 @@ class TestParsePdf:
 
     def test_default_local_mode_never_hits_hosted_endpoint(self, monkeypatch):
         content = _load("scanned-image-only.pdf")
-        pages = [[_line("local text " * 20, 28.0)]]
+        from parse_svc import pagewise
+        from PIL import Image
+
+        monkeypatch.setattr(
+            pagewise, "render_page", lambda *a: Image.new("RGB", (20, 20), "black")
+        )
+        monkeypatch.setattr(
+            pagewise, "tesseract_page", lambda *a: ("local text " * 20, 0.28, 40)
+        )
         reply = {"success": True, "data": {"markdown": "must not be used"}}
 
         with _hosted_parse_stub(200, reply) as (api_url, hits):
             monkeypatch.setenv("PARSE_HOSTED_OCR_API_URL", api_url)
-            with _patch_ocr(pages):
-                result = _parse_pdf(content, "scan.pdf")
+            result = _parse_pdf(content, "scan.pdf")
 
         assert result["metadata"]["extraction"] == "pagewise"
         assert result["metadata"]["degraded"] is True

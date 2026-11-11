@@ -1,6 +1,7 @@
 """Bounded synchronous PDF extraction with scope-isolated page receipts."""
 
 import hashlib
+import io
 import json
 import os
 import subprocess
@@ -43,29 +44,44 @@ def usable_native(text: str) -> bool:
 
 
 def render_page(content: bytes, number: int, settings: OcrSettings, deadline: float):
-    from pdf2image import convert_from_bytes
+    from PIL import Image
 
-    # Floor rather than round up: renderer timeout must not exceed the budget.
-    remaining = int(min(settings.page_timeout, deadline - time.monotonic()))
+    remaining = min(settings.page_timeout, deadline - time.monotonic())
     if remaining <= 0:
         raise DeadlineExceededError("document_deadline")
-    images = convert_from_bytes(
-        content,
-        dpi=150,
-        first_page=number,
-        last_page=number,
-        size=settings.render_edge,
-        timeout=remaining,
-        thread_count=1,
-    )
-    if len(images) != 1:
-        raise CheckpointError("renderer_page_count_mismatch")
-    image = images[0]
+    # Invoke Poppler directly: pdf2image has an untimed pdfinfo preflight.
+    try:
+        process = subprocess.run(
+            [
+                "pdftoppm",
+                "-f",
+                str(number),
+                "-l",
+                str(number),
+                "-singlefile",
+                "-r",
+                "150",
+                "-scale-to",
+                str(settings.render_edge),
+                "-png",
+                "-",
+            ],
+            input=content,
+            capture_output=True,
+            timeout=remaining,
+            check=True,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise DeadlineExceededError("render_timeout") from exc
+    except (subprocess.CalledProcessError, FileNotFoundError) as exc:
+        raise CheckpointError("renderer_unavailable_or_failed") from exc
+    image = Image.open(io.BytesIO(process.stdout))
     if (
         max(image.size) > settings.render_edge
         or image.width * image.height > settings.render_edge**2
     ):
         raise CheckpointError("render_dimensions_exceeded")
+    image.load()
     return image
 
 
