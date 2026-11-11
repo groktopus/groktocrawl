@@ -38,6 +38,7 @@ dependencies = [
     { name = "redis" },
     { name = "referencing" },
     { name = "rfc8785" },
+    { name = "starlette" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
@@ -53,6 +54,7 @@ requires-dist = [
     { name = "redis", specifier = ">=5.2.0" },
     { name = "referencing", specifier = ">=0.28.4" },
     { name = "rfc8785", specifier = "==0.1.4" },
+    { name = "starlette", specifier = ">=0.40.0" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.34.0" },
 ]
 
