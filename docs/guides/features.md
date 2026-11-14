@@ -41,3 +41,25 @@ controls availability and live versus demonstration execution. These tools
 expose retained sources and reports, while the existing `agent` tool runs the
 iterative research workflow. See the [durable research contract](durable-research.md)
 and [workspace guide](research-workspace.md) for their limits and evidence handling.
+
+### Following MCP result pages
+
+`search`, `select_session_evidence`, `get_crawl_status`, and
+`get_batch_scrape_status` prepend a server-authored `pagination` object to their
+JSON responses. Read its `notice`, `state`, and `next_call` before treating a
+bounded result as truncated or complete. When `next_call` is present, invoke its
+`tool` with its `arguments` to retrieve remaining relevant content. Existing API
+fields remain intact. Crawl and batch status tools accept a nonnegative `offset`.
+
+`more_available` means a usable continuation exists, even if the current data
+array is empty. `pending` means a job is still running, not that it completed.
+`exhausted` applies only to the stated scope; `unknown` is not evidence of
+completion. Invalid or unsupported continuation does not produce an executable
+call. Error responses retain their existing behavior.
+
+Search continuation repeats the original query with its filters; upstream
+ordering can change and further upstream pages remain unverified. Query-selected
+session evidence is not sequential: its continuation clears the query and starts
+a digest-bound sequential scan at offset zero. Exhausting retained text never
+means exhaustive research coverage. If stopping early, state which content was
+actually inspected rather than claiming full coverage.
