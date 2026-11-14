@@ -15,6 +15,7 @@ py-modules = [
     'browser_handler',
     'groktocrawl_client',
     'mcp_server',
+    'pagination',
     'session_store',
 ]
 

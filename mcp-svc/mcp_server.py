@@ -25,6 +25,7 @@ from mcp.server.fastmcp import FastMCP
 from mcp.server.fastmcp.exceptions import ToolError
 from mcp.server.transport_security import TransportSecuritySettings
 from mcp.types import ToolAnnotations
+from pagination import with_pagination
 from pydantic import Field
 from session_store import SessionStore
 
@@ -262,6 +263,8 @@ async def search(
     pagination support is unknown and repeated query ordering may change.
     Response coverage/continuation describe captured results, not all web results.
 
+    Response pagination includes guidance and an executable next_call.
+
     Calls POST /v2/search on the GroktoCrawl API.  Supports fast mode
     (raw results, <1s) and rich mode (scraped + LLM synthesis, 1-3s).
 
@@ -285,6 +288,7 @@ async def search(
         time_range: Unsupported on this API; use exact publication bounds.
         engines: Exact bounds require ["openalex"], fast keyword mode.
     """
+    arguments = dict(locals())
     result = await _client.search(
         query=query,
         limit=limit,
@@ -301,7 +305,7 @@ async def search(
         engines=engines,
     )
     _ensure_success(result)
-    return _resp(result)
+    return _resp(with_pagination(result, "search", arguments))
 
 
 # Keep date-like typos from disappearing in the SDK's default ignore-extra model.
@@ -416,19 +420,27 @@ async def crawl(
 
 
 @mcp.tool(annotations=_RO)
-async def get_crawl_status(job_id: str) -> str:
+async def get_crawl_status(
+    job_id: str, offset: Annotated[int, Field(ge=0, strict=True)] = 0
+) -> str:
     """Poll the status of a crawl job and return page data when complete.
+
+    Response pagination includes guidance and an executable next_call.
 
     Calls GET /v2/crawl/{job_id} on the GroktoCrawl API.  Returns the
     current status (processing/completed/failed), page counts, and
     (when finished) the scraped page content with metadata.
 
     Args:
+        offset: Result offset; follow pagination.next_call to retrieve remaining pages.
         job_id: The crawl job ID returned by the crawl tool.
     """
-    result = await _client.get_crawl_status(job_id)
+    arguments = dict(locals())
+    result = await _client.get_crawl_status(
+        job_id, **({"offset": offset} if offset else {})
+    )
     _ensure_success(result)
-    return _resp(result)
+    return _resp(with_pagination(result, "get_crawl_status", arguments))
 
 
 @mcp.tool(annotations=_DESTRUCTIVE)
@@ -917,6 +929,7 @@ async def select_session_evidence(
 ) -> str:
     """Inspect exact retained session evidence without fetching or synthesis.
 
+    Follow response pagination.next_call for remaining relevant content.
     Returns spans, content digest, bounded coverage and continuation. Select
     by query or page by offset, never both. Coverage_complete remains false;
     continuation binds later pages to expected_digest. Session ownership and
@@ -924,6 +937,7 @@ async def select_session_evidence(
     """
     if query and offset:
         raise ToolError("Use either query selection or an offset page")
+    arguments = dict(locals())
     result = await _client.select_session_evidence(
         session_id,
         ref_id,
@@ -933,7 +947,7 @@ async def select_session_evidence(
         expected_digest=expected_digest,
     )
     _ensure_success(result)
-    return _resp(result)
+    return _resp(with_pagination(result, "select_session_evidence", arguments))
 
 
 @mcp.tool(annotations=_RO)
@@ -1463,19 +1477,27 @@ async def get_activity() -> str:
 
 
 @mcp.tool(annotations=_RO)
-async def get_batch_scrape_status(job_id: str) -> str:
+async def get_batch_scrape_status(
+    job_id: str, offset: Annotated[int, Field(ge=0, strict=True)] = 0
+) -> str:
     """Poll the status of a batch scrape job and return results when done.
+
+    Response pagination includes guidance and an executable next_call.
 
     Calls GET /v2/batch/scrape/{job_id} on the GroktoCrawl API.
     Returns the current status (processing/completed/failed) and,
     when finished, the scraped content for each URL in the batch.
 
     Args:
+        offset: Result offset; follow pagination.next_call to retrieve remaining pages.
         job_id: The batch scrape job ID returned by the batch_scrape tool.
     """
-    result = await _client.get_batch_scrape_status(job_id)
+    arguments = dict(locals())
+    result = await _client.get_batch_scrape_status(
+        job_id, **({"offset": offset} if offset else {})
+    )
     _ensure_success(result)
-    return _resp(result)
+    return _resp(with_pagination(result, "get_batch_scrape_status", arguments))
 
 
 @mcp.tool(annotations=_DESTRUCTIVE)
