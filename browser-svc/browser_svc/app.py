@@ -33,6 +33,7 @@ from .capacity_metrics import CapacityMetrics
 from .cookie_rpc import DEFAULT_COOKIE_RPC_SOCKET, CookieRPCClient
 from .lifecycle import BrowserOwner
 from .process_health import process_capacity
+from .recovery import ContainerRecycler
 from .settings import load_settings
 
 setup_logging()
@@ -227,6 +228,7 @@ _cleanup_task: asyncio.Task | None = None
 _shutting_down = False
 _update_active_sessions_gauge()
 _capacity_metrics = CapacityMetrics()
+_recycler = ContainerRecycler()
 
 
 class SessionData:
@@ -354,6 +356,8 @@ async def _retire_owner(session_id: str, owner: BrowserOwner) -> None:
         owner.phase = "quarantined"
         _capacity_metrics.increment("cleanup_incomplete_total")
         logger.error("Browser cleanup incomplete; admission disabled until restart")
+        if not _shutting_down:
+            _recycler.schedule()
 
 
 def _begin_cleanup(session_id: str, owner: BrowserOwner) -> asyncio.Task:
@@ -390,6 +394,7 @@ async def _destroy_session(session_id: str, reason: str = "deleted") -> None:
 async def shutdown():
     global _shutting_down
     _shutting_down = True
+    await _recycler.stop()
     if _cleanup_task is not None:
         _cleanup_task.cancel()
         await asyncio.gather(_cleanup_task, return_exceptions=True)

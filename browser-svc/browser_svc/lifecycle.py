@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import time
 from collections.abc import Awaitable
 from dataclasses import dataclass, field
 from typing import Any
@@ -39,18 +40,35 @@ class BrowserOwner:
         # startup until it yields a controller, then stop that controller.
         await asyncio.shield(self.startup)
 
-    async def bounded(self, operation: Awaitable, timeout: float) -> bool:
+    async def bounded(
+        self, operation: Awaitable, timeout: float, stage: str = "resource"
+    ) -> bool:
         """Do not let cancellation-resistant dependencies extend a deadline."""
+        started = time.monotonic()
         task = asyncio.ensure_future(operation)
         self.pending.add(task)
         task.add_done_callback(self._finished)
         done, _ = await asyncio.wait({task}, timeout=timeout)
+        error_type = "none"
         if not done:
             task.cancel()
-            return False
-        if task.cancelled():
-            return False
-        return task.exception() is None
+            outcome = "timeout"
+        elif task.cancelled():
+            outcome = "cancelled"
+        elif (error := task.exception()) is not None:
+            outcome = "exception"
+            error_type = type(error).__name__
+        else:
+            return True
+        # Exception messages/tracebacks can contain URLs, cookies or page data.
+        logger.warning(
+            "Browser cleanup stage=%s outcome=%s error_type=%s elapsed_ms=%.1f",
+            stage,
+            outcome,
+            error_type,
+            (time.monotonic() - started) * 1000,
+        )
+        return False
 
     def _finished(self, task: asyncio.Task) -> None:
         self.pending.discard(task)
@@ -67,39 +85,52 @@ class BrowserOwner:
                 # The initializer can still acquire resources. Its owner remains
                 # registered, and the completion callback performs a late close.
                 self.creation.add_done_callback(self._late_creation)
+                logger.warning("Browser cleanup stage=creation outcome=timeout")
                 complete = False
         if self.startup is not None and not self.startup.done():
             done, _ = await asyncio.wait({self.startup}, timeout=CLOSE_TIMEOUT)
             if not done:
                 self.startup.add_done_callback(self._late_creation)
+                logger.warning("Browser cleanup stage=startup outcome=timeout")
                 # Do not call __aexit__ before its transport exists. Retain
                 # ownership and fail closed until late startup can be stopped.
                 return False
-        for resource, method in (
-            (self.page, "close"),
-            (self.context, "close"),
-            (self.browser, "close"),
-            (self.playwright, "stop"),
+        for stage, resource, method in (
+            ("page", self.page, "close"),
+            ("context", self.context, "close"),
+            ("browser", self.browser, "close"),
+            ("playwright", self.playwright, "stop"),
         ):
             if resource is not None:
                 try:
                     complete = (
-                        await self.bounded(getattr(resource, method)(), CLOSE_TIMEOUT)
+                        await self.bounded(
+                            getattr(resource, method)(), CLOSE_TIMEOUT, stage
+                        )
                         and complete
                     )
-                except Exception:
-                    logger.exception("Browser resource cleanup failed")
+                except Exception as error:
+                    logger.warning(
+                        "Browser cleanup stage=%s outcome=invoke_exception error_type=%s",
+                        stage,
+                        type(error).__name__,
+                    )
                     complete = False
         if self.playwright is None and self.manager is not None:
             try:
                 complete = (
                     await self.bounded(
-                        self.manager.__aexit__(None, None, None), CLOSE_TIMEOUT
+                        self.manager.__aexit__(None, None, None),
+                        CLOSE_TIMEOUT,
+                        "manager",
                     )
                     and complete
                 )
-            except Exception:
-                logger.exception("Partial Playwright startup cleanup failed")
+            except Exception as error:
+                logger.warning(
+                    "Browser cleanup stage=manager outcome=invoke_exception error_type=%s",
+                    type(error).__name__,
+                )
                 complete = False
         if self.pending:
             complete = False

@@ -115,3 +115,5 @@ An Architecture Decision Record captures an important architectural decision mad
 | 0079 | [Extract PDF Evidence Page by Page](0079-extract-pdf-evidence-page-by-page.md) | accepted; implementation pending |
 
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full ADR workflow: when to write an ADR, how to number it, and how to get it reviewed in a PR. Experimental records are linked from the provenance archive, not included in the mainline sequence.
+
+| 0080 | [Recycle quarantined browser containers](0080-recycle-quarantined-browser-containers.md) | proposed |
