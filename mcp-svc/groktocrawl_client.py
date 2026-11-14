@@ -1119,7 +1119,7 @@ class GroktocrawlClient:
 
     # ── status / cancellation / activity tools ──────────────────
 
-    async def get_crawl_status(self, job_id: str) -> dict:
+    async def get_crawl_status(self, job_id: str, offset: int = 0) -> dict:
         """Get the current status of a crawl job.
 
         Args:
@@ -1129,7 +1129,9 @@ class GroktocrawlClient:
             Status dict with ``status``, ``completed``, ``total``,
             ``data``, and other crawl-specific fields.
         """
-        return await self._get(f"/v2/crawl/{job_id}")
+        return await self._get(
+            f"/v2/crawl/{quote(job_id, safe='')}?" + urlencode({"offset": offset})
+        )
 
     async def get_active_crawls(self) -> dict:
         """List active/processing crawl jobs.
@@ -1198,9 +1200,12 @@ class GroktocrawlClient:
         """
         return await self._get(f"/v2/extract/{job_id}")
 
-    async def get_batch_scrape_status(self, job_id: str) -> dict:
+    async def get_batch_scrape_status(self, job_id: str, offset: int = 0) -> dict:
         """Get the current status of a batch scrape job."""
-        return await self._get(f"/v2/batch/scrape/{job_id}")
+        return await self._get(
+            f"/v2/batch/scrape/{quote(job_id, safe='')}?"
+            + urlencode({"offset": offset})
+        )
 
     async def cancel_batch_scrape(self, job_id: str) -> dict:
         """Cancel an in-progress batch scrape job.

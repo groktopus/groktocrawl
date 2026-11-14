@@ -82,7 +82,9 @@ async def test_evidence_tool_annotation_and_parameter_response_parity(monkeypatc
     response = await mcp_server.select_session_evidence(
         "s", "r", offset=256, budget_chars=256, expected_digest="a" * 64
     )
-    assert json.loads(response) == result
+    actual = json.loads(response)
+    assert actual.pop("pagination")["state"] == "exhausted"
+    assert actual == result
     client.assert_awaited_once_with(
         "s", "r", query="", offset=256, budget_chars=256, expected_digest="a" * 64
     )

@@ -14,6 +14,7 @@ RUN pip install --no-cache-dir \
 COPY groktocrawl_client.py .
 COPY browser_handler.py .
 COPY mcp_server.py .
+COPY pagination.py .
 COPY session_store.py .
 
 # Health check
