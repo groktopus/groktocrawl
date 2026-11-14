@@ -738,6 +738,11 @@ async def fetch_via_flaresolverr(url: str) -> dict | None:
     return None
 
 
+_BROWSER_NAVIGATION_TIMEOUT_MS = 45000
+_BROWSER_HTTP_TIMEOUT_SECONDS = _BROWSER_NAVIGATION_TIMEOUT_MS / 1000 + 10
+_BROWSER_CLEANUP_TIMEOUT_SECONDS = 20
+
+
 async def _fetch_via_browser_svc(url: str) -> dict | None:
     """Fallback: use the browser-svc API to navigate and extract content.
 
@@ -751,7 +756,7 @@ async def _fetch_via_browser_svc(url: str) -> dict | None:
     try:
         # Create a browser session
         async with trusted_control_httpx_client(
-            service="browser", timeout=30
+            service="browser", timeout=_BROWSER_HTTP_TIMEOUT_SECONDS
         ) as client:
             create_resp = await client.post(
                 f"{browser_svc_url}/browsers",
@@ -769,7 +774,11 @@ async def _fetch_via_browser_svc(url: str) -> dict | None:
             # Navigate to the URL
             nav_resp = await client.post(
                 f"{browser_svc_url}/browsers/{session_id}/execute",
-                json={"action": "navigate", "url": url, "timeout": 45000},
+                json={
+                    "action": "navigate",
+                    "url": url,
+                    "timeout": _BROWSER_NAVIGATION_TIMEOUT_MS,
+                },
             )
             if not nav_resp.json().get("success"):
                 logger.warning("Browser-svc navigation failed for %s", url)
@@ -881,7 +890,7 @@ async def _fetch_via_browser_svc(url: str) -> dict | None:
         if session_id:
             try:
                 async with trusted_control_httpx_client(
-                    service="browser", timeout=5
+                    service="browser", timeout=_BROWSER_CLEANUP_TIMEOUT_SECONDS
                 ) as c:
                     await c.delete(f"{browser_svc_url}/browsers/{session_id}")
             except Exception:

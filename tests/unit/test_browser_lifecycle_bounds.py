@@ -339,3 +339,28 @@ async def test_shutdown_retains_late_start_or_cancellation_resistant_launch(
     assert not service._sessions
     assert resources.controller.stop.await_count >= 1
     assert (await service.health()).status_code == 503
+
+
+@pytest.mark.asyncio
+async def test_cleanup_exception_reports_stage_without_secret(resources, caplog):
+    resources.page.close.side_effect = RuntimeError(
+        "https://secret.test/?token=private"
+    )
+    response = await service.create_browser(service.BrowserCreateRequest())
+    await service._destroy_session(response.id)
+    assert service._owners[response.id].phase == "quarantined"
+    assert "stage=page outcome=exception error_type=RuntimeError" in caplog.text
+    assert "secret.test" not in caplog.text
+    assert "token=private" not in caplog.text
+    resources.controller.stop.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_cleanup_timeout_reports_stage(resources, caplog):
+    async def slow_close():
+        await asyncio.sleep(60)
+
+    resources.page.close.side_effect = slow_close
+    response = await service.create_browser(service.BrowserCreateRequest())
+    await service._destroy_session(response.id)
+    assert "stage=page outcome=timeout" in caplog.text

@@ -199,6 +199,9 @@ services:
       - cloakbrowser_cache:/root/.cloakbrowser
 
   browser-svc:
+    # Dedicated single-process container: exit on quarantine lets Docker reap descendants.
+    environment:
+      BROWSER_CONTAINER_RECYCLE_ON_QUARANTINE: "1"
     init: true
     mem_limit: 1500m
     cpus: 1.0
