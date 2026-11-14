@@ -1,8 +1,8 @@
 # Recycle Quarantined Browser Containers Without Releasing Uncertain Ownership
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-11-14
-- Decision authority: Magnus Hedemark authorized issue, ADR, reviewed implementation, merge and production deployment for issue #722. Acceptance follows PR review.
+- Decision authority: Magnus Hedemark authorized issue, ADR, reviewed implementation, merge and production deployment for issue #722. Independent design and exact-code review accepted this scoped decision; deployment remains gated on CI and production verification.
 
 ## Context
 
