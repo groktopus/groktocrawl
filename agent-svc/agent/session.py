@@ -1119,6 +1119,34 @@ class SessionManager:
         async def guarded_generate(
             llm: LLMClient, checkpoint: dict[str, Any], **call_args: Any
         ) -> str:
+            def provider_diagnostics(error: Exception) -> dict[str, Any]:
+                details = getattr(error, "details", None)
+                if not isinstance(details, dict):
+                    return {}
+                safe: dict[str, Any] = {}
+                finish_reason = details.get("finish_reason")
+                if isinstance(finish_reason, str) and finish_reason in {
+                    "stop",
+                    "length",
+                    "content_filter",
+                    "tool_calls",
+                    "function_call",
+                    "other",
+                }:
+                    safe["finish_reason"] = finish_reason
+                refusal_present = details.get("refusal_present")
+                if isinstance(refusal_present, bool):
+                    safe["refusal_present"] = refusal_present
+                for key in ("prompt_tokens", "completion_tokens"):
+                    value = details.get(key)
+                    if (
+                        isinstance(value, int)
+                        and not isinstance(value, bool)
+                        and 0 <= value <= 10_000_000
+                    ):
+                        safe[key] = value
+                return safe
+
             stage = call_args.get("stage", "synthesis")
             if stage == "synthesis_outline":
                 checkpoint["outline_attempts"] = (
@@ -1135,34 +1163,46 @@ class SessionManager:
             await save_checkpoint(checkpoint)
             try:
                 response_text = await llm.generate(**call_args)
-            except ProviderRefusalError:
+            except ProviderRefusalError as exc:
+                diagnostics = provider_diagnostics(exc)
+                if diagnostics:
+                    checkpoint["provider_diagnostics"] = diagnostics
                 checkpoint["pending"] = None
                 checkpoint["status"] = "refused"
                 await save_checkpoint(checkpoint)
                 raise
             except ContextLimitError as exc:
+                diagnostics = provider_diagnostics(exc)
+                if diagnostics:
+                    checkpoint["provider_diagnostics"] = diagnostics
                 checkpoint["pending"] = None
                 checkpoint["status"] = "failed"
                 checkpoint["failure"] = "provider_context_limit"
                 await save_checkpoint(checkpoint)
-                raise ValueError(
-                    "provider rejected synthesis input context; reuse the same imported refs with a new synthesis_id and smaller input_budget_chars"
+                raise ContextLimitError(
+                    detail="provider rejected synthesis input context; reuse the same imported refs with a new synthesis_id and smaller input_budget_chars",
+                    details=diagnostics or None,
                 ) from exc
             except OutputTruncatedError as exc:
+                diagnostics = provider_diagnostics(exc)
+                if diagnostics:
+                    checkpoint["provider_diagnostics"] = diagnostics
                 retries = checkpoint.get("output_truncation_retries", 0)
                 if retries >= 1:
                     checkpoint["pending"] = None
                     checkpoint["status"] = "failed"
                     await save_checkpoint(checkpoint)
-                    raise ValueError(
-                        "output truncation retry budget exhausted"
+                    raise OutputTruncatedError(
+                        detail="output truncation retry budget exhausted",
+                        details=diagnostics or None,
                     ) from exc
                 checkpoint["output_truncation_retries"] = retries + 1
                 checkpoint["pending"]["outcome"] = "output_truncated"
                 checkpoint["pending"]["previous_output_budget"] = output_budget
                 await save_checkpoint(checkpoint)
-                raise ValueError(
-                    "provider output was truncated; explicit retry_pending=true with a larger output_budget_tokens is required"
+                raise OutputTruncatedError(
+                    detail="provider output was truncated; explicit retry_pending=true with a larger output_budget_tokens is required",
+                    details=diagnostics or None,
                 ) from exc
             except Exception:
                 checkpoint["pending"]["outcome"] = "unknown"
@@ -1171,6 +1211,7 @@ class SessionManager:
             # Keep the persistence write outside the provider exception
             # handlers: a store failure after a successful response must not
             # rewrite the known response as an ambiguous provider outcome.
+            checkpoint.pop("provider_diagnostics", None)
             checkpoint["pending"]["outcome"] = "response_received"
             checkpoint["pending"]["raw_output"] = response_text
             await save_checkpoint(checkpoint)

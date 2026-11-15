@@ -97,7 +97,9 @@ tokens. The input setting bounds serialized prompt size in characters; it is
 not an exact tokenizer count. Each completed chunk must cite its assigned
 source. Provider-truncated chunks are not marked complete, and a provider
 context-limit rejection is terminal for that synthesis ID; create a new ID
-over the same imported refs with a smaller input budget. The session expires
+over the same imported refs with a smaller input budget. Provider error details
+are limited to allowlisted finish reason, refusal presence, and bounded token
+counts when available. The session expires
 according to its TTL, so retain the session ID and snapshot locally if work
 needs to continue later. `scripts/resume_synthesis_snapshot.py` imports an
 acquired-source JSONL and drives this workflow, saving a private atomic resume

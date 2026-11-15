@@ -52,7 +52,9 @@ provider's configured output-token allowance. Both are returned in progress
 metadata. The character budget is a conservative payload envelope, not an
 exact tokenizer count. The output allowance remains the configured
 `LLM_TOKEN_PARAMETER` budget; a provider-truncated or malformed chunk is not
-accepted as complete. A provider context-limit rejection is terminal for that
+accepted as complete. Provider failures expose only allowlisted finish reason,
+refusal presence and bounded token counts when supplied; raw provider errors,
+prompts and source text are excluded from diagnostics. A provider context-limit rejection is terminal for that
 synthesis ID; the caller may start a new ID over the same imported refs with a
 smaller input budget. Every completed chunk must contain the citation marker
 for its assigned source, in addition to passing final citation-index checks.

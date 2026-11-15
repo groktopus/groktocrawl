@@ -355,7 +355,14 @@ async def test_refusal_is_terminal_and_output_truncation_requires_larger_explici
             if stage == "synthesis_outline":
                 return json.dumps({"sections": [{"id": "sources", "title": "Sources"}]})
             if self.__class__.calls == 2:
-                raise OutputTruncatedError("length")
+                raise OutputTruncatedError(
+                    "length",
+                    details={
+                        "finish_reason": "length",
+                        "refusal_present": False,
+                        "completion_tokens": 1024,
+                    },
+                )
             return json.dumps(
                 {
                     "markdown": "Finding [1]",
@@ -386,7 +393,9 @@ async def test_refusal_is_terminal_and_output_truncation_requires_larger_explici
         llm_api_key="",
         llm_model="fixture",
     )
-    with pytest.raises(ValueError, match="larger output_budget_tokens"):
+    with pytest.raises(
+        OutputTruncatedError, match="larger output_budget_tokens"
+    ) as error:
         await resumable._step_synthesize(
             session_id="session-1",
             params={
@@ -398,6 +407,11 @@ async def test_refusal_is_terminal_and_output_truncation_requires_larger_explici
             llm_api_key="",
             llm_model="fixture",
         )
+    assert error.value.details == {
+        "finish_reason": "length",
+        "refusal_present": False,
+        "completion_tokens": 1024,
+    }
     result = await resumable._step_synthesize(
         session_id="session-1",
         params={
@@ -637,7 +651,7 @@ async def test_provider_context_limit_is_terminal_for_snapshot_id(monkeypatch):
         "synthesis_id": "context-limit-01",
         "ref_ids": ["r1"],
     }
-    with pytest.raises(ValueError, match="new synthesis_id"):
+    with pytest.raises(ContextLimitError, match="new synthesis_id"):
         await manager._step_synthesize(
             session_id="session-1",
             params=params,
