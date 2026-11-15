@@ -1,5 +1,6 @@
 """Session route handlers — multi-step research sessions."""
 
+import hashlib
 import logging
 from functools import partial
 from typing import Any
@@ -11,6 +12,7 @@ from ..models import (
     SessionCreateRequest,
     SessionCreateResponse,
     SessionDeleteResponse,
+    SessionEvidenceImportRequest,
     SessionExportResponse,
     SessionResolveRequest,
     SessionResolveResponse,
@@ -25,6 +27,71 @@ from ._helpers import _get_redis_url
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+@router.post("/v2/session/{session_id}/evidence/import")
+async def import_session_evidence(
+    request: Request, session_id: str, body: SessionEvidenceImportRequest
+) -> dict[str, Any]:
+    """Persist an acquired snapshot for synthesis without repeating discovery."""
+    from ..experimental.knowledge import text_digest
+    from ..session import SessionManager
+
+    manager = SessionManager(redis_url=_get_redis_url(request))
+    await authorize_session(manager.store, session_id, request)
+    refs: dict[str, dict[str, Any]] = {}
+    manifest_sources: list[dict[str, Any]] = []
+    for source in body.sources:
+        ref_id = (
+            "evidence_" + hashlib.sha256(source.url.encode("utf-8")).hexdigest()[:24]
+        )
+        markdown = source.markdown
+        digest = text_digest(markdown)
+        refs[ref_id] = {
+            "url": source.url,
+            "title": source.title,
+            "markdown": markdown,
+            "source": "imported_snapshot",
+            "char_count": len(markdown),
+            "content_sha256": digest,
+        }
+        manifest_sources.append(
+            {
+                "id": ref_id,
+                "url": source.url,
+                "title": source.title,
+                "chars": len(markdown),
+                "content_sha256": digest,
+            }
+        )
+    # Snapshot import mutates the same refs that synthesis freezes into its
+    # manifest. Serialize it with step execution so a manifest cannot observe
+    # only part of an import (or have evidence change during a model call).
+    owner_token = await manager.store.acquire_lock(
+        session_id, timeout=2, lease_ttl=manager._SERIAL_LOCK_LEASE_TTL
+    )
+    if owner_token is None:
+        raise ConflictError(detail="Session is executing another operation; retry")
+    owner_context = manager.store.set_lock_owner(owner_token)
+    try:
+        await authorize_session(manager.store, session_id, request)
+        if await manager.store.ahas_pending_steps(session_id):
+            raise ConflictError(detail="Session has pending independent steps; retry")
+        if not await manager._store_refs(session_id, refs):
+            raise NotFoundError(detail="Session no longer exists")
+        await authorize_session(manager.store, session_id, request)
+    finally:
+        manager.store.reset_lock_owner(owner_context)
+        await manager.store.arelease_lock(session_id, owner_token)
+    return {
+        "success": True,
+        "session_id": session_id,
+        "source_count": len(manifest_sources),
+        "source_chars": sum(source["chars"] for source in manifest_sources),
+        "sources": manifest_sources,
+        "synthesis_action": "synthesize",
+        "synthesis_params": {"ref_ids": list(refs)},
+    }
 
 
 @router.get("/v2/session/{session_id}/evidence/{ref_id}")

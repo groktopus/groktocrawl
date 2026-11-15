@@ -72,7 +72,9 @@ def _is_context_limit_response(resp: httpx.Response) -> bool:
     )
 
 
-def _token_budget_params(*, health: bool = False) -> dict[str, int]:
+def _token_budget_params(
+    *, health: bool = False, max_output_tokens: int | None = None
+) -> dict[str, int]:
     """Return the configured budget under exactly the selected provider field."""
     settings = load_settings()
     if health:
@@ -88,6 +90,14 @@ def _token_budget_params(*, health: bool = False) -> dict[str, int]:
             and settings.llm_max_output_tokens is not None
         ):
             budget = settings.llm_max_output_tokens
+        if max_output_tokens is not None:
+            if type(max_output_tokens) is not int or max_output_tokens < 1:
+                raise ValueError("max_output_tokens must be a positive integer")
+            if max_output_tokens > budget:
+                raise ValueError(
+                    "max_output_tokens cannot exceed configured provider budget"
+                )
+            budget = max_output_tokens
     return {settings.llm_token_parameter: budget}
 
 
@@ -108,8 +118,7 @@ def _safe_provider_diagnostics(
     diagnostics: dict[str, Any] = {
         "finish_reason": (
             finish_reason
-            if isinstance(finish_reason, str)
-            and finish_reason in _SAFE_FINISH_REASONS
+            if isinstance(finish_reason, str) and finish_reason in _SAFE_FINISH_REASONS
             else "other"
         ),
         "refusal_present": bool(refusal_present),
@@ -141,9 +150,7 @@ def _completion_content(result: object) -> str:
             usage=result.get("usage"),
         )
         if refusal_present:
-            raise ProviderRefusalError(
-                details=diagnostics
-            )
+            raise ProviderRefusalError(details=diagnostics)
         if finish_reason == "length":
             raise OutputTruncatedError(details=diagnostics)
         if finish_reason == "content_filter":
@@ -499,6 +506,7 @@ class LLMClient:
         context: str | None = None,
         schema: dict | None = None,
         stage: str = "other",
+        max_output_tokens: int | None = None,
     ) -> str:
         """Generate a response from the LLM.
 
@@ -508,6 +516,9 @@ class LLMClient:
             context: Optional scraped context to include.
             schema: Optional JSON Schema for structured output.
             stage: Bounded stage identifier for latency telemetry.
+            max_output_tokens: Optional per-call output ceiling, never above the
+                configured provider output budget. This does not change the
+                input/context budget.
 
         Returns:
             The LLM's response text.
@@ -538,7 +549,7 @@ class LLMClient:
             "messages": messages,
             "temperature": 0.3,
         }
-        body.update(_token_budget_params())
+        body.update(_token_budget_params(max_output_tokens=max_output_tokens))
 
         # Only enable thinking/reasoning for providers that support it
         # (Anthropic/DeepSeek). Default is off; omit the param otherwise.

@@ -68,6 +68,43 @@ caller-provided `limit` on `POST /v2/search`.
 
 The plan endpoints create and retrieve a consentable research plan; execution starts an approved plan. Sessions preserve stepwise research context. Research-memory endpoints query, store, batch, delete, and sweep reusable artifacts. Citation resolution expands compact citations. These APIs are public but are intentionally not all exposed by the CLI yet.
 
+#### Resume synthesis from a captured source snapshot
+
+When a research response has already acquired source bodies but synthesis did
+not complete, import those bodies into an owner-scoped session and synthesize
+without search or scraping:
+
+1. `POST /v2/session/create` and retain the returned `session_id`.
+2. `POST /v2/session/{session_id}/evidence/import` with
+   `{"sources":[{"url":"https://example.test/source","title":"Source title","markdown":"..."}]}`.
+   The endpoint accepts up to 256 unique HTTP(S) sources and 20 MB of UTF-8
+   Markdown. It stores the supplied snapshot; it does not fetch the URLs.
+3. `POST /v2/session/{session_id}/step` with
+   `{"action":"synthesize","params":{"question":"...","synthesis_id":"stable-client-id","ref_ids":["..."]}}`.
+   This persists a digest-pinned manifest and outline before section work.
+4. Continue with the same `synthesis_id`, `question`, and `"resume":true`.
+   Each step processes and checkpoints one evidence chunk; the final response
+   appears only after every chunk and section is assembled and citations
+   validate. After an ambiguous provider call, retry only with the explicit
+   `retry_pending:true` flag. This retry does not repeat discovery.
+
+`input_budget_chars` (8,000–64,000; default 32,000) and
+`output_budget_tokens` are separate. The latter is capped by the selected
+configured `LLM_TOKEN_PARAMETER` budget; the default chunk allowance is 1,024
+tokens. The input setting bounds serialized prompt size in characters; it is
+not an exact tokenizer count. Each completed chunk must cite its assigned
+source. Provider-truncated chunks are not marked complete, and a provider
+context-limit rejection is terminal for that synthesis ID; create a new ID
+over the same imported refs with a smaller input budget. The session expires
+according to its TTL, so retain the session ID and snapshot locally if work
+needs to continue later. `scripts/resume_synthesis_snapshot.py` imports an
+acquired-source JSONL and drives this workflow, saving a private atomic resume
+file; use `--resume` after interruption and `--retry-pending` only when you
+explicitly authorize retrying an unknown model call. It accepts either
+`--sources-jsonl` or a validated `--sources-index` from a source dossier export.
+This workflow is scoped to a captured snapshot and does not claim exhaustive
+discovery.
+
 ### Files and browser sessions
 
 Use the two-step parse flow when an upload must be staged: `PUT /v2/parse/upload/{upload_id}`, then `POST /v2/parse` referencing that ID. Browser routes create, execute against, list, and destroy short-lived Playwright sessions.

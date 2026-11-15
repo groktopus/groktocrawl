@@ -1486,6 +1486,48 @@ class SessionCreateResponse(BaseModel):
     ttl: int = 3600
 
 
+class SessionEvidenceImportSource(BaseModel):
+    """One caller-supplied immutable snapshot source for synthesis replay."""
+
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
+    url: str = Field(..., min_length=1, max_length=8_192)
+    title: str = Field(default="", max_length=2_000)
+    markdown: str = Field(..., min_length=1)
+
+    @field_validator("url")
+    @classmethod
+    def validate_http_url(cls, value: str) -> str:
+        parsed = urlparse(value)
+        if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+            raise ValueError("source URL must be an absolute HTTP or HTTPS URL")
+        if parsed.username is not None or parsed.password is not None:
+            raise ValueError("source URL cannot contain credentials")
+        return value
+
+
+class SessionEvidenceImportRequest(BaseModel):
+    """Import captured source bodies without search or scraper calls."""
+
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
+    sources: list[SessionEvidenceImportSource] = Field(
+        ..., min_length=1, max_length=256
+    )
+
+    @field_validator("sources")
+    @classmethod
+    def validate_source_snapshot(
+        cls, sources: list[SessionEvidenceImportSource]
+    ) -> list[SessionEvidenceImportSource]:
+        urls = [source.url for source in sources]
+        if len(set(urls)) != len(urls):
+            raise ValueError("source URLs must be unique")
+        if sum(len(source.markdown.encode("utf-8")) for source in sources) > 20_000_000:
+            raise ValueError("source snapshot exceeds the 20 MB byte limit")
+        return sources
+
+
 class SessionStepRequest(BaseModel):
     """Execute an action step within a research session.
 
@@ -1505,7 +1547,7 @@ class SessionStepRequest(BaseModel):
 
     action: str = Field(
         ...,
-        description="Step action: search, scrape, query, or deepen",
+        description="Step action: search, scrape, query, deepen, or synthesize",
     )
     params: dict[str, Any] = Field(
         default_factory=dict,
@@ -1527,7 +1569,7 @@ class SessionStepRequest(BaseModel):
     @field_validator("action")
     @classmethod
     def validate_action(cls, value: str) -> str:
-        allowed = {"search", "scrape", "query", "deepen"}
+        allowed = {"search", "scrape", "query", "deepen", "synthesize"}
         if value not in allowed:
             raise ValueError(
                 f"Unknown action: {value!r}. Supported: {', '.join(sorted(allowed))}"
@@ -1580,6 +1622,15 @@ class SessionStepRequest(BaseModel):
                 raise ValueError(
                     "deepen action requires a non-empty 'sub_topic' parameter"
                 )
+        elif self.action == "synthesize":
+            question = params.get("question")
+            synthesis_id = params.get("synthesis_id")
+            if not isinstance(question, str) or not question.strip():
+                raise ValueError(
+                    "synthesize action requires a non-empty 'question' parameter"
+                )
+            if not isinstance(synthesis_id, str) or not synthesis_id.strip():
+                raise ValueError("synthesize action requires a stable 'synthesis_id'")
         return self
 
 
