@@ -444,6 +444,7 @@ class LLMClient:
                     "type": "error",
                     "classification": "truncated",
                     "error_code": "LLM_STREAM_INCOMPLETE",
+                    "details": diagnostics,
                     "content": "LLM provider stream ended before [DONE]",
                 }
                 return

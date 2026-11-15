@@ -10,6 +10,7 @@ always sorted alphabetically by the exporter).
 from __future__ import annotations
 
 import asyncio
+import json
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -130,6 +131,66 @@ async def test_llm_stream_cancellation_records_cancelled_outcome(monkeypatch):
         )
         == before + 1
     )
+
+
+@pytest.mark.asyncio
+async def test_incomplete_llm_stream_includes_safe_provider_diagnostics(monkeypatch):
+    """An EOF before DONE retains finish/usage metadata but never accepts output."""
+    import agent.llm as llm_mod
+
+    class FakeResp:
+        status_code = 200
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *_args):
+            return None
+
+        async def aread(self):
+            return b""
+
+        async def aiter_lines(self):
+            yield "data: " + json.dumps(
+                {"choices": [{"delta": {}, "finish_reason": "stop"}]}
+            )
+            # OpenAI-compatible providers may send token usage in a final
+            # choices=[] chunk immediately before the connection closes.
+            yield "data: " + json.dumps(
+                {
+                    "choices": [],
+                    "usage": {
+                        "prompt_tokens": 17,
+                        "completion_tokens": 5,
+                        "total_tokens": 22,
+                    },
+                }
+            )
+
+    class FakeClient:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *_args):
+            return None
+
+        def stream(self, *_args, **_kwargs):
+            return FakeResp()
+
+    monkeypatch.setattr(llm_mod.httpx, "AsyncClient", lambda *_a, **_k: FakeClient())
+    client = llm_mod.LLMClient("http://llm.test", "", "model")
+    events = [event async for event in client.generate_stream("system", "user")]
+
+    assert events[-1]["type"] == "error"
+    assert events[-1]["classification"] == "truncated"
+    assert events[-1]["error_code"] == "LLM_STREAM_INCOMPLETE"
+    assert events[-1]["details"] == {
+        "finish_reason": "stop",
+        "refusal_present": False,
+        "prompt_tokens": 17,
+        "completion_tokens": 5,
+    }
+    assert not any(event["type"] == "done" for event in events)
 
 
 # ── Search query telemetry ────────────────────────────────────────
