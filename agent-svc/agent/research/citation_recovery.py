@@ -187,13 +187,21 @@ async def generate_with_context_fallback(
                 + notes
             )
             try:
-                answer = await llm.generate(
-                    system_prompt=system_prompt,
-                    user_prompt=user_prompt,
-                    context=notes_context,
-                    schema=schema,
-                    **({"stage": stage} if include_stage else {}),
-                )
+                if include_stage:
+                    answer = await llm.generate(
+                        system_prompt=system_prompt,
+                        user_prompt=user_prompt,
+                        context=notes_context,
+                        schema=schema,
+                        stage=stage,
+                    )
+                else:
+                    answer = await llm.generate(
+                        system_prompt=system_prompt,
+                        user_prompt=user_prompt,
+                        context=notes_context,
+                        schema=schema,
+                    )
                 return answer
             except ContextLimitError:
                 shorter_notes = await _reduce_evidence_context(
@@ -284,9 +292,7 @@ async def generate_cited_answer(
         except OutputTruncatedError as exc:
             if not output_retry_used:
                 output_retry_used = True
-                llm.output_truncation_retries = (
-                    output_truncation_retry_count(llm) + 1
-                )
+                llm.output_truncation_retries = output_truncation_retry_count(llm) + 1
                 _record_recovery(stage, "output_limit_retry")
                 user_prompt = _concise_output_retry_prompt(user_prompt)
                 continue
@@ -298,9 +304,7 @@ async def generate_cited_answer(
         try:
             result = _apply_citation_style(answer, sources, citation_style)
         except CitationValidationError:
-            _record_recovery(
-                stage, "exhausted" if citation_attempt else "attempted"
-            )
+            _record_recovery(stage, "exhausted" if citation_attempt else "attempted")
             if citation_attempt:
                 raise
             citation_attempt += 1
@@ -427,9 +431,7 @@ async def stream_cited_answer(
                 full_content, sources, citation_style
             )
         except CitationValidationError:
-            _record_recovery(
-                stage, "exhausted" if citation_attempt else "attempted"
-            )
+            _record_recovery(stage, "exhausted" if citation_attempt else "attempted")
             if citation_attempt:
                 raise
             user_prompt = _correction_prompt(user_prompt, len(sources))
