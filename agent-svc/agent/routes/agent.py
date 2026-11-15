@@ -457,6 +457,7 @@ async def get_agent_status(request: Request, job_id: str) -> AgentStatusResponse
         data=job.get("data"),
         error=job.get("error"),
         error_code=job.get("error_code"),
+        error_details=job.get("error_details"),
         expires_at=job.get("completed_at") or job.get("created_at"),
         retry_at=job.get("retry_at"),
         retry_attempt=job.get("retry_attempt"),

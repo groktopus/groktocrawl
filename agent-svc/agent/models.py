@@ -597,6 +597,9 @@ class AgentStatusResponse(BaseModel):
     data: dict[str, Any] | None = None
     error: str | None = None
     error_code: str | None = Field(default=None, serialization_alias="errorCode")
+    error_details: dict[str, Any] | None = Field(
+        default=None, serialization_alias="errorDetails"
+    )
     expires_at: str | None = None
     credits_used: int | None = None
     # Retry metadata (ADR-0053) — populated while status == "retry_scheduled".

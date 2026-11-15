@@ -47,11 +47,14 @@ Examples:
 """
 
 import argparse
+import contextlib
 import datetime
+import hashlib
 import json
 import os
 import re
 import sys
+import tempfile
 import textwrap
 import time
 import warnings
@@ -123,11 +126,111 @@ def _slugify(text: str, max_len: int = 60) -> str:
     return slug[:max_len].rstrip("-")
 
 
+def _source_dossier_slug(title: str, url: str) -> str:
+    """Keep source filenames readable and unique for distinct URLs."""
+    url_digest = hashlib.sha256(url.encode("utf-8")).hexdigest()
+    return f"{_slugify(title, 40)}-{url_digest}"
+
+
 def _default_output_dir(query: str) -> str:
     """Generate a default output directory path from the query."""
     slug = _slugify(query)
     date = datetime.date.today().isoformat()
     return os.path.abspath(f"groktocrawl-output/{date}-{slug}")
+
+
+def _checkpoint_terminal_response(
+    output_dir: str, *, command: str, query: str, terminal_response: dict[str, Any]
+) -> str:
+    """Atomically persist a completed response before any client-side export."""
+    os.makedirs(output_dir, mode=0o700, exist_ok=True)
+    os.chmod(output_dir, 0o700)
+    target = os.path.join(output_dir, "00-terminal-response.json")
+    payload = {
+        "schema_version": 1,
+        "command": command,
+        "query": query,
+        "captured_at": datetime.datetime.now(datetime.UTC).isoformat(),
+        **terminal_response,
+    }
+    fd, temporary = tempfile.mkstemp(
+        prefix=".terminal-response-", suffix=".tmp", dir=output_dir
+    )
+    try:
+        os.fchmod(fd, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as output:
+            json.dump(
+                payload,
+                output,
+                ensure_ascii=False,
+                allow_nan=False,
+                separators=(",", ":"),
+            )
+            output.write("\n")
+            output.flush()
+            os.fsync(output.fileno())
+        os.replace(temporary, target)
+        directory_fd = os.open(output_dir, os.O_RDONLY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
+    except BaseException:
+        with contextlib.suppress(OSError):
+            os.close(fd)
+        with contextlib.suppress(FileNotFoundError):
+            os.unlink(temporary)
+        raise
+    return target
+
+
+def _initialize_pyramid_capture(output_dir: str, *, command: str, query: str) -> None:
+    """Start a fresh, private capture before the research request begins."""
+    _checkpoint_terminal_response(
+        output_dir,
+        command=command,
+        query=query,
+        terminal_response={"status": "started"},
+    )
+    capture_path = os.path.join(output_dir, "00-acquired-sources.jsonl")
+    fd = os.open(capture_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    try:
+        os.fchmod(fd, 0o600)
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def _append_acquired_source(output_dir: str, *, query: str, event: dict[str, Any]) -> None:
+    """Durably append one opt-in acquisition event without rewriting prior bodies."""
+    record = {
+        "schema_version": 1,
+        "query": query,
+        "captured_at": datetime.datetime.now(datetime.UTC).isoformat(),
+        **event,
+    }
+    line = (
+        json.dumps(
+            record,
+            ensure_ascii=False,
+            allow_nan=False,
+            separators=(",", ":"),
+        )
+        + "\n"
+    ).encode("utf-8")
+    path = os.path.join(output_dir, "00-acquired-sources.jsonl")
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
+    try:
+        os.fchmod(fd, 0o600)
+        remaining = memoryview(line)
+        while remaining:
+            written = os.write(fd, remaining)
+            if written <= 0:
+                raise OSError("Could not append source capture")
+            remaining = remaining[written:]
+        os.fsync(fd)
+    finally:
+        os.close(fd)
 
 
 def _write_pyramid(
@@ -139,6 +242,7 @@ def _write_pyramid(
     search_results: list | None = None,
     source_details: list[dict] | None = None,
     source_contents: dict[str, str] | None = None,
+    research_status: str = "completed",
 ) -> str:
     """Write an artifact-pyramid directory and return the absolute path.
 
@@ -162,16 +266,36 @@ def _write_pyramid(
         item = dict(source) if isinstance(source, dict) else {"url": str(source)}
         url = item.get("url", "")
         item.update(source_details_by_url.get(url, {}))
-        if source_contents and url in source_contents:
-            item["markdown"] = source_contents[url]
-        if not item.get("markdown"):
-            raise ValueError(
-                "Pyramid export is missing scraped content for "
-                f"{url or 'an unnamed source'}; rerun with a server that supports "
-                "include_source_content."
+        markdown = item.get("markdown")
+        if isinstance(source_contents, dict) and isinstance(
+            source_contents.get(url), str
+        ):
+            markdown = source_contents[url]
+        if isinstance(markdown, str) and markdown:
+            item["markdown"] = markdown
+            item["content_status"] = "available"
+        else:
+            item["markdown"] = ""
+            item["content_status"] = "missing"
+            item["content_missing_reason"] = (
+                "acquisition_event_missing_markdown"
+                if research_status != "completed"
+                else "terminal_response_missing_markdown"
             )
         enriched_sources.append(item)
     sources = enriched_sources
+
+    available_source_count = sum(
+        source.get("content_status") == "available" for source in sources
+    )
+    missing_source_count = len(sources) - available_source_count
+    content_completeness = (
+        "not_applicable"
+        if not sources
+        else "complete"
+        if missing_source_count == 0
+        else "partial"
+    )
 
     pyramid_root = os.path.abspath(output_dir)
     l1_dir = os.path.join(pyramid_root, "01-summary")
@@ -181,7 +305,7 @@ def _write_pyramid(
     for d in (l1_dir, l2_dir, l3_dir):
         os.makedirs(d, exist_ok=True)
 
-    now = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+    now = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     # ---- 00-index.md ----
     index_lines = [
@@ -191,7 +315,11 @@ def _write_pyramid(
         "",
         f"- **Query:** {query}",
         f"- **Generated:** {now}",
-        f"- **Sources consulted:** {len(sources) if sources else 0}",
+        f"- **Research status:** {research_status}",
+        f"- **Sources {'acquired' if research_status != 'completed' else 'consulted'}:** {len(sources) if sources else 0}",
+        f"- **Source content completeness:** {content_completeness} "
+        f"({available_source_count}/{len(sources)} source bodies present; "
+        f"{missing_source_count} missing)",
         "",
         "## Pyramid Contents",
         "",
@@ -201,14 +329,16 @@ def _write_pyramid(
         "| L2 | `02-analysis/00-index.md` | Analysis dimension index |",
         "| L2 | `02-analysis/dimension-*.md` | Per-angle stub files with source links |",
         "| L3 | `03-dossiers/00-index.md` | Source index table |",
-        "| L3 | `03-dossiers/consulted-*.md` | Full scraped source content |",
+        "| L3 | `03-dossiers/consulted-*.md` | Source bodies with missing content marked |",
         "| L3 | `03-dossiers/discovered-*.md` | Raw search results (unscraped) |",
+        "| Capture | `00-terminal-response.json` | Durable latest response/progress before export |",
+        "| Capture | `00-acquired-sources.jsonl` | Fsynced per-source acquisition records |",
         "",
         "## Navigation",
         "",
-        "- **L1** is the entry point — start here for key findings",
+        "- **L1** is the entry point — start here for findings or failure status",
         "- **L2** groups sources by analytical dimension with links to L3",
-        "- **L3** contains full source material with YAML frontmatter",
+        "- **L3** contains source dossiers with body availability in frontmatter",
         "",
         "SOURCES (LAYER 1 NAVIGATION)",
         "01-summary/findings.md",
@@ -225,6 +355,14 @@ def _write_pyramid(
         "# Key Findings",
         "",
         result_text.strip(),
+        *(
+            [
+                "",
+                "**Incomplete research:** synthesis did not complete. These dossiers contain acquired source material only and were not synthesized into an answer.",
+            ]
+            if research_status != "completed"
+            else []
+        ),
         "",
         "## Implications",
         "",
@@ -246,8 +384,8 @@ def _write_pyramid(
         "# Analysis Dimensions",
         "",
         "Sources are grouped by domain of origin. Each dimension file",
-        "lists the sources from that domain and links to their full",
-        "content in L3 dossiers.",
+        "lists sources from that domain and links to their dossiers",
+        "in L3, where unavailable source bodies are explicitly marked.",
         "",
         "| Dimension | Sources |",
         "|-----------|---------|",
@@ -255,6 +393,9 @@ def _write_pyramid(
     l2_files: list[str] = []
 
     if sources:
+        dossier_prefix = (
+            "acquired" if research_status != "completed" else "consulted"
+        )
         # Group sources by domain
         from urllib.parse import urlparse
 
@@ -284,9 +425,9 @@ def _write_pyramid(
             for i, ds in enumerate(domain_sources, 1):
                 url = ds.get("url", "") if isinstance(ds, dict) else str(ds)
                 title = ds.get("title", url) if isinstance(ds, dict) else url
-                src_slug = _slugify(title, 40)
+                src_slug = _source_dossier_slug(title, url)
                 stub_lines.append(
-                    f"| {i} | {title} | {url} | `03-dossiers/consulted-{src_slug}.md` |"
+                    f"| {i} | {title} | {url} | `03-dossiers/{dossier_prefix}-{src_slug}.md` |"
                 )
             stub_lines.extend(
                 [
@@ -297,9 +438,9 @@ def _write_pyramid(
             for ds in domain_sources:
                 url = ds.get("url", "") if isinstance(ds, dict) else str(ds)
                 title = ds.get("title", url) if isinstance(ds, dict) else url
-                src_slug = _slugify(title, 40)
-                stub_lines.append(f"03-dossiers/consulted-{src_slug}.md")
-                stub_lines.append(f" -> Full scraped content from {url}")
+                src_slug = _source_dossier_slug(title, url)
+                stub_lines.append(f"03-dossiers/{dossier_prefix}-{src_slug}.md")
+                stub_lines.append(f" -> Source dossier and content status for {url}")
             _write_file(os.path.join(l2_dir, dim_file), "\n".join(stub_lines))
 
     if not sources:
@@ -317,8 +458,8 @@ def _write_pyramid(
     l3_index = [
         "# Source Index",
         "",
-        "| Type | File | Title | URL |",
-        "|------|------|-------|-----|",
+        "| Type | Content | File | Title | URL |",
+        "|------|---------|------|-------|-----|",
     ]
     consulted_files: list[str] = []
 
@@ -326,11 +467,15 @@ def _write_pyramid(
         for s in sources:
             url = s.get("url", "") if isinstance(s, dict) else str(s)
             title = s.get("title", url) if isinstance(s, dict) else url
-            src_slug = _slugify(title, 40)
-            fname = f"consulted-{src_slug}.md"
+            src_slug = _source_dossier_slug(title, url)
+            fname = f"{dossier_prefix}-{src_slug}.md"
             consulted_files.append(fname)
 
-            l3_index.append(f"| consulted | `{fname}` | {title} | {url} |")
+            content_status = s.get("content_status", "missing")
+            source_type = "acquired" if research_status != "completed" else "consulted"
+            l3_index.append(
+                f"| {source_type} | {content_status} | `{fname}` | {title} | {url} |"
+            )
 
             # Write source dossier
             from urllib.parse import urlparse
@@ -348,11 +493,39 @@ def _write_pyramid(
                 f"source: {s.get('source', 'unknown')}",
                 f"char_count: {s.get('char_count', len(content))}",
                 f"word_count: {len(content.split())}",
-                "status: consulted",
+                f"content_status: {content_status}",
+                *(
+                    [f"content_missing_reason: {s['content_missing_reason']}"]
+                    if content_status == "missing"
+                    else []
+                ),
+                f"status: {'acquired_not_synthesized' if research_status != 'completed' else 'consulted'}",
                 "---",
                 "",
-                content or "(no content available)",
+                content
+                or (
+                    "**Source body unavailable:** the completed response did not "
+                    "include non-empty Markdown for this consulted source. This "
+                    "metadata-only dossier is not counted as complete source content."
+                ),
             ]
+            evidence_coverage = s.get("evidence_coverage")
+            recovery = (
+                evidence_coverage.get("recovery")
+                if isinstance(evidence_coverage, dict)
+                else None
+            )
+            if isinstance(recovery, dict):
+                body.extend(
+                    [
+                        "",
+                        "## Evidence recovery metadata",
+                        "",
+                        "```json",
+                        json.dumps(recovery, ensure_ascii=False, indent=2),
+                        "```",
+                    ]
+                )
             _write_file(os.path.join(l3_dir, fname), "\n".join(body))
 
     discovered_entries = []
@@ -360,7 +533,7 @@ def _write_pyramid(
         for item in search_results:
             url = item.get("url", "") if isinstance(item, dict) else str(item)
             title = item.get("title", url) if isinstance(item, dict) else url
-            src_slug = _slugify(title, 40)
+            src_slug = _source_dossier_slug(title, url)
             fname = f"discovered-{src_slug}.md"
             discovered_entries.append(fname)
             l3_index.append(f"| discovered | `{fname}` | {title} | {url} |")
@@ -383,7 +556,11 @@ def _write_pyramid(
     l3_index.append("SOURCES (LAYER 3 NAVIGATION)")
     for cf in consulted_files:
         l3_index.append(f"03-dossiers/{cf}")
-        l3_index.append(" -> Full scraped content (consulted, used in synthesis)")
+        l3_index.append(
+            " -> Full scraped content (acquired, not synthesized)"
+            if research_status != "completed"
+            else " -> Full scraped content (consulted, used in synthesis)"
+        )
     for df in discovered_entries:
         l3_index.append(f"03-dossiers/{df}")
         l3_index.append(" -> Search result only (discovered, not scraped)")
@@ -2390,6 +2567,8 @@ def cmd_agent(client: Client, args: argparse.Namespace) -> None:
 
         if not pyramid_mode:
             log(f"Agent job {job_id} — researching...")
+        if pyramid_mode:
+            _initialize_pyramid_capture(output_dir, command="agent", query=args.prompt)
         while True:
             time.sleep(POLL_INTERVAL)
             try:
@@ -2407,6 +2586,12 @@ def cmd_agent(client: Client, args: argparse.Namespace) -> None:
                 source_contents = data.get("source_contents", {})
 
                 if pyramid_mode:
+                    _checkpoint_terminal_response(
+                        output_dir,
+                        command="agent",
+                        query=args.prompt,
+                        terminal_response=data,
+                    )
                     try:
                         path = _write_pyramid(
                             output_dir=output_dir,
@@ -2431,6 +2616,49 @@ def cmd_agent(client: Client, args: argparse.Namespace) -> None:
                 return
             elif s == "failed":
                 err_msg = status.get("error", "unknown")
+                if pyramid_mode:
+                    failure_data = {
+                        "status": "failed",
+                        "error": err_msg,
+                        **({"errorCode": status["errorCode"]} if status.get("errorCode") else {}),
+                        **({"errorDetails": status["errorDetails"]} if status.get("errorDetails") else {}),
+                    }
+                    _checkpoint_terminal_response(
+                        output_dir,
+                        command="agent",
+                        query=args.prompt,
+                        terminal_response=failure_data,
+                    )
+                    path = _write_pyramid(
+                        output_dir=output_dir,
+                        query=args.prompt,
+                        result_text=f"Research failed before synthesis: {err_msg}",
+                        sources=[],
+                        citations=[],
+                        research_status="failed",
+                    )
+                    emit(path, {"job_id": job_id, "status": "failed", "pyramid": path, "error": err_msg})
+                    sys.exit(1)
+                if JSON_OUTPUT:
+                    emit(
+                        "",
+                        {
+                            "job_id": job_id,
+                            "status": "failed",
+                            "error": err_msg,
+                            **(
+                                {"error_code": status["errorCode"]}
+                                if status.get("errorCode")
+                                else {}
+                            ),
+                            **(
+                                {"error_details": status["errorDetails"]}
+                                if status.get("errorDetails")
+                                else {}
+                            ),
+                        },
+                    )
+                    sys.exit(1)
                 print(f"\nError: Agent failed — {err_msg}", flush=True)
                 sys.exit(1)
             else:
@@ -2443,7 +2671,10 @@ def cmd_agent(client: Client, args: argparse.Namespace) -> None:
         agent_sources = []
         agent_source_details = []
         agent_source_contents = {}
+        agent_search_results = []
         evidence_coverage = None
+        if pyramid_mode:
+            _initialize_pyramid_capture(output_dir, command="agent", query=args.prompt)
         for line in resp.iter_lines(decode_unicode=True):
             if not line or not line.startswith("data: "):
                 continue
@@ -2452,17 +2683,76 @@ def cmd_agent(client: Client, args: argparse.Namespace) -> None:
                 break
             try:
                 event = json.loads(data_str)
-                if event["type"] == "sources_pending" and not sources_shown:
+                if event["type"] == "sources_pending":
                     if event.get("sources"):
-                        if not pyramid_mode:
+                        if pyramid_mode:
+                            known_urls = {item.get("url") for item in agent_search_results}
+                            for item in event["sources"]:
+                                if item.get("url") not in known_urls:
+                                    agent_search_results.append(item)
+                                    known_urls.add(item.get("url"))
+                            _checkpoint_terminal_response(
+                                output_dir,
+                                command="agent",
+                                query=args.prompt,
+                                terminal_response={
+                                    "status": "acquiring",
+                                    "search_results": agent_search_results,
+                                },
+                            )
+                        if not pyramid_mode and not sources_shown:
                             log(f"Found {len(event['sources'])} sources...")
                 elif event["type"] == "source_scraped":
                     url = event.get("url", "")
                     chars = event.get("chars", 0)
+                    if pyramid_mode and url:
+                        _append_acquired_source(
+                            output_dir,
+                            query=args.prompt,
+                            event=event,
+                        )
+                        agent_source_details = [
+                            item for item in agent_source_details if item.get("url") != url
+                        ] + [
+                            {
+                                "url": url,
+                                "source": event.get("source", "unknown"),
+                                "char_count": chars,
+                            }
+                        ]
+                        agent_sources = [
+                            item for item in agent_sources
+                            if (item.get("url") if isinstance(item, dict) else item) != url
+                        ] + [{"url": url, "title": event.get("source", url)}]
+                        if isinstance(event.get("markdown"), str):
+                            agent_source_contents[url] = event["markdown"]
+                        _checkpoint_terminal_response(
+                            output_dir,
+                            command="agent",
+                            query=args.prompt,
+                            terminal_response={
+                                "status": "acquiring",
+                                "source_details": agent_source_details,
+                                "sources": agent_sources,
+                                "search_results": agent_search_results,
+                                "acquired_source_count": len(agent_source_contents),
+                                "acquired_sources_capture": "00-acquired-sources.jsonl",
+                            },
+                        )
                     info(f"  Scraped: {url} ({chars} chars)")
                 elif event["type"] == "sources" and not sources_shown:
                     if event.get("sources"):
-                        agent_sources = event["sources"]
+                        if pyramid_mode:
+                            known_urls = {
+                                item.get("url") if isinstance(item, dict) else item
+                                for item in agent_sources
+                            }
+                            for source in event["sources"]:
+                                source_url = source.get("url") if isinstance(source, dict) else source
+                                if source_url not in known_urls:
+                                    agent_sources.append(source)
+                        else:
+                            agent_sources = event["sources"]
                         if not pyramid_mode:
                             log("Sources:")
                             for s in event["sources"]:
@@ -2474,18 +2764,92 @@ def cmd_agent(client: Client, args: argparse.Namespace) -> None:
                         print(event["content"], end="", flush=True)
                 elif event["type"] == "done":
                     full_result = event.get("result", full_result)
-                    agent_source_details = event.get("source_details", [])
-                    agent_source_contents = event.get("source_contents", {})
+                    source_details_by_url = {
+                        item.get("url"): item
+                        for item in agent_source_details
+                        if item.get("url")
+                    }
+                    source_details_by_url.update(
+                        {
+                            item.get("url"): item
+                            for item in (event.get("source_details") or [])
+                            if item.get("url")
+                        }
+                    )
+                    agent_source_details = list(source_details_by_url.values())
+                    source_contents = event.get("source_contents")
+                    if isinstance(source_contents, dict):
+                        agent_source_contents.update(
+                            {
+                                url: markdown
+                                for url, markdown in source_contents.items()
+                                if isinstance(url, str) and isinstance(markdown, str)
+                            }
+                        )
+                    if event.get("sources"):
+                        agent_sources = event["sources"]
                     evidence_coverage = event.get("evidence_coverage")
+                    if pyramid_mode:
+                        terminal_event = {
+                            **event,
+                            "source_details": agent_source_details,
+                            "sources": agent_sources,
+                            "search_results": agent_search_results,
+                            "acquired_source_count": len(agent_source_contents),
+                            "acquired_sources_capture": "00-acquired-sources.jsonl",
+                        }
+                        _checkpoint_terminal_response(
+                            output_dir,
+                            command="agent",
+                            query=args.prompt,
+                            terminal_response=terminal_event,
+                        )
                     if not pyramid_mode and not JSON_OUTPUT:
                         print()
                 elif event["type"] == "error":
+                    if pyramid_mode:
+                        failure = {
+                            "status": "failed",
+                            "error": event.get("content", "Agent stream failed"),
+                            **({"errorCode": event["error_code"]} if event.get("error_code") else {}),
+                            **({"errorDetails": event["details"]} if event.get("details") else {}),
+                            "source_details": agent_source_details,
+                            "sources": agent_sources,
+                            "search_results": agent_search_results,
+                            "acquired_source_count": len(agent_source_contents),
+                            "acquired_sources_capture": "00-acquired-sources.jsonl",
+                        }
+                        _checkpoint_terminal_response(
+                            output_dir,
+                            command="agent",
+                            query=args.prompt,
+                            terminal_response=failure,
+                        )
+                        path = _write_pyramid(
+                            output_dir=output_dir,
+                            query=args.prompt,
+                            result_text=f"Research failed before synthesis: {failure['error']}",
+                            sources=agent_sources,
+                            citations=[],
+                            source_details=agent_source_details,
+                            source_contents=agent_source_contents,
+                            search_results=agent_search_results,
+                            research_status="failed",
+                        )
+                        if JSON_OUTPUT:
+                            emit(path, {"success": False, "error": failure["error"], "pyramid": path})
+                        else:
+                            print(f"\nError: {failure['error']}\nPartial acquisition bundle: {path}", flush=True)
+                        sys.exit(1)
                     if JSON_OUTPUT and not pyramid_mode:
                         payload = {
                             "success": False,
                             "error": event.get("content", "Agent stream failed"),
                         }
                         for key in ("classification", "retry_after_seconds"):
+                            if key in event:
+                                payload[key] = event[key]
+                        for key in ("error_code", "details"):
                             if key in event:
                                 payload[key] = event[key]
                         emit("", payload)
@@ -2584,6 +2948,13 @@ def cmd_answer(client: Client, args: argparse.Namespace) -> None:
                     citations = event.get("citations", [])
                     evidence_coverage = event.get("evidence_coverage")
                     source_contents = event.get("source_contents", {})
+                    if pyramid_mode:
+                        _checkpoint_terminal_response(
+                            output_dir,
+                            command="answer",
+                            query=args.query,
+                            terminal_response=event,
+                        )
                     if not pyramid_mode:
                         print()
                 elif event["type"] == "error":
@@ -2615,6 +2986,12 @@ def cmd_answer(client: Client, args: argparse.Namespace) -> None:
 
     if pyramid_mode:
         # Sync path, pyramid mode
+        _checkpoint_terminal_response(
+            output_dir,
+            command="answer",
+            query=args.query,
+            terminal_response=result,
+        )
         path = _write_pyramid(
             output_dir=output_dir,
             query=args.query,

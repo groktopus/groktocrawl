@@ -19,7 +19,14 @@ from common.stage_metrics import inc_counter, observe_elapsed
 
 from .admission import AdmissionRejectedError, get_admission
 from .cancel import JobCancelledError, raise_if_cancelled
-from .exceptions import ContextLimitError, ProviderOutputError, RetryableRateLimitError
+from .exceptions import (
+    ContextLimitError,
+    OutputTruncatedError,
+    ProviderFilteredOutputError,
+    ProviderOutputError,
+    ProviderRefusalError,
+    RetryableRateLimitError,
+)
 from .settings import load_settings
 
 logger = logging.getLogger(__name__)
@@ -84,6 +91,41 @@ def _token_budget_params(*, health: bool = False) -> dict[str, int]:
     return {settings.llm_token_parameter: budget}
 
 
+_SAFE_FINISH_REASONS = {
+    "stop",
+    "length",
+    "content_filter",
+    "tool_calls",
+    "function_call",
+}
+_MAX_DIAGNOSTIC_TOKEN_COUNT = 10_000_000
+
+
+def _safe_provider_diagnostics(
+    *, finish_reason: object, refusal_present: bool, usage: object
+) -> dict[str, Any]:
+    """Keep provider failure telemetry bounded and free of prompt/output text."""
+    diagnostics: dict[str, Any] = {
+        "finish_reason": (
+            finish_reason
+            if isinstance(finish_reason, str)
+            and finish_reason in _SAFE_FINISH_REASONS
+            else "other"
+        ),
+        "refusal_present": bool(refusal_present),
+    }
+    if isinstance(usage, dict):
+        for key in ("prompt_tokens", "completion_tokens"):
+            value = usage.get(key)
+            if (
+                isinstance(value, int)
+                and not isinstance(value, bool)
+                and 0 <= value <= _MAX_DIAGNOSTIC_TOKEN_COUNT
+            ):
+                diagnostics[key] = value
+    return diagnostics
+
+
 def _completion_content(result: object) -> str:
     """Extract only a complete, non-refusal provider completion."""
     if not isinstance(result, dict):
@@ -92,10 +134,20 @@ def _completion_content(result: object) -> str:
         choice = result["choices"][0]
         message = choice["message"]
         finish_reason = choice.get("finish_reason")
-        if message.get("refusal") or finish_reason == "length":
-            raise ProviderOutputError(
-                detail="LLM provider returned an unusable response"
+        refusal_present = bool(message.get("refusal"))
+        diagnostics = _safe_provider_diagnostics(
+            finish_reason=finish_reason,
+            refusal_present=refusal_present,
+            usage=result.get("usage"),
+        )
+        if refusal_present:
+            raise ProviderRefusalError(
+                details=diagnostics
             )
+        if finish_reason == "length":
+            raise OutputTruncatedError(details=diagnostics)
+        if finish_reason == "content_filter":
+            raise ProviderFilteredOutputError(details=diagnostics)
         content = message.get("content")
     except (KeyError, IndexError, TypeError, AttributeError) as exc:
         raise ProviderOutputError(
@@ -147,6 +199,7 @@ class LLMClient:
         self.api_key = api_key
         self.model = model
         self.context_fallback_calls = 0
+        self.output_truncation_retries = 0
         self._admission = admission if admission is not None else get_admission()
         self._client = httpx.AsyncClient(timeout=load_settings().llm_call_timeout)
 
@@ -205,13 +258,14 @@ class LLMClient:
                     "content": exc.detail,
                 }
             except ProviderOutputError as exc:
-                error_event = {
+                error_event: dict[str, Any] = {
                     "type": "error",
                     "classification": "non_retryable",
                     "content": exc.detail,
+                    "error_code": exc.error_code,
                 }
-                if isinstance(exc, ContextLimitError):
-                    error_event["error_code"] = exc.error_code
+                if exc.details:
+                    error_event["details"] = exc.details
                 yield error_event
             else:
                 yield {"type": "done", "full_content": content}
@@ -266,6 +320,9 @@ class LLMClient:
         full_content = ""
         saw_done = False
         saw_length_stop = False
+        saw_refusal = False
+        finish_reason: object = None
+        provider_usage: object = None
         outcome = "success"
         started = time.monotonic()
         try:
@@ -323,12 +380,20 @@ class LLMClient:
                             chunk = json.loads(data_str)
                             if not isinstance(chunk, dict):
                                 raise ValueError("SSE payload is not an object")
+                            if isinstance(chunk.get("usage"), dict):
+                                provider_usage = chunk["usage"]
                             choices = chunk.get("choices", [{}])
                             if not choices:
                                 continue
-                            if choices[0].get("finish_reason") == "length":
+                            choice = choices[0]
+                            finish_reason = choice.get("finish_reason")
+                            if finish_reason == "length":
                                 saw_length_stop = True
-                            delta = choices[0].get("delta", {})
+                            delta = choice.get("delta", {})
+                            message = choice.get("message", {})
+                            saw_refusal = saw_refusal or bool(
+                                delta.get("refusal") or message.get("refusal")
+                            )
                             token = delta.get("content", "")
                             if token:
                                 full_content += token
@@ -348,11 +413,37 @@ class LLMClient:
                             }
                             return
 
-            if not saw_done:
+            diagnostics = _safe_provider_diagnostics(
+                finish_reason=finish_reason,
+                refusal_present=saw_refusal,
+                usage=provider_usage,
+            )
+            if saw_refusal:
+                outcome = "refusal"
+                yield {
+                    "type": "error",
+                    "classification": "non_retryable",
+                    "error_code": ProviderRefusalError.error_code,
+                    "details": diagnostics,
+                    "content": ProviderRefusalError.detail,
+                }
+                return
+            if finish_reason == "content_filter":
+                outcome = "filtered"
+                yield {
+                    "type": "error",
+                    "classification": "non_retryable",
+                    "error_code": ProviderFilteredOutputError.error_code,
+                    "details": diagnostics,
+                    "content": ProviderFilteredOutputError.detail,
+                }
+                return
+            if not saw_done and not saw_length_stop:
                 outcome = "truncated"
                 yield {
                     "type": "error",
                     "classification": "truncated",
+                    "error_code": "LLM_STREAM_INCOMPLETE",
                     "content": "LLM provider stream ended before [DONE]",
                 }
                 return
@@ -361,7 +452,9 @@ class LLMClient:
                 yield {
                     "type": "error",
                     "classification": "truncated",
-                    "content": "LLM provider stopped at its output limit",
+                    "error_code": OutputTruncatedError.error_code,
+                    "details": diagnostics,
+                    "content": OutputTruncatedError.detail,
                 }
                 return
             yield {"type": "done", "full_content": full_content}
@@ -513,11 +606,16 @@ class LLMClient:
             outcome = "rate_limited"
             raise
         except ProviderOutputError as exc:
-            outcome = (
-                "context_limit"
-                if isinstance(exc, ContextLimitError)
-                else "provider_error"
-            )
+            if isinstance(exc, ContextLimitError):
+                outcome = "context_limit"
+            elif isinstance(exc, OutputTruncatedError):
+                outcome = "output_truncated"
+            elif isinstance(exc, ProviderRefusalError):
+                outcome = "refusal"
+            elif isinstance(exc, ProviderFilteredOutputError):
+                outcome = "filtered"
+            else:
+                outcome = "provider_error"
             raise
         except httpx.HTTPError as exc:
             outcome = "provider_error"

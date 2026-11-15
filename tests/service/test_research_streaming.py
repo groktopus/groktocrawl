@@ -141,6 +141,8 @@ class TestLiveResearchStreamingAdmission:
                 "content": "LLM provider rate limit exceeded",
                 "classification": "retryable",
                 "retry_after_seconds": 2.0,
+                "error_code": "LLM_OUTPUT_TRUNCATED",
+                "details": {"finish_reason": "length", "refusal_present": False},
             }
 
         with patch("agent.research.streaming.run_research_stream", error_events):
@@ -168,8 +170,57 @@ class TestLiveResearchStreamingAdmission:
             "content": "LLM provider rate limit exceeded",
             "classification": "retryable",
             "retry_after_seconds": 2.0,
+            "error_code": "LLM_OUTPUT_TRUNCATED",
+            "details": {"finish_reason": "length", "refusal_present": False},
         }
         assert "data: [DONE]\n\n" not in chunks
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("include_source_content", [False, True])
+    async def test_source_scraped_body_is_opt_in(self, include_source_content):
+        from agent.models import CitationStyle
+        from agent.research.streaming import stream_research_live
+
+        async def source_events(*args, **kwargs):
+            yield {
+                "type": "source_scraped",
+                "url": "https://example.com",
+                "source": "fixture",
+                "chars": 8,
+                "markdown": "evidence",
+            }
+            yield {
+                "type": "done",
+                "result": "Answer",
+                "sources": [],
+                "source_details": [],
+                "latency_ms": 1,
+            }
+
+        with patch("agent.research.streaming.run_research_stream", source_events):
+            chunks = [
+                chunk
+                async for chunk in stream_research_live(
+                    prompt="Question",
+                    urls=None,
+                    schema=None,
+                    searxng_url="http://searxng",
+                    scraper_url="http://scraper",
+                    llm_base_url="http://llm",
+                    llm_api_key="key",
+                    llm_model="test-model",
+                    requested_model=None,
+                    max_searches_per_request=5,
+                    include_images=False,
+                    citation_style=CitationStyle.inline,
+                    include_source_content=include_source_content,
+                )
+            ]
+        event = json.loads(chunks[0].removeprefix("data: "))
+        if include_source_content:
+            assert event["markdown"] == "evidence"
+        else:
+            assert "markdown" not in event
 
 
 @pytest.mark.asyncio

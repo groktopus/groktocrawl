@@ -13,7 +13,11 @@ from typing import Any
 from .admission import get_admission
 from .barrier_guard import is_barrier_flagged, log_refusal
 from .cancel import JobCancelledError, raise_if_cancelled, set_token
-from .exceptions import CitationValidationError, RetryableRateLimitError
+from .exceptions import (
+    CitationValidationError,
+    ProviderOutputError,
+    RetryableRateLimitError,
+)
 from .metrics import METRICS
 from .research import run_extract, run_research
 from .research.evidence_recovery import (
@@ -61,12 +65,28 @@ def _complete_with_webhook_intent(
 
 
 def _fail_with_webhook_intent(
-    store, job_id: str, error: str, intent: dict | None
+    store,
+    job_id: str,
+    error: str,
+    intent: dict | None,
+    *,
+    error_code: str | None = None,
+    error_details: dict[str, Any] | None = None,
 ) -> bool:
     """Pass atomic outbox intent to JobStore while tolerating legacy test doubles."""
-    if "webhook_event" in inspect.signature(store.fail_job).parameters:
-        return store.fail_job(job_id, error, webhook_event=intent)
-    return store.fail_job(job_id, error)
+    parameters = inspect.signature(store.fail_job).parameters
+    accepts_kwargs = any(
+        parameter.kind == inspect.Parameter.VAR_KEYWORD
+        for parameter in parameters.values()
+    )
+    kwargs: dict[str, Any] = {}
+    if "webhook_event" in parameters:
+        kwargs["webhook_event"] = intent
+    if error_code and ("error_code" in parameters or accepts_kwargs):
+        kwargs["error_code"] = error_code
+    if error_details and ("error_details" in parameters or accepts_kwargs):
+        kwargs["error_details"] = error_details
+    return store.fail_job(job_id, error, **kwargs)
 
 
 async def _run_job_with_observability(
@@ -250,6 +270,39 @@ async def _run_job_with_observability(
         record_job_cancelled(job_type)
         logger.info("%s job %s cancelled (forced)", job_type, job_id)
         raise
+    except ProviderOutputError as e:
+        logger.exception(
+            "%s job %s failed with provider output code=%s",
+            job_type,
+            job_id,
+            e.error_code,
+        )
+        diagnostics = e.details if isinstance(e.details, dict) else None
+        _fail_with_webhook_intent(
+            store,
+            job_id,
+            e.detail,
+            build_webhook_intent(
+                webhook_config,
+                "failed",
+                job_id,
+                {"error": e.detail},
+                success=False,
+                error=e.detail,
+            ),
+            error_code=e.error_code,
+            error_details=diagnostics,
+        )
+        await deliver_webhook(
+            webhook_config, "failed", job_id, {"error": e.detail}
+        )
+        elapsed = time.monotonic() - start
+        METRICS.histogram(
+            "job_duration_seconds", "Job processing duration", ["type", "status"]
+        ).observe({"type": job_type, "status": "failed"}, elapsed)
+        METRICS.counter("jobs_failed_total", "Total failed jobs", ["type"]).inc(
+            {"type": job_type}
+        )
     except Exception as e:
         logger.exception("%s job %s failed", job_type, job_id)
         _fail_with_webhook_intent(

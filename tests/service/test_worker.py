@@ -165,6 +165,75 @@ class TestProcessAgentAsync:
         assert "error" in call_args[3]
 
     @pytest.mark.asyncio
+    async def test_provider_output_failure_persists_safe_diagnostics(self):
+        from agent.exceptions import OutputTruncatedError
+        from agent.worker import _process_agent_async
+
+        mock_store = MagicMock()
+        mock_run_research = AsyncMock(
+            side_effect=OutputTruncatedError(
+                details={
+                    "finish_reason": "length",
+                    "refusal_present": False,
+                    "prompt_tokens": 123,
+                    "completion_tokens": 8192,
+                    "recovery_attempts": 1,
+                }
+            )
+        )
+        mock_deliver_webhook = AsyncMock()
+        mock_metrics = MagicMock()
+        mock_metrics.counter.return_value.inc = MagicMock()
+        mock_metrics.histogram.return_value.observe = MagicMock()
+
+        with (
+            patch("agent.worker.JobStore", return_value=mock_store),
+            patch("agent.worker.run_research", mock_run_research),
+            patch("agent.worker.deliver_webhook", mock_deliver_webhook),
+            patch("agent.worker.METRICS", mock_metrics),
+            patch(
+                "agent.worker.load_settings",
+                return_value=MagicMock(
+                    valkey_host="valkey",
+                    valkey_port=6379,
+                    valkey_db=0,
+                    crawl_max_duration_seconds=1800,
+                    crawl_idle_timeout_seconds=300,
+                ),
+            ),
+        ):
+            await _process_agent_async(
+                job_id="test-job-provider-truncated",
+                prompt="Test prompt",
+                urls=None,
+                schema_=None,
+                llm_base_url="http://llm:8000",
+                llm_api_key="test-key",
+                llm_model="fixture-model",
+                searxng_url="http://searxng:8080",
+                scraper_url="http://scraper:8001",
+            )
+
+        call = mock_store.fail_job.call_args
+        assert call.args == (
+            "test-job-provider-truncated",
+            "LLM provider stopped before completing the response",
+        )
+        assert call.kwargs["error_code"] == "LLM_OUTPUT_TRUNCATED"
+        assert call.kwargs["error_details"] == {
+            "finish_reason": "length",
+            "refusal_present": False,
+            "prompt_tokens": 123,
+            "completion_tokens": 8192,
+            "recovery_attempts": 1,
+        }
+        # Provider diagnostics are retained for status inspection, not sent
+        # with the failure webhook payload.
+        assert mock_deliver_webhook.call_args.args[3] == {
+            "error": "LLM provider stopped before completing the response"
+        }
+
+    @pytest.mark.asyncio
     async def test_llm_error_not_cached(self):
         """LLM error results must not pollute the research memory cache (#432)."""
         mocks = await self._run_worker_with(

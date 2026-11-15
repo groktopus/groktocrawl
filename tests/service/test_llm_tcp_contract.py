@@ -66,8 +66,48 @@ async def test_real_client_rejects_non_success_outputs(fixture_url: str, scenari
                 await client.generate("system", "question")
             assert 1 <= (error.value.retry_after_seconds or 0) <= 60
         else:
-            with pytest.raises(ProviderOutputError):
+            with pytest.raises(ProviderOutputError) as error:
                 await client.generate("system", "question")
+            if scenario == "truncated":
+                assert error.value.error_code == "LLM_OUTPUT_TRUNCATED"
+                assert error.value.details == {
+                    "finish_reason": "length",
+                    "refusal_present": False,
+                    "prompt_tokens": 0,
+                    "completion_tokens": 0,
+                }
+            if scenario == "refusal":
+                assert error.value.error_code == "LLM_REFUSAL"
+                assert error.value.details["refusal_present"] is True
+                assert "fixture refusal" not in str(error.value.details)
+    finally:
+        await client.close()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("scenario", "error_code", "finish_reason", "refusal_present"),
+    [
+        ("stream-truncated", "LLM_OUTPUT_TRUNCATED", "length", False),
+        ("stream-refusal", "LLM_REFUSAL", "other", True),
+    ],
+)
+async def test_real_client_classifies_stream_output_failures(
+    fixture_url: str,
+    scenario: str,
+    error_code: str,
+    finish_reason: str,
+    refusal_present: bool,
+):
+    client = _client(fixture_url, scenario)
+    try:
+        events = [event async for event in client.generate_stream("system", "question")]
+        assert events[-1]["type"] == "error"
+        assert events[-1]["error_code"] == error_code
+        assert events[-1]["details"]["finish_reason"] == finish_reason
+        assert events[-1]["details"]["refusal_present"] is refusal_present
+        if scenario == "stream-truncated":
+            assert events[-1]["details"]["completion_tokens"] == 8192
     finally:
         await client.close()
 

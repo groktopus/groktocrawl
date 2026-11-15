@@ -81,16 +81,241 @@ class TestPyramidSourceExport:
         assert "char_count: 22" in dossier.read_text()
         assert "(no content available)" not in dossier.read_text()
 
-    def test_rejects_url_only_completed_response(self, tmp_path):
+    def test_preserves_synthesis_when_source_body_is_missing(self, tmp_path):
         write_pyramid = _cli_ns["_write_pyramid"]
-        with pytest.raises(ValueError, match="missing scraped content"):
-            write_pyramid(
-                str(tmp_path / "pyramid"),
-                "Research topic",
-                "Synthesis",
-                ["https://example.com/article"],
-                [],
-            )
+        output = write_pyramid(
+            str(tmp_path / "pyramid"),
+            "Research topic",
+            "Synthesis survives export.",
+            ["https://example.com/article"],
+            [],
+            source_details=[
+                {
+                    "url": "https://example.com/article",
+                    "source": "playwright",
+                    "char_count": 120,
+                    "evidence_coverage": {
+                        "recovery": {
+                            "status": "available",
+                            "session_id": "session-fixture",
+                            "ref_id": "agent_1",
+                        }
+                    },
+                }
+            ],
+        )
+
+        root_index = (Path(output) / "00-index.md").read_text()
+        findings = (Path(output) / "01-summary/findings.md").read_text()
+        dossier = next((Path(output) / "03-dossiers").glob("consulted-*.md"))
+        dossier_text = dossier.read_text()
+        assert "**Source content completeness:** partial " in root_index
+        assert "(0/1 source bodies present; 1 missing)" in root_index
+        assert "Synthesis survives export." in findings
+        assert "content_status: missing" in dossier_text
+        assert "did not include non-empty Markdown" in dossier_text
+        assert "session-fixture" in dossier_text
+
+    def test_checkpoint_is_durable_before_pyramid_transformation(
+        self, tmp_path, monkeypatch
+    ):
+        cmd_agent = _cli_ns["cmd_agent"]
+        output_dir = tmp_path / "pyramid"
+        terminal = {
+            "type": "done",
+            "result": "Completed synthesis.",
+            "sources": ["https://example.test/a"],
+            "source_details": [],
+            "source_contents": {},
+        }
+        response = MagicMock()
+        response.iter_lines.return_value = [
+            "data: " + json.dumps(terminal),
+            "data: [DONE]",
+        ]
+        client = MagicMock()
+        client.dry_run = False
+        client.create_agent_stream.return_value = {"_stream": response}
+
+        def assert_checkpoint_then_transform(**kwargs):
+            checkpoint = output_dir / "00-terminal-response.json"
+            assert checkpoint.is_file()
+            assert json.loads(checkpoint.read_text())["result"] == "Completed synthesis."
+            return str(output_dir)
+
+        monkeypatch.setitem(
+            _cli_ns, "_write_pyramid", assert_checkpoint_then_transform
+        )
+        args = type(
+            "Args",
+            (),
+            {
+                "prompt": "research topic",
+                "urls": None,
+                "sync": False,
+                "no_poll": False,
+                "pyramid": True,
+                "output_dir": str(output_dir),
+                "include_images": False,
+                "search_type": "deep",
+                "evidence_budget_chars": None,
+            },
+        )()
+
+        cmd_agent(client, args)
+
+        checkpoint = output_dir / "00-terminal-response.json"
+        assert checkpoint.stat().st_mode & 0o777 == 0o600
+
+    def test_acquisition_records_are_fsynced_and_failure_bundle_is_explicit(
+        self, tmp_path
+    ):
+        initialize = _cli_ns["_initialize_pyramid_capture"]
+        append = _cli_ns["_append_acquired_source"]
+        write_pyramid = _cli_ns["_write_pyramid"]
+        output = tmp_path / "pyramid"
+        output.mkdir(mode=0o700)
+        initialize(str(output), command="agent", query="research topic")
+        append(
+            str(output),
+            query="research topic",
+            event={
+                "type": "source_scraped",
+                "url": "https://example.test/source",
+                "source": "fixture",
+                "chars": 15,
+                "markdown": "Acquired evidence",
+            },
+        )
+        capture = output / "00-acquired-sources.jsonl"
+        assert capture.stat().st_mode & 0o777 == 0o600
+        captured = json.loads(capture.read_text().splitlines()[0])
+        assert captured["markdown"] == "Acquired evidence"
+
+        result = write_pyramid(
+            str(output),
+            "research topic",
+            "Research failed before synthesis: LLM output truncated.",
+            [{"url": captured["url"], "title": "fixture"}],
+            [],
+            source_contents={captured["url"]: captured["markdown"]},
+            research_status="failed",
+        )
+        findings = (Path(result) / "01-summary/findings.md").read_text()
+        dossier = next((Path(result) / "03-dossiers").glob("acquired-*.md"))
+        assert "synthesis did not complete" in findings
+        assert "Acquired evidence" in dossier.read_text()
+        assert "acquired_not_synthesized" in dossier.read_text()
+
+    def test_acquired_sources_with_same_title_keep_distinct_dossiers(self, tmp_path):
+        write_pyramid = _cli_ns["_write_pyramid"]
+        first_url = "https://example.test/first"
+        second_url = "https://example.test/second"
+        output = write_pyramid(
+            str(tmp_path / "collision-pyramid"),
+            "Research topic",
+            "Research failed before synthesis.",
+            [
+                {"url": first_url, "title": "playwright", "source": "playwright"},
+                {"url": second_url, "title": "playwright", "source": "playwright"},
+            ],
+            [],
+            source_contents={
+                first_url: "Evidence belonging only to the first URL.",
+                second_url: "Evidence belonging only to the second URL.",
+            },
+            research_status="failed",
+        )
+
+        dossiers = list((Path(output) / "03-dossiers").glob("acquired-*.md"))
+        assert len(dossiers) == 2
+        dossier_text = [path.read_text() for path in dossiers]
+        assert any(first_url in text and "first URL" in text for text in dossier_text)
+        assert any(second_url in text and "second URL" in text for text in dossier_text)
+        assert all("content_status: available" in text for text in dossier_text)
+
+        index = (Path(output) / "03-dossiers/00-index.md").read_text()
+        assert index.count("`acquired-") == 2
+
+    def test_stream_failure_exports_sources_captured_before_synthesis(
+        self, tmp_path
+    ):
+        cmd_agent = _cli_ns["cmd_agent"]
+        output_dir = tmp_path / "failed-pyramid"
+        events = [
+            {
+                "type": "sources_pending",
+                "sources": [
+                    {
+                        "url": "https://example.test/source",
+                        "title": "Source title",
+                        "relevance": "Relevant history",
+                    }
+                ],
+            },
+            {
+                "type": "source_scraped",
+                "url": "https://example.test/source",
+                "source": "playwright",
+                "chars": 16,
+                "markdown": "Captured evidence",
+            },
+            {
+                "type": "sources_pending",
+                "sources": [
+                    {
+                        "url": "https://example.test/second-source",
+                        "title": "Second source",
+                        "relevance": "Additional context",
+                    }
+                ],
+            },
+            {
+                "type": "error",
+                "content": "LLM provider stopped before completing the response",
+                "error_code": "LLM_OUTPUT_TRUNCATED",
+                "details": {"finish_reason": "length", "refusal_present": False},
+            },
+        ]
+        response = MagicMock()
+        response.iter_lines.return_value = [
+            "data: " + json.dumps(event) for event in events
+        ]
+        client = MagicMock()
+        client.dry_run = False
+        client.create_agent_stream.return_value = {"_stream": response}
+        args = type(
+            "Args",
+            (),
+            {
+                "prompt": "research topic",
+                "urls": None,
+                "sync": False,
+                "no_poll": False,
+                "pyramid": True,
+                "output_dir": str(output_dir),
+                "include_images": False,
+                "search_type": "deep",
+                "evidence_budget_chars": None,
+            },
+        )()
+
+        with pytest.raises(SystemExit) as caught:
+            cmd_agent(client, args)
+
+        assert caught.value.code == 1
+        checkpoint = json.loads((output_dir / "00-terminal-response.json").read_text())
+        assert checkpoint["errorCode"] == "LLM_OUTPUT_TRUNCATED"
+        assert checkpoint["errorDetails"]["finish_reason"] == "length"
+        assert checkpoint["search_results"][0]["title"] == "Source title"
+        assert checkpoint["search_results"][1]["title"] == "Second source"
+        assert checkpoint["acquired_source_count"] == 1
+        assert checkpoint["acquired_sources_capture"] == "00-acquired-sources.jsonl"
+        assert "source_contents" not in checkpoint
+        assert (output_dir / "00-acquired-sources.jsonl").stat().st_mode & 0o777 == 0o600
+        assert "Captured evidence" in next(
+            (output_dir / "03-dossiers").glob("acquired-*.md")
+        ).read_text()
 
     def test_client_requests_source_export_only_when_opted_in(self, client):
         calls = []
@@ -1891,6 +2116,8 @@ def test_agent_json_stream_error_exits_nonzero_with_json(monkeypatch, capsys):
                 "type": "error",
                 "content": "provider unavailable",
                 "classification": "non_retryable",
+                "error_code": "LLM_OUTPUT_TRUNCATED",
+                "details": {"finish_reason": "length", "refusal_present": False},
             }
         )
     ]
@@ -1916,6 +2143,8 @@ def test_agent_json_stream_error_exits_nonzero_with_json(monkeypatch, capsys):
         "success": False,
         "error": "provider unavailable",
         "classification": "non_retryable",
+        "error_code": "LLM_OUTPUT_TRUNCATED",
+        "details": {"finish_reason": "length", "refusal_present": False},
     }
 
     def test_search_type_images_in_choices(self):

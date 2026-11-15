@@ -95,6 +95,8 @@ if e.lease_owner ~= ARGV[1] or tonumber(e.fence) ~= tonumber(ARGV[2]) then retur
 if tonumber(e.lease_expires_at or 0) <= tonumber(ARGV[3]) then return 0 end
 meta.status = 'failed'
 meta.error = ARGV[4]
+if ARGV[10] ~= '' then meta.error_code = ARGV[10] else meta.error_code = nil end
+if ARGV[11] ~= '' then meta.error_details = cjson.decode(ARGV[11]) else meta.error_details = nil end
 meta.completed_at = ARGV[5]
 e.state = 'failed'
 e.pending_operation = nil
@@ -377,7 +379,12 @@ class JobStore:
         self.redis.set(f"job:{job_id}:data", json.dumps(data), ex=_default_ttl())
 
     def fail_job(
-        self, job_id: str, error: str, webhook_event: dict | None = None
+        self,
+        job_id: str,
+        error: str,
+        webhook_event: dict | None = None,
+        error_code: str | None = None,
+        error_details: dict[str, Any] | None = None,
     ) -> bool:
         """Mark a job as failed with an error message.
 
@@ -405,6 +412,10 @@ class JobStore:
                 webhook_event["fingerprint"] if webhook_event else "",
                 webhook_event["event"]["webhookId"] if webhook_event else "",
                 json.dumps(webhook_event["event"]) if webhook_event else "",
+                error_code or "",
+                json.dumps(error_details, separators=(",", ":"))
+                if error_details
+                else "",
             )
             if isinstance(result, int):
                 return result == 1
@@ -417,6 +428,14 @@ class JobStore:
             return False
         meta["status"] = "failed"
         meta["error"] = error
+        if error_code:
+            meta["error_code"] = error_code
+        else:
+            meta.pop("error_code", None)
+        if error_details:
+            meta["error_details"] = error_details
+        else:
+            meta.pop("error_details", None)
         meta["completed_at"] = _now_iso()
         self.redis.set(f"job:{job_id}:meta", json.dumps(meta), ex=_default_ttl())
         if webhook_event:

@@ -108,6 +108,26 @@ class TestJobStore:
         assert meta["status"] == "failed"
         assert meta["error"] == "Something went wrong"
 
+    def test_fail_job_persists_bounded_provider_diagnostics(self, store):
+        job_id = store.create_job(kind="agent")
+        details = {
+            "finish_reason": "length",
+            "refusal_present": False,
+            "prompt_tokens": 123,
+            "completion_tokens": 8192,
+        }
+
+        store.fail_job(
+            job_id,
+            "LLM provider output was incomplete",
+            error_code="LLM_OUTPUT_TRUNCATED",
+            error_details=details,
+        )
+
+        failed = store.get_job(job_id)
+        assert failed["error_code"] == "LLM_OUTPUT_TRUNCATED"
+        assert failed["error_details"] == details
+
     def test_fail_job_unknown_id_does_not_raise(self, store):
         store.fail_job("unknown", "error")  # should not raise
 

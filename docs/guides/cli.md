@@ -55,6 +55,17 @@ Commands that start asynchronous work print a job identifier unless polling is e
 
 `groktocrawl answer "capacitor measurements" --evidence-budget-chars 64000 --sync` selects up to 64,000 source characters from complete bodies. By default, all retained source text is supplied; an explicit budget has a minimum of 256 and no application-level maximum. JSON and SSE done metadata expose evidence_coverage and direct/hierarchical synthesis mode. Agent and answer completions expose a credential-scoped evidence session and digest-pinned page recovery. Text coverage does not establish answer completeness.
 
+`agent --pyramid` and `answer --pyramid` atomically preserve the completed
+terminal response in `00-terminal-response.json` before writing the pyramid.
+If a source body is absent from the terminal response, its dossier is explicitly
+marked `content_status: missing`, any returned recovery metadata is included,
+and the index reports partial source-body completeness. The synthesis is kept.
+In streaming agent pyramid mode, acquired Markdown is also appended durably to
+`00-acquired-sources.jsonl` as each page completes. If synthesis fails after
+discovery, the CLI still writes a failure pyramid with acquired source dossiers
+marked as not synthesized, includes safe failure diagnostics, and exits nonzero.
+Treat the capture and dossiers as sensitive research artifacts.
+
 `groktocrawl search "capacitor measurements" --limit 20 --page 1 --offset 20 --json` continues within the selected upstream page. JSON exposes coverage and a request-shaped continuation; text mode prints captured/returned counts and the next page/offset for captured results. Omit --stream for continuation. Upstream ordering may change between calls; pagination support and additional upstream results remain unknown. Page/offset currently require fast keyword search without images.
 
 MCP search exposes page/offset and MCP answer exposes evidence_budget_chars with the same API contracts. Session query/deepen can set evidence_budget_chars; query can restrict ref_ids to refs in its own session. Full session evidence remains available through resolve until session TTL/deletion. Agent completion returns recovery handles; include_source_content exports full acquired Markdown inline.

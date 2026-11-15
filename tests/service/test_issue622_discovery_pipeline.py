@@ -344,7 +344,7 @@ async def test_loop_forwards_source_event_before_discovery_completes():
         return {"context": "fixture"}
 
     seen = []
-    async for event in _discover_with_progress(factory):
+    async for event in _discover_with_progress(factory, include_source_content=True):
         seen.append(event)
         if event["type"] == "source_scraped":
             assert not discovery_finished.is_set()
@@ -356,6 +356,7 @@ async def test_loop_forwards_source_event_before_discovery_completes():
     ]
     assert seen[0]["sources"][0]["url"] == artifact.url
     assert seen[1]["type"] == "source_scraped"
+    assert seen[1]["markdown"] == "fixture"
     assert seen[-1]["type"] == "_discovery_complete"
 
 
