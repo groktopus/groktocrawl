@@ -1055,6 +1055,27 @@ class TestToolCallRouting:
             "idempotency_key": None,
         }
 
+    async def test_research_session_synthesis_rejects_invalid_id(self, monkeypatch):
+        """Reject invalid synthesis IDs before sending an API request."""
+        import mcp_server as mod
+        from mcp.server.fastmcp.exceptions import ToolError
+
+        async def _unexpected_step(**kwargs: Any) -> dict:
+            raise AssertionError(f"invalid synthesis request forwarded: {kwargs}")
+
+        monkeypatch.setattr(mod._client, "research_session_step", _unexpected_step)
+        with pytest.raises(ToolError, match="at least 8 characters"):
+            await mcp.call_tool(
+                "research_session_step",
+                {
+                    "session_id": "rs-1",
+                    "action": "synthesize",
+                    "question": "Trace the historical development",
+                    "synthesis_id": "short",
+                    "ref_ids": ["evidence_a"],
+                },
+            )
+
     @pytest.mark.parametrize(
         ("source", "message"),
         [

@@ -919,7 +919,9 @@ async def research_session_step(
     ref_id: str | None = None,
     sub_topic: str | None = None,
     max_sources: int | None = None,
-    synthesis_id: str | None = None,
+    synthesis_id: Annotated[
+        str | None, Field(min_length=8, max_length=100, pattern=r"^[A-Za-z0-9_-]+$")
+    ] = None,
     ref_ids: list[str] | None = None,
     input_budget_chars: Annotated[
         int | None, Field(ge=8_000, le=64_000, strict=True)
