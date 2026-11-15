@@ -3,6 +3,7 @@
 Single endpoint: POST /scrape — takes a URL, returns clean markdown.
 """
 
+import asyncio
 import logging
 import time
 from contextlib import asynccontextmanager
@@ -18,6 +19,7 @@ from common.metrics import METRICS
 from common.middleware import add_request_id_middleware
 from common.stage_metrics import inc_counter, observe_elapsed
 
+from .browser_recovery import stop_container_recycle
 from .cookie_store import close_client, get_client
 from .exceptions import (
     BarrierDetectedError,
@@ -30,15 +32,17 @@ from .exceptions import (
 )
 from .fetch import _private_destination_error, smart_scrape
 from .meta import fetch_meta_tags
+from .process_health import process_capacity
 
 setup_logging()
 logger = logging.getLogger(__name__)
 
 # Cache for Playwright browser availability — probed at startup.
 _browser_available: bool | None = None
+_BROWSER_POOL_SHUTDOWN_TIMEOUT_SECONDS = 10.0
 
 
-async def _probe_browser() -> bool:
+async def _probe_browser() -> bool | None:
     """Attempt to launch a minimal Playwright browser and report success.
 
     Uses the same stealth launch args as Tier 3 (``create_stealth_browser``)
@@ -51,6 +55,9 @@ async def _probe_browser() -> bool:
     (libglib-2.0.so.0 etc.) or other runtime failures that prevent
     Chromium from starting.
     """
+    if process_capacity()["state"] == "degraded":
+        logger.warning("Skipping Playwright startup probe: process capacity is low")
+        return None
     try:
         from playwright.async_api import async_playwright
 
@@ -137,8 +144,39 @@ async def lifespan(app):
     try:
         yield
     finally:
-        await close_browser_pool()
+        from .browser_pool import get_browser_pool
+
+        close_task = asyncio.create_task(
+            close_browser_pool(), name="scraper-browser-pool-shutdown"
+        )
+        done, _ = await asyncio.wait(
+            {close_task}, timeout=_BROWSER_POOL_SHUTDOWN_TIMEOUT_SECONDS
+        )
+        recycle_required = False
+        if not done:
+            logger.error(
+                "Browser pool shutdown exceeded its bound; process cleanup remains pending"
+            )
+            recycle_required = True
+        elif get_browser_pool().quarantined:
+            logger.error("Browser pool shutdown retained uncertain process ownership")
+            recycle_required = True
+        else:
+            try:
+                close_task.result()
+            except Exception as exc:
+                logger.warning(
+                    "Browser pool shutdown failed; exception_type=%s",
+                    type(exc).__name__,
+                )
+                recycle_required = True
+        if recycle_required:
+            from .browser_recovery import schedule_container_recycle
+
+            schedule_container_recycle()
         await close_client()
+        if not recycle_required:
+            await stop_container_recycle()
 
 
 app = FastAPI(title="GroktoCrawl Scraper", version="0.1.0", lifespan=lifespan)
@@ -255,14 +293,48 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 @app.get("/health")
 async def health():
+    from .fetch_tiers import browser_readiness
+
+    capacity = process_capacity()
+    browser = browser_readiness(capacity)
+    browser_status = (
+        "unavailable"
+        if _browser_available is False
+        else "unknown"
+        if browser["status"] == "unknown" or _browser_available is None
+        else "available"
+    )
     checks = {
         "playwright": {
-            "status": "available" if _browser_available else "unavailable",
+            "status": browser_status,
             "available": bool(_browser_available),
-        }
+            "admission": browser["admission"],
+            "reason": browser["reason"],
+            "active": browser["active"],
+            "queued": browser["queued"],
+            "limit": browser["limit"],
+        },
+        "process_capacity": capacity,
     }
-    overall = "ok" if _browser_available is not False else "degraded"
+    # The service remains live for lightweight routes when browser capacity is
+    # degraded. Report that tier explicitly instead of masking it as ready.
+    overall = (
+        "degraded" if browser["status"] != "ok" or _browser_available is False else "ok"
+    )
     return {"status": overall, "checks": checks}
+
+
+@app.get("/ready/browser")
+async def browser_ready():
+    """Report whether new embedded browser work can be safely admitted."""
+    from .fetch_tiers import browser_readiness
+
+    browser = browser_readiness()
+    ready = browser["status"] == "ok" and _browser_available is True
+    return JSONResponse(
+        {"status": "ready" if ready else "not_ready", "browser": browser},
+        status_code=200 if ready else 503,
+    )
 
 
 @app.get("/metrics")

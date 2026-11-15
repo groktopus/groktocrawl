@@ -13,10 +13,21 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from .source_http import scraper_api_uds_client
 
 SCRAPER_SOCKET = os.environ.get("SCRAPER_API_SOCKET", "/run/scraper/app.sock")
-_ALLOWED = {("GET", "/health"), ("POST", "/scrape"), ("POST", "/scrape/meta")}
+_ALLOWED = {
+    ("GET", "/health"),
+    ("GET", "/ready/browser"),
+    ("POST", "/scrape"),
+    ("POST", "/scrape/meta"),
+}
 _HOP = {
-    "connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
-    "te", "trailer", "transfer-encoding", "upgrade",
+    "connection",
+    "keep-alive",
+    "proxy-authenticate",
+    "proxy-authorization",
+    "te",
+    "trailer",
+    "transfer-encoding",
+    "upgrade",
 }
 
 
@@ -57,9 +68,7 @@ async def forward(path: str, request: Request):
         return JSONResponse({"detail": "scraper unavailable"}, status_code=503)
 
     response_headers = {
-        key: value
-        for key, value in upstream.headers.items()
-        if key.lower() not in _HOP
+        key: value for key, value in upstream.headers.items() if key.lower() not in _HOP
     }
 
     async def body():

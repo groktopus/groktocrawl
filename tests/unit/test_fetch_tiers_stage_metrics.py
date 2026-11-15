@@ -221,10 +221,18 @@ async def test_cleanup_error_records_outcome(monkeypatch):
     monkeypatch.setattr(cookie_store, "store_cookies", noop)
     monkeypatch.setattr(tiers, "html_to_markdown", lambda _html: "content " * 100)
 
-    with pytest.raises(RuntimeError, match="close failed"):
+    with pytest.raises(tiers.BrowserCleanupIncompleteError):
         await tiers._playwright_fetch_unbounded("https://example.test", None)
 
     assert (
         'groktocrawl_browser_cleanup_total{outcome="error"}'
         in METRICS.generate_openmetrics()
     )
+    assert (
+        'groktocrawl_browser_cleanup_total{outcome="quarantined"}'
+        in METRICS.generate_openmetrics()
+    )
+    # This test simulates process-wide quarantine but runs in the shared unit
+    # test interpreter; restore the service baseline explicitly for later tests.
+    tiers._browser_quarantined = False
+    tiers._browser_quarantine_reason = None

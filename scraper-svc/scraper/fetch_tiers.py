@@ -32,9 +32,15 @@ from .barrier import (
     _is_substack_redirect,
     _looks_like_markdown,
 )
+from .browser_recovery import schedule_container_recycle
 from .cache import _is_binary_content_type, _make_download_payload
 from .fetch_quality import html_to_markdown
 from .playwright_retry import retry_transient
+from .process_health import (
+    MIN_TASK_HEADROOM,
+    launch_with_process_headroom,
+    process_capacity,
+)
 from .proxy import _get_playwright_proxy
 from .settings import load_settings
 from .source_http import (
@@ -57,6 +63,80 @@ _browser_admission = AdmissionController(
     limits={"browser": _settings.max_browser_concurrency},
     weights={"browser": 1},
 )
+_BROWSER_LIFECYCLE_TIMEOUT_SECONDS = 120.0
+_BROWSER_CLEANUP_GRACE_SECONDS = 5.0
+_browser_quarantined = False
+_browser_quarantine_reason: str | None = None
+
+
+class BrowserUnavailableError(RuntimeError):
+    """The embedded browser tier cannot safely accept more work."""
+
+
+class BrowserCleanupIncompleteError(RuntimeError):
+    """A lifecycle completed but could not prove its native browser closed."""
+
+
+def browser_readiness(
+    capacity: dict[str, object] | None = None,
+    *,
+    additional_launches: int = 1,
+) -> dict[str, object]:
+    """Return browser-tier readiness while leaving lightweight scraper paths live."""
+    capacity = capacity if capacity is not None else process_capacity()
+    if _browser_quarantined:
+        reason = _browser_quarantine_reason or "cleanup_incomplete"
+        state = "degraded"
+    elif capacity["state"] == "degraded":
+        reason = "process_capacity_low"
+        state = "degraded"
+    elif capacity["state"] == "unknown":
+        reason = "process_budget_unavailable"
+        state = "unknown"
+    else:
+        reason = None
+        state = "ok"
+    available_tasks = capacity.get("available_tasks")
+    required_tasks = MIN_TASK_HEADROOM * additional_launches
+    if (
+        state == "ok"
+        and isinstance(available_tasks, int)
+        and available_tasks < required_tasks
+    ):
+        reason = "process_capacity_low"
+        state = "degraded"
+    return {
+        "status": state,
+        "capacity": capacity,
+        "admission": "unavailable" if state == "degraded" else "available",
+        "reason": reason,
+        "active": _browser_admission.active("browser"),
+        "queued": _browser_admission.queue_depth("browser"),
+        "limit": _browser_admission.budget_for("browser"),
+        "required_task_headroom": required_tasks,
+    }
+
+
+def _quarantine_browser(reason: str) -> None:
+    global _browser_quarantined, _browser_quarantine_reason
+    if _browser_quarantined:
+        return
+    _browser_quarantined = True
+    _browser_quarantine_reason = reason
+    inc_counter(
+        _BROWSER_CLEANUP_TOTAL,
+        "Browser cleanup outcomes",
+        {"outcome": "quarantined"},
+    )
+    logger.error(
+        "Embedded browser cleanup could not be confirmed; browser admission quarantined; reason=%s",
+        reason,
+    )
+    try:
+        schedule_container_recycle()
+    except RuntimeError:
+        logger.exception("Scraper container recycle guard rejected configured recovery")
+
 
 # ── Browser lifecycle capacity/latency metric names ──────────────
 _BROWSER_ACTIVE = "groktocrawl_browser_semaphore_active"
@@ -119,29 +199,106 @@ async def _playwright_fetch_with_proxy(
     url: str,
     proxy: dict | None,
 ) -> dict | None:
-    """Run one complete Playwright lifecycle within the service-wide limit."""
+    """Run one bounded browser lifecycle, retaining capacity if cleanup is uncertain."""
+    readiness = browser_readiness()
+    if readiness["admission"] != "available":
+        raise BrowserUnavailableError(str(readiness["reason"]))
     _browser_waiters_gauge().inc()
     wait_started = time.monotonic()
-    acquired = False
+    admitted = False
+    slotted = False
+    retain_capacity = False
+    operation: asyncio.Task[dict | None] | None = None
     try:
-        async with _browser_admission.resource("browser"):
-            async with _browser_semaphore:
-                acquired = True
-                _browser_waiters_gauge().dec()
-                observe_elapsed(
-                    _BROWSER_WAIT_SECONDS,
-                    "Time spent waiting for a browser semaphore slot",
-                    {},
-                    wait_started,
+        await _browser_admission.acquire("browser")
+        admitted = True
+        await _browser_semaphore.acquire()
+        slotted = True
+        _browser_waiters_gauge().dec()
+        observe_elapsed(
+            _BROWSER_WAIT_SECONDS,
+            "Time spent waiting for a browser semaphore slot",
+            {},
+            wait_started,
+        )
+        _browser_active_gauge().inc()
+        # Recheck after queueing: a different lifecycle may have quarantined the
+        # browser tier while this request waited for its permit.
+        readiness = browser_readiness(additional_launches=0)
+        if readiness["admission"] != "available":
+            raise BrowserUnavailableError(str(readiness["reason"]))
+        operation = asyncio.create_task(
+            _playwright_fetch_unbounded(url, proxy), name="scraper-playwright-lifecycle"
+        )
+        done, _ = await asyncio.wait(
+            {operation}, timeout=_BROWSER_LIFECYCLE_TIMEOUT_SECONDS
+        )
+        if done:
+            try:
+                return operation.result()
+            except BrowserCleanupIncompleteError:
+                retain_capacity = True
+                raise
+
+        operation.cancel()
+        done, _ = await asyncio.wait(
+            {operation}, timeout=_BROWSER_CLEANUP_GRACE_SECONDS
+        )
+        if not done:
+            retain_capacity = True
+            _quarantine_browser("lifecycle_timeout_cleanup_incomplete")
+            raise BrowserUnavailableError("browser lifecycle cleanup incomplete")
+        # Retrieve the cancellation to prevent an unobserved-task warning. The
+        # bounded cleanup completed, so this permit can safely be released.
+        try:
+            operation.result()
+        except asyncio.CancelledError:
+            pass
+        except BrowserCleanupIncompleteError:
+            retain_capacity = True
+            raise
+        except BaseException:
+            pass
+        raise TimeoutError("Playwright lifecycle exceeded its deadline")
+    except asyncio.CancelledError:
+        if operation is not None and not operation.done():
+            operation.cancel()
+            # Keep the reservation unless cleanup is positively observed. If a
+            # second cancellation interrupts this wait, fail closed.
+            retain_capacity = True
+            try:
+                done, _ = await asyncio.wait(
+                    {operation}, timeout=_BROWSER_CLEANUP_GRACE_SECONDS
                 )
-                _browser_active_gauge().inc()
+            except asyncio.CancelledError:
+                _quarantine_browser("request_cancel_cleanup_interrupted")
+                raise
+            if operation not in done:
+                _quarantine_browser("request_cancel_cleanup_incomplete")
+            else:
+                retain_capacity = False
                 try:
-                    return await _playwright_fetch_unbounded(url, proxy)
-                finally:
-                    _browser_active_gauge().dec()
+                    operation.result()
+                except BrowserCleanupIncompleteError:
+                    retain_capacity = True
+                except BaseException:
+                    pass
+        elif operation is not None and operation.done() and not operation.cancelled():
+            try:
+                operation.result()
+            except BrowserCleanupIncompleteError:
+                retain_capacity = True
+            except BaseException:
+                pass
+        raise
     finally:
-        if not acquired:
+        if not slotted:
             _browser_waiters_gauge().dec()
+        if slotted and not retain_capacity:
+            _browser_active_gauge().dec()
+            _browser_semaphore.release()
+        if admitted and not retain_capacity:
+            _browser_admission.release("browser")
 
 
 async def _playwright_fetch_unbounded(
@@ -180,22 +337,32 @@ async def _playwright_fetch_unbounded(
 
                     async def release_pool(_exc_type, _exc, _traceback):
                         await lease.release(healthy=_exc_type is None)
+                        if pool.quarantined:
+                            _quarantine_browser("browser_pool_cleanup_incomplete")
+                            raise BrowserCleanupIncompleteError(
+                                "browser pool cleanup incomplete"
+                            )
 
                     lifecycle.push_async_exit(release_pool)
                 else:
                     p = await lifecycle.enter_async_context(async_playwright())
-                    browser, cloakbrowser = await create_stealth_browser(p, url)
+                    browser, cloakbrowser = await launch_with_process_headroom(
+                        lambda: create_stealth_browser(p, url)
+                    )
 
                     async def close_legacy_browser():
                         try:
                             await browser.close()
                         except Exception:
+                            _quarantine_browser("legacy_browser_close_failed")
                             inc_counter(
                                 _BROWSER_CLEANUP_TOTAL,
                                 "Browser cleanup outcomes",
                                 {"outcome": "error"},
                             )
-                            raise
+                            raise BrowserCleanupIncompleteError(
+                                "legacy browser close failed"
+                            ) from None
                         inc_counter(
                             _BROWSER_CLEANUP_TOTAL,
                             "Browser cleanup outcomes",
@@ -508,6 +675,11 @@ async def _playwright_fetch_unbounded(
         except BaseException:
             # AsyncExitStack performs the resource cleanup; preserve the
             # original exception for callers and cancellation handling.
+            if pool.quarantined:
+                _quarantine_browser("browser_pool_cleanup_incomplete")
+                raise BrowserCleanupIncompleteError(
+                    "browser pool cleanup incomplete"
+                ) from None
             raise
 
     return None
