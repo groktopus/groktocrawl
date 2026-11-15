@@ -83,7 +83,9 @@ without search or scraping:
    `{"action":"synthesize","params":{"question":"...","synthesis_id":"stable-client-id","ref_ids":["..."]}}`.
    This persists a digest-pinned manifest and outline before section work.
 4. Continue with the same `synthesis_id`, `question`, and `"resume":true`.
-   Each step processes and checkpoints one evidence chunk; the final response
+   Each step processes one evidence chunk. Provider responses are checkpointed
+   before parsing, so a local interruption can resume validation without
+   resending that completed model request. The final response
    appears only after every chunk and section is assembled and citations
    validate. After an ambiguous provider call, retry only with the explicit
    `retry_pending:true` flag. This retry does not repeat discovery.

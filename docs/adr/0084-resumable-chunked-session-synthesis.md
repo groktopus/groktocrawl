@@ -32,7 +32,13 @@ The outline cannot contain more sections than available chunks.
 
 Each subsequent request must carry `resume=true` and processes one bounded
 chunk. It writes a pending operation before dispatch, then atomically saves the
-validated chunk text and structured continuity digest. The digest carries
+complete bounded provider response before parsing or validation, then
+atomically saves the validated chunk text and structured continuity digest. A
+crash after the response checkpoint commits can resume parsing from that saved
+response without issuing another provider call. The narrow interval between
+provider acceptance and that persistence write remains an unknown outcome
+because Valkey and the model provider do not share a transaction. Invalid
+responses require an explicit retry. The digest carries
 claims, terminology, transitions and unresolved points. When full prior
 sections and the stable outline fit, they are supplied in full. Otherwise the
 structured digest is used. The current chunk's evidence allowance is reserved

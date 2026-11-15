@@ -751,3 +751,134 @@ async def test_missing_assigned_source_citation_is_not_checkpointed(monkeypatch)
     )
     assert result["status"] == "complete"
     assert "[1]" in result["answer"]
+
+
+@pytest.mark.asyncio
+async def test_response_is_durable_before_outline_and_chunk_validation(monkeypatch):
+    import asyncio
+
+    import agent.session as session_module
+    from agent.session import SessionManager
+
+    class Store:
+        def __init__(self):
+            self.refs = {
+                "r1": {
+                    "url": "https://example.test/a",
+                    "title": "Source",
+                    "markdown": "Evidence.",
+                }
+            }
+
+        async def aget_refs(self, _sid):
+            return dict(self.refs)
+
+        async def aadd_refs(self, _sid, refs):
+            self.refs.update(refs)
+            return True
+
+        async def aappend_step(self, _sid, _step):
+            return 1
+
+    class FakeLLM:
+        calls = 0
+
+        def __init__(self, *_args, **_kwargs):
+            pass
+
+        async def generate(self, *, stage, **_kwargs):
+            self.__class__.calls += 1
+            if stage == "synthesis_outline":
+                return json.dumps({"sections": [{"id": "sources", "title": "Sources"}]})
+            return json.dumps(
+                {
+                    "markdown": "Evidence finding [1]",
+                    "continuity": {
+                        "claims": [],
+                        "terminology": [],
+                        "transitions": [],
+                        "unresolved": [],
+                    },
+                }
+            )
+
+        async def close(self):
+            pass
+
+    monkeypatch.setattr("agent.session.LLMClient", FakeLLM)
+    monkeypatch.setattr(
+        "agent.session._token_budget_params", lambda: {"max_tokens": 1024}
+    )
+    manager = SessionManager.__new__(SessionManager)
+    manager.store = Store()
+    params = {
+        "question": "q",
+        "synthesis_id": "durable-response-01",
+        "ref_ids": ["r1"],
+    }
+    checkpoint_ref = (
+        "__synthesis_"
+        + __import__("hashlib").sha256(b"durable-response-01").hexdigest()[:32]
+    )
+
+    original_validate = session_module.validate_outline
+
+    def interrupt_before_outline_validation(_value):
+        raise asyncio.CancelledError
+
+    monkeypatch.setattr(
+        session_module, "validate_outline", interrupt_before_outline_validation
+    )
+    with pytest.raises(asyncio.CancelledError):
+        await manager._step_synthesize(
+            session_id="session-1",
+            params=params,
+            llm_base_url="fixture",
+            llm_api_key="",
+            llm_model="fixture",
+        )
+    pending = manager.store.refs[checkpoint_ref]["state"]["pending"]
+    assert pending["outcome"] == "response_received"
+    assert "raw_output" in pending
+    monkeypatch.setattr(session_module, "validate_outline", original_validate)
+    outline = await manager._step_synthesize(
+        session_id="session-1",
+        params={**params, "resume": True},
+        llm_base_url="fixture",
+        llm_api_key="",
+        llm_model="fixture",
+    )
+    assert outline["status"] == "outline_ready"
+    assert FakeLLM.calls == 1
+
+    original_findall = session_module.re.findall
+
+    def interrupt_before_citation_validation(pattern, string, *args, **kwargs):
+        if pattern == r"(?<!\w)\[(\d+)\](?!\w)":
+            raise asyncio.CancelledError
+        return original_findall(pattern, string, *args, **kwargs)
+
+    monkeypatch.setattr(
+        session_module.re, "findall", interrupt_before_citation_validation
+    )
+    with pytest.raises(asyncio.CancelledError):
+        await manager._step_synthesize(
+            session_id="session-1",
+            params={**params, "resume": True},
+            llm_base_url="fixture",
+            llm_api_key="",
+            llm_model="fixture",
+        )
+    pending = manager.store.refs[checkpoint_ref]["state"]["pending"]
+    assert pending["outcome"] == "response_received"
+    assert "raw_output" in pending
+    monkeypatch.setattr(session_module.re, "findall", original_findall)
+    complete = await manager._step_synthesize(
+        session_id="session-1",
+        params={**params, "resume": True},
+        llm_base_url="fixture",
+        llm_api_key="",
+        llm_model="fixture",
+    )
+    assert complete["status"] == "complete"
+    assert FakeLLM.calls == 2
