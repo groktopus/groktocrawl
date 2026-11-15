@@ -106,6 +106,7 @@ async def generate_with_context_fallback(
     schema: dict | None = None,
     stage: str,
     correction: bool = False,
+    include_stage: bool = False,
 ) -> str:
     """Retry an oversized complete corpus through provider-sized hierarchy."""
     if (
@@ -116,12 +117,32 @@ async def generate_with_context_fallback(
         context = context_state["context"]
         context_blocks = context_state.get("context_blocks", context_blocks)
     try:
+        if schema is not None and include_stage:
+            return await llm.generate(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                context=context,
+                schema=schema,
+                stage=stage,
+            )
+        if schema is not None:
+            return await llm.generate(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                context=context,
+                schema=schema,
+            )
+        if include_stage:
+            return await llm.generate(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                context=context,
+                stage=stage,
+            )
         return await llm.generate(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
             context=context,
-            **({"schema": schema} if schema is not None else {}),
-            stage=stage,
         )
     except ContextLimitError:
         blocks = context_blocks or [context]
@@ -150,7 +171,7 @@ async def generate_with_context_fallback(
                     user_prompt=user_prompt,
                     context=notes_context,
                     schema=schema,
-                    stage=stage,
+                    **({"stage": stage} if include_stage else {}),
                 )
                 return answer
             except ContextLimitError:
@@ -230,6 +251,7 @@ async def generate_cited_answer(
             context_state=context_state,
             stage=stage,
             correction=bool(attempt),
+            include_stage=True,
         )
         try:
             result = _apply_citation_style(answer, sources, citation_style)

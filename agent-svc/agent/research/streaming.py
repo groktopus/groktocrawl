@@ -218,33 +218,42 @@ async def stream_research_live(
             from .evidence_recovery import retain_result_evidence
 
             recovery_result: dict[str, Any] = {
-                "source_contents": event.get("source_contents", {}),
-                "evidence_coverage": event.get("evidence_coverage", {}),
-                "coverage": event.get("coverage", {}),
+                "source_details": deepcopy(source_details),
+                "evidence_coverage": deepcopy(event.get("evidence_coverage", {})),
+                "coverage": deepcopy(event.get("coverage", {})),
             }
+            client_recovery: dict[str, Any] = {
+                "source_contents": event.get("source_contents", {}),
+                "source_details": deepcopy(source_details),
+                "evidence_coverage": deepcopy(event.get("evidence_coverage", {})),
+                "coverage": deepcopy(event.get("coverage", {})),
+            }
+            from .evidence_recovery import mark_evidence_recovery_status
+
             await retain_result_evidence(
-                recovery_result,
+                client_recovery,
                 redis_url=evidence_redis_url,
                 owner_scope=evidence_owner_scope,
                 include_source_content=include_source_content,
             )
-
+            mark_evidence_recovery_status(
+                recovery_result, "not_retained", "cached_result"
+            )
+            memory_id = await admit_research_memory(
+                research_memory,
+                prompt=prompt,
+                artifact=event["result"],
+                source_details=recovery_result["source_details"],
+                coverage=recovery_result.get("coverage"),
+                model=llm_model,
+                citation_style=cs.value,
+                requested_model=requested_model,
+                latency_ms=event["latency_ms"],
+                user_id=user_id,
+                fingerprint=fingerprint,
+                evidence_coverage=recovery_result.get("evidence_coverage", {}),
+            )
             transformed_result = event["result"]
-            if research_memory is not None:
-                await admit_research_memory(
-                    research_memory,
-                    prompt=prompt,
-                    artifact=transformed_result,
-                    source_details=source_details,
-                    coverage=event.get("coverage"),
-                    model=llm_model,
-                    citation_style=cs.value,
-                    requested_model=requested_model,
-                    latency_ms=event["latency_ms"],
-                    user_id=user_id,
-                    fingerprint=fingerprint,
-                    evidence_coverage=event.get("evidence_coverage", {}),
-                )
 
             done_payload: dict = {
                 "type": "done",
@@ -254,6 +263,8 @@ async def stream_research_live(
                 "evidence_coverage": event.get("evidence_coverage", {}),
                 "evidence_recovery": recovery_result.get("evidence_recovery", {}),
             }
+            if memory_id:
+                done_payload["research_memory_id"] = memory_id
             if "evidence_session_id" in recovery_result:
                 done_payload["evidence_session_id"] = recovery_result[
                     "evidence_session_id"
@@ -272,15 +283,27 @@ async def stream_research_live(
                 done_payload["sources_compact"] = compact_sources
                 done_payload["source_details"] = []
             else:
-                done_payload["source_details"] = source_details
-            if include_source_content or recovery_result.get(
-                "evidence_recovery", {}
-            ).get("status") == "unavailable":
-                done_payload["source_contents"] = recovery_result.get(
-                    "source_contents", {}
+                done_payload["source_details"] = client_recovery.get(
+                    "source_details", source_details
                 )
             if "coverage" in event:
                 done_payload["coverage"] = event["coverage"]
+            done_payload["evidence_coverage"] = client_recovery.get(
+                "evidence_coverage", {}
+            )
+            done_payload["evidence_recovery"] = client_recovery.get(
+                "evidence_recovery", {}
+            )
+            if "evidence_session_id" in client_recovery:
+                done_payload["evidence_session_id"] = client_recovery[
+                    "evidence_session_id"
+                ]
+            if include_source_content or client_recovery.get(
+                "evidence_recovery", {}
+            ).get("status") == "unavailable":
+                done_payload["source_contents"] = client_recovery.get(
+                    "source_contents", {}
+                )
             yield f"data: {json.dumps(done_payload)}\n\n"
         elif event["type"] == "error":
             payload: dict[str, Any] = {

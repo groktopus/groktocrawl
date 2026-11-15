@@ -16,7 +16,10 @@ from .cancel import JobCancelledError, raise_if_cancelled, set_token
 from .exceptions import CitationValidationError, RetryableRateLimitError
 from .metrics import METRICS
 from .research import run_extract, run_research
-from .research.evidence_recovery import mark_evidence_recovery_status
+from .research.evidence_recovery import (
+    mark_evidence_recovery_status,
+    retain_result_evidence,
+)
 from .research.memory import finalize_and_admit, refresh_research_memory
 from .research_cache_metrics import (
     BypassReason,
@@ -649,11 +652,13 @@ async def _process_agent_async(
         # Apply citation style to transform bare [N] markers to [N](url)
         # for compact style, or leave them unchanged for inline style, then
         # admit the post-transform artifact to research memory.
+        cache_result = deepcopy(result)
+        mark_evidence_recovery_status(cache_result, "not_retained", "cached_result")
         result = await finalize_and_admit(
             research_memory,
             has_schema=bool(schema_),
             prompt=prompt,
-            result=result,
+            result=cache_result,
             llm_model=llm_model,
             citation_style=cs,
             requested_model=requested_model,
@@ -661,10 +666,8 @@ async def _process_agent_async(
             fingerprint=fingerprint,
         )
 
-        from .research.evidence_recovery import retain_result_evidence
-
-        result = await retain_result_evidence(
-            result,
+        response_result = await retain_result_evidence(
+            deepcopy(result),
             redis_url=redis_url,
             owner_scope=evidence_owner_scope or "anonymous",
             include_source_content=include_source_content,
@@ -678,6 +681,21 @@ async def _process_agent_async(
                 "freshness", "stale"
             )
 
+        result.update(
+            {
+                key: value
+                for key, value in response_result.items()
+                if key
+                in {
+                    "evidence_coverage",
+                    "evidence_recovery",
+                    "evidence_session_id",
+                    "source_contents",
+                }
+            }
+        )
+        if response_result.get("evidence_recovery", {}).get("status") == "unavailable":
+            result["source_contents"] = response_result.get("source_contents", {})
         return result
 
     await _run_job_with_observability(job_id, "agent", store, webhook_config, work_fn)

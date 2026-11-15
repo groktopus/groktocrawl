@@ -713,3 +713,58 @@ async def test_citation_correction_stays_one_live_execution(
     assert llm.generate_stream.call_count == 2
     assert any('"type": "done"' in event for event in events) == successful
     assert any('"type": "error"' in event for event in events) != successful
+
+
+@pytest.mark.asyncio
+async def test_live_stream_keeps_inline_evidence_when_retention_fails(monkeypatch):
+    from agent.research import streaming
+
+    evidence = {"https://fixture.test/source": "complete source body"}
+
+    async def research_stream(**kwargs):
+        yield {
+            "type": "done",
+            "result": "Answer.",
+            "sources": ["https://fixture.test/source"],
+            "source_details": [{"url": "https://fixture.test/source"}],
+            "source_contents": evidence,
+            "latency_ms": 1,
+            "evidence_coverage": {},
+        }
+
+    async def failed_retention(result, **kwargs):
+        result["evidence_recovery"] = {
+            "status": "unavailable",
+            "reason": "retention_failed",
+        }
+        return result
+
+    monkeypatch.setattr(streaming, "run_research_stream", research_stream)
+    monkeypatch.setattr(
+        "agent.research.evidence_recovery.retain_result_evidence",
+        failed_retention,
+    )
+    frames = [
+        frame
+        async for frame in streaming.stream_research_live(
+            "question",
+            None,
+            None,
+            "http://search",
+            "http://scraper",
+            "http://llm",
+            "fixture",
+            "fixture",
+            None,
+            1,
+            False,
+            CitationStyle.inline,
+        )
+    ]
+    done = next(
+        json.loads(frame.removeprefix("data: "))
+        for frame in frames
+        if '"type": "done"' in frame
+    )
+    assert done["evidence_recovery"]["status"] == "unavailable"
+    assert done["source_contents"] == evidence

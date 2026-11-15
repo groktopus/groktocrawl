@@ -614,12 +614,11 @@ async def _run_research_events(
             "evidence_coverage": evidence_coverage,
             "latency_ms": int((time.monotonic() - start) * 1000),
         }
-        if include_source_content:
-            done_event["source_contents"] = {
-                artifact.url: artifact.markdown or ""
-                for artifact in source_registry.artifacts()
-                if artifact.markdown
-            }
+        done_event["source_contents"] = {
+            artifact.url: artifact.markdown or ""
+            for artifact in source_registry.artifacts()
+            if artifact.markdown
+        }
         coverage["successful_sources"] = len(all_source_details)
         synthesis_coverage = {
             "mode": "hierarchical" if context_fallback_call_count(llm) else "direct",

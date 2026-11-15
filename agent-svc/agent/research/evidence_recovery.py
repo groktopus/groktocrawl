@@ -38,6 +38,19 @@ def mark_evidence_recovery_status(
                     "status": status,
                     **({"reason": reason} if reason else {}),
                 }
+    for key in ("sources", "source_details"):
+        rows = result.get(key)
+        if not isinstance(rows, list):
+            continue
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            coverage = row.get("evidence_coverage")
+            if isinstance(coverage, dict):
+                coverage["recovery"] = {
+                    "status": status,
+                    **({"reason": reason} if reason else {}),
+                }
     return result
 
 
@@ -55,6 +68,8 @@ async def retain_result_evidence(
     """
     contents = result.get("source_contents")
     if not isinstance(contents, dict) or not contents:
+        if result.get("evidence_recovery", {}).get("status") == "unavailable":
+            return result
         return mark_evidence_recovery_status(result, "not_retained")
 
     source_rows = [
@@ -119,24 +134,56 @@ async def retain_result_evidence(
             for source in sources:
                 if not isinstance(source, dict):
                     continue
-                url = source.get("url") or source.get("id")
-                ref_id = ref_by_url.get(url) if isinstance(url, str) else None
-                if ref_id is None:
+                source_url = source.get("url") or source.get("id")
+                page_ref = (
+                    ref_by_url.get(source_url)
+                    if isinstance(source_url, str)
+                    else None
+                )
+                if page_ref is None:
                     source["recovery"] = {"status": "not_retained"}
                     continue
-                digest = text_digest(contents[url])
+                digest = text_digest(contents[source_url])
                 source["recovery"] = {
                     "action": "read_retained_evidence",
                     "session_id": session_id,
-                    "ref_id": ref_id,
+                    "ref_id": page_ref,
                     "method": "GET",
-                    "path": path_prefix + ref_id,
+                    "path": path_prefix + page_ref,
                     "params": {
                         "offset": 0,
                         "expected_digest": digest,
                         "budget_chars": 32_000,
                     },
                 }
+
+        # The research adapters expose evidence coverage both as an aggregate
+        # and on each source detail. Keep both representations actionable.
+        for row in result.get("source_details", []):
+            if not isinstance(row, dict):
+                continue
+            source_coverage = row.get("evidence_coverage")
+            if not isinstance(source_coverage, dict):
+                continue
+            source_url = row.get("url")
+            page_ref = (
+                ref_by_url.get(source_url) if isinstance(source_url, str) else None
+            )
+            if page_ref is None:
+                source_coverage["recovery"] = {"status": "not_retained"}
+                continue
+            source_coverage["recovery"] = {
+                "action": "read_retained_evidence",
+                "session_id": session_id,
+                "ref_id": page_ref,
+                "method": "GET",
+                "path": path_prefix + page_ref,
+                "params": {
+                    "offset": 0,
+                    "expected_digest": text_digest(contents[source_url]),
+                    "budget_chars": 32_000,
+                },
+            }
 
         if not include_source_content:
             result.pop("source_contents", None)

@@ -146,6 +146,7 @@ class LLMClient:
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.model = model
+        self.context_fallback_calls = 0
         self._admission = admission if admission is not None else get_admission()
         self._client = httpx.AsyncClient(timeout=load_settings().llm_call_timeout)
 

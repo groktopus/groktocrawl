@@ -223,6 +223,12 @@ async def test_retained_evidence_exposes_digest_pinned_pages(monkeypatch):
                 }
             ]
         },
+        "source_details": [
+            {
+                "url": "https://fixture.test/source",
+                "evidence_coverage": {"status": "complete"},
+            }
+        ],
     }
     await retain_result_evidence(
         result,
@@ -237,6 +243,9 @@ async def test_retained_evidence_exposes_digest_pinned_pages(monkeypatch):
     assert recovery["session_id"] == "session-id"
     assert recovery["ref_id"] == "agent_1"
     assert recovery["params"]["expected_digest"] == text_digest(text)
+    detail_recovery = result["source_details"][0]["evidence_coverage"]["recovery"]
+    assert detail_recovery["session_id"] == "session-id"
+    assert detail_recovery["ref_id"] == "agent_1"
     assert stored["agent_1"]["markdown"] == text
 
 
