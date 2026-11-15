@@ -60,6 +60,7 @@ POST /v2/search
 POST /v2/session/create
 GET /v2/session/{session_id}
 GET /v2/session/{session_id}/evidence/{ref_id}
+POST /v2/session/{session_id}/evidence/import
 POST /v2/session/{session_id}/export
 POST /v2/session/{session_id}/resolve
 POST /v2/session/{session_id}/step
