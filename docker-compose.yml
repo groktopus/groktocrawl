@@ -176,6 +176,7 @@ services:
       - SITE_NAME=Tier 3 Fixture
 
   scraper-svc:
+    # Dedicated single-process container: exit after uncertain embedded browser cleanup.
     init: true
     mem_limit: 2500m
     cpus: 2.0
@@ -192,6 +193,7 @@ services:
     env_file:
       - .env
     environment:
+      - SCRAPER_CONTAINER_RECYCLE_ON_QUARANTINE=1
       - VALKEY_HOST=valkey
       - VALKEY_PORT=6379
       - VALKEY_DB=0

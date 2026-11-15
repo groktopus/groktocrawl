@@ -46,21 +46,26 @@ def test_ingress_forwards_fixed_api_routes_and_rejects_arbitrary_paths():
             transport=httpx.ASGITransport(app=ingress.app),
             base_url="http://ingress.internal",
         ) as client:
-            accepted = await client.post("/scrape", json={"url": "https://example.test"})
+            accepted = await client.post(
+                "/scrape", json={"url": "https://example.test"}
+            )
+            browser_ready = await client.get("/ready/browser")
             rejected = await client.post("/admin/flush", json={})
             query = await client.get("/health?target=http://example.test")
         await ingress.app.state.client.aclose()
-        return accepted, rejected, query
+        return accepted, browser_ready, rejected, query
 
-    accepted, rejected, query = asyncio.run(run())
+    accepted, browser_ready, rejected, query = asyncio.run(run())
     assert accepted.status_code == 201
     assert accepted.json() == {"forwarded": "/scrape"}
+    assert browser_ready.status_code == 201
     assert rejected.status_code == 404
     assert query.status_code == 404
-    assert len(observed) == 1
+    assert len(observed) == 2
     method, path, body = observed[0]
     assert (method, path) == ("POST", "/scrape")
     assert b"https://example.test" in body
+    assert observed[1][:2] == ("GET", "/ready/browser")
 
 
 def test_forced_browser_probe_requires_browser_source_provenance():

@@ -23,7 +23,7 @@ An Architecture Decision Record captures an important architectural decision mad
 
 **Status legend:** accepted ADRs describe decisions used by the current implementation. Proposed ADRs are design work, not promises of current behavior. Superseded ADRs are historical context only; use their successor when documenting current behavior.
 
-**Current accepted decisions:** ADR-0001–0007, 0009–0012, 0014–0022, 0026 (as superseded for migrated deployments), 0029–0035, 0038, 0039, 0043–0046, 0048–0057, 0059–0067, 0069–0073, 0080, and 0081.
+**Current accepted decisions:** ADR-0001–0007, 0009–0012, 0014–0022, 0026 (as superseded for migrated deployments), 0029–0035, 0038, 0039, 0043–0046, 0048–0057, 0059–0067, 0069–0073, 0080–0082.
 
 **Proposed work:** ADR-0023–0025, 0027, 0028, 0036, 0037, and 0040–0042.
 
@@ -118,4 +118,5 @@ See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full ADR workflow: when to 
 
 | 0080 | [Recycle quarantined browser containers](0080-recycle-quarantined-browser-containers.md) | accepted |
 | 0081 | [Preserve complete default research evidence and recoverable context](0081-preserve-complete-default-research-evidence.md) | accepted |
-| 0082 | [Classify and recover legacy provider output failures](0082-classify-and-recover-legacy-provider-output-failures.md) | proposed |
+| 0082 | [Bound embedded browser lifecycles and quarantine uncertain cleanup](0082-bound-embedded-browser-lifecycle.md) | accepted |
+| 0083 | [Classify and recover legacy provider output failures](0083-classify-and-recover-legacy-provider-output-failures.md) | proposed |
