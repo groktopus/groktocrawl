@@ -56,9 +56,7 @@ class TestProviderOutputDiagnostics:
         with pytest.raises(ProviderOutputError) as caught:
             _completion_content(
                 {
-                    "choices": [
-                        {"finish_reason": finish_reason, "message": message}
-                    ],
+                    "choices": [{"finish_reason": finish_reason, "message": message}],
                     "usage": {
                         "prompt_tokens": 123,
                         "completion_tokens": 8192,
@@ -103,7 +101,9 @@ class TestProviderOutputDiagnostics:
                 "usage": {"prompt_tokens": 1500, "completion_tokens": 200},
             }
         )
-        with patch.object(llm._client, "post", side_effect=[complete, recovered]) as post:
+        with patch.object(
+            llm._client, "post", side_effect=[complete, recovered]
+        ) as post:
             answer, citations = await generate_cited_answer(
                 llm,
                 system_prompt="Use evidence.",
@@ -121,7 +121,9 @@ class TestProviderOutputDiagnostics:
         assert "complete, concise response" in retry_prompt
         assert "A source with evidence." in retry_prompt
 
-        with patch.object(llm._client, "post", side_effect=[complete, complete]) as post:
+        with patch.object(
+            llm._client, "post", side_effect=[complete, complete]
+        ) as post:
             with pytest.raises(ProviderOutputError) as caught:
                 await generate_cited_answer(
                     llm,
@@ -1378,15 +1380,20 @@ class TestCleanTimeoutFailure:
     async def test_generate_timeout_fails_cleanly_and_releases_admission_slot(
         self, slow_1500ms_url, monkeypatch
     ):
-        from agent.admission import get_admission
         from agent.llm import LLMClient
+
+        from common.admission import AdmissionController
 
         monkeypatch.setenv("LLM_CALL_TIMEOUT", "0.05")
         load_settings.cache_clear()
         try:
-            admission = get_admission()
-            assert admission.active("llm") == 0
-            client = LLMClient(slow_1500ms_url, api_key="", model="fixture-model")
+            admission = AdmissionController(limits={"llm": 4})
+            client = LLMClient(
+                slow_1500ms_url,
+                api_key="",
+                model="fixture-model",
+                admission=admission,
+            )
             with pytest.raises(ProviderOutputError):
                 await asyncio.wait_for(
                     client.generate(system_prompt="x", user_prompt="y"),
@@ -1746,17 +1753,22 @@ class TestStreamSuccessEnvelope:
         yields the error event, releases the admission slot (generator
         finally), and closes without a dangling-client hang. The repo's
         TestCleanTimeoutFailure covers only the generate() path."""
-        from agent.admission import get_admission
         from agent.llm import LLMClient
+
+        from common.admission import AdmissionController
 
         call_timeout = 0.5
         raw_sse.configure(stall_after=2, quiet_seconds=3.0)
         monkeypatch.setenv("LLM_CALL_TIMEOUT", str(call_timeout))
         load_settings.cache_clear()
         try:
-            admission = get_admission()
-            assert admission.active("llm") == 0
-            client = LLMClient(raw_sse.base_url, api_key="", model="fixture-model")
+            admission = AdmissionController(limits={"llm": 4})
+            client = LLMClient(
+                raw_sse.base_url,
+                api_key="",
+                model="fixture-model",
+                admission=admission,
+            )
             started = _time.monotonic()
             events = await asyncio.wait_for(
                 _collect(client.generate_stream(system_prompt="x", user_prompt="y")),
@@ -1783,17 +1795,22 @@ class TestStreamSuccessEnvelope:
         """VAL-LLM-014 slot hygiene: abort after a mid-stream stall leaves
         the admission controller clean (the existing quiet-period test
         asserts timing + error event but not slot release)."""
-        from agent.admission import get_admission
         from agent.llm import LLMClient
+
+        from common.admission import AdmissionController
 
         call_timeout = 0.5
         raw_sse.configure(stall_after=1, quiet_seconds=3.0)
         monkeypatch.setenv("LLM_CALL_TIMEOUT", str(call_timeout))
         load_settings.cache_clear()
         try:
-            admission = get_admission()
-            assert admission.active("llm") == 0
-            client = LLMClient(raw_sse.base_url, api_key="", model="fixture-model")
+            admission = AdmissionController(limits={"llm": 4})
+            client = LLMClient(
+                raw_sse.base_url,
+                api_key="",
+                model="fixture-model",
+                admission=admission,
+            )
             events = await asyncio.wait_for(
                 _collect(client.generate_stream(system_prompt="x", user_prompt="y")),
                 timeout=call_timeout + 5,
