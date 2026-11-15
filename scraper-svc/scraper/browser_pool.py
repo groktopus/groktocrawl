@@ -16,7 +16,7 @@ import time
 from dataclasses import dataclass
 from typing import Any
 
-from .process_health import launch_with_process_headroom
+from .process_health import ProcessCapacityLowError, launch_with_process_headroom
 from .stealth import create_stealth_browser, create_stealth_context, fingerprint_seed
 
 logger = logging.getLogger(__name__)
@@ -279,11 +279,42 @@ class BrowserPool:
                 except asyncio.CancelledError:
                     # Shield the native launch so cancellation cannot strand
                     # a browser that was created just before the await ended.
-                    with contextlib.suppress(BaseException):
+                    try:
                         browser, _ = await launch_task
+                    except ProcessCapacityLowError:
+                        browser = None
+                    except BaseException:
+                        # A failed launch after cancellation may have created a
+                        # native child before raising. The supervisor will
+                        # recycle the process; retain the launch reservation.
+                        async with self._condition:
+                            self._quarantined = True
+                            if launching:
+                                self._launching -= 1
+                                launching = False
+                                self._closing_processes += 1
+                            self._condition.notify_all()
+                        raise RuntimeError(
+                            "browser launch cleanup is incomplete"
+                        ) from None
                     if browser is not None:
-                        with contextlib.suppress(Exception):
+                        try:
                             await browser.close()
+                        except BaseException:
+                            # The launching reservation represents this process
+                            # until close is positively confirmed. Keep that
+                            # reservation and quarantine the pool on uncertainty.
+                            async with self._condition:
+                                self._quarantined = True
+                                if launching:
+                                    self._launching -= 1
+                                    launching = False
+                                    self._closing_processes += 1
+                                self._condition.notify_all()
+                            browser = None
+                            raise RuntimeError(
+                                "browser launch cleanup is incomplete"
+                            ) from None
                     browser = None
                     raise
                 now = time.monotonic()
@@ -318,8 +349,19 @@ class BrowserPool:
                         and not registered
                         and not close_after_registration
                     ):
-                        with contextlib.suppress(Exception):
+                        try:
                             await browser.close()
+                        except BaseException:
+                            async with self._condition:
+                                self._quarantined = True
+                                if launching:
+                                    self._launching -= 1
+                                    launching = False
+                                    self._closing_processes += 1
+                                self._condition.notify_all()
+                            raise RuntimeError(
+                                "browser launch cleanup is incomplete"
+                            ) from None
                 finally:
                     if launching:
                         async with self._condition:

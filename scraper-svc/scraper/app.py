@@ -40,6 +40,7 @@ logger = logging.getLogger(__name__)
 # Cache for Playwright browser availability — probed at startup.
 _browser_available: bool | None = None
 _BROWSER_POOL_SHUTDOWN_TIMEOUT_SECONDS = 10.0
+_browser_probe_lock = asyncio.Lock()
 
 
 async def _probe_browser() -> bool | None:
@@ -70,6 +71,18 @@ async def _probe_browser() -> bool | None:
     except Exception as exc:
         logger.warning("Playwright browser probe failed: %s", exc)
         return False
+
+
+async def _refresh_browser_probe_if_capacity_available() -> None:
+    """Retry a startup probe skipped for low capacity once headroom recovers."""
+    global _browser_available
+    if _browser_available is not None or process_capacity()["state"] != "ok":
+        return
+    async with _browser_probe_lock:
+        if _browser_available is not None or process_capacity()["state"] != "ok":
+            return
+        _browser_available = await _probe_browser()
+        logger.info("Playwright browser availability refreshed: %s", _browser_available)
 
 
 class VerbosityLevel(StrEnum):
@@ -293,6 +306,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 @app.get("/health")
 async def health():
+    await _refresh_browser_probe_if_capacity_available()
     from .fetch_tiers import browser_readiness
 
     capacity = process_capacity()
@@ -319,7 +333,9 @@ async def health():
     # The service remains live for lightweight routes when browser capacity is
     # degraded. Report that tier explicitly instead of masking it as ready.
     overall = (
-        "degraded" if browser["status"] != "ok" or _browser_available is False else "ok"
+        "degraded"
+        if browser["status"] != "ok" or _browser_available is not True
+        else "ok"
     )
     return {"status": overall, "checks": checks}
 
@@ -327,6 +343,7 @@ async def health():
 @app.get("/ready/browser")
 async def browser_ready():
     """Report whether new embedded browser work can be safely admitted."""
+    await _refresh_browser_probe_if_capacity_available()
     from .fetch_tiers import browser_readiness
 
     browser = browser_readiness()

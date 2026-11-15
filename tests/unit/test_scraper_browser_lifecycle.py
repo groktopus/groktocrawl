@@ -274,3 +274,36 @@ async def test_unknown_process_capacity_is_not_reported_as_browser_ready(monkeyp
     assert payload["status"] == "degraded"
     assert payload["checks"]["playwright"]["status"] == "unknown"
     assert ready_response.status_code == 503
+
+
+@pytest.mark.asyncio
+async def test_browser_probe_retries_after_startup_capacity_recovers(monkeypatch):
+    import scraper.fetch_tiers as tiers
+    from scraper import app as app_module
+
+    capacity = {"state": "degraded", "reason": "process_capacity_low"}
+    monkeypatch.setattr(app_module, "_browser_available", None)
+    monkeypatch.setattr(app_module, "process_capacity", lambda: capacity)
+    monkeypatch.setattr(tiers, "process_capacity", lambda: capacity)
+    probes = 0
+
+    async def successful_probe():
+        nonlocal probes
+        probes += 1
+        return True
+
+    monkeypatch.setattr(app_module, "_probe_browser", successful_probe)
+
+    degraded = await app_module.health()
+    assert degraded["status"] == "degraded"
+    assert degraded["checks"]["playwright"]["status"] == "unknown"
+    assert probes == 0
+
+    capacity.update(state="ok", reason="process_budget_available")
+    ready_response = await app_module.browser_ready()
+    recovered = await app_module.health()
+
+    assert ready_response.status_code == 200
+    assert recovered["status"] == "ok"
+    assert recovered["checks"]["playwright"]["status"] == "available"
+    assert probes == 1

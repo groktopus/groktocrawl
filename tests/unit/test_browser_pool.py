@@ -243,6 +243,51 @@ async def test_failed_process_close_keeps_pool_capacity_quarantined(fake_pool):
 
 
 @pytest.mark.asyncio
+async def test_cancelled_late_launch_close_failure_keeps_launch_reservation(
+    fake_pool, monkeypatch
+):
+    browser_pool, _manager, _browsers, _contexts = fake_pool
+    pool = browser_pool.BrowserPool(enabled=True, max_processes=1)
+    launch_started = asyncio.Event()
+    finish_launch = asyncio.Event()
+    browser = _Browser("late")
+
+    async def close_failure():
+        raise RuntimeError("synthetic late browser close failure")
+
+    browser.close = close_failure
+
+    async def delayed_launch(_playwright, _url):
+        launch_started.set()
+        await finish_launch.wait()
+        return browser, False
+
+    async def launch_with_headroom(launch_fn):
+        return await launch_fn()
+
+    monkeypatch.setattr(browser_pool, "create_stealth_browser", delayed_launch)
+    monkeypatch.setattr(
+        browser_pool, "launch_with_process_headroom", launch_with_headroom
+    )
+
+    acquire = asyncio.create_task(pool.acquire("https://late.example/a"))
+    await launch_started.wait()
+    acquire.cancel()
+    await asyncio.sleep(0)
+    assert not acquire.done()
+
+    finish_launch.set()
+    with pytest.raises(RuntimeError, match="cleanup is incomplete"):
+        await acquire
+
+    assert pool.quarantined is True
+    assert pool._launching == 0
+    assert pool._closing_processes == 1
+    assert pool.process_count == 1
+    await pool.close()
+
+
+@pytest.mark.asyncio
 async def test_fetch_tiers_uses_pool_context_and_releases_it(fake_pool, monkeypatch):
     browser_pool, _manager, _browsers, contexts = fake_pool
     import scraper.captcha as captcha

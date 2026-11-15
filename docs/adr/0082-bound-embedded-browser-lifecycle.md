@@ -68,6 +68,11 @@ rejects the configured recovery guard. With recovery disabled, browser
 admission stays quarantined until operator restart. The container boundary is
 the only recovery that can prove descendant processes have been destroyed.
 
+If startup skipped the Playwright probe due to low process headroom, health and
+browser-readiness requests retry it after cgroup capacity returns to a known
+healthy state. Until the probe succeeds, the browser tier remains not ready;
+the service liveness response reports degraded status.
+
 ## Consequences
 
 Individual browser calls keep their existing timeouts and extraction behavior.
