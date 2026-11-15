@@ -236,6 +236,10 @@ async def stream_research_live(
                 owner_scope=evidence_owner_scope,
                 include_source_content=include_source_content,
             )
+            if isinstance(client_recovery.get("coverage"), dict):
+                client_recovery["coverage"]["evidence"] = client_recovery.get(
+                    "evidence_coverage", {}
+                )
             mark_evidence_recovery_status(
                 recovery_result, "not_retained", "cached_result"
             )
@@ -287,7 +291,9 @@ async def stream_research_live(
                     "source_details", source_details
                 )
             if "coverage" in event:
-                done_payload["coverage"] = event["coverage"]
+                done_payload["coverage"] = client_recovery.get(
+                    "coverage", event["coverage"]
+                )
             done_payload["evidence_coverage"] = client_recovery.get(
                 "evidence_coverage", {}
             )
