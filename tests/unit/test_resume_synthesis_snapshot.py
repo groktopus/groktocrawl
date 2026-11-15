@@ -79,12 +79,103 @@ def test_resume_reuses_saved_budgets_unless_explicitly_overridden():
 
     assert _MODULE.resolve_budgets(None, None, state) == (48_000, 512)
     assert _MODULE.resolve_budgets(None, 2_048, state) == (48_000, 2_048)
-    assert _MODULE.resolve_budgets(64_000, 2_048, state) == (64_000, 2_048)
+    with pytest.raises(ValueError, match="fixed for a synthesis snapshot"):
+        _MODULE.resolve_budgets(64_000, 2_048, state)
 
     with pytest.raises(ValueError, match="input budget"):
         _MODULE.resolve_budgets(7_999, None, state)
     with pytest.raises(ValueError, match="output token budget"):
         _MODULE.resolve_budgets(None, 255, state)
+
+
+@pytest.mark.parametrize(
+    "budget_option,budget_value",
+    [("--input-budget-chars", "7999"), ("--output-budget-tokens", "255")],
+)
+def test_invalid_initial_budget_fails_before_api_writes(
+    monkeypatch, tmp_path, budget_option, budget_value
+):
+    import sys
+
+    source_file = tmp_path / "captured.jsonl"
+    source_file.write_text(
+        json.dumps(
+            {
+                "type": "source_scraped",
+                "query": "question",
+                "url": "https://example.test/source",
+                "markdown": "captured body",
+            }
+        ),
+        encoding="utf-8",
+    )
+    state_file = tmp_path / "state.json"
+    calls = []
+    monkeypatch.setenv("GROKTOCRAWL_API_KEY", "local-test-key")
+    monkeypatch.setattr(_MODULE, "_request", lambda *args, **kwargs: calls.append(args))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "resume_synthesis_snapshot.py",
+            "--base-url",
+            "http://example.test",
+            "--sources-jsonl",
+            str(source_file),
+            "--state-file",
+            str(state_file),
+            budget_option,
+            budget_value,
+        ],
+    )
+
+    with pytest.raises(SystemExit):
+        _MODULE.main()
+
+    assert calls == []
+    assert not state_file.exists()
+
+
+def test_resume_rejects_input_budget_change_without_mutating_state(
+    monkeypatch, tmp_path
+):
+    import sys
+
+    state_file = tmp_path / "state.json"
+    saved = {
+        "version": 1,
+        "session_id": "session-fixture",
+        "question": "question",
+        "synthesis_id": "stable-synthesis-id",
+        "ref_ids": ["evidence-fixture"],
+        "input_budget_chars": 48_000,
+        "output_budget_tokens": 512,
+        "last_status": "in_progress",
+    }
+    _MODULE._atomic_private_json(state_file, saved)
+    calls = []
+    monkeypatch.setenv("GROKTOCRAWL_API_KEY", "local-test-key")
+    monkeypatch.setattr(_MODULE, "_request", lambda *args, **kwargs: calls.append(args))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "resume_synthesis_snapshot.py",
+            "--base-url",
+            "http://example.test",
+            "--state-file",
+            str(state_file),
+            "--resume",
+            "--input-budget-chars",
+            "64000",
+        ],
+    )
+
+    with pytest.raises(SystemExit):
+        _MODULE.main()
+
+    assert calls == []
+    assert json.loads(state_file.read_text(encoding="utf-8")) == saved
 
 
 def test_loads_full_acquired_body_from_dossier_index_with_length_check(tmp_path):

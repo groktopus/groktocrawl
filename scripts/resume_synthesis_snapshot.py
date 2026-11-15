@@ -163,6 +163,14 @@ def resolve_budgets(
         if input_argument is not None
         else state.get("input_budget_chars", 32_000)
     )
+    if (
+        input_argument is not None
+        and "input_budget_chars" in state
+        and input_argument != state["input_budget_chars"]
+    ):
+        raise ValueError(
+            "input budget is fixed for a synthesis snapshot; use a new synthesis_id or re-import the same evidence"
+        )
     output_budget = (
         output_argument
         if output_argument is not None
@@ -223,7 +231,20 @@ def main() -> int:
         if not args.state_file.exists():
             parser.error("--resume requires an existing --state-file")
         state = json.loads(args.state_file.read_text(encoding="utf-8"))
+        try:
+            input_budget, output_budget = resolve_budgets(
+                args.input_budget_chars, args.output_budget_tokens, state
+            )
+        except ValueError as exc:
+            parser.error(str(exc))
     else:
+        try:
+            # Validate before creating a session or importing a large snapshot.
+            input_budget, output_budget = resolve_budgets(
+                args.input_budget_chars, args.output_budget_tokens, {}
+            )
+        except ValueError as exc:
+            parser.error(str(exc))
         if bool(args.sources_jsonl) == bool(args.sources_index):
             parser.error(
                 "initial synthesis requires exactly one of --sources-jsonl or --sources-index"
@@ -266,12 +287,6 @@ def main() -> int:
             "last_status": "imported",
         }
 
-    try:
-        input_budget, output_budget = resolve_budgets(
-            args.input_budget_chars, args.output_budget_tokens, state
-        )
-    except ValueError as exc:
-        parser.error(str(exc))
     state["input_budget_chars"] = input_budget
     state["output_budget_tokens"] = output_budget
     _atomic_private_json(args.state_file, state)
