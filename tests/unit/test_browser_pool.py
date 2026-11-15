@@ -251,6 +251,7 @@ async def test_cancelled_late_launch_close_failure_keeps_launch_reservation(
     launch_started = asyncio.Event()
     finish_launch = asyncio.Event()
     close_started = asyncio.Event()
+    finish_close = asyncio.Event()
     browser = _Browser("late")
     close_calls = 0
 
@@ -259,6 +260,7 @@ async def test_cancelled_late_launch_close_failure_keeps_launch_reservation(
         close_calls += 1
         if close_calls == 1:
             close_started.set()
+            await finish_close.wait()
             raise RuntimeError("synthetic late browser close failure")
 
     browser.close = close_failure
@@ -282,8 +284,10 @@ async def test_cancelled_late_launch_close_failure_keeps_launch_reservation(
     acquire.cancel()
     finish_launch.set()
     await close_started.wait()
-    # A second cancellation must not interrupt quarantine accounting or cause
-    # the generic exception path to retry browser.close().
+    finish_close.set()
+    # Let the failed close reach quarantine accounting while the condition lock
+    # is held, then cancel again. Cleanup must not retry or release capacity.
+    await asyncio.sleep(0)
     acquire.cancel()
     pool._condition.release()
     with pytest.raises(RuntimeError, match="cleanup is incomplete"):
