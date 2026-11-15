@@ -1,7 +1,7 @@
 """MCP server exposing GroktoCrawl tools via Model Context Protocol.
 
 Uses FastMCP from the official mcp SDK (v1.x) with Streamable HTTP
-transport.  Defines 74 tools matching the GroktoCrawl agent-svc
+transport.  Defines 75 tools matching the GroktoCrawl agent-svc
 API surface, with proper readOnlyHint/destructiveHint annotations.
 
 Tool surface policy (see scripts/check-mcp-coverage.py): every agent-svc
@@ -763,9 +763,7 @@ async def agent(
     include_images: bool = False,
     force_fresh: bool = False,
     search_type: str | None = None,
-    evidence_budget_chars: Annotated[
-        int | None, Field(ge=256, strict=True)
-    ] = None,
+    evidence_budget_chars: Annotated[int | None, Field(ge=256, strict=True)] = None,
 ) -> str:
     """Run autonomous research: search → scrape → LLM synthesis with sources.
 
@@ -857,6 +855,40 @@ async def create_research_session(ttl: int | None = None) -> str:
             when omitted.
     """
     result = await _client.create_research_session(ttl=ttl)
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_NEUTRAL)
+async def import_session_evidence(
+    session_id: str,
+    sources: Annotated[list[dict[str, Any]], Field(min_length=1, max_length=256)],
+) -> str:
+    """Import previously acquired source bodies into a research session.
+
+    This stores and hashes caller-provided evidence for later chunked
+    synthesis. It never fetches the supplied URLs. The snapshot is limited to
+    256 unique HTTP(S) sources and 20 MB of Markdown.
+    """
+    urls: set[str] = set()
+    total_bytes = 0
+    for source in sources:
+        url = source.get("url")
+        markdown = source.get("markdown")
+        title = source.get("title", "")
+        if not isinstance(url, str) or not url:
+            raise ToolError("each source requires a non-empty URL")
+        if not isinstance(markdown, str) or not markdown:
+            raise ToolError("each source requires non-empty Markdown")
+        if not isinstance(title, str):
+            raise ToolError("source title must be a string")
+        if url in urls:
+            raise ToolError("source URLs must be unique")
+        urls.add(url)
+        total_bytes += len(markdown.encode("utf-8"))
+        if total_bytes > 20_000_000:
+            raise ToolError("source snapshot exceeds the 20 MB byte limit")
+    result = await _client.import_session_evidence(session_id, sources)
     _ensure_success(result)
     return _resp(result)
 
@@ -1254,9 +1286,7 @@ async def answer(
     citation_style: str | None = None,
     search_type: str | None = None,
     retrieval_mode: str | None = None,
-    evidence_budget_chars: Annotated[
-        int | None, Field(ge=256, strict=True)
-    ] = None,
+    evidence_budget_chars: Annotated[int | None, Field(ge=256, strict=True)] = None,
 ) -> str:
     """Grounded Q&A: search → scrape → LLM answer with inline citations.
 

@@ -608,6 +608,15 @@ class GroktocrawlClient:
             body["ttl"] = ttl
         return await self._post("/v2/session/create", body)
 
+    async def import_session_evidence(
+        self, session_id: str, sources: list[dict[str, Any]]
+    ) -> dict:
+        """Import an already acquired immutable source snapshot."""
+        return await self._post(
+            f"/v2/session/{quote(session_id, safe='')}/evidence/import",
+            {"sources": sources},
+        )
+
     async def research_session_step(
         self,
         session_id: str,

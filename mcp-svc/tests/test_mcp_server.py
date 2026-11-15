@@ -138,9 +138,9 @@ class TestToolDiscovery:
     """VAL-MCP-B01: tools/list returns the complete MCP tool surface."""
 
     async def test_tool_count(self):
-        """tools/list returns exactly 74 tools."""
+        """tools/list returns exactly 75 tools."""
         tools = await mcp.list_tools()
-        assert len(tools) == 74, f"Expected 74 tools, got {len(tools)}"
+        assert len(tools) == 75, f"Expected 75 tools, got {len(tools)}"
 
     async def test_all_tool_names(self):
         """All 52 expected tool names are present."""
@@ -205,6 +205,7 @@ class TestToolDiscovery:
             "run_monitor",
             "delete_monitor",
             "create_research_session",
+            "import_session_evidence",
             "research_session_step",
             "get_research_session",
             "export_research_session",
@@ -949,6 +950,10 @@ class TestToolCallRouting:
             captured["step"] = kwargs
             return {"success": True, "step_index": 1}
 
+        async def _fake_import(session_id: str, sources: list[dict[str, Any]]) -> dict:
+            captured["import"] = (session_id, sources)
+            return {"success": True, "source_count": len(sources)}
+
         async def _fake_get(session_id: str) -> dict:
             captured["get"] = session_id
             return {"success": True, "session_id": session_id}
@@ -966,6 +971,7 @@ class TestToolCallRouting:
             return {"success": True, "deleted": True}
 
         monkeypatch.setattr(mod._client, "create_research_session", _fake_create)
+        monkeypatch.setattr(mod._client, "import_session_evidence", _fake_import)
         monkeypatch.setattr(mod._client, "research_session_step", _fake_step)
         monkeypatch.setattr(mod._client, "get_research_session", _fake_get)
         monkeypatch.setattr(mod._client, "export_research_session", _fake_export)
@@ -973,6 +979,13 @@ class TestToolCallRouting:
         monkeypatch.setattr(mod._client, "delete_research_session", _fake_delete)
 
         await mcp.call_tool("create_research_session", {"ttl": 900})
+        imported_sources = [
+            {"url": "https://example.test/a", "title": "A", "markdown": "Body A"}
+        ]
+        await mcp.call_tool(
+            "import_session_evidence",
+            {"session_id": "rs-1", "sources": imported_sources},
+        )
         await mcp.call_tool(
             "research_session_step",
             {
@@ -992,6 +1005,7 @@ class TestToolCallRouting:
         await mcp.call_tool("delete_research_session", {"session_id": "rs-1"})
 
         assert captured["create"] == {"ttl": 900}
+        assert captured["import"] == ("rs-1", imported_sources)
         assert captured["step"] == {
             "session_id": "rs-1",
             "action": "search",
