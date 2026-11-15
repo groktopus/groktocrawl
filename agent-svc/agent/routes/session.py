@@ -33,7 +33,7 @@ async def select_session_evidence(
     session_id: str,
     ref_id: str,
     query: str = Query(default="", max_length=10_000),
-    budget_chars: int = Query(default=32_000, ge=256, le=128_000),
+    budget_chars: int = Query(default=32_000, ge=256),
     offset: int = Query(default=0, ge=0),
     expected_digest: str | None = Query(default=None, pattern=r"^[0-9a-f]{64}$"),
 ) -> dict[str, Any]:

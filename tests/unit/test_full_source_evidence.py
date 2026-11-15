@@ -87,10 +87,20 @@ def test_large_retained_source_classified_recovery_and_page_reconstruction():
     assert reconstructed == text
 
 
-@pytest.mark.parametrize("budget", [True, 255, 128001, "32000", None])
+@pytest.mark.parametrize("budget", [True, 255, "32000"])
 def test_invalid_budgets_rejected(budget):
     with pytest.raises(ValueError):
         build_evidence([source("body")], "body", budget)
+
+
+def test_none_means_complete_and_explicit_budget_has_no_arbitrary_ceiling():
+    text = "late value " + "x" * 130_000
+    full = build_evidence([source(text)], "late value", None)
+    assert full["coverage"]["sources"][0]["selected_chars"] == len(text)
+    assert full["coverage"]["sources"][0]["omitted_chars"] == 0
+    explicit = build_evidence([source(text)], "late value", 130_020)
+    assert explicit["coverage"]["budget_chars"] == 130_020
+    assert explicit["coverage"]["complete"]
 
 
 @pytest.mark.asyncio
@@ -257,7 +267,7 @@ async def test_cache_stream_replays_exact_coverage_and_budget_fingerprints_diffe
     from agent.research_memory import compute_fingerprint
 
     assert compute_fingerprint(
-        prompt="same", evidence_budget_chars=256
+        prompt="same", evidence_budget_chars=None
     ) != compute_fingerprint(prompt="same", evidence_budget_chars=32000)
     coverage = build_evidence([source("retained quote")], "quote", 256)["coverage"]
     events = [
@@ -274,10 +284,11 @@ async def test_cache_stream_replays_exact_coverage_and_budget_fingerprints_diffe
         )
         if event.strip() != "data: [DONE]"
     ]
-    assert (
-        next(event for event in events if event["type"] == "done")["evidence_coverage"]
-        == coverage
-    )
+    done = next(event for event in events if event["type"] == "done")
+    assert done["evidence_coverage"]["method"] == coverage["method"]
+    assert done["evidence_coverage"]["selected_chars"] == coverage["selected_chars"]
+    assert done["evidence_recovery"]["status"] == "not_retained"
+    assert done["evidence_coverage"]["sources"][0]["recovery"]["status"] == "not_retained"
 
 
 def test_selected_construction_keeps_utf8_byte_ceiling():

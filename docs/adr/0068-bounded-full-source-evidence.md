@@ -1,6 +1,6 @@
 # 0068: Select bounded evidence from complete sources
 
-- Status: accepted
+- Status: superseded by ADR-0081
 - Date: 2026-10-07
 
 ## Context

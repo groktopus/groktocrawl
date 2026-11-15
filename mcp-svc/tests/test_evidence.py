@@ -114,7 +114,6 @@ async def test_evidence_query_offset_conflict_never_calls_api(monkeypatch):
     "arguments",
     [
         {"budget_chars": 255},
-        {"budget_chars": 128001},
         {"offset": -1},
         {"expected_digest": "bad"},
         {"query": "x" * 10001},
@@ -150,6 +149,11 @@ async def test_budget_tool_passthrough_and_validation(
         tool, {argument: "question", "evidence_budget_chars": 4096}
     )
     assert client.call_args.kwargs["evidence_budget_chars"] == 4096
+    client.reset_mock()
+    await mcp_server.mcp.call_tool(
+        tool, {argument: "question", "evidence_budget_chars": 200001}
+    )
+    assert client.call_args.kwargs["evidence_budget_chars"] == 200001
     client.reset_mock()
     await mcp_server.mcp.call_tool(tool, {argument: "question"})
     assert "evidence_budget_chars" not in client.call_args.kwargs

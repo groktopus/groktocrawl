@@ -94,6 +94,13 @@ async def finalize_and_admit(
         )
     result["result"] = result_text
     memory_sources = source_details or result.get("sources", [])
+    cache_evidence = {
+        "evidence_coverage": result.get("evidence_coverage", {}),
+        "coverage": result.get("coverage", {}),
+    }
+    from .evidence_recovery import mark_evidence_recovery_status
+
+    mark_evidence_recovery_status(cache_evidence, "not_retained", "cached_result")
 
     if citation_style == CitationStyle.compact:
         compact_sources: list[dict[str, str | int]] = []
@@ -111,10 +118,10 @@ async def finalize_and_admit(
         citation_style=citation_style.value,
         requested_model=requested_model,
         latency_ms=result.get("latency_ms", 0),
-        coverage=result.get("coverage"),
+        coverage=cache_evidence.get("coverage"),
         user_id=user_id,
         fingerprint=fingerprint,
-        evidence_coverage=result.get("evidence_coverage", {}),
+        evidence_coverage=cache_evidence.get("evidence_coverage", {}),
     )
     if artifact_id:
         result["research_memory_id"] = artifact_id
@@ -141,7 +148,7 @@ async def refresh_research_memory(
     search_type: str,
     user_id: str | None,
     fingerprint: str | None,
-    evidence_budget_chars: int = 32_000,
+    evidence_budget_chars: int | None = None,
 ) -> dict[str, Any]:
     """Re-run the research pipeline and re-admit a fresh result to memory.
 

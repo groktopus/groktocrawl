@@ -18,6 +18,10 @@ from typing import Any
 
 from .barrier_guard import is_barrier_flagged, log_refusal
 from .llm import LLMClient
+from .research.citation_recovery import (
+    context_fallback_call_count,
+    generate_with_context_fallback,
+)
 from .research.evidence import (
     DEFAULT_EVIDENCE_CHARS,
     build_evidence_async,
@@ -921,11 +925,19 @@ class SessionManager:
         effective_model = model if model != "default" else llm_model
         llm = LLMClient(llm_base_url, llm_api_key, effective_model)
         try:
-            answer = await llm.generate(
+            answer = await generate_with_context_fallback(
+                llm,
                 system_prompt=SESSION_QUERY_SYSTEM_PROMPT,
                 user_prompt=question,
                 context=context,
+                context_blocks=selected["contexts"] + [citation_guidance],
+                stage="session_query",
             )
+            selected["coverage"]["synthesis"] = {
+                "mode": "hierarchical" if context_fallback_call_count(llm) else "direct",
+                "reduction_calls": context_fallback_call_count(llm),
+                "source_text_retained": True,
+            }
         finally:
             await llm.close()
 
@@ -1062,10 +1074,10 @@ class SessionManager:
         )
         source_context = source_selection["context"]
         query_prompt = (
-            f"Based on the following source content and the user's follow-up question, "
+            f"Based on the supplied source content and the user's follow-up question, "
             f"generate 2-3 highly specific web search queries to find additional "
             f"information that deepens the investigation.\n\n"
-            f"SOURCE ({source_title or source_url}):\n{source_context}\n\n"
+            f"SOURCE IDENTITY: {source_title or source_url}\n"
             f"FOLLOW-UP QUESTION: {sub_topic}\n\n"
             f"Return ONLY the search queries, one per line. No other text."
         )
@@ -1098,9 +1110,13 @@ class SessionManager:
             if len(new_urls) < max_sources:
                 llm_query = LLMClient(llm_base_url, llm_api_key, llm_model)
                 try:
-                    gen_response = await llm_query.generate(
+                    gen_response = await generate_with_context_fallback(
+                        llm_query,
                         system_prompt="You generate precise web search queries. Return only the queries, one per line.",
                         user_prompt=query_prompt,
+                        context=source_context,
+                        context_blocks=source_selection["contexts"],
+                        stage="session_deepen_query",
                     )
                     # Parse queries from response
                     gen_queries = [
@@ -1177,25 +1193,33 @@ class SessionManager:
             )
             new_context = synthesis_selection["context"]
 
-            synthesis_prompt = (
-                f"ORIGINAL AND NEW EVIDENCE:\n{new_context}\n\n"
-                f"DEPTH PROMPT: {sub_topic}\n\n"
-                f"Synthesise the new findings. Focus on what NEW information the "
-                f"deep-dive sources add beyond the original source. Be specific and "
-                f"cite sources by URL. Format in clean markdown."
-            )
-
             llm_synth = LLMClient(llm_base_url, llm_api_key, llm_model)
             try:
-                new_findings = await llm_synth.generate(
+                new_findings = await generate_with_context_fallback(
+                    llm_synth,
                     system_prompt=(
                         "You are GroktoCrawl, a deep-research agent. Synthesise new "
                         "findings from deep-dive sources. Focus on novelty — what "
                         "does the new research add? Be concise, specific, and cite "
                         "sources by URL."
                     ),
-                    user_prompt=synthesis_prompt,
+                    user_prompt=(
+                        f"DEPTH PROMPT: {sub_topic}\n\n"
+                        "Synthesize the new findings. Focus on what new information "
+                        "the deep-dive sources add beyond the original source. Be "
+                        "specific and cite sources by URL. Format in clean markdown."
+                    ),
+                    context=new_context,
+                    context_blocks=synthesis_selection["contexts"],
+                    stage="session_deepen_synthesis",
                 )
+                synthesis_selection["coverage"]["synthesis"] = {
+                    "mode": "hierarchical"
+                    if context_fallback_call_count(llm_synth)
+                    else "direct",
+                    "reduction_calls": context_fallback_call_count(llm_synth),
+                    "source_text_retained": True,
+                }
             finally:
                 await llm_synth.close()
         else:

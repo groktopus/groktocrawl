@@ -76,7 +76,7 @@ async def test_answer_api_exports_full_sources_only_on_request(streaming, export
         )
     else:
         payload = response.json()
-    if export:
+    if export or payload.get("evidence_recovery", {}).get("status") == "unavailable":
         assert payload["source_contents"] == {URL: TEXT}
     else:
         assert "source_contents" not in payload

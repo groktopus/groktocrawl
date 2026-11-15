@@ -6,6 +6,7 @@ import logging
 import os
 import time
 from collections.abc import Callable, Coroutine
+from copy import deepcopy
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -15,6 +16,10 @@ from .cancel import JobCancelledError, raise_if_cancelled, set_token
 from .exceptions import CitationValidationError, RetryableRateLimitError
 from .metrics import METRICS
 from .research import run_extract, run_research
+from .research.evidence_recovery import (
+    mark_evidence_recovery_status,
+    retain_result_evidence,
+)
 from .research.memory import finalize_and_admit, refresh_research_memory
 from .research_cache_metrics import (
     BypassReason,
@@ -299,7 +304,8 @@ async def _process_agent_async(
     max_credits: int | None = None,
     fingerprint: str | None = None,
     task_tracker: Any = None,
-    evidence_budget_chars: int = 32_000,
+    evidence_budget_chars: int | None = None,
+    evidence_owner_scope: str | None = None,
 ) -> None:
     if task_tracker is not None:
         set_token(task_tracker.cancel_token(job_id))
@@ -351,24 +357,36 @@ async def _process_agent_async(
                     if not schema_:
                         result_text, _ = _apply_citation_style(result_text, sources, cs)
 
+                    cached_coverage = deepcopy(
+                        entry.get("metadata", {}).get("coverage")
+                        or {
+                            "scope": "cached_answer",
+                            "coverage_complete": False,
+                            "evidence": {"status": "not_retained"},
+                        }
+                    )
+                    cached_evidence_coverage = deepcopy(
+                        entry.get("metadata", {}).get("evidence_coverage", {})
+                    )
+
                     cached_payload: dict[str, Any] = {
                         "result": result_text,
                         "sources": [s.get("url", "") for s in sources],
                         "source_details": sources,
                         "from_cache": True,
-                        "coverage": entry.get("metadata", {}).get("coverage")
-                        or {
-                            "scope": "cached_answer",
-                            "coverage_complete": False,
-                            "evidence": {"status": "not_retained"},
-                        },
+                        "coverage": cached_coverage,
                         "freshness": freshness,
                         "similarity": cache_result.get("similarity", 0),
                         "memory_id": cache_result.get("memory_id", ""),
-                        "evidence_coverage": entry.get("metadata", {}).get(
-                            "evidence_coverage", {}
-                        ),
+                        "evidence_coverage": cached_evidence_coverage,
+                        "evidence_recovery": {
+                            "status": "not_retained",
+                            "reason": "cached_result",
+                        },
                     }
+                    mark_evidence_recovery_status(
+                        cached_payload, "not_retained", "cached_result"
+                    )
                     # Apply compact citation transformation
                     if cs == CitationStyle.compact:
                         compact_sources = []
@@ -419,26 +437,37 @@ async def _process_agent_async(
 
                     if not schema_:
                         result_text, _ = _apply_citation_style(result_text, sources, cs)
+                    stale_coverage = deepcopy(
+                        entry.get("metadata", {}).get("coverage")
+                        or {
+                            "scope": "cached_answer",
+                            "coverage_complete": False,
+                            "evidence": {"status": "not_retained"},
+                        }
+                    )
+                    stale_evidence_coverage = deepcopy(
+                        entry.get("metadata", {}).get("evidence_coverage", {})
+                    )
                     stale_payload: dict[str, Any] = {
                         "result": result_text,
                         "sources": [s.get("url", "") for s in sources],
                         "source_details": sources,
                         "from_cache": True,
-                        "coverage": entry.get("metadata", {}).get("coverage")
-                        or {
-                            "scope": "cached_answer",
-                            "coverage_complete": False,
-                            "evidence": {"status": "not_retained"},
-                        },
+                        "coverage": stale_coverage,
                         "freshness": "stale",
-                        "evidence_coverage": entry.get("metadata", {}).get(
-                            "evidence_coverage", {}
-                        ),
+                        "evidence_coverage": stale_evidence_coverage,
+                        "evidence_recovery": {
+                            "status": "not_retained",
+                            "reason": "cached_result",
+                        },
                         "refreshed": False,
                         "age_hours": cache_result.get("age_hours"),
                         "similarity": cache_result.get("similarity", 0),
                         "memory_id": cache_result.get("memory_id", ""),
                     }
+                    mark_evidence_recovery_status(
+                        stale_payload, "not_retained", "cached_result"
+                    )
                     if cs == CitationStyle.compact:
                         compact_sources = []
                         for i, src in enumerate(sources, start=1):
@@ -504,10 +533,17 @@ async def _process_agent_async(
                             "from_cache": False,
                             "freshness": "refreshed",
                             "evidence_coverage": fresh.get("evidence_coverage", {}),
+                            "evidence_recovery": {
+                                "status": "not_retained",
+                                "reason": "cached_refresh",
+                            },
                             "refreshed": True,
                             "age_hours": 0.0,
                             "research_memory_id": fresh.get("research_memory_id"),
                         }
+                        mark_evidence_recovery_status(
+                            refreshed_payload, "not_retained", "cached_refresh"
+                        )
                         if cs == CitationStyle.compact:
                             refreshed_payload["sources_compact"] = fresh.get(
                                 "sources_compact", []
@@ -597,7 +633,10 @@ async def _process_agent_async(
             llm_model=llm_model,
             requested_model=requested_model,
             include_images=include_images,
-            include_source_content=include_source_content,
+            # Retain the acquired bodies in an owned, paged evidence session.
+            # The public response remains compact unless the caller requested
+            # an inline source export.
+            include_source_content=True,
             citation_style=cs,
             search_type=search_type,
             max_searches_per_request=max_searches_per_request,
@@ -613,16 +652,25 @@ async def _process_agent_async(
         # Apply citation style to transform bare [N] markers to [N](url)
         # for compact style, or leave them unchanged for inline style, then
         # admit the post-transform artifact to research memory.
+        cache_result = deepcopy(result)
+        mark_evidence_recovery_status(cache_result, "not_retained", "cached_result")
         result = await finalize_and_admit(
             research_memory,
             has_schema=bool(schema_),
             prompt=prompt,
-            result=result,
+            result=cache_result,
             llm_model=llm_model,
             citation_style=cs,
             requested_model=requested_model,
             user_id=user_id,
             fingerprint=fingerprint,
+        )
+
+        response_result = await retain_result_evidence(
+            deepcopy(result),
+            redis_url=redis_url,
+            owner_scope=evidence_owner_scope or "anonymous",
+            include_source_content=include_source_content,
         )
 
         # Note stale cache existence if applicable
@@ -633,6 +681,21 @@ async def _process_agent_async(
                 "freshness", "stale"
             )
 
+        result.update(
+            {
+                key: value
+                for key, value in response_result.items()
+                if key
+                in {
+                    "evidence_coverage",
+                    "evidence_recovery",
+                    "evidence_session_id",
+                    "source_contents",
+                }
+            }
+        )
+        if response_result.get("evidence_recovery", {}).get("status") == "unavailable":
+            result["source_contents"] = response_result.get("source_contents", {})
         return result
 
     await _run_job_with_observability(job_id, "agent", store, webhook_config, work_fn)

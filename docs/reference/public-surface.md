@@ -315,16 +315,20 @@ configured private model endpoint; it does not permit private scrape targets.
 
 ## Bounded evidence controls
 
-`agent` and `answer` accept optional `--evidence-budget-chars` (256–128000),
-matching API/MCP `evidence_budget_chars`. Omission preserves server defaults.
-CLI JSON retains `evidence_coverage` in synchronous and streaming completion
-results. This budget selects verbatim source characters for synthesis; it does
-not limit acquisition or claim exhaustive evidence coverage.
+`agent` and `answer` accept optional `--evidence-budget-chars` (minimum 256,
+without an application-level maximum), matching API/MCP
+`evidence_budget_chars`. Omission supplies all retained source text; an
+explicit budget selects verbatim excerpts. CLI JSON retains
+`evidence_coverage` and synthesis mode in synchronous and streaming completion
+results. This budget does not limit acquisition or claim exhaustive evidence
+coverage. Agent and answer completions expose credential-scoped, digest-pinned
+evidence recovery pages.
 
 `groktocrawl evidence SESSION_ID REF_ID --query "question" --json` and MCP
 `select_session_evidence` inspect exact retained spans, content digest and
 coverage without retrieval or model work. Omit query to page from `--offset`
-(default 0), using `--budget-chars` (default 32000, range 256–128000). Query
+(default 0), using `--budget-chars` (default 32000 per page, minimum 256,
+without an application-level maximum). Query
 selection and a nonzero offset are mutually exclusive. Follow the returned
 continuation with its offset and `--expected-digest` (64 lowercase hexadecimal
 characters); changed content is rejected. `coverage_complete` remains false.

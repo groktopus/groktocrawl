@@ -20,7 +20,7 @@ from .acquisition import (
     acquire_source_artifacts,
     stream_source_artifacts,
 )
-from .evidence import build_evidence_async
+from .evidence import DEFAULT_EVIDENCE_CHARS, build_evidence_async
 from .prompts import DEEP_SEARCH_GAP_PROMPT, RICH_SEARCH_SYSTEM_PROMPT
 from .sources import SourceArtifact, normalize_source_url
 
@@ -186,12 +186,15 @@ async def _run_deep_search_with_clients(
 
 async def _rich_evidence_context(enriched: list[dict], query: str) -> dict[str, Any]:
     """Select across full retained bodies, preserving the numbered source order."""
+    # Rich search and field enrichment keep their historical excerpting policy
+    # until the API exposes an explicit evidence budget for those surfaces.
     selected = await build_evidence_async(
         [
             {"id": item["url"], "url": item["url"], "markdown": item["content"]}
             for item in enriched
         ],
         query,
+        DEFAULT_EVIDENCE_CHARS if DEFAULT_EVIDENCE_CHARS is not None else 32_000,
     )
     notice = selected["context"].partition("\n\n")[0]
     context_parts = [

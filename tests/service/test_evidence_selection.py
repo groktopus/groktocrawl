@@ -68,7 +68,7 @@ def test_selection_is_deterministic_and_foreign_sources_are_not_consulted():
     assert "other-session" not in build_evidence(sources, "capacitor", 256)["context"]
 
 
-@pytest.mark.parametrize("budget", [0, 255, 128001, True, "400"])
+@pytest.mark.parametrize("budget", [0, 255, True, "400"])
 def test_budget_rejection_is_visible(budget):
     with pytest.raises(ValueError):
         build_evidence([], "question", budget)
@@ -117,6 +117,41 @@ async def test_session_query_reads_full_refs_and_rejects_foreign_ref(monkeypatch
 
 
 @pytest.mark.asyncio
+async def test_session_query_defaults_to_complete_source_text(monkeypatch):
+    from agent import session
+
+    text = "late-session-fact: 9137\n" + "background text\n" * 5000
+    manager = session.SessionManager.__new__(session.SessionManager)
+    manager.store = MagicMock()
+    manager.store.aget_artifact = AsyncMock(return_value="preview only")
+    manager.store.aget_refs = AsyncMock(
+        return_value={
+            "ref_1": {"url": "https://fixture.test", "markdown": text}
+        }
+    )
+    manager.store.aappend_step = AsyncMock(return_value=2)
+    manager.store.aappend_artifact = AsyncMock()
+    llm = MagicMock()
+    llm.generate = AsyncMock(return_value="9137 [1]")
+    llm.close = AsyncMock()
+    monkeypatch.setattr(session, "LLMClient", lambda *_args: llm)
+
+    result = await manager._step_query(
+        "one",
+        {"question": "What is the late-session-fact?", "ref_ids": ["ref_1"]},
+        "http://fixture",
+        "",
+        "fixture",
+    )
+
+    context = llm.generate.call_args.kwargs["context"]
+    assert "late-session-fact: 9137" in context
+    assert text in context
+    assert result["evidence_coverage"]["method"] == "full_source_v1"
+    assert result["evidence_coverage"]["sources"][0]["selected_chars"] == len(text)
+
+
+@pytest.mark.asyncio
 async def test_search_window_reports_omissions_and_requests_explicit_upstream_page():
     from agent.searxng_client import SearXNGClient
 
@@ -153,12 +188,29 @@ async def test_search_window_reports_omissions_and_requests_explicit_upstream_pa
         await client.close()
 
 
-def test_old_requests_keep_defaults_and_new_bounds_are_validated():
-    assert AnswerRequest(query="test").evidence_budget_chars == 32000
+def test_requests_default_to_complete_evidence_and_allow_large_explicit_budgets():
+    assert AnswerRequest(query="test").evidence_budget_chars is None
+    assert AnswerRequest(query="test", evidence_budget_chars=200_000).evidence_budget_chars == 200_000
     request = SearchRequest(query="test")
     assert request.page == 1 and request.offset == 0 and request.limit == 5
     with pytest.raises(ValueError):
         SearchRequest(query="test", page=0)
+
+
+def test_full_source_is_default_and_explicit_budget_is_only_an_excerpt():
+    sources = [
+        {"id": "one", "url": "https://fixture.test/one", "markdown": "A" * 3000},
+        {"id": "two", "url": "https://fixture.test/two", "markdown": "late-value: 9182"},
+    ]
+    complete = build_evidence(sources, "late value", None)
+    assert complete["coverage"]["method"] == "full_source_v1"
+    assert complete["coverage"]["selected_chars"] == 3016
+    assert complete["coverage"]["omitted_chars"] == 0
+    assert "A" * 3000 in complete["context"]
+    assert "late-value: 9182" in complete["context"]
+    excerpt = build_evidence(sources, "late value", 512)
+    assert excerpt["coverage"]["method"] == "lexical_passages_v1"
+    assert excerpt["coverage"]["selected_chars"] <= 512
 
 
 @pytest.mark.asyncio

@@ -2298,10 +2298,8 @@ def cmd_evidence(client: Client, args: argparse.Namespace) -> None:
 
 def _evidence_budget_arg(value: str) -> int:
     number = int(value)
-    if not 256 <= number <= 128_000:
-        raise argparse.ArgumentTypeError(
-            "Evidence budget must be 256..128000 characters"
-        )
+    if number < 256:
+        raise argparse.ArgumentTypeError("Evidence budget must be at least 256 characters")
     return number
 
 
@@ -3740,7 +3738,7 @@ def make_parser() -> argparse.ArgumentParser:
         "--evidence-budget-chars",
         type=_evidence_budget_arg,
         default=None,
-        help="Aggregate verbatim evidence budget (256..128000 characters)",
+        help="Optional aggregate excerpt budget; omitted means use all retained source text",
     )
     p_agent.add_argument("--urls", nargs="+", help="Seed URLs to focus research")
     p_agent.add_argument(
@@ -4100,7 +4098,7 @@ def make_parser() -> argparse.ArgumentParser:
         "--evidence-budget-chars",
         type=_evidence_budget_arg,
         default=None,
-        help="Aggregate verbatim evidence budget (256..128000 characters)",
+        help="Optional aggregate excerpt budget; omitted means use all retained source text",
     )
     p_answer.add_argument(
         "-n",

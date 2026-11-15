@@ -466,12 +466,11 @@ class ScrapeResponse(BaseModel):
 
 
 class AgentRequest(BaseModel):
-    evidence_budget_chars: int = Field(
-        default=32_000,
+    evidence_budget_chars: int | None = Field(
+        default=None,
         strict=True,
         ge=256,
-        le=128_000,
-        description="Aggregate verbatim source-character budget for synthesis; acquisition is unchanged",
+        description="Optional aggregate excerpt budget; when omitted, all retained source text is supplied for synthesis",
     )
     prompt: str = Field(
         ...,
@@ -1323,12 +1322,11 @@ class AnswerRequest(BaseModel):
         default=False,
         description="Include the already scraped full source Markdown for artifact export",
     )
-    evidence_budget_chars: int = Field(
-        default=32_000,
+    evidence_budget_chars: int | None = Field(
+        default=None,
         strict=True,
         ge=256,
-        le=128_000,
-        description="Aggregate verbatim source-character budget, separate from retained-byte admission",
+        description="Optional aggregate excerpt budget; when omitted, all retained source text is supplied for synthesis",
     )
     query: str = Field(..., max_length=10000, description="Natural language question")
     search_type: str = Field(default="auto", description="Hint for search depth")
@@ -1384,6 +1382,8 @@ class AnswerRequest(BaseModel):
 class AnswerResponse(BaseModel):
     source_contents: dict[str, str] | None = None
     evidence_coverage: dict[str, Any] = Field(default_factory=dict)
+    evidence_session_id: str | None = None
+    evidence_recovery: dict[str, Any] = Field(default_factory=dict)
     success: bool = True
     answer: str = ""
     sources: list[Source] = Field(default_factory=list)

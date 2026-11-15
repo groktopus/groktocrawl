@@ -12,6 +12,7 @@ from common.stage_metrics import StreamTiming, observe_elapsed
 
 from ..exceptions import (
     CitationValidationError,
+    ContextLimitError,
     ProviderOutputError,
     RetryableRateLimitError,
     StructuredOutputError,
@@ -22,7 +23,12 @@ from ..scraper_client import ScraperClient
 from ..search_metadata import search_metadata
 from ..searxng_client import SearXNGClient
 from ..settings import load_settings
-from .citation_recovery import generate_cited_answer, stream_cited_answer
+from .citation_recovery import (
+    context_fallback_call_count,
+    generate_cited_answer,
+    generate_with_context_fallback,
+    stream_cited_answer,
+)
 from .citations import (
     _build_answer_user_prompt,
 )
@@ -166,7 +172,7 @@ async def _run_research_events(
     search_type: str = "deep",
     stream_tokens: bool = False,
     include_source_content: bool = False,
-    evidence_budget_chars: int = DEFAULT_EVIDENCE_CHARS,
+    evidence_budget_chars: int | None = DEFAULT_EVIDENCE_CHARS,
 ) -> AsyncGenerator[ResearchEvent, None]:
     """Execute the canonical research loop and emit progress and terminal events."""
     start = time.monotonic()
@@ -414,6 +420,10 @@ async def _run_research_events(
                 evidence_sources, prompt, evidence_budget_chars
             )
             context = selected["context"]
+            context_blocks = [
+                f"[{index}] {block}"
+                for index, block in enumerate(selected["contexts"], start=1)
+            ]
             evidence_coverage = selected["coverage"]
             coverage["evidence"] = evidence_coverage
             for detail in source_details:
@@ -511,10 +521,12 @@ async def _run_research_events(
         if schema or not stream_tokens:
             try:
                 if schema:
-                    answer = await llm.generate(
+                    answer = await generate_with_context_fallback(
+                        llm,
                         system_prompt=synthesis_prompt,
                         user_prompt=prompt,
                         context=combined_context,
+                        context_blocks=context_blocks,
                         schema=schema,
                         stage="synthesis",
                     )
@@ -524,6 +536,7 @@ async def _run_research_events(
                         system_prompt=synthesis_prompt,
                         user_prompt=prompt,
                         context=combined_context,
+                        context_blocks=context_blocks,
                         source_map=all_source_details,
                         citation_style=citation_style or CitationStyle.inline,
                         stage="synthesis",
@@ -545,6 +558,8 @@ async def _run_research_events(
                         "classification": "non_retryable",
                         "content": exc.detail,
                     }
+                    if isinstance(exc, ContextLimitError):
+                        error_event["error_code"] = exc.error_code
                     yield error_event
                     return
                 raise
@@ -575,6 +590,7 @@ async def _run_research_events(
                 system_prompt=synthesis_prompt,
                 user_prompt=prompt,
                 context=combined_context,
+                context_blocks=context_blocks,
                 source_map=all_source_details,
                 citation_style=citation_style or CitationStyle.inline,
                 stage="synthesis",
@@ -598,13 +614,19 @@ async def _run_research_events(
             "evidence_coverage": evidence_coverage,
             "latency_ms": int((time.monotonic() - start) * 1000),
         }
-        if include_source_content:
-            done_event["source_contents"] = {
-                artifact.url: artifact.markdown or ""
-                for artifact in source_registry.artifacts()
-                if artifact.markdown
-            }
+        done_event["source_contents"] = {
+            artifact.url: artifact.markdown or ""
+            for artifact in source_registry.artifacts()
+            if artifact.markdown
+        }
         coverage["successful_sources"] = len(all_source_details)
+        synthesis_coverage = {
+            "mode": "hierarchical" if context_fallback_call_count(llm) else "direct",
+            "reduction_calls": context_fallback_call_count(llm),
+            "source_text_retained": True,
+        }
+        evidence_coverage["synthesis"] = synthesis_coverage
+        coverage["evidence_synthesis"] = synthesis_coverage
         coverage["candidate_urls"] = len(coverage_candidates)
         coverage["discovery_target_met"] = not coverage["uncovered_queries"] and (
             coverage["successful_sources"] >= coverage["minimum_sources"]
@@ -652,7 +674,7 @@ async def run_research(
     citation_style: Any = None,
     search_type: str = "deep",
     include_source_content: bool = False,
-    evidence_budget_chars: int = DEFAULT_EVIDENCE_CHARS,
+    evidence_budget_chars: int | None = DEFAULT_EVIDENCE_CHARS,
 ) -> dict:
     """Consume the canonical research event stream and return its terminal result."""
     async with contextlib.aclosing(
@@ -719,7 +741,7 @@ async def run_research_stream(
     citation_style: Any = None,
     search_type: str = "deep",
     include_source_content: bool = False,
-    evidence_budget_chars: int = DEFAULT_EVIDENCE_CHARS,
+    evidence_budget_chars: int | None = DEFAULT_EVIDENCE_CHARS,
 ) -> AsyncGenerator[ResearchEvent, None]:
     """Expose events from the canonical research engine for SSE adaptation."""
     async with contextlib.aclosing(
@@ -755,7 +777,7 @@ async def run_extract(
     llm_base_url: str = "https://api.openai.com/v1",
     llm_api_key: str = "",
     llm_model: str | None = None,
-    evidence_budget_chars: int = DEFAULT_EVIDENCE_CHARS,
+    evidence_budget_chars: int | None = DEFAULT_EVIDENCE_CHARS,
 ) -> dict:
     """Extract structured data from given URLs. No search step."""
     if llm_model is None:
@@ -820,7 +842,7 @@ async def run_answer(
     max_searches_per_request: int = 0,
     output_schema: dict | None = None,
     citation_style: Any = None,
-    evidence_budget_chars: int = DEFAULT_EVIDENCE_CHARS,
+    evidence_budget_chars: int | None = DEFAULT_EVIDENCE_CHARS,
     include_source_content: bool = False,
 ) -> dict:
     """Run a grounded Q&A pipeline: search → scrape → LLM → citations.
@@ -887,10 +909,12 @@ async def run_answer(
                 f"Question: {query}\n\n"
                 f"Cite sources using [1], [2], etc. corresponding to the source numbers above."
             )
-            answer = await llm.generate(
+            answer = await generate_with_context_fallback(
+                llm,
                 system_prompt=ANSWER_SYSTEM_PROMPT,
                 user_prompt=user_prompt,
                 context=context,
+                context_blocks=discovered.get("context_parts"),
                 schema=output_schema,
                 stage="answer",
             )
@@ -903,6 +927,7 @@ async def run_answer(
                 user_prompt=user_prompt,
                 context=context,
                 source_map=source_map,
+                context_blocks=discovered.get("context_parts"),
                 citation_style=cs,
                 stage="answer",
             )
@@ -913,13 +938,19 @@ async def run_answer(
 
         elapsed = int((time.monotonic() - start) * 1000)
 
+        evidence_coverage = discovered.get("evidence_coverage", {})
+        evidence_coverage["synthesis"] = {
+            "mode": "hierarchical" if context_fallback_call_count(llm) else "direct",
+            "reduction_calls": context_fallback_call_count(llm),
+            "source_text_retained": True,
+        }
         return {
             "answer": answer,
             "sources": source_map,
             "citations": citations,
             "search_type": search_type,
             "latency_ms": elapsed,
-            "evidence_coverage": discovered.get("evidence_coverage", {}),
+            "evidence_coverage": evidence_coverage,
             **(
                 {"source_contents": discovered.get("source_contents", {})}
                 if include_source_content
@@ -947,7 +978,7 @@ async def run_answer_stream(
     max_searches_per_request: int = 0,
     output_schema: dict | None = None,
     citation_style: Any = None,
-    evidence_budget_chars: int = DEFAULT_EVIDENCE_CHARS,
+    evidence_budget_chars: int | None = DEFAULT_EVIDENCE_CHARS,
     include_source_content: bool = False,
 ) -> AsyncGenerator[dict[str, Any], None]:
     """Streaming version of run_answer. Yields SSE-suitable dicts.
@@ -1058,10 +1089,12 @@ async def run_answer_stream(
                 f"Cite sources using [1], [2], etc. corresponding to the source numbers above."
             )
             try:
-                full_answer = await llm.generate(
+                full_answer = await generate_with_context_fallback(
+                    llm,
                     system_prompt=ANSWER_SYSTEM_PROMPT,
                     user_prompt=user_prompt,
                     context=context,
+                    context_blocks=built.get("context_parts"),
                     schema=output_schema,
                     stage="answer",
                 )
@@ -1078,6 +1111,11 @@ async def run_answer_stream(
                     "type": "error",
                     "classification": "non_retryable",
                     "content": exc.detail,
+                    **(
+                        {"error_code": exc.error_code}
+                        if isinstance(exc, ContextLimitError)
+                        else {}
+                    ),
                 }
                 return
             try:
@@ -1099,6 +1137,7 @@ async def run_answer_stream(
                 user_prompt=user_prompt,
                 context=context,
                 source_map=source_map,
+                context_blocks=built.get("context_parts"),
                 citation_style=cs,
                 stage="answer",
             ):
@@ -1117,12 +1156,18 @@ async def run_answer_stream(
             citations = []
 
         elapsed = int((time.monotonic() - start) * 1000)
+        evidence_coverage = built["evidence_coverage"]
+        evidence_coverage["synthesis"] = {
+            "mode": "hierarchical" if context_fallback_call_count(llm) else "direct",
+            "reduction_calls": context_fallback_call_count(llm),
+            "source_text_retained": True,
+        }
         yield {
             "type": "done",
             "answer": full_answer,
-            "evidence_coverage": built["evidence_coverage"],
+            "evidence_coverage": evidence_coverage,
             **(
-                {"source_contents": built["source_contents"]}
+                {"source_contents": built.get("source_contents", {})}
                 if include_source_content
                 else {}
             ),
