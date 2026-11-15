@@ -243,8 +243,9 @@ async def test_failed_process_close_keeps_pool_capacity_quarantined(fake_pool):
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("cancel_during_close", [False, True])
 async def test_cancelled_late_launch_close_failure_keeps_launch_reservation(
-    fake_pool, monkeypatch
+    fake_pool, monkeypatch, cancel_during_close
 ):
     browser_pool, _manager, _browsers, _contexts = fake_pool
     pool = browser_pool.BrowserPool(enabled=True, max_processes=1)
@@ -284,10 +285,10 @@ async def test_cancelled_late_launch_close_failure_keeps_launch_reservation(
     acquire.cancel()
     finish_launch.set()
     await close_started.wait()
-    # Cancel again while the first close is still blocked and the condition
-    # lock is held. Cleanup must quarantine synchronously, without retrying the
-    # close or releasing the launch reservation.
-    acquire.cancel()
+    if cancel_during_close:
+        # Cancel again while the first close is blocked and the condition lock
+        # is held. Quarantine must not wait for the lock or retry browser.close.
+        acquire.cancel()
     finish_close.set()
     pool._condition.release()
     with pytest.raises(RuntimeError, match="cleanup is incomplete"):
