@@ -284,11 +284,11 @@ async def test_cancelled_late_launch_close_failure_keeps_launch_reservation(
     acquire.cancel()
     finish_launch.set()
     await close_started.wait()
-    finish_close.set()
-    # Let the failed close reach quarantine accounting while the condition lock
-    # is held, then cancel again. Cleanup must not retry or release capacity.
-    await asyncio.sleep(0)
+    # Cancel again while the first close is still blocked and the condition
+    # lock is held. Cleanup must quarantine synchronously, without retrying the
+    # close or releasing the launch reservation.
     acquire.cancel()
+    finish_close.set()
     pool._condition.release()
     with pytest.raises(RuntimeError, match="cleanup is incomplete"):
         await acquire
