@@ -112,7 +112,7 @@ async def generate_with_context_fallback(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
             context=context,
-            schema=schema,
+            **({"schema": schema} if schema is not None else {}),
             stage=stage,
         )
     except ContextLimitError:

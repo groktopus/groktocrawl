@@ -25,9 +25,10 @@ def request_credential(request: Request) -> str | None:
     A configured key must match before it can select an ownership/cache scope.
     Without authentication, supplied keys are partition hints, not identities.
     """
-    authorization = request.headers.get("Authorization", "")
+    headers = getattr(request, "headers", {})
+    authorization = headers.get("Authorization", "") or ""
     bearer = authorization[7:] if authorization.startswith("Bearer ") else None
-    api_key = request.headers.get("X-API-Key")
+    api_key = headers.get("X-API-Key")
     if not AUTH_ENABLED:
         return bearer or api_key or None
     if bearer == API_KEY:

@@ -1168,7 +1168,7 @@ async def run_answer_stream(
             "answer": full_answer,
             "evidence_coverage": evidence_coverage,
             **(
-                {"source_contents": built["source_contents"]}
+                {"source_contents": built.get("source_contents", {})}
                 if include_source_content
                 else {}
             ),

@@ -121,6 +121,7 @@ async def run_enrich_pipeline(
                 selected = await build_evidence_async(
                     [{"id": top_url, "url": top_url, "markdown": markdown}],
                     query + "\n" + field_descriptions,
+                    32_000,
                 )
                 extract_prompt = (
                     "Extract the following fields from the text below.\n"
