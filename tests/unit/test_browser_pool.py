@@ -93,6 +93,13 @@ def fake_pool(monkeypatch):
 
     monkeypatch.setattr(browser_pool, "create_stealth_browser", launch)
     monkeypatch.setattr(browser_pool, "create_stealth_context", context)
+
+    async def launch_with_headroom(launch_fn):
+        return await launch_fn()
+
+    monkeypatch.setattr(
+        browser_pool, "launch_with_process_headroom", launch_with_headroom
+    )
     monkeypatch.setattr(browser_pool, "fingerprint_seed", lambda url: url.split("/")[2])
     return browser_pool, manager, browsers, contexts
 
@@ -204,14 +211,94 @@ async def test_cancelled_release_finishes_context_cleanup(fake_pool):
     cleanup = asyncio.create_task(lease.release())
     await started.wait()
     cleanup.cancel()
+    await asyncio.sleep(0)
+    assert not cleanup.done()
+    finish.set()
     with pytest.raises(asyncio.CancelledError):
         await cleanup
-    finish.set()
-    await asyncio.sleep(0)
-    await asyncio.sleep(0)
 
     assert lease.entry.leases == 0
     assert lease.context not in (lease.entry.contexts or set())
+    await pool.close()
+
+
+@pytest.mark.asyncio
+async def test_failed_process_close_keeps_pool_capacity_quarantined(fake_pool):
+    _browser_pool, _manager, browsers, _contexts = fake_pool
+    pool = _browser_pool.BrowserPool(enabled=True, max_processes=1)
+    lease = await pool.acquire("https://one.example/a")
+
+    async def fail_close():
+        raise RuntimeError("synthetic close failure")
+
+    browsers[0][1].close = fail_close
+    await lease.release(healthy=False)
+
+    assert pool.quarantined is True
+    assert pool.process_count == 1
+    with pytest.raises(RuntimeError, match="cleanup is incomplete"):
+        await pool.acquire("https://two.example/a")
+    await pool.close()
+    # Pool shutdown must not hang waiting on a process whose close was uncertain.
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("cancel_during_close", [False, True])
+async def test_cancelled_late_launch_close_failure_keeps_launch_reservation(
+    fake_pool, monkeypatch, cancel_during_close
+):
+    browser_pool, _manager, _browsers, _contexts = fake_pool
+    pool = browser_pool.BrowserPool(enabled=True, max_processes=1)
+    launch_started = asyncio.Event()
+    finish_launch = asyncio.Event()
+    close_started = asyncio.Event()
+    finish_close = asyncio.Event()
+    browser = _Browser("late")
+    close_calls = 0
+
+    async def close_failure():
+        nonlocal close_calls
+        close_calls += 1
+        if close_calls == 1:
+            close_started.set()
+            await finish_close.wait()
+            raise RuntimeError("synthetic late browser close failure")
+
+    browser.close = close_failure
+
+    async def delayed_launch(_playwright, _url):
+        launch_started.set()
+        await finish_launch.wait()
+        return browser, False
+
+    async def launch_with_headroom(launch_fn):
+        return await launch_fn()
+
+    monkeypatch.setattr(browser_pool, "create_stealth_browser", delayed_launch)
+    monkeypatch.setattr(
+        browser_pool, "launch_with_process_headroom", launch_with_headroom
+    )
+
+    acquire = asyncio.create_task(pool.acquire("https://late.example/a"))
+    await launch_started.wait()
+    await pool._condition.acquire()
+    acquire.cancel()
+    finish_launch.set()
+    await close_started.wait()
+    if cancel_during_close:
+        # Cancel again while the first close is blocked and the condition lock
+        # is held. Quarantine must not wait for the lock or retry browser.close.
+        acquire.cancel()
+    finish_close.set()
+    pool._condition.release()
+    with pytest.raises(RuntimeError, match="cleanup is incomplete"):
+        await acquire
+
+    assert close_calls == 1
+    assert pool.quarantined is True
+    assert pool._launching == 0
+    assert pool._closing_processes == 1
+    assert pool.process_count == 1
     await pool.close()
 
 

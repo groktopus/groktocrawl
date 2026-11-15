@@ -16,6 +16,7 @@ import time
 from dataclasses import dataclass
 from typing import Any
 
+from .process_health import ProcessCapacityLowError, launch_with_process_headroom
 from .stealth import create_stealth_browser, create_stealth_context, fingerprint_seed
 
 logger = logging.getLogger(__name__)
@@ -97,6 +98,7 @@ class BrowserPool:
         self._reaper_task: asyncio.Task[None] | None = None
         self._started = False
         self._closing = False
+        self._quarantined = False
 
     @classmethod
     def from_env(cls) -> BrowserPool:
@@ -112,8 +114,34 @@ class BrowserPool:
         """Return all processes still occupying the bounded pool capacity."""
         return len(self._entries) + self._launching + self._closing_processes
 
+    @property
+    def quarantined(self) -> bool:
+        """Whether cleanup left browser ownership uncertain."""
+        return self._quarantined
+
+    def _retain_uncertain_launch(self, launching: bool) -> None:
+        """Keep one launch slot reserved and quarantine before any await."""
+        self._quarantined = True
+        if launching:
+            # No await occurs between checking/updating these counters, so a
+            # second cancellation cannot expose the in-flight native process.
+            self._launching = max(0, self._launching - 1)
+            self._closing_processes += 1
+
+        async def notify_waiters() -> None:
+            async with self._condition:
+                self._condition.notify_all()
+
+        task = asyncio.create_task(
+            notify_waiters(), name="scraper-browser-pool-quarantine-notify"
+        )
+        task.add_done_callback(
+            lambda done: done.exception() if not done.cancelled() else None
+        )
+
     async def _close_entry(self, entry: _BrowserEntry) -> None:
         """Close one detached entry and release its capacity reservation."""
+        process_closed = False
         try:
             for context in list(entry.contexts or ()):
                 try:
@@ -124,9 +152,16 @@ class BrowserPool:
                 await entry.browser.close()
             except Exception:
                 logger.debug("Browser process cleanup failed", exc_info=True)
+            else:
+                process_closed = True
         finally:
             async with self._condition:
-                self._closing_processes = max(0, self._closing_processes - 1)
+                if process_closed:
+                    self._closing_processes = max(0, self._closing_processes - 1)
+                else:
+                    # A failed close is not proof that the native process died.
+                    # Retain the reservation and reject future pool acquisitions.
+                    self._quarantined = True
                 self._condition.notify_all()
 
     async def _close_entry_safely(self, entry: _BrowserEntry) -> None:
@@ -137,7 +172,13 @@ class BrowserPool:
         try:
             await asyncio.shield(task)
         except asyncio.CancelledError:
-            await task
+            while not task.done():
+                try:
+                    await asyncio.shield(task)
+                except asyncio.CancelledError:
+                    # Repeated cancellation must not detach native cleanup.
+                    continue
+            task.result()
             raise
 
     async def _retire(self, entry: _BrowserEntry, *, release_lease: bool) -> None:
@@ -205,6 +246,8 @@ class BrowserPool:
             async with self._condition:
                 if self._closing:
                     raise RuntimeError("browser pool is closed")
+                if self._quarantined:
+                    raise RuntimeError("browser pool cleanup is incomplete")
                 entry = next(
                     (
                         item
@@ -246,7 +289,9 @@ class BrowserPool:
             close_after_registration = False
             try:
                 launch_task = asyncio.create_task(
-                    create_stealth_browser(self._playwright, url),
+                    launch_with_process_headroom(
+                        lambda: create_stealth_browser(self._playwright, url)
+                    ),
                     name="scraper-browser-pool-launch",
                 )
                 try:
@@ -254,11 +299,32 @@ class BrowserPool:
                 except asyncio.CancelledError:
                     # Shield the native launch so cancellation cannot strand
                     # a browser that was created just before the await ended.
-                    with contextlib.suppress(BaseException):
+                    try:
                         browser, _ = await launch_task
+                    except ProcessCapacityLowError:
+                        browser = None
+                    except BaseException:
+                        # A failed launch after cancellation may have created a
+                        # native child before raising. The supervisor will
+                        # recycle the process; retain the launch reservation.
+                        self._retain_uncertain_launch(launching)
+                        launching = False
+                        raise RuntimeError(
+                            "browser launch cleanup is incomplete"
+                        ) from None
                     if browser is not None:
-                        with contextlib.suppress(Exception):
+                        try:
                             await browser.close()
+                        except BaseException:
+                            # The launching reservation represents this process
+                            # until close is positively confirmed. Keep that
+                            # reservation and quarantine the pool on uncertainty.
+                            self._retain_uncertain_launch(launching)
+                            launching = False
+                            browser = None
+                            raise RuntimeError(
+                                "browser launch cleanup is incomplete"
+                            ) from None
                     browser = None
                     raise
                 now = time.monotonic()
@@ -293,8 +359,15 @@ class BrowserPool:
                         and not registered
                         and not close_after_registration
                     ):
-                        with contextlib.suppress(Exception):
+                        try:
                             await browser.close()
+                        except BaseException:
+                            self._retain_uncertain_launch(launching)
+                            launching = False
+                            browser = None
+                            raise RuntimeError(
+                                "browser launch cleanup is incomplete"
+                            ) from None
                 finally:
                     if launching:
                         async with self._condition:
@@ -372,9 +445,15 @@ class BrowserPool:
         try:
             await asyncio.shield(task)
         except asyncio.CancelledError:
-            # Let the cleanup task finish after request cancellation. Browser
-            # processes are otherwise left busy until the next acquisition.
-            task.add_done_callback(lambda done: done.exception())
+            # Keep the lifecycle task pending until context/process cleanup has
+            # completed. Its caller has an independent deadline and quarantines
+            # the tier if this shielded operation remains stuck.
+            while not task.done():
+                try:
+                    await asyncio.shield(task)
+                except asyncio.CancelledError:
+                    continue
+            task.result()
             raise
 
     async def _discard(self, entry: _BrowserEntry) -> None:
@@ -409,7 +488,12 @@ class BrowserPool:
         try:
             await asyncio.shield(task)
         except asyncio.CancelledError:
-            await task
+            while not task.done():
+                try:
+                    await asyncio.shield(task)
+                except asyncio.CancelledError:
+                    continue
+            task.result()
             raise
 
     async def _reap_loop(self) -> None:
@@ -448,8 +532,12 @@ class BrowserPool:
             await asyncio.gather(reaper, return_exceptions=True)
         await self._close_entries_safely(entries)
         async with self._condition:
-            while self._closing_processes:
+            while self._closing_processes and not self._quarantined:
                 await self._condition.wait()
+        if self._quarantined:
+            # Do not wait on the controller whose browser process we could not
+            # prove closed. Container teardown is the recovery boundary.
+            return
         if manager is not None:
             try:
                 await manager.__aexit__(None, None, None)
