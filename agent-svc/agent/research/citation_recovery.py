@@ -28,8 +28,8 @@ def context_fallback_call_count(llm: LLMClient) -> int:
     return count if isinstance(count, int) and not isinstance(count, bool) else 0
 
 
-def _split_source_block(block: str) -> tuple[str, str] | None:
-    """Bisect a single source block while repeating its identity header."""
+def _split_source_block(block: str) -> tuple[str, str, str] | None:
+    """Return the stable source label and two body chunks."""
     header, separator, body = block.partition("\n\n")
     if not separator:
         header, body = "", block
@@ -42,8 +42,7 @@ def _split_source_block(block: str) -> tuple[str, str] | None:
     if boundary < low:
         boundary = body.find("\n\n", midpoint, high)
     split_at = boundary + 2 if boundary >= 0 else midpoint
-    prefix = f"{header}\n\n" if header else ""
-    return prefix + body[:split_at], prefix + body[split_at:]
+    return header, body[:split_at], body[split_at:]
 
 
 async def _reduce_evidence_context(
@@ -72,7 +71,11 @@ async def _reduce_evidence_context(
             split = _split_source_block(blocks[0]) if blocks else None
             if split is None:
                 raise
-            pieces = [[split[0]], [split[1]]]
+            header, first_body, second_body = split
+            pieces = [
+                [f"{header}\n\n{first_body}" if header else first_body],
+                [f"{header}\n\n{second_body}" if header else second_body],
+            ]
 
         notes = [
             await _reduce_evidence_context(
@@ -102,9 +105,14 @@ async def generate_with_context_fallback(
     context_state: dict[str, Any] | None = None,
     schema: dict | None = None,
     stage: str,
+    correction: bool = False,
 ) -> str:
     """Retry an oversized complete corpus through provider-sized hierarchy."""
-    if context_state and isinstance(context_state.get("context"), str):
+    if (
+        context_state
+        and isinstance(context_state.get("context"), str)
+        and (not correction or context_state.get("context_reduced"))
+    ):
         context = context_state["context"]
         context_blocks = context_state.get("context_blocks", context_blocks)
     try:
@@ -120,6 +128,15 @@ async def generate_with_context_fallback(
         notes = await _reduce_evidence_context(
             llm, question=user_prompt, blocks=blocks, stage=stage
         )
+        if context_state is not None and not correction:
+            context_state["context"] = (
+                "The following evidence notes were prepared hierarchically from all "
+                "supplied source text. They retain source labels and URLs. Treat them "
+                "as evidence summaries, not as proof of exhaustive answer coverage.\n\n"
+                + notes
+            )
+            context_state["context_blocks"] = [context_state["context"]]
+            context_state["context_reduced"] = True
         while True:
             notes_context = (
                 "The following evidence notes were prepared hierarchically from all "
@@ -135,9 +152,6 @@ async def generate_with_context_fallback(
                     schema=schema,
                     stage=stage,
                 )
-                if context_state is not None:
-                    context_state["context"] = notes_context
-                    context_state["context_blocks"] = [notes_context]
                 return answer
             except ContextLimitError:
                 shorter_notes = await _reduce_evidence_context(
@@ -215,6 +229,7 @@ async def generate_cited_answer(
             context_blocks=context_blocks,
             context_state=context_state,
             stage=stage,
+            correction=bool(attempt),
         )
         try:
             result = _apply_citation_style(answer, sources, citation_style)

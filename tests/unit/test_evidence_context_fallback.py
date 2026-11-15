@@ -11,6 +11,8 @@ from agent.experimental.knowledge import text_digest
 from agent.llm import LLMClient, _is_context_limit_response
 from agent.models import CitationStyle
 from agent.research.citation_recovery import (
+    _split_source_block,
+    generate_cited_answer,
     generate_with_context_fallback,
     stream_cited_answer,
 )
@@ -52,6 +54,48 @@ async def test_provider_limit_hierarchically_processes_every_source_block():
         marker = f"MARKER{index:02d}"
         assert any(marker in leaf for leaf in accepted_leaf_text)
         assert marker in final_contexts[0]
+
+
+def test_recursive_source_split_preserves_identity_header():
+    block = "Source: https://fixture.test/identity\n\n" + ("body paragraph\n\n" * 500)
+    first = _split_source_block(block)
+    assert first is not None
+    header, body_a, _body_b = first
+    assert header == "Source: https://fixture.test/identity"
+    second = _split_source_block(f"{header}\n\n{body_a}")
+    assert second is not None
+    assert second[0] == header
+    assert "body paragraph" in second[1] + second[2]
+
+
+@pytest.mark.asyncio
+async def test_citation_correction_reuses_reduced_context_and_corrective_prompt():
+    calls = []
+
+    async def generate(*, user_prompt, context, **_kwargs):
+        calls.append((user_prompt, context))
+        if context.startswith("complete source"):
+            raise ContextLimitError()
+        if "preparing evidence notes" in _kwargs.get("system_prompt", ""):
+            return "Source 1 supports the claim."
+        return "claim [99]" if len(calls) == 3 else "claim [1]"
+
+    llm = SimpleNamespace(generate=generate, context_fallback_calls=0)
+    answer, citations = await generate_cited_answer(
+        llm,
+        system_prompt="answer",
+        user_prompt="question",
+        context="complete source" + " x" * 800,
+        context_blocks=["Source: https://fixture.test/source\n\ncomplete source" + " x" * 800],
+        source_map=[{"url": "https://fixture.test/source"}],
+        citation_style=CitationStyle.inline,
+        stage="answer",
+    )
+    assert answer == "claim [1]"
+    assert len(citations) == 1
+    final_calls = [call for call in calls if "invalid citation formatting" in call[0]]
+    assert len(final_calls) == 1
+    assert final_calls[0][1].startswith("The following evidence notes")
 
 
 @pytest.mark.asyncio
