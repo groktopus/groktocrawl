@@ -250,10 +250,16 @@ async def test_cancelled_late_launch_close_failure_keeps_launch_reservation(
     pool = browser_pool.BrowserPool(enabled=True, max_processes=1)
     launch_started = asyncio.Event()
     finish_launch = asyncio.Event()
+    close_started = asyncio.Event()
     browser = _Browser("late")
+    close_calls = 0
 
     async def close_failure():
-        raise RuntimeError("synthetic late browser close failure")
+        nonlocal close_calls
+        close_calls += 1
+        if close_calls == 1:
+            close_started.set()
+            raise RuntimeError("synthetic late browser close failure")
 
     browser.close = close_failure
 
@@ -272,14 +278,18 @@ async def test_cancelled_late_launch_close_failure_keeps_launch_reservation(
 
     acquire = asyncio.create_task(pool.acquire("https://late.example/a"))
     await launch_started.wait()
+    await pool._condition.acquire()
     acquire.cancel()
-    await asyncio.sleep(0)
-    assert not acquire.done()
-
     finish_launch.set()
+    await close_started.wait()
+    # A second cancellation must not interrupt quarantine accounting or cause
+    # the generic exception path to retry browser.close().
+    acquire.cancel()
+    pool._condition.release()
     with pytest.raises(RuntimeError, match="cleanup is incomplete"):
         await acquire
 
+    assert close_calls == 1
     assert pool.quarantined is True
     assert pool._launching == 0
     assert pool._closing_processes == 1

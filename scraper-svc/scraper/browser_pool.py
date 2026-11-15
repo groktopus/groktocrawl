@@ -119,6 +119,26 @@ class BrowserPool:
         """Whether cleanup left browser ownership uncertain."""
         return self._quarantined
 
+    def _retain_uncertain_launch(self, launching: bool) -> None:
+        """Keep one launch slot reserved and quarantine before any await."""
+        self._quarantined = True
+        if launching:
+            # No await occurs between checking/updating these counters, so a
+            # second cancellation cannot expose the in-flight native process.
+            self._launching = max(0, self._launching - 1)
+            self._closing_processes += 1
+
+        async def notify_waiters() -> None:
+            async with self._condition:
+                self._condition.notify_all()
+
+        task = asyncio.create_task(
+            notify_waiters(), name="scraper-browser-pool-quarantine-notify"
+        )
+        task.add_done_callback(
+            lambda done: done.exception() if not done.cancelled() else None
+        )
+
     async def _close_entry(self, entry: _BrowserEntry) -> None:
         """Close one detached entry and release its capacity reservation."""
         process_closed = False
@@ -287,13 +307,8 @@ class BrowserPool:
                         # A failed launch after cancellation may have created a
                         # native child before raising. The supervisor will
                         # recycle the process; retain the launch reservation.
-                        async with self._condition:
-                            self._quarantined = True
-                            if launching:
-                                self._launching -= 1
-                                launching = False
-                                self._closing_processes += 1
-                            self._condition.notify_all()
+                        self._retain_uncertain_launch(launching)
+                        launching = False
                         raise RuntimeError(
                             "browser launch cleanup is incomplete"
                         ) from None
@@ -304,13 +319,8 @@ class BrowserPool:
                             # The launching reservation represents this process
                             # until close is positively confirmed. Keep that
                             # reservation and quarantine the pool on uncertainty.
-                            async with self._condition:
-                                self._quarantined = True
-                                if launching:
-                                    self._launching -= 1
-                                    launching = False
-                                    self._closing_processes += 1
-                                self._condition.notify_all()
+                            self._retain_uncertain_launch(launching)
+                            launching = False
                             browser = None
                             raise RuntimeError(
                                 "browser launch cleanup is incomplete"
@@ -352,13 +362,9 @@ class BrowserPool:
                         try:
                             await browser.close()
                         except BaseException:
-                            async with self._condition:
-                                self._quarantined = True
-                                if launching:
-                                    self._launching -= 1
-                                    launching = False
-                                    self._closing_processes += 1
-                                self._condition.notify_all()
+                            self._retain_uncertain_launch(launching)
+                            launching = False
+                            browser = None
                             raise RuntimeError(
                                 "browser launch cleanup is incomplete"
                             ) from None
