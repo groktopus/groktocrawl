@@ -205,6 +205,27 @@ class TestOpenAPIModels:
         ):
             assert field in props, field
 
+    def test_agent_status_exposes_safe_provider_failure_details(self):
+        payload = AgentStatusResponse(
+            status="failed",
+            error="LLM provider stopped before completing the response",
+            error_code="LLM_OUTPUT_TRUNCATED",
+            error_details={
+                "finish_reason": "length",
+                "refusal_present": False,
+                "prompt_tokens": 123,
+                "completion_tokens": 8192,
+            },
+        ).model_dump(by_alias=True, exclude_none=True)
+
+        assert payload["errorCode"] == "LLM_OUTPUT_TRUNCATED"
+        assert payload["errorDetails"] == {
+            "finish_reason": "length",
+            "refusal_present": False,
+            "prompt_tokens": 123,
+            "completion_tokens": 8192,
+        }
+
     def test_crawl_status_response_exposes_retry_fields(self):
         schema = CrawlStatusResponse.model_json_schema()
         # CrawlStatusResponse uses to_camel aliases, so the schema exposes

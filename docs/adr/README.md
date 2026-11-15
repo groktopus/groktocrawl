@@ -118,3 +118,4 @@ See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full ADR workflow: when to 
 
 | 0080 | [Recycle quarantined browser containers](0080-recycle-quarantined-browser-containers.md) | accepted |
 | 0081 | [Preserve complete default research evidence and recoverable context](0081-preserve-complete-default-research-evidence.md) | accepted |
+| 0082 | [Classify and recover legacy provider output failures](0082-classify-and-recover-legacy-provider-output-failures.md) | proposed |

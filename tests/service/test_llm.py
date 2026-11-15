@@ -35,6 +35,208 @@ class TestLLMClientInit:
             LLMClient()
 
 
+class TestProviderOutputDiagnostics:
+    @pytest.mark.parametrize(
+        ("finish_reason", "refusal", "expected_code"),
+        [
+            ("length", None, "LLM_OUTPUT_TRUNCATED"),
+            ("stop", "provider refusal text", "LLM_REFUSAL"),
+            ("content_filter", None, "LLM_OUTPUT_FILTERED"),
+        ],
+    )
+    def test_completion_errors_expose_only_safe_provider_metadata(
+        self, finish_reason, refusal, expected_code
+    ):
+        from agent.exceptions import ProviderOutputError
+        from agent.llm import _completion_content
+
+        message = {"content": "PRIVATE completion material"}
+        if refusal is not None:
+            message["refusal"] = refusal
+        with pytest.raises(ProviderOutputError) as caught:
+            _completion_content(
+                {
+                    "choices": [
+                        {"finish_reason": finish_reason, "message": message}
+                    ],
+                    "usage": {
+                        "prompt_tokens": 123,
+                        "completion_tokens": 8192,
+                    },
+                }
+            )
+
+        assert caught.value.error_code == expected_code
+        assert caught.value.details["finish_reason"] == finish_reason
+        assert caught.value.details["refusal_present"] is (refusal is not None)
+        assert caught.value.details["prompt_tokens"] == 123
+        assert caught.value.details["completion_tokens"] == 8192
+        assert "PRIVATE" not in str(caught.value) + str(caught.value.details)
+
+    @pytest.mark.asyncio
+    async def test_cited_generation_retries_output_limit_once_but_not_refusal(
+        self, llm
+    ):
+        from agent.exceptions import ProviderOutputError
+        from agent.models import CitationStyle
+        from agent.research.citation_recovery import generate_cited_answer
+
+        complete = _make_response(
+            json_data={
+                "choices": [
+                    {
+                        "finish_reason": "length",
+                        "message": {"content": "partial"},
+                    }
+                ],
+                "usage": {"prompt_tokens": 1500, "completion_tokens": 8192},
+            }
+        )
+        recovered = _make_response(
+            json_data={
+                "choices": [
+                    {
+                        "finish_reason": "stop",
+                        "message": {"content": "Concise complete answer [1]."},
+                    }
+                ],
+                "usage": {"prompt_tokens": 1500, "completion_tokens": 200},
+            }
+        )
+        with patch.object(llm._client, "post", side_effect=[complete, recovered]) as post:
+            answer, citations = await generate_cited_answer(
+                llm,
+                system_prompt="Use evidence.",
+                user_prompt="Research the topic in depth.",
+                context="[1] A source with evidence.",
+                source_map=[{"url": "https://example.test/a"}],
+                citation_style=CitationStyle.inline,
+                stage="synthesis",
+            )
+
+        assert answer == "Concise complete answer [1]."
+        assert citations == [{"index": 1, "url": "https://example.test/a"}]
+        assert post.call_count == 2
+        retry_prompt = post.call_args_list[1].kwargs["json"]["messages"][1]["content"]
+        assert "complete, concise response" in retry_prompt
+        assert "A source with evidence." in retry_prompt
+
+        with patch.object(llm._client, "post", side_effect=[complete, complete]) as post:
+            with pytest.raises(ProviderOutputError) as caught:
+                await generate_cited_answer(
+                    llm,
+                    system_prompt="Use evidence.",
+                    user_prompt="Research the topic in depth.",
+                    context="[1] A source with evidence.",
+                    source_map=[{"url": "https://example.test/a"}],
+                    citation_style=CitationStyle.inline,
+                    stage="synthesis",
+                )
+        assert post.call_count == 2
+        assert caught.value.error_code == "LLM_OUTPUT_TRUNCATED"
+        assert caught.value.details["recovery_attempts"] == 1
+        assert "partial" not in str(caught.value)
+
+        refusal = _make_response(
+            json_data={
+                "choices": [
+                    {
+                        "finish_reason": "stop",
+                        "message": {
+                            "content": "PRIVATE refusal text",
+                            "refusal": "PRIVATE refusal text",
+                        },
+                    }
+                ]
+            }
+        )
+        with patch.object(llm._client, "post", return_value=refusal) as post:
+            with pytest.raises(ProviderOutputError) as caught:
+                await generate_cited_answer(
+                    llm,
+                    system_prompt="Use evidence.",
+                    user_prompt="Research the topic in depth.",
+                    context="[1] A source with evidence.",
+                    source_map=[{"url": "https://example.test/a"}],
+                    citation_style=CitationStyle.inline,
+                    stage="synthesis",
+                )
+        assert caught.value.error_code == "LLM_REFUSAL"
+        assert post.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_stream_retry_discards_partial_text_and_never_retries_refusal(
+        self, llm
+    ):
+        from agent.models import CitationStyle
+        from agent.research.citation_recovery import stream_cited_answer
+
+        prompts = []
+
+        async def generate_stream(**kwargs):
+            prompts.append(kwargs["user_prompt"])
+            if len(prompts) == 1:
+                yield {"type": "token", "content": "partial "}
+                yield {
+                    "type": "error",
+                    "classification": "non_retryable",
+                    "error_code": "LLM_OUTPUT_TRUNCATED",
+                    "details": {"finish_reason": "length", "refusal_present": False},
+                    "content": "LLM provider stopped before completing the response",
+                }
+                return
+            yield {"type": "token", "content": "Complete [1]."}
+            yield {"type": "done", "full_content": "Complete [1]."}
+
+        llm.generate_stream = generate_stream
+        events = [
+            event
+            async for event in stream_cited_answer(
+                llm,
+                system_prompt="Use evidence.",
+                user_prompt="Research the topic.",
+                context="[1] A source with evidence.",
+                source_map=[{"url": "https://example.test/a"}],
+                citation_style=CitationStyle.inline,
+                stage="synthesis",
+            )
+        ]
+
+        assert [event["type"] for event in events] == ["token", "done"]
+        assert events[0]["content"] == "Complete [1]."
+        assert "complete, concise response" in prompts[1]
+
+        prompts.clear()
+
+        async def refusal_stream(**kwargs):
+            prompts.append(kwargs["user_prompt"])
+            yield {"type": "token", "content": "partial refusal"}
+            yield {
+                "type": "error",
+                "classification": "non_retryable",
+                "error_code": "LLM_REFUSAL",
+                "details": {"finish_reason": "stop", "refusal_present": True},
+                "content": "LLM provider refused the request",
+            }
+
+        llm.generate_stream = refusal_stream
+        events = [
+            event
+            async for event in stream_cited_answer(
+                llm,
+                system_prompt="Use evidence.",
+                user_prompt="Research the topic.",
+                context="[1] A source with evidence.",
+                source_map=[{"url": "https://example.test/a"}],
+                citation_style=CitationStyle.inline,
+                stage="synthesis",
+            )
+        ]
+        assert [event["type"] for event in events] == ["error"]
+        assert events[0]["error_code"] == "LLM_REFUSAL"
+        assert len(prompts) == 1
+
+
 def _make_response(status_code=200, json_data=None, text=""):
     """Create a mock httpx response for LLM generate()."""
     resp = MagicMock()
@@ -357,6 +559,8 @@ class TestLLMClientGenerateStream:
         assert events[0] == {"type": "token", "content": "Partial"}
         assert events[-1]["type"] == "error"
         assert events[-1]["classification"] == "truncated"
+        assert events[-1]["error_code"] == "LLM_OUTPUT_TRUNCATED"
+        assert events[-1]["details"]["finish_reason"] == "length"
         assert not any(event["type"] == "done" for event in events)
 
     @pytest.mark.asyncio
@@ -515,6 +719,7 @@ class TestLLMClientGenerateStream:
                     "type": "error",
                     "classification": "non_retryable",
                     "content": "LLM provider returned HTTP 500",
+                    "error_code": "LLM_PROVIDER_OUTPUT_INVALID",
                 }
             ]
 

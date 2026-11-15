@@ -204,7 +204,15 @@ async def stream_research_live(
         if event["type"] == "sources_pending":
             yield f"data: {json.dumps({'type': 'sources_pending', 'sources': event['sources']})}\n\n"
         elif event["type"] == "source_scraped":
-            yield f"data: {json.dumps({'type': 'source_scraped', 'url': event['url'], 'source': event.get('source', ''), 'chars': event.get('chars', 0)})}\n\n"
+            source_event = {
+                "type": "source_scraped",
+                "url": event["url"],
+                "source": event.get("source", ""),
+                "chars": event.get("chars", 0),
+            }
+            if include_source_content and isinstance(event.get("markdown"), str):
+                source_event["markdown"] = event["markdown"]
+            yield f"data: {json.dumps(source_event)}\n\n"
         elif event["type"] == "sources":
             yield f"data: {json.dumps({'type': 'sources', 'sources': event['sources']})}\n\n"
         elif event["type"] == "token":
@@ -319,6 +327,9 @@ async def stream_research_live(
             error_code = event.get("error_code")
             if isinstance(error_code, str):
                 payload["error_code"] = error_code
+            details = event.get("details")
+            if isinstance(details, dict):
+                payload["details"] = details
             classification = event.get("classification")
             if isinstance(classification, str):
                 payload["classification"] = classification

@@ -8,7 +8,11 @@ from collections.abc import AsyncGenerator
 from typing import Any
 
 from ..cancel import raise_if_cancelled
-from ..exceptions import CitationValidationError, ContextLimitError
+from ..exceptions import (
+    CitationValidationError,
+    ContextLimitError,
+    OutputTruncatedError,
+)
 from ..llm import LLMClient
 from ..metrics import METRICS
 from .citations import _apply_citation_style
@@ -26,6 +30,23 @@ def context_fallback_call_count(llm: LLMClient) -> int:
     """Read an optional metric safely from real clients and test doubles."""
     count = getattr(llm, "context_fallback_calls", 0)
     return count if isinstance(count, int) and not isinstance(count, bool) else 0
+
+
+def output_truncation_retry_count(llm: LLMClient) -> int:
+    """Read the bounded concise-retry count from real clients and test doubles."""
+    count = getattr(llm, "output_truncation_retries", 0)
+    return count if isinstance(count, int) and not isinstance(count, bool) else 0
+
+
+def _concise_output_retry_prompt(prompt: str) -> str:
+    """Retry a rejected length-limited completion without weakening evidence use."""
+    return (
+        prompt
+        + "\n\nThe previous completion was stopped by the provider output limit and was "
+        "discarded. This is the only retry: provide a complete, concise response, "
+        "preserve material dates, qualifications, disagreements, and citations, "
+        "and state any material scope you cannot cover. Do not return a partial draft."
+    )
 
 
 def _split_source_block(block: str) -> tuple[str, str, str] | None:
@@ -199,7 +220,12 @@ def initialize_citation_metrics() -> None:
         for outcome in ("valid", "normalized", "invalid"):
             validation.inc({"style": style, "outcome": outcome}, 0)
     for stage in ("answer", "synthesis"):
-        for outcome in ("attempted", "succeeded", "exhausted"):
+        for outcome in (
+            "attempted",
+            "succeeded",
+            "exhausted",
+            "output_limit_retry",
+        ):
             recovery.inc({"stage": stage, "outcome": outcome}, 0)
 
 
@@ -236,35 +262,54 @@ async def generate_cited_answer(
     citation_style: Any,
     stage: str,
 ) -> tuple[str, list[dict]]:
-    """Generate once, correcting one completed citation-invalid answer at most."""
+    """Bound synthesis recovery to one output-limit retry and one citation repair."""
     sources = [dict(source) for source in source_map]
-    original_prompt = user_prompt
     context_state: dict[str, Any] = {}
-    for attempt in range(2):
+    citation_attempt = 0
+    output_retry_used = False
+    while citation_attempt < 2:
         raise_if_cancelled()
-        answer = await generate_with_context_fallback(
-            llm,
-            system_prompt=system_prompt,
-            user_prompt=user_prompt,
-            context=context,
-            context_blocks=context_blocks,
-            context_state=context_state,
-            stage=stage,
-            correction=bool(attempt),
-            include_stage=True,
-        )
+        try:
+            answer = await generate_with_context_fallback(
+                llm,
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                context=context,
+                context_blocks=context_blocks,
+                context_state=context_state,
+                stage=stage,
+                correction=bool(citation_attempt or output_retry_used),
+                include_stage=True,
+            )
+        except OutputTruncatedError as exc:
+            if not output_retry_used:
+                output_retry_used = True
+                llm.output_truncation_retries = (
+                    output_truncation_retry_count(llm) + 1
+                )
+                _record_recovery(stage, "output_limit_retry")
+                user_prompt = _concise_output_retry_prompt(user_prompt)
+                continue
+            exc.details = {
+                **(exc.details or {}),
+                "recovery_attempts": 1,
+            }
+            raise
         try:
             result = _apply_citation_style(answer, sources, citation_style)
         except CitationValidationError:
-            _record_recovery(stage, "exhausted" if attempt else "attempted")
-            if attempt:
+            _record_recovery(
+                stage, "exhausted" if citation_attempt else "attempted"
+            )
+            if citation_attempt:
                 raise
-            user_prompt = _correction_prompt(original_prompt, len(sources))
+            citation_attempt += 1
+            user_prompt = _correction_prompt(user_prompt, len(sources))
         else:
-            if attempt:
+            if citation_attempt:
                 _record_recovery(stage, "succeeded")
             return result
-    raise AssertionError("bounded citation correction did not terminate")
+    raise AssertionError("bounded synthesis recovery did not terminate")
 
 
 async def stream_cited_answer(
@@ -282,6 +327,7 @@ async def stream_cited_answer(
     sources = [dict(source) for source in source_map]
     original_prompt = user_prompt
     citation_attempt = 0
+    output_retry_used = False
     current_context_blocks = context_blocks or [context]
     while citation_attempt < 2:
         raise_if_cancelled()
@@ -289,6 +335,7 @@ async def stream_cited_answer(
         full_content = None
         completed = False
         context_limit = False
+        output_limit_retry = False
         async for event in llm.generate_stream(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
@@ -302,6 +349,25 @@ async def stream_cited_answer(
                 ):
                     context_limit = True
                     break
+                if (
+                    event.get("error_code") == OutputTruncatedError.error_code
+                    and not output_retry_used
+                ):
+                    output_limit_retry = True
+                    break
+                if (
+                    event.get("error_code") == OutputTruncatedError.error_code
+                    and output_retry_used
+                ):
+                    diagnostics = event.get("details")
+                    if isinstance(diagnostics, dict):
+                        event = {
+                            **event,
+                            "details": {
+                                **diagnostics,
+                                "recovery_attempts": 1,
+                            },
+                        }
                 yield event
                 return
             if completed:
@@ -342,6 +408,12 @@ async def stream_cited_answer(
             context = reduced_context
             current_context_blocks = [context]
             continue
+        if output_limit_retry:
+            output_retry_used = True
+            llm.output_truncation_retries = output_truncation_retry_count(llm) + 1
+            _record_recovery(stage, "output_limit_retry")
+            user_prompt = _concise_output_retry_prompt(user_prompt)
+            continue
         # Stream-integrity failures never qualify for correction, even if an
         # earlier token contained an invalid marker. The paid outcome is unclear.
         if not completed or not isinstance(full_content, str):
@@ -360,7 +432,7 @@ async def stream_cited_answer(
             )
             if citation_attempt:
                 raise
-            user_prompt = _correction_prompt(original_prompt, len(sources))
+            user_prompt = _correction_prompt(user_prompt, len(sources))
             citation_attempt += 1
         else:
             if citation_attempt:

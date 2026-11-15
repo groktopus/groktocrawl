@@ -89,6 +89,28 @@ class ProviderOutputError(UpstreamError):
     """The provider returned an invalid or unusable completion envelope."""
 
     detail = "LLM provider output was invalid"
+    error_code = "LLM_PROVIDER_OUTPUT_INVALID"
+
+
+class ProviderRefusalError(ProviderOutputError):
+    """The provider explicitly refused the requested completion."""
+
+    error_code = "LLM_REFUSAL"
+    detail = "LLM provider refused the request"
+
+
+class ProviderFilteredOutputError(ProviderOutputError):
+    """The provider filtered the completion before it was complete."""
+
+    error_code = "LLM_OUTPUT_FILTERED"
+    detail = "LLM provider filtered the response before completion"
+
+
+class OutputTruncatedError(ProviderOutputError):
+    """The provider stopped a completion at its configured output limit."""
+
+    error_code = "LLM_OUTPUT_TRUNCATED"
+    detail = "LLM provider stopped before completing the response"
 
 
 class ContextLimitError(ProviderOutputError):

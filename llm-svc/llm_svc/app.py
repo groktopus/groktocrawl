@@ -33,6 +33,7 @@ SCENARIOS = {
     "streaming",
     "stream-malformed",
     "stream-truncated",
+    "stream-refusal",
     "delayed",
     "timeout",
     "rate-limit",
@@ -384,6 +385,7 @@ def create_app() -> FastAPI:
             "streaming",
             "stream-malformed",
             "stream-truncated",
+            "stream-refusal",
         }:
             return response
 
@@ -394,6 +396,19 @@ def create_app() -> FastAPI:
         async def events():
             if scenario == "stream-malformed":
                 yield "data: {not-json\n\n"
+            if scenario == "stream-refusal":
+                refusal_chunk = {
+                    "id": "chatcmpl-fixture",
+                    "object": "chat.completion.chunk",
+                    "model": req.model,
+                    "choices": [
+                        {
+                            "index": 0,
+                            "delta": {"refusal": "fixture refusal"},
+                        }
+                    ],
+                }
+                yield f"data: {json.dumps(refusal_chunk)}\n\n"
             for index in range(0, len(text_content), step):
                 payload = {
                     "id": "chatcmpl-fixture",
@@ -407,7 +422,25 @@ def create_app() -> FastAPI:
                     ],
                 }
                 yield f"data: {json.dumps(payload)}\n\n"
-            if scenario != "stream-truncated":
+            if scenario == "stream-truncated":
+                limit_chunk = {
+                    "id": "chatcmpl-fixture",
+                    "object": "chat.completion.chunk",
+                    "model": req.model,
+                    "choices": [
+                        {
+                            "index": 0,
+                            "delta": {},
+                            "finish_reason": "length",
+                        }
+                    ],
+                    "usage": {
+                        "prompt_tokens": 42,
+                        "completion_tokens": 8192,
+                    },
+                }
+                yield f"data: {json.dumps(limit_chunk)}\n\n"
+            else:
                 yield "data: [DONE]\n\n"
 
         return StreamingResponse(events(), media_type="text/event-stream")

@@ -12,7 +12,6 @@ from common.stage_metrics import StreamTiming, observe_elapsed
 
 from ..exceptions import (
     CitationValidationError,
-    ContextLimitError,
     ProviderOutputError,
     RetryableRateLimitError,
     StructuredOutputError,
@@ -27,6 +26,7 @@ from .citation_recovery import (
     context_fallback_call_count,
     generate_cited_answer,
     generate_with_context_fallback,
+    output_truncation_retry_count,
     stream_cited_answer,
 )
 from .citations import (
@@ -75,19 +75,22 @@ def _deep_source_target(query_count: int) -> int:
     return max(3, min(5, query_count))
 
 
-async def _discover_with_progress(factory, initial_pending=None):
+async def _discover_with_progress(
+    factory, initial_pending=None, *, include_source_content: bool = False
+):
     """Run discovery while forwarding search and acquisition events immediately."""
     progress: asyncio.Queue[ResearchEvent] = asyncio.Queue()
 
     async def on_artifact(artifact: SourceArtifact) -> None:
-        await progress.put(
-            {
-                "type": "source_scraped",
-                "url": artifact.url,
-                "source": artifact.source,
-                "chars": artifact.char_count,
-            }
-        )
+        event: ResearchEvent = {
+            "type": "source_scraped",
+            "url": artifact.url,
+            "source": artifact.source,
+            "chars": artifact.char_count,
+        }
+        if include_source_content and isinstance(artifact.markdown, str):
+            event["markdown"] = artifact.markdown
+        await progress.put(event)
 
     async def on_search_results(results) -> None:
         await progress.put(
@@ -146,6 +149,9 @@ def _research_error_event(event: dict[str, Any]) -> ResearchEvent:
     error_code = event.get("error_code")
     if isinstance(error_code, str):
         result["error_code"] = error_code
+    details = event.get("details")
+    if isinstance(details, dict):
+        result["details"] = details
     classification = event.get("classification")
     if isinstance(classification, str):
         result["classification"] = classification
@@ -344,7 +350,11 @@ async def _run_research_events(
                 else None
             )
             async with contextlib.aclosing(
-                _discover_with_progress(discovery_factory, initial_pending)
+                _discover_with_progress(
+                    discovery_factory,
+                    initial_pending,
+                    include_source_content=include_source_content,
+                )
             ) as discovery_events:
                 async for progress_event in discovery_events:
                     if progress_event["type"] == "_discovery_complete":
@@ -557,9 +567,10 @@ async def _run_research_events(
                         "type": "error",
                         "classification": "non_retryable",
                         "content": exc.detail,
+                        "error_code": exc.error_code,
                     }
-                    if isinstance(exc, ContextLimitError):
-                        error_event["error_code"] = exc.error_code
+                    if exc.details:
+                        error_event["details"] = exc.details
                     yield error_event
                     return
                 raise
@@ -624,6 +635,7 @@ async def _run_research_events(
             "mode": "hierarchical" if context_fallback_call_count(llm) else "direct",
             "reduction_calls": context_fallback_call_count(llm),
             "source_text_retained": True,
+            "output_truncation_retries": output_truncation_retry_count(llm),
         }
         evidence_coverage["synthesis"] = synthesis_coverage
         coverage["evidence_synthesis"] = synthesis_coverage
@@ -943,6 +955,7 @@ async def run_answer(
             "mode": "hierarchical" if context_fallback_call_count(llm) else "direct",
             "reduction_calls": context_fallback_call_count(llm),
             "source_text_retained": True,
+            "output_truncation_retries": output_truncation_retry_count(llm),
         }
         return {
             "answer": answer,
@@ -1107,16 +1120,15 @@ async def run_answer_stream(
                 }
                 return
             except ProviderOutputError as exc:
-                yield {
+                error_event: ResearchEvent = {
                     "type": "error",
                     "classification": "non_retryable",
                     "content": exc.detail,
-                    **(
-                        {"error_code": exc.error_code}
-                        if isinstance(exc, ContextLimitError)
-                        else {}
-                    ),
+                    "error_code": exc.error_code,
                 }
+                if exc.details:
+                    error_event["details"] = exc.details
+                yield cast(dict[str, Any], error_event)
                 return
             try:
                 _validate_json_if_schema(full_answer, output_schema)
@@ -1161,6 +1173,7 @@ async def run_answer_stream(
             "mode": "hierarchical" if context_fallback_call_count(llm) else "direct",
             "reduction_calls": context_fallback_call_count(llm),
             "source_text_retained": True,
+            "output_truncation_retries": output_truncation_retry_count(llm),
         }
         yield {
             "type": "done",

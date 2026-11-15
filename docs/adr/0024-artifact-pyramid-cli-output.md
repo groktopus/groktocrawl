@@ -31,6 +31,7 @@ The Artifact Pyramid pattern (progressive disclosure across three layers of incr
 * Must support both **agent** (multi-source research) and **answer** (grounded Q&A) commands
 * Must be **self-contained** — no additional dependencies, no server-side LLM calls for the pyramid transformation
 * Output directory must be **immutable for L3 files** — once written, source dossiers are never modified. Root and summary files are overwritten on re-run
+* A completed response must remain recoverable if local pyramid transformation fails
 
 ## Considered Options
 
@@ -43,11 +44,23 @@ The ordinary agent response remains compact: `sources` contains URL strings and
 `source_details` contains fetch metadata only. When the export field is enabled,
 the completed response additionally contains `source_contents`, a URL-to-Markdown
 mapping for successfully acquired sources. The CLI combines that mapping with the
-metadata to write L3 dossiers and fails clearly if a consulted source body is
-unavailable; it never writes `(no content available)` as a consulted dossier.
+metadata to write L3 dossiers. Before transformation, pyramid mode atomically
+checkpoints the completed terminal response as `00-terminal-response.json` with
+owner-only file permissions. A missing or empty source body is represented as a
+metadata-only dossier marked `content_status: missing`, with any evidence
+recovery metadata preserved. The summary and source index report body
+completeness; the exporter never invents or substitutes source text.
+
+The streaming agent route also includes Markdown on each `source_scraped` event
+when `include_source_content` is enabled. The CLI fsyncs each event to a private
+`00-acquired-sources.jsonl` capture and checkpoints metadata as acquisition
+progresses. If synthesis fails after acquisition, it emits an explicitly failed
+pyramid containing discovered results and acquired source dossiers marked
+`acquired_not_synthesized`; it exits nonzero and never presents those sources as
+a completed answer.
 
 **Positive:**
-- Zero server-side changes — works with the existing API
+- Source bodies remain available even if final SSE serialization or synthesis fails
 - Uses the fastest execution path (inline SSE vs async job polling)
 - Progress visible on stderr without contaminating stdout
 - Directory output is inspectable by both humans and agents
@@ -86,7 +99,7 @@ The CLI produces a structured JSON blob that agents can consume programmatically
 
 ## Decision Outcome
 
-Chosen option A: CLI-side transformation with SSE-buffered directory output. The agent/answer commands get `--pyramid` and `--output-dir` flags. When `--pyramid` is set, the CLI runs the SSE stream for speed but buffers tokens internally. Progress messages go to stderr. On stream completion, the CLI writes the pyramid directory and prints only the absolute path to stdout.
+Chosen option A: CLI-side transformation with SSE-buffered directory output. The agent/answer commands get `--pyramid` and `--output-dir` flags. When `--pyramid` is set, the CLI runs the SSE stream for speed but buffers tokens internally. Progress messages go to stderr. On stream completion, the CLI durably checkpoints the terminal response before transforming it into the pyramid directory, then prints only the absolute path to stdout.
 
 ### Pyramid Structure
 
