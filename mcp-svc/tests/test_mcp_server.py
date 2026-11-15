@@ -1018,6 +1018,74 @@ class TestToolCallRouting:
         assert captured["resolve"] == ("rs-1", ["ref_1_1"])
         assert captured["delete"] == "rs-1"
 
+    async def test_research_session_synthesis_routing(self, monkeypatch):
+        """MCP can resume synthesis over previously imported evidence."""
+        import mcp_server as mod
+
+        captured: dict[str, Any] = {}
+
+        async def _fake_step(**kwargs: Any) -> dict:
+            captured.update(kwargs)
+            return {"success": True, "status": "outline_ready"}
+
+        monkeypatch.setattr(mod._client, "research_session_step", _fake_step)
+        await mcp.call_tool(
+            "research_session_step",
+            {
+                "session_id": "rs-1",
+                "action": "synthesize",
+                "question": "Trace the historical development",
+                "synthesis_id": "iraq-history-v1",
+                "ref_ids": ["evidence_a"],
+                "input_budget_chars": 48_000,
+                "output_budget_tokens": 1_024,
+            },
+        )
+        assert captured == {
+            "session_id": "rs-1",
+            "action": "synthesize",
+            "params": {
+                "question": "Trace the historical development",
+                "synthesis_id": "iraq-history-v1",
+                "ref_ids": ["evidence_a"],
+                "input_budget_chars": 48_000,
+                "output_budget_tokens": 1_024,
+            },
+            "parallel": False,
+            "idempotency_key": None,
+        }
+
+    @pytest.mark.parametrize(
+        ("source", "message"),
+        [
+            (
+                {"url": "file:///etc/passwd", "markdown": "x"},
+                r"absolute credential-free HTTP\(S\) URL",
+            ),
+            (
+                {"url": "https://user:pass@example.test", "markdown": "x"},
+                r"absolute credential-free HTTP\(S\) URL",
+            ),
+            (
+                {
+                    "url": "https://example.test",
+                    "title": "x" * 2_001,
+                    "markdown": "x",
+                },
+                "title exceeds",
+            ),
+        ],
+    )
+    async def test_import_session_evidence_rejects_invalid_source_metadata(
+        self, source, message
+    ):
+        """Reject malformed URLs and oversized titles before API forwarding."""
+        with pytest.raises(Exception, match=message):
+            await mcp.call_tool(
+                "import_session_evidence",
+                {"session_id": "rs-1", "sources": [source]},
+            )
+
     @pytest.mark.parametrize(
         ("action", "arguments", "message"),
         [

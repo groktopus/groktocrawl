@@ -18,6 +18,7 @@ import logging
 import os
 import time
 from typing import Annotated, Any, Literal
+from urllib.parse import urlsplit
 
 from browser_handler import BrowserHandler
 from groktocrawl_client import GroktocrawlClient
@@ -878,10 +879,24 @@ async def import_session_evidence(
         title = source.get("title", "")
         if not isinstance(url, str) or not url:
             raise ToolError("each source requires a non-empty URL")
+        if len(url) > 8_192:
+            raise ToolError("source URL exceeds the 8192-character limit")
+        parsed_url = urlsplit(url)
+        if (
+            parsed_url.scheme not in {"http", "https"}
+            or not parsed_url.hostname
+            or parsed_url.username is not None
+            or parsed_url.password is not None
+        ):
+            raise ToolError(
+                "source URL must be an absolute credential-free HTTP(S) URL"
+            )
         if not isinstance(markdown, str) or not markdown:
             raise ToolError("each source requires non-empty Markdown")
         if not isinstance(title, str):
             raise ToolError("source title must be a string")
+        if len(title) > 2_000:
+            raise ToolError("source title exceeds the 2000-character limit")
         if url in urls:
             raise ToolError("source URLs must be unique")
         urls.add(url)
@@ -896,7 +911,7 @@ async def import_session_evidence(
 @mcp.tool(annotations=_NEUTRAL)
 async def research_session_step(
     session_id: str,
-    action: Literal["search", "scrape", "query", "deepen"],
+    action: Literal["search", "scrape", "query", "deepen", "synthesize"],
     query: str | None = None,
     limit: int | None = None,
     urls: list[str] | None = None,
@@ -904,14 +919,25 @@ async def research_session_step(
     ref_id: str | None = None,
     sub_topic: str | None = None,
     max_sources: int | None = None,
+    synthesis_id: str | None = None,
+    ref_ids: list[str] | None = None,
+    input_budget_chars: Annotated[
+        int | None, Field(ge=8_000, le=64_000, strict=True)
+    ] = None,
+    output_budget_tokens: Annotated[int | None, Field(ge=256, strict=True)] = None,
+    resume: bool = False,
+    retry_pending: bool = False,
     parallel: bool = False,
     idempotency_key: str | None = None,
 ) -> str:
-    """Run one typed search, scrape, query, or deepen step in a session.
+    """Run one typed search, scrape, query, deepen, or synthesis step.
 
     Supply only the fields for the selected action: search uses ``query``
     and optional ``limit``; scrape uses ``urls``; query uses ``question``;
-    deepen uses ``ref_id``, ``sub_topic``, and optional ``max_sources``.
+    deepen uses ``ref_id``, ``sub_topic``, and optional ``max_sources``;
+    synthesize uses ``question`` and stable ``synthesis_id``, optional
+    ``ref_ids`` on its first call, and explicit ``resume`` or
+    ``retry_pending`` flags for later calls.
     The API rejects missing sessions, invalid transitions, and conflicting
     concurrent or idempotent steps with actionable errors.
     """
@@ -930,7 +956,7 @@ async def research_session_step(
         if not question or not question.strip():
             raise ToolError("query action requires a non-empty question")
         params = {"question": question}
-    else:
+    elif action == "deepen":
         if not ref_id or not ref_id.strip():
             raise ToolError("deepen action requires a non-empty ref_id")
         if not sub_topic or not sub_topic.strip():
@@ -938,6 +964,22 @@ async def research_session_step(
         params = {"ref_id": ref_id, "sub_topic": sub_topic}
         if max_sources is not None:
             params["max_sources"] = max_sources
+    else:
+        if not question or not question.strip():
+            raise ToolError("synthesize action requires a non-empty question")
+        if not synthesis_id or not synthesis_id.strip():
+            raise ToolError("synthesize action requires a stable synthesis_id")
+        params = {"question": question, "synthesis_id": synthesis_id}
+        if ref_ids is not None:
+            params["ref_ids"] = ref_ids
+        if input_budget_chars is not None:
+            params["input_budget_chars"] = input_budget_chars
+        if output_budget_tokens is not None:
+            params["output_budget_tokens"] = output_budget_tokens
+        if resume:
+            params["resume"] = True
+        if retry_pending:
+            params["retry_pending"] = True
 
     result = await _client.research_session_step(
         session_id=session_id,
