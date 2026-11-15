@@ -50,6 +50,9 @@ owner-only file permissions. A missing or empty source body is represented as a
 metadata-only dossier marked `content_status: missing`, with any evidence
 recovery metadata preserved. The summary and source index report body
 completeness; the exporter never invents or substitutes source text.
+Each dossier filename includes a readable title slug and the full SHA-256 digest
+of its URL, so identical titles or acquisition-tier labels cannot overwrite a
+different source's body.
 
 The streaming agent route also includes Markdown on each `source_scraped` event
 when `include_source_content` is enabled. The CLI fsyncs each event to a private

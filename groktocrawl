@@ -47,7 +47,9 @@ Examples:
 """
 
 import argparse
+import contextlib
 import datetime
+import hashlib
 import json
 import os
 import re
@@ -124,6 +126,12 @@ def _slugify(text: str, max_len: int = 60) -> str:
     return slug[:max_len].rstrip("-")
 
 
+def _source_dossier_slug(title: str, url: str) -> str:
+    """Keep source filenames readable and unique for distinct URLs."""
+    url_digest = hashlib.sha256(url.encode("utf-8")).hexdigest()
+    return f"{_slugify(title, 40)}-{url_digest}"
+
+
 def _default_output_dir(query: str) -> str:
     """Generate a default output directory path from the query."""
     slug = _slugify(query)
@@ -168,14 +176,10 @@ def _checkpoint_terminal_response(
         finally:
             os.close(directory_fd)
     except BaseException:
-        try:
+        with contextlib.suppress(OSError):
             os.close(fd)
-        except OSError:
-            pass
-        try:
+        with contextlib.suppress(FileNotFoundError):
             os.unlink(temporary)
-        except FileNotFoundError:
-            pass
         raise
     return target
 
@@ -421,7 +425,7 @@ def _write_pyramid(
             for i, ds in enumerate(domain_sources, 1):
                 url = ds.get("url", "") if isinstance(ds, dict) else str(ds)
                 title = ds.get("title", url) if isinstance(ds, dict) else url
-                src_slug = _slugify(title, 40)
+                src_slug = _source_dossier_slug(title, url)
                 stub_lines.append(
                     f"| {i} | {title} | {url} | `03-dossiers/{dossier_prefix}-{src_slug}.md` |"
                 )
@@ -434,7 +438,7 @@ def _write_pyramid(
             for ds in domain_sources:
                 url = ds.get("url", "") if isinstance(ds, dict) else str(ds)
                 title = ds.get("title", url) if isinstance(ds, dict) else url
-                src_slug = _slugify(title, 40)
+                src_slug = _source_dossier_slug(title, url)
                 stub_lines.append(f"03-dossiers/{dossier_prefix}-{src_slug}.md")
                 stub_lines.append(f" -> Source dossier and content status for {url}")
             _write_file(os.path.join(l2_dir, dim_file), "\n".join(stub_lines))
@@ -463,7 +467,7 @@ def _write_pyramid(
         for s in sources:
             url = s.get("url", "") if isinstance(s, dict) else str(s)
             title = s.get("title", url) if isinstance(s, dict) else url
-            src_slug = _slugify(title, 40)
+            src_slug = _source_dossier_slug(title, url)
             fname = f"{dossier_prefix}-{src_slug}.md"
             consulted_files.append(fname)
 
@@ -499,8 +503,7 @@ def _write_pyramid(
                 "---",
                 "",
                 content
-                if content
-                else (
+                or (
                     "**Source body unavailable:** the completed response did not "
                     "include non-empty Markdown for this consulted source. This "
                     "metadata-only dossier is not counted as complete source content."
@@ -530,7 +533,7 @@ def _write_pyramid(
         for item in search_results:
             url = item.get("url", "") if isinstance(item, dict) else str(item)
             title = item.get("title", url) if isinstance(item, dict) else url
-            src_slug = _slugify(title, 40)
+            src_slug = _source_dossier_slug(title, url)
             fname = f"discovered-{src_slug}.md"
             discovered_entries.append(fname)
             l3_index.append(f"| discovered | `{fname}` | {title} | {url} |")

@@ -380,6 +380,8 @@ class LLMClient:
                             chunk = json.loads(data_str)
                             if not isinstance(chunk, dict):
                                 raise ValueError("SSE payload is not an object")
+                            if isinstance(chunk.get("usage"), dict):
+                                provider_usage = chunk["usage"]
                             choices = chunk.get("choices", [{}])
                             if not choices:
                                 continue
@@ -392,8 +394,6 @@ class LLMClient:
                             saw_refusal = saw_refusal or bool(
                                 delta.get("refusal") or message.get("refusal")
                             )
-                            if isinstance(chunk.get("usage"), dict):
-                                provider_usage = chunk["usage"]
                             token = delta.get("content", "")
                             if token:
                                 full_content += token

@@ -207,6 +207,36 @@ class TestPyramidSourceExport:
         assert "Acquired evidence" in dossier.read_text()
         assert "acquired_not_synthesized" in dossier.read_text()
 
+    def test_acquired_sources_with_same_title_keep_distinct_dossiers(self, tmp_path):
+        write_pyramid = _cli_ns["_write_pyramid"]
+        first_url = "https://example.test/first"
+        second_url = "https://example.test/second"
+        output = write_pyramid(
+            str(tmp_path / "collision-pyramid"),
+            "Research topic",
+            "Research failed before synthesis.",
+            [
+                {"url": first_url, "title": "playwright", "source": "playwright"},
+                {"url": second_url, "title": "playwright", "source": "playwright"},
+            ],
+            [],
+            source_contents={
+                first_url: "Evidence belonging only to the first URL.",
+                second_url: "Evidence belonging only to the second URL.",
+            },
+            research_status="failed",
+        )
+
+        dossiers = list((Path(output) / "03-dossiers").glob("acquired-*.md"))
+        assert len(dossiers) == 2
+        dossier_text = [path.read_text() for path in dossiers]
+        assert any(first_url in text and "first URL" in text for text in dossier_text)
+        assert any(second_url in text and "second URL" in text for text in dossier_text)
+        assert all("content_status: available" in text for text in dossier_text)
+
+        index = (Path(output) / "03-dossiers/00-index.md").read_text()
+        assert index.count("`acquired-") == 2
+
     def test_stream_failure_exports_sources_captured_before_synthesis(
         self, tmp_path
     ):

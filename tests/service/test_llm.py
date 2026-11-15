@@ -564,6 +564,29 @@ class TestLLMClientGenerateStream:
         assert not any(event["type"] == "done" for event in events)
 
     @pytest.mark.asyncio
+    async def test_stream_retains_usage_from_final_empty_choices_chunk(self, llm):
+        mock_client_cls, _ = self._setup_stream_mock(
+            [
+                'data: {"choices":[{"delta":{"content":"Partial"}}]}',
+                'data: {"choices":[{"delta":{},"finish_reason":"length"}]}',
+                'data: {"choices":[],"usage":{"prompt_tokens":321,"completion_tokens":8192}}',
+                "data: [DONE]",
+            ]
+        )
+
+        with patch("httpx.AsyncClient", mock_client_cls):
+            events = [event async for event in llm.generate_stream("x", "y")]
+
+        assert events[-1]["type"] == "error"
+        assert events[-1]["error_code"] == "LLM_OUTPUT_TRUNCATED"
+        assert events[-1]["details"] == {
+            "finish_reason": "length",
+            "refusal_present": False,
+            "prompt_tokens": 321,
+            "completion_tokens": 8192,
+        }
+
+    @pytest.mark.asyncio
     async def test_stream_output_budget_preserves_mainline_default_and_legacy_override(
         self, llm, monkeypatch
     ):
