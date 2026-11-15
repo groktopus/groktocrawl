@@ -74,6 +74,19 @@ def test_resume_state_is_atomically_saved_owner_only(tmp_path):
     assert os.stat(path).st_mode & 0o777 == 0o600
 
 
+def test_resume_reuses_saved_budgets_unless_explicitly_overridden():
+    state = {"input_budget_chars": 48_000, "output_budget_tokens": 512}
+
+    assert _MODULE.resolve_budgets(None, None, state) == (48_000, 512)
+    assert _MODULE.resolve_budgets(None, 2_048, state) == (48_000, 2_048)
+    assert _MODULE.resolve_budgets(64_000, 2_048, state) == (64_000, 2_048)
+
+    with pytest.raises(ValueError, match="input budget"):
+        _MODULE.resolve_budgets(7_999, None, state)
+    with pytest.raises(ValueError, match="output token budget"):
+        _MODULE.resolve_budgets(None, 255, state)
+
+
 def test_loads_full_acquired_body_from_dossier_index_with_length_check(tmp_path):
     body = "# A source\n\nExact evidence.\n"
     dossier = tmp_path / "acquired-source.md"

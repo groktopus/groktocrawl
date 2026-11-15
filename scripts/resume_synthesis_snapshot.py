@@ -152,6 +152,29 @@ def _atomic_private_json(path: Path, payload: dict[str, Any]) -> None:
         raise
 
 
+def resolve_budgets(
+    input_argument: int | None,
+    output_argument: int | None,
+    state: dict[str, Any],
+) -> tuple[int, int]:
+    """Reuse persisted budgets on resume unless the caller explicitly overrides."""
+    input_budget = (
+        input_argument
+        if input_argument is not None
+        else state.get("input_budget_chars", 32_000)
+    )
+    output_budget = (
+        output_argument
+        if output_argument is not None
+        else state.get("output_budget_tokens", 1_024)
+    )
+    if type(input_budget) is not int or not 8_000 <= input_budget <= 64_000:
+        raise ValueError("input budget must be between 8000 and 64000 characters")
+    if type(output_budget) is not int or output_budget < 256:
+        raise ValueError("output token budget must be an integer of at least 256")
+    return input_budget, output_budget
+
+
 def _request(
     base_url: str, path: str, api_key: str, body: dict[str, Any]
 ) -> dict[str, Any]:
@@ -187,8 +210,8 @@ def main() -> int:
         default=2000,
         help="Maximum outline/section calls in this invocation (1-2000)",
     )
-    parser.add_argument("--input-budget-chars", type=int, default=32_000)
-    parser.add_argument("--output-budget-tokens", type=int, default=1_024)
+    parser.add_argument("--input-budget-chars", type=int)
+    parser.add_argument("--output-budget-tokens", type=int)
     args = parser.parse_args()
     api_key = os.environ.get("GROKTOCRAWL_API_KEY", "")
     if not api_key:
@@ -242,15 +265,24 @@ def main() -> int:
             "manifest_chars": imported["source_chars"],
             "last_status": "imported",
         }
-        _atomic_private_json(args.state_file, state)
+
+    try:
+        input_budget, output_budget = resolve_budgets(
+            args.input_budget_chars, args.output_budget_tokens, state
+        )
+    except ValueError as exc:
+        parser.error(str(exc))
+    state["input_budget_chars"] = input_budget
+    state["output_budget_tokens"] = output_budget
+    _atomic_private_json(args.state_file, state)
 
     result: dict[str, Any] = {}
     for attempt in range(args.max_steps):
         params: dict[str, Any] = {
             "question": state["question"],
             "synthesis_id": state["synthesis_id"],
-            "input_budget_chars": args.input_budget_chars,
-            "output_budget_tokens": args.output_budget_tokens,
+            "input_budget_chars": input_budget,
+            "output_budget_tokens": output_budget,
         }
         if args.resume or state.get("last_status") != "imported":
             params["resume"] = True

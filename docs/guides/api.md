@@ -103,8 +103,10 @@ counts when available. The session expires
 according to its TTL, so retain the session ID and snapshot locally if work
 needs to continue later. `scripts/resume_synthesis_snapshot.py` imports an
 acquired-source JSONL and drives this workflow, saving a private atomic resume
-file; use `--resume` after interruption and `--retry-pending` only when you
-explicitly authorize retrying an unknown model call. It accepts either
+file with the selected input and output budgets; use `--resume` after
+interruption and `--retry-pending` only when you explicitly authorize retrying
+an unknown model call. Pass `--output-budget-tokens` with `--retry-pending` to
+raise the saved output limit after truncation. It accepts either
 `--sources-jsonl` or a validated `--sources-index` from a source dossier export.
 This workflow is scoped to a captured snapshot and does not claim exhaustive
 discovery.
