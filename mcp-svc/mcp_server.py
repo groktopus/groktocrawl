@@ -764,7 +764,7 @@ async def agent(
     force_fresh: bool = False,
     search_type: str | None = None,
     evidence_budget_chars: Annotated[
-        int | None, Field(ge=256, le=128_000, strict=True)
+        int | None, Field(ge=256, strict=True)
     ] = None,
 ) -> str:
     """Run autonomous research: search → scrape → LLM synthesis with sources.
@@ -775,7 +775,7 @@ async def agent(
     cancel_agent to stop an in-progress job.
 
     Args:
-        evidence_budget_chars: Aggregate verbatim source budget (256..128000 characters); omitted uses server default.
+        evidence_budget_chars: Optional excerpt budget (minimum 256 characters; no application-level maximum). Omission supplies all retained source text.
         prompt: What the agent should research (max 100k chars).
         model: Optional per-request LLM model override (e.g. ``gpt-4o``).
             When omitted or ``default``, the server-configured model is used.
@@ -923,7 +923,7 @@ async def select_session_evidence(
     session_id: str,
     ref_id: str,
     query: Annotated[str, Field(max_length=10_000)] = "",
-    budget_chars: Annotated[int, Field(ge=256, le=128_000, strict=True)] = 32_000,
+    budget_chars: Annotated[int, Field(ge=256, strict=True)] = 32_000,
     offset: Annotated[int, Field(ge=0, strict=True)] = 0,
     expected_digest: Annotated[str | None, Field(pattern=r"^[0-9a-f]{64}$")] = None,
 ) -> str:
@@ -1255,21 +1255,22 @@ async def answer(
     search_type: str | None = None,
     retrieval_mode: str | None = None,
     evidence_budget_chars: Annotated[
-        int | None, Field(ge=256, le=128_000, strict=True)
+        int | None, Field(ge=256, strict=True)
     ] = None,
 ) -> str:
     """Grounded Q&A: search → scrape → LLM answer with inline citations.
 
-    evidence_budget_chars bounds selected source text (256–128000; default
-    32000). Full bodies are scanned; evidence_coverage reports hashes, character
-    spans and omissions. Selection does not establish answer completeness.
+    evidence_budget_chars optionally selects excerpts (minimum 256; no
+    application-level maximum). Omission supplies all retained text. Coverage
+    reports hashes, spans, omissions and context-window handling. Selection
+    does not establish answer completeness.
 
     Calls POST /v2/answer on the GroktoCrawl API.  This is a synchronous
     single-turn endpoint designed for 1-3s latency.  Returns a markdown
     answer with [N] citation markers and a list of source URLs.
 
     Args:
-        evidence_budget_chars: Aggregate verbatim source budget (256..128000 characters); omitted uses server default.
+        evidence_budget_chars: Optional excerpt budget (minimum 256 characters; no application-level maximum). Omission supplies all retained source text.
         query: Natural language question.
         num_sources: Number of sources to scrape and cite (1–20,
             default 5).

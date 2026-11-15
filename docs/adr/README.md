@@ -23,7 +23,7 @@ An Architecture Decision Record captures an important architectural decision mad
 
 **Status legend:** accepted ADRs describe decisions used by the current implementation. Proposed ADRs are design work, not promises of current behavior. Superseded ADRs are historical context only; use their successor when documenting current behavior.
 
-**Current accepted decisions:** ADR-0001–0007, 0009–0012, 0014–0022, 0026 (as superseded for migrated deployments), 0029–0035, 0038, 0039, 0043–0046, 0048–0057, and 0059–0073.
+**Current accepted decisions:** ADR-0001–0007, 0009–0012, 0014–0022, 0026 (as superseded for migrated deployments), 0029–0035, 0038, 0039, 0043–0046, 0048–0057, 0059–0067, 0069–0073, 0080, and 0081.
 
 **Proposed work:** ADR-0023–0025, 0027, 0028, 0036, 0037, and 0040–0042.
 
@@ -95,7 +95,7 @@ An Architecture Decision Record captures an important architectural decision mad
 | 0065 | [Stream Discovery Acquisitions as Queries Complete](0065-stream-discovery-acquisitions.md) | accepted |
 | 0066 | [Opt In to Independent Session Steps](0066-opt-in-to-independent-session-steps.md) | accepted |
 | 0067 | [Select the LLM Token Budget Parameter Explicitly](0067-explicit-llm-token-budget-parameter.md) | accepted |
-| 0068 | [Select bounded evidence from complete sources](0068-bounded-full-source-evidence.md) | accepted |
+| 0068 | [Select bounded evidence from complete sources](0068-bounded-full-source-evidence.md) | superseded by ADR-0081 |
 | 0069 | [Adopt a Bounded Research Substrate](0069-adopt-bounded-research-substrate.md) | accepted; rollout-gated adoption in standard deployment |
 | 0070 | [Execute live durable research with persisted external-call receipts](0070-execute-live-durable-research.md) | accepted |
 | 0071 | [Use pgvector for Research Memory with Reversible Rollback](0071-use-pgvector-for-research-memory-with-reversible-rollback.md) | accepted |
@@ -117,3 +117,4 @@ An Architecture Decision Record captures an important architectural decision mad
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full ADR workflow: when to write an ADR, how to number it, and how to get it reviewed in a PR. Experimental records are linked from the provenance archive, not included in the mainline sequence.
 
 | 0080 | [Recycle quarantined browser containers](0080-recycle-quarantined-browser-containers.md) | accepted |
+| 0081 | [Preserve complete default research evidence and recoverable context](0081-preserve-complete-default-research-evidence.md) | accepted |

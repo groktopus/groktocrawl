@@ -91,6 +91,16 @@ class ProviderOutputError(UpstreamError):
     detail = "LLM provider output was invalid"
 
 
+class ContextLimitError(ProviderOutputError):
+    """The provider rejected complete supplied evidence as over its context limit."""
+
+    error_code = "MODEL_CONTEXT_LIMIT"
+    detail = (
+        "The complete supplied evidence exceeds the configured model context window. "
+        "No partial answer was generated; inspect or narrow the retained evidence."
+    )
+
+
 class SearchError(GroktoCrawlError):
     status_code = 502
     error_code = "SEARCH_ERROR"

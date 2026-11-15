@@ -216,7 +216,7 @@ class TestAgentWorkerMaxCreditsWiring:
         state.task_tracker = MagicMock()
         request.app.state = state
         request.headers = MagicMock()
-        request.headers.get.return_value = None
+        request.headers.get.return_value = ""
         request.client = MagicMock()
         request.client.host = "127.0.0.1"
 
@@ -238,6 +238,7 @@ class TestAgentWorkerMaxCreditsWiring:
             await create_agent(request, body, response)
 
         assert process.call_args.kwargs["max_credits"] == 7
+        assert process.call_args.kwargs["evidence_owner_scope"] == "anonymous"
 
     @pytest.mark.asyncio
     async def test_worker_passes_max_credits_to_run_research(self):

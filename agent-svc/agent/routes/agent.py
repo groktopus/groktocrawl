@@ -24,11 +24,13 @@ from ..models import (
 )
 from ..research_cache_metrics import record_bypass, record_rejection
 from ..research_memory import compute_fingerprint
+from ..session_scope import request_scope
 from ..store import JobStore
 from ._helpers import (
     _apply_rate_headers,
     _derive_user_id,
     _get_client_ip,
+    _get_redis_url,
     _resolve_output_schema,
 )
 
@@ -39,6 +41,10 @@ router = APIRouter()
 
 async def _serialize_answer_stream(
     events: AsyncIterator[dict[str, Any]],
+    *,
+    evidence_owner_scope: str = "anonymous",
+    evidence_redis_url: str | None = None,
+    include_source_content: bool = False,
 ) -> AsyncGenerator[str, None]:
     """Serialize answer events without masking terminal error semantics."""
     async for event in events:
@@ -49,15 +55,38 @@ async def _serialize_answer_stream(
         elif event["type"] == "token":
             payload = {"type": "token", "content": event["content"]}
         elif event["type"] == "done":
+            recovery_result: dict[str, Any] = {
+                "source_contents": event.get("source_contents", {}),
+                "evidence_coverage": event.get("evidence_coverage", {}),
+            }
+            if evidence_redis_url is not None:
+                from ..research.evidence_recovery import retain_result_evidence
+
+                await retain_result_evidence(
+                    recovery_result,
+                    redis_url=evidence_redis_url,
+                    owner_scope=evidence_owner_scope,
+                    include_source_content=include_source_content,
+                )
             payload = {
                 "type": "done",
                 "answer": event["answer"],
                 "citations": event["citations"],
                 "latency_ms": event["latency_ms"],
                 "evidence_coverage": event.get("evidence_coverage", {}),
+                "evidence_recovery": recovery_result.get(
+                    "evidence_recovery", {"status": "not_retained"}
+                ),
             }
+            if "evidence_session_id" in recovery_result:
+                payload["evidence_session_id"] = recovery_result[
+                    "evidence_session_id"
+                ]
             if "source_contents" in event:
-                payload["source_contents"] = event["source_contents"]
+                if include_source_content or recovery_result.get("evidence_recovery", {}).get("status") == "unavailable":
+                    payload["source_contents"] = recovery_result.get(
+                        "source_contents", {}
+                    )
         elif event["type"] == "error":
             payload = {"type": "error", "content": event["content"]}
             for key in ("classification", "retry_after_seconds", "error_code"):
@@ -293,6 +322,8 @@ async def _handle_agent_streaming(
                 user_id=_derive_user_id(request),
                 fingerprint=fingerprint,
                 evidence_budget_chars=body.evidence_budget_chars,
+                evidence_owner_scope=request_scope(request),
+                evidence_redis_url=_get_redis_url(request),
             ),
             media_type="text/event-stream",
             headers=headers,
@@ -367,6 +398,7 @@ async def create_agent(request: Request, body: AgentRequest, response: Response)
     store: JobStore = request.app.state.job_store
     job_payload = body.model_dump(exclude_none=True, by_alias=True)
     job_payload["recovery_user_id"] = _derive_user_id(request)
+    job_payload["evidence_owner_scope"] = request_scope(request)
     job_id = store.create_job(kind="agent", payload=job_payload)
 
     from ..worker import _process_agent_async
@@ -403,6 +435,7 @@ async def create_agent(request: Request, body: AgentRequest, response: Response)
             fingerprint=fingerprint,
             task_tracker=request.app.state.task_tracker,
             evidence_budget_chars=body.evidence_budget_chars,
+            evidence_owner_scope=request_scope(request),
         ),
     )
 
@@ -507,9 +540,14 @@ async def answer(request: Request, body: AnswerRequest, response: Response) -> A
                 output_schema=effective_schema,
                 citation_style=body.citation_style,
                 evidence_budget_chars=body.evidence_budget_chars,
-                include_source_content=body.include_source_content,
+                include_source_content=True,
             )
-            async for chunk in _serialize_answer_stream(events):
+            async for chunk in _serialize_answer_stream(
+                events,
+                evidence_owner_scope=request_scope(request),
+                evidence_redis_url=_get_redis_url(request),
+                include_source_content=body.include_source_content,
+            ):
                 yield chunk
 
         headers: dict[str, str] = {}
@@ -541,6 +579,14 @@ async def answer(request: Request, body: AnswerRequest, response: Response) -> A
         output_schema=effective_schema,
         citation_style=body.citation_style,
         evidence_budget_chars=body.evidence_budget_chars,
+        include_source_content=True,
+    )
+    from ..research.evidence_recovery import retain_result_evidence
+
+    await retain_result_evidence(
+        result,
+        redis_url=_get_redis_url(request),
+        owner_scope=request_scope(request),
         include_source_content=body.include_source_content,
     )
     _apply_rate_headers(
@@ -554,7 +600,10 @@ async def answer(request: Request, body: AnswerRequest, response: Response) -> A
         search_type=result["search_type"],
         latency_ms=result["latency_ms"],
         evidence_coverage=result.get("evidence_coverage", {}),
+        evidence_session_id=result.get("evidence_session_id"),
+        evidence_recovery=result.get("evidence_recovery", {"status": "not_retained"}),
         source_contents=result.get("source_contents")
         if body.include_source_content
+        or result.get("evidence_recovery", {}).get("status") == "unavailable"
         else None,
     )

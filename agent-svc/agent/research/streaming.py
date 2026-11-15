@@ -7,6 +7,7 @@ stream_research_live() async generators extracted from api.py.
 import json
 import logging
 import time as _time
+from copy import deepcopy
 from typing import Any
 
 from common.stage_metrics import StreamTiming
@@ -71,13 +72,20 @@ async def stream_cached_artifact(
             yield f"data: {json.dumps({'type': 'token', 'content': chunk})}\n\n"
 
     latency_ms = int((_time.monotonic() - stream_start) * 1000)
+    from .evidence_recovery import mark_evidence_recovery_status
+
+    cached_result: dict[str, Any] = {
+        "coverage": deepcopy(coverage or {}),
+        "evidence_coverage": deepcopy(evidence_coverage or {}),
+    }
+    mark_evidence_recovery_status(cached_result, "not_retained", "cached_result")
     done_payload: dict = {
         "type": "done",
         "result": transformed_text,
         "sources": [s.get("url", "") for s in sources],
         "latency_ms": latency_ms,
         "from_cache": True,
-        "coverage": coverage
+        "coverage": cached_result["coverage"]
         or {
             "scope": "cached_answer",
             "coverage_complete": False,
@@ -87,7 +95,8 @@ async def stream_cached_artifact(
         "freshness": freshness,
         "similarity": similarity,
         "citation_style": citation_style.value,
-        "evidence_coverage": evidence_coverage or {},
+        "evidence_coverage": cached_result["evidence_coverage"],
+        "evidence_recovery": cached_result["evidence_recovery"],
     }
     if age_hours is not None:
         done_payload["age_hours"] = age_hours
@@ -120,7 +129,13 @@ async def stream_cached_artifact(
                 "freshness": "refreshed",
                 "age_hours": 0.0,
                 "evidence_coverage": refreshed.get("evidence_coverage", {}),
+                "evidence_recovery": {"status": "not_retained"},
             }
+            from .evidence_recovery import mark_evidence_recovery_status
+
+            mark_evidence_recovery_status(
+                refreshed_payload, "not_retained", "cached_refresh"
+            )
             if citation_style == CitationStyle.compact:
                 refreshed_payload["sources_compact"] = refreshed.get(
                     "sources_compact", []
@@ -149,7 +164,9 @@ async def stream_research_live(
     research_memory: Any = None,
     user_id: str | None = None,
     fingerprint: str | None = None,
-    evidence_budget_chars: int = 32_000,
+    evidence_budget_chars: int | None = None,
+    evidence_owner_scope: str = "anonymous",
+    evidence_redis_url: str = "redis://localhost:6379/0",
 ) -> Any:
     """Orchestrate full research SSE pipeline for cache-miss or force-fresh.
 
@@ -177,7 +194,9 @@ async def stream_research_live(
         citation_style=citation_style,
         search_type=search_type,
         max_credits=max_credits,
-        include_source_content=include_source_content,
+        # Complete bodies are retained behind an owned paged session. The
+        # source export is only included in the event when the caller asked.
+        include_source_content=True,
         evidence_budget_chars=evidence_budget_chars,
     ):
         if event["type"] in _content_events:
@@ -195,6 +214,20 @@ async def stream_research_live(
             # The synthesis loop has already emitted this canonical Markdown.
             source_details = event.get("source_details", [])
             cs = citation_style
+
+            from .evidence_recovery import retain_result_evidence
+
+            recovery_result: dict[str, Any] = {
+                "source_contents": event.get("source_contents", {}),
+                "evidence_coverage": event.get("evidence_coverage", {}),
+                "coverage": event.get("coverage", {}),
+            }
+            await retain_result_evidence(
+                recovery_result,
+                redis_url=evidence_redis_url,
+                owner_scope=evidence_owner_scope,
+                include_source_content=include_source_content,
+            )
 
             transformed_result = event["result"]
             if research_memory is not None:
@@ -219,7 +252,12 @@ async def stream_research_live(
                 "sources": event["sources"],
                 "latency_ms": event["latency_ms"],
                 "evidence_coverage": event.get("evidence_coverage", {}),
+                "evidence_recovery": recovery_result.get("evidence_recovery", {}),
             }
+            if "evidence_session_id" in recovery_result:
+                done_payload["evidence_session_id"] = recovery_result[
+                    "evidence_session_id"
+                ]
             # Apply citation_style transformation (VAL-CC-008, VAL-CC-009)
             done_payload["citation_style"] = cs.value
             if cs == CitationStyle.compact:
@@ -235,8 +273,12 @@ async def stream_research_live(
                 done_payload["source_details"] = []
             else:
                 done_payload["source_details"] = source_details
-            if include_source_content:
-                done_payload["source_contents"] = event.get("source_contents", {})
+            if include_source_content or recovery_result.get(
+                "evidence_recovery", {}
+            ).get("status") == "unavailable":
+                done_payload["source_contents"] = recovery_result.get(
+                    "source_contents", {}
+                )
             if "coverage" in event:
                 done_payload["coverage"] = event["coverage"]
             yield f"data: {json.dumps(done_payload)}\n\n"

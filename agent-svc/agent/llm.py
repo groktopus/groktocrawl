@@ -19,7 +19,7 @@ from common.stage_metrics import inc_counter, observe_elapsed
 
 from .admission import AdmissionRejectedError, get_admission
 from .cancel import JobCancelledError, raise_if_cancelled
-from .exceptions import ProviderOutputError, RetryableRateLimitError
+from .exceptions import ContextLimitError, ProviderOutputError, RetryableRateLimitError
 from .settings import load_settings
 
 logger = logging.getLogger(__name__)
@@ -29,6 +29,40 @@ _LLM_CALL_SECONDS_HELP = "LLM call latency by research stage"
 _LLM_CALLS_TOTAL = "groktocrawl_llm_calls_total"
 _LLM_CALLS_TOTAL_HELP = "Total LLM calls by research stage and outcome"
 _MAX_RETRY_AFTER_SECONDS = 60
+
+
+def _is_context_limit_response(resp: httpx.Response) -> bool:
+    """Recognize common OpenAI-compatible context-limit error envelopes."""
+    try:
+        payload = resp.json()
+    except (ValueError, json.JSONDecodeError):
+        return False
+    error = payload.get("error") if isinstance(payload, dict) else None
+    if not isinstance(error, dict):
+        return False
+    identifiers = {
+        str(value).casefold()
+        for value in (error.get("code"), error.get("type"))
+        if value
+    }
+    if identifiers & {
+        "context_length_exceeded",
+        "max_context_length_exceeded",
+        "context_window_exceeded",
+        "input_too_long",
+    }:
+        return True
+    diagnostic = str(error.get("message") or "").casefold()
+    return any(
+        phrase in diagnostic
+        for phrase in (
+            "maximum context length",
+            "context window",
+            "input is too long",
+            "too many tokens",
+            "input token limit",
+        )
+    )
 
 
 def _token_budget_params(*, health: bool = False) -> dict[str, int]:
@@ -170,11 +204,14 @@ class LLMClient:
                     "content": exc.detail,
                 }
             except ProviderOutputError as exc:
-                yield {
+                error_event = {
                     "type": "error",
                     "classification": "non_retryable",
                     "content": exc.detail,
                 }
+                if isinstance(exc, ContextLimitError):
+                    error_event["error_code"] = exc.error_code
+                yield error_event
             else:
                 yield {"type": "done", "full_content": content}
             return
@@ -255,6 +292,15 @@ class LLMClient:
                                     resp.headers.get("Retry-After")
                                 ),
                                 "content": "LLM provider rate limit exceeded",
+                            }
+                            return
+                        if _is_context_limit_response(resp):
+                            outcome = "context_limit"
+                            yield {
+                                "type": "error",
+                                "classification": "non_retryable",
+                                "error_code": ContextLimitError.error_code,
+                                "content": ContextLimitError.detail,
                             }
                             return
                         outcome = "provider_error"
@@ -445,6 +491,9 @@ class LLMClient:
                             resp.headers.get("Retry-After")
                         ),
                     )
+                if _is_context_limit_response(resp):
+                    outcome = "context_limit"
+                    raise ContextLimitError()
                 raise ProviderOutputError(
                     detail=f"LLM provider returned HTTP {resp.status_code}"
                 )
@@ -462,8 +511,12 @@ class LLMClient:
         except RetryableRateLimitError:
             outcome = "rate_limited"
             raise
-        except ProviderOutputError:
-            outcome = "provider_error"
+        except ProviderOutputError as exc:
+            outcome = (
+                "context_limit"
+                if isinstance(exc, ContextLimitError)
+                else "provider_error"
+            )
             raise
         except httpx.HTTPError as exc:
             outcome = "provider_error"

@@ -141,7 +141,7 @@ async def refresh_research_memory(
     search_type: str,
     user_id: str | None,
     fingerprint: str | None,
-    evidence_budget_chars: int = 32_000,
+    evidence_budget_chars: int | None = None,
 ) -> dict[str, Any]:
     """Re-run the research pipeline and re-admit a fresh result to memory.
 

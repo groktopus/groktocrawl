@@ -49,7 +49,6 @@ def test_evidence_dry_run_includes_exact_parameters():
     "flags",
     [
         ["--budget-chars", "255"],
-        ["--budget-chars", "128001"],
         ["--offset", "-1"],
         ["--expected-digest", "bad"],
     ],
@@ -57,6 +56,17 @@ def test_evidence_dry_run_includes_exact_parameters():
 def test_evidence_parser_rejects_invalid_contract(flags):
     with pytest.raises(SystemExit):
         _cli_ns["make_parser"]().parse_args(["evidence", "s", "r", *flags])
+
+
+def test_evidence_budgets_have_no_application_upper_ceiling():
+    args = _cli_ns["make_parser"]().parse_args(
+        ["agent", "question", "--evidence-budget-chars", "200001"]
+    )
+    assert args.evidence_budget_chars == 200001
+    page = _cli_ns["make_parser"]().parse_args(
+        ["evidence", "s", "r", "--budget-chars", "200001"]
+    )
+    assert page.budget_chars == 200001
 
 
 def test_query_offset_conflict_never_calls_api():
