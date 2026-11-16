@@ -97,6 +97,33 @@ class TestScraperClient:
             assert captured["json"] == {"url": "https://example.com/page"}
 
     @pytest.mark.asyncio
+    async def test_sends_full_page_contents_request(self, client):
+        captured = {}
+
+        with pytest.MonkeyPatch.context() as mp:
+
+            async def mock_post(url, json=None):
+                captured["url"] = url
+                captured["json"] = json
+                import types
+
+                response = types.SimpleNamespace()
+                response.json = lambda: {"success": True, "data": {"markdown": ""}}
+                return response
+
+            mp.setattr(client._client, "post", mock_post)
+
+            await client.scrape(
+                "https://example.com/page",
+                contents={"text": {"verbosity": "full"}},
+            )
+
+        assert captured["json"] == {
+            "url": "https://example.com/page",
+            "contents": {"text": {"verbosity": "full"}},
+        }
+
+    @pytest.mark.asyncio
     async def test_close(self, client):
         closed = False
 

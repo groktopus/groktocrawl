@@ -2,6 +2,7 @@
 
 import logging
 from datetime import datetime as _dt
+from typing import Any
 
 from fastapi import APIRouter, Request
 
@@ -36,7 +37,10 @@ router = APIRouter()
 async def scrape(request: Request, body: ScrapeRequest) -> ScrapeResponse:
     scraper = request.app.state.scraper_client
     scrape_opts = {"formats": body.formats}
-    result = await scraper.scrape(body.url, scrape_options=scrape_opts)
+    scrape_kwargs: dict[str, Any] = {"scrape_options": scrape_opts}
+    if not body.only_main_content:
+        scrape_kwargs["contents"] = {"text": {"verbosity": "full"}}
+    result = await scraper.scrape(body.url, **scrape_kwargs)
     if result.get("success"):
         if is_block_flagged(result):
             # Barrier-flagged scrape (#586): never presented as clean success
