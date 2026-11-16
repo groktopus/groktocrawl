@@ -51,7 +51,7 @@ class _FakeLLMResp:
     status_code = 200
 
     def json(self):
-        return {"choices": [{"message": {"content": "ok"}}]}
+        return {"choices": [{"finish_reason": "stop", "message": {"content": "ok"}}]}
 
 
 class _FakeLLMClient:

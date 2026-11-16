@@ -44,7 +44,9 @@ def _install_strict_provider(monkeypatch, expected_field):
             )
         return httpx.Response(
             200,
-            json={"choices": [{"message": {"content": content}}]},
+            json={
+                "choices": [{"finish_reason": "stop", "message": {"content": content}}]
+            },
         )
 
     original = httpx.AsyncClient
