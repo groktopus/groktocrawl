@@ -992,6 +992,30 @@ async def test_agent_scrape_route_preserves_exhausted_barrier_receipt():
 
 
 @pytest.mark.asyncio
+async def test_agent_scrape_route_preserves_upstream_http_status():
+    from agent.exceptions import ScrapeError
+    from agent.models import ScrapeRequest
+    from agent.routes.scrape import scrape
+
+    class Client:
+        async def scrape(self, *_args, **_kwargs):
+            return {
+                "success": False,
+                "error": "Source navigation returned HTTP 404",
+                "error_code": "UPSTREAM_ERROR",
+                "details": {"http_status": 404},
+            }
+
+    request = types.SimpleNamespace(
+        app=types.SimpleNamespace(state=types.SimpleNamespace(scraper_client=Client()))
+    )
+    with pytest.raises(ScrapeError) as error:
+        await scrape(request, ScrapeRequest(url="https://example.test/missing"))
+
+    assert error.value.details == {"http_status": 404}
+
+
+@pytest.mark.asyncio
 async def test_batch_scrape_preserves_captcha_error_code(monkeypatch):
     import agent.worker as worker
 

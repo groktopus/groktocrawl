@@ -92,7 +92,10 @@ async def scrape(request: Request, body: ScrapeRequest) -> ScrapeResponse:
             detail=result.get("error", "Barrier or challenge could not be resolved"),
             details=result.get("details") or result.get("barrier"),
         )
-    raise ScrapeError(detail=result.get("error", "Scrape failed"))
+    raise ScrapeError(
+        detail=result.get("error", "Scrape failed"),
+        details=result.get("details"),
+    )
 
 
 @router.post("/v2/batch/scrape", response_model=CrawlCreateResponse)
