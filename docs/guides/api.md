@@ -16,6 +16,8 @@ curl -X POST http://localhost:8080/v2/scrape \
   -d '{"url":"https://example.com"}'
 ```
 
+`POST /v2/scrape` defaults to main-content extraction. Set `only_main_content: false` to request full-page text when the scraper has the source HTML available.
+
 ### Rate limits and retries
 
 Per-client admission limiting is **opt-in** and disabled by default ([ADR-0077](../adr/0077-capacity-evidenced-resource-limits.md)). It protects a metered search-provider budget, not an internal capacity bound, so an unset `AGENT_SEARCH_RATE_LIMIT` (the default) admits every request. When it is configured, per-client rate limits reject `POST /v2/agent`, `POST /v2/answer`, and `POST /v2/crawl` before a job is created. A rejection is HTTP 429 with `error_code: RATE_LIMITED`, `retryable: true`, a positive `retry_after_seconds`, and `details` describing the non-secret bucket (`search` or `crawl`), limit, remaining, and reset time. The response also carries standard `Retry-After`, `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` headers. Because rejection happens before job creation, retrying a definitively rejected admission never creates duplicate jobs. The per-request search budget (`AGENT_MAX_SEARCHES_PER_REQUEST`) is likewise opt-in: `0`, the default, means unbounded. Neither knob is a substitute for the physical browser bounds inside `scraper-svc`.
