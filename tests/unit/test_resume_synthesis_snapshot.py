@@ -67,6 +67,26 @@ def test_loads_canonical_stream_events_with_explicit_question(tmp_path):
     ]
 
 
+def test_jsonl_body_unicode_line_separator_is_not_a_record_boundary(tmp_path):
+    path = tmp_path / "capture.jsonl"
+    body = "before\u2028after"
+    path.write_text(
+        json.dumps(
+            {
+                "type": "source_scraped",
+                "url": "https://example.test/a",
+                "markdown": body,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    _question, sources = _MODULE.load_snapshot_jsonl(path, question="Research question")
+
+    assert sources[0]["markdown"] == body
+
+
 def test_jsonl_query_if_present_must_match_explicit_question(tmp_path):
     path = tmp_path / "capture.jsonl"
     path.write_text(

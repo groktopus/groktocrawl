@@ -16,8 +16,15 @@ import tempfile
 import urllib.error
 import urllib.request
 import uuid
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
+
+
+def _jsonl_lines(path: Path) -> Iterator[tuple[int, str]]:
+    """Iterate physical JSONL lines without treating Unicode separators as LF."""
+    with path.open(encoding="utf-8") as stream:
+        yield from enumerate(stream, 1)
 
 
 def load_snapshot_jsonl(
@@ -27,9 +34,7 @@ def load_snapshot_jsonl(
     query = question.strip() if isinstance(question, str) and question.strip() else None
     captured_query: str | None = None
     by_url: dict[str, dict[str, str]] = {}
-    for line_number, line in enumerate(
-        path.read_text(encoding="utf-8").splitlines(), 1
-    ):
+    for line_number, line in _jsonl_lines(path):
         if not line.strip():
             continue
         try:

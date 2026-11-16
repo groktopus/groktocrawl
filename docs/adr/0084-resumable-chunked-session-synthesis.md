@@ -71,9 +71,10 @@ the saved answer without another model call.
 `scripts/resume_synthesis_snapshot.py` imports an existing acquired-source
 JSONL and drives the session API. Canonical `source_scraped` stream events do
 not contain the research question, so JSONL replay requires `--question`; if a
-captured row does contain a question, it must match that argument. The script
-stores only session ID, synthesis ID, question, reference IDs and progress in
-an atomic mode-0600 local state file.
+captured row does contain a question, it must match that argument. It parses
+physical newline-delimited records and preserves Unicode line separators
+inside source Markdown. The script stores only session ID, synthesis ID,
+question, reference IDs and progress in an atomic mode-0600 local state file.
 `--resume` continues the saved run; `--retry-pending` is required to retry an
 ambiguous provider dispatch. This path can validate saved research without
 repeating acquisition.
@@ -96,8 +97,9 @@ because discovery and model calls may already have occurred.
 
 ## Validation
 
-Test canonical `source_scraped` JSONL replay with an explicit question and
-reject any conflicting captured question. Test that absent, unknown and
+Test canonical `source_scraped` JSONL replay with an explicit question,
+preserve Unicode line separators inside bodies, and reject any conflicting
+captured question. Test that absent, unknown and
 non-text finish reasons fail closed and filtered output cannot be explicitly
 retried. Test exact source-manifest coverage and stable digests, non-lossy chunking,
 outline validation and assignment, pending/unknown operation handling,
