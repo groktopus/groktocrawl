@@ -69,6 +69,18 @@ _browser_quarantined = False
 _browser_quarantine_reason: str | None = None
 
 
+def _http_status_error(url: str, status: int, source: str) -> dict:
+    """Build a terminal scrape result for an unsuccessful document response."""
+    return {
+        "error": f"Source navigation returned HTTP {status} for {url}",
+        "error_code": "HTTP_STATUS_ERROR",
+        "http_status": status,
+        "markdown": "",
+        "source": source,
+        "url": url,
+    }
+
+
 class BrowserUnavailableError(RuntimeError):
     """The embedded browser tier cannot safely accept more work."""
 
@@ -396,7 +408,9 @@ async def _playwright_fetch_unbounded(
             # initial HTML fast, detect the challenge, then actively poll for resolution.
             navigation_started = time.monotonic()
             try:
-                await page.goto(url, wait_until="domcontentloaded", timeout=15000)
+                navigation_response = await page.goto(
+                    url, wait_until="domcontentloaded", timeout=15000
+                )
             except Exception:
                 observe_elapsed(
                     _BROWSER_NAVIGATION_SECONDS,
@@ -409,6 +423,7 @@ async def _playwright_fetch_unbounded(
             # Check for bot challenges (Cloudflare / DDoS-Guard)
             title = await page.title()
             current_url = page.url
+            challenge_resolved = False
             if _is_bot_challenge(title, current_url):
                 logger.info(
                     "Bot challenge detected on %s, polling for resolution...", url
@@ -463,6 +478,7 @@ async def _playwright_fetch_unbounded(
                     # Return None so the pipeline falls through to Tier 3.5 (FlareSolverr).
                     return None
 
+                challenge_resolved = True
                 # Re-read title and URL after challenge (may have navigated)
                 title = await page.title()
                 current_url = page.url
@@ -501,6 +517,14 @@ async def _playwright_fetch_unbounded(
                         },
                     }
                 captcha_resolved = bool(attempts)
+                navigation_status = getattr(navigation_response, "status", None)
+                if (
+                    type(navigation_status) is int
+                    and navigation_status >= 400
+                    and not captcha_resolved
+                    and not challenge_resolved
+                ):
+                    return _http_status_error(url, navigation_status, "playwright")
                 if captcha_resolved:
                     # Remove solved widget DOM before extraction so challenge markup
                     # cannot be returned or cached as successful page content.
@@ -952,9 +976,21 @@ async def _fetch_via_browser_svc(url: str) -> dict | None:
                     "timeout": _BROWSER_NAVIGATION_TIMEOUT_MS,
                 },
             )
-            if not nav_resp.json().get("success"):
+            navigation = nav_resp.json()
+            if not navigation.get("success"):
                 logger.warning("Browser-svc navigation failed for %s", url)
                 return None
+            navigation_result = navigation.get("result") or {}
+            navigation_status = navigation_result.get("http_status")
+            if (
+                type(navigation_status) is int
+                and navigation_status >= 400
+                and not _is_bot_challenge(
+                    str(navigation_result.get("title") or ""),
+                    str(navigation_result.get("url") or url),
+                )
+            ):
+                return _http_status_error(url, navigation_status, "browser-svc")
 
             # Get page content (HTML)
             content_resp = await client.post(
@@ -1004,6 +1040,9 @@ async def _fetch_via_browser_svc(url: str) -> dict | None:
                             "url": url,
                         }
 
+                    if type(navigation_status) is int and navigation_status >= 400:
+                        return _http_status_error(url, navigation_status, "browser-svc")
+
                     logger.info(
                         "Browser-svc fallback hit for %s (article text: %d chars)",
                         url,
@@ -1044,6 +1083,9 @@ async def _fetch_via_browser_svc(url: str) -> dict | None:
                             "url": url,
                         }
 
+                    if type(navigation_status) is int and navigation_status >= 400:
+                        return _http_status_error(url, navigation_status, "browser-svc")
+
                     logger.info(
                         "Browser-svc fallback hit for %s (HTML: %d chars)",
                         url,
@@ -1054,6 +1096,9 @@ async def _fetch_via_browser_svc(url: str) -> dict | None:
                         "source": "browser-svc",
                         "url": url,
                     }
+
+            if type(navigation_status) is int and navigation_status >= 400:
+                return _http_status_error(url, navigation_status, "browser-svc")
 
     except Exception as e:
         logger.warning("Browser-svc fallback failed for %s: %s", url, e)
