@@ -112,11 +112,15 @@ An Architecture Decision Record captures an important architectural decision mad
 
 | 0078 | [Correct completed citation-invalid synthesis once](0078-correct-completed-citation-invalid-synthesis.md) | accepted |
 
-| 0079 | [Extract PDF Evidence Page by Page](0079-extract-pdf-evidence-page-by-page.md) | accepted; implementation pending |
+| 0079 | [Extract PDF Evidence Page by Page](0079-extract-pdf-evidence-page-by-page.md) | accepted; implementation merged in [#719](https://github.com/groktopus/groktocrawl/pull/719); production verification unknown |
 
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full ADR workflow: when to write an ADR, how to number it, and how to get it reviewed in a PR. Experimental records are linked from the provenance archive, not included in the mainline sequence.
 
 | 0080 | [Recycle quarantined browser containers](0080-recycle-quarantined-browser-containers.md) | accepted |
 | 0081 | [Preserve complete default research evidence and recoverable context](0081-preserve-complete-default-research-evidence.md) | accepted |
 | 0082 | [Bound embedded browser lifecycles and quarantine uncertain cleanup](0082-bound-embedded-browser-lifecycle.md) | accepted |
-| 0083 | [Classify and recover legacy provider output failures](0083-classify-and-recover-legacy-provider-output-failures.md) | proposed |
+| 0083 | [Classify and recover legacy provider output failures](0083-classify-and-recover-legacy-provider-output-failures.md) | proposed; implementation merged in [#727](https://github.com/groktopus/groktocrawl/pull/727); acceptance/status reconciliation remains |
+
+## Implementation observations (November 16, 2026)
+
+At source main `91e7a0ce17d14d7d234337c1d3e50b6c9db80976`, #719 merged at `8442b79a4f06921881bc3cfbb953f717d89aecea` and #727 at `7f0b550ceef2440041085d5b090580e2f9646605`. These observations do not change ADR decisions or acceptance. For 0079, P01–P15 mapping, final-head CI/review disposition (the recorded Droid summary has one finding), exact merged image, authenticated long-report/raster/cache/child-cleanup receipts and rollback remain unverified here. Candidate timing is not production proof. For 0083, bounded Markdown retry and private checkpoints are distinct from durable receipts and #728 session synthesis. CTO/decider retain status reconciliation and any separately authorized instrumented acceptance. See the [roadmap](../roadmap.md).
