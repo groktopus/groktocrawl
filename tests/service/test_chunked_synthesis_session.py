@@ -274,7 +274,11 @@ async def test_small_input_budget_partitions_without_dropping_snapshot(monkeypat
 async def test_refusal_is_terminal_and_output_truncation_requires_larger_explicit_retry(
     monkeypatch,
 ):
-    from agent.exceptions import OutputTruncatedError, ProviderRefusalError
+    from agent.exceptions import (
+        OutputTruncatedError,
+        ProviderFilteredOutputError,
+        ProviderRefusalError,
+    )
     from agent.session import SessionManager
 
     class Store:
@@ -343,6 +347,52 @@ async def test_refusal_is_terminal_and_output_truncation_requires_larger_explici
             llm_model="fixture",
         )
     assert RefusingLLM.calls == 1
+
+    class FilteringLLM:
+        calls = 0
+
+        def __init__(self, *_args, **_kwargs):
+            pass
+
+        async def generate(self, **_kwargs):
+            self.__class__.calls += 1
+            raise ProviderFilteredOutputError(
+                details={"finish_reason": "content_filter", "refusal_present": False}
+            )
+
+        async def close(self):
+            pass
+
+    monkeypatch.setattr("agent.session.LLMClient", FilteringLLM)
+    filtered = SessionManager.__new__(SessionManager)
+    filtered.store = Store()
+    filtered_params = {**params, "synthesis_id": "filtered-case-1"}
+    with pytest.raises(ProviderFilteredOutputError):
+        await filtered._step_synthesize(
+            session_id="session-1",
+            params=filtered_params,
+            llm_base_url="fixture",
+            llm_api_key="",
+            llm_model="fixture",
+        )
+    filtered_ref = (
+        "__synthesis_"
+        + __import__("hashlib").sha256(b"filtered-case-1").hexdigest()[:32]
+    )
+    assert filtered.store.refs[filtered_ref]["state"]["status"] == "filtered"
+    with pytest.raises(ValueError, match="filtered output is not retryable"):
+        await filtered._step_synthesize(
+            session_id="session-1",
+            params={
+                **filtered_params,
+                "resume": True,
+                "retry_pending": True,
+            },
+            llm_base_url="fixture",
+            llm_api_key="",
+            llm_model="fixture",
+        )
+    assert FilteringLLM.calls == 1
 
     class TruncatingLLM:
         calls = 0

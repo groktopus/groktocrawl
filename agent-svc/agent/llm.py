@@ -155,6 +155,11 @@ def _completion_content(result: object) -> str:
             raise OutputTruncatedError(details=diagnostics)
         if finish_reason == "content_filter":
             raise ProviderFilteredOutputError(details=diagnostics)
+        if finish_reason != "stop":
+            raise ProviderOutputError(
+                detail="LLM provider returned an incomplete response",
+                details=diagnostics,
+            )
         content = message.get("content")
     except (KeyError, IndexError, TypeError, AttributeError) as exc:
         raise ProviderOutputError(

@@ -20,9 +20,12 @@ from pathlib import Path
 from typing import Any
 
 
-def load_snapshot_jsonl(path: Path) -> tuple[str, list[dict[str, str]]]:
-    """Read only acquired source events and reject partial/duplicate snapshots."""
-    query: str | None = None
+def load_snapshot_jsonl(
+    path: Path, question: str | None = None
+) -> tuple[str, list[dict[str, str]]]:
+    """Read acquired source events, binding them to an explicit or captured question."""
+    query = question.strip() if isinstance(question, str) and question.strip() else None
+    captured_query: str | None = None
     by_url: dict[str, dict[str, str]] = {}
     for line_number, line in enumerate(
         path.read_text(encoding="utf-8").splitlines(), 1
@@ -35,16 +38,22 @@ def load_snapshot_jsonl(path: Path) -> tuple[str, list[dict[str, str]]]:
             raise ValueError(f"invalid JSONL at line {line_number}") from exc
         if row.get("type") != "source_scraped":
             continue
-        if not all(
-            isinstance(row.get(key), str) for key in ("query", "url", "markdown")
-        ):
+        if not all(isinstance(row.get(key), str) for key in ("url", "markdown")):
             raise ValueError(f"acquired source at line {line_number} is incomplete")
         if not row["markdown"]:
             raise ValueError(f"acquired source at line {line_number} has no Markdown")
-        if query is None:
-            query = row["query"]
-        elif query != row["query"]:
-            raise ValueError("source JSONL contains multiple research questions")
+        row_query = row.get("query")
+        if row_query is not None:
+            if not isinstance(row_query, str) or not row_query.strip():
+                raise ValueError(
+                    f"acquired source query at line {line_number} is invalid"
+                )
+            if captured_query is None:
+                captured_query = row_query.strip()
+            elif captured_query != row_query.strip():
+                raise ValueError("source JSONL contains multiple research questions")
+            if query is not None and query != row_query.strip():
+                raise ValueError("source JSONL contains multiple research questions")
         if row["url"] in by_url:
             if by_url[row["url"]]["markdown"] != row["markdown"]:
                 raise ValueError("source JSONL contains conflicting bodies for one URL")
@@ -64,8 +73,11 @@ def load_snapshot_jsonl(path: Path) -> tuple[str, list[dict[str, str]]]:
             "title": title,
             "markdown": row["markdown"],
         }
-    if query is None or not by_url:
+    query = query or captured_query
+    if not by_url:
         raise ValueError("source JSONL contains no acquired source bodies")
+    if query is None:
+        raise ValueError("a research question is required for snapshot synthesis")
     return query, list(by_url.values())
 
 
@@ -250,7 +262,9 @@ def main() -> int:
                 "initial synthesis requires exactly one of --sources-jsonl or --sources-index"
             )
         if args.sources_jsonl is not None:
-            question, sources = load_snapshot_jsonl(args.sources_jsonl)
+            question, sources = load_snapshot_jsonl(
+                args.sources_jsonl, question=args.question
+            )
         else:
             terminal_path = (
                 args.sources_index.parent.parent / "00-terminal-response.json"

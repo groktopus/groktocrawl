@@ -43,6 +43,128 @@ def test_loads_only_complete_unique_acquired_sources(tmp_path):
     ]
 
 
+def test_loads_canonical_stream_events_with_explicit_question(tmp_path):
+    path = tmp_path / "captured-stream.jsonl"
+    rows = [
+        {
+            "type": "source_scraped",
+            "url": "https://example.test/a",
+            "source": "playwright",
+            "chars": 4,
+            "markdown": "body",
+        },
+        {"type": "done", "query": "not part of the canonical done payload"},
+    ]
+    path.write_text("\n".join(json.dumps(row) for row in rows), encoding="utf-8")
+
+    question, sources = _MODULE.load_snapshot_jsonl(
+        path, question="Research the captured subject"
+    )
+
+    assert question == "Research the captured subject"
+    assert sources == [
+        {"url": "https://example.test/a", "title": "", "markdown": "body"}
+    ]
+
+
+def test_jsonl_query_if_present_must_match_explicit_question(tmp_path):
+    path = tmp_path / "capture.jsonl"
+    path.write_text(
+        json.dumps(
+            {
+                "type": "source_scraped",
+                "query": "another question",
+                "url": "https://example.test/a",
+                "markdown": "body",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="multiple research questions"):
+        _MODULE.load_snapshot_jsonl(path, question="requested question")
+
+
+def test_jsonl_without_query_requires_explicit_question(tmp_path):
+    path = tmp_path / "capture.jsonl"
+    path.write_text(
+        json.dumps(
+            {
+                "type": "source_scraped",
+                "url": "https://example.test/a",
+                "markdown": "body",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="research question is required"):
+        _MODULE.load_snapshot_jsonl(path)
+
+
+def test_cli_passes_explicit_question_for_canonical_jsonl(monkeypatch, tmp_path):
+    import sys
+
+    source_file = tmp_path / "captured.jsonl"
+    source_file.write_text(
+        json.dumps(
+            {
+                "type": "source_scraped",
+                "url": "https://example.test/source",
+                "source": "playwright",
+                "chars": 13,
+                "markdown": "captured body",
+            }
+        ),
+        encoding="utf-8",
+    )
+    state_file = tmp_path / "state.json"
+    calls = []
+
+    def request(_base_url, endpoint, _api_key, body):
+        calls.append((endpoint, body))
+        if endpoint == "/v2/session/create":
+            return {"session_id": "session-fixture"}
+        if endpoint.endswith("/evidence/import"):
+            return {"sources": [{"id": "ref-fixture"}], "source_chars": 13}
+        return {"result": {"status": "in_progress", "completed_chunk_count": 0}}
+
+    monkeypatch.setenv("GROKTOCRAWL_API_KEY", "local-test-key")
+    monkeypatch.setattr(_MODULE, "_request", request)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "resume_synthesis_snapshot.py",
+            "--base-url",
+            "http://example.test",
+            "--sources-jsonl",
+            str(source_file),
+            "--question",
+            "Research the captured subject",
+            "--state-file",
+            str(state_file),
+            "--max-steps",
+            "1",
+        ],
+    )
+
+    assert _MODULE.main() == 0
+
+    import_call = next(
+        body for endpoint, body in calls if endpoint.endswith("/evidence/import")
+    )
+    step_call = next(body for endpoint, body in calls if endpoint.endswith("/step"))
+    assert import_call["sources"] == [
+        {
+            "url": "https://example.test/source",
+            "title": "",
+            "markdown": "captured body",
+        }
+    ]
+    assert step_call["params"]["question"] == "Research the captured subject"
+
+
 def test_rejects_conflicting_body_for_same_url(tmp_path):
     path = tmp_path / "capture.jsonl"
     rows = [

@@ -17,7 +17,12 @@ from datetime import UTC, datetime
 from typing import Any
 
 from .barrier_guard import is_barrier_flagged, log_refusal
-from .exceptions import ContextLimitError, OutputTruncatedError, ProviderRefusalError
+from .exceptions import (
+    ContextLimitError,
+    OutputTruncatedError,
+    ProviderFilteredOutputError,
+    ProviderRefusalError,
+)
 from .llm import LLMClient, _token_budget_params
 from .research.chunked_synthesis import (
     assemble_sections,
@@ -1171,6 +1176,14 @@ class SessionManager:
                 checkpoint["status"] = "refused"
                 await save_checkpoint(checkpoint)
                 raise
+            except ProviderFilteredOutputError as exc:
+                diagnostics = provider_diagnostics(exc)
+                if diagnostics:
+                    checkpoint["provider_diagnostics"] = diagnostics
+                checkpoint["pending"] = None
+                checkpoint["status"] = "filtered"
+                await save_checkpoint(checkpoint)
+                raise
             except ContextLimitError as exc:
                 diagnostics = provider_diagnostics(exc)
                 if diagnostics:
@@ -1378,6 +1391,10 @@ class SessionManager:
             }
         if state.get("status") == "refused":
             raise ValueError("provider refused synthesis; refusal is not retryable")
+        if state.get("status") == "filtered":
+            raise ValueError(
+                "provider filtered synthesis; filtered output is not retryable"
+            )
         if state.get("status") == "failed":
             raise ValueError("synthesis retry budget is exhausted")
         if state.get("pending"):

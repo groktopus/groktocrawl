@@ -105,9 +105,12 @@ needs to continue later. `scripts/resume_synthesis_snapshot.py` imports an
 acquired-source JSONL and drives this workflow, saving a private atomic resume
 file with the selected input and output budgets; use `--resume` after
 interruption and `--retry-pending` only when you explicitly authorize retrying
-an unknown model call. Pass `--output-budget-tokens` with `--retry-pending` to
-raise the saved output limit after truncation. It accepts either
-`--sources-jsonl` or a validated `--sources-index` from a source dossier export.
+an unknown model call. Refusal and filtered output are terminal and cannot be
+retried. Pass `--output-budget-tokens` with `--retry-pending` to raise the saved
+output limit after truncation. It accepts either `--sources-jsonl` or a
+validated `--sources-index` from a source dossier export. Canonical captured
+`source_scraped` JSONL events omit the research question, so pass `--question`
+when replaying them; any query embedded in source rows must agree with it.
 This workflow is scoped to a captured snapshot and does not claim exhaustive
 discovery.
 

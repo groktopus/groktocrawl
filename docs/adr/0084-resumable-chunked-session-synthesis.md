@@ -52,11 +52,16 @@ provider's configured output-token allowance. Both are returned in progress
 metadata. The character budget is a conservative payload envelope, not an
 exact tokenizer count. The output allowance remains the configured
 `LLM_TOKEN_PARAMETER` budget; a provider-truncated or malformed chunk is not
-accepted as complete. Provider failures expose only allowlisted finish reason,
-refusal presence and bounded token counts when supplied; raw provider errors,
-prompts and source text are excluded from diagnostics. A provider context-limit rejection is terminal for that
-synthesis ID; the caller may start a new ID over the same imported refs with a
-smaller input budget. Every completed chunk must contain the citation marker
+accepted as complete. For non-stream calls, only `finish_reason: stop` confirms
+a completed text response. Truncation, filtering, refusal, absent or unknown
+finish reasons, and tool-call completions are never accepted as synthesized
+text. Refusal and filtered-output checkpoints are terminal and cannot be
+replayed with `retry_pending`; a filtered result is not an ambiguous dispatch.
+Provider failures expose only allowlisted finish reason, refusal presence and
+bounded token counts when supplied; raw provider errors, prompts and source
+text are excluded from diagnostics. A provider context-limit rejection is
+terminal for that synthesis ID; the caller may start a new ID over the same
+imported refs with a smaller input budget. Every completed chunk must contain the citation marker
 for its assigned source, in addition to passing final citation-index checks.
 Final assembly follows outline order, requires every section and evidence chunk
 exactly once, and validates citations against the immutable source ordering
@@ -64,8 +69,11 @@ before returning a completed answer. Repeated requests after completion replay
 the saved answer without another model call.
 
 `scripts/resume_synthesis_snapshot.py` imports an existing acquired-source
-JSONL and drives the session API. It stores only session ID, synthesis ID,
-question, reference IDs and progress in an atomic mode-0600 local state file.
+JSONL and drives the session API. Canonical `source_scraped` stream events do
+not contain the research question, so JSONL replay requires `--question`; if a
+captured row does contain a question, it must match that argument. The script
+stores only session ID, synthesis ID, question, reference IDs and progress in
+an atomic mode-0600 local state file.
 `--resume` continues the saved run; `--retry-pending` is required to retry an
 ambiguous provider dispatch. This path can validate saved research without
 repeating acquisition.
@@ -88,7 +96,10 @@ because discovery and model calls may already have occurred.
 
 ## Validation
 
-Test exact source-manifest coverage and stable digests, non-lossy chunking,
+Test canonical `source_scraped` JSONL replay with an explicit question and
+reject any conflicting captured question. Test that absent, unknown and
+non-text finish reasons fail closed and filtered output cannot be explicitly
+retried. Test exact source-manifest coverage and stable digests, non-lossy chunking,
 outline validation and assignment, pending/unknown operation handling,
 explicit resume, immutable completed chunks, full-prior versus structured
 continuity selection, input-evidence reservation, deterministic assembly,

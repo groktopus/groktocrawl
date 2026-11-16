@@ -71,6 +71,38 @@ class TestProviderOutputDiagnostics:
         assert caught.value.details["completion_tokens"] == 8192
         assert "PRIVATE" not in str(caught.value) + str(caught.value.details)
 
+    @pytest.mark.parametrize(
+        "finish_reason", [None, "provider_future_state", "tool_calls", "function_call"]
+    )
+    def test_unknown_or_nonterminal_finish_reasons_fail_closed(self, finish_reason):
+        from agent.exceptions import ProviderOutputError
+        from agent.llm import _completion_content
+
+        with pytest.raises(ProviderOutputError) as caught:
+            _completion_content(
+                {
+                    "choices": [
+                        {
+                            "finish_reason": finish_reason,
+                            "message": {"content": "PRIVATE partial completion"},
+                        }
+                    ],
+                    "usage": {"completion_tokens": 17},
+                }
+            )
+
+        assert caught.value.error_code == "LLM_PROVIDER_OUTPUT_INVALID"
+        assert caught.value.details == {
+            "finish_reason": (
+                finish_reason
+                if finish_reason in {"tool_calls", "function_call"}
+                else "other"
+            ),
+            "refusal_present": False,
+            "completion_tokens": 17,
+        }
+        assert "PRIVATE" not in str(caught.value) + str(caught.value.details)
+
     @pytest.mark.asyncio
     async def test_cited_generation_retries_output_limit_once_but_not_refusal(
         self, llm
@@ -240,7 +272,14 @@ class TestProviderOutputDiagnostics:
 
 
 def _make_response(status_code=200, json_data=None, text=""):
-    """Create a mock httpx response for LLM generate()."""
+    """Create a mock response; legacy success fixtures end with ``stop``."""
+    if isinstance(json_data, dict) and isinstance(json_data.get("choices"), list):
+        for choice in json_data["choices"]:
+            if not isinstance(choice, dict) or "finish_reason" in choice:
+                continue
+            message = choice.get("message")
+            if isinstance(message, dict) and isinstance(message.get("content"), str):
+                choice["finish_reason"] = "stop"
     resp = MagicMock()
     resp.status_code = status_code
     resp.json.return_value = json_data or {}
