@@ -149,6 +149,46 @@ async def test_empty_content_records_extraction(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_http_error_navigation_returns_status_without_extracting_page(
+    monkeypatch,
+):
+    import scraper.captcha as captcha
+    import scraper.fetch_tiers as tiers
+
+    _install_fakes(monkeypatch)
+
+    class NotFoundResponse:
+        status = 404
+
+    async def goto_not_found(self, *_args, **_kwargs):
+        return NotFoundResponse()
+
+    async def no_captcha(_page, _url):
+        return None, []
+
+    monkeypatch.setattr(_Page, "goto", goto_not_found)
+    monkeypatch.setattr(captcha, "resolve_captcha", no_captcha)
+    monkeypatch.setattr(
+        tiers,
+        "html_to_markdown",
+        lambda _html: pytest.fail("HTTP error documents must not be extracted"),
+    )
+
+    result = await tiers._playwright_fetch_unbounded(
+        "https://example.test/missing", None
+    )
+
+    assert result == {
+        "error": "Source navigation returned HTTP 404 for https://example.test/missing",
+        "error_code": "HTTP_STATUS_ERROR",
+        "http_status": 404,
+        "markdown": "",
+        "source": "playwright",
+        "url": "https://example.test/missing",
+    }
+
+
+@pytest.mark.asyncio
 async def test_barrier_detected_records_extraction(monkeypatch):
     import scraper.captcha as captcha
     import scraper.fetch_tiers as tiers

@@ -160,6 +160,8 @@ def _resp(data: dict[str, Any]) -> str:
                 error_obj["status_code"] = data["status_code"]
             if "error_code" in data:
                 error_obj["error_code"] = data["error_code"]
+            if "http_status" in data:
+                error_obj["http_status"] = data["http_status"]
             return _json_text(error_obj)
     return _json_text(data)
 
@@ -763,9 +765,7 @@ async def agent(
     include_images: bool = False,
     force_fresh: bool = False,
     search_type: str | None = None,
-    evidence_budget_chars: Annotated[
-        int | None, Field(ge=256, strict=True)
-    ] = None,
+    evidence_budget_chars: Annotated[int | None, Field(ge=256, strict=True)] = None,
 ) -> str:
     """Run autonomous research: search → scrape → LLM synthesis with sources.
 
@@ -1254,9 +1254,7 @@ async def answer(
     citation_style: str | None = None,
     search_type: str | None = None,
     retrieval_mode: str | None = None,
-    evidence_budget_chars: Annotated[
-        int | None, Field(ge=256, strict=True)
-    ] = None,
+    evidence_budget_chars: Annotated[int | None, Field(ge=256, strict=True)] = None,
 ) -> str:
     """Grounded Q&A: search → scrape → LLM answer with inline citations.
 

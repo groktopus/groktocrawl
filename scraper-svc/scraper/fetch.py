@@ -291,6 +291,8 @@ async def _recover_from_barrier(
         flare_result = await fetch_via_flaresolverr(url)
         if flare_result is None:
             record_attempt(receipt, "flaresolverr", "unavailable")
+        elif flare_result.get("error_code") == "HTTP_STATUS_ERROR":
+            return attach_recovery(flare_result, receipt, recovered=False)
         elif flare_result.get("barrier"):
             if terminal_result is None or not terminal_result.get("error_code"):
                 terminal_result = flare_result
@@ -322,6 +324,8 @@ async def _recover_from_barrier(
         browser_result = await _fetch_via_browser_svc(url)
         if browser_result is None:
             record_attempt(receipt, "browser-svc", "unavailable")
+        elif browser_result.get("error_code") == "HTTP_STATUS_ERROR":
+            return attach_recovery(browser_result, receipt, recovered=False)
         elif browser_result.get("barrier"):
             if terminal_result is None or not terminal_result.get("error_code"):
                 terminal_result = browser_result
@@ -532,6 +536,8 @@ async def smart_scrape(
 
         result = await fetch_via_playwright(url)
         if result:
+            if result.get("error_code") == "HTTP_STATUS_ERROR":
+                return await _enrich_with_politeness(result, url)
             # Barrier detection
             if "barrier" in result:
                 logger.warning("Barrier detected at force_browser Tier 3 for %s", url)
@@ -722,6 +728,8 @@ async def smart_scrape(
         return blocked
     result = await fetch_via_playwright(url)
     if result:
+        if result.get("error_code") == "HTTP_STATUS_ERROR":
+            return await _enrich_with_politeness(result, url)
         # Barrier detection — if page IS a challenge/error, skip remaining tiers
         if "barrier" in result:
             logger.warning(
@@ -828,6 +836,8 @@ async def smart_scrape(
             )
             browser_result = await _fetch_via_browser_svc(url)
             if browser_result:
+                if browser_result.get("error_code") == "HTTP_STATUS_ERROR":
+                    return await _enrich_with_politeness(browser_result, url)
                 accepted = await _maybe_degrade(
                     browser_result, "browser-svc", best_effort
                 )

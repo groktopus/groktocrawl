@@ -47,6 +47,28 @@ async def test_scrape_tier_metrics_are_bounded(monkeypatch):
     assert "# TYPE groktocrawl_scrape_tier_duration_seconds histogram" in text
 
 
+@pytest.mark.asyncio
+async def test_scrape_http_status_error_exposes_source_status(monkeypatch):
+    import scraper.app as app
+    from scraper.exceptions import UpstreamError
+
+    async def http_status_error(*_args, **_kwargs):
+        return {
+            "error": "Source navigation returned HTTP 404",
+            "error_code": "HTTP_STATUS_ERROR",
+            "http_status": 404,
+            "markdown": "",
+            "source": "playwright",
+        }
+
+    monkeypatch.setattr(app, "smart_scrape", http_status_error)
+
+    with pytest.raises(UpstreamError) as error:
+        await app.scrape(app.ScrapeRequest(url="https://example.test/missing"))
+
+    assert error.value.details == {"http_status": 404}
+
+
 # ── Browser-svc capacity signals ──────────────────────────────────
 
 
