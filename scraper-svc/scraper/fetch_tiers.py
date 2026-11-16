@@ -423,6 +423,7 @@ async def _playwright_fetch_unbounded(
             # Check for bot challenges (Cloudflare / DDoS-Guard)
             title = await page.title()
             current_url = page.url
+            challenge_resolved = False
             if _is_bot_challenge(title, current_url):
                 logger.info(
                     "Bot challenge detected on %s, polling for resolution...", url
@@ -477,6 +478,7 @@ async def _playwright_fetch_unbounded(
                     # Return None so the pipeline falls through to Tier 3.5 (FlareSolverr).
                     return None
 
+                challenge_resolved = True
                 # Re-read title and URL after challenge (may have navigated)
                 title = await page.title()
                 current_url = page.url
@@ -520,6 +522,7 @@ async def _playwright_fetch_unbounded(
                     type(navigation_status) is int
                     and navigation_status >= 400
                     and not captcha_resolved
+                    and not challenge_resolved
                 ):
                     return _http_status_error(url, navigation_status, "playwright")
                 if captcha_resolved:

@@ -189,6 +189,43 @@ async def test_http_error_navigation_returns_status_without_extracting_page(
 
 
 @pytest.mark.asyncio
+async def test_resolved_bot_challenge_is_not_rejected_for_initial_http_error(
+    monkeypatch,
+):
+    import scraper.captcha as captcha
+    import scraper.fetch_tiers as tiers
+
+    _install_fakes(monkeypatch)
+
+    class ChallengeResponse:
+        status = 403
+
+    async def goto_challenge(self, *_args, **_kwargs):
+        return ChallengeResponse()
+
+    async def no_captcha(_page, _url):
+        return None, []
+
+    challenge_checks = 0
+
+    def challenge_then_clear(_title, _url):
+        nonlocal challenge_checks
+        challenge_checks += 1
+        return challenge_checks == 1
+
+    monkeypatch.setattr(_Page, "goto", goto_challenge)
+    monkeypatch.setattr(tiers, "_is_bot_challenge", challenge_then_clear)
+    monkeypatch.setattr(captcha, "resolve_captcha", no_captcha)
+    monkeypatch.setattr(tiers, "html_to_markdown", lambda _html: "article " * 100)
+
+    result = await tiers._playwright_fetch_unbounded("https://example.test", None)
+
+    assert result is not None
+    assert result["source"] == "playwright"
+    assert result["markdown"].startswith("article")
+
+
+@pytest.mark.asyncio
 async def test_barrier_detected_records_extraction(monkeypatch):
     import scraper.captcha as captcha
     import scraper.fetch_tiers as tiers

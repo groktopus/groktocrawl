@@ -624,7 +624,9 @@ async def execute_action(session_id: str, req: BrowserExecuteRequest):
             # Bot challenge detection (Cloudflare / DDoS-Guard) — wait for JS challenge to resolve
             title = await page.title()
             current_url = page.url
-            if _is_bot_challenge(title, current_url):
+            challenge_detected = _is_bot_challenge(title, current_url)
+            challenge_resolved = False
+            if challenge_detected:
                 logger.info(
                     "Cloudflare challenge detected on %s, waiting for resolution...",
                     req.url,
@@ -632,7 +634,8 @@ async def execute_action(session_id: str, req: BrowserExecuteRequest):
                 await page.wait_for_timeout(8000)
                 title = await page.title()
                 current_url = page.url
-                if _is_bot_challenge(title, current_url):
+                challenge_resolved = not _is_bot_challenge(title, current_url)
+                if not challenge_resolved:
                     logger.warning("Bot challenge persisted after wait for %s", req.url)
 
             # Store Cloudflare cookies after successful navigation
@@ -643,7 +646,8 @@ async def execute_action(session_id: str, req: BrowserExecuteRequest):
             # bounded response metadata. Protected-boundary probes use this to
             # distinguish a gateway denial from a successful navigation to a
             # private controller endpoint; response bodies and headers stay private.
-            result.update(_navigation_response_fields(navigation_response))
+            if not challenge_resolved:
+                result.update(_navigation_response_fields(navigation_response))
             return BrowserExecuteResponse(result=result)
 
         elif req.action == "click":
