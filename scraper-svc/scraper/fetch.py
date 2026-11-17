@@ -295,7 +295,7 @@ async def _recover_from_barrier(
             record_attempt(receipt, "flaresolverr", "source_http_error")
             retained = (
                 terminal_result
-                if (terminal_result or {}).get("barrier")
+                if terminal_result is not None and terminal_result.get("barrier")
                 else flare_result
             )
             return attach_recovery(retained, receipt, recovered=False)
@@ -355,7 +355,7 @@ async def _recover_from_barrier(
             record_attempt(receipt, "browser-svc", "source_http_error")
             retained = (
                 terminal_result
-                if (terminal_result or {}).get("barrier")
+                if terminal_result is not None and terminal_result.get("barrier")
                 else browser_result
             )
             return attach_recovery(retained, receipt, recovered=False)
