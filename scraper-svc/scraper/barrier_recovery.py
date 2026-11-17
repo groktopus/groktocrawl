@@ -21,7 +21,13 @@ def new_recovery_receipt(
     barrier = _barrier_details(result)
     first_attempt: dict = {
         "strategy": initial_strategy,
-        "outcome": "barrier" if barrier else "no_content",
+        "outcome": (
+            "unsupported_challenge"
+            if barrier.get("supported") is False
+            else "barrier"
+            if barrier
+            else "no_content"
+        ),
     }
     captcha_attempts = barrier.get("attempted_strategies")
     if isinstance(captcha_attempts, list) and captcha_attempts:
@@ -58,7 +64,9 @@ def flaresolverr_applicable(receipt: dict) -> bool:
 
 def browser_service_applicable(receipt: dict) -> bool:
     """A fresh browser session can help interactive challenges, not throttling."""
-    return receipt.get("barrier_type") not in {"rate-limit", "empty"}
+    return receipt.get("provider") != "datadome" and receipt.get(
+        "barrier_type"
+    ) not in {"rate-limit", "empty"}
 
 
 def attach_recovery(result: dict, receipt: dict, *, recovered: bool) -> dict:
