@@ -100,7 +100,7 @@ async def test_browser_fallback_rejects_http_error_navigation(monkeypatch):
     assert result["error_code"] == "HTTP_STATUS_ERROR"
     assert result["http_status"] == 404
     assert result["markdown"] == ""
-    assert calls == ["create", "navigate", "delete"]
+    assert calls == ["create", "navigate", "getContent", "delete"]
 
 
 @pytest.mark.asyncio

@@ -121,6 +121,8 @@ See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full ADR workflow: when to 
 | 0082 | [Bound embedded browser lifecycles and quarantine uncertain cleanup](0082-bound-embedded-browser-lifecycle.md) | accepted |
 | 0083 | [Classify and recover legacy provider output failures](0083-classify-and-recover-legacy-provider-output-failures.md) | proposed; implementation merged in [#727](https://github.com/groktopus/groktocrawl/pull/727); acceptance/status reconciliation remains |
 
+| 0084 | [Preserve provider-aware barrier diagnostics before extraction gates](0084-provider-aware-barrier-diagnostics.md) | accepted |
+
 ## Implementation observations (November 16, 2026)
 
 At source main `91e7a0ce17d14d7d234337c1d3e50b6c9db80976`, #719 merged at `8442b79a4f06921881bc3cfbb953f717d89aecea` and #727 at `7f0b550ceef2440041085d5b090580e2f9646605`. These observations do not change ADR decisions or acceptance. For 0079, P01–P15 mapping, final-head CI/review disposition (the recorded Droid summary has one finding), exact merged image, authenticated long-report/raster/cache/child-cleanup receipts and rollback remain unverified here. Candidate timing is not production proof. For 0083, bounded Markdown retry and private checkpoints are distinct from durable receipts and #728 session synthesis. CTO/decider retain status reconciliation and any separately authorized instrumented acceptance. See the [roadmap](../roadmap.md).
