@@ -558,6 +558,25 @@ class TestContentBlocks:
         assert "400" in err_text
         assert "Invalid URL" in err_text
 
+    async def test_error_result_includes_source_http_status(self, monkeypatch):
+        _patch_client(
+            monkeypatch,
+            {
+                "scrape": {
+                    "error": "Source navigation returned HTTP 404",
+                    "error_code": "UPSTREAM_ERROR",
+                    "status_code": 502,
+                    "http_status": 404,
+                },
+            },
+        )
+        from mcp.server.fastmcp.exceptions import ToolError
+
+        with pytest.raises(ToolError) as exc_info:
+            await mcp.call_tool("scrape", {"url": "https://example.com/missing"})
+
+        assert '"http_status": 404' in str(exc_info.value)
+
     async def test_error_result_preserves_barrier_error_code(self, monkeypatch):
         _patch_client(
             monkeypatch,

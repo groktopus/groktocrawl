@@ -288,7 +288,7 @@ def main() -> int:
                 )
             sources = load_snapshot_index(args.sources_index, question)
         session = _request(args.base_url, "/v2/session/create", api_key, {"ttl": 86400})
-        session_id = session["session_id"]
+        session_id = session.get("sessionId") or session["session_id"]
         imported = _request(
             args.base_url,
             f"/v2/session/{session_id}/evidence/import",

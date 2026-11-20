@@ -1052,6 +1052,9 @@ class SessionManager:
             r"[A-Za-z0-9_-]{8,100}", synthesis_id
         ):
             raise ValueError("synthesize action requires a stable synthesis_id")
+        for flag in ("resume", "retry_pending"):
+            if flag in params and type(params[flag]) is not bool:
+                raise ValueError(f"{flag} must be a boolean")
         input_budget = params.get("input_budget_chars", 32_000)
         if type(input_budget) is not int or not 8_000 <= input_budget <= 64_000:
             raise ValueError("input_budget_chars must be between 8000 and 64000")
@@ -1387,6 +1390,8 @@ class SessionManager:
                 "synthesis_id": synthesis_id,
                 "status": "complete",
                 "answer": state["answer"],
+                "citations": state["citations"],
+                "resume_required": False,
                 "manifest_sha256": state["manifest"]["manifest_sha256"],
             }
         if state.get("status") == "refused":
@@ -1439,6 +1444,7 @@ class SessionManager:
             ):
                 raw_outline = pending["raw_output"]
             else:
+                state["pending"] = {"kind": "outline"}
                 llm = LLMClient(llm_base_url, llm_api_key, llm_model)
                 try:
                     raw_outline = await guarded_generate(

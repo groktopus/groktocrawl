@@ -9,12 +9,15 @@ Authentication is optional for local development and required for production. Se
 If both key headers are sent, a valid Bearer key takes precedence; otherwise a valid `X-API-Key` is used. Sessions and per-user research memory use that same key for their scope. `RESEARCH_MEMORY_SCOPE=global` still shares cached research. Without authentication, supplied key headers are cache-partition hints and do not establish caller identity.
 
 Errors use a common object with `error`, `error_code`, and optional `details`. Typical codes are `INVALID_REQUEST`, `AUTH_ERROR`, `NOT_FOUND`, `RATE_LIMITED`, `UPSTREAM_ERROR`, and `INTERNAL_ERROR`.
+For scrape failures caused by a non-success source navigation, `details.http_status` reports the source's HTTP status when the browser observed one; the API request itself remains an upstream failure.
 
 ```bash
 curl -X POST http://localhost:8080/v2/scrape \
   -H 'Authorization: Bearer YOUR_KEY' -H 'Content-Type: application/json' \
   -d '{"url":"https://example.com"}'
 ```
+
+`POST /v2/scrape` defaults to main-content extraction. Set `only_main_content: false` to request full-page text when the scraper has the source HTML available.
 
 ### Rate limits and retries
 

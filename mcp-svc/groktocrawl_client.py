@@ -238,12 +238,15 @@ class GroktocrawlClient:
         *,
         status_code: int | None = None,
         error_code: str | None = None,
+        http_status: int | None = None,
     ) -> dict:
         result: dict[str, Any] = {"error": msg}
         if status_code is not None:
             result["status_code"] = status_code
         if error_code:
             result["error_code"] = error_code
+        if http_status is not None:
+            result["http_status"] = http_status
         return result
 
     async def _request(
@@ -287,6 +290,14 @@ class GroktocrawlClient:
                 detail = _extract_response_detail(exc.response)
                 upstream_body = _extract_response_body(exc.response)
                 error_code = upstream_body.get("error_code")
+                details = upstream_body.get("details")
+                http_status = (
+                    details.get("http_status")
+                    if isinstance(details, dict)
+                    and type(details.get("http_status")) is int
+                    and 100 <= details["http_status"] <= 599
+                    else None
+                )
                 if status_code == 429:
                     # Retry budget exhausted — report distinctly from a
                     # one-off 429 so callers can distinguish.
@@ -313,6 +324,7 @@ class GroktocrawlClient:
                     f"HTTP {status_code}: {detail}",
                     status_code=status_code,
                     error_code=error_code if isinstance(error_code, str) else None,
+                    http_status=http_status,
                 )
             except httpx.TimeoutException:
                 duration = time.monotonic() - start

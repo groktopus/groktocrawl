@@ -120,4 +120,5 @@ See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full ADR workflow: when to 
 | 0081 | [Preserve complete default research evidence and recoverable context](0081-preserve-complete-default-research-evidence.md) | accepted |
 | 0082 | [Bound embedded browser lifecycles and quarantine uncertain cleanup](0082-bound-embedded-browser-lifecycle.md) | accepted |
 | 0083 | [Classify and recover legacy provider output failures](0083-classify-and-recover-legacy-provider-output-failures.md) | proposed |
-| 0084 | [Resume source-grounded synthesis in bounded outline chunks](0084-resumable-chunked-session-synthesis.md) | proposed |
+| 0084 | [Preserve provider-aware barrier diagnostics before extraction gates](0084-provider-aware-barrier-diagnostics.md) | accepted |
+| 0085 | [Resume source-grounded synthesis in bounded outline chunks](0085-resumable-chunked-session-synthesis.md) | proposed |

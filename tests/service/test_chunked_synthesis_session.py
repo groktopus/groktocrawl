@@ -141,6 +141,8 @@ async def test_outline_checkpoint_resume_and_deterministic_assembly(monkeypatch)
         llm_model="fixture",
     )
     assert replay["answer"] == final["answer"]
+    assert replay["citations"] == final["citations"]
+    assert replay["resume_required"] is False
     assert FakeLLM.calls == 3
 
 
@@ -946,3 +948,89 @@ async def test_response_is_durable_before_outline_and_chunk_validation(monkeypat
     )
     assert complete["status"] == "complete"
     assert FakeLLM.calls == 2
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("failure", ["unknown", "invalid", "truncated"])
+async def test_explicit_outline_retry_preserves_pending_response_receipt(
+    monkeypatch, failure
+):
+    import copy
+
+    from agent.exceptions import OutputTruncatedError
+    from agent.session import SessionManager
+
+    class Store:
+        def __init__(self):
+            self.refs = {
+                "r1": {"url": "https://example.test/a", "markdown": "Evidence."}
+            }
+
+        async def aget_refs(self, _sid):
+            return copy.deepcopy(self.refs)
+
+        async def aadd_refs(self, _sid, refs):
+            self.refs.update(copy.deepcopy(refs))
+            return True
+
+        async def aappend_step(self, _sid, _step):
+            return 1
+
+    class FakeLLM:
+        calls = 0
+
+        def __init__(self, *_args):
+            pass
+
+        async def generate(self, **_kwargs):
+            self.__class__.calls += 1
+            if self.calls == 1:
+                if failure == "unknown":
+                    raise RuntimeError("fixture disconnect")
+                if failure == "truncated":
+                    raise OutputTruncatedError()
+                return "invalid JSON"
+            return json.dumps({"sections": [{"id": "evidence", "title": "Evidence"}]})
+
+        async def close(self):
+            pass
+
+    monkeypatch.setattr("agent.session.LLMClient", FakeLLM)
+    monkeypatch.setattr(
+        "agent.session._token_budget_params", lambda: {"max_tokens": 2048}
+    )
+    manager = SessionManager.__new__(SessionManager)
+    manager.store = Store()
+    params = {"question": "q", "synthesis_id": "outline-retry-01", "ref_ids": ["r1"]}
+    kwargs = {
+        "session_id": "s1",
+        "llm_base_url": "fixture",
+        "llm_api_key": "",
+        "llm_model": "fixture",
+    }
+    with pytest.raises((RuntimeError, ValueError, OutputTruncatedError)):
+        await manager._step_synthesize(params=params, **kwargs)
+    for flag in ("resume", "retry_pending"):
+        with pytest.raises(ValueError, match=f"{flag} must be a boolean"):
+            await manager._step_synthesize(
+                params={**params, "resume": True, flag: "false"}, **kwargs
+            )
+    with pytest.raises(ValueError, match="retry_pending=true"):
+        await manager._step_synthesize(params={**params, "resume": True}, **kwargs)
+    assert FakeLLM.calls == 1
+    retry = {
+        **params,
+        "resume": True,
+        "retry_pending": True,
+        "output_budget_tokens": 2048,
+    }
+    result = await manager._step_synthesize(params=retry, **kwargs)
+    assert result["status"] == "outline_ready"
+    assert FakeLLM.calls == 2
+    state = next(
+        ref["state"]
+        for key, ref in manager.store.refs.items()
+        if key.startswith("__synthesis_")
+    )
+    assert state["pending"] is None
+    assert state["outline_attempts"] == 2

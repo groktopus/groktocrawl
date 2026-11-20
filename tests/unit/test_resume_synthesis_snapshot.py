@@ -144,7 +144,11 @@ def test_cli_passes_explicit_question_for_canonical_jsonl(monkeypatch, tmp_path)
     def request(_base_url, endpoint, _api_key, body):
         calls.append((endpoint, body))
         if endpoint == "/v2/session/create":
-            return {"session_id": "session-fixture"}
+            from agent.models import SessionCreateResponse
+
+            return SessionCreateResponse(session_id="session-fixture").model_dump(
+                by_alias=True
+            )
         if endpoint.endswith("/evidence/import"):
             return {"sources": [{"id": "ref-fixture"}], "source_chars": 13}
         return {"result": {"status": "in_progress", "completed_chunk_count": 0}}
