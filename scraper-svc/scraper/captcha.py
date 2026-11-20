@@ -223,7 +223,7 @@ async def resolve_captcha(page, url: str) -> tuple[BarrierInfo | None, list[str]
     provider = barrier.provider or "generic"
     selectors = _SELECTORS.get(provider)
     if not selectors:
-        return barrier, []
+        return barrier, ["unsupported_provider"]
     attempts: list[str] = ["passive_wait"]
     await page.wait_for_timeout(1000)
     frames = await _provider_frames(page, provider)

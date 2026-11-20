@@ -83,7 +83,7 @@ Research-memory artifacts remain in Valkey; its vector index defaults to Qdrant 
 
 | Area | Capabilities |
 |---|---|
-| Web data | Scrape, batch scrape, map, crawl, parse, browser sessions, and llms.txt generation; the scraper recovers low-yield (card-style) page bodies, warns on partial extractions, and detects bot-challenge pages (e.g. Fastly JS challenges) so barrier content is never served as article content |
+| Web data | Scrape, batch scrape, map, crawl, parse, browser sessions, and llms.txt generation; the scraper recovers low-yield (card-style) page bodies, warns on partial extractions, and detects bot-challenge pages (e.g. Fastly JS challenges) so barrier content is never served as article content; DataDome frames are identified and reported as unsupported rather than mislabelled as service outages |
 | Search and retrieval | SlopSearX search (DuckDuckGo engine falls back to its lite endpoint when the primary frontend is bot-blocked; results best-effort), rich/deep research modes, semantic index, and similarity search; vector-search backend failures surface as errors rather than silent empty results |
 | Research | Grounded answers, streaming agent research, plans, sessions, citations, and reusable research memory |
 | Operations | Monitors, webhooks, health probes, Prometheus metrics, cache controls, and politeness controls |

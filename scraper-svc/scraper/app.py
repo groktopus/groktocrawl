@@ -438,6 +438,11 @@ async def scrape(request: ScrapeRequest):
                     details={
                         "barrier": result.get("barrier"),
                         "recovery": result.get("recovery"),
+                        **(
+                            {"http_status": result["http_status"]}
+                            if "http_status" in result
+                            else {}
+                        ),
                     },
                 )
             if result.get("error_code") == "SOURCE_DESTINATION_VALIDATION_UNAVAILABLE":
@@ -454,6 +459,11 @@ async def scrape(request: ScrapeRequest):
                     {
                         "barrier": result.get("barrier"),
                         "recovery": result.get("recovery"),
+                        **(
+                            {"http_status": result["http_status"]}
+                            if "http_status" in result
+                            else {}
+                        ),
                     }
                     if result.get("barrier") or result.get("recovery")
                     else None

@@ -173,3 +173,21 @@ access to protected pages.
 The fixture-backed critical-journey release gate checks `/health`, the fast-search response contract, and `/v2/scrape` for `test-site`'s markdown-capable `/pricing` page; it deliberately does not promise live-search result cardinality, semantic retrieval, or research-agent results.
 
 Before upgrading, run `docker compose config --quiet`, rebuild changed services, and review [CHANGELOG.md](../../CHANGELOG.md). Use the fixture profile and test suite before changing production configuration.
+
+### DataDome and fallback diagnostics
+
+DataDome challenge frames are recognized even when the page has no visible text.
+The built-in widget resolver supports reCAPTCHA, hCaptcha and Turnstile, not
+DataDome. A DataDome refusal returns `BARRIER_DETECTED` with
+`details.barrier.provider: "datadome"`, `supported: false`, and the observed
+source `http_status` when available. The recovery receipt records
+`unsupported_challenge` and skips unrelated fallback services; it does not
+send a DataDome slider to the image-grid solver or pretend FlareSolverr can
+solve it. Recognition is not an access guarantee.
+
+Fallback receipts distinguish `no_content`, `source_http_error`,
+`extraction_failed`, `invalid_response`, `service_error`, and `unavailable`.
+A working service returning a block or thin document is not labelled unavailable.
+Raw challenge HTML, cookie values and provider challenge URLs are not included.
+See [ADR-0084](../adr/0084-provider-aware-barrier-diagnostics.md) and the
+[feature specification](../specs/datadome-barrier-diagnostics.md).

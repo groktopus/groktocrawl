@@ -27,6 +27,7 @@ from common.stage_metrics import inc_counter, observe_elapsed
 from common.url import extract_domain, is_private_host, is_private_host_literal
 
 from .barrier import (
+    BarrierInfo,
     _classify_barrier,
     _is_bot_challenge,
     _is_substack_redirect,
@@ -79,6 +80,47 @@ def _http_status_error(url: str, status: int, source: str) -> dict:
         "source": source,
         "url": url,
     }
+
+
+def _fallback_failure(url: str, source: str, outcome: str) -> dict:
+    """Keep service failures distinct from a service returning no usable content."""
+    return {
+        "error": f"{source} fallback failed: {outcome}",
+        "error_code": "SCRAPE_FALLBACK_FAILED",
+        "failure_outcome": outcome,
+        "markdown": "",
+        "source": source,
+        "url": url,
+    }
+
+
+def _barrier_result(
+    url: str, source: str, barrier: BarrierInfo, status: int | None = None
+) -> dict:
+    """Return sanitized evidence, never challenge HTML or cookie-bearing URLs."""
+    unsupported = barrier.provider == "datadome"
+    result: dict = {
+        "error": (
+            "Unsupported CAPTCHA provider: datadome"
+            if unsupported
+            else f"Barrier detected: {barrier.barrier_type}"
+        ),
+        "error_code": "BARRIER_DETECTED",
+        "markdown": "",
+        "source": source,
+        "url": url,
+        "barrier": {
+            "detected": True,
+            "type": barrier.barrier_type,
+            "provider": barrier.provider,
+            "confidence": barrier.confidence,
+            "detail": barrier.detail,
+            **({"supported": False} if unsupported else {}),
+        },
+    }
+    if type(status) is int:
+        result["http_status"] = status
+    return result
 
 
 class BrowserUnavailableError(RuntimeError):
@@ -501,6 +543,13 @@ async def _playwright_fetch_unbounded(
 
                 unresolved_captcha, attempts = await resolve_captcha(page, url)
                 if unresolved_captcha:
+                    if unresolved_captcha.provider == "datadome":
+                        return _barrier_result(
+                            url,
+                            "playwright",
+                            unresolved_captcha,
+                            getattr(navigation_response, "status", None),
+                        )
                     return {
                         "error": "CAPTCHA challenge could not be resolved",
                         "error_code": "CAPTCHA_UNRESOLVED",
@@ -608,6 +657,15 @@ async def _playwright_fetch_unbounded(
 
                 if html:
                     markdown = html_to_markdown(html)
+                    barrier = _classify_barrier(title, url, markdown, html)
+                    if (
+                        barrier.detected
+                        and barrier.confidence > 0.7
+                        and barrier.barrier_type != "empty"
+                    ):
+                        return _barrier_result(
+                            url, "playwright", barrier, navigation_status
+                        )
                     if markdown and len(markdown) > 50:
                         barrier = _classify_barrier(title, url, markdown, html)
                         # Post-extraction block-page gate (#586): a challenge
@@ -875,63 +933,44 @@ async def fetch_via_playwright(url: str) -> dict | None:
 
 
 async def fetch_via_flaresolverr(url: str) -> dict | None:
-    """Tier 3.5: Route through FlareSolverr for hard Cloudflare challenges.
-
-    Requires the flare-solverr service to be running (profile-gated in
-    docker-compose.yml). Gracefully falls back if unavailable.
-    """
+    """Use the configured FlareSolverr; classify its document before text gates."""
     try:
         flare_url = trusted_control_base_url(FLARE_SOLVERR_URL, "flare")
         async with trusted_control_httpx_client(service="flare", timeout=60) as client:
             resp = await client.post(
                 flare_url,
-                json={
-                    "cmd": "request.get",
-                    "url": url,
-                    "maxTimeout": 60000,
-                },
+                json={"cmd": "request.get", "url": url, "maxTimeout": 60000},
             )
-            if resp.status_code == 200:
-                data = resp.json()
-                solution = data.get("solution", {})
-                if solution.get("status") == 200:
-                    html = solution.get("response", "")
-                    if html:
-                        markdown = html_to_markdown(html)
-                        if markdown and len(markdown) > 50:
-                            # ── Barrier check ─────────────────
-                            barrier = _classify_barrier("", url, markdown, html)
-                            if barrier.detected and barrier.confidence > 0.7:
-                                logger.warning(
-                                    "Barrier detected in flare-solverr result for %s: %s (confidence: %.2f)",
-                                    url,
-                                    barrier.barrier_type,
-                                    barrier.confidence,
-                                )
-                                return {
-                                    "error": f"Barrier detected: {barrier.barrier_type} (confidence: {barrier.confidence:.2f})",
-                                    "barrier": {
-                                        "detected": True,
-                                        "type": barrier.barrier_type,
-                                        "confidence": barrier.confidence,
-                                        "detail": barrier.detail,
-                                    },
-                                    "markdown": "",
-                                    "source": "barrier-detection",
-                                    "url": url,
-                                }
-
-                            logger.info("Tier 3.5 hit: flare-solverr for %s", url)
-                            return {
-                                "markdown": markdown,
-                                "source": "flare-solverr",
-                                "url": url,
-                            }
+        if resp.status_code != 200:
+            return _fallback_failure(url, "flare-solverr", "service_error")
+        data = resp.json()
+        if not isinstance(data, dict) or not isinstance(data.get("solution"), dict):
+            return _fallback_failure(url, "flare-solverr", "invalid_response")
+        solution = data["solution"]
+        status = solution.get("status")
+        html = solution.get("response") or ""
+        if not isinstance(html, str) or type(status) is not int:
+            return _fallback_failure(url, "flare-solverr", "invalid_response")
+        markdown = html_to_markdown(html) if html else ""
+        barrier = _classify_barrier("", url, markdown, html)
+        if (
+            barrier.detected
+            and barrier.confidence > 0.7
+            and barrier.barrier_type != "empty"
+        ):
+            return _barrier_result(url, "flare-solverr", barrier, status)
+        if status >= 400:
+            return _http_status_error(url, status, "flare-solverr")
+        if status != 200:
+            return _fallback_failure(url, "flare-solverr", "invalid_response")
+        if len(markdown) <= 50:
+            return _fallback_failure(url, "flare-solverr", "no_content")
+        return {"markdown": markdown, "source": "flare-solverr", "url": url}
     except (httpx.ConnectError, httpx.TimeoutException):
-        logger.debug("FlareSolverr not available for %s", url)
-    except Exception as e:
-        logger.warning("FlareSolverr failed for %s: %s", url, e)
-    return None
+        return _fallback_failure(url, "flare-solverr", "unavailable")
+    except Exception:
+        logger.warning("FlareSolverr returned an invalid response for %s", url)
+        return _fallback_failure(url, "flare-solverr", "invalid_response")
 
 
 _BROWSER_NAVIGATION_TIMEOUT_MS = 45000
@@ -962,10 +1001,10 @@ async def _fetch_via_browser_svc(url: str) -> dict | None:
                 logger.warning(
                     "Browser-svc session creation failed: %d", create_resp.status_code
                 )
-                return None
+                return _fallback_failure(url, "browser-svc", "service_error")
             session_id = create_resp.json().get("id")
             if not session_id:
-                return None
+                return _fallback_failure(url, "browser-svc", "invalid_response")
 
             # Navigate to the URL
             nav_resp = await client.post(
@@ -979,29 +1018,37 @@ async def _fetch_via_browser_svc(url: str) -> dict | None:
             navigation = nav_resp.json()
             if not navigation.get("success"):
                 logger.warning("Browser-svc navigation failed for %s", url)
-                return None
+                return _fallback_failure(url, "browser-svc", "extraction_failed")
             navigation_result = navigation.get("result") or {}
             navigation_status = navigation_result.get("http_status")
-            if (
-                type(navigation_status) is int
-                and navigation_status >= 400
-                and not _is_bot_challenge(
-                    str(navigation_result.get("title") or ""),
-                    str(navigation_result.get("url") or url),
-                )
-            ):
-                return _http_status_error(url, navigation_status, "browser-svc")
-
             # Get page content (HTML)
             content_resp = await client.post(
                 f"{browser_svc_url}/browsers/{session_id}/execute",
                 json={"action": "getContent"},
             )
             if not content_resp.json().get("success"):
-                return None
+                return _fallback_failure(url, "browser-svc", "extraction_failed")
 
             result = content_resp.json()["result"]
-            html = None
+            html = (
+                (await _get_browser_page_content(browser_svc_url, session_id))
+                if result.get("html_length")
+                else ""
+            )
+            barrier = _classify_barrier(
+                str(navigation_result.get("title") or ""),
+                url,
+                "",
+                html,
+            )
+            if (
+                barrier.detected
+                and barrier.confidence > 0.7
+                and barrier.barrier_type != "empty"
+            ):
+                return _barrier_result(url, "browser-svc", barrier, navigation_status)
+            if type(navigation_status) is int and navigation_status >= 400:
+                return _http_status_error(url, navigation_status, "browser-svc")
 
             # Try to extract article text via executeScript first
             text_resp = await client.post(
@@ -1015,7 +1062,10 @@ async def _fetch_via_browser_svc(url: str) -> dict | None:
                     ),
                 },
             )
-            if text_resp.json().get("success"):
+            text_succeeded = bool(text_resp.json().get("success"))
+            if not text_succeeded and html is None:
+                return _fallback_failure(url, "browser-svc", "extraction_failed")
+            if text_succeeded:
                 text = text_resp.json()["result"].get("script_result", "")
                 if text and len(text) > 200:
                     # ── Barrier check ─────────────────────────
@@ -1055,11 +1105,17 @@ async def _fetch_via_browser_svc(url: str) -> dict | None:
                     }
 
             # Fallback: get HTML and convert to markdown
-            html = result.get("html_length") and (
-                await _get_browser_page_content(browser_svc_url, session_id)
-            )
             if html:
                 markdown = html_to_markdown(html)
+                short_barrier = _classify_barrier("", url, markdown, html)
+                if (
+                    short_barrier.detected
+                    and short_barrier.confidence > 0.7
+                    and short_barrier.barrier_type != "empty"
+                ):
+                    return _barrier_result(
+                        url, "browser-svc", short_barrier, navigation_status
+                    )
                 if markdown and len(markdown) > 50:
                     # ── Barrier check ─────────────────────────
                     barrier = _classify_barrier("", url, markdown, html)
@@ -1100,8 +1156,11 @@ async def _fetch_via_browser_svc(url: str) -> dict | None:
             if type(navigation_status) is int and navigation_status >= 400:
                 return _http_status_error(url, navigation_status, "browser-svc")
 
-    except Exception as e:
-        logger.warning("Browser-svc fallback failed for %s: %s", url, e)
+    except (httpx.ConnectError, httpx.TimeoutException):
+        return _fallback_failure(url, "browser-svc", "unavailable")
+    except Exception:
+        logger.warning("Browser-svc returned an invalid response for %s", url)
+        return _fallback_failure(url, "browser-svc", "invalid_response")
     finally:
         # Clean up the browser session
         if session_id:
@@ -1113,7 +1172,7 @@ async def _fetch_via_browser_svc(url: str) -> dict | None:
             except Exception:
                 pass
 
-    return None
+    return _fallback_failure(url, "browser-svc", "no_content")
 
 
 async def _get_browser_page_content(
