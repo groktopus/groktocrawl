@@ -2,7 +2,7 @@ name: Droid Auto Review
 
 on:
   pull_request:
-    types: [opened, ready_for_review, reopened, synchronize]
+    types: [opened, ready_for_review, reopened]
   workflow_dispatch:
 
 concurrency:
@@ -58,11 +58,6 @@ jobs:
       format('{0}', github.event.pull_request.head.repo.fork) == 'false') ||
       github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    # The full-scope deep/security review for PR #728 hit the pinned action's
-    # 100-turn candidate-generation cap with 16 subagent tasks still pending.
-    # Give the same review a larger bounded budget; do not narrow its diff or
-    # disable security review. This job-level cap still bounds total runtime.
-    timeout-minutes: 30
     permissions:
       contents: read
       pull-requests: write
@@ -157,7 +152,6 @@ jobs:
           reasoning_effort: none
           security_model: custom:Nous-GPT-6-Luna-0
           automatic_security_review: ${{ needs.assess-depth.outputs.security }}
-          review_candidates_max_turns: "240"
           allowed_bots: "dependabot[bot]"
         env:
           NOUS_API_KEY: ${{ secrets.NOUS_API_KEY }}

@@ -204,6 +204,9 @@ fast-tests = [
     "pytest-socket>=0.7.0",
     "PyYAML>=6.0",
     "jsonschema>=4.23.0",
+    # Export FastAPI with its locked Starlette dependency: installing only the
+    # test group into a freshly built image must not mix framework versions.
+    "fastapi>=0.137.2",
     # Service imports exercised by tests/unit and tests/service, excluding ML models.
     "cloakbrowser==0.6.4",
     "firecrawl-anydoc==0.2.4",
