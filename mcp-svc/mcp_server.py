@@ -1,7 +1,7 @@
 """MCP server exposing GroktoCrawl tools via Model Context Protocol.
 
 Uses FastMCP from the official mcp SDK (v1.x) with Streamable HTTP
-transport.  Defines 74 tools matching the GroktoCrawl agent-svc
+transport.  Defines 75 tools matching the GroktoCrawl agent-svc
 API surface, with proper readOnlyHint/destructiveHint annotations.
 
 Tool surface policy (see scripts/check-mcp-coverage.py): every agent-svc
@@ -18,6 +18,7 @@ import logging
 import os
 import time
 from typing import Annotated, Any, Literal
+from urllib.parse import urlsplit
 
 from browser_handler import BrowserHandler
 from groktocrawl_client import GroktocrawlClient
@@ -862,9 +863,57 @@ async def create_research_session(ttl: int | None = None) -> str:
 
 
 @mcp.tool(annotations=_NEUTRAL)
+async def import_session_evidence(
+    session_id: str,
+    sources: Annotated[list[dict[str, Any]], Field(min_length=1, max_length=256)],
+) -> str:
+    """Import previously acquired source bodies into a research session.
+
+    This stores and hashes caller-provided evidence for later chunked
+    synthesis. It never fetches the supplied URLs. The snapshot is limited to
+    256 unique HTTP(S) sources and 20 MB of Markdown.
+    """
+    urls: set[str] = set()
+    total_bytes = 0
+    for source in sources:
+        url = source.get("url")
+        markdown = source.get("markdown")
+        title = source.get("title", "")
+        if not isinstance(url, str) or not url:
+            raise ToolError("each source requires a non-empty URL")
+        if len(url) > 8_192:
+            raise ToolError("source URL exceeds the 8192-character limit")
+        parsed_url = urlsplit(url)
+        if (
+            parsed_url.scheme not in {"http", "https"}
+            or not parsed_url.hostname
+            or parsed_url.username is not None
+            or parsed_url.password is not None
+        ):
+            raise ToolError(
+                "source URL must be an absolute credential-free HTTP(S) URL"
+            )
+        if not isinstance(markdown, str) or not markdown:
+            raise ToolError("each source requires non-empty Markdown")
+        if not isinstance(title, str):
+            raise ToolError("source title must be a string")
+        if len(title) > 2_000:
+            raise ToolError("source title exceeds the 2000-character limit")
+        if url in urls:
+            raise ToolError("source URLs must be unique")
+        urls.add(url)
+        total_bytes += len(markdown.encode("utf-8"))
+        if total_bytes > 20_000_000:
+            raise ToolError("source snapshot exceeds the 20 MB byte limit")
+    result = await _client.import_session_evidence(session_id, sources)
+    _ensure_success(result)
+    return _resp(result)
+
+
+@mcp.tool(annotations=_NEUTRAL)
 async def research_session_step(
     session_id: str,
-    action: Literal["search", "scrape", "query", "deepen"],
+    action: Literal["search", "scrape", "query", "deepen", "synthesize"],
     query: str | None = None,
     limit: int | None = None,
     urls: list[str] | None = None,
@@ -872,14 +921,27 @@ async def research_session_step(
     ref_id: str | None = None,
     sub_topic: str | None = None,
     max_sources: int | None = None,
+    synthesis_id: Annotated[
+        str | None, Field(min_length=8, max_length=100, pattern=r"^[A-Za-z0-9_-]+$")
+    ] = None,
+    ref_ids: list[str] | None = None,
+    input_budget_chars: Annotated[
+        int | None, Field(ge=8_000, le=64_000, strict=True)
+    ] = None,
+    output_budget_tokens: Annotated[int | None, Field(ge=256, strict=True)] = None,
+    resume: bool = False,
+    retry_pending: bool = False,
     parallel: bool = False,
     idempotency_key: str | None = None,
 ) -> str:
-    """Run one typed search, scrape, query, or deepen step in a session.
+    """Run one typed search, scrape, query, deepen, or synthesis step.
 
     Supply only the fields for the selected action: search uses ``query``
     and optional ``limit``; scrape uses ``urls``; query uses ``question``;
-    deepen uses ``ref_id``, ``sub_topic``, and optional ``max_sources``.
+    deepen uses ``ref_id``, ``sub_topic``, and optional ``max_sources``;
+    synthesize uses ``question`` and stable ``synthesis_id``, optional
+    ``ref_ids`` on its first call, and explicit ``resume`` or
+    ``retry_pending`` flags for later calls.
     The API rejects missing sessions, invalid transitions, and conflicting
     concurrent or idempotent steps with actionable errors.
     """
@@ -898,7 +960,7 @@ async def research_session_step(
         if not question or not question.strip():
             raise ToolError("query action requires a non-empty question")
         params = {"question": question}
-    else:
+    elif action == "deepen":
         if not ref_id or not ref_id.strip():
             raise ToolError("deepen action requires a non-empty ref_id")
         if not sub_topic or not sub_topic.strip():
@@ -906,6 +968,22 @@ async def research_session_step(
         params = {"ref_id": ref_id, "sub_topic": sub_topic}
         if max_sources is not None:
             params["max_sources"] = max_sources
+    else:
+        if not question or not question.strip():
+            raise ToolError("synthesize action requires a non-empty question")
+        if not synthesis_id or not synthesis_id.strip():
+            raise ToolError("synthesize action requires a stable synthesis_id")
+        params = {"question": question, "synthesis_id": synthesis_id}
+        if ref_ids is not None:
+            params["ref_ids"] = ref_ids
+        if input_budget_chars is not None:
+            params["input_budget_chars"] = input_budget_chars
+        if output_budget_tokens is not None:
+            params["output_budget_tokens"] = output_budget_tokens
+        if resume:
+            params["resume"] = True
+        if retry_pending:
+            params["retry_pending"] = True
 
     result = await _client.research_session_step(
         session_id=session_id,

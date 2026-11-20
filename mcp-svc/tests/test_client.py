@@ -1123,6 +1123,9 @@ class TestExpandedSurface:
 
         async def run() -> None:
             await client.create_research_session(ttl=900)
+            await client.import_session_evidence(
+                "rs-1", [{"url": "https://example.test/a", "markdown": "A"}]
+            )
             await client.research_session_step(
                 "rs-1",
                 "search",
@@ -1138,6 +1141,11 @@ class TestExpandedSurface:
         asyncio.run(run())
         assert captured == [
             ("POST", "/v2/session/create", {"ttl": 900}),
+            (
+                "POST",
+                "/v2/session/rs-1/evidence/import",
+                {"sources": [{"url": "https://example.test/a", "markdown": "A"}]},
+            ),
             (
                 "POST",
                 "/v2/session/rs-1/step",

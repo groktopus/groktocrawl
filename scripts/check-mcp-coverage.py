@@ -98,6 +98,7 @@ PATH_TO_MCP_TOOL: dict[str, str] = {
     "POST /v2/session/create": "create_research_session",
     "POST /v2/session/{session_id}/step": "research_session_step",
     "GET /v2/session/{session_id}": "get_research_session",
+    "POST /v2/session/{session_id}/evidence/import": "import_session_evidence",
     "POST /v2/session/{session_id}/export": "export_research_session",
     "DELETE /v2/session/{session_id}": "delete_research_session",
     "POST /v2/session/{session_id}/resolve": "resolve_research_session",

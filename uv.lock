@@ -839,6 +839,7 @@ dev = [
 fast-tests = [
     { name = "cloakbrowser" },
     { name = "curl-cffi" },
+    { name = "fastapi" },
     { name = "firecrawl-anydoc" },
     { name = "jinja2" },
     { name = "jsonschema" },
@@ -898,6 +899,7 @@ dev = [
 fast-tests = [
     { name = "cloakbrowser", specifier = "==0.6.4" },
     { name = "curl-cffi", specifier = ">=0.15.0" },
+    { name = "fastapi", specifier = ">=0.137.2" },
     { name = "firecrawl-anydoc", specifier = "==0.2.4" },
     { name = "jinja2", specifier = ">=3.1.0" },
     { name = "jsonschema", specifier = ">=4.23.0" },

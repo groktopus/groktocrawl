@@ -44,7 +44,9 @@ def _install_strict_provider(monkeypatch, expected_field):
             )
         return httpx.Response(
             200,
-            json={"choices": [{"message": {"content": content}}]},
+            json={
+                "choices": [{"finish_reason": "stop", "message": {"content": content}}]
+            },
         )
 
     original = httpx.AsyncClient
@@ -109,6 +111,22 @@ async def test_wrong_selected_field_is_rejected_by_strict_provider(monkeypatch):
     finally:
         await client.close()
     assert requests[0]["max_tokens"] == 1234
+
+
+@pytest.mark.asyncio
+async def test_per_call_output_allowance_is_separate_and_cannot_raise_provider_cap(
+    monkeypatch,
+):
+    _settings(monkeypatch, "max_tokens")
+    requests = _install_strict_provider(monkeypatch, "max_tokens")
+    client = LLMClient(base_url="https://provider.invalid/v1", model="fixture")
+    try:
+        assert await client.generate("sys", "question", max_output_tokens=256) == "ok"
+        with pytest.raises(ValueError, match="cannot exceed configured"):
+            await client.generate("sys", "question", max_output_tokens=1235)
+    finally:
+        await client.close()
+    assert requests[0]["max_tokens"] == 256
 
 
 @pytest.mark.parametrize(
