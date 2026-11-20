@@ -481,10 +481,7 @@ jobs:
 
       - name: Install critical test dependencies
         run: |
-          uv export --locked --only-group fast-tests --no-dev --no-emit-project --no-emit-workspace --no-header --format requirements.txt --output-file runtime-test-requirements.txt
-          svc=$(docker compose ps -q agent-svc)
-          docker cp runtime-test-requirements.txt "$svc:/tmp/runtime-test-requirements.txt"
-          docker compose exec -T agent-svc python3 -m pip install --require-hashes -r /tmp/runtime-test-requirements.txt -q
+          bash scripts/install-runtime-test-deps.sh
 
       - name: Verify LLM fixture contract and agent routing
         run: |
@@ -596,10 +593,7 @@ jobs:
 
       - name: Run integration tests
         run: |
-          uv export --locked --only-group fast-tests --no-dev --no-emit-project --no-emit-workspace --no-header --format requirements.txt --output-file runtime-test-requirements.txt
-          svc=$(docker compose ps -q agent-svc)
-          docker cp runtime-test-requirements.txt "$svc:/tmp/runtime-test-requirements.txt"
-          docker compose exec -T agent-svc python3 -m pip install --require-hashes -r /tmp/runtime-test-requirements.txt -q
+          bash scripts/install-runtime-test-deps.sh
           docker compose exec -T agent-svc mkdir -p /app/coverage
           set +e
           docker compose exec -T agent-svc env \

@@ -182,23 +182,18 @@ def test_runtime_container_tests_use_hash_locked_fast_test_requirements(filename
     workflow = yaml.safe_load((root / ".github/workflows" / filename).read_text())
     runtime = workflow["jobs"]["integration-tests"]
     steps = {step.get("name"): step.get("run", "") for step in runtime["steps"]}
-    export_command = (
-        "uv export --locked --only-group fast-tests --no-dev --no-emit-project "
-        "--no-emit-workspace --no-header --format requirements.txt "
-        "--output-file runtime-test-requirements.txt"
-    )
     for name in ("Install critical test dependencies", "Run integration tests"):
         command = steps[name]
-        assert export_command in command
-        assert (
-            'docker cp runtime-test-requirements.txt "$svc:/tmp/runtime-test-requirements.txt"'
-            in command
-        )
-        assert (
-            "pip install --require-hashes -r /tmp/runtime-test-requirements.txt"
-            in command
-        )
-        assert "pip install pytest " not in command
+        assert "bash scripts/install-runtime-test-deps.sh" in command
+        assert "pip install" not in command
+
+    helper = (root / "scripts/install-runtime-test-deps.sh").read_text()
+    assert "--locked --only-group fast-tests" in helper
+    assert "exclude+=(--no-emit-package" in helper
+    assert "pip install --require-hashes --no-deps" in helper
+    assert "python3 -m pip check" in helper
+    assert "from fastapi import FastAPI" in helper
+    assert "test dependency installation changed runtime versions" in helper
 
     groups = tomllib.loads((root / "pyproject.toml").read_text())["dependency-groups"]
     fast_tests = groups["fast-tests"]
