@@ -76,9 +76,10 @@ results.
 - The isolated restore and shadow-backfill rehearsal matched all 11,852 records across IDs, payload/content, and vectors.
 - Version 1.0.0 was initially published on 2026-10-16 ([release](https://github.com/groktopus/groktocrawl/releases/tag/v1.0.0)); its release PR merged at `f2ebbbb4e8da42c96f054e19d5d86fe556d62a6e`.
 - Version 1.0.0 was subsequently marked prerelease after the missing live adapter was found. Do not use its publication as evidence that the cleanup is complete.
-- Final 1.0.1 image publication, immutable digests and deployment verification remain pending.
-- The isolated restore and backfill verified pgvector parity; live vector-serving cutover and deployment verification remain pending. Keep demonstration admission disabled. Enable the corrected live research path only after the 1.0.1 acceptance and deployment checks pass.
-- Transfer of remaining optional issues and retirement of the experimental repository are pending.
+- The [1.0.1 verification report](../experiments/release-1.0.1-verification.md) records publication on October 16, 2026, immutable image provenance and both deployments verified at runtime revision `729d34d360d819b29a633389e0067e34b2dfe7ce`. Steps 1–4 have historical integration, rehearsal, release and deployment evidence; this is not a fresh running-image/configuration attestation.
+- The report records PostgreSQL page-vector serving, Qdrant dual writes retained for rollback, four live research flags enabled and fixture runs disabled. The original strict approximate comparison failed in 28/100 frozen-query cases and remains failed evidence. A separate exact-search check passed at unchanged 0.0001 tolerance; it establishes neither runtime approximate parity nor general relevance.
+- Step 5 remains an administrative residual: Chief/CTO retain optional-issue reconciliation, mainline links, archive/read-only status and redirect/README, including explicit disposition of experimental #391/#392. This update performs no issue transfer or repository retirement.
+- November 16, 2026 reconciliation: source main `91e7a0ce17d14d7d234337c1d3e50b6c9db80976` differs from the release/runtime above. Private operator receipts were not inspected here. MAG-48 assigns bounded engineering work after MAG-43; assignment does not prove batch completion. See the [current roadmap](../roadmap.md).
 
 Live durable research, workspace integration, storage and restart recovery are
 tracked together in the 1.0.1 cleanup plan. Controlled service tests establish
