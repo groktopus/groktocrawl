@@ -292,11 +292,38 @@ async def _recover_from_barrier(
         if flare_result is None:
             record_attempt(receipt, "flaresolverr", "unavailable")
         elif flare_result.get("error_code") == "HTTP_STATUS_ERROR":
-            return attach_recovery(flare_result, receipt, recovered=False)
+            record_attempt(receipt, "flaresolverr", "source_http_error")
+            retained = (
+                terminal_result
+                if terminal_result is not None and terminal_result.get("barrier")
+                else flare_result
+            )
+            return attach_recovery(retained, receipt, recovered=False)
         elif flare_result.get("barrier"):
-            if terminal_result is None or not terminal_result.get("error_code"):
+            if (
+                flare_result["barrier"].get("provider") == "datadome"
+                or terminal_result is None
+                or not terminal_result.get("error_code")
+                or not (terminal_result.get("barrier") or {}).get("provider")
+            ):
                 terminal_result = flare_result
-            record_attempt(receipt, "flaresolverr", "barrier")
+            barrier = flare_result["barrier"]
+            if barrier.get("provider"):
+                receipt["provider"] = barrier["provider"]
+                receipt["barrier_type"] = barrier.get("type") or "unknown"
+            record_attempt(
+                receipt,
+                "flaresolverr",
+                "unsupported_challenge"
+                if barrier.get("supported") is False
+                else "barrier",
+            )
+        elif flare_result.get("error"):
+            record_attempt(
+                receipt,
+                "flaresolverr",
+                flare_result.get("failure_outcome") or "source_http_error",
+            )
         else:
             accepted = await _maybe_degrade(
                 flare_result, "barrier-flaresolverr", best_effort
@@ -325,11 +352,38 @@ async def _recover_from_barrier(
         if browser_result is None:
             record_attempt(receipt, "browser-svc", "unavailable")
         elif browser_result.get("error_code") == "HTTP_STATUS_ERROR":
-            return attach_recovery(browser_result, receipt, recovered=False)
+            record_attempt(receipt, "browser-svc", "source_http_error")
+            retained = (
+                terminal_result
+                if terminal_result is not None and terminal_result.get("barrier")
+                else browser_result
+            )
+            return attach_recovery(retained, receipt, recovered=False)
         elif browser_result.get("barrier"):
-            if terminal_result is None or not terminal_result.get("error_code"):
+            if (
+                browser_result["barrier"].get("provider") == "datadome"
+                or terminal_result is None
+                or not terminal_result.get("error_code")
+                or not (terminal_result.get("barrier") or {}).get("provider")
+            ):
                 terminal_result = browser_result
-            record_attempt(receipt, "browser-svc", "barrier")
+            barrier = browser_result["barrier"]
+            if barrier.get("provider"):
+                receipt["provider"] = barrier["provider"]
+                receipt["barrier_type"] = barrier.get("type") or "unknown"
+            record_attempt(
+                receipt,
+                "browser-svc",
+                "unsupported_challenge"
+                if barrier.get("supported") is False
+                else "barrier",
+            )
+        elif browser_result.get("error"):
+            record_attempt(
+                receipt,
+                "browser-svc",
+                browser_result.get("failure_outcome") or "source_http_error",
+            )
         else:
             accepted = await _maybe_degrade(
                 browser_result, "barrier-browser-svc", best_effort
@@ -364,6 +418,11 @@ async def _recover_from_barrier(
         "markdown": "",
         "source": terminal_source,
         "url": url,
+        **(
+            {"http_status": terminal_result["http_status"]}
+            if terminal_result and "http_status" in terminal_result
+            else {}
+        ),
         **(
             {"barrier": terminal_result["barrier"]}
             if terminal_result and terminal_result.get("barrier")
@@ -784,6 +843,8 @@ async def smart_scrape(
         return blocked
     fs_result = await fetch_via_flaresolverr(url)
     if fs_result:
+        if fs_result.get("error_code") == "HTTP_STATUS_ERROR":
+            return await _enrich_with_politeness(fs_result, url)
         if "barrier" in fs_result:
             return await _recover_from_barrier(
                 url,
