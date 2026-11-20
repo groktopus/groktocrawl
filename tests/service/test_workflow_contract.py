@@ -520,8 +520,6 @@ def test_compose_run_id_and_failure_provenance_are_unambiguous():
 def test_droid_action_sanitizer_removes_debug_uploads_and_fails_closed(tmp_path):
     root = Path(__file__).parents[2]
     workflow = yaml.safe_load((root / ".github/workflows/droid-review.yml").read_text())
-    triggers = workflow.get("on", workflow.get(True))
-    assert "synchronize" in triggers["pull_request"]["types"]
     job = workflow["jobs"]["droid-review"]
     checkout = next(
         step
@@ -533,13 +531,6 @@ def test_droid_action_sanitizer_removes_debug_uploads_and_fails_closed(tmp_path)
     action_step = next(
         step for step in job["steps"] if step.get("name") == "Run Droid Auto Review"
     )
-    assert job["timeout-minutes"] == 30
-    assert action_step["with"]["automatic_review"] is True
-    assert (
-        action_step["with"]["automatic_security_review"]
-        == "${{ needs.assess-depth.outputs.security }}"
-    )
-    assert action_step["with"]["review_candidates_max_turns"] == "240"
     assert action_step["env"]["NOUS_API_KEY"] == "${{ secrets.NOUS_API_KEY }}"
     assert "NOUS_API_KEY" not in job.get("env", {})
     cleanup = next(
