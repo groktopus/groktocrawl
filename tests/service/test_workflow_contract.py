@@ -182,23 +182,18 @@ def test_runtime_container_tests_use_hash_locked_fast_test_requirements(filename
     workflow = yaml.safe_load((root / ".github/workflows" / filename).read_text())
     runtime = workflow["jobs"]["integration-tests"]
     steps = {step.get("name"): step.get("run", "") for step in runtime["steps"]}
-    export_command = (
-        "uv export --locked --only-group fast-tests --no-dev --no-emit-project "
-        "--no-emit-workspace --no-header --format requirements.txt "
-        "--output-file runtime-test-requirements.txt"
-    )
     for name in ("Install critical test dependencies", "Run integration tests"):
         command = steps[name]
-        assert export_command in command
-        assert (
-            'docker cp runtime-test-requirements.txt "$svc:/tmp/runtime-test-requirements.txt"'
-            in command
-        )
-        assert (
-            "pip install --require-hashes -r /tmp/runtime-test-requirements.txt"
-            in command
-        )
-        assert "pip install pytest " not in command
+        assert "bash scripts/install-runtime-test-deps.sh" in command
+        assert "pip install" not in command
+
+    helper = (root / "scripts/install-runtime-test-deps.sh").read_text()
+    assert "--locked --only-group fast-tests" in helper
+    assert "exclude+=(--no-emit-package" in helper
+    assert "pip install --require-hashes --no-deps" in helper
+    assert "python3 -m pip check" in helper
+    assert "from fastapi import FastAPI" in helper
+    assert "test dependency installation changed runtime versions" in helper
 
     groups = tomllib.loads((root / "pyproject.toml").read_text())["dependency-groups"]
     fast_tests = groups["fast-tests"]
@@ -520,6 +515,8 @@ def test_compose_run_id_and_failure_provenance_are_unambiguous():
 def test_droid_action_sanitizer_removes_debug_uploads_and_fails_closed(tmp_path):
     root = Path(__file__).parents[2]
     workflow = yaml.safe_load((root / ".github/workflows/droid-review.yml").read_text())
+    triggers = workflow.get("on", workflow.get(True))
+    assert "synchronize" in triggers["pull_request"]["types"]
     job = workflow["jobs"]["droid-review"]
     checkout = next(
         step
@@ -531,6 +528,13 @@ def test_droid_action_sanitizer_removes_debug_uploads_and_fails_closed(tmp_path)
     action_step = next(
         step for step in job["steps"] if step.get("name") == "Run Droid Auto Review"
     )
+    assert job["timeout-minutes"] == 30
+    assert action_step["with"]["automatic_review"] is True
+    assert (
+        action_step["with"]["automatic_security_review"]
+        == "${{ needs.assess-depth.outputs.security }}"
+    )
+    assert action_step["with"]["review_candidates_max_turns"] == "240"
     assert action_step["env"]["NOUS_API_KEY"] == "${{ secrets.NOUS_API_KEY }}"
     assert "NOUS_API_KEY" not in job.get("env", {})
     cleanup = next(
