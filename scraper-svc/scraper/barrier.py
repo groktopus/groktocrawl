@@ -9,6 +9,8 @@ replaced the old boolean ``_looks_suspicious()``.
 import logging
 import re
 from dataclasses import dataclass
+from html.parser import HTMLParser
+from urllib.parse import urlsplit
 
 logger = logging.getLogger(__name__)
 
@@ -109,6 +111,27 @@ class BarrierInfo:
     provider: str | None = None
 
 
+class _DataDomeFrameParser(HTMLParser):
+    """Recognize actual provider frames, not prose or lookalike hostnames."""
+
+    detected = False
+
+    def handle_starttag(self, tag, attrs):
+        if tag != "iframe":
+            return
+        src = dict(attrs).get("src") or ""
+        try:
+            parsed = urlsplit(src)
+        except ValueError:
+            return
+        if (
+            parsed.scheme in ("", "http", "https")
+            and parsed.hostname == "geo.captcha-delivery.com"
+            and parsed.path.startswith(("/captcha/", "/interstitial/"))
+        ):
+            self.detected = True
+
+
 def _classify_barrier(
     title: str, url: str, content: str, html: str | None = None
 ) -> BarrierInfo:
@@ -144,6 +167,18 @@ def _classify_barrier(
             f"Definitive Fastly challenge signature ({FASTLY_SIGNATURE_PREFIX})",
             title,
             "fastly",
+        )
+
+    datadome = _DataDomeFrameParser()
+    datadome.feed(html or "")
+    if datadome.detected:
+        return BarrierInfo(
+            True,
+            "captcha",
+            0.95,
+            "DataDome challenge frame; solver unsupported",
+            title,
+            "datadome",
         )
 
     captcha_providers = (

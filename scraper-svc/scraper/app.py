@@ -438,20 +438,36 @@ async def scrape(request: ScrapeRequest):
                     details={
                         "barrier": result.get("barrier"),
                         "recovery": result.get("recovery"),
+                        **(
+                            {"http_status": result["http_status"]}
+                            if "http_status" in result
+                            else {}
+                        ),
                     },
                 )
             if result.get("error_code") == "SOURCE_DESTINATION_VALIDATION_UNAVAILABLE":
                 raise DestinationValidationUnavailableError(
                     detail="Source destination validation is temporarily unavailable"
                 )
+            error_details = None
+            if result.get("error_code") == "HTTP_STATUS_ERROR":
+                error_details = {"http_status": result.get("http_status")}
             raise UpstreamError(
                 detail=result["error"],
-                details={
-                    "barrier": result.get("barrier"),
-                    "recovery": result.get("recovery"),
-                }
-                if result.get("barrier") or result.get("recovery")
-                else None,
+                details=error_details
+                or (
+                    {
+                        "barrier": result.get("barrier"),
+                        "recovery": result.get("recovery"),
+                        **(
+                            {"http_status": result["http_status"]}
+                            if "http_status" in result
+                            else {}
+                        ),
+                    }
+                    if result.get("barrier") or result.get("recovery")
+                    else None
+                ),
             )
         markdown = result.get("markdown", "")
         raw_html = result.get("raw_html_start", "")

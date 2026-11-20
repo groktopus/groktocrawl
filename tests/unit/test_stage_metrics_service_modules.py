@@ -47,6 +47,28 @@ async def test_scrape_tier_metrics_are_bounded(monkeypatch):
     assert "# TYPE groktocrawl_scrape_tier_duration_seconds histogram" in text
 
 
+@pytest.mark.asyncio
+async def test_scrape_http_status_error_exposes_source_status(monkeypatch):
+    import scraper.app as app
+    from scraper.exceptions import UpstreamError
+
+    async def http_status_error(*_args, **_kwargs):
+        return {
+            "error": "Source navigation returned HTTP 404",
+            "error_code": "HTTP_STATUS_ERROR",
+            "http_status": 404,
+            "markdown": "",
+            "source": "playwright",
+        }
+
+    monkeypatch.setattr(app, "smart_scrape", http_status_error)
+
+    with pytest.raises(UpstreamError) as error:
+        await app.scrape(app.ScrapeRequest(url="https://example.test/missing"))
+
+    assert error.value.details == {"http_status": 404}
+
+
 # ── Browser-svc capacity signals ──────────────────────────────────
 
 
@@ -108,6 +130,50 @@ async def test_browser_execute_expired_records_reason(monkeypatch):
             "sid", BrowserExecuteRequest(action="navigate", url="https://example.test")
         )
     assert destroyed == [("sid", "expired")]
+
+
+@pytest.mark.asyncio
+async def test_resolved_challenge_omits_stale_navigation_status(monkeypatch):
+    import browser_svc.app as bapp
+    from browser_svc.app import BrowserExecuteRequest, SessionData
+
+    class Response:
+        status = 403
+        headers = {}
+
+    waited = False
+
+    class Page:
+        url = "https://example.test/article"
+
+        async def goto(self, *_args, **_kwargs):
+            return Response()
+
+        async def title(self):
+            return "Article" if waited else "Just a moment..."
+
+        async def wait_for_timeout(self, _timeout):
+            nonlocal waited
+            waited = True
+
+    bapp._sessions.clear()
+    monkeypatch.setattr(bapp, "_owners", {})
+    monkeypatch.setattr(bapp, "_shutting_down", False)
+    monkeypatch.setattr(bapp, "_protected_renderer_enabled", lambda: False)
+    monkeypatch.setattr(bapp, "is_private_host", lambda _url: False)
+    monkeypatch.setattr(bapp, "_store_cookies", AsyncMock())
+    bapp._sessions["sid"] = SessionData(
+        object(), object(), Page(), ttl=300, playwright=object()
+    )
+
+    result = await bapp.execute_action(
+        "sid",
+        BrowserExecuteRequest(action="navigate", url="https://example.test/article"),
+    )
+
+    assert result.success is True
+    assert result.result["title"] == "Article"
+    assert "http_status" not in result.result
 
 
 @pytest.mark.asyncio
