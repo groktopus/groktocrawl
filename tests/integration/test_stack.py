@@ -5546,6 +5546,10 @@ def test_agent_memory_force_fresh_bypasses_cache():
         httpx.delete(AGENT + f"/v2/memory/{artifact_id}", timeout=30)
 
 
+# Budget 30s for store, 2s settle, 30s for an initial job request, 30s for polling,
+# and 120s for cleanup (98s observed under load). Reserve extra time for retry
+# backoff and reporting, but retain a finite end-to-end cap for this test only.
+@pytest.mark.timeout(300)
 def test_agent_memory_cache_hit_response_format():
     """VAL-MEM-029: Cache hit response format matches normal agent response.
 
@@ -5592,7 +5596,11 @@ def test_agent_memory_cache_hit_response_format():
                 # Just verify basic fields are present
                 assert "result" in data or "error" in payload
     finally:
-        httpx.delete(AGENT + f"/v2/memory/{artifact_id}", timeout=30)
+        # Keep the normal connection limit, but allow the server's cleanup to finish.
+        httpx.delete(
+            AGENT + f"/v2/memory/{artifact_id}",
+            timeout=httpx.Timeout(30.0, read=120.0),
+        )
 
 
 def test_agent_memory_dissimilar_query_cache_miss():
